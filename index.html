@@ -588,7 +588,12 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 
   <div class="section">
     <div class="section-head">
-      <div class="section-title"><em>전체 도서</em> · 저작권 만료 정전 12권</div>
+      <div class="section-title"><em>정전 도서</em></div>
+    </div>
+    <div class="subtabs" id="libTabs">
+      <div class="subtab active" data-tab="modern" onclick="setLibTab(this,'modern')">한국 고전 <span id="libCntK"></span></div>
+      <div class="subtab" data-tab="foreign" onclick="setLibTab(this,'foreign')">해외 고전 <span id="libCntF"></span></div>
+      <div class="subtab" data-tab="all" onclick="setLibTab(this,'all')">전체 <span id="libCntAll"></span></div>
     </div>
     <div class="book-grid" id="bookGridAll"></div>
   </div>
@@ -945,10 +950,28 @@ function bookCoverHTML(b, extra=''){
   </div>`;
 }
 
+let currentLibTab = 'modern';  // 한국 고전이 기본 (해외는 표지 결이 달라 시각적으로 강조)
+
+function setLibTab(el, tab){
+  document.querySelectorAll('#libTabs .subtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentLibTab = tab;
+  renderBookGrid('bookGridAll', false);
+}
+
 function renderBookGrid(targetId, filterIntl){
   const el = document.getElementById(targetId);
   if(!el) return;
-  const list = filterIntl ? BOOKS.filter(b=>b.intl) : BOOKS;
+  let list = BOOKS;
+  if(targetId === 'bookGridAll'){
+    if(currentLibTab === 'modern')      list = BOOKS.filter(b => b.locale === 'modern');
+    else if(currentLibTab === 'foreign') list = BOOKS.filter(b => b.locale === 'foreign');
+    // 'all' → 그대로 전체
+  } else if(targetId === 'bookGridIntl'){
+    list = BOOKS.filter(b => b.locale === 'modern');  // International Students = 한국 고전만
+  } else if(filterIntl){
+    list = BOOKS.filter(b => b.intl);
+  }
   el.innerHTML = list.map(b=>`
     <div class="book-card" onclick="openDetail('${b.id}')">
       ${bookCoverHTML(b)}
@@ -1503,6 +1526,10 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   renderCurations('curationFull', false);
   renderCurations('curationIntl', true);
+  const nK = BOOKS.filter(b=>b.locale==='modern').length;
+  const nF = BOOKS.filter(b=>b.locale==='foreign').length;
+  const setTxt = (id,n)=>{ const e=document.getElementById(id); if(e) e.textContent = ' ' + n; };
+  setTxt('libCntK', nK); setTxt('libCntF', nF); setTxt('libCntAll', nK+nF);
   renderBookGrid('bookGridAll', false);
   renderBookGrid('bookGridIntl', true);
   renderCommunity('program');
