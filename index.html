@@ -28,6 +28,13 @@ body.dark{
   --text:#f1f5f9; --text-sub:#94a3b8; --text-light:#64748b;
   --border:#334155;
 }
+body.sepia{
+  --primary:#7a5a2f; --primary-dark:#5b4222; --accent:#8c6a3a;
+  --primary-bg:rgba(122,90,47,0.08);
+  --bg:#f4ecd8; --bg-card:#f7efd9; --bg-input:#ede2c5;
+  --text:#3a2f1d; --text-sub:#5b4a30; --text-light:#7a6a4d;
+  --border:#d8c6a0;
+}
 html,body{height:100%;overflow:hidden;}
 body{font-family:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);font-feature-settings:'ss03','ss06';letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;}
 
@@ -458,6 +465,70 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
   .viewer-pane.left{display:none;}
   .quest-grid{grid-template-columns:repeat(3,1fr);}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   리더 모드 추가 (밀리 결 도입 — 폰트/크기/줄간격/세피아/TOC/진행률/하이라이트/복사차단)
+   ═══════════════════════════════════════════════════════════ */
+.reader-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.reader-btn{padding:6px 10px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+.reader-btn:hover{background:var(--primary-bg);}
+.reader-btn.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+.reader-divider{width:1px;height:18px;background:var(--border);margin:0 4px;}
+
+/* 뷰어 본문 = 리더 prefs 적용 */
+.viewer-body{
+  --reader-fs:17px; --reader-lh:1.85; --reader-ff:'Pretendard Variable',serif;
+}
+.viewer-pane{font-size:var(--reader-fs);line-height:var(--reader-lh);font-family:var(--reader-ff);}
+.viewer-pane p{margin:0 0 1em 0;}
+.viewer-pane .chapter-anchor{scroll-margin-top:20px;}
+.viewer-pane h3.ch-title{font-size:1.15em;font-weight:800;margin:1.6em 0 0.6em;padding-top:0.4em;border-top:1px solid var(--border);color:var(--primary);}
+
+/* TOC 드로어 */
+.toc-drawer{
+  position:absolute;top:0;left:0;bottom:0;width:300px;background:var(--bg-card);border-right:1px solid var(--border);
+  transform:translateX(-100%);transition:transform 0.25s ease;z-index:5;display:flex;flex-direction:column;
+}
+.toc-drawer.open{transform:translateX(0);}
+.toc-head{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+.toc-list{flex:1;overflow-y:auto;padding:8px 0;}
+.toc-item{padding:10px 18px;font-size:13px;color:var(--text-sub);cursor:pointer;border-left:3px solid transparent;}
+.toc-item:hover{background:var(--primary-bg);color:var(--text);}
+.toc-item.active{background:var(--primary-bg);color:var(--primary);border-left-color:var(--primary);font-weight:700;}
+.toc-item.done::after{content:' ✓';color:var(--success);font-weight:800;}
+
+/* 진행률 */
+.viewer-progress-wrap{position:relative;height:3px;background:var(--border);overflow:hidden;}
+.viewer-progress-bar{position:absolute;left:0;top:0;bottom:0;background:var(--primary);width:0%;transition:width 0.2s;}
+.viewer-progress-text{font-size:11px;color:var(--text-light);font-variant-numeric:tabular-nums;margin-left:8px;}
+
+/* 챌린지 모드 = 복사·드래그·우클릭 차단 */
+.viewer-shell.mode-challenge .viewer-body{
+  user-select:none; -webkit-user-select:none; -moz-user-select:none;
+}
+.viewer-shell.mode-challenge .viewer-body::selection{background:transparent;}
+
+/* 하이라이트 (완독 모드에서만) */
+.viewer-pane mark.hl{background:rgba(212,169,59,0.32);color:inherit;border-radius:2px;padding:0 1px;cursor:pointer;}
+body.dark .viewer-pane mark.hl{background:rgba(212,169,59,0.45);}
+body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
+.hl-popup{
+  position:fixed;z-index:120;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+  padding:6px;box-shadow:0 6px 24px rgba(0,0,0,0.15);display:none;gap:4px;
+}
+.hl-popup button{padding:6px 10px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text);background:var(--bg-input);}
+.hl-popup button:hover{background:var(--primary-bg);}
+
+/* 독서 통계 칩 */
+.reader-stats{display:inline-flex;gap:10px;align-items:center;font-size:11px;color:var(--text-sub);}
+.reader-stats b{color:var(--text);font-weight:800;}
+.reader-stats .dot{width:4px;height:4px;border-radius:50%;background:var(--border);}
+
+@media (max-width:780px){
+  .toc-drawer{width:88%;}
+  .reader-toolbar{gap:4px;}
+  .reader-btn{padding:5px 8px;font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -710,18 +781,46 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 <div class="viewer-overlay" id="viewerOverlay" onclick="if(event.target.id==='viewerOverlay')closeViewer()">
   <div class="viewer-shell">
     <div class="viewer-header">
-      <div>
-        <span class="viewer-title" id="viewerTitle"></span>
-        <span class="viewer-author" id="viewerAuthor"></span>
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+        <button class="reader-btn" onclick="toggleTOC()" title="목차">☰ 목차</button>
+        <div style="min-width:0;overflow:hidden;">
+          <span class="viewer-title" id="viewerTitle"></span>
+          <span class="viewer-author" id="viewerAuthor"></span>
+        </div>
       </div>
       <div class="mode-toggle">
-        <button id="modeChallenge" class="active" onclick="setMode('challenge')">챌린지 모드</button>
-        <button id="modeFull" onclick="setMode('full')">완독 모드</button>
-        <button id="modeIntl" onclick="setMode('intl')">International</button>
+        <button id="modeChallenge" class="active" onclick="setMode('challenge')">챌린지</button>
+        <button id="modeFull" onclick="setMode('full')">완독</button>
+        <button id="modeIntl" onclick="setMode('intl')">Intl</button>
+      </div>
+      <div class="reader-toolbar">
+        <button class="reader-btn" onclick="readerFS(-1)" title="글자 작게">A−</button>
+        <button class="reader-btn" onclick="readerFS(1)" title="글자 크게">A+</button>
+        <span class="reader-divider"></span>
+        <button class="reader-btn" onclick="readerLH(-1)" title="줄간격 좁게">≡−</button>
+        <button class="reader-btn" onclick="readerLH(1)" title="줄간격 넓게">≡+</button>
+        <span class="reader-divider"></span>
+        <button class="reader-btn" data-theme="light" onclick="readerTheme('light')">☀</button>
+        <button class="reader-btn" data-theme="sepia" onclick="readerTheme('sepia')">◐</button>
+        <button class="reader-btn" data-theme="dark" onclick="readerTheme('dark')">☾</button>
       </div>
       <span class="viewer-close" onclick="closeViewer()">✕</span>
     </div>
-    <div class="viewer-body" id="viewerBody"></div>
+    <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="toc-drawer" id="tocDrawer">
+        <div class="toc-head">
+          <span>목차</span>
+          <button class="reader-btn" onclick="toggleTOC()" style="padding:2px 8px;">✕</button>
+        </div>
+        <div class="toc-list" id="tocList"></div>
+      </div>
+      <div class="viewer-body" id="viewerBody"></div>
+    </div>
+    <div class="viewer-progress-wrap"><div class="viewer-progress-bar" id="viewerProg"></div></div>
+    <div class="hl-popup" id="hlPopup">
+      <button onclick="addHighlight()">✎ 하이라이트</button>
+      <button onclick="addNote()">📝 메모</button>
+    </div>
     <div class="viewer-footer">
       <div id="viewerFooterInfo">제3장 핵심 페이지 · <b>+50 점수</b></div>
       <div class="viewer-actions">
@@ -873,6 +972,184 @@ const BOOK_CONTENT = {
 
 let currentBook = null;
 let currentMode = 'challenge';
+
+/* ═══════════════════════════════════════════════════════════
+   리더 모듈 — 폰트/크기/줄간격/테마, TOC, 위치저장, 읽기시간, streak, 하이라이트
+   ═══════════════════════════════════════════════════════════ */
+const READER_PREFS_KEY = 'klever-reader-prefs';
+const READER_STATS_KEY = 'klever-reader-stats';
+const FONT_SIZES = [14,15,16,17,18,19,20,22,24];
+const LINE_HEIGHTS = [1.5,1.65,1.75,1.85,2.0,2.2];
+
+let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light'};
+let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
+let _readerSessionStart = 0;
+let _scrollSaveTimer = null;
+let _lastSelectionRange = null;
+
+function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_PREFS_KEY)||'null'); if(s)Object.assign(readerPrefs,s);}catch(e){} }
+function saveReaderPrefs(){ try{ localStorage.setItem(READER_PREFS_KEY, JSON.stringify(readerPrefs)); }catch(e){} }
+function loadReaderStats(){ try{ const s=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(s)Object.assign(readerStats,s);}catch(e){} }
+function saveReaderStats(){ try{ localStorage.setItem(READER_STATS_KEY, JSON.stringify(readerStats)); }catch(e){} }
+
+function applyReaderPrefs(){
+  const v = document.getElementById('viewerBody');
+  if(v){
+    v.style.setProperty('--reader-fs', FONT_SIZES[readerPrefs.fontSizeIdx] + 'px');
+    v.style.setProperty('--reader-lh', LINE_HEIGHTS[readerPrefs.lineHeightIdx]);
+  }
+  document.body.classList.remove('dark','sepia');
+  if(readerPrefs.theme === 'dark') document.body.classList.add('dark');
+  else if(readerPrefs.theme === 'sepia') document.body.classList.add('sepia');
+  document.querySelectorAll('.reader-btn[data-theme]').forEach(b=>{
+    b.classList.toggle('on', b.dataset.theme === readerPrefs.theme);
+  });
+  // 휴면 중인 dark 테마 토글 버튼과 동기화
+  const tBtn = document.getElementById('themeBtn');
+  if(tBtn) tBtn.innerHTML = readerPrefs.theme==='dark' ? ic('sun','icon icon-sm') : ic('moon','icon icon-sm');
+}
+function readerFS(d){ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }
+function readerLH(d){ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }
+function readerTheme(t){ readerPrefs.theme = t; applyReaderPrefs(); saveReaderPrefs(); }
+
+/* TOC */
+function buildTOC(){
+  const list = document.getElementById('tocList');
+  const left = document.querySelector('.viewer-pane.left');
+  if(!list) return;
+  if(!left){ list.innerHTML = ''; return; }
+  const sections = left.querySelectorAll('.chapter-anchor');
+  if(sections.length <= 1){
+    list.innerHTML = '<div style="padding:14px 18px;color:var(--text-light);font-size:12px;">이 책은 단일 장(章)입니다.</div>';
+    return;
+  }
+  const completed = (readerStats.completedChapters || {})[currentBook.id] || [];
+  list.innerHTML = '';
+  sections.forEach((sec, i) => {
+    const title = sec.dataset.chTitle || ('Chapter ' + (i+1));
+    const div = document.createElement('div');
+    div.className = 'toc-item' + (completed.includes(i) ? ' done' : '');
+    div.textContent = title;
+    div.onclick = () => {
+      sec.scrollIntoView({behavior:'smooth', block:'start'});
+      document.querySelectorAll('.toc-item').forEach(x=>x.classList.remove('active'));
+      div.classList.add('active');
+    };
+    list.appendChild(div);
+  });
+}
+function toggleTOC(){ const d=document.getElementById('tocDrawer'); if(d) d.classList.toggle('open'); }
+
+/* 위치 저장 · 진행률 (스크롤은 .viewer-pane.left에서 일어남) */
+function _scrollEl(){ return document.querySelector('.viewer-pane.left'); }
+function saveScrollPos(){
+  if(!currentBook) return;
+  const el = _scrollEl(); if(!el) return;
+  readerStats.positions[currentBook.id] = el.scrollTop;
+  saveReaderStats();
+}
+function restoreScrollPos(){
+  if(!currentBook) return;
+  const el = _scrollEl(); if(!el) return;
+  el.scrollTop = readerStats.positions[currentBook.id] || 0;
+  updateProgress();
+}
+function updateProgress(){
+  const el = _scrollEl();
+  const bar = document.getElementById('viewerProg');
+  if(!el || !bar) return;
+  const max = el.scrollHeight - el.clientHeight;
+  bar.style.width = (max > 0 ? Math.min(100,(el.scrollTop/max)*100) : 0).toFixed(1) + '%';
+}
+function readerOnScroll(){
+  updateProgress();
+  if(_scrollSaveTimer) clearTimeout(_scrollSaveTimer);
+  _scrollSaveTimer = setTimeout(saveScrollPos, 800);
+}
+function attachScrollListener(){
+  const el = _scrollEl();
+  if(el) el.onscroll = readerOnScroll;
+}
+
+/* 읽기 세션 · streak */
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function bumpStreak(){
+  const today = todayKey();
+  if(readerStats.streak.last === today) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const yk = y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0');
+  readerStats.streak.count = (readerStats.streak.last === yk) ? (readerStats.streak.count+1) : 1;
+  readerStats.streak.last = today;
+  saveReaderStats();
+}
+function readerSessionStart(){ _readerSessionStart = Date.now(); bumpStreak(); }
+function readerSessionEnd(){
+  if(!_readerSessionStart) return;
+  const mins = Math.round((Date.now() - _readerSessionStart) / 60000);
+  if(mins > 0){
+    const tk = todayKey();
+    readerStats.readingTime.total = (readerStats.readingTime.total||0) + mins;
+    readerStats.readingTime.days[tk] = (readerStats.readingTime.days[tk]||0) + mins;
+    saveReaderStats();
+  }
+  _readerSessionStart = 0;
+}
+
+/* 하이라이트 (완독 모드에서만) */
+function setupHighlightHandlers(){
+  document.addEventListener('mouseup', (e) => {
+    const popup = document.getElementById('hlPopup');
+    if(!popup) return;
+    if(currentMode !== 'full'){ popup.style.display = 'none'; return; }
+    const sel = window.getSelection();
+    const text = sel ? sel.toString().trim() : '';
+    if(!text || text.length < 2){ popup.style.display = 'none'; _lastSelectionRange = null; return; }
+    if(sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const left = document.querySelector('.viewer-pane.left');
+    if(!left || !left.contains(range.startContainer)) return;
+    _lastSelectionRange = range.cloneRange();
+    const rect = range.getBoundingClientRect();
+    popup.style.display = 'flex';
+    popup.style.left = Math.max(8, rect.left + rect.width/2 - 80) + 'px';
+    popup.style.top  = Math.max(8, rect.top - 44) + 'px';
+  });
+}
+function addHighlight(){
+  if(!_lastSelectionRange || !currentBook) return;
+  try {
+    const span = document.createElement('mark');
+    span.className = 'hl';
+    _lastSelectionRange.surroundContents(span);
+    if(!readerStats.highlights[currentBook.id]) readerStats.highlights[currentBook.id] = [];
+    readerStats.highlights[currentBook.id].push({text: span.textContent, ts: Date.now()});
+    saveReaderStats();
+  } catch(e){
+    alert('한 단락 안의 텍스트만 하이라이트할 수 있어요.');
+  }
+  document.getElementById('hlPopup').style.display = 'none';
+  window.getSelection().removeAllRanges();
+}
+function addNote(){
+  if(!_lastSelectionRange || !currentBook) return;
+  const note = prompt('메모를 입력하세요:');
+  if(note === null || !note.trim()) return;
+  addHighlight();
+  const hl = readerStats.highlights[currentBook.id];
+  if(hl && hl.length) hl[hl.length-1].note = note.trim();
+  saveReaderStats();
+}
+
+/* 모드 클래스 */
+function updateModeClass(){
+  const shell = document.querySelector('.viewer-shell');
+  if(shell) shell.classList.toggle('mode-challenge', currentMode === 'challenge');
+}
+
+function readerStatsText(){
+  const today = readerStats.readingTime.days[todayKey()] || 0;
+  return `오늘 <b>${today}분</b> · 연속 <b>${readerStats.streak.count}일</b> · 누적 <b>${readerStats.readingTime.total}분</b>`;
+}
 
 /* ═══════════════════════════════════════════════════════════
    네비게이션
@@ -1061,6 +1338,15 @@ function openViewer(bookId, mode){
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
   renderViewer();
+  // 리더 모듈 초기화
+  setTimeout(() => {
+    applyReaderPrefs();
+    buildTOC();
+    restoreScrollPos();
+    updateModeClass();
+    readerSessionStart();
+    attachScrollListener();
+  }, 0);
 }
 
 function setMode(mode){
@@ -1072,15 +1358,35 @@ function setMode(mode){
   document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
   document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
   renderViewer();
+  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreScrollPos(); updateModeClass(); attachScrollListener(); }, 0);
 }
 
 function bodyToHtml(text){
   if(!text) return '';
-  // 줄 단위로 단락 처리 (빈 줄로 단락 구분)
-  return text.split(/\n{2,}/).map(p => {
-    const escaped = esc(p.trim()).replace(/\n/g, '<br>');
-    return `<p>${escaped}</p>`;
+  const chPat = /^\s*(CHAPTER|BOOK|PART|ACT|SCENE|CANTO)\s+[IVXLCDM\d]+[.:]?[^\n]*$/i;
+  const lines = text.split(/\n/);
+  const headerIdx = [];
+  for(let i = 0; i < lines.length; i++) if(chPat.test(lines[i])) headerIdx.push(i);
+  const paraHtml = body => body.split(/\n{2,}/).map(p => {
+    const t = p.trim(); if(!t) return '';
+    return `<p>${esc(t).replace(/\n/g,'<br>')}</p>`;
   }).join('\n');
+  if(headerIdx.length < 2){
+    return `<section class="chapter-anchor" data-ch-title="전체">${paraHtml(text)}</section>`;
+  }
+  let html = '';
+  // 첫 챕터 헤더 앞 (서문) 있으면 별도 섹션
+  if(headerIdx[0] > 0){
+    const pre = lines.slice(0, headerIdx[0]).join('\n').trim();
+    if(pre) html += `<section class="chapter-anchor" data-ch-title="서문 · 머리말">${paraHtml(pre)}</section>`;
+  }
+  for(let i = 0; i < headerIdx.length; i++){
+    const s = headerIdx[i], e = i+1 < headerIdx.length ? headerIdx[i+1] : lines.length;
+    const title = lines[s].trim().replace(/\s+/g,' ');
+    const body = lines.slice(s+1, e).join('\n').trim();
+    html += `<section class="chapter-anchor" data-ch-title="${esc(title)}"><h3 class="ch-title">${esc(title)}</h3>${paraHtml(body)}</section>`;
+  }
+  return html;
 }
 
 // locale별 viewer 라벨 + 본문 매핑
@@ -1228,6 +1534,9 @@ function checkQuiz(el, qi, oi){
 }
 
 function closeViewer(){
+  saveScrollPos();
+  readerSessionEnd();
+  const drawer = document.getElementById('tocDrawer'); if(drawer) drawer.classList.remove('open');
   document.getElementById('viewerOverlay').classList.remove('open');
 }
 
@@ -1509,6 +1818,12 @@ function onSearch(e){
 }
 
 function toggleTheme(){
+  // 라이트 → 세피아 → 다크 → 라이트 순환
+  const order = ['light','sepia','dark'];
+  const i = order.indexOf(readerPrefs.theme);
+  readerTheme(order[(i+1) % order.length]);
+  return;
+  // (이하 레거시 흔적 — 의도적으로 도달 X)
   document.body.classList.toggle('dark');
   const isDark = document.body.classList.contains('dark');
   document.getElementById('themeBtn').innerHTML = ic(isDark ? 'sun' : 'moon', 'icon icon-sm');
@@ -1519,10 +1834,14 @@ function toggleTheme(){
    초기화
    ═══════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-  if(localStorage.getItem('klever-theme') === 'dark'){
-    document.body.classList.add('dark');
-    document.getElementById('themeBtn').innerHTML = ic('sun','icon icon-sm');
+  // 리더 prefs / stats 복원
+  loadReaderPrefs(); loadReaderStats();
+  // 레거시 klever-theme(다크 토글) → 새 prefs로 흡수
+  if(!localStorage.getItem(READER_PREFS_KEY) && localStorage.getItem('klever-theme') === 'dark'){
+    readerPrefs.theme = 'dark'; saveReaderPrefs();
   }
+  applyReaderPrefs();
+  setupHighlightHandlers();
   renderCurations('curationFull', false);
   renderCurations('curationIntl', true);
   const nK = BOOKS.filter(b=>b.locale==='modern').length;
