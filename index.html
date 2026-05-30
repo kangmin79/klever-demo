@@ -252,7 +252,7 @@ body.dark .cc-deadline b{color:#7a5a10;}
 .modal-body{padding:24px;overflow-y:auto;flex:1;}
 .home-hub{position:relative;width:min(95%,780px);aspect-ratio:800/700;max-height:65vh;}
 .home-hub-center{
-  width:286px!important;height:auto!important;min-height:0!important;
+  width:268px!important;height:auto!important;min-height:0!important;
   border-radius:22px!important;padding:18px 20px!important;
   align-items:stretch!important;justify-content:flex-start!important;text-align:left!important;
   box-shadow:0 0 50px rgba(26,41,66,0.18),0 16px 40px rgba(26,41,66,0.22)!important;
@@ -262,7 +262,7 @@ body.dark .home-hub-center{box-shadow:0 0 50px rgba(0,0,0,0.3),0 16px 40px rgba(
 .home-search-input{width:100%;padding:15px 22px 15px 50px!important;border-radius:30px!important;box-shadow:0 4px 16px rgba(26,41,66,0.08);}
 .home-search-hint{margin-top:8px;text-align:center;font-size:11px;color:var(--text-light);}
 
-.hub-visual{position:relative;width:100%;height:100%;max-width:480px;}
+.hub-visual{position:relative;width:100%;height:100%;max-width:580px;}
 .hub-lines{position:absolute;inset:0;pointer-events:none;}
 .hub-line{stroke:#cbd5e1;stroke-width:1;opacity:0.5;}
 body.dark .hub-line{stroke:#475569;}
@@ -1935,7 +1935,7 @@ function renderHomeHub(){
   const hc = document.getElementById('hubCenterHome');
   if(!v || !hc) return;
 
-  const VW=800, VH=700, RADIUS=320;
+  const VW=800, VH=700, RADIUS_X=372, RADIUS_Y=300;
   const cx=VW/2, cy=VH/2;
 
   hc.innerHTML = buildCenterCard();
@@ -1943,8 +1943,8 @@ function renderHomeHub(){
   let svg='', html='';
   HUB_NODES.forEach(n=>{
     const rad = n.angle*Math.PI/180;
-    const nx = cx + RADIUS*Math.cos(rad);
-    const ny = cy + RADIUS*Math.sin(rad);
+    const nx = cx + RADIUS_X*Math.cos(rad);
+    const ny = cy + RADIUS_Y*Math.sin(rad);
     svg += `<line class="hub-line" x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"/>`;
     ['t3','t2','t1'].forEach((s,i)=>svg+=`<circle class="pulse-${s}" id="p${s}-${n.key}" cx="${cx}" cy="${cy}" r="${6-i}"/>`);
     svg += `<circle class="pulse-head" id="ph-${n.key}" cx="${cx}" cy="${cy}" r="3.5"/>`;
