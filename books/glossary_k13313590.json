@@ -1,0 +1,286 @@
+{
+ "어와": {
+  "ko": "(들어와, 들어와서, 들어왔다, 들어와라)→ 들어오다"
+ },
+ "두고": {
+  "ko": "여러 번에 걸쳐서, 오랫동안.",
+  "en_w": "time and time again",
+  "en": "Over and over again; for a long time.",
+  "zh_w": "久久，永远",
+  "zh": "经过很多次，很长时间地。",
+  "vi_w": "lần lữa, để hoài",
+  "vi": "Qua nhiều lần, trong một thời gian dài."
+ },
+ "거든": {
+  "ko": "'어떤 일이 사실이거나 사실로 실현되면'의 뜻을 나타내는 연결 어미.",
+  "en_w": "-geodeun",
+  "en": "A connective ending used to convey the meaning, \"if something is true or turns out to be true.\"",
+  "zh": "连接语尾。表示“如果某事是事实或成为事实的话”。",
+  "vi_w": "nếu",
+  "vi": "Vĩ tố liên kết thể hiện nghĩa 'nếu việc nào đó là sự thật hoặc được thực hiện thành sự thật'."
+ },
+ "거니": {
+  "ko": "(옛 말투로) 앞에 오는 말을 인정하면서 그것이 뒤에 오는 말의 전제나 조건이 됨을 나타내는 연결 어미.",
+  "en_w": "-geoni",
+  "en": "(old-fashioned) A connective ending used when recognizing the truth of the preceding statement and indicating that it is the premise or condition of the following statement.",
+  "zh": "(文言)连接语尾。表示承认前面的内容，并以此作为后句的前提或条件。",
+  "vi_w": "thì",
+  "vi": "(cổ ngữ) Vĩ tố liên kết thể hiện sự công nhận vế trước đồng thời điều đó trở thành tiền đề hay điều kiện của vế sau."
+ },
+ "올라": {
+  "ko": "(올라, 올라서, 올랐다, 올라라)→ 오르다"
+ },
+ "바다": {
+  "ko": "지구에서 육지 이외의 부분으로 짠물이 차 있는 곳.",
+  "en_w": "sea",
+  "en": "The part of the earth that is differentiated from the land and filled with salty water.",
+  "zh_w": "海，大海，海洋",
+  "zh": "在地球上除陆地以外被咸水填满的部分。",
+  "vi_w": "biển",
+  "vi": "Nơi chứa đầy nước mặn trên trái đất nằm ngoài phần lục địa."
+ },
+ "드러가니": {
+  "ko": "밖에서 안으로 향하여 가다.",
+  "en_w": "enter; go into",
+  "en": "To go inside from outside.",
+  "zh_w": "进，进去",
+  "zh": "由外往里去。",
+  "vi_w": "đi vào, bước vào",
+  "vi": "Đi theo hướng từ ngoài vào trong."
+ },
+ "우리": {
+  "ko": "말하는 사람이 자기와 듣는 사람 또는 이를 포함한 여러 사람들을 가리키는 말.",
+  "en_w": "we",
+  "en": "A pronoun used when the speaker refers to himself/herself and the listener or listeners, or a group of people including the speaker and listener or listeners.",
+  "zh_w": "我们，咱们",
+  "zh": "说话人指代自己和听话人在内的一些人。",
+  "vi_w": "chúng ta",
+  "vi": "Từ chỉ nhiều người bao gồm cả người nói và người nghe."
+ },
+ "내여": {
+  "ko": "자기 나라 안의 지역으로 떠나는 여행.",
+  "en_w": "local trip; domestic trip",
+  "en": "A trip to local destinations within one's own country.",
+  "zh_w": "国内旅行，境内游",
+  "zh": "出发去自己国家境内的地区进行的旅游。",
+  "vi_w": "du lịch nội địa, du lịch trong nước",
+  "vi": "Du lịch đến các địa phương trong nước của mình."
+ },
+ "이술": {
+  "ko": "음력 1월 15일 대보름에 마시는 술. 이 술을 마시면 귀가 밝아지고 한 해 동안 좋은 소식을 듣게 된다고 한다.",
+  "en_w": "ear-brightening drink",
+  "en": "A drink consumed on the full moon, the 15th day of the first month by the lunar calendar; it is said that if you drink this, your ears will become brighter and you will hear good news throughout the year.",
+  "zh_w": "开耳酒",
+  "zh": "农历正月十五元宵节饮用的酒，据说饮后耳朵会变得敏锐，并在一年内能听到好消息。",
+  "vi_w": "rượu làm sáng tai",
+  "vi": "Rượu uống vào rằm tháng 1 âm lịch. Người ta nói rằng nếu uống loại rượu này thì tai sẽ sáng lên và nghe được tin tốt trong suốt một năm."
+ },
+ "망극": {
+  "ko": "임금이나 부모, 가까운 사람 등에게 안 좋은 일이 생겨 슬픔이 크다.",
+  "en_w": "inscrutable; immeasurable",
+  "en": "A person's grief being great because a bad thing has happened to his/her king, parents, or friend, etc.",
+  "zh_w": "(悲痛)无比，无限，至极",
+  "zh": "由于国君、父母或亲近的人身上发生不好的事而非常伤心。",
+  "vi_w": "tột cùng, tột bực",
+  "vi": "Nỗi đau buồn lớn do chuyện không hay xảy đến với nhà vua, cha mẹ hay người thân..."
+ },
+ "드리": {
+  "ko": "(드리고, 드리는데, 드리니, 드리면, 드린, 드리는, 드릴, 드립니다)→ 드리다1, 드리다2"
+ },
+ "도라드니": {
+  "ko": "여러 곳을 거쳐 일정한 곳으로 들어가거나 들어오다.",
+  "en_w": "come into",
+  "en": "To pass through many places and go or come to a certain place.",
+  "zh_w": "回到，转到",
+  "zh": "辗转很多地方后回去或来到特定地点。",
+  "vi_w": "trở vào",
+  "vi": "Qua nhiều nơi rồi đi vào hay vào một nơi nhất định."
+ },
+ "발도": {
+  "ko": "산업의 근대화와 경제 개발이 선진국에 비하여 뒤떨어진 나라.",
+  "en_w": "developing country",
+  "en": "A country of which the industrial modernization and economic development are behind those of developed countries.",
+  "zh_w": "发展中国家",
+  "zh": "产业现代化、经济开发比发达国家落后的国家。",
+  "vi_w": "quốc gia đang phát triển, nước đang phát triển",
+  "vi": "Đất nước trong đó sự phát triển của nền kinh tế và quá trình công nghiệp hóa chậm hơn so với các nước phát triển."
+ },
+ "시고": {
+  "ko": "주어가 앞말을 뒤의 말이 나타내는 행동에 대한 근거라고 내세우는 것을 말하는 사람이 못마땅하게 봄을 나타내는 연결 어미.",
+  "en_w": "-ndapsigo",
+  "en": "A connective ending used when the speaker is displeased about the subject claiming that the preceding statement is the reason for the following action.",
+  "zh": "连接语尾。表示主语以前面的内容作为后面行动的根据，而说话人对此持有不满。",
+  "vi_w": "bày đặt bảo là... rồi lại",
+  "vi": "Vĩ tố liên kết thể hiện việc người nói cho rằng việc chủ ngữ đưa ra lời nói ở trước làm căn cứ cho hành động ở vế sau là không thoả đáng."
+ },
+ "자시니": {
+  "ko": "(높임말로) 먹다.",
+  "en_w": "have; take",
+  "en": "(honorific) To eat.",
+  "zh_w": "用餐",
+  "zh": "(尊称)吃。",
+  "vi_w": "dùng, xơi",
+  "vi": "(cách nói kính trọng) Ăn."
+ },
+ "보니": {
+  "ko": "앞말이 뜻하는 행동을 시험 삼아 함을 나타내는 말.",
+  "en_w": "try",
+  "en": "An auxiliary verb used to indicate testing to do an action in the preceding statement.",
+  "zh_w": "试，试图",
+  "zh": "表示试着做前面所指的行为。",
+  "vi_w": "thử",
+  "vi": "Từ thể hiện việc lấy hành động mà vế trước đề cập làm thử nghiệm."
+ },
+ "금강": {
+  "ko": "전라북도에서 시작하여 전라북도 동부 지역과 충청북도 남동 지역을 지나 서해로 흘러드는 강. 중류와 하류에 평야가 발달되어 있어 과거 백제 문화의 중심지를 이루었다.",
+  "en_w": "Geumgang River",
+  "en": "The river flowing from Jeollabuk-do, or North Jeolla Province, through the eastern region of Jeollabuk-do, or North Jeolla Province, and the southeastern region of Chungcheongbuk-do, or North Chungcheong Province, to the Yellow Sea; fields are developed around its midstream and downstream, which is why it became the center of Baekje culture.",
+  "zh_w": "锦江",
+  "zh": "发源于全罗北道、流经全罗北道东部地区和忠清北道东南地区、最后流入西海的江河，其在中下游形成了平原，过去曾为百济文化的中心。",
+  "vi_w": "Geumgang, sông Geum",
+  "vi": "Con sông bắt nguồn từ miền Bắc tỉnh Jeolla đi qua phía đông và phía đông nam thuộc miền Bắc tỉnh Chungcheong rồi đổ ra biển Tây, vùng trung lưu và hạ lưu có đồng bằng phát triển nên trước kia đã hình thành vùng trung tâm của văn hóa Baekje."
+ },
+ "소소": {
+  "ko": "평범하고 대수롭지 않다.",
+  "en_w": "trivial; trifling; small",
+  "en": "Common and not significant.",
+  "zh_w": "微小，琐碎",
+  "zh": "平凡，不重要。",
+  "vi_w": "nhỏ nhặt, nhỏ nhoi",
+  "vi": "Bình thường và không to tát gì."
+ },
+ "마리": {
+  "ko": "짐승이나 물고기, 벌레 등을 세는 단위.",
+  "en_w": "mari",
+  "en": "A bound noun that serves as a unit for counting the number of animals, fish, bugs, etc.",
+  "zh_w": "只，头，条",
+  "zh": "计算飞禽走兽或鱼虫等的数量单位。",
+  "vi_w": "con",
+  "vi": "Đơn vị đếm thú vật, cá hay côn trùng..."
+ },
+ "진면목이": {
+  "ko": "본디 그대로의 상태.",
+  "en_w": "true worth; innate state",
+  "en": "The state of something as it is.",
+  "zh_w": "真面目，真实面貌",
+  "zh": "本来的状态。",
+  "vi_w": "diện mạo đích thực, diện mạo thực sự",
+  "vi": "Trạng thái y như vốn có."
+ },
+ "다뵈": {
+  "ko": "속이나 안에 있는 것이 밖에서 보이다.",
+  "en_w": "be seen through",
+  "en": "For something inside to be seen from outside.",
+  "zh_w": "显露，一目了然，被看穿，被看透",
+  "zh": "从外面看到内在或里面的东西。",
+  "vi_w": "cho thấy bên trong",
+  "vi": "Cái ở trong hoặc bên trong được nhìn thấy từ ngoài."
+ },
+ "박차": {
+  "ko": "말을 탈 때 신는 신발의 뒤축에 달린 톱니바퀴 모양의 쇠.",
+  "en_w": "spur",
+  "en": "A tooth wheel-shaped piece of metal on the heel of a shoe worn when riding a horse.",
+  "zh_w": "马刺",
+  "zh": "马靴后跟上另加的齿轮状的铁片。",
+  "vi_w": "yên ngựa sắt",
+  "vi": "Vòng sắt có hình bánh xe có răng, được gắn ở gót giày mà đi vào khi cưỡi ngựa."
+ },
+ "망고": {
+  "ko": "타원형에 과육이 노랗고 부드러우며 단맛이 나는 열대 과일.",
+  "en_w": "mango",
+  "en": "An oval tropical sweet fruit, of which the pulp is yellow and soft.",
+  "zh_w": "芒果",
+  "zh": "一种热带水果。呈椭圆形，黄色果肉柔软、味甜。",
+  "vi_w": "quả xoài",
+  "vi": "Trái cây vùng nhiệt đới hình ôvan có vị ngọt, thịt quả mềm và màu vàng."
+ },
+ "연이": {
+  "ko": "일 년을 단위로 하여 정한 이율.",
+  "en_w": "annual interest rate",
+  "en": "Interest rate calculated yearly.",
+  "zh_w": "年利率",
+  "zh": "以一年为单位定的利率。",
+  "vi_w": "lãi năm",
+  "vi": "Lãi được tính theo đơn vị một năm."
+ },
+ "동산": {
+  "ko": "땅이나 건물 등이 아닌 돈이나 증권처럼 바꾸거나 옮길 수 있는 재산.",
+  "en_w": "movable assets; movables",
+  "en": "Assets such as cash or securities that can be sold or moved, unlike real estate or buildings.",
+  "zh_w": "动产",
+  "zh": "非土地或建筑等的、如钱或证券等可以交换或移动的财产。",
+  "vi_w": "tài sản lưu động",
+  "vi": "Tài sản có thể thay đổi hoặc dịch chuyển ví dụ như tiền hoặc chứng khoán chứ không phải là nhà cửa hay đất đai."
+ },
+ "조븐": {
+  "ko": "면이나 바닥 등의 면적이 작다.",
+  "en_w": "small",
+  "en": "A surface, floor, etc., being small in size.",
+  "zh_w": "窄小",
+  "zh": "面或底部等的面积小。",
+  "vi_w": "hẹp",
+  "vi": "Diện tích của bề mặt hay nền... nhỏ."
+ },
+ "어이": {
+  "ko": "상상 밖의 엄청나게 큰 물건이나 사람.",
+  "en_w": "being unspeakable; being staggering; being absurd",
+  "en": "A person or thing that is big beyond one's imagination.",
+  "zh_w": "庞然大物，巨人",
+  "zh": "意想不到的非常大的东西或人。",
+  "vi_w": "ngoài sức tưởng tượng",
+  "vi": "Người hoặc đồ vật rất to lớn ngoài sức tưởng tượng."
+ },
+ "고이": {
+  "ko": "겉모습이 예쁘고 아름답게.",
+  "en_w": "lovely; nicely",
+  "en": "Prettily and beautifully in terms of one's outward appearance.",
+  "zh_w": "好好儿地",
+  "zh": "外表很美、很漂亮地。",
+  "vi_w": "gọn gàng, xinh xắn, đẹp xinh",
+  "vi": "Dáng vẻ bên ngoài xinh đẹp."
+ },
+ "천년": {
+  "ko": "오랜 세월.",
+  "en_w": "thousand years",
+  "en": "A long period of time.",
+  "zh_w": "千年",
+  "zh": "很长的时间。",
+  "vi_w": "ngàn năm, nghìn năm",
+  "vi": "Năm tháng dài lâu."
+ },
+ "너머": {
+  "ko": "경계나 가로막은 것을 넘어선 건너편.",
+  "en_w": "beyond; over; the other side",
+  "en": "The opposite side over a boundary or an obstacle.",
+  "zh_w": "那边，后面",
+  "zh": "跨越界线或阻隔物的对面。",
+  "vi_w": "phía bên kia, bên kia",
+  "vi": "Phía đối diện vượt qua ranh giới hoặc dụng cụ chắn ngang."
+ },
+ "한구": {
+  "ko": "중앙에서 멀리 떨어져 한쪽으로 치우친 곳.",
+  "en_w": "corner; nook",
+  "en": "A place distant from the center, leaning toward one side.",
+  "zh_w": "一角，一个角落",
+  "zh": "离中央很远、且偏向一边的地方。",
+  "vi_w": "một góc, một xó",
+  "vi": "Nơi cách xa trung tâm, thiên về một phía."
+ },
+ "려니": {
+  "ko": "어떤 행위의 의도를 나타내면서 그것이 뒤에 오는 말의 배경이나 전제임을 나타내는 표현.",
+  "en_w": "-ryeoni",
+  "en": "An expression used to indicate the intention of a certain act, which is the background or condition for the following situation.",
+  "zh": "表示某个行为的意图，并以此作为后面内容的背景或前提。",
+  "vi_w": "định... nên..., định ... mà...",
+  "vi": "Cấu trúc thể hiện ý định của hành vi nào đó đồng thời thể hiện đó là tiền đề hoặc bối cảnh của vế sau."
+ },
+ "티니": {
+  "ko": "막혀 있던 것이 치워지고 통하게 되다.",
+  "en_w": "get cleared",
+  "en": "For something that has been closed or blocked to be cleared and become passable.",
+  "zh_w": "打开，打通，开通",
+  "zh": "堵塞之物被清除，变得畅通。",
+  "vi_w": "được thông, thông suốt",
+  "vi": "Cái bị ngăn lại bị chọc thủng và xuyên suốt."
+ }
+}
