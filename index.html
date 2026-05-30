@@ -226,6 +226,27 @@ body.dark .program-card:not(.featured) .program-cta{background:var(--gold);color
   min-height:calc(100vh - var(--header-h) - 80px);justify-content:center;
 }
 
+/* 이번 주 챌린지 카드 (홈 동기 장치) */
+.weekly-challenge{
+  width:min(92%,560px);background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;border-radius:18px;padding:18px 20px;box-shadow:0 12px 36px rgba(26,41,66,0.28);
+  position:relative;overflow:hidden;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+}
+body.dark .weekly-challenge,body.sepia .weekly-challenge{box-shadow:0 12px 36px rgba(0,0,0,0.35);}
+.weekly-challenge:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(26,41,66,0.36);}
+.weekly-challenge::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.07);}
+.wc-top{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;opacity:0.92;letter-spacing:-0.2px;}
+.wc-flame{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.16);padding:3px 9px;border-radius:12px;}
+.wc-title{font-size:21px;font-weight:800;letter-spacing:-0.6px;margin:8px 0 4px;}
+.wc-sub{font-size:12px;opacity:0.85;margin-bottom:12px;}
+.wc-progress{height:7px;background:rgba(255,255,255,0.22);border-radius:6px;overflow:hidden;margin-bottom:6px;}
+.wc-progress-fill{height:100%;background:var(--gold);border-radius:6px;transition:width 0.4s;}
+.wc-meta{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;opacity:0.92;margin-bottom:14px;}
+.wc-deadline{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.14);padding:3px 9px;border-radius:10px;font-weight:700;}
+.wc-cta{width:100%;padding:12px;background:var(--gold);color:#3a2b00;border-radius:11px;font-size:14px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;justify-content:center;gap:6px;transition:filter 0.15s;}
+.wc-cta:hover{filter:brightness(1.06);}
+.wc-icon{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;}
+
 /* 프로그램 모달 */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:24px;}
 .modal-overlay.open{display:flex;}
@@ -615,6 +636,7 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
      ═══════════════════════════════════════════════════════════ -->
 <section class="page active" id="page-home">
   <div class="home-hub-wrap home-hub-full">
+    <div id="weeklyChallenge"></div>
     <div class="hub-visual home-hub" id="hubVisualHome">
       <svg class="hub-lines" id="hubLinesHome" viewBox="0 0 800 700" width="100%" height="100%" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="hub-center home-hub-center" id="hubCenterHome"></div>
@@ -1955,7 +1977,34 @@ function renderHomeHub(){
     el.addEventListener('mouseleave',()=>pulseStop(el.dataset.key));
   });
 
+  renderWeeklyChallenge();
   startIdlePulse();
+}
+
+// 이번 주 챌린지 카드 — 홈 최상단 동기 장치
+function renderWeeklyChallenge(){
+  const el = document.getElementById('weeklyChallenge');
+  if(!el) return;
+  const q = QUEST.find(x=>x.current) || QUEST.find(x=>!x.done) || QUEST[0];
+  if(!q){ el.innerHTML=''; return; }
+  const book = BOOKS.find(b=>b.id===q.id) || BOOKS.find(b=>b.title===q.book);
+  const prog = (book && book.progress) ? book.progress : 35;
+  const openArg = book ? book.id : '';
+  el.innerHTML = `
+    <div class="weekly-challenge" onclick="${openArg?`openViewer('${openArg}','challenge')`:`nav('mypage')`}">
+      <div class="wc-top">
+        <span>${q.week}주차 챌린지 · 이번 주 지정 도서</span>
+        <span class="wc-flame">${ic('flame','wc-icon')} ${readerStats.streak?.count || Student.streak}일 연속</span>
+      </div>
+      <div class="wc-title">${esc(q.book)}</div>
+      <div class="wc-sub">${book?esc(book.author)+' · '+esc(book.category):'고전 챌린지'}</div>
+      <div class="wc-progress"><div class="wc-progress-fill" style="width:${prog}%"></div></div>
+      <div class="wc-meta">
+        <span>완독 ${prog}% · 미션 3종 ${prog>=100?'완료':'미완료'}</span>
+        <span class="wc-deadline">⏰ 내일 23:59까지 +500점</span>
+      </div>
+      <div class="wc-cta">${ic('bookOpen','wc-icon')} 이어서 읽고 미션 완료하기</div>
+    </div>`;
 }
 
 let pulseRaf=null;
