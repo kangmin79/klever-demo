@@ -60,28 +60,51 @@ a{color:inherit;text-decoration:none}
 .cta-row{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:30px}
 .trust-line{margin-top:24px;font-size:12.5px;color:var(--light)}
 .trust-line b{color:var(--sub);font-weight:700}
-/* brand story — 네이비 밤하늘 띠 */
-.story{position:relative;overflow:hidden;text-align:center;padding:80px 0;color:#fff;
-  background:radial-gradient(120% 130% at 50% -10%,#22365a 0%,#1a2942 45%,#0f1a2e 100%)}
-.story::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.9;
+/* brand story — 우주 밤하늘 띠 */
+.story{position:relative;overflow:hidden;text-align:center;padding:88px 0;color:#fff;
+  background:
+    radial-gradient(60% 50% at 22% 16%,rgba(58,110,165,.22),transparent 70%),
+    radial-gradient(55% 48% at 84% 84%,rgba(212,169,59,.10),transparent 70%),
+    radial-gradient(140% 120% at 50% 0%,#1b2c4a 0%,#101d33 48%,#0a1322 100%)}
+/* 작고 옅은 별 (밀도) */
+.story::before{content:'';position:absolute;inset:0;pointer-events:none;
   background-image:
-    radial-gradient(1.6px 1.6px at 12% 26%,rgba(255,255,255,.55),transparent),
-    radial-gradient(1.4px 1.4px at 84% 20%,rgba(255,255,255,.45),transparent),
-    radial-gradient(1.2px 1.2px at 22% 72%,rgba(255,255,255,.4),transparent),
-    radial-gradient(1.5px 1.5px at 70% 78%,rgba(255,255,255,.5),transparent),
-    radial-gradient(1.2px 1.2px at 50% 14%,rgba(212,169,59,.7),transparent),
-    radial-gradient(1.1px 1.1px at 90% 60%,rgba(255,255,255,.35),transparent),
-    radial-gradient(1.1px 1.1px at 8% 54%,rgba(255,255,255,.3),transparent)}
+    radial-gradient(1px 1px at 6% 18%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 14% 62%,rgba(255,255,255,.35),transparent),
+    radial-gradient(1px 1px at 22% 30%,rgba(255,255,255,.45),transparent),
+    radial-gradient(1px 1px at 30% 80%,rgba(255,255,255,.3),transparent),
+    radial-gradient(1px 1px at 38% 12%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1px 1px at 46% 56%,rgba(255,255,255,.32),transparent),
+    radial-gradient(1px 1px at 54% 26%,rgba(255,255,255,.42),transparent),
+    radial-gradient(1px 1px at 62% 74%,rgba(255,255,255,.35),transparent),
+    radial-gradient(1px 1px at 70% 40%,rgba(255,255,255,.48),transparent),
+    radial-gradient(1px 1px at 78% 16%,rgba(255,255,255,.34),transparent),
+    radial-gradient(1px 1px at 86% 66%,rgba(255,255,255,.45),transparent),
+    radial-gradient(1px 1px at 94% 34%,rgba(255,255,255,.3),transparent),
+    radial-gradient(1px 1px at 10% 88%,rgba(255,255,255,.3),transparent),
+    radial-gradient(1px 1px at 50% 92%,rgba(255,255,255,.26),transparent),
+    radial-gradient(1px 1px at 90% 88%,rgba(255,255,255,.3),transparent),
+    radial-gradient(1px 1px at 34% 46%,rgba(255,255,255,.3),transparent),
+    radial-gradient(1px 1px at 66% 58%,rgba(255,255,255,.3),transparent)}
+/* 크고 밝은 별 + 골드 별 */
+.story::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(2px 2px at 18% 24%,rgba(255,255,255,.95),transparent),
+    radial-gradient(2.4px 2.4px at 74% 30%,rgba(255,255,255,.9),transparent),
+    radial-gradient(2px 2px at 40% 72%,rgba(255,255,255,.85),transparent),
+    radial-gradient(2.6px 2.6px at 60% 16%,rgba(212,169,59,.95),transparent),
+    radial-gradient(2px 2px at 88% 74%,rgba(255,255,255,.8),transparent),
+    radial-gradient(2.2px 2.2px at 12% 70%,rgba(212,169,59,.65),transparent)}
 .story .wrap{position:relative;z-index:1}
 .story .mk{font-size:12.5px;color:var(--gold);font-weight:800;letter-spacing:3px;margin-bottom:30px}
 .eqn{display:inline-flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
 .eqn .t{font-weight:800;font-size:30px;color:#fff;letter-spacing:-.5px}
 .eqn .t i{font-style:normal;font-weight:600;font-size:13px;color:#9fb0cc;margin-left:7px;letter-spacing:0}
-.eqn .op{font-size:24px;font-weight:800;color:var(--gold)}
-.eqn .bs{font-weight:800;font-size:30px;color:var(--navy);background:var(--gold);padding:8px 20px;border-radius:13px;letter-spacing:-.5px}
+.eqn .op{font-size:22px;font-weight:700;color:#8fa0bd}
+.eqn .bs{font-weight:800;font-size:33px;color:var(--gold);letter-spacing:-.5px;text-shadow:0 0 24px rgba(212,169,59,.5),0 0 2px rgba(212,169,59,.6)}
 .story p{font-family:var(--serif);font-size:18px;line-height:2;color:#dbe2ee;max-width:580px;margin:0 auto}
 .story p b{color:var(--gold);font-weight:700}
-@media(max-width:520px){.eqn .t,.eqn .bs{font-size:24px}.story p{font-size:16px}}
+@media(max-width:520px){.eqn .t{font-size:24px}.eqn .bs{font-size:27px}.story p{font-size:16px}}
 /* section */
 .sec{padding:64px 0}
 .sec.alt{background:linear-gradient(var(--card),var(--card)) no-repeat;background-color:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
