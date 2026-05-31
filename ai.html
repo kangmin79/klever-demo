@@ -1,0 +1,128 @@
+<!doctype html><html lang=ko><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>클레버 · AI 도서 추천</title>
+<style>
+:root{--ac:#5b5ef0;--bg:#fafafb;--card:#fff;--tx:#18181f;--mut:#9a9aa6;--soft:#5c5c68;--line:#eeeef2;--gold:#c79a3e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--tx);padding:30px 18px 80px;-webkit-font-smoothing:antialiased;letter-spacing:-.2px}
+.wrap{max-width:840px;margin:0 auto}
+.brand{font-size:13px;font-weight:800;color:var(--ac);letter-spacing:.5px;margin-bottom:8px}
+h1{font-size:24px;font-weight:700;letter-spacing:-.7px;line-height:1.3}
+.sub{color:var(--mut);font-size:13px;margin:8px 0 22px;line-height:1.55}
+.searchbar{display:flex;gap:8px;background:#fff;border:1.5px solid #e3e3ea;border-radius:16px;padding:7px 7px 7px 18px;box-shadow:0 4px 18px rgba(20,20,50,.05);transition:.15s}
+.searchbar:focus-within{border-color:var(--ac);box-shadow:0 4px 20px rgba(91,94,240,.14)}
+.searchbar input{flex:1;border:0;outline:0;font-size:15px;background:transparent;color:var(--tx);font-family:inherit}
+.searchbar button{flex:0 0 auto;background:var(--ac);color:#fff;border:0;border-radius:11px;width:46px;height:42px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.searchbar button:disabled{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font-size:12.5px;color:var(--soft);background:#fff;border:1px solid var(--line);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.13s}
+.chip:hover{border-color:var(--ac);color:var(--ac)}
+#stage{margin-top:30px}
+.loading{text-align:center;color:var(--mut);font-size:13.5px;padding:50px 0}
+.pulse{display:inline-block;width:34px;height:34px;border:3px solid #e7e7ef;border-top-color:var(--ac);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.intro{font-size:15px;font-weight:600;line-height:1.5;margin-bottom:6px;letter-spacing:-.3px}
+.modeline{font-size:11.5px;color:var(--mut);margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:560px){.grid{grid-template-columns:1fr 1fr}}
+.card{display:flex;gap:15px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;transition:.15s}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,20,50,.09)}
+.card .cv{flex:0 0 84px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#ececf0;box-shadow:0 4px 12px rgba(20,20,45,.16)}
+.card .cv img{width:100%;height:100%;object-fit:cover}
+.card .bd{flex:1;min-width:0;display:flex;flex-direction:column}
+.card h3{font-size:14.5px;font-weight:700;letter-spacing:-.3px;line-height:1.3}
+.card .au{font-size:11.5px;color:var(--mut);margin:4px 0 7px}
+.card .meta{font-size:11.5px;color:var(--soft)}
+.card .meta .star{color:var(--gold);font-weight:700}
+.why{margin-top:9px;font-size:12px;line-height:1.55;color:#43434e;background:#f6f6fb;border-radius:9px;padding:9px 11px;border-left:2.5px solid var(--ac)}
+.why b{color:var(--ac);font-weight:700;font-size:10.5px;display:block;margin-bottom:2px;letter-spacing:.3px}
+.empty{text-align:center;color:var(--mut);font-size:13.5px;padding:40px 0;line-height:1.6}
+.foot{font-size:10.5px;color:#c2c2cc;margin-top:26px;line-height:1.5;text-align:center}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(18,18,32,.46);display:none;align-items:flex-end;justify-content:center;z-index:50;backdrop-filter:blur(3px)}
+.ov.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:26px 24px 32px;max-height:88vh;overflow:auto}
+@media(min-width:560px){.ov{align-items:center}.sheet{border-radius:20px}}
+.sheet .top{display:flex;gap:18px;margin-bottom:16px}
+.sheet .cv{flex:0 0 104px;aspect-ratio:2/3;border-radius:9px;overflow:hidden;box-shadow:0 8px 22px rgba(20,20,45,.2)}
+.sheet .cv img{width:100%;height:100%;object-fit:cover}
+.sheet h2{font-size:18px;font-weight:700;letter-spacing:-.5px;line-height:1.3}
+.sheet .au{color:var(--mut);font-size:12.5px;margin:7px 0 11px}
+.sheet .meta{font-size:12px;color:var(--soft)}.sheet .meta .star{color:var(--gold);font-weight:700}
+.sheet p.desc{font-size:13.5px;line-height:1.72;color:#42424d;margin:16px 0}
+.kws{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.kw{font-size:11.5px;color:var(--soft);background:#f3f3f6;padding:4px 10px;border-radius:6px}
+.acts{display:flex;gap:9px}
+.cta{flex:1;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:13px;font-size:13.5px;font-weight:600;cursor:pointer}
+.cta2{background:#fff;color:var(--soft);border:1px solid var(--line);border-radius:12px;padding:13px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+.src{font-size:10.5px;color:#c2c2cc;margin-top:14px}
+</style></head><body><div class=wrap>
+<div class=brand>KLEVER</div>
+<h1>어떤 책을 찾고 계신가요?</h1>
+<div class=sub>기분·상황을 말하듯 적어보세요. AI가 국립중앙도서관 대출 데이터와 평점을 보고 골라드려요.</div>
+<div class=searchbar>
+  <input id=q placeholder="예: 요즘 지쳐서 위로가 되는 책" onkeydown="if(event.key=='Enter')go()">
+  <button id=send onclick=go()>➔</button>
+</div>
+<div class=chips id=chips></div>
+<div id=stage></div>
+<div class=foot>표지·별점: 알라딘 · 대출·키워드: 도서관 정보나루(국립중앙도서관) · 추천: 클레버 AI</div>
+</div>
+<div class=ov id=ov onclick="if(event.target.id=='ov')closeM()"><div class=sheet id=sheet></div></div>
+<script>
+const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+const EXAMPLES=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","사회를 깊게 생각하게 하는 책","김애란 책","창비에서 나온 책"];
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
+const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
+let LAST=[];
+document.getElementById('chips').innerHTML=EXAMPLES.map(e=>`<span class=chip onclick="run('${e}')">${e}</span>`).join('');
+function run(text){document.getElementById('q').value=text;go();}
+async function go(){
+  const q=document.getElementById('q').value.trim();
+  if(!q)return;
+  const st=document.getElementById('stage');
+  document.getElementById('send').disabled=true;
+  st.innerHTML='<div class=loading><div class=pulse></div><br>클레버 AI가 책을 고르는 중…</div>';
+  try{
+    const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
+    const d=await r.json();
+    LAST=d.results||[];
+    render(d);
+  }catch(e){ st.innerHTML='<div class=empty>잠시 문제가 생겼어요. 다시 시도해 주세요.<br><small>'+esc(String(e))+'</small></div>'; }
+  document.getElementById('send').disabled=false;
+}
+function card(b,i){
+  const star=b.rating!=null?`<span class=star>★</span> ${f5(b.rating)}`:'';
+  const loan=b.loan_count?` · 대출 ${man(b.loan_count)}`:'';
+  return `<div class=card onclick="openM(${i})">
+    <div class=cv><img src="${esc(b.cover)}" loading=lazy onerror="this.style.opacity=0"></div>
+    <div class=bd><h3>${esc(b.title)}</h3><div class=au>${esc(b.author)}</div>
+      <div class=meta>${star}${loan}</div>
+      ${b.reason?`<div class=why><b>왜 이 책일까</b>${esc(b.reason)}</div>`:''}
+    </div></div>`;
+}
+function render(d){
+  const st=document.getElementById('stage');
+  if(!d.results||!d.results.length){st.innerHTML='<div class=empty>딱 맞는 책을 못 찾았어요.<br>다르게 말해보거나 예시를 눌러보세요.</div>';return;}
+  const modeTxt=d.mode==='entity'?'정확 검색 (도서관 DB)':'AI 큐레이션';
+  st.innerHTML=`<div class=intro>${esc(d.intro||'')}</div><div class=modeline>${modeTxt} · ${d.results.length}권</div><div class=grid>${d.results.map(card).join('')}</div>`;
+}
+function openM(i){const b=LAST[i];if(!b)return;
+  const star=b.rating!=null?`<span class=star>★</span> ${f5(b.rating)} · ${b.rating_count||0}명`:'';
+  const loan=b.loan_count?` &nbsp;|&nbsp; 대출 ${man(b.loan_count)}`:'';
+  const page=b.pages?` &nbsp;|&nbsp; ${b.pages}쪽`:'';
+  const kws=(b.keywords||[]).slice(0,5);
+  document.getElementById('sheet').innerHTML=`<div class=top><div class=cv><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
+    <div style="flex:1"><h2>${esc(b.title)}</h2><div class=au>${esc(b.author)} · ${esc(b.publisher||'')} · ${b.pub_year||''}</div>
+    <div class=meta>${star}${loan}${page}</div></div></div>
+    ${b.reason?`<div class=why style="margin-bottom:6px"><b>왜 이 책일까</b>${esc(b.reason)}</div>`:''}
+    <p class=desc>${esc(b.description||'')}</p>
+    ${kws.length?`<div class=kws>${kws.map(k=>'<span class=kw>'+esc(k)+'</span>').join('')}</div>`:''}
+    <div class=acts><button class=cta>도서관에서 빌리기</button><button class=cta2 onclick=closeM()>닫기</button></div>
+    <div class=src>출처 · 별점·표지: 알라딘 / 대출·키워드: 정보나루(국립중앙도서관)</div>`;
+  document.getElementById('ov').classList.add('on');
+}
+function closeM(){document.getElementById('ov').classList.remove('on');}
+</script></body></html>
