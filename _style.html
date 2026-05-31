@@ -1,0 +1,173 @@
+<!doctype html><html lang=ko><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Bookstar 디자인 시스템</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600&display=swap" rel=stylesheet>
+<style>
+:root{
+  --navy:#1a2942; --navy-dark:#0f1a2e; --blue:#3a6ea5; --gold:#d4a93b;
+  --bg:#f4f3ef; --card:#fff; --input:#f0efeb;
+  --tx:#1a2942; --sub:#475569; --light:#7c8597; --border:#e6e2d8;
+  --good:#2e7d57; --warn:#c98a2b; --bad:#c0392b;
+  --r-card:18px; --r-btn:12px; --r-pill:999px;
+  --sh:0 12px 34px rgba(26,30,55,.06); --sh-lg:0 24px 60px rgba(26,30,55,.12);
+  --sans:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif; --serif:'Noto Serif KR',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased;letter-spacing:-.02em;padding:42px 24px 90px}
+.wrap{max-width:1000px;margin:0 auto}
+.head{text-align:center;margin-bottom:40px}
+.head .logo{display:inline-flex;align-items:center;gap:11px;font-size:26px;font-weight:800;letter-spacing:-1px}
+.head .logo .tile{width:42px;height:42px;border-radius:12px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px}
+.head p{color:var(--light);font-size:13.5px;margin-top:12px}
+.sec{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);box-shadow:var(--sh);padding:28px 30px;margin-bottom:22px}
+.sec > h2{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--light);margin-bottom:20px}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:14px}
+/* 색 스와치 */
+.sw{width:130px}
+.sw .chip{height:64px;border-radius:12px;border:1px solid rgba(0,0,0,.05)}
+.sw .nm{font-size:12px;font-weight:700;margin-top:8px}
+.sw .hex{font-size:11px;color:var(--light)}
+/* 타이포 */
+.t-h1{font-size:30px;font-weight:800;letter-spacing:-1px}
+.t-h2{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.t-body{font-size:14px;color:var(--sub);line-height:1.6}
+.t-serif{font-family:var(--serif);font-size:18px;font-style:italic;color:#3a3942;line-height:1.6}
+.t-cap{font-size:12px;color:var(--light)}
+/* 버튼 */
+.btn{border:0;border-radius:var(--r-btn);padding:13px 22px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+.btn-fill{background:var(--navy);color:#fff}.btn-fill:hover{background:var(--navy-dark)}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-ghost{background:var(--card);color:var(--sub);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+/* 입력 */
+.inp{font-family:inherit;font-size:15px;border:1px solid var(--border);border-radius:var(--r-btn);padding:13px 16px;color:var(--tx);outline:none;transition:.15s;min-width:260px}
+.inp:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,41,66,.08)}
+.searchbar{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:8px 8px 8px 18px;box-shadow:var(--sh);max-width:460px;width:100%}
+.searchbar input{flex:1;border:0;outline:0;font-size:15px;background:transparent;font-family:inherit}
+.searchbar button{background:var(--navy);color:#fff;border:0;border-radius:11px;width:44px;height:40px;font-size:18px;cursor:pointer}
+/* 칩·뱃지 */
+.pill{font-size:12.5px;font-weight:600;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:var(--r-pill);padding:8px 15px;cursor:pointer}
+.pill.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.badge.good{color:#1d6b48;background:rgba(46,125,87,.13)}
+.badge.ok{color:#2f5d8a;background:rgba(58,110,165,.13)}
+.badge.warn{color:#9a5b12;background:rgba(212,140,40,.16)}
+.tag{font-size:10.5px;font-weight:700;color:var(--blue);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px}
+/* 책 카드 */
+.bookcard{display:flex;gap:15px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);padding:16px;max-width:420px;box-shadow:var(--sh)}
+.bookcard .cv{flex:0 0 92px;aspect-ratio:2/3;border-radius:9px;background:var(--input);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 6px 16px rgba(20,20,45,.16)}
+.bookcard h3{font-size:15px;font-weight:700}
+.bookcard .au{font-size:11.5px;color:var(--light);margin:5px 0 8px}
+.bookcard .meta{font-size:11.5px;color:var(--sub)}
+.bookcard .star{color:var(--gold);font-weight:700}
+.bookcard .why{margin-top:10px;font-family:var(--serif);font-style:italic;font-size:12.5px;color:#4a4853;line-height:1.55}
+.bookcard .why::before{content:'“';color:var(--navy)}.bookcard .why::after{content:'”';color:var(--navy)}
+/* KPI */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:17px 18px;min-width:150px;box-shadow:var(--sh)}
+.kpi .lab{font-size:12px;color:var(--light);font-weight:600}
+.kpi .val{font-size:26px;font-weight:800;letter-spacing:-1px;margin-top:9px}
+.kpi .val small{font-size:13px;color:var(--light)}
+.kpi .d{font-size:11.5px;font-weight:700;color:var(--good);margin-top:7px}
+.note{font-size:12.5px;color:var(--sub);line-height:1.7;background:var(--card);border:1px dashed #cfcabc;border-radius:14px;padding:18px 22px;margin-top:30px}
+.gabox{display:flex;gap:10px}
+.principle{display:flex;gap:10px;font-size:13px;color:var(--sub);margin-bottom:8px}
+.principle b{color:var(--tx)}
+</style></head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="logo"><span class="tile">b</span>bookstar</div>
+    <p>디자인 시스템 — “깔끔한 흰 카드 · 네이비 · 큰 라운드 · 여백”</p>
+  </div>
+
+  <!-- 핵심 원칙 -->
+  <div class="sec">
+    <h2>핵심 원칙</h2>
+    <div class="principle"><b>1.</b> 흰 카드 + 부드러운 종이 배경 + 깊은 네이비 — 차분하고 지적인 무드</div>
+    <div class="principle"><b>2.</b> 큰 라운드(카드 18 · 버튼 12) + 은은한 그림자 — 손이 가는 부드러움</div>
+    <div class="principle"><b>3.</b> 골드는 ‘강조 한 방울’만 (별점·우수·프리미엄) — 남발 금지</div>
+    <div class="principle"><b>4.</b> 본문 산세리프(Pretendard), 책 인용·큐레이션 문구만 명조(Noto Serif) — 문학적 포인트</div>
+  </div>
+
+  <!-- 컬러 -->
+  <div class="sec">
+    <h2>컬러</h2>
+    <div class="row">
+      <div class="sw"><div class="chip" style="background:#1a2942"></div><div class="nm">Navy · 브랜드</div><div class="hex">#1a2942</div></div>
+      <div class="sw"><div class="chip" style="background:#3a6ea5"></div><div class="nm">Blue · 정보</div><div class="hex">#3a6ea5</div></div>
+      <div class="sw"><div class="chip" style="background:#d4a93b"></div><div class="nm">Gold · 강조</div><div class="hex">#d4a93b</div></div>
+      <div class="sw"><div class="chip" style="background:#f4f3ef"></div><div class="nm">Paper · 배경</div><div class="hex">#f4f3ef</div></div>
+      <div class="sw"><div class="chip" style="background:#fff"></div><div class="nm">Card · 표면</div><div class="hex">#ffffff</div></div>
+      <div class="sw"><div class="chip" style="background:#475569"></div><div class="nm">Text Sub</div><div class="hex">#475569</div></div>
+    </div>
+  </div>
+
+  <!-- 타이포 -->
+  <div class="sec">
+    <h2>타이포그래피</h2>
+    <div class="col">
+      <div class="t-h1">어떤 책을 찾고 계신가요?</div>
+      <div class="t-h2">측정 대시보드</div>
+      <div class="t-body">학생들이 실제로 ‘얼마나 읽었는지’를 한눈에. 추천을 넘어 측정·검증으로.</div>
+      <div class="t-serif">“지친 마음을 다독여줄 따뜻한 책들이에요” — 책 인용·큐레이션은 명조</div>
+      <div class="t-cap">CAPTION · 출처 · 메타 정보</div>
+    </div>
+  </div>
+
+  <!-- 컴포넌트 -->
+  <div class="sec">
+    <h2>버튼 · 입력</h2>
+    <div class="row" style="margin-bottom:18px">
+      <button class="btn btn-fill">기본 버튼</button>
+      <button class="btn btn-gold">강조(골드)</button>
+      <button class="btn btn-ghost">보조</button>
+    </div>
+    <div class="row" style="margin-bottom:18px"><input class="inp" placeholder="입력 필드"></div>
+    <div class="searchbar"><input placeholder="예: 요즘 지쳐서 위로가 되는 책"><button>→</button></div>
+  </div>
+
+  <div class="sec">
+    <h2>칩 · 뱃지 · 태그</h2>
+    <div class="row" style="margin-bottom:16px">
+      <span class="pill on">전체</span><span class="pill">우수</span><span class="pill">양호</span><span class="pill">유학생만</span>
+    </div>
+    <div class="row">
+      <span class="badge good">우수</span><span class="badge ok">양호</span><span class="badge warn">주의</span>
+      <span class="tag">완독 기준</span>
+    </div>
+  </div>
+
+  <!-- 카드들 -->
+  <div class="sec">
+    <h2>책 카드 · KPI</h2>
+    <div class="row" style="align-items:stretch">
+      <div class="bookcard">
+        <div class="cv">📕</div>
+        <div>
+          <h3>코스모스 - 특별판</h3>
+          <div class="au">칼 세이건</div>
+          <div class="meta"><span class="star">★</span> 4.7 · 대출 8,316</div>
+          <div class="why">우주를 바라보는 과학적 시선이 담긴 칼 세이건의 걸작</div>
+        </div>
+      </div>
+      <div class="gabox">
+        <div class="kpi"><div class="lab">이달 완독</div><div class="val">3,471<small> 권</small></div><div class="d">▲ +12.4%</div></div>
+        <div class="kpi"><div class="lab">평균 완독률</div><div class="val">67<small> %</small></div><div class="d">▲ +4.0%p</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+  <b>이 시스템으로 통일 시 바뀌는 것</b><br>
+  · <b>AI추천(자연어)</b> — 지금 ai.html은 인디고 → 네이비/골드로 교체, 책 인용만 명조 유지<br>
+  · <b>학생 앱(index.html)</b> — 이미 네이비 계열, 라운드·그림자·여백을 이 기준으로 정돈<br>
+  · <b>관리자</b> — 이미 이 결 (기준점)<br>
+  · 로고 ‘b’ 타일 + bookstar 워드마크 통일, 골드는 강조에만<br><br>
+  이 방향이 맞으면 → 화면별로 순서대로 적용합니다(권장: ① AI추천 → ② 학생앱 홈 → ③ 나머지).
+  </div>
+
+</div>
+</body></html>

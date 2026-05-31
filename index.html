@@ -3,7 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>클레버 — Ver 03 (한국대학교 도서관)</title>
+<title>북스타 · Bookstar — 모든 책은 하늘의 별</title>
+<meta name="description" content="수많은 책 중, 지금 당신에게 길을 비추는 한 권. 북스타 AI가 도서관 책을 자연어로 추천하고, 끝까지 읽도록 함께합니다.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="북스타 · Bookstar">
+<meta property="og:title" content="북스타 · 모든 책은 하늘의 별">
+<meta property="og:description" content="수많은 책 중, 지금 당신에게 길을 비추는 한 권을 북스타 AI가 찾아드려요.">
+<meta property="og:image" content="https://bookstar.co.kr/og.png">
+<meta property="og:url" content="https://bookstar.co.kr/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bookstar.co.kr/og.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <style>
 /* ═══════════════════════════════════════════════════════════
@@ -641,6 +650,72 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
   .reader-toolbar{gap:4px;}
   .reader-btn{padding:5px 8px;font-size:11px;}
 }
+/* ═══ AI추천 (ai.html 이식) — 앱 테마(네이비/골드)로 ═══ */
+#page-airec .air-hero{text-align:center;padding:44px 0 28px;}
+#page-airec .air-kicker{font-size:12px;font-weight:800;letter-spacing:3px;color:var(--primary);margin-bottom:14px;}
+body.dark #page-airec .air-kicker{color:var(--gold);}
+#page-airec .air-h1{font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.3;color:var(--text);}
+#page-airec .air-sub{color:var(--text-light);font-size:13.5px;margin-top:12px;line-height:1.65;}
+#page-airec .air-searchwrap{max-width:600px;margin:26px auto 0;}
+#page-airec .air-searchbar{display:flex;gap:8px;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:8px 8px 8px 18px;box-shadow:0 10px 30px rgba(20,25,45,.06);transition:.18s;}
+#page-airec .air-searchbar:focus-within{border-color:var(--primary);box-shadow:0 12px 34px rgba(26,41,66,.13);}
+#page-airec .air-searchbar input{flex:1;border:0;outline:0;font-size:15px;background:transparent;color:var(--text);font-family:inherit;padding:8px 0;}
+#page-airec .air-searchbar input::placeholder{color:var(--text-light);}
+#page-airec .air-send{flex:0 0 auto;background:var(--primary);color:#fff;border:0;border-radius:12px;width:46px;height:42px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;}
+body.dark #page-airec .air-send{color:#0f172a;}
+#page-airec .air-send:hover{opacity:.9;}
+#page-airec .air-send:disabled{opacity:.45;}
+#page-airec .air-chips{display:flex;flex-wrap:nowrap;gap:8px;justify-content:safe center;margin-top:16px;overflow-x:auto;padding:2px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+#page-airec .air-chips::-webkit-scrollbar{display:none;}
+#page-airec .air-chip{flex:0 0 auto;white-space:nowrap;font-size:12.5px;color:var(--text-sub);background:var(--bg-card);border:1px solid var(--border);padding:8px 14px;border-radius:999px;cursor:pointer;transition:.14s;}
+#page-airec .air-chip:hover{border-color:var(--primary);color:var(--primary);}
+#page-airec .air-story{max-width:580px;margin:26px auto 4px;text-align:center;font-size:14px;line-height:2;color:var(--text-light);letter-spacing:-.2px;animation:airrise .6s cubic-bezier(.2,.7,.2,1);}
+#page-airec .air-stage{margin-top:14px;padding-bottom:50px;}
+#page-airec .air-loading{text-align:center;color:var(--text-light);font-size:13.5px;padding:52px 0;}
+#page-airec .air-pulse{display:inline-block;width:30px;height:30px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:airspin .75s linear infinite;margin-bottom:14px;}
+@keyframes airspin{to{transform:rotate(360deg)}}
+#page-airec .air-results{animation:airrise .45s cubic-bezier(.2,.7,.2,1);}
+@keyframes airrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#page-airec .air-intro{font-size:19px;font-weight:700;line-height:1.5;letter-spacing:-.4px;color:var(--text);text-align:center;max-width:600px;margin:8px auto 4px;}
+#page-airec .air-modeline{font-size:11px;letter-spacing:.4px;color:var(--text-light);text-align:center;margin-bottom:22px;}
+#page-airec .air-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:760px){#page-airec .air-grid{grid-template-columns:1fr 1fr;}}
+#page-airec .air-card{display:flex;gap:15px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:15px;cursor:pointer;transition:.18s;}
+#page-airec .air-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(20,25,45,.1);}
+#page-airec .air-cv{flex:0 0 96px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--bg-input);box-shadow:0 6px 16px rgba(20,20,45,.16);}
+#page-airec .air-cv img{width:100%;height:100%;object-fit:cover;}
+#page-airec .air-bd{flex:1;min-width:0;display:flex;flex-direction:column;}
+#page-airec .air-card h3{font-size:15px;font-weight:700;letter-spacing:-.3px;line-height:1.32;color:var(--text);}
+#page-airec .air-au{font-size:11.5px;color:var(--text-light);margin:5px 0 8px;}
+#page-airec .air-meta{font-size:11.5px;color:var(--text-sub);}
+#page-airec .air-star{color:var(--gold);font-weight:700;}
+#page-airec .air-why{margin-top:auto;padding-top:10px;font-size:12.5px;line-height:1.55;color:var(--text-sub);font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+#page-airec .air-why::before{content:'\201C';color:var(--primary);font-weight:700;}
+#page-airec .air-why::after{content:'\201D';color:var(--primary);font-weight:700;}
+#page-airec .air-empty{text-align:center;color:var(--text-light);font-size:13.5px;padding:46px 0;line-height:1.7;}
+#page-airec .air-foot{font-size:10.5px;color:var(--text-light);margin-top:26px;line-height:1.6;text-align:center;opacity:.75;}
+/* 모달 */
+#airOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(4px);}
+#airOv.on{display:flex;animation:airfade .2s;}
+@keyframes airfade{from{opacity:0}to{opacity:1}}
+#airOv .air-sheet{background:var(--bg-card);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:26px 24px 32px;max-height:88vh;overflow:auto;animation:airup .3s cubic-bezier(.2,.7,.2,1);}
+@keyframes airup{from{transform:translateY(30px)}to{transform:none}}
+@media(min-width:560px){#airOv{align-items:center;}#airOv .air-sheet{border-radius:20px;}}
+#airOv .air-stop{display:flex;gap:18px;margin-bottom:16px;}
+#airOv .air-scv{flex:0 0 110px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;box-shadow:0 10px 26px rgba(20,20,45,.22);}
+#airOv .air-scv img{width:100%;height:100%;object-fit:cover;}
+#airOv h2{font-size:19px;font-weight:800;letter-spacing:-.5px;line-height:1.32;color:var(--text);}
+#airOv .air-sau{color:var(--text-light);font-size:12.5px;margin:8px 0 11px;}
+#airOv .air-smeta{font-size:12px;color:var(--text-sub);}
+#airOv .air-swhy{font-style:italic;font-size:14px;line-height:1.66;color:var(--text-sub);border-left:3px solid var(--primary);padding:4px 0 4px 14px;margin:16px 0;}
+#airOv .air-sdesc{font-size:13.5px;line-height:1.78;color:var(--text-sub);margin:16px 0;}
+#airOv .air-kws{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+#airOv .air-kw{font-size:11.5px;color:var(--text-sub);background:var(--bg-input);padding:5px 11px;border-radius:7px;}
+#airOv .air-acts{display:flex;gap:9px;}
+#airOv .air-cta{flex:1;background:var(--primary);color:#fff;border:0;border-radius:13px;padding:14px;font-size:13.5px;font-weight:700;cursor:pointer;}
+body.dark #airOv .air-cta{color:#0f172a;}
+#airOv .air-cta2{background:var(--bg-card);color:var(--text-sub);border:1px solid var(--border);border-radius:13px;padding:14px 18px;font-size:13.5px;font-weight:600;cursor:pointer;}
+#airOv .air-src{font-size:10.5px;color:var(--text-light);margin-top:15px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -653,6 +728,7 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
     <div class="gnb-item active" data-page="home" onclick="nav('home')">홈</div>
     <div class="gnb-item" data-page="collection" onclick="nav('collection')">클레버 컬렉션</div>
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">도서 큐레이션</div>
+    <div class="gnb-item" data-page="airec" onclick="nav('airec')">AI추천</div>
     <div class="gnb-item" data-page="international" onclick="nav('international')">International Students</div>
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
     <div class="gnb-item" data-page="mypage" onclick="nav('mypage')">마이 페이지</div>
@@ -835,6 +911,30 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
     </div>
   </div>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2-2) AI추천 (ai.html 이식 — 도서관 1,133권 자연어 추천)
+     ═══════════════════════════════════════════════════════════ -->
+<section class="page" id="page-airec">
+  <div style="max-width:1000px;margin:0 auto;">
+    <div class="air-hero">
+      <div class="air-kicker">✦ BOOKSTAR</div>
+      <div class="air-h1">어떤 별을 찾고 계신가요?</div>
+      <div class="air-sub">모든 책은 하늘의 별 — 당신의 한 권을 북스타가 찾아드려요</div>
+      <div class="air-searchwrap">
+        <div class="air-searchbar">
+          <input id="airQ" placeholder="예: 요즘 지쳐서 위로가 되는 책" onkeydown="if(event.key==='Enter')airGo()">
+          <button class="air-send" id="airSend" onclick="airGo()" aria-label="검색">→</button>
+        </div>
+        <div class="air-chips" id="airChips"></div>
+      </div>
+    </div>
+    <div class="air-story" id="airStory">밤하늘에 수천 개의 별이 떠 있듯, 도서관엔 수천 권의 책이 있어요.<br>모두 빛나지만, 지금 당신에게 길을 비추는 별은 따로 있죠.<br>북스타는 그 한 권을 찾아주고, 끝까지 읽어내도록 함께합니다.<br>한 권을 읽을 때마다, 당신의 밤하늘엔 별이 하나씩 떠오릅니다.</div>
+    <div class="air-stage" id="airStage"></div>
+    <div class="air-foot">표지·별점 알라딘 · 대출·키워드 도서관 정보나루(국립중앙도서관) · 추천 Bookstar AI</div>
+  </div>
+</section>
+<div id="airOv" onclick="if(event.target.id==='airOv')airClose()"><div class="air-sheet" id="airSheet"></div></div>
 
 <!-- ═══════════════════════════════════════════════════════════
      3) International Students
@@ -2498,5 +2598,64 @@ window.addEventListener('keydown', (e) => {
 });
 </script>
 
+<script>
+/* ═══ AI추천 (ai.html 이식) — air* 네임스페이스, 전역 esc 재사용 ═══ */
+(function(){
+  const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
+  const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+  const EX=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어","김애란 책"];
+  const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
+  const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
+  let LAST=[];
+  function cardHtml(b,i){
+    const star=b.rating!=null?`<span class="air-star">★</span> ${f5(b.rating)}`:'';
+    const loan=b.loan_count?`  ·  대출 ${man(b.loan_count)}`:'';
+    return `<div class="air-card" onclick="airOpen(${i})">
+      <div class="air-cv"><img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0"></div>
+      <div class="air-bd"><h3>${esc(b.title)}</h3><div class="air-au">${esc(b.author)}</div>
+        <div class="air-meta">${star}${loan}</div>
+        ${b.reason?`<div class="air-why">${esc(b.reason)}</div>`:''}
+      </div></div>`;
+  }
+  function render(d){
+    const st=document.getElementById('airStage');
+    if(!d.results||!d.results.length){st.innerHTML='<div class="air-empty">딱 맞는 책을 못 찾았어요.<br>조금 다르게 말해보거나 예시를 눌러보세요.</div>';return;}
+    const modeTxt=d.mode==='entity'?'정확 검색 · 도서관 DB':'Bookstar AI 큐레이션';
+    st.innerHTML=`<div class="air-results"><div class="air-intro">${esc(d.intro||'')}</div><div class="air-modeline">${modeTxt} · ${d.results.length}권</div><div class="air-grid">${d.results.map(cardHtml).join('')}</div></div>`;
+  }
+  window.airRun=function(t){document.getElementById('airQ').value=t;airGo();};
+  window.airGo=async function(){
+    const q=document.getElementById('airQ').value.trim(); if(!q)return;
+    const st=document.getElementById('airStage');
+    var sy=document.getElementById('airStory'); if(sy) sy.style.display='none';
+    document.getElementById('airSend').disabled=true;
+    st.innerHTML='<div class="air-loading"><div class="air-pulse"></div><br>AI가 책을 고르는 중…</div>';
+    try{
+      const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
+      const d=await r.json(); LAST=d.results||[]; render(d);
+    }catch(e){ st.innerHTML='<div class="air-empty">잠시 문제가 생겼어요. 다시 시도해 주세요.</div>'; }
+    document.getElementById('airSend').disabled=false;
+  };
+  window.airOpen=function(i){const b=LAST[i];if(!b)return;
+    const star=b.rating!=null?`<span class="air-star">★</span> ${f5(b.rating)} · ${b.rating_count||0}명`:'';
+    const loan=b.loan_count?`  |  대출 ${man(b.loan_count)}`:'';
+    const page=b.pages?`  |  ${b.pages}쪽`:'';
+    const kws=(b.keywords||[]).slice(0,5);
+    document.getElementById('airSheet').innerHTML=`<div class="air-stop"><div class="air-scv"><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
+      <div style="flex:1"><h2>${esc(b.title)}</h2><div class="air-sau">${esc(b.author)} · ${esc(b.publisher||'')} · ${b.pub_year||''}</div>
+      <div class="air-smeta">${star}${loan}${page}</div></div></div>
+      ${b.reason?`<div class="air-swhy">${esc(b.reason)}</div>`:''}
+      <p class="air-sdesc">${esc(b.description||'')}</p>
+      ${kws.length?`<div class="air-kws">${kws.map(k=>'<span class="air-kw">'+esc(k)+'</span>').join('')}</div>`:''}
+      <div class="air-acts"><button class="air-cta">도서관에서 빌리기</button><button class="air-cta2" onclick="airClose()">닫기</button></div>
+      <div class="air-src">출처 · 별점·표지 알라딘 / 대출·키워드 정보나루(국립중앙도서관)</div>`;
+    document.getElementById('airOv').classList.add('on');
+  };
+  window.airClose=function(){document.getElementById('airOv').classList.remove('on');};
+  // 예시 칩 초기화
+  var ch=document.getElementById('airChips');
+  if(ch) ch.innerHTML=EX.map(e=>`<span class="air-chip" onclick="airRun('${e}')">${esc(e)}</span>`).join('');
+})();
+</script>
 </body>
 </html>
