@@ -37,8 +37,7 @@ a{color:inherit;text-decoration:none}
 .nav{position:sticky;top:0;z-index:30;background:rgba(244,243,239,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
 .nav .wrap{display:flex;align-items:center;gap:14px;height:62px}
 .brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:18px;letter-spacing:-.5px}
-.brand .tile{width:30px;height:30px;border-radius:9px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800}
-.brand .tile .s{color:var(--gold)}
+.brand .tilelogo{width:30px;height:30px;border-radius:9px;display:block}
 .nav .sp{flex:1}
 .nav a.lnk{font-size:13.5px;font-weight:600;color:var(--sub);padding:8px 4px}
 .nav a.lnk:hover{color:var(--navy)}
@@ -173,8 +172,7 @@ a{color:inherit;text-decoration:none}
 /* footer */
 .foot{padding:40px 0 56px;text-align:center}
 .foot .b{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:15px;margin-bottom:12px}
-.foot .b .tile{width:24px;height:24px;border-radius:7px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
-.foot .b .s{color:var(--gold)}
+.foot .b .tilelogo{width:24px;height:24px;border-radius:7px;display:block}
 .foot p{font-size:11.5px;color:var(--light);line-height:1.7}
 .foot .links{margin-top:12px;font-size:12.5px}
 .foot .links a{color:var(--sub);font-weight:600;margin:0 8px}
@@ -184,7 +182,7 @@ a{color:inherit;text-decoration:none}
 
 <!-- NAV -->
 <nav class=nav><div class=wrap>
-  <a class=brand href="/"><span class=tile>b<span class=s>✦</span></span>bookstar</a>
+  <a class=brand href="/"><img class=tilelogo src="/apple-touch-icon.png" alt="bookstar 로고" width=30 height=30>bookstar</a>
   <span class=sp></span>
   <a class=lnk href="#how">작동 방식</a>
   <a class=lnk href="#measure">측정</a>
@@ -327,7 +325,7 @@ a{color:inherit;text-decoration:none}
 
 <!-- FOOTER -->
 <footer class=foot><div class=wrap>
-  <div class=b><span class=tile>b<span class=s>✦</span></span>bookstar</div>
+  <div class=b><img class=tilelogo src="/apple-touch-icon.png" alt="bookstar 로고" width=24 height=24>bookstar</div>
   <p>모든 책은 하늘의 별 — 학생에게 길을 비추는 한 권을 찾고, 끝까지 읽도록 함께합니다.</p>
   <div class=links>
     <a href="/ai.html">AI 추천 체험</a>·<a href="/app.html">학생 앱 미리보기</a>·<a href="#contact">도입 문의</a>
