@@ -60,16 +60,28 @@ a{color:inherit;text-decoration:none}
 .cta-row{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:30px}
 .trust-line{margin-top:24px;font-size:12.5px;color:var(--light)}
 .trust-line b{color:var(--sub);font-weight:700}
-/* brand story */
-.story{text-align:center;padding:58px 0 10px}
-.story .mk{font-size:12px;color:var(--gold);font-weight:800;letter-spacing:2.5px;margin-bottom:22px}
-.eqn{display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:26px}
-.eqn .t{font-weight:800;font-size:21px;color:var(--navy)}
-.eqn .t i{font-style:normal;font-weight:600;font-size:12px;color:var(--light);margin-left:5px}
-.eqn .op{font-size:17px;font-weight:800;color:var(--gold)}
-.eqn .bs{font-weight:800;font-size:21px;color:var(--navy);background:rgba(26,41,66,.06);padding:6px 15px;border-radius:11px}
-.story p{font-family:var(--serif);font-size:16.5px;line-height:1.9;color:#3a3942;max-width:560px;margin:0 auto}
-.story p b{color:var(--navy);font-weight:700}
+/* brand story — 네이비 밤하늘 띠 */
+.story{position:relative;overflow:hidden;text-align:center;padding:80px 0;color:#fff;
+  background:radial-gradient(120% 130% at 50% -10%,#22365a 0%,#1a2942 45%,#0f1a2e 100%)}
+.story::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.9;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 26%,rgba(255,255,255,.55),transparent),
+    radial-gradient(1.4px 1.4px at 84% 20%,rgba(255,255,255,.45),transparent),
+    radial-gradient(1.2px 1.2px at 22% 72%,rgba(255,255,255,.4),transparent),
+    radial-gradient(1.5px 1.5px at 70% 78%,rgba(255,255,255,.5),transparent),
+    radial-gradient(1.2px 1.2px at 50% 14%,rgba(212,169,59,.7),transparent),
+    radial-gradient(1.1px 1.1px at 90% 60%,rgba(255,255,255,.35),transparent),
+    radial-gradient(1.1px 1.1px at 8% 54%,rgba(255,255,255,.3),transparent)}
+.story .wrap{position:relative;z-index:1}
+.story .mk{font-size:12.5px;color:var(--gold);font-weight:800;letter-spacing:3px;margin-bottom:30px}
+.eqn{display:inline-flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.eqn .t{font-weight:800;font-size:30px;color:#fff;letter-spacing:-.5px}
+.eqn .t i{font-style:normal;font-weight:600;font-size:13px;color:#9fb0cc;margin-left:7px;letter-spacing:0}
+.eqn .op{font-size:24px;font-weight:800;color:var(--gold)}
+.eqn .bs{font-weight:800;font-size:30px;color:var(--navy);background:var(--gold);padding:8px 20px;border-radius:13px;letter-spacing:-.5px}
+.story p{font-family:var(--serif);font-size:18px;line-height:2;color:#dbe2ee;max-width:580px;margin:0 auto}
+.story p b{color:var(--gold);font-weight:700}
+@media(max-width:520px){.eqn .t,.eqn .bs{font-size:24px}.story p{font-size:16px}}
 /* section */
 .sec{padding:64px 0}
 .sec.alt{background:linear-gradient(var(--card),var(--card)) no-repeat;background-color:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
