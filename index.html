@@ -1677,14 +1677,19 @@ function renderCurations(targetId, filterIntl){
    ═══════════════════════════════════════════════════════════ */
 // 세부 category를 사용자 친화 장르로 묶기
 const REC_GENRES = [
-  {key:'novel',   label:'소설',       cats:['소설','근대 소설']},
-  {key:'poem',    label:'시',         cats:['시','근대 시']},
-  {key:'thought', label:'철학·사상',  cats:['고대 철학','근세 철학','철학','정치사상','경제사상','근대 사상']},
-  {key:'play',    label:'희곡',       cats:['희곡','고대 비극']},
-  {key:'epic',    label:'서사시·고전',cats:['서사시','고대 서사시']},
-  {key:'essay',   label:'수필·에세이',cats:['수필','근대 수필']},
-  {key:'sci',     label:'과학·심리',  cats:['과학','심리학']},
+  {key:'novel',   label:'소설',       cats:['소설','근대 소설'], kdc:'8'},
+  {key:'poem',    label:'시',         cats:['시','근대 시'], kdc:'8'},
+  {key:'thought', label:'철학·사상',  cats:['고대 철학','근세 철학','철학','정치사상','경제사상','근대 사상'], kdc:'1'},
+  {key:'play',    label:'희곡',       cats:['희곡','고대 비극'], kdc:'8'},
+  {key:'epic',    label:'서사시·고전',cats:['서사시','고대 서사시'], kdc:'9'},
+  {key:'essay',   label:'수필·에세이',cats:['수필','근대 수필'], kdc:'8'},
+  {key:'sci',     label:'과학·심리',  cats:['과학','심리학'], kdc:'4'},
 ];
+// 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
+let LOAN_DATA = {};
+async function loadLoanData(){
+  try{ const r = await fetch('./books/loan_popular.json'); if(r.ok) LOAN_DATA = await r.json(); }catch(e){ LOAN_DATA = {}; }
+}
 // 기분 → 선호 장르 가중치
 const REC_MOODS = [
   {key:'calm',  label:'🌱 평온',     boost:['essay','poem']},
@@ -1725,43 +1730,81 @@ function genreOfBook(b){
 function runRecommend(){
   const moodObj = REC_MOODS.find(m=>m.key===recSel.mood);
   const regionLocale = REC_REGIONS.find(r=>r.key===recSel.region).locale;
+  const anySel = recSel.genres.size>0 || recSel.mood;
+
+  // ── 1층: 클레버 PD 고전 (읽기·챌린지) ──
   let pool = BOOKS.filter(b=> regionLocale ? b.locale===regionLocale : true);
   const scored = pool.map(b=>{
-    const g = genreOfBook(b);
-    let score = 0;
-    if(g && recSel.genres.has(g.key)) score += 10;          // 선택 장르 일치
-    if(g && moodObj && moodObj.boost.includes(g.key)) score += 5; // 기분 가중
-    score += (b.participants||0)/100;                        // 인기 약가중
-    // 결정적 셔플(아이디 기반)으로 동점 분산
+    const g = genreOfBook(b); let score = 0;
+    if(g && recSel.genres.has(g.key)) score += 10;
+    if(g && moodObj && moodObj.boost.includes(g.key)) score += 5;
+    score += (b.participants||0)/100;
     score += (Math.abs((b.id||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%7)*0.01;
-    return {b, score, g};
+    return {b, score};
   });
-  // 아무것도 안 골랐으면 인기순 8권
-  const anySel = recSel.genres.size>0 || recSel.mood;
   scored.sort((a,b)=> b.score-a.score);
-  const top = (anySel ? scored.filter(x=>x.score>=5) : scored).slice(0,8);
-  renderRecResults(top.length?top:scored.slice(0,8), anySel, moodObj);
+  const pdTop = (anySel ? scored.filter(x=>x.score>=5) : scored).slice(0,6);
+
+  // ── 2층: 정보나루 도서관 인기대출 (대출 연결) ──
+  // 선택 장르 → KDC 매핑 (없으면 문학8 기본)
+  let kdcs = [...new Set([...recSel.genres].map(k=>REC_GENRES.find(g=>g.key===k)?.kdc).filter(Boolean))];
+  if(!kdcs.length) kdcs = ['8','1','9'];
+  let loanBooks = [];
+  kdcs.forEach(k=> loanBooks.push(...(LOAN_DATA[k]||[])));
+  loanBooks = loanBooks.sort((a,b)=> (parseInt(b.loan)||0)-(parseInt(a.loan)||0)).slice(0,6);
+
+  renderRecResults(pdTop.length?pdTop:scored.slice(0,6), loanBooks, anySel, moodObj);
 }
-function renderRecResults(list, anySel, moodObj){
+
+function loanCardHTML(b){
+  const coverInner = b.cover
+    ? `<div class="book-cover has-img"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none';"></div>`
+    : `<div class="book-cover style-${(Math.abs((b.title||'').charCodeAt(0))%8)+1}"><div><div class="book-cover-title">${esc(b.title)}</div><div class="book-cover-author">${esc(b.author)}</div></div></div>`;
+  const loanTxt = b.loan ? `대출 ${parseInt(b.loan).toLocaleString()}회` : '';
+  const link = b.detail ? `window.open('${esc(b.detail)}','_blank')` : `alert('도서관 소장 조회는 로그인 후 이용 가능합니다.')`;
+  return `<div class="book-card">
+    ${coverInner}
+    <div class="book-info">
+      <div class="book-title">${esc(b.title)}</div>
+      <div class="book-author">${esc(b.author)}${b.publisher?' · '+esc(b.publisher):''}</div>
+      ${loanTxt?`<div style="font-size:11px;color:var(--text-light);margin-top:3px;">📚 ${loanTxt}</div>`:''}
+      <button class="rec-card-cta" style="background:var(--accent);color:#fff;" onclick="${link}">🏛 도서관에서 찾기</button>
+    </div>
+  </div>`;
+}
+
+function renderRecResults(pdList, loanList, anySel, moodObj){
   const el = document.getElementById('recResults');
   if(!el) return;
-  if(!list.length){ el.innerHTML = `<div class="rec-empty">조건에 맞는 책을 못 찾았어요. 장르를 줄이거나 권역을 '무관'으로 바꿔보세요.</div>`; return; }
-  const moodTxt = moodObj ? ` · ${moodObj.label.replace(/^\S+\s/,'')} 기분에` : '';
   const genreTxt = recSel.genres.size ? [...recSel.genres].map(k=>REC_GENRES.find(g=>g.key===k).label).join('·') : '전체';
-  el.innerHTML = `
-    <div class="rec-results-head">${ic('sparkles','icon icon-sm')} AI가 골랐어요 — ${list.length}권</div>
-    <div class="rec-results-sub">${esc(genreTxt)}${moodTxt} 어울리는 고전이에요. 마음에 드는 책으로 바로 챌린지를 시작해 보세요.</div>
-    <div class="book-grid">
-      ${list.map(({b})=>`
-        <div class="book-card">
-          <div onclick="openDetail('${b.id}')">${bookCoverHTML(b)}</div>
-          <div class="book-info">
-            <div class="book-title">${esc(b.title)}</div>
-            <div class="book-author">${esc(b.author)} · ${esc(b.category)}</div>
-            <button class="rec-card-cta" onclick="event.stopPropagation();openViewer('${b.id}','challenge')">${ic('target','icon icon-sm')} 챌린지 시작</button>
-          </div>
-        </div>`).join('')}
-    </div>`;
+  const moodTxt = moodObj ? ` · ${moodObj.label.replace(/^\S+\s/,'')} 기분에` : '';
+  let html = `<div class="rec-results-sub" style="margin-bottom:20px;">${esc(genreTxt)}${moodTxt} 어울리는 책을 골랐어요.</div>`;
+
+  // 1층 — 클레버 고전
+  html += `<div class="rec-results-head">${ic('sparkles','icon icon-sm')} 클레버에서 바로 읽을 수 있는 고전 <span style="color:var(--text-light);font-weight:600;">${pdList.length}</span></div>
+    <div class="rec-results-sub">전문·번역·퀴즈가 준비돼 있어요. 읽고 바로 챌린지까지!</div>`;
+  if(pdList.length){
+    html += `<div class="book-grid" style="margin-bottom:28px;">${pdList.map(({b})=>`
+      <div class="book-card">
+        <div onclick="openDetail('${b.id}')">${bookCoverHTML(b)}</div>
+        <div class="book-info">
+          <div class="book-title">${esc(b.title)}</div>
+          <div class="book-author">${esc(b.author)} · ${esc(b.category)}</div>
+          <button class="rec-card-cta" onclick="event.stopPropagation();openViewer('${b.id}','challenge')">${ic('target','icon icon-sm')} 챌린지 시작</button>
+        </div>
+      </div>`).join('')}</div>`;
+  } else {
+    html += `<div class="rec-empty" style="margin-bottom:28px;">선택한 조건의 클레버 고전이 없어요. 권역을 '무관'으로 바꿔보세요.</div>`;
+  }
+
+  // 2층 — 도서관 대출
+  if(loanList.length){
+    html += `<div class="rec-results-head">🏛 도서관에서 빌릴 만한 책 <span style="color:var(--text-light);font-weight:600;">${loanList.length}</span></div>
+      <div class="rec-results-sub">우리 학교 도서관 인기 대출 도서예요. 더 읽고 싶다면 빌려보세요.</div>
+      <div class="book-grid">${loanList.map(loanCardHTML).join('')}</div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:14px;">표지·서지·대출 데이터 출처: 도서관 정보나루(국립중앙도서관)${LOAN_DATA._sample?' · ※ 현재 샘플 데이터':''}</div>`;
+  }
+  el.innerHTML = html;
   el.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
@@ -2436,6 +2479,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderBookGrid('bookGridAll', false);
   renderBookGrid('bookGridIntl', true);
   renderRecChips();
+  loadLoanData();
   renderCommunity('program');
   renderHomeHub();
 });

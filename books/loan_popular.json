@@ -1,0 +1,36 @@
+{
+ "_sample": true,
+ "_note": "샘플 데이터 — 정보나루_추천캐시.py 실행 시 실제 인기대출 데이터로 교체됨",
+ "8": [
+  {"rank":"1","title":"불편한 편의점","author":"김호연","publisher":"나무옆의자","year":"2021","isbn":"9791161571188","loan":"28412","cover":"","detail":""},
+  {"rank":"2","title":"아몬드","author":"손원평","publisher":"창비","year":"2017","isbn":"9788936434267","loan":"24190","cover":"","detail":""},
+  {"rank":"3","title":"달러구트 꿈 백화점","author":"이미예","publisher":"팩토리나인","year":"2020","isbn":"9791165341909","loan":"21885","cover":"","detail":""},
+  {"rank":"4","title":"작별인사","author":"김영하","publisher":"복복서가","year":"2022","isbn":"9791191114171","loan":"19733","cover":"","detail":""},
+  {"rank":"5","title":"파친코","author":"이민진","publisher":"인플루엔셜","year":"2022","isbn":"9788966864188","loan":"17204","cover":"","detail":""}
+ ],
+ "1": [
+  {"rank":"1","title":"미움받을 용기","author":"기시미 이치로","publisher":"인플루엔셜","year":"2014","isbn":"9788996991342","loan":"31204","cover":"","detail":""},
+  {"rank":"2","title":"나는 나로 살기로 했다","author":"김수현","publisher":"마음의숲","year":"2016","isbn":"9788960869790","loan":"22510","cover":"","detail":""},
+  {"rank":"3","title":"마흔에 읽는 쇼펜하우어","author":"강용수","publisher":"유노북스","year":"2023","isbn":"9791192300979","loan":"18877","cover":"","detail":""},
+  {"rank":"4","title":"데일 카네기 인간관계론","author":"데일 카네기","publisher":"현대지성","year":"2019","isbn":"9791187142454","loan":"15320","cover":"","detail":""}
+ ],
+ "9": [
+  {"rank":"1","title":"사피엔스","author":"유발 하라리","publisher":"김영사","year":"2015","isbn":"9788934972464","loan":"26630","cover":"","detail":""},
+  {"rank":"2","title":"총 균 쇠","author":"재레드 다이아몬드","publisher":"김영사","year":"2023","isbn":"9788934986584","loan":"19044","cover":"","detail":""},
+  {"rank":"3","title":"하룻밤에 읽는 한국사","author":"최용범","publisher":"페이퍼로드","year":"2019","isbn":"9791190475006","loan":"12880","cover":"","detail":""}
+ ],
+ "3": [
+  {"rank":"1","title":"정의란 무엇인가","author":"마이클 샌델","publisher":"와이즈베리","year":"2014","isbn":"9788960517202","loan":"23110","cover":"","detail":""},
+  {"rank":"2","title":"넛지","author":"리처드 탈러","publisher":"리더스북","year":"2022","isbn":"9788901260716","loan":"16402","cover":"","detail":""},
+  {"rank":"3","title":"부의 추월차선","author":"엠제이 드마코","publisher":"토트","year":"2022","isbn":"9788992175852","loan":"20155","cover":"","detail":""}
+ ],
+ "4": [
+  {"rank":"1","title":"코스모스","author":"칼 세이건","publisher":"사이언스북스","year":"2006","isbn":"9788983711892","loan":"18992","cover":"","detail":""},
+  {"rank":"2","title":"이기적 유전자","author":"리처드 도킨스","publisher":"을유문화사","year":"2018","isbn":"9788932473901","loan":"14233","cover":"","detail":""},
+  {"rank":"3","title":"김상욱의 양자 공부","author":"김상욱","publisher":"사이언스북스","year":"2017","isbn":"9788983719041","loan":"11870","cover":"","detail":""}
+ ],
+ "6": [
+  {"rank":"1","title":"방구석 미술관","author":"조원재","publisher":"블랙피쉬","year":"2018","isbn":"9791165850135","loan":"13540","cover":"","detail":""},
+  {"rank":"2","title":"다시, 그림이다","author":"데이비드 호크니","publisher":"디자인하우스","year":"2012","isbn":"9788970418582","loan":"8920","cover":"","detail":""}
+ ]
+}
