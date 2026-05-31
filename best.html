@@ -1,0 +1,129 @@
+<!doctype html><html lang=ko><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>클레버 · 베스트셀러 레이아웃 비교</title>
+<style>
+:root{--ac:#5b5ef0;--bg:#fafafb;--card:#fff;--tx:#18181f;--mut:#9a9aa6;--soft:#5c5c68;--line:#eeeef2;--gold:#c79a3e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--tx);padding:28px 18px 70px;-webkit-font-smoothing:antialiased;letter-spacing:-.2px}
+.wrap{max-width:840px;margin:0 auto}
+h1{font-size:20px;font-weight:700;letter-spacing:-.6px}
+.sub{color:var(--mut);font-size:12.5px;margin:7px 0 18px;line-height:1.55}
+.switch{display:flex;gap:4px;background:#f0f0f3;padding:3px;border-radius:11px;margin-bottom:24px;width:fit-content}
+.switch button{border:0;background:transparent;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;color:#8a8a96;cursor:pointer;transition:.15s}
+.switch button.on{background:#fff;color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+/* shared meta line */
+.meta{font-size:12px;color:var(--mut);line-height:1.5}
+.meta .star{color:var(--gold);font-weight:700}
+.meta b{color:var(--soft);font-weight:600}
+.meta .sep{padding:0 7px;color:#dcdce2}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px 18px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(4,1fr);gap:26px 18px}}
+.tile{cursor:pointer;position:relative}
+.tile .cv{width:100%;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#ececf0;box-shadow:0 6px 18px rgba(20,20,45,.13);margin-bottom:11px;transition:.18s}
+.tile:hover .cv{transform:translateY(-4px);box-shadow:0 12px 26px rgba(20,20,45,.18)}
+.tile .cv img{width:100%;height:100%;object-fit:cover}
+.tile h3{font-size:13.5px;font-weight:600;letter-spacing:-.3px;line-height:1.35;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.tile .au{font-size:11.5px;color:var(--mut);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .mini{font-size:11.5px;color:var(--soft)}
+.tile .mini .star{color:var(--gold);font-weight:700}
+.tile .mini .ln{color:var(--mut)}
+.rk{position:absolute;top:8px;left:8px;min-width:21px;height:21px;padding:0 6px;background:rgba(15,15,25,.78);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11.5px;z-index:2;backdrop-filter:blur(3px)}
+/* FEAT */
+.feat{display:flex;gap:22px;margin-bottom:30px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.feat .cv{flex:0 0 132px;aspect-ratio:2/3;border-radius:9px;overflow:hidden;box-shadow:0 10px 26px rgba(20,20,45,.2)}
+.feat .cv img{width:100%;height:100%;object-fit:cover}
+.feat .tag{font-size:11px;font-weight:700;color:var(--ac);letter-spacing:.3px;margin-bottom:8px}
+.feat h3{font-size:21px;font-weight:700;letter-spacing:-.6px;line-height:1.25}
+.feat .au{color:var(--mut);font-size:12.5px;margin:7px 0 11px}
+.feat p{font-size:12.5px;line-height:1.65;color:var(--soft);margin-top:11px}
+.lab{font-size:12.5px;font-weight:700;color:var(--tx);margin:0 0 14px}
+.row{display:flex;gap:16px;overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory}
+.row::-webkit-scrollbar{height:5px}.row::-webkit-scrollbar-thumb{background:#dcdce2;border-radius:3px}
+.rcard{flex:0 0 116px;scroll-snap-align:start;cursor:pointer;position:relative}
+.rcard .cv{width:116px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;box-shadow:0 6px 16px rgba(20,20,45,.14);margin-bottom:9px}
+.rcard .cv img{width:100%;height:100%;object-fit:cover}
+.rcard h4{font-size:12px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcard .au{font-size:11px;color:var(--mut);margin-top:2px}
+/* LIST */
+.litem{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);cursor:pointer;position:relative}
+.litem .cv{flex:0 0 62px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;box-shadow:0 4px 12px rgba(20,20,45,.14)}
+.litem .cv img{width:100%;height:100%;object-fit:cover}
+.litem h3{font-size:15px;font-weight:600;letter-spacing:-.3px;line-height:1.3}
+.litem .au{font-size:11.5px;color:var(--mut);margin:5px 0 8px}
+.litem .lrk{font-size:12px;font-weight:700;color:var(--mut);width:18px;flex:0 0 18px;padding-top:2px}
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(18,18,32,.46);display:none;align-items:flex-end;justify-content:center;z-index:50;backdrop-filter:blur(3px)}
+.ov.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:26px 24px 32px;max-height:88vh;overflow:auto}
+@media(min-width:560px){.ov{align-items:center}.sheet{border-radius:20px}}
+.sheet .top{display:flex;gap:18px;margin-bottom:18px}
+.sheet .cv{flex:0 0 110px;aspect-ratio:2/3;border-radius:9px;overflow:hidden;box-shadow:0 8px 22px rgba(20,20,45,.2)}
+.sheet .cv img{width:100%;height:100%;object-fit:cover}
+.sheet h2{font-size:19px;font-weight:700;letter-spacing:-.5px;line-height:1.3}
+.sheet .au{color:var(--mut);font-size:12.5px;margin:7px 0 12px}
+.sheet .top .meta{font-size:12px;line-height:1.9}
+.sheet p.desc{font-size:13.5px;line-height:1.72;color:#42424d;margin:18px 0}
+.kws{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.kw{font-size:11.5px;color:var(--soft);background:#f3f3f6;padding:4px 10px;border-radius:6px;font-weight:500}
+.rec{font-size:12px;color:var(--soft);background:#fafafc;border:1px solid var(--line);border-radius:11px;padding:12px 14px;line-height:1.6;margin-bottom:18px}
+.rec .rl{color:var(--mut);font-size:11px;margin-bottom:5px}
+.rec b{color:var(--tx);font-weight:600}
+.acts{display:flex;gap:9px}
+.cta{flex:1;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:13px;font-size:13.5px;font-weight:600;cursor:pointer}
+.cta2{background:#fff;color:var(--soft);border:1px solid var(--line);border-radius:12px;padding:13px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+.src{font-size:10.5px;color:#c2c2cc;margin-top:14px;line-height:1.5}
+</style></head><body><div class=wrap>
+<h1>한국소설 베스트셀러</h1>
+<div class=sub>국립중앙도서관 대출 · 알라딘 평점 합본 — 표지를 누르면 상세가 열립니다.</div>
+<div class=switch>
+ <button id=b-grid class=on onclick="setV('grid')">바둑판</button>
+ <button id=b-feat onclick="setV('feat')">대표+가로</button>
+ <button id=b-list onclick="setV('list')">리스트</button>
+</div>
+<div id=stage></div>
+</div>
+<div class=ov id=ov onclick="if(event.target.id=='ov')closeM()"><div class=sheet id=sheet></div></div>
+<script>
+const BOOKS=[{"rank": 1, "title": "안녕이라 그랬어", "author": "김애란", "publisher": "문학동네", "year": "2025", "cover": "https://image.aladin.co.kr/product/36566/52/cover500/s632135953_1.jpg", "rating": 9.5, "ratingCount": 144, "page": 320, "desc": "소설가 김애란이 『바깥은 여름』 이후 팔 년 만에 새 소설집으로 돌아왔다. 2022 김승옥문학상 우수상을 수상한 「홈 파티」와 2022 오영수문학상 수상작인 「좋은 이웃」을 비롯해 총 일곱 편의 단편이 수록되어 있다.", "loan": 3422, "keywords": ["홈 파티", "좋은 이웃", "공간", "바깥은 여름"], "rec": []}, {"rank": 2, "title": "모순 - 개정판", "author": "양귀자", "publisher": "쓰다", "year": "2013", "cover": "https://image.aladin.co.kr/product/2584/37/cover500/8998441012_3.jpg", "rating": 9.1, "ratingCount": 244, "page": 308, "desc": "작가 양귀자가 1998년 펴낸 세 번째 장편소설로, 책이 나온 지 한 달 만에 무서운 속도로 베스트셀러 1위에 진입, 출판계를 놀라게 하고 그해 최고의 베스트셀러로 자리 잡으면서 ‘양귀자 소설의 힘’을 다시 한 번 유감없이 보여준 소설이다.", "loan": 78593, "keywords": ["인생", "독자", "원미동 사람들", "희망"], "rec": ["아버지의 해방일지", "아주 희미한 빛으로도", "이처럼 사소한 것들"]}, {"rank": 3, "title": "자몽살구클럽", "author": "한로로 (HANRORO)", "publisher": "어센틱", "year": "2025", "cover": "https://image.aladin.co.kr/product/36808/37/cover500/k082030009_1.jpg", "rating": 7.2, "ratingCount": 61, "page": 199, "desc": "싱어송라이터 한로로가 발매할 세 번째 EP 음악 앨범과 연결된 동명의 소설이다. 죽고 싶은 네명의 아이들이 비밀 클럽 '자몽살구클럽'에서 만나 서로를 살리기로 한다. 각자의 모진 삶을 견디기 힘들어 모인 '소하', '태수', '유민', '보현'의 에피소드는 생존이라는 목표 아래 처절하게 전개된다.", "loan": 373, "keywords": ["싱어송라이터", "음악", "입춘", "소하"], "rec": []}, {"rank": 4, "title": "수족관", "author": "유래혁", "publisher": "포스터샵", "year": "2023", "cover": "https://image.aladin.co.kr/product/33081/18/cover500/k582937507_1.jpg", "rating": 10, "ratingCount": 7, "page": 376, "desc": "유래혁 소설. 보육 시설에서 자라난 인물 ‘류이치’가, 먼저 보육 시설에서 도망쳐나온 인물 ‘아카리’를 만나 겪게 되는 일들을 그려낸다. 이 두 인물은 자신들이 가진 뿌리 깊은 과거와 상처, 그 이야기가 만들어낸 수족관에서 만나 입을 맞추고, 서로의 숨을 훔쳐가면서도 언젠가 오키나와의 너른 바다에 도착하는 꿈을 나눈다.", "loan": 1111, "keywords": ["인물", "시설", "보육", "바다"], "rec": ["작별하지 않는다", "급류", "오로라"]}, {"rank": 5, "title": "2026 제17회 젊은작가상 수상작품집", "author": "김채원, 길란, 남의현, 서장원, 위수정, 이미상, 함윤이", "publisher": "문학동네", "year": "2026", "cover": "https://image.aladin.co.kr/product/38989/43/cover500/k232137415_1.jpg", "rating": 8, "ratingCount": 13, "page": 368, "desc": "한국문학의 미래와 함께하고자 2010년 제정된 젊은작가상이 2026년 올해로 17회를 맞이했다. 올해 젊은작가상에 이름을 올린 수상 작가는 김채원 길란 남의현 서장원 위수정 이미상 함윤이다.", "loan": null, "keywords": [], "rec": []}, {"rank": 6, "title": "소년이 온다 - 2024 노벨문학상 수상작가", "author": "한강", "publisher": "창비", "year": "2014", "cover": "https://image.aladin.co.kr/product/4086/97/cover500/8936434128_2.jpg", "rating": 9.6, "ratingCount": 1056, "page": 216, "desc": "섬세한 감수성과 치밀한 문장으로 인간 존재의 본질을 탐구해온 작가 한강의 여섯번째 장편소설. '상처의 구조에 대한 투시와 천착의 서사'를 통해 한강만이 풀어낼 수 있는 방식으로 1980년 5월을 새롭게 조명한다.", "loan": 215566, "keywords": ["동호", "당시", "정대", "상무관"], "rec": ["작별하지 않는다", "아버지의 해방일지", "채식주의자"]}, {"rank": 7, "title": "급류", "author": "정대건", "publisher": "민음사", "year": "2022", "cover": "https://image.aladin.co.kr/product/30769/24/cover500/8937473402_1.jpg", "rating": 6.6, "ratingCount": 147, "page": 300, "desc": "2020년 《한경신춘문예》에 장편소설 <GV 빌런 고태경>이 당선되어 작품 활동을 시작한 소설가 정대건의 두 번째 장편소설 <급류>가 오늘의 젊은 작가 시리즈 40번으로 출간되었다. <급류>는 저수지와 계곡이 유명한 지방도시 ‘진평’을 배경으로, 열일곱 살 동갑내기인 ‘도담’과 ‘해솔’의 만남과 사랑을 그린 소설이다.", "loan": 28637, "keywords": ["도담", "한경신춘문예", "해솔", "GV  빌런 고태경"], "rec": ["홍학의 자리", "이중 하나는 거짓말", "아주 희미한 빛으로도"]}, {"rank": 8, "title": "리치먼드힐의 이층 버스", "author": "이경진", "publisher": "북플레저", "year": "2026", "cover": "https://image.aladin.co.kr/product/39408/46/cover500/k862139099_1.jpg", "rating": 10, "ratingCount": 4, "page": 292, "desc": "캐나다에서 거주하며, 이민자의 시선을 담아내고 싶었던 이경진 작가의 첫 장편소설 《리치먼드힐의 이층 버스》. 이 소설은 우리 모두 한번쯤 떠올려 보았을 만한 질문을 던진다. 후회하지 않는 선택이 있을까? 과거를 바꿀 수 있다면 어떤 선택을 할까? 동시에 작가 특유의 섬세한 묘사와 예상을 뒤엎는 전개로 독자들이 느껴보지 못했던 새로운 감동을 선사한다.", "loan": null, "keywords": [], "rec": []}, {"rank": 9, "title": "혼모노 (리커버, 양장)", "author": "성해나", "publisher": "창비", "year": "2025", "cover": "https://image.aladin.co.kr/product/39078/47/cover500/k792137959_1.jpg", "rating": 8.3, "ratingCount": 222, "page": 368, "desc": "작품마다 치밀한 취재와 정교한 구성을 바탕으로 한 개성적인 캐릭터와 강렬하고도 서늘한 서사로 평단과 독자의 주목을 고루 받으며 새로운 세대의 리얼리즘을 열어가고 있다 평가받는 작가 성해나가 두번째 소설집 『혼모노』를 선보인다.", "loan": 8087, "keywords": ["창비", "길티", "소개", "출판사"], "rec": []}, {"rank": 10, "title": "흉담", "author": "전건우", "publisher": "래빗홀", "year": "2026", "cover": "https://image.aladin.co.kr/product/39128/54/cover500/k232137457_1.jpg", "rating": 9.7, "ratingCount": 37, "page": 304, "desc": "저주를 퍼뜨리지 않으면 악귀가 찾아온다. 공포소설가 ‘나’와 편집자가 의문의 죽음을 추적하며 ‘흉담’의 정체에 다가간다. 전건우가 선보이는 악귀, 주술, 현대사의 비극이 뒤엉킨 K-오컬트 호러 미스터리다.", "loan": null, "keywords": [], "rec": []}];
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
+const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
+const hrs=p=>{if(!p)return '';let h=Math.round(p/90);return p+'쪽 · 약 '+h+'시간';};
+const SEP='<span class=sep>|</span>';
+function metaLine(b){let a=[];
+ if(b.rating!=null)a.push('<span class=star>★</span> <b>'+f5(b.rating)+'</b> <span style="color:#c0c0ca">'+(b.ratingCount||0)+'</span>');
+ if(b.loan)a.push('대출 <b>'+man(b.loan)+'</b>');
+ if(b.page)a.push(hrs(b.page));
+ return '<div class=meta>'+a.join(SEP)+'</div>';}
+function tile(b,i){return `<div class=tile onclick="openM(${i})"><div class=cv><div class=rk>${b.rank}</div><img src="${esc(b.cover)}" loading=lazy onerror="this.style.opacity=0"></div>
+ <h3>${esc(b.title)}</h3><div class=au>${esc(b.author)}</div>
+ <div class=mini><span class=star>★</span> ${f5(b.rating)}${b.loan?` <span class=ln>· 대출 ${man(b.loan)}</span>`:''}</div></div>`}
+function rcard(b,i){return `<div class=rcard onclick="openM(${i})"><div class=cv><div class=rk>${b.rank}</div><img src="${esc(b.cover)}" loading=lazy onerror="this.style.opacity=0"></div>
+ <h4>${esc(b.title)}</h4><div class=au>${esc(b.author)}</div></div>`}
+function setV(v){
+ ['grid','feat','list'].forEach(k=>document.getElementById('b-'+k).classList.toggle('on',k==v));
+ const s=document.getElementById('stage');
+ if(v=='grid'){s.innerHTML='<div class=grid>'+BOOKS.map(tile).join('')+'</div>';}
+ else if(v=='feat'){const f=BOOKS[0];
+  s.innerHTML=`<div class=feat><div class=cv><img src="${esc(f.cover)}" onerror="this.style.opacity=0"></div>
+   <div style="flex:1"><div class=tag>이번 주 1위</div><h3>${esc(f.title)}</h3><div class=au>${esc(f.author)} · ${esc(f.publisher)}</div>
+   ${metaLine(f)}<p>${esc(f.desc).slice(0,120)}…</p></div></div>
+   <div class=lab>베스트 2–10위</div>
+   <div class=row>`+BOOKS.slice(1).map((b)=>rcard(b,BOOKS.indexOf(b))).join('')+`</div>`;}
+ else{s.innerHTML=BOOKS.map((b,i)=>`<div class=litem onclick="openM(${i})"><div class=lrk>${b.rank}</div>
+   <div class=cv><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
+   <div style="flex:1;min-width:0"><h3>${esc(b.title)}</h3><div class=au>${esc(b.author)} · ${esc(b.publisher)}</div>${metaLine(b)}</div></div>`).join('');}
+}
+function openM(i){const b=BOOKS[i];
+ document.getElementById('sheet').innerHTML=`<div class=top><div class=cv><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
+  <div style="flex:1"><h2>${esc(b.title)}</h2><div class=au>${esc(b.author)} · ${esc(b.publisher)} · ${b.year}</div>${metaLine(b)}</div></div>
+  <p class=desc>${esc(b.desc)}</p>
+  ${b.keywords.length?`<div class=kws>${b.keywords.map(k=>'<span class=kw>'+esc(k)+'</span>').join('')}</div>`:''}
+  ${b.rec.length?`<div class=rec><div class=rl>이 책 읽은 분들이 함께 본 책</div><b>${b.rec.map(esc).join('  ·  ')}</b></div>`:''}
+  <div class=acts><button class=cta>도서관에서 빌리기</button><button class=cta2>읽기 목록</button></div>
+  <div class=src>출처 · 별점·표지: 알라딘 / 대출·키워드: 도서관 정보나루(국립중앙도서관)</div>`;
+ document.getElementById('ov').classList.add('on');}
+function closeM(){document.getElementById('ov').classList.remove('on');}
+setV('grid');
+</script></body></html>
