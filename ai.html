@@ -108,7 +108,7 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
     </div>
   </div>
   <div id=stage></div>
-  <div class=foot>표지·별점 알라딘 · 대출·키워드 도서관 정보나루(국립중앙도서관) · 추천 클레버 AI</div>
+  <div class=foot>표지·별점 알라딘 · 대출·키워드 도서관 정보나루(국립중앙도서관) · 추천 북스타 AI</div>
 </div>
 <div class=ov id=ov onclick="if(event.target.id=='ov')closeM()"><div class=sheet id=sheet></div></div>
 <script>
@@ -125,7 +125,7 @@ async function go(){
   const q=document.getElementById('q').value.trim(); if(!q)return;
   const st=document.getElementById('stage');
   document.getElementById('send').disabled=true;
-  st.innerHTML='<div class=loading><div class=pulse></div><br>클레버 AI가 책을 고르는 중…</div>';
+  st.innerHTML='<div class=loading><div class=pulse></div><br>북스타 AI가 책을 고르는 중…</div>';
   try{
     const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
     const d=await r.json(); LAST=d.results||[]; render(d);
@@ -145,7 +145,7 @@ function card(b,i){
 function render(d){
   const st=document.getElementById('stage');
   if(!d.results||!d.results.length){st.innerHTML='<div class=empty>딱 맞는 책을 못 찾았어요.<br>조금 다르게 말해보거나 예시를 눌러보세요.</div>';return;}
-  const modeTxt=d.mode==='entity'?'정확 검색 · 도서관 DB':'클레버 AI 큐레이션';
+  const modeTxt=d.mode==='entity'?'정확 검색 · 도서관 DB':'북스타 AI 큐레이션';
   st.innerHTML=`<div class=results><div class=intro>${esc(d.intro||'')}</div><div class=modeline>${modeTxt} · ${d.results.length}권</div><div class=grid>${d.results.map(card).join('')}</div></div>`;
 }
 function openM(i){const b=LAST[i];if(!b)return;

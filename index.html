@@ -78,6 +78,12 @@ input,textarea,select{font-family:inherit;}
 body.dark .header{background:rgba(15,23,42,0.95);}
 .logo{font-size:20px;font-weight:800;color:#fff;background:var(--primary);padding:7px 14px;border-radius:10px;cursor:pointer;letter-spacing:-0.5px;}
 body.dark .logo{background:var(--gold);color:#0f172a;}
+/* 북스타 헤더 로고 (세리프 워드마크) */
+.brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
+.bl-word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:-.4px;color:var(--text);line-height:1;}
+.bl-word span{color:#b8902f;}
+body.dark .bl-word{color:#f1f5f9;}
+body.dark .bl-word span{color:var(--gold);}
 .gnb{display:flex;gap:4px;flex:1;}
 .gnb-item{padding:8px 16px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:all 0.15s;letter-spacing:-0.3px;}
 .gnb-item:hover{background:var(--primary-bg);color:var(--primary);}
@@ -728,9 +734,12 @@ body.dark #airOv .air-cta{color:#0f172a;}
      헤더 (Ver 03 — 5 GNB)
      ═══════════════════════════════════════════════════════════ -->
 <header class="header">
+  <div class="brand-logo" onclick="nav('home')" title="북스타 홈">
+    <span class="bl-word">book<span>star</span></span>
+  </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="home" onclick="nav('home')">홈</div>
-    <div class="gnb-item" data-page="collection" onclick="nav('collection')">클레버 컬렉션</div>
+    <div class="gnb-item" data-page="collection" onclick="nav('collection')">북스타 컬렉션</div>
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">도서 큐레이션</div>
     <div class="gnb-item" data-page="airec" onclick="nav('airec')">AI추천</div>
     <div class="gnb-item" data-page="international" onclick="nav('international')">International Students</div>
@@ -831,10 +840,10 @@ body.dark #airOv .air-cta{color:#0f172a;}
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     2) 클레버 컬렉션
+     2) 북스타 컬렉션
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-collection">
-  <h1 class="page-title">클레버 컬렉션</h1>
+  <h1 class="page-title">북스타 컬렉션</h1>
   <p class="page-subtitle">저작권 만료된 국내·해외 동서양 고전을 테마로 묶었어요</p>
 
   <div class="search-bar">
@@ -908,7 +917,7 @@ body.dark #airOv .air-cta{color:#0f172a;}
     <div class="rec-panel">
       <div class="rec-intro" style="margin-bottom:0;">
         <b style="color:var(--primary);font-size:15px;">독서 페르소나 기반 추천</b><br><br>
-        클레버는 단순 대출 이력이 아니라 <b>어떻게 읽었는지</b>(완독률·퀴즈 정답률·서평 관심사·어휘 수준)를 분석해 다음에 읽을 고전을 추천합니다.<br><br>
+        북스타는 단순 대출 이력이 아니라 <b>어떻게 읽었는지</b>(완독률·퀴즈 정답률·서평 관심사·어휘 수준)를 분석해 다음에 읽을 고전을 추천합니다.<br><br>
         <span style="color:var(--text-light);">예: "당신은 인간 내면을 다룬 고전에서 완독률이 높고 퀴즈 정답률이 좋아요 → 다음은 도스토옙스키 『죄와 벌』 추천 + 이번 주 챌린지로?"</span><br><br>
         <span style="display:inline-block;background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:6px 12px;border-radius:10px;">🔒 로그인 후 이용 가능 · 준비 중</span>
       </div>
@@ -1777,7 +1786,7 @@ function renderCurations(targetId, filterIntl){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   AI 추천 (목원대 큐레이션 대응 — 클레버판: 추천→챌린지 연결)
+   AI 추천 (목원대 큐레이션 대응 — 북스타판: 추천→챌린지 연결)
    ═══════════════════════════════════════════════════════════ */
 // 세부 category를 사용자 친화 장르로 묶기
 const REC_GENRES = [
@@ -1836,7 +1845,7 @@ function runRecommend(){
   const regionLocale = REC_REGIONS.find(r=>r.key===recSel.region).locale;
   const anySel = recSel.genres.size>0 || recSel.mood;
 
-  // ── 1층: 클레버 PD 고전 (읽기·챌린지) ──
+  // ── 1층: 북스타 PD 고전 (읽기·챌린지) ──
   let pool = BOOKS.filter(b=> regionLocale ? b.locale===regionLocale : true);
   const scored = pool.map(b=>{
     const g = genreOfBook(b); let score = 0;
@@ -1884,8 +1893,8 @@ function renderRecResults(pdList, loanList, anySel, moodObj){
   const moodTxt = moodObj ? ` · ${moodObj.label.replace(/^\S+\s/,'')} 기분에` : '';
   let html = `<div class="rec-results-sub" style="margin-bottom:20px;">${esc(genreTxt)}${moodTxt} 어울리는 책을 골랐어요.</div>`;
 
-  // 1층 — 클레버 고전
-  html += `<div class="rec-results-head">${ic('sparkles','icon icon-sm')} 클레버에서 바로 읽을 수 있는 고전 <span style="color:var(--text-light);font-weight:600;">${pdList.length}</span></div>
+  // 1층 — 북스타 고전
+  html += `<div class="rec-results-head">${ic('sparkles','icon icon-sm')} 북스타에서 바로 읽을 수 있는 고전 <span style="color:var(--text-light);font-weight:600;">${pdList.length}</span></div>
     <div class="rec-results-sub">전문·번역·퀴즈가 준비돼 있어요. 읽고 바로 챌린지까지!</div>`;
   if(pdList.length){
     html += `<div class="book-grid" style="margin-bottom:28px;">${pdList.map(({b})=>`
@@ -1898,7 +1907,7 @@ function renderRecResults(pdList, loanList, anySel, moodObj){
         </div>
       </div>`).join('')}</div>`;
   } else {
-    html += `<div class="rec-empty" style="margin-bottom:28px;">선택한 조건의 클레버 고전이 없어요. 권역을 '무관'으로 바꿔보세요.</div>`;
+    html += `<div class="rec-empty" style="margin-bottom:28px;">선택한 조건의 북스타 고전이 없어요. 권역을 '무관'으로 바꿔보세요.</div>`;
   }
 
   // 2층 — 도서관 대출
@@ -2006,12 +2015,12 @@ function openDetail(bookId){
 
     <div class="detail-section">
       <h3>책 소개</h3>
-      <p>${esc(b.title)}은 ${esc(b.author)}이 쓴 ${esc(b.period)} 시대 ${esc(b.category)} 정전입니다. 저작권 만료(PD) 상태로 자유 이용 가능하며, 클레버 표준 격조체 번역으로 제공됩니다.</p>
+      <p>${esc(b.title)}은 ${esc(b.author)}이 쓴 ${esc(b.period)} 시대 ${esc(b.category)} 정전입니다. 저작권 만료(PD) 상태로 자유 이용 가능하며, 북스타 표준 격조체 번역으로 제공됩니다.</p>
     </div>
 
     <div class="detail-section">
       <h3>저자 소개</h3>
-      <p>${esc(b.author)}의 일생과 사상, 시대 배경. ${esc(b.author)}이 쓴 다른 책들도 클레버에서 만나보세요.</p>
+      <p>${esc(b.author)}의 일생과 사상, 시대 배경. ${esc(b.author)}이 쓴 다른 책들도 북스타에서 만나보세요.</p>
     </div>
 
     <div class="detail-section">
@@ -2103,9 +2112,9 @@ function viewerLabels(book){
   if(loc === 'classic'){
     return {
       leftLabel:  '왼쪽 — 원문 (옛글·한문)',
-      rightLabel: '오른쪽 — 현대어 풀이 (클레버 격조체)',
-      challengeLeftLabel: '왼쪽 — 현대어 풀이 (클레버 격조체)',
-      intlLeftLabel: '왼쪽 — 현대어 풀이 (클레버 격조체)',
+      rightLabel: '오른쪽 — 현대어 풀이 (북스타 격조체)',
+      challengeLeftLabel: '왼쪽 — 현대어 풀이 (북스타 격조체)',
+      intlLeftLabel: '왼쪽 — 현대어 풀이 (북스타 격조체)',
       placeholderOrig: '원문 준비 중',
       placeholderTrans: '격조체 풀이 준비 중',
     };
