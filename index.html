@@ -627,6 +627,7 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
   <nav class="gnb">
     <div class="gnb-item active" data-page="home" onclick="nav('home')">홈</div>
     <div class="gnb-item" data-page="collection" onclick="nav('collection')">클레버 컬렉션</div>
+    <div class="gnb-item" data-page="curation" onclick="nav('curation')">도서 큐레이션</div>
     <div class="gnb-item" data-page="international" onclick="nav('international')">International Students</div>
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
     <div class="gnb-item" data-page="mypage" onclick="nav('mypage')">마이 페이지</div>
@@ -738,10 +739,40 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
 
   <div class="section">
     <div class="section-head">
-      <div class="section-title"><em>AI 추천</em> · 나에게 맞는 고전 찾기</div>
+      <div class="section-title"><em>테마 컬렉션</em></div>
     </div>
+    <div class="curation-grid" id="curationFull"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title"><em>정전 도서</em></div>
+    </div>
+    <div class="subtabs" id="libTabs">
+      <div class="subtab active" data-tab="modern" onclick="setLibTab(this,'modern')">한국 고전 <span id="libCntK"></span></div>
+      <div class="subtab" data-tab="foreign" onclick="setLibTab(this,'foreign')">해외 고전 <span id="libCntF"></span></div>
+      <div class="subtab" data-tab="all" onclick="setLibTab(this,'all')">전체 <span id="libCntAll"></span></div>
+    </div>
+    <div class="book-grid" id="bookGridAll"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2-1) 도서 큐레이션 (AI 추천)
+     ═══════════════════════════════════════════════════════════ -->
+<section class="page" id="page-curation">
+  <h1 class="page-title">도서 큐레이션</h1>
+  <p class="page-subtitle">조건을 고르면 AI가 181편의 고전 중에서 딱 맞는 책을 추천해 드려요 · 바로 챌린지로 이어집니다</p>
+
+  <div class="subtabs" id="curationTabs">
+    <div class="subtab active" data-ctab="match" onclick="setCurationTab(this,'match')">맞춤 추천</div>
+    <div class="subtab" data-ctab="persona" onclick="setCurationTab(this,'persona')">나만의 추천</div>
+  </div>
+
+  <!-- 맞춤 추천 -->
+  <div id="ctab-match">
     <div class="rec-panel">
-      <div class="rec-intro">관심 장르와 지금 기분을 고르면, AI가 181편의 고전 중에서 딱 맞는 책을 골라 드려요. 바로 챌린지로 이어집니다.</div>
+      <div class="rec-intro">관심 장르와 지금 기분을 고르면, AI가 181편의 고전 중에서 딱 맞는 책을 골라 드려요. 마음에 드는 책으로 바로 챌린지를 시작할 수 있어요.</div>
       <div class="rec-row">
         <div class="rec-label">관심 장르</div>
         <div class="rec-chips" id="recGenres"></div>
@@ -759,23 +790,16 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><em>테마 컬렉션</em></div>
+  <!-- 나만의 추천 (개인화 — 로그인·백엔드 단계) -->
+  <div id="ctab-persona" style="display:none;">
+    <div class="rec-panel">
+      <div class="rec-intro" style="margin-bottom:0;">
+        <b style="color:var(--primary);font-size:15px;">독서 페르소나 기반 추천</b><br><br>
+        클레버는 단순 대출 이력이 아니라 <b>어떻게 읽었는지</b>(완독률·퀴즈 정답률·서평 관심사·어휘 수준)를 분석해 다음에 읽을 고전을 추천합니다.<br><br>
+        <span style="color:var(--text-light);">예: "당신은 인간 내면을 다룬 고전에서 완독률이 높고 퀴즈 정답률이 좋아요 → 다음은 도스토옙스키 『죄와 벌』 추천 + 이번 주 챌린지로?"</span><br><br>
+        <span style="display:inline-block;background:var(--primary-bg);color:var(--primary);font-weight:700;font-size:12px;padding:6px 12px;border-radius:10px;">🔒 로그인 후 이용 가능 · 준비 중</span>
+      </div>
     </div>
-    <div class="curation-grid" id="curationFull"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><em>정전 도서</em></div>
-    </div>
-    <div class="subtabs" id="libTabs">
-      <div class="subtab active" data-tab="modern" onclick="setLibTab(this,'modern')">한국 고전 <span id="libCntK"></span></div>
-      <div class="subtab" data-tab="foreign" onclick="setLibTab(this,'foreign')">해외 고전 <span id="libCntF"></span></div>
-      <div class="subtab" data-tab="all" onclick="setLibTab(this,'all')">전체 <span id="libCntAll"></span></div>
-    </div>
-    <div class="book-grid" id="bookGridAll"></div>
   </div>
 </section>
 
@@ -1651,6 +1675,12 @@ function renderRecChips(){
   g.innerHTML = REC_GENRES.map(x=>`<span class="rec-chip ${recSel.genres.has(x.key)?'on':''}" onclick="toggleRecGenre('${x.key}')">${x.label}</span>`).join('');
   m.innerHTML = REC_MOODS.map(x=>`<span class="rec-chip ${recSel.mood===x.key?'on':''}" onclick="setRecMood('${x.key}')">${x.label}</span>`).join('');
   r.innerHTML = REC_REGIONS.map(x=>`<span class="rec-chip ${recSel.region===x.key?'on':''}" onclick="setRecRegion('${x.key}')">${x.label}</span>`).join('');
+}
+function setCurationTab(el, tab){
+  document.querySelectorAll('#curationTabs .subtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ctab-match').style.display   = (tab==='match')   ? '' : 'none';
+  document.getElementById('ctab-persona').style.display = (tab==='persona') ? '' : 'none';
 }
 function toggleRecGenre(k){ recSel.genres.has(k)?recSel.genres.delete(k):recSel.genres.add(k); renderRecChips(); }
 function setRecMood(k){ recSel.mood = (recSel.mood===k)?null:k; renderRecChips(); }
