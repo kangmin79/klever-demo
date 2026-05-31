@@ -19,7 +19,7 @@ a{color:inherit;text-decoration:none}
 /* ── 상단바 ── */
 .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:16px;position:sticky;top:0;z-index:30}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.5px}
-.brand .logo{background:var(--primary);color:#fff;border-radius:9px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800}
+.brand .logo{width:30px;height:30px;border-radius:9px;display:block}
 .brand small{font-weight:600;font-size:11px;color:var(--light);background:var(--input);padding:3px 8px;border-radius:6px;margin-left:2px}
 .spacer{flex:1}
 .roleswitch{display:flex;background:var(--input);border-radius:10px;padding:3px;gap:2px}
@@ -160,7 +160,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 #loginGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(120% 100% at 50% -10%,rgba(26,41,66,.96),#0f1a2e 70%)}
 .lg-card{width:100%;max-width:360px;background:#fff;border-radius:20px;padding:34px 30px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4)}
-.lg-logo{width:54px;height:54px;border-radius:14px;background:var(--primary);color:#fff;font-weight:800;font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.lg-logo{width:54px;height:54px;border-radius:14px;display:block;margin:0 auto 16px}
 .lg-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
 .lg-sub{font-size:12.5px;color:var(--light);margin:7px 0 22px;line-height:1.5}
 .lg-card input{width:100%;font-family:inherit;font-size:15px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;color:var(--text);outline:none;transition:.15s}
@@ -176,7 +176,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 <!-- 데모 로그인 게이트 (정적 페이지 → 진짜 인증 아님. 라이브 시 Supabase Auth+권한체크로 교체) -->
 <div id="loginGate">
   <div class="lg-card">
-    <div class="lg-logo">b</div>
+    <img class="lg-logo" src="/apple-touch-icon.png" alt="bookstar" width=54 height=54>
     <div class="lg-title">bookstar 관리자</div>
     <div class="lg-sub">도서관 관리자·운영자 전용 페이지입니다.<br>로그인 후 이용하세요.</div>
     <input id="lgPw" type="password" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')lgTry()" autofocus>
@@ -196,7 +196,7 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
 </script>
 
 <div class="topbar">
-  <div class="brand"><span class="logo">b</span>bookstar <small>관리자</small></div>
+  <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>관리자</small></div>
   <div class="school" id="scopeLabel">🏛 한국대학교 도서관</div>
   <div class="spacer"></div>
   <div class="roleswitch">
@@ -232,7 +232,7 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
     <section id="pg-dash">
       <div class="phead">
         <div>
-          <h1>측정 대시보드 <span class="tagpill" id="scopeTag">한국대학교</span></h1>
+          <h1>측정 대시보드 <span class="tagpill" id="scopeTag">한국대학교</span><span class="tagpill" id="demoTag" style="color:var(--gold);background:rgba(212,169,59,.14)">데모 데이터</span></h1>
           <p id="dashSub">학생들이 실제로 ‘얼마나 읽었는지’를 한눈에 — 추천을 넘어 측정·검증</p>
         </div>
         <div class="seg">
@@ -246,8 +246,8 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
 
       <div class="row c2">
         <div class="panel">
-          <h3>주간 완독 추세</h3>
-          <div class="ph-sub">최근 8주간 완독 권수</div>
+          <h3 id="trendTitle">주간 완독 추세</h3>
+          <div class="ph-sub" id="trendSub">최근 8주간 완독 권수</div>
           <svg class="trend" id="trend" viewBox="0 0 640 170" preserveAspectRatio="none"></svg>
         </div>
         <div class="panel">
@@ -320,36 +320,90 @@ const DATA = {
   library: {
     scope:'한국대학교', label:'🏛 한국대학교 도서관', who:'한국대 사서', av:'한',
     sub:'학생들이 실제로 ‘얼마나 읽었는지’를 한눈에 — 추천을 넘어 측정·검증',
-    kpis:[
-      {lab:'활성 학생',  val:'1,284', unit:'명', d:'+8.2%', up:true},
-      {lab:'이달 완독',  val:'3,471', unit:'권', d:'+12.4%', up:true},
-      {lab:'평균 완독률', val:'67', unit:'%', d:'+4.0%p', up:true},
-      {lab:'챌린지 참여율', val:'42', unit:'%', d:'+6.1%p', up:true},
-      {lab:'퀴즈 정답률', val:'78', unit:'%', d:'-1.2%p', up:false},
-    ],
-    trend:[210,245,232,290,275,330,360,412],
     donut:[{n:'완독',v:67,c:'#1a2942'},{n:'진행중',v:21,c:'#3a6ea5'},{n:'미시작',v:12,c:'#d8d3c8'}],
     dept:[['국어국문',5.8],['심리학',5.1],['사학',4.6],['경영',3.9],['컴퓨터공학',3.2],['간호',2.8]],
     books:[['코스모스','칼 세이건',182],['사피엔스','유발 하라리',164],['미움받을 용기','기시미 이치로',151],['데미안','헤르만 헤세',133],['1984','조지 오웰',120]],
-    readers:[['김민준','컴퓨터공학 · 완독 12',96],['이서연','국어국문 · 완독 11',94],['박도윤','심리학 · 완독 10',91],['최지우','경영 · 완독 9',88],['정하准','사학 · 완독 9',85]],
+    readers:[['김민준','컴퓨터공학 · 완독 12',96],['이서연','국어국문 · 완독 11',94],['박도윤','심리학 · 완독 10',91],['최지우','경영 · 완독 9',88],['정하준','사학 · 완독 9',85]],
     feed:[['김','김민준 학생이 《코스모스》 완독','방금'],['이','이서연 학생이 챌린지 ‘이달의 고전’ 달성','7분 전'],['박','박도윤 학생이 《데미안》 퀴즈 100점','22분 전'],['최','International 학생 3명 신규 가입','1시간 전'],['정','정하준 학생이 《1984》 서평 등록','2시간 전']],
+    ranges:{
+      week:{
+        kpis:[
+          {lab:'주간 활성 학생', val:'612', unit:'명', d:'+5.4%', up:true},
+          {lab:'주간 완독',    val:'824', unit:'권', d:'+9.1%', up:true},
+          {lab:'평균 완독률',  val:'64', unit:'%', d:'+2.2%p', up:true},
+          {lab:'챌린지 참여율', val:'39', unit:'%', d:'+3.0%p', up:true},
+          {lab:'퀴즈 정답률',  val:'77', unit:'%', d:'-0.8%p', up:false},
+        ],
+        trend:[88,96,72,110,131,98,142], labs:['월','화','수','목','금','토','일'],
+        tTitle:'일별 완독 추세', tSub:'최근 7일간 완독 권수'
+      },
+      month:{
+        kpis:[
+          {lab:'활성 학생',   val:'1,284', unit:'명', d:'+8.2%', up:true},
+          {lab:'이달 완독',   val:'3,471', unit:'권', d:'+12.4%', up:true},
+          {lab:'평균 완독률', val:'67', unit:'%', d:'+4.0%p', up:true},
+          {lab:'챌린지 참여율', val:'42', unit:'%', d:'+6.1%p', up:true},
+          {lab:'퀴즈 정답률', val:'78', unit:'%', d:'-1.2%p', up:false},
+        ],
+        trend:[210,245,232,290,275,330,360,412], labs:['7주전','','5주전','','3주전','','지난주','이번주'],
+        tTitle:'주간 완독 추세', tSub:'최근 8주간 완독 권수'
+      },
+      term:{
+        kpis:[
+          {lab:'학기 활성 학생', val:'3,920', unit:'명', d:'+11.0%', up:true},
+          {lab:'학기 완독',    val:'12,640', unit:'권', d:'+15.8%', up:true},
+          {lab:'평균 완독률',  val:'69', unit:'%', d:'+5.1%p', up:true},
+          {lab:'챌린지 참여율', val:'47', unit:'%', d:'+8.4%p', up:true},
+          {lab:'퀴즈 정답률',  val:'79', unit:'%', d:'+0.6%p', up:true},
+        ],
+        trend:[1480,1760,2120,2540,2960,3380,3720], labs:['1월','2월','3월','4월','5월','6월','이번'],
+        tTitle:'월별 완독 추세', tSub:'이번 학기 월별 완독 권수'
+      }
+    }
   },
   operator: {
     scope:'전체 12개 대학', label:'🌐 Bookstar 운영', who:'Bookstar 운영자', av:'B',
     sub:'전체 도입 대학의 독서 측정·운영 현황 (본사 슈퍼관리자)',
-    kpis:[
-      {lab:'도입 대학',  val:'12', unit:'곳', d:'+2곳', up:true},
-      {lab:'전체 학생',  val:'18,402', unit:'명', d:'+9.6%', up:true},
-      {lab:'월 완독 합계', val:'41,250', unit:'권', d:'+14.1%', up:true},
-      {lab:'평균 완독률', val:'63', unit:'%', d:'+3.2%p', up:true},
-      {lab:'MRR(구독)', val:'1,840', unit:'만원', d:'+18%', up:true},
-    ],
-    trend:[2200,2480,2610,2900,3100,3450,3720,4125],
     donut:[{n:'활성 대학',v:75,c:'#1a2942'},{n:'온보딩',v:17,c:'#3a6ea5'},{n:'휴면',v:8,c:'#d8d3c8'}],
     dept:[['한국대',5.2],['경기대',4.8],['목원대',4.3],['서울여대',3.7],['부산대',3.1],['전남대',2.6]],
     books:[['사피엔스','유발 하라리',1842],['코스모스','칼 세이건',1655],['미움받을 용기','기시미',1402],['데미안','헤르만 헤세',1190],['총균쇠','재레드 다이아몬드',1033]],
     readers:[['한국대','완독 3,471 · 활성 1,284',97],['경기대','완독 3,102 · 활성 1,150',93],['목원대','완독 2,740 · 활성 980',90],['서울여대','완독 2,210 · 활성 870',86],['부산대','완독 1,980 · 활성 760',82]],
     feed:[['경','경기대 신규 온보딩 완료','12분 전'],['B','AI 추천 호출 일 12,400건 돌파','40분 전'],['목','목원대 구독 연장(연간)','3시간 전'],['서','서울여대 도서 풀 +320권 증분','5시간 전'],['B','신규 도서 DB 빌드 완료(1,133→1,460)','어제']],
+    ranges:{
+      week:{
+        kpis:[
+          {lab:'도입 대학',    val:'12', unit:'곳', d:'+2곳', up:true},
+          {lab:'전체 학생',    val:'18,402', unit:'명', d:'+9.6%', up:true},
+          {lab:'주간 완독 합계', val:'9,640', unit:'권', d:'+7.2%', up:true},
+          {lab:'평균 완독률',  val:'61', unit:'%', d:'+1.8%p', up:true},
+          {lab:'MRR(구독)',   val:'1,840', unit:'만원', d:'+18%', up:true},
+        ],
+        trend:[1180,1320,980,1510,1720,1290,1640], labs:['월','화','수','목','금','토','일'],
+        tTitle:'일별 완독 추세', tSub:'전체 대학 최근 7일 완독 합계'
+      },
+      month:{
+        kpis:[
+          {lab:'도입 대학',   val:'12', unit:'곳', d:'+2곳', up:true},
+          {lab:'전체 학생',   val:'18,402', unit:'명', d:'+9.6%', up:true},
+          {lab:'월 완독 합계', val:'41,250', unit:'권', d:'+14.1%', up:true},
+          {lab:'평균 완독률', val:'63', unit:'%', d:'+3.2%p', up:true},
+          {lab:'MRR(구독)',  val:'1,840', unit:'만원', d:'+18%', up:true},
+        ],
+        trend:[2200,2480,2610,2900,3100,3450,3720,4125], labs:['7주전','','5주전','','3주전','','지난주','이번주'],
+        tTitle:'주간 완독 추세', tSub:'전체 대학 최근 8주 완독 합계'
+      },
+      term:{
+        kpis:[
+          {lab:'도입 대학',    val:'12', unit:'곳', d:'+2곳', up:true},
+          {lab:'전체 학생',    val:'18,402', unit:'명', d:'+9.6%', up:true},
+          {lab:'학기 완독 합계', val:'152,400', unit:'권', d:'+16.0%', up:true},
+          {lab:'평균 완독률',  val:'64', unit:'%', d:'+3.0%p', up:true},
+          {lab:'MRR(구독)',   val:'1,840', unit:'만원', d:'+18%', up:true},
+        ],
+        trend:[9800,11200,13400,16100,18900,21500], labs:['1월','2월','3월','4월','5월','이번'],
+        tTitle:'월별 완독 추세', tSub:'이번 학기 월별 완독 합계'
+      }
+    }
   }
 };
 let ROLE='library', RANGE='month';
@@ -362,7 +416,7 @@ function setRole(r){
   document.querySelectorAll('.grp.op-only').forEach(g=>g.style.display=r==='operator'?'block':'none');
   render();
 }
-function setRange(b,r){RANGE=r;document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');/* 데모: 범위별 미세 변동 생략 */}
+function setRange(b,r){RANGE=r;document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();}
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
   ['pg-dash','pg-students','pg-other'].forEach(id=>el(id).style.display='none');
@@ -378,14 +432,15 @@ function go(elm,page){
 
 /* ── 렌더 ── */
 function render(){
-  const d=DATA[ROLE];
+  const d=DATA[ROLE], rg=d.ranges[RANGE];
   el('scopeLabel').textContent=d.label; el('scopeTag').textContent=d.scope;
   el('whoName').textContent=d.who; el('avatar').textContent=d.av; el('dashSub').textContent=d.sub;
   // KPI
-  el('kpis').innerHTML=d.kpis.map(k=>`<div class="kpi"><div class="lab">${k.lab}</div>
+  el('kpis').innerHTML=rg.kpis.map(k=>`<div class="kpi"><div class="lab">${k.lab}</div>
     <div class="val">${k.val}<small> ${k.unit}</small></div>
     <div class="delta ${k.up?'up':'down'}">${k.up?'▲':'▼'} ${k.d}</div></div>`).join('');
-  drawTrend(d.trend); drawDonut(d.donut); drawDept(d.dept);
+  el('trendTitle').textContent=rg.tTitle; el('trendSub').textContent=rg.tSub;
+  drawTrend(rg.trend,rg.labs); drawDonut(d.donut); drawDept(d.dept);
   // TOP 도서
   el('topBooks').innerHTML=d.books.map((b,i)=>`<div class="rk"><div class="no ${i<3?'top':''}">${i+1}</div>
     <div class="cv">📕</div><div class="info"><div class="t">${b[0]}</div><div class="s">${b[1]}</div></div>
@@ -398,13 +453,13 @@ function render(){
   el('feed').innerHTML=d.feed.map(f=>`<div class="fi"><div class="fav">${f[0]}</div>
     <div class="ft">${f[1]}</div><div class="fz">${f[2]}</div></div>`).join('');
 }
-function drawTrend(vals){
+function drawTrend(vals,labs){
   const W=640,H=170,pad=18,mx=Math.max(...vals),mn=Math.min(...vals);
   const x=i=>pad+i*(W-pad*2)/(vals.length-1);
   const y=v=>H-22-(v-mn)/(mx-mn||1)*(H-46);
   const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
   const area=`${pad},${H-22} ${pts} ${W-pad},${H-22}`;
-  const labs=['7주전','','5주전','','3주전','','지난주','이번주'];
+  labs=labs||[];
   el('trend').innerHTML=`<defs><linearGradient id="g" x1=0 y1=0 x2=0 y2=1>
     <stop offset="0" stop-color="#3a6ea5" stop-opacity=".22"/><stop offset="1" stop-color="#3a6ea5" stop-opacity="0"/></linearGradient></defs>
     <polygon points="${area}" fill="url(#g)"/>
