@@ -172,8 +172,16 @@ body.dark .lc-spread-text{background:linear-gradient(95deg,#241f17,#2c261c 55%);
 body.dark .lc-st{color:#f3ecdd;}
 .lc-sa{font-size:12.5px;color:#8a7c66;}
 body.dark .lc-sa{color:var(--text-light);}
+.lc-smeta{margin-top:11px;font-size:12.5px;color:#6b5e49;display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+body.dark .lc-smeta{color:#b6a890;}
+.lc-smeta i{color:#cbb88f;font-style:normal;margin:0 9px;}
+.lc-star{color:var(--gold);font-weight:800;}
 .lc-snote{margin-top:15px;font-size:13.5px;line-height:1.72;color:#5a4f3e;font-style:italic;border-left:3px solid var(--gold);padding-left:12px;}
 body.dark .lc-snote{color:#cdbfa6;}
+.lc-sdesc{margin-top:13px;font-size:12.5px;line-height:1.72;color:#5f5444;max-height:6.9em;overflow:hidden;}
+body.dark .lc-sdesc{color:#b0a48f;}
+.lc-ssrc{margin-top:13px;font-size:10px;color:#a99c84;letter-spacing:.1px;}
+body.dark .lc-ssrc{color:#7d735f;}
 .lc-sbtns{margin-top:auto;display:flex;gap:9px;padding-top:20px;flex-wrap:wrap;}
 .lc-sbtn{padding:10px 17px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;}
 .lc-sbtn.p{background:var(--gold);color:#3a2b00;}
@@ -1844,6 +1852,7 @@ function spineHeight(s){const hs=[150,174,186,158,178,146,190,164,154,182];let h
 function spineStyle(b,face){const h=face?156:spineHeight(b.t);return `height:${h}px;${b.cover?'':`background:${spineColor(b.t)}`}`;}
 function spineCls(bi,total){if(total>=3&&bi===total-1)return ' lc-lean';if(total>=5&&bi===total-2)return ' lc-lean2';return '';}
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
+const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function lcCvHTML(b){return b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.remove()">`:`<div class="lc-fb">${esc(b.t)}</div>`;}
 function lcGridHTML(){
@@ -1852,14 +1861,24 @@ function lcGridHTML(){
     if(!books.length) return '';
     const f=books[0], rest=books.slice(1);
     const note=f.note||c.intro||'';
+    const yr=f.pubYear?` · ${esc(f.pubYear)}`:'';
+    const mb=[];
+    if(f.rating!=null) mb.push(`<span class="lc-star">★</span> ${f.rating}${f.ratingCount?` · ${f.ratingCount}명`:''}`);
+    if(f.loan) mb.push(`대출 ${Number(f.loan).toLocaleString()}`);
+    if(f.pages) mb.push(`${f.pages}쪽`);
+    const metaHTML=mb.length?`<div class="lc-smeta">${mb.join('<i>|</i>')}</div>`:'';
+    const descHTML=f.description?`<p class="lc-sdesc">${esc(f.description)}</p>`:'';
     const spread=`
       <div class="lc-spread">
         <div class="lc-spread-cover"${f.cover?'':` style="background:${spineColor(f.t)}"`}>${lcCvHTML(f)}</div>
         <div class="lc-spread-text">
           <div class="lc-st">${esc(f.t)}</div>
-          <div class="lc-sa">${esc(f.a||'')}</div>
+          <div class="lc-sa">${esc(f.a||'')}${yr}</div>
+          ${metaHTML}
           ${note?`<div class="lc-snote">“${esc(note)}”${f.note?' — 사서':''}</div>`:''}
-          <div class="lc-sbtns"><span class="lc-sbtn p" onclick="openLc(${ci},0)">📖 자세히 · 빌리기</span></div>
+          ${descHTML}
+          <div class="lc-sbtns"><span class="lc-sbtn p" onclick="openLc(${ci},0)">📖 도서관에서 빌리기</span></div>
+          <div class="lc-ssrc">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>
         </div>
       </div>`;
     const restHTML=rest.length?`
@@ -1887,19 +1906,27 @@ function renderLibCuration(){
   try { LC_PUB = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){ LC_PUB=[]; }
   if(!LC_PUB.length){ grid.innerHTML = '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:54px 0;line-height:1.8">아직 사서가 발행한 큐레이션이 없어요.<br>도서관에서 곧 추천 책을 올릴 거예요 📚</div>'; return; }
   grid.innerHTML = lcGridHTML();
-  backfillCovers();
+  backfillInfo();
 }
-async function backfillCovers(){
-  const missing = [...new Set([].concat(...LC_PUB.map(c=>(c.books||[]).filter(b=>!b.cover && b.isbn).map(b=>b.isbn))))];
-  if(!missing.length) return;
+async function backfillInfo(){
+  const need = [...new Set([].concat(...LC_PUB.map(c=>(c.books||[]).filter(b=>b.isbn && (b.rating===undefined || !b.cover || b.description===undefined)).map(b=>b.isbn))))];
+  if(!need.length) return;
   try{
-    const r = await fetch(COVER_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:missing})});
-    const d = await r.json(); const cov = d.covers||{};
+    const r = await fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:need})});
+    const d = await r.json(); const info = d.info||{};
     let changed=false;
-    LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(!b.cover && cov[b.isbn]){ b.cover=cov[b.isbn]; changed=true; } }));
+    LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{
+      const x=info[b.isbn]; if(!x) return;
+      if(!b.cover && x.cover){ b.cover=x.cover; changed=true; }
+      if(b.rating===undefined && x.rating!=null){ b.rating=x.rating; b.ratingCount=x.ratingCount||0; changed=true; }
+      if(!b.pages && x.pages){ b.pages=x.pages; changed=true; }
+      if(!b.loan && x.loan){ b.loan=x.loan; changed=true; }
+      if(!b.pubYear && x.pubYear){ b.pubYear=x.pubYear; changed=true; }
+      if(b.description===undefined && x.description){ b.description=x.description; changed=true; }
+    }));
     if(changed){
       try{ localStorage.setItem('bookstar_pub', JSON.stringify(LC_PUB)); }catch(e){}
-      document.getElementById('libCurationGrid').innerHTML = lcGridHTML();
+      const g=document.getElementById('libCurationGrid'); if(g) g.innerHTML = lcGridHTML();
     }
   }catch(e){}
 }
