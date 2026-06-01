@@ -247,7 +247,7 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
 
 <div class="topbar">
   <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>관리자</small></div>
-  <div class="school" id="scopeLabel">🏛 한국대학교 도서관</div>
+  <div class="school" id="scopeLabel">한국대학교 도서관</div>
   <div class="spacer"></div>
   <div class="roleswitch">
     <button class="on" id="rbLib" onclick="setRole('library')">도서관 관리자</button>
@@ -261,19 +261,19 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
   <!-- 사이드 -->
   <aside class="side">
     <div class="grp">운영</div>
-    <div class="navi on" onclick="go(this,'dash')">📊 <span>측정 대시보드</span></div>
-    <div class="navi" onclick="go(this,'students')">🎓 <span>학생 관리</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'programs')">🏆 <span>프로그램·챌린지</span></div>
-    <div class="navi" onclick="go(this,'curation')">✦ <span>큐레이션 편성</span><span class="soon">준비</span></div>
+    <div class="navi on" onclick="go(this,'dash')"><span>측정 대시보드</span></div>
+    <div class="navi" onclick="go(this,'students')"><span>학생 관리</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'programs')"><span>프로그램·챌린지</span></div>
+    <div class="navi" onclick="go(this,'curation')"><span>큐레이션 편성</span><span class="soon">준비</span></div>
     <div class="grp">콘텐츠</div>
-    <div class="navi" onclick="go(this,'books')">📚 <span>도서·콘텐츠</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'report')">📄 <span>리포트</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'community')">💬 <span>커뮤니티 관리</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'settings')">⚙ <span>설정</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'books')"><span>도서·콘텐츠</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'report')"><span>리포트</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'community')"><span>커뮤니티 관리</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'settings')"><span>설정</span><span class="soon">준비</span></div>
     <div class="grp op-only" style="display:none">운영자 전용</div>
-    <div class="navi op-only" onclick="go(this,'universities')">🏫 <span>대학 관리</span><span class="soon">준비</span></div>
-    <div class="navi op-only" onclick="go(this,'bookdb')">🗄 <span>도서 DB·AI</span><span class="soon">준비</span></div>
-    <div class="navi op-only" onclick="go(this,'billing')">💳 <span>구독·결제</span><span class="soon">준비</span></div>
+    <div class="navi op-only" onclick="go(this,'universities')"><span>대학 관리</span><span class="soon">준비</span></div>
+    <div class="navi op-only" onclick="go(this,'bookdb')"><span>도서 DB·AI</span><span class="soon">준비</span></div>
+    <div class="navi op-only" onclick="go(this,'billing')"><span>구독·결제</span><span class="soon">준비</span></div>
   </aside>
 
   <!-- 본문 -->
@@ -396,7 +396,7 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
 /* ── 목업 데이터 (도서관 / 운영자 두 스코프) ── */
 const DATA = {
   library: {
-    scope:'한국대학교', label:'🏛 한국대학교 도서관', who:'한국대 사서', av:'한',
+    scope:'한국대학교', label:'한국대학교 도서관', who:'한국대 사서', av:'한',
     sub:'학생들이 실제로 ‘얼마나 읽었는지’를 한눈에 — 추천을 넘어 측정·검증',
     donut:[{n:'완독',v:67,c:'#1a2942'},{n:'진행중',v:21,c:'#3a6ea5'},{n:'미시작',v:12,c:'#d8d3c8'}],
     dept:[['국어국문',5.8],['심리학',5.1],['사학',4.6],['경영',3.9],['컴퓨터공학',3.2],['간호',2.8]],
@@ -440,7 +440,7 @@ const DATA = {
     }
   },
   operator: {
-    scope:'전체 12개 대학', label:'🌐 Bookstar 운영', who:'Bookstar 운영자', av:'B',
+    scope:'전체 12개 대학', label:'Bookstar 운영', who:'Bookstar 운영자', av:'B',
     sub:'전체 도입 대학의 독서 측정·운영 현황 (본사 슈퍼관리자)',
     donut:[{n:'활성 대학',v:75,c:'#1a2942'},{n:'온보딩',v:17,c:'#3a6ea5'},{n:'휴면',v:8,c:'#d8d3c8'}],
     dept:[['한국대',5.2],['경기대',4.8],['목원대',4.3],['서울여대',3.7],['부산대',3.1],['전남대',2.6]],
@@ -640,7 +640,7 @@ function renderPrograms(){
       ${list.map(p=>`<div class="pcard">
         <span class="ptype">${p.type}</span><h4>${p.title}</h4>
         <div class="pmeta">${p.period} · ${p.target}</div>
-        <div class="pfoot"><span class="pbooks">📚 ${p.books}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
+        <div class="pfoot"><span class="pbooks">도서 ${p.books}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
       </div>`).join('')||'<div style="font-size:12px;color:var(--light);padding:10px 4px">없음</div>'}
     </div>`;
   }).join('');
