@@ -179,18 +179,26 @@ body.dark .ml-bk:hover .ml-bk-t,body.dark .ml-rkc:hover .ml-rkc-t{color:var(--go
 .ml-ic-c{width:62px;height:62px;margin:0 auto 8px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .15s;}
 .ml-ic:hover .ml-ic-c{transform:translateY(-3px);}
 .ml-ic-l{font-size:12px;color:var(--text-sub);font-weight:500;letter-spacing:-.3px;}
-.ml-life{display:flex;flex-wrap:wrap;gap:30px;align-items:center;background:linear-gradient(120deg,var(--primary-bg),transparent);border-radius:20px;padding:30px 32px;}
-.ml-life-cv{flex:0 0 auto;width:150px;aspect-ratio:2/3;}
-.ml-life-card{flex:1 1 280px;min-width:240px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;box-shadow:0 10px 30px -16px rgba(20,25,45,.18);}
-.ml-life-by{font-size:12px;font-weight:800;color:var(--gold);margin-bottom:12px;}
-.ml-life-q{font-size:16px;line-height:1.6;color:var(--text);font-weight:600;letter-spacing:-.3px;}
-.ml-life-meta{margin-top:16px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;}
-.ml-life-meta span{color:var(--primary);font-weight:600;}
-body.dark .ml-life-meta span{color:var(--gold);}
-.ml-life-t{margin-top:14px;font-size:13px;font-weight:700;color:var(--text);}
-.ml-life-t span{color:var(--text-light);font-weight:500;}
-.ml-cta{display:inline-block;margin-top:16px;padding:11px 20px;border-radius:11px;background:var(--primary);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;}
-body.dark .ml-cta{background:var(--gold);color:#0f172a;}
+.ml-life{display:flex;flex-wrap:wrap;gap:36px;align-items:center;justify-content:center;background:linear-gradient(125deg,var(--primary-bg),rgba(255,255,255,0) 70%);border-radius:22px;padding:42px 38px;}
+.ml-life-stage{position:relative;flex:0 0 auto;width:200px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.ml-life-glow{position:absolute;inset:8px;border-radius:22px;background-position:center;background-size:cover;filter:blur(32px) saturate(1.4);opacity:.5;transform:scale(1.06);}
+.ml-life-cv{position:relative;width:166px;aspect-ratio:2/3;box-shadow:0 24px 46px -14px rgba(20,20,40,.5);}
+.ml-life-card{flex:0 1 446px;min-width:260px;background:var(--bg-card);border-radius:18px;padding:24px 26px;box-shadow:0 14px 38px -18px rgba(20,25,45,.22);}
+body.dark .ml-life-card{background:rgba(255,255,255,.05);}
+.ml-life-who{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.ml-life-av{width:42px;height:42px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;}
+.ml-life-who-t{font-size:14px;font-weight:800;color:var(--text);}
+.ml-life-who-s{font-size:12px;color:var(--text-light);margin-top:2px;}
+.ml-life-quote{position:relative;padding:6px 28px 6px 34px;}
+.ml-q-open,.ml-q-close{position:absolute;font-size:44px;font-weight:800;color:var(--border);font-family:Georgia,serif;line-height:1;}
+.ml-q-open{left:0;top:-4px;}
+.ml-q-close{right:4px;bottom:-20px;}
+.ml-life-quote p{font-size:15px;line-height:1.78;color:var(--text-sub);font-weight:500;letter-spacing:-.2px;}
+.ml-life-checks{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+.ml-life-chk{font-size:13px;color:var(--text-sub);display:flex;align-items:center;gap:9px;}
+.ml-life-chk b{color:var(--text);font-weight:700;}
+.ml-life-chk .ck{color:var(--primary);font-weight:800;}
+body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;cursor:grab;user-select:none;}
 .ml-hrow.grabbing{cursor:grabbing;}
 .ml-hrow::-webkit-scrollbar{display:none;}
@@ -1914,7 +1922,24 @@ function mlBindDrag(){
 function libTitled(){return LIB_POOL.filter(b=>b.t);}
 function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];for(let i=0;i<n;i++)r.push(p[(off+i)%p.length]);return r;}
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
-function mlLife(b,note,cur){const m=[];if(b.rating!=null)m.push(`✓ 평균 별점 ${b.rating}`);if(b.loan)m.push(`✓ 대출 ${Number(b.loan).toLocaleString()}회`);return `<div>${mlHead('오늘의 사서 추천',(cur&&cur.title)||'우리 도서관 큐레이션')}<div class="ml-life">${mlcv('ml-life-cv',b)}<div class="ml-life-card"><div class="ml-life-by">✦ ${esc((cur&&cur.library)||'우리 도서관')} 사서 추천</div><div class="ml-life-q">“${esc(note||'이 달의 추천 도서예요.')}”</div>${m.length?`<div class="ml-life-meta">${m.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}<div class="ml-life-t">${esc(cleanT(b.t))} <span>· ${esc(cleanA(b.a))}</span></div><span class="ml-cta" onclick="libDetail('${b.isbn}')">읽으러 가기</span></div></div></div>`;}
+function mlLife(b,note,cur){
+  const d=new Date();const wd=['일','월','화','수','목','금','토'][d.getDay()];
+  const dateStr=`${d.getMonth()+1}월 ${d.getDate()}일 ${wd}요일 업데이트`;
+  const ym=`${d.getFullYear()}년 ${d.getMonth()+1}월`;
+  const glow=b.cover?`<div class="ml-life-glow" style="background-image:url('${esc(hiCover(b.cover))}')"></div>`:'';
+  const checks=[];
+  if(b.rating!=null) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${ym} 평균 별점 <b>${b.rating}</b></div>`);
+  if(cur&&cur.title) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${esc(cur.title)}</div>`);
+  else if(b.loan) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> 누적 대출 <b>${Number(b.loan).toLocaleString()}회</b></div>`);
+  return `<div>${mlHead('오늘의 사서 추천',dateStr)}
+    <div class="ml-life">
+      <div class="ml-life-stage" onclick="libDetail('${b.isbn}')">${glow}${mlcv('ml-life-cv',b)}</div>
+      <div class="ml-life-card">
+        <div class="ml-life-who"><div class="ml-life-av">📖</div><div><div class="ml-life-who-t">우리 학교 사서의 추천</div><div class="ml-life-who-s">${esc((cur&&cur.library)||'우리 도서관')} · 사서</div></div></div>
+        <div class="ml-life-quote"><span class="ml-q-open">“</span><p>${esc(note||'이 달의 추천 도서예요.')}</p><span class="ml-q-close">”</span></div>
+        ${checks.length?`<div class="ml-life-checks">${checks.join('')}</div>`:''}
+      </div>
+    </div></div>`;}
 function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(cleanA(b.a))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
 const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시','인문/교양','취미/실용','어린이/청소년','매거진'];
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
