@@ -206,6 +206,26 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .cur-f{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .cur-f input{flex:1;min-width:160px;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none}
 .cur-f input:focus{border-color:var(--primary)}
+/* ── 큐레이션 편집/발행 모달 ── */
+#progOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:70;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#progOv.on{display:flex}
+.cur-inp{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;outline:none;color:var(--text);background:var(--card)}
+.cur-inp:focus{border-color:var(--primary)}
+textarea.cur-inp{resize:vertical;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-ghost2{background:var(--card);color:var(--sub);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.btn-ghost2:hover{border-color:var(--primary);color:var(--primary)}
+.bk{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.bk .cv{width:30px;height:42px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
+.bk-i{flex:1;min-width:0}
+.bk-i .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-i .s{font-size:11px;color:var(--light);margin:2px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-note{width:100%;font-family:inherit;font-size:11.5px;border:1px solid var(--border);border-radius:8px;padding:6px 9px;outline:none;color:var(--text)}
+.bk-note:focus{border-color:var(--primary)}
+.bk-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:0 0 auto}
+.avbadge{font-size:10px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 7px;border-radius:6px;white-space:nowrap}
+.bk-x{cursor:pointer;color:var(--light);font-size:16px;line-height:1;padding:0 2px}
+.bk-x:hover{color:var(--bad)}
 /* ── 로그인 게이트 (데모) ── */
 #loginGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(120% 100% at 50% -10%,rgba(26,41,66,.96),#0f1a2e 70%)}
@@ -383,6 +403,9 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
         </div>
       </div>
     </div>
+    <div id="progOv" onclick="if(event.target.id==='progOv')closeProg()">
+      <div class="cur-modal" id="progModal"></div>
+    </div>
 
     <!-- 나머지 메뉴: 골격(준비중) -->
     <section id="pg-other" style="display:none">
@@ -487,6 +510,8 @@ const DATA = {
 let ROLE='library', RANGE='month';
 
 const el=id=>document.getElementById(id);
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let PID=200;
 function setRole(r){
   ROLE=r; document.body.className=r;
   el('rbLib').classList.toggle('on',r==='library');
@@ -627,23 +652,80 @@ function closeStudent(){el('stuOv').classList.remove('on');}
 /* ── 프로그램 운영 ── */
 const STATUS=[{k:'예정',c:'#c98a2b'},{k:'진행중',c:'#2e7d57'},{k:'종료',c:'#7c8597'}];
 let PROGRAMS=[
-  {title:'신입생 환영 — 첫 책', type:'큐레이션', status:'진행중', period:'3.2~3.31', target:'신입생 전체', books:8, result:'완독률 64%'},
-  {title:'이달의 고전 챌린지', type:'챌린지', status:'진행중', period:'6.1~6.30', target:'전교', books:5, result:'참여 312명'},
-  {title:'시험기간, 머리 식히는 책', type:'큐레이션', status:'예정', period:'6.15~6.30', target:'전교', books:10, result:''},
-  {title:'심리학과 추천도서', type:'큐레이션', status:'종료', period:'5.1~5.31', target:'심리학과', books:12, result:'완독률 71%'},
-  {title:'작가 초청 북토크 — 정세랑', type:'행사', status:'종료', period:'4.18', target:'신청 80명', books:3, result:'만족 4.6/5'},
+  {id:'p1', title:'신입생 환영 — 첫 책', type:'큐레이션', status:'진행중', period:'3.2~3.31', target:'신입생 전체', n:8, books:[], intro:'', result:'완독률 64%'},
+  {id:'p2', title:'이달의 고전 챌린지', type:'챌린지', status:'진행중', period:'6.1~6.30', target:'전교', n:5, books:[], intro:'', result:'참여 312명'},
+  {id:'p3', title:'시험기간, 머리 식히는 책', type:'큐레이션', status:'예정', period:'6.15~6.30', target:'전교', intro:'시험 끝, 가볍게 머리 식히며 읽기 좋은 소설들이에요',
+    books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',note:''},{t:'달러구트 꿈 백화점',a:'이미예 · 팩토리나인',isbn:'9791165341909',note:''},{t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',note:''},{t:'아몬드',a:'손원평 · 창비',isbn:'9788936434267',note:''}], result:''},
+  {id:'p4', title:'심리학과 추천도서', type:'큐레이션', status:'종료', period:'5.1~5.31', target:'심리학과', n:12, books:[], intro:'', result:'완독률 71%'},
+  {id:'p5', title:'작가 초청 북토크 — 정세랑', type:'행사', status:'종료', period:'4.18', target:'신청 80명', n:3, books:[], intro:'', result:'만족 4.6/5'},
 ];
+function pgCount(p){return (p.books&&p.books.length)?p.books.length:(p.n||0);}
 function renderPrograms(){
   el('kanban').innerHTML=STATUS.map(s=>{
     const list=PROGRAMS.filter(p=>p.status===s.k);
     return `<div class="kcol"><div class="ktit"><span class="kdot" style="background:${s.c}"></span>${s.k}<span class="kcount">${list.length}</span></div>
-      ${list.map(p=>`<div class="pcard">
-        <span class="ptype">${p.type}</span><h4>${p.title}</h4>
-        <div class="pmeta">${p.period} · ${p.target}</div>
-        <div class="pfoot"><span class="pbooks">도서 ${p.books}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
+      ${list.map(p=>`<div class="pcard" onclick="openProg('${p.id}')">
+        <span class="ptype">${p.type}</span><h4>${esc(p.title)}</h4>
+        <div class="pmeta">${p.period} · ${esc(p.target)}</div>
+        <div class="pfoot"><span class="pbooks">도서 ${pgCount(p)}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
       </div>`).join('')||'<div style="font-size:12px;color:var(--light);padding:10px 4px">없음</div>'}
     </div>`;
   }).join('');
+}
+/* ── 큐레이션 편집 / 발행 ── */
+function progById(id){return PROGRAMS.find(p=>p.id===id);}
+function openProg(id){
+  const p=progById(id); if(!p) return;
+  const editable = p.status!=='종료';
+  el('progModal').innerHTML=`
+    <div class="cur-h"><span class="star">✦</span><h3>${p.type==='큐레이션'?'큐레이션 편집':'프로그램'}</h3>
+      <span class="ptype" style="margin-left:4px">${p.type}</span><span class="x" onclick="closeProg()">×</span></div>
+    <div class="cur-b">
+      <div class="cur-label">제목</div>
+      <input class="cur-inp" id="pgTitle" value="${esc(p.title)}" ${editable?'':'disabled'}>
+      <div class="cur-label" style="margin-top:16px">소개글 — 학생에게 보일 한두 줄</div>
+      <textarea class="cur-inp" id="pgIntro" rows="2" placeholder="예: 시험 끝, 머리 식히며 읽기 좋은 소설들이에요" ${editable?'':'disabled'}>${esc(p.intro||'')}</textarea>
+      <div class="row2">
+        <div><div class="cur-label" style="margin-top:16px">대상</div><input class="cur-inp" id="pgTarget" value="${esc(p.target||'')}" ${editable?'':'disabled'}></div>
+        <div><div class="cur-label" style="margin-top:16px">기간</div><input class="cur-inp" id="pgPeriod" value="${esc(p.period||'')}" ${editable?'':'disabled'}></div>
+      </div>
+      <div class="cand-head" style="margin-top:18px"><span class="ct">담은 책 ${(p.books||[]).length}권</span></div>
+      <div id="pgBooks">${renderBooks(p,editable)}</div>
+      <div class="cur-note">※ '소장·전자책'은 예시 표기예요 — 도서관 카탈로그 연동 시 책마다 실제 접근 링크(소장 위치·전자책)가 자동으로 붙습니다.</div>
+    </div>
+    <div class="cur-f">
+      ${p.status==='종료'?'<span style="color:var(--light);font-size:12.5px">종료된 프로그램입니다</span>':`
+        <button class="btn-ghost2" onclick="saveProg('${id}')">임시 저장</button>
+        <button class="btn-primary" onclick="publishProg('${id}')">${p.status==='예정'?'발행하기 →':'변경 발행'}</button>`}
+    </div>`;
+  el('progOv').classList.add('on');
+}
+function renderBooks(p,editable){
+  return (p.books||[]).map((b,i)=>`<div class="bk">
+    <div class="cv">📕</div>
+    <div class="bk-i"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
+      <input class="bk-note" placeholder="사서 한마디 (선택)" value="${esc(b.note||'')}" oninput="noteBook('${p.id}',${i},this.value)" ${editable?'':'disabled'}></div>
+    <div class="bk-side"><span class="avbadge">소장·전자책</span>${editable?`<span class="bk-x" onclick="delBook('${p.id}',${i})">×</span>`:''}</div>
+  </div>`).join('') || '<div style="color:var(--light);font-size:12.5px;padding:8px 0">담은 책이 없어요.</div>';
+}
+function noteBook(id,i,v){const p=progById(id);if(p&&p.books[i])p.books[i].note=v;}
+function delBook(id,i){const p=progById(id);if(!p)return;p.books.splice(i,1);el('pgBooks').innerHTML=renderBooks(p,true);el('progModal').querySelector('.cand-head .ct').textContent='담은 책 '+p.books.length+'권';}
+function readProg(id){const p=progById(id);if(!p)return null;
+  p.title=el('pgTitle').value.trim()||p.title;p.intro=el('pgIntro').value.trim();
+  p.target=el('pgTarget').value.trim()||p.target;p.period=el('pgPeriod').value.trim()||p.period;return p;}
+function closeProg(){el('progOv').classList.remove('on');}
+function saveProg(id){readProg(id);closeProg();renderPrograms();}
+function publishProg(id){const p=readProg(id);if(!p)return;
+  if(!p.books||!p.books.length){alert('담은 책이 없어요. 책을 담은 큐레이션만 발행할 수 있어요.');return;}
+  p.status='진행중'; if(p.period==='발행 대기')p.period='발행됨';
+  try{
+    const pub=JSON.parse(localStorage.getItem('bookstar_pub')||'[]');
+    pub.unshift({id:p.id,title:p.title,intro:p.intro,library:'한국대학교 도서관',target:p.target,
+      books:p.books.map(b=>({t:b.t,a:b.a,isbn:b.isbn,note:b.note||''}))});
+    localStorage.setItem('bookstar_pub',JSON.stringify(pub.slice(0,20)));
+  }catch(e){}
+  closeProg();renderPrograms();
+  alert('발행됐어요! 학생 앱 큐레이션에 노출됩니다.');
 }
 /* ── 큐레이션 만들기 (국중 라이브) ──
    admin → Supabase Edge Function 'curate' → (Claude Haiku 자연어→파라미터) → 정보나루 loanItemSrch 실시간.
@@ -695,8 +777,10 @@ function saveProgram(){
   const sel=CAND.filter((_,i)=>picks[i]);
   if(!sel.length){alert('담은 책이 없어요. 후보에서 + 를 눌러 담아주세요.');return;}
   const title=el('curTitle').value.trim()||el('curQ').value.trim()||'새 큐레이션';
-  PROGRAMS.unshift({title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',books:sel.length,result:''});
-  closeCur();renderPrograms();
+  const id='c'+(++PID);
+  PROGRAMS.unshift({id,title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',intro:'',
+    books:sel.map(b=>({t:b.t,a:b.a,isbn:b.isbn,note:''})),result:''});
+  closeCur();renderPrograms();openProg(id);
 }
 
 initStudents();
