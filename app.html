@@ -1788,12 +1788,9 @@ function nav(page){
 
 let LC_PUB=[];
 function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
-function renderLibCuration(){
-  const sec = document.getElementById('libCurationSec'); if(!sec) return;
-  try { LC_PUB = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){ LC_PUB=[]; }
-  if(!LC_PUB.length){ sec.style.display='none'; return; }
-  sec.style.display = '';
-  document.getElementById('libCurationGrid').innerHTML = LC_PUB.map((c,ci)=>`
+const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
+function lcGridHTML(){
+  return LC_PUB.map((c,ci)=>`
     <div class="lc-card">
       <div class="lc-meta">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
       <div class="lc-title">${esc(c.title)}</div>
@@ -1805,6 +1802,28 @@ function renderLibCuration(){
       </div>
       <div class="lc-hint">책에 마우스를 올리면 표지가 펼쳐지고, 누르면 빌리기로 이어져요</div>
     </div>`).join('');
+}
+function renderLibCuration(){
+  const sec = document.getElementById('libCurationSec'); if(!sec) return;
+  try { LC_PUB = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){ LC_PUB=[]; }
+  if(!LC_PUB.length){ sec.style.display='none'; return; }
+  sec.style.display = '';
+  document.getElementById('libCurationGrid').innerHTML = lcGridHTML();
+  backfillCovers();
+}
+async function backfillCovers(){
+  const missing = [...new Set([].concat(...LC_PUB.map(c=>(c.books||[]).filter(b=>!b.cover && b.isbn).map(b=>b.isbn))))];
+  if(!missing.length) return;
+  try{
+    const r = await fetch(COVER_FN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({isbns:missing})});
+    const d = await r.json(); const cov = d.covers||{};
+    let changed=false;
+    LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(!b.cover && cov[b.isbn]){ b.cover=cov[b.isbn]; changed=true; } }));
+    if(changed){
+      try{ localStorage.setItem('bookstar_pub', JSON.stringify(LC_PUB)); }catch(e){}
+      document.getElementById('libCurationGrid').innerHTML = lcGridHTML();
+    }
+  }catch(e){}
 }
 function openLc(ci,bi){
   const c=LC_PUB[ci]; if(!c) return; const b=(c.books||[])[bi]; if(!b) return;
