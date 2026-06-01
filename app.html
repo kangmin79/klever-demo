@@ -1855,6 +1855,8 @@ function nav(page){
 }
 
 let LC_PUB=[];
+let LC_SEL={};  // ci → 펼친 책으로 보여줄 책 인덱스(기본 0)
+function lcSelect(ci,gi){ LC_SEL[ci]=gi; const g=document.getElementById('libCurationGrid'); if(g) g.innerHTML=lcGridHTML(); }
 function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
 function spineHeight(s){const hs=[150,174,186,158,178,146,190,164,154,182];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i)*(i+1);return hs[h%hs.length];}
 function spineStyle(b,face){const h=face?156:spineHeight(b.t);return `height:${h}px;${b.cover?'':`background:${spineColor(b.t)}`}`;}
@@ -1872,7 +1874,9 @@ function lcGridHTML(){
   return LC_PUB.map((c,ci)=>{
     const books=c.books||[];
     if(!books.length) return '';
-    const f=books[0], rest=books.slice(1);
+    const sel=LC_SEL[ci]||0;
+    const f=books[sel]||books[0];
+    const rest=books.map((b,gi)=>({b,gi})).filter(x=>x.gi!==sel);
     const note=f.note||c.intro||'';
     const yr=f.pubYear?` · ${esc(f.pubYear)}`:'';
     const mb=[];
@@ -1890,7 +1894,7 @@ function lcGridHTML(){
           ${metaHTML}
           ${note?`<div class="lc-snote">“${esc(note)}”${f.note?' — 사서':''}</div>`:''}
           ${descHTML}
-          <div class="lc-sbtns"><span class="lc-sbtn p" onclick="openLc(${ci},0)">📖 도서관에서 빌리기</span></div>
+          <div class="lc-sbtns"><span class="lc-sbtn p" onclick="openLc(${ci},${sel})">📖 도서관에서 빌리기</span></div>
           <div class="lc-ssrc">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>
         </div>
       </div>`;
@@ -1898,16 +1902,17 @@ function lcGridHTML(){
       <div class="lc-recent">
         <div class="lc-recent-h">이 컬렉션의 다른 책</div>
         <div class="lc-recent-row">
-        ${rest.map((b,i)=>{
+        ${rest.map((x,i)=>{
+          const b=x.b, gi=x.gi;
           const im=[];
           if(b.rating!=null) im.push(`<span class="lc-star">★</span> ${b.rating}`);
           if(b.loan) im.push(`대출 ${Number(b.loan).toLocaleString()}`);
           if(b.pages) im.push(`${b.pages}쪽`);
           const imHTML=im.length?`<div class="lc-ri-meta">${im.join('<i>·</i>')}</div>`:'';
-          return `<div class="lc-ri" onclick="openLc(${ci},${i+1})" style="animation-delay:${(i*0.09).toFixed(2)}s">
+          return `<div class="lc-ri" onclick="lcSelect(${ci},${gi})" style="animation-delay:${(i*0.09).toFixed(2)}s">
           <div class="lc-cv lc-cv-sm"${b.cover?'':` style="background:${spineColor(b.t)}"`}>${lcCvHTML(b)}</div>
           <div class="lc-ri-info"><div class="lc-ri-t">${esc(b.t)}</div><div class="lc-ri-a">${esc(b.a||'')}</div>${imHTML}</div>
-          <span class="lc-ri-btn">빌리기</span>
+          <span class="lc-ri-btn" onclick="event.stopPropagation();openLc(${ci},${gi})">빌리기</span>
         </div>`;}).join('')}
         </div>
       </div>`:'';
