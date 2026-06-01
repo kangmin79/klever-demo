@@ -645,48 +645,54 @@ function renderPrograms(){
     </div>`;
   }).join('');
 }
-/* ── 큐레이션 만들기 (국중 후보 — 데모) ──
-   운영 시: Supabase Edge Function이 정보나루 loanItemSrch(주제·연령·기간) 호출 →
-   도서관 카탈로그와 ISBN 매칭 → 접근 링크(소장·전자책) 부착.
-   아래 DEMO_CAND는 실제 정보나루에서 받아온 '20대 인기 문학' 응답. */
-const CUR_EX=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','과학·교양 베스트'];
+/* ── 큐레이션 만들기 (국중 라이브) ──
+   admin → Supabase Edge Function 'curate' → (Claude Haiku 자연어→파라미터) → 정보나루 loanItemSrch 실시간.
+   authKey는 함수 env에 숨김. 발행 시 도서관 카탈로그와 ISBN 매칭해 접근 링크 부착(다음 단계). */
+const CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";
+const CURATE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+const CUR_EX=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','심리학 입문','과학·교양 베스트'];
+// 연결 실패 시 대체 후보 (정보나루에서 받아온 실제 데이터)
 const DEMO_CAND=[
  {t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120',loan:2313},
  {t:'모순',a:'양귀자 · 쓰다',isbn:'9788998441012',loan:2103},
- {t:'홍학의 자리',a:'정해연 · 문학동네',isbn:'9788954681155',loan:1746},
- {t:'작별하지 않는다',a:'한강 · 문학동네',isbn:'9788954682152',loan:1705},
  {t:'채식주의자',a:'한강 · 창비',isbn:'9788936434595',loan:1416},
  {t:'급류',a:'정대건 · 민음사',isbn:'9788937473401',loan:1469},
- {t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',loan:1280},
- {t:'혼모노',a:'성해나 · 창비',isbn:'9788936439743',loan:1347},
 ];
-let picks={};
-function openCur(){picks={};el('curQ').value='';el('curTitle').value='';el('candWrap').innerHTML='';
+let CAND=[], picks={};
+function openCur(){picks={};CAND=[];el('curQ').value='';el('curTitle').value='';el('candWrap').innerHTML='';
   el('curEx').innerHTML=CUR_EX.map(e=>`<span onclick="exCur('${e}')">${e}</span>`).join('');
   el('curOv').classList.add('on');}
 function closeCur(){el('curOv').classList.remove('on');}
 function exCur(t){el('curQ').value=t;loadCand();}
-function loadCand(){
-  if(!el('curQ').value.trim())return;
+async function loadCand(){
+  const q=el('curQ').value.trim();if(!q)return;
+  picks={};
   el('candWrap').innerHTML='<div class="cur-loading">✦ 국중 인기대출에서 후보 가져오는 중…</div>';
-  setTimeout(()=>{ picks={}; renderCand(); },650);
+  try{
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
+    const d=await r.json();
+    CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0}));
+    if(d.title && !el('curTitle').value.trim()) el('curTitle').value=d.title;
+    if(!CAND.length){el('candWrap').innerHTML='<div class="cur-loading">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
+    renderCand(true);
+  }catch(e){ CAND=DEMO_CAND.slice(); renderCand(false); }
 }
-function renderCand(){
+function renderCand(live){
   const n=Object.keys(picks).filter(k=>picks[k]).length;
-  el('candWrap').innerHTML=`<div class="cand-head"><span class="ct">국중 추천 후보 ${DEMO_CAND.length}권</span><span class="cc" id="pickCnt">담음 ${n}권</span></div>`+
-    DEMO_CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
+  el('candWrap').innerHTML=`<div class="cand-head"><span class="ct">국중 추천 후보 ${CAND.length}권</span><span class="cc" id="pickCnt">담음 ${n}권</span></div>`+
+    CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
       <div class="cv">📕</div>
-      <div class="ci"><div class="t">${b.t}</div><div class="s">${b.a} · ISBN ${b.isbn}</div></div>
-      <div class="loan">대출 ${b.loan.toLocaleString()}</div>
+      <div class="ci"><div class="t">${b.t}</div><div class="s">${b.a}${b.isbn?' · ISBN '+b.isbn:''}</div></div>
+      <div class="loan">${b.loan?'대출 '+b.loan.toLocaleString():''}</div>
       <div class="pick" onclick="pick(${i})">${picks[i]?'✓':'+'}</div>
     </div>`).join('')+
-    `<div class="cur-note">※ 데모 — 운영 시 정보나루 <b>loanItemSrch</b>(주제·연령·기간)로 실제 후보를 불러오고, 도서관 카탈로그와 매칭해 접근 링크(소장·전자책)를 붙입니다.</div>`;
+    `<div class="cur-note">${live?'✓ 정보나루 <b>loanItemSrch</b> 실시간 결과 · 발행 시 도서관 카탈로그와 매칭해 접근 링크(소장·전자책)를 붙입니다.':'⚠ 연결이 잠시 안 돼 대체 후보를 보여줘요. 다시 시도하면 실시간으로 가져옵니다.'}</div>`;
 }
 function pick(i){picks[i]=!picks[i];const c=el('cand'+i);c.classList.toggle('on',picks[i]);
   c.querySelector('.pick').textContent=picks[i]?'✓':'+';
   el('pickCnt').textContent='담음 '+Object.keys(picks).filter(k=>picks[k]).length+'권';}
 function saveProgram(){
-  const sel=DEMO_CAND.filter((_,i)=>picks[i]);
+  const sel=CAND.filter((_,i)=>picks[i]);
   if(!sel.length){alert('담은 책이 없어요. 후보에서 + 를 눌러 담아주세요.');return;}
   const title=el('curTitle').value.trim()||el('curQ').value.trim()||'새 큐레이션';
   PROGRAMS.unshift({title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',books:sel.length,result:''});
