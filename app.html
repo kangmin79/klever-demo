@@ -1961,7 +1961,7 @@ function millieHTML(){
   const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:P[0];
   const note=life.note||(cur&&cur.intro)||'';
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
-  return `<div class="ml">${mlIcons()}${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libTitled())}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
+  return `<div class="ml">${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libTitled())}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
 }
 function renderLibCuration(){
   const grid=document.getElementById('libCurationGrid'); if(!grid) return;
