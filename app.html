@@ -101,15 +101,23 @@ body.dark .gnb-item.active{background:var(--gold);color:#0f172a;}
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
 .page{max-width:1280px;margin:0 auto;padding:32px 24px;display:none;}
 .page.active{display:block;}
-body.with-sidenav .page:not(#page-home){padding-left:108px;}
-body.with-sidenav .page#page-detail{padding-left:108px;}
+body.with-sidenav .page:not(#page-home){padding-left:24px;}
+body.with-sidenav .page#page-detail{padding-left:24px;}
 
 /* 좌측 고정 사이드바 (홈 제외 모든 페이지) */
 .side-nav{
   position:fixed;top:calc(var(--header-h) + 24px);left:16px;z-index:80;
   display:none;flex-direction:column;gap:10px;width:80px;
+  transform:translateX(-118px);opacity:0;pointer-events:none;
+  transition:transform .26s cubic-bezier(.2,.7,.2,1),opacity .2s;
 }
 body.with-sidenav .side-nav{display:flex;}
+/* 왼쪽 가장자리 호버 트리거 + 손잡이 힌트 */
+.side-hot{position:fixed;left:0;top:var(--header-h);width:22px;height:calc(100vh - var(--header-h));z-index:79;display:none;}
+body.with-sidenav .side-hot{display:block;}
+.side-hot::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:4px;height:48px;border-radius:3px;background:var(--border);transition:opacity .2s;}
+.side-hot:hover::before{opacity:0;}
+.side-hot:hover ~ .side-nav, .side-nav:hover{transform:translateX(0);opacity:1;pointer-events:auto;}
 .side-node{
   background:var(--bg-card);border:1px solid rgba(0,0,0,0.06);
   border-radius:16px;padding:12px 6px;text-align:center;cursor:pointer;
@@ -134,7 +142,8 @@ body.dark .side-node .icon{color:var(--gold);}
 @media (max-width:900px){
   body.with-sidenav .page:not(#page-home){padding-left:24px;}
   body.with-sidenav .page#page-detail{padding-left:24px;}
-  .side-nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;flex-direction:row;justify-content:space-around;padding:8px 4px;background:var(--bg-card);border-top:1px solid var(--border);gap:0;}
+  .side-nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;flex-direction:row;justify-content:space-around;padding:8px 4px;background:var(--bg-card);border-top:1px solid var(--border);gap:0;transform:none;opacity:1;pointer-events:auto;}
+  .side-hot{display:none !important;}
   .side-node{padding:6px 8px;flex:1;border:none;box-shadow:none;border-radius:8px;}
   .side-node:hover{transform:none;}
   .side-node-label{font-size:9px;}
@@ -786,7 +795,8 @@ body.dark #airOv .air-cta{color:#0f172a;}
   </div>
 </header>
 
-<!-- 좌측 고정 사이드바 (홈 제외) -->
+<!-- 좌측 사이드바 (자동 숨김 — 왼쪽 가장자리 호버 시 노출) -->
+<div class="side-hot"></div>
 <aside class="side-nav" id="sideNav"></aside>
 
 <main class="main">
