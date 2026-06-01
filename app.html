@@ -191,8 +191,15 @@ body.dark .ml-life-meta span{color:var(--gold);}
 .ml-life-t span{color:var(--text-light);font-weight:500;}
 .ml-cta{display:inline-block;margin-top:16px;padding:11px 20px;border-radius:11px;background:var(--primary);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;}
 body.dark .ml-cta{background:var(--gold);color:#0f172a;}
-.ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;}
+.ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;scroll-behavior:smooth;}
 .ml-hrow::-webkit-scrollbar{display:none;}
+.ml-car{position:relative;}
+.ml-arrow{position:absolute;top:42%;transform:translateY(-50%);z-index:6;width:42px;height:42px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);box-shadow:0 6px 20px rgba(20,20,45,.2);font-size:22px;line-height:1;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s,transform .12s;}
+.ml-car:hover .ml-arrow{opacity:.96;}
+.ml-arrow:hover{transform:translateY(-50%) scale(1.08);}
+.ml-arrow-l{left:-10px;}
+.ml-arrow-r{right:-10px;}
+@media(max-width:760px){.ml-arrow{display:none;}}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
 .ml-bk-cv{width:130px;aspect-ratio:2/3;}
 .ml-bk-t{margin-top:10px;font-size:13.5px;font-weight:700;color:var(--text);line-height:1.32;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
@@ -1890,11 +1897,13 @@ function cleanA(a){let s=(a||'').replace(/지은이\s*:?/g,'').replace(/\((지�
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
 function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div><div class="ml-h-x">›</div></div>`;}
+function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
+function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
 function libTitled(){return LIB_POOL.filter(b=>b.t);}
 function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];for(let i=0;i<n;i++)r.push(p[(off+i)%p.length]);return r;}
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
 function mlLife(b,note,cur){const m=[];if(b.rating!=null)m.push(`✓ 평균 별점 ${b.rating}`);if(b.loan)m.push(`✓ 대출 ${Number(b.loan).toLocaleString()}회`);return `<div>${mlHead('오늘의 사서 추천',(cur&&cur.title)||'우리 도서관 큐레이션')}<div class="ml-life">${mlcv('ml-life-cv',b)}<div class="ml-life-card"><div class="ml-life-by">✦ ${esc((cur&&cur.library)||'우리 도서관')} 사서 추천</div><div class="ml-life-q">“${esc(note||'이 달의 추천 도서예요.')}”</div>${m.length?`<div class="ml-life-meta">${m.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}<div class="ml-life-t">${esc(cleanT(b.t))} <span>· ${esc(cleanA(b.a))}</span></div><span class="ml-cta" onclick="libDetail('${b.isbn}')">읽으러 가기</span></div></div></div>`;}
-function mlRow(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-hrow">${books.map(b=>`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(cleanA(b.a))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div></div>`;}
+function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(cleanA(b.a))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
 const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시','인문/교양','취미/실용','어린이/청소년','매거진'];
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
 function mlChip(el){el.parentNode.querySelectorAll('.ml-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
@@ -1905,8 +1914,8 @@ function mlRank(t,s,books){
     <div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>
     <div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>
     <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(cleanA(b.a))}</div></div></div>`).join('')}</div></div>`;}
-function mlGrad(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div></div>`;}
-function mlAI(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div></div>`;}
+function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
+function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 function millieHTML(){
   const P=libTitled();
   if(!P.length) return '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:60px 0">불러오는 중…</div>';
@@ -1914,7 +1923,7 @@ function millieHTML(){
   const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:P[0];
   const note=life.note||(cur&&cur.intro)||'';
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
-  return `<div class="ml">${mlIcons()}${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libPick(7,0))}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
+  return `<div class="ml">${mlIcons()}${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libTitled())}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
 }
 function renderLibCuration(){
   const grid=document.getElementById('libCurationGrid'); if(!grid) return;
