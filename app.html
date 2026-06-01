@@ -776,6 +776,7 @@ body.dark #airOv .air-cta{color:#0f172a;}
   </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="home" onclick="nav('home')">홈</div>
+    <div class="gnb-item" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
     <div class="gnb-item" data-page="collection" onclick="nav('collection')">북스타 컬렉션</div>
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">도서 큐레이션</div>
     <div class="gnb-item" data-page="airec" onclick="nav('airec')">AI추천</div>
@@ -889,12 +890,6 @@ body.dark #airOv .air-cta{color:#0f172a;}
     <input class="search-input" placeholder="책·작가·테마 검색 — AI가 추천해줘요" onkeyup="onSearch(event)">
   </div>
 
-  <div class="section" id="libCurationSec" style="display:none">
-    <div class="section-head"><div class="section-title"><em>우리 도서관 큐레이션</em></div></div>
-    <div id="libCurationGrid"></div>
-  </div>
-  <div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
-
   <div class="section">
     <div class="section-head">
       <div class="section-title"><em>테마 컬렉션</em></div>
@@ -913,6 +908,18 @@ body.dark #airOv .air-cta{color:#0f172a;}
     </div>
     <div class="book-grid" id="bookGridAll"></div>
   </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     우리 도서관 — 사서 큐레이션 (독립 탭)
+     ═══════════════════════════════════════════════════════════ -->
+<section class="page" id="page-ourlib">
+  <h1 class="page-title">우리 도서관</h1>
+  <p class="page-subtitle">우리 학교 도서관 사서가 직접 골라 추천하는 책들이에요</p>
+  <div class="section" id="libCurationSec">
+    <div id="libCurationGrid"></div>
+  </div>
+  <div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -1788,7 +1795,7 @@ function nav(page){
   if(page === 'home') {
     setTimeout(()=>renderHomeHub(), 50);
   }
-  if(page === 'collection') {
+  if(page === 'ourlib') {
     setTimeout(()=>renderLibCuration(), 30);
   }
   if(page === 'mypage') {
@@ -1815,11 +1822,10 @@ function lcGridHTML(){
     </div>`).join('');
 }
 function renderLibCuration(){
-  const sec = document.getElementById('libCurationSec'); if(!sec) return;
+  const grid = document.getElementById('libCurationGrid'); if(!grid) return;
   try { LC_PUB = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){ LC_PUB=[]; }
-  if(!LC_PUB.length){ sec.style.display='none'; return; }
-  sec.style.display = '';
-  document.getElementById('libCurationGrid').innerHTML = lcGridHTML();
+  if(!LC_PUB.length){ grid.innerHTML = '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:54px 0;line-height:1.8">아직 사서가 발행한 큐레이션이 없어요.<br>도서관에서 곧 추천 책을 올릴 거예요 📚</div>'; return; }
+  grid.innerHTML = lcGridHTML();
   backfillCovers();
 }
 async function backfillCovers(){
