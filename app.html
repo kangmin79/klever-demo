@@ -159,12 +159,26 @@ body.dark .side-node .icon{color:var(--gold);}
 .lc-meta{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:8px;}
 .lc-title{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
 .lc-intro{font-size:13px;color:var(--text-sub);margin-top:7px;line-height:1.6;}
-/* 우리 도서관 — ref #3: 대표책 히어로 + 선반 + 추천 리스트 */
-.lc-hero{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap;padding:8px 8px 0;}
-.lc-hero-txt{flex:1 1 220px;min-width:200px;padding-bottom:18px;}
-.lc-hx{font-family:'Noto Serif KR',Georgia,'Times New Roman',serif;font-size:25px;font-weight:700;letter-spacing:-.5px;line-height:1.3;color:var(--text);margin:3px 0 0;}
-.lc-hero .lc-intro{margin-top:9px;max-width:380px;}
-.lc-hero-stage{flex:0 0 auto;display:flex;gap:20px;align-items:flex-end;padding:16px 6px 4px;}
+/* 우리 도서관 — 상단=펼친 책(좌 표지/우 내용), 하단=추천 리스트 */
+.lc-meta{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:6px;}
+.lc-coltitle{font-family:'Noto Serif KR',Georgia,'Times New Roman',serif;font-size:19px;font-weight:700;letter-spacing:-.5px;color:var(--text);margin:0 2px 13px;line-height:1.3;}
+.lc-spread{display:flex;flex-wrap:wrap;border-radius:6px 12px 12px 6px;overflow:hidden;margin-top:4px;box-shadow:0 26px 50px -20px rgba(40,28,14,.46),0 2px 0 rgba(0,0,0,.05);}
+.lc-spread-cover{flex:1 1 190px;position:relative;min-height:248px;background:var(--bg-input);}
+.lc-spread-cover img{width:100%;height:100%;position:absolute;inset:0;object-fit:cover;display:block;}
+.lc-spread-cover .lc-fb{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;height:100%;padding:18px;font-size:15px;font-weight:700;color:#fff;line-height:1.45;}
+.lc-spread-text{flex:2 1 280px;display:flex;flex-direction:column;padding:26px 28px 22px;background:linear-gradient(95deg,#f2ebdb,#fbf7ef 55%);box-shadow:inset 20px 0 30px -20px rgba(40,28,14,.42);}
+body.dark .lc-spread-text{background:linear-gradient(95deg,#241f17,#2c261c 55%);box-shadow:inset 20px 0 30px -20px rgba(0,0,0,.6);}
+.lc-st{font-family:'Noto Serif KR',Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;line-height:1.32;letter-spacing:-.5px;color:#2a2118;margin:6px 0 3px;}
+body.dark .lc-st{color:#f3ecdd;}
+.lc-sa{font-size:12.5px;color:#8a7c66;}
+body.dark .lc-sa{color:var(--text-light);}
+.lc-snote{margin-top:15px;font-size:13.5px;line-height:1.72;color:#5a4f3e;font-style:italic;border-left:3px solid var(--gold);padding-left:12px;}
+body.dark .lc-snote{color:#cdbfa6;}
+.lc-sbtns{margin-top:auto;display:flex;gap:9px;padding-top:20px;flex-wrap:wrap;}
+.lc-sbtn{padding:10px 17px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;}
+.lc-sbtn.p{background:var(--gold);color:#3a2b00;}
+.lc-sbtn.s{background:rgba(0,0,0,.05);color:#2a2118;border:1px solid rgba(0,0,0,.1);}
+body.dark .lc-sbtn.s{background:rgba(255,255,255,.06);color:#f3ecdd;border-color:rgba(255,255,255,.12);}
 /* 표지 정면 카드(공용) */
 .lc-cv{position:relative;flex:0 0 auto;border-radius:3px 6px 6px 3px;overflow:hidden;background:var(--bg-input);box-shadow:-3px 0 7px -3px rgba(0,0,0,.28) inset,0 16px 17px -11px rgba(35,28,18,.5);width:96px;height:140px;}
 .lc-cv img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -1835,15 +1849,24 @@ function lcCvHTML(b){return b.cover?`<img src="${esc(b.cover)}" loading="lazy" o
 function lcGridHTML(){
   return LC_PUB.map((c,ci)=>{
     const books=c.books||[];
-    const hero=books.slice(0,3), rest=books.slice(3);
-    const heroHTML=hero.map((b,i)=>`<div class="lc-book${i===0?' feat':''}" onclick="openLc(${ci},${i})">
-          <div class="lc-cv"${b.cover?'':` style="background:${spineColor(b.t)}"`}>${lcCvHTML(b)}</div>
-        </div>`).join('');
+    if(!books.length) return '';
+    const f=books[0], rest=books.slice(1);
+    const note=f.note||c.intro||'';
+    const spread=`
+      <div class="lc-spread">
+        <div class="lc-spread-cover"${f.cover?'':` style="background:${spineColor(f.t)}"`}>${lcCvHTML(f)}</div>
+        <div class="lc-spread-text">
+          <div class="lc-st">${esc(f.t)}</div>
+          <div class="lc-sa">${esc(f.a||'')}</div>
+          ${note?`<div class="lc-snote">“${esc(note)}”${f.note?' — 사서':''}</div>`:''}
+          <div class="lc-sbtns"><span class="lc-sbtn p" onclick="openLc(${ci},0)">📖 자세히 · 빌리기</span></div>
+        </div>
+      </div>`;
     const restHTML=rest.length?`
       <div class="lc-recent">
         <div class="lc-recent-h">이 컬렉션의 다른 책</div>
         <div class="lc-recent-row">
-        ${rest.map((b,i)=>`<div class="lc-ri" onclick="openLc(${ci},${i+3})">
+        ${rest.map((b,i)=>`<div class="lc-ri" onclick="openLc(${ci},${i+1})">
           <div class="lc-cv lc-cv-sm"${b.cover?'':` style="background:${spineColor(b.t)}"`}>${lcCvHTML(b)}</div>
           <div class="lc-ri-info"><div class="lc-ri-t">${esc(b.t)}</div><div class="lc-ri-a">${esc(b.a||'')}</div><span class="lc-ri-btn">빌리기</span></div>
         </div>`).join('')}
@@ -1852,15 +1875,9 @@ function lcGridHTML(){
       </div>`:'';
     return `
     <div class="lc-card">
-      <div class="lc-hero">
-        <div class="lc-hero-txt">
-          <div class="lc-meta">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
-          <h3 class="lc-hx">${esc(c.title)}</h3>
-          ${c.intro?`<p class="lc-intro">${esc(c.intro)}</p>`:''}
-        </div>
-        <div class="lc-hero-stage">${heroHTML}</div>
-      </div>
-      <div class="lc-shelfline"></div>
+      <div class="lc-meta">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
+      <div class="lc-coltitle">${esc(c.title)}</div>
+      ${spread}
       ${restHTML}
     </div>`;
   }).join('');
