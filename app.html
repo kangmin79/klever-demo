@@ -193,7 +193,7 @@ body.dark .lc-sbtn.s{background:rgba(255,255,255,.06);color:#f3ecdd;border-color
 .lc-cv{position:relative;flex:0 0 auto;border-radius:3px 6px 6px 3px;overflow:hidden;background:var(--bg-input);box-shadow:-3px 0 7px -3px rgba(0,0,0,.28) inset,0 16px 17px -11px rgba(35,28,18,.5);width:96px;height:140px;}
 .lc-cv img{width:100%;height:100%;object-fit:cover;display:block;}
 .lc-cv .lc-fb{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;height:100%;padding:9px;font-size:11.5px;font-weight:700;color:#fff;line-height:1.4;}
-.lc-cv-sm{width:56px;height:82px;border-radius:2px 4px 4px 2px;box-shadow:-2px 0 5px -3px rgba(0,0,0,.28) inset,0 10px 12px -8px rgba(35,28,18,.5);}
+.lc-cv-sm{width:66px;height:97px;border-radius:2px 5px 5px 2px;box-shadow:-2px 0 5px -3px rgba(0,0,0,.28) inset,0 10px 12px -8px rgba(35,28,18,.5);}
 .lc-book{cursor:pointer;transition:transform .24s cubic-bezier(.2,.7,.2,1);}
 .lc-book:hover{transform:translateY(-9px);}
 .lc-book.feat .lc-cv{width:128px;height:188px;border-radius:3px 7px 7px 3px;box-shadow:-4px 0 9px -3px rgba(0,0,0,.3) inset,0 22px 24px -12px rgba(35,28,18,.55);}
@@ -208,12 +208,16 @@ body.dark .lc-shelfline{background:linear-gradient(180deg,#3c352a,#28231b);box-s
 .lc-recent-h{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-light);margin:0 4px 14px;}
 .lc-recent-row{display:flex;flex-direction:column;gap:16px;padding:2px 4px;}
 @keyframes lcFloatIn{0%{opacity:0;transform:translateY(20px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
-.lc-ri{display:flex;gap:15px;align-items:center;cursor:pointer;animation:lcFloatIn .55s cubic-bezier(.2,.7,.2,1) both;}
+.lc-ri{display:flex;gap:16px;align-items:center;cursor:pointer;padding:4px 4px 18px;border-bottom:1px solid rgba(60,45,25,.1);animation:lcFloatIn .55s cubic-bezier(.2,.7,.2,1) both;}
+.lc-ri:last-child{border-bottom:none;}
+body.dark .lc-ri{border-bottom-color:rgba(255,255,255,.08);}
 .lc-ri .lc-cv{box-shadow:-2px 0 5px -3px rgba(0,0,0,.28) inset,0 14px 18px -9px rgba(35,28,18,.42);}
+.lc-ri-meta{margin-top:7px;font-size:11.5px;color:var(--text-light);display:flex;align-items:center;flex-wrap:wrap;}
+.lc-ri-meta i{font-style:normal;margin:0 7px;color:#cbb88f;}
 .lc-ri-info{flex:1;min-width:0;}
 .lc-ri-t{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .lc-ri-a{font-size:11px;color:var(--text-light);margin-top:3px;}
-.lc-ri-btn{display:inline-block;margin-top:9px;padding:6px 13px;border-radius:9px;background:var(--gold);color:#3a2b00;font-size:11.5px;font-weight:800;}
+.lc-ri-btn{flex:0 0 auto;align-self:center;padding:8px 15px;border-radius:9px;background:var(--gold);color:#3a2b00;font-size:11.5px;font-weight:800;}
 .lc-ri:hover .lc-cv{transform:translateY(-5px);transition:transform .2s;}
 .lc-hint{font-size:11px;color:var(--text-light);padding:0 2px 14px;}
 #lcDetail{position:fixed;inset:0;background:rgba(15,20,35,.55);display:none;z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
@@ -1896,10 +1900,17 @@ function lcGridHTML(){
       <div class="lc-recent">
         <div class="lc-recent-h">이 컬렉션의 다른 책</div>
         <div class="lc-recent-row">
-        ${rest.map((b,i)=>`<div class="lc-ri" onclick="openLc(${ci},${i+1})" style="animation-delay:${(i*0.09).toFixed(2)}s">
+        ${rest.map((b,i)=>{
+          const im=[];
+          if(b.rating!=null) im.push(`<span class="lc-star">★</span> ${b.rating}`);
+          if(b.loan) im.push(`대출 ${Number(b.loan).toLocaleString()}`);
+          if(b.pages) im.push(`${b.pages}쪽`);
+          const imHTML=im.length?`<div class="lc-ri-meta">${im.join('<i>·</i>')}</div>`:'';
+          return `<div class="lc-ri" onclick="openLc(${ci},${i+1})" style="animation-delay:${(i*0.09).toFixed(2)}s">
           <div class="lc-cv lc-cv-sm"${b.cover?'':` style="background:${spineColor(b.t)}"`}>${lcCvHTML(b)}</div>
-          <div class="lc-ri-info"><div class="lc-ri-t">${esc(b.t)}</div><div class="lc-ri-a">${esc(b.a||'')}</div><span class="lc-ri-btn">빌리기</span></div>
-        </div>`).join('')}
+          <div class="lc-ri-info"><div class="lc-ri-t">${esc(b.t)}</div><div class="lc-ri-a">${esc(b.a||'')}</div>${imHTML}</div>
+          <span class="lc-ri-btn">빌리기</span>
+        </div>`;}).join('')}
         </div>
       </div>`:'';
     return `
