@@ -547,7 +547,7 @@ function render(){
   drawTrend(rg.trend,rg.labs); drawDonut(d.donut); drawDept(d.dept);
   // TOP 도서
   el('topBooks').innerHTML=d.books.map((b,i)=>`<div class="rk"><div class="no ${i<3?'top':''}">${i+1}</div>
-    <div class="cv">📕</div><div class="info"><div class="t">${b[0]}</div><div class="s">${b[1]}</div></div>
+    <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><div class="info"><div class="t">${b[0]}</div><div class="s">${b[1]}</div></div>
     <div class="n2">${b[2].toLocaleString()}</div></div>`).join('');
   // 우수 독자
   el('topReaders').innerHTML=d.readers.map((r,i)=>`<div class="rk"><div class="no ${i<3?'top':''}">${i+1}</div>
@@ -655,7 +655,7 @@ let PROGRAMS=[
   {id:'p1', title:'신입생 환영 — 첫 책', type:'큐레이션', status:'진행중', period:'3.2~3.31', target:'신입생 전체', n:8, books:[], intro:'', result:'완독률 64%'},
   {id:'p2', title:'이달의 고전 챌린지', type:'챌린지', status:'진행중', period:'6.1~6.30', target:'전교', n:5, books:[], intro:'', result:'참여 312명'},
   {id:'p3', title:'시험기간, 머리 식히는 책', type:'큐레이션', status:'예정', period:'6.15~6.30', target:'전교', intro:'시험 끝, 가볍게 머리 식히며 읽기 좋은 소설들이에요',
-    books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',note:''},{t:'달러구트 꿈 백화점',a:'이미예 · 팩토리나인',isbn:'9791165341909',note:''},{t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',note:''},{t:'아몬드',a:'손원평 · 창비',isbn:'9788936434267',note:''}], result:''},
+    books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg',note:''},{t:'달러구트 꿈 백화점',a:'이미예 · 팩토리나인',isbn:'9791165341909',cover:'https://image.aladin.co.kr/product/24512/70/cover/k392630952_1.jpg',note:''},{t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',cover:'https://image.aladin.co.kr/product/19804/82/cover/k072635131_1.jpg',note:''},{t:'아몬드',a:'손원평 · 창비',isbn:'9788936434267',cover:'https://image.aladin.co.kr/product/16839/4/cover/k492534773_1.jpg',note:''}], result:''},
   {id:'p4', title:'심리학과 추천도서', type:'큐레이션', status:'종료', period:'5.1~5.31', target:'심리학과', n:12, books:[], intro:'', result:'완독률 71%'},
   {id:'p5', title:'작가 초청 북토크 — 정세랑', type:'행사', status:'종료', period:'4.18', target:'신청 80명', n:3, books:[], intro:'', result:'만족 4.6/5'},
 ];
@@ -702,7 +702,7 @@ function openProg(id){
 }
 function renderBooks(p,editable){
   return (p.books||[]).map((b,i)=>`<div class="bk">
-    <div class="cv">📕</div>
+    <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
     <div class="bk-i"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
       <input class="bk-note" placeholder="사서 한마디 (선택)" value="${esc(b.note||'')}" oninput="noteBook('${p.id}',${i},this.value)" ${editable?'':'disabled'}></div>
     <div class="bk-side"><span class="avbadge">소장·전자책</span>${editable?`<span class="bk-x" onclick="delBook('${p.id}',${i})">×</span>`:''}</div>
@@ -721,7 +721,7 @@ function publishProg(id){const p=readProg(id);if(!p)return;
   try{
     const pub=JSON.parse(localStorage.getItem('bookstar_pub')||'[]');
     pub.unshift({id:p.id,title:p.title,intro:p.intro,library:'한국대학교 도서관',target:p.target,
-      books:p.books.map(b=>({t:b.t,a:b.a,isbn:b.isbn,note:b.note||''}))});
+      books:p.books.map(b=>({t:b.t,a:b.a,isbn:b.isbn,cover:b.cover||'',note:b.note||''}))});
     localStorage.setItem('bookstar_pub',JSON.stringify(pub.slice(0,20)));
   }catch(e){}
   closeProg();renderPrograms();
@@ -753,7 +753,7 @@ async function loadCand(){
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
     const d=await r.json();
-    CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0}));
+    CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||''}));
     if(d.title && !el('curTitle').value.trim()) el('curTitle').value=d.title;
     if(!CAND.length){el('candWrap').innerHTML='<div class="cur-loading">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
     renderCand(true);
@@ -763,7 +763,7 @@ function renderCand(live){
   const n=Object.keys(picks).filter(k=>picks[k]).length;
   el('candWrap').innerHTML=`<div class="cand-head"><span class="ct">국중 추천 후보 ${CAND.length}권</span><span class="cc" id="pickCnt">담음 ${n}권</span></div>`+
     CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
-      <div class="cv">📕</div>
+      <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${b.t}</div><div class="s">${b.a}${b.isbn?' · ISBN '+b.isbn:''}</div></div>
       <div class="loan">${b.loan?'대출 '+b.loan.toLocaleString():''}</div>
       <div class="pick" onclick="pick(${i})">${picks[i]?'✓':'+'}</div>
@@ -779,7 +779,7 @@ function saveProgram(){
   const title=el('curTitle').value.trim()||el('curQ').value.trim()||'새 큐레이션';
   const id='c'+(++PID);
   PROGRAMS.unshift({id,title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',intro:'',
-    books:sel.map(b=>({t:b.t,a:b.a,isbn:b.isbn,note:''})),result:''});
+    books:sel.map(b=>({t:b.t,a:b.a,isbn:b.isbn,cover:b.cover||'',note:''})),result:''});
   closeCur();renderPrograms();openProg(id);
 }
 

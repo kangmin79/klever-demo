@@ -145,6 +145,34 @@ body.dark .side-node .icon{color:var(--gold);}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
 .section-title{font-size:18px;font-weight:700;letter-spacing:-0.5px;}
 .section-title em{color:var(--primary);font-style:normal;}
+/* 우리 도서관 큐레이션 — 책장(스파인→호버 표지→클릭 상세) */
+.lc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 22px 6px;margin-bottom:14px;}
+.lc-meta{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:8px;}
+.lc-title{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
+.lc-intro{font-size:13px;color:var(--text-sub);margin-top:7px;line-height:1.6;}
+.lc-shelf{display:flex;gap:9px;align-items:flex-end;overflow-x:auto;padding:20px 2px 22px;scrollbar-width:thin;}
+.lc-shelf::-webkit-scrollbar{height:6px;}
+.lc-shelf::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.lc-spine{position:relative;flex:0 0 auto;width:44px;height:172px;border-radius:3px 6px 6px 3px;overflow:hidden;cursor:pointer;box-shadow:0 6px 15px rgba(20,20,45,.22);transition:width .26s cubic-bezier(.2,.7,.2,1),transform .26s cubic-bezier(.2,.7,.2,1),box-shadow .26s;}
+.lc-spine img{position:absolute;left:0;top:0;width:120px;height:172px;max-width:none;object-fit:cover;}
+.lc-spine .lc-fb{position:absolute;inset:0;padding:11px 8px;writing-mode:vertical-rl;font-size:11px;font-weight:700;color:#fff;line-height:1.35;overflow:hidden;}
+.lc-spine:hover{width:120px;transform:translateY(-10px);box-shadow:0 18px 34px rgba(20,20,45,.34);border-radius:6px;z-index:2;}
+.lc-hint{font-size:11px;color:var(--text-light);padding:0 2px 14px;}
+#lcDetail{position:fixed;inset:0;background:rgba(15,20,35,.55);display:none;z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+#lcDetail.on{display:flex;}
+.lcd{position:relative;background:var(--bg-card);width:100%;max-width:430px;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.42);max-height:90vh;overflow-y:auto;}
+.lcd-x{position:absolute;top:12px;right:16px;font-size:24px;color:var(--text-light);cursor:pointer;z-index:3;line-height:1;}
+.lcd-top{display:flex;gap:16px;padding:26px 24px 20px;}
+.lcd-cv{flex:0 0 98px;width:98px;height:140px;border-radius:9px;overflow:hidden;background:var(--bg-input);box-shadow:0 10px 24px rgba(20,20,45,.26);}
+.lcd-cv img{width:100%;height:100%;object-fit:cover;}
+.lcd-i{flex:1;min-width:0;}
+.lcd-i h2{font-size:18px;font-weight:800;letter-spacing:-.5px;line-height:1.32;}
+.lcd-i .au{font-size:12.5px;color:var(--text-light);margin-top:6px;}
+.lcd-note{font-size:12.5px;color:var(--primary);margin-top:11px;font-style:italic;line-height:1.55;}
+.lcd-acts{padding:0 24px 24px;display:flex;flex-direction:column;gap:9px;}
+.lcd-btn{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--bg-card);color:var(--text);}
+.lcd-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+.lcd-btn .ar{margin-left:auto;opacity:.6;}
 
 /* ═══════════════════════════════════════════════════════════
    4. 홈 — 3 메인 프로그램 + 공지
@@ -855,6 +883,7 @@ body.dark #airOv .air-cta{color:#0f172a;}
     <div class="section-head"><div class="section-title"><em>우리 도서관 큐레이션</em></div></div>
     <div id="libCurationGrid"></div>
   </div>
+  <div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
 
   <div class="section">
     <div class="section-head">
@@ -1757,30 +1786,45 @@ function nav(page){
   }
 }
 
+let LC_PUB=[];
+function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
 function renderLibCuration(){
   const sec = document.getElementById('libCurationSec'); if(!sec) return;
-  let pub = [];
-  try { pub = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){}
-  if(!pub.length){ sec.style.display='none'; return; }
+  try { LC_PUB = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){ LC_PUB=[]; }
+  if(!LC_PUB.length){ sec.style.display='none'; return; }
   sec.style.display = '';
-  document.getElementById('libCurationGrid').innerHTML = pub.map(c=>`
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:8px">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
-      <div style="font-size:18px;font-weight:800;letter-spacing:-0.5px">${esc(c.title)}</div>
-      ${c.intro?`<div style="font-size:13px;color:var(--text-sub);margin-top:7px;line-height:1.6">${esc(c.intro)}</div>`:''}
-      <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
-        ${(c.books||[]).map(b=>`<div style="display:flex;gap:11px;align-items:flex-start">
-          <div style="width:30px;height:42px;border-radius:4px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px">📕</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700">${esc(b.t)}</div>
-            <div style="font-size:11.5px;color:var(--text-light)">${esc(b.a)}</div>
-            ${b.note?`<div style="font-size:11.5px;color:var(--primary);margin-top:3px;font-style:italic">“${esc(b.note)}”</div>`:''}
-          </div>
-          <span style="font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:3px 8px;border-radius:6px;white-space:nowrap">소장·전자책</span>
+  document.getElementById('libCurationGrid').innerHTML = LC_PUB.map((c,ci)=>`
+    <div class="lc-card">
+      <div class="lc-meta">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
+      <div class="lc-title">${esc(c.title)}</div>
+      ${c.intro?`<div class="lc-intro">${esc(c.intro)}</div>`:''}
+      <div class="lc-shelf">
+        ${(c.books||[]).map((b,bi)=>`<div class="lc-spine" onclick="openLc(${ci},${bi})" ${b.cover?'':`style="background:${spineColor(b.t)}"`}>
+          ${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.remove()">`:`<div class="lc-fb">${esc(b.t)}</div>`}
         </div>`).join('')}
       </div>
+      <div class="lc-hint">책에 마우스를 올리면 표지가 펼쳐지고, 누르면 빌리기로 이어져요</div>
     </div>`).join('');
 }
+function openLc(ci,bi){
+  const c=LC_PUB[ci]; if(!c) return; const b=(c.books||[])[bi]; if(!b) return;
+  const ov=document.getElementById('lcDetail');
+  ov.querySelector('.lcd').innerHTML=`
+    <span class="lcd-x" onclick="closeLc()">×</span>
+    <div class="lcd-top">
+      <div class="lcd-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
+      <div class="lcd-i"><h2>${esc(b.t)}</h2><div class="au">${esc(b.a)}</div>
+        ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
+    </div>
+    <div class="lcd-acts">
+      <div class="lcd-btn primary" onclick="lcAccess('도서관 소장')">📖 도서관 소장에서 보기<span class="ar">›</span></div>
+      <div class="lcd-btn" onclick="lcAccess('전자책')">💻 전자책으로 읽기<span class="ar">›</span></div>
+      <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:4px">도서관 카탈로그 연동 시 바로 연결됩니다</div>
+    </div>`;
+  ov.classList.add('on');
+}
+function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
+function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
   if(!el) return;
