@@ -159,10 +159,11 @@ body.dark .side-node .icon{color:var(--gold);}
 .lc-meta{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:8px;}
 .lc-title{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
 .lc-intro{font-size:13px;color:var(--text-sub);margin-top:7px;line-height:1.6;}
-.lc-shelfwrap{position:relative;padding:0 6px 14px;margin-top:12px;border-radius:7px 7px 4px 4px;background:linear-gradient(180deg,rgba(20,28,52,.055),rgba(20,28,52,.015));box-shadow:inset 15px 0 22px -16px rgba(10,16,38,.32),inset -15px 0 22px -16px rgba(10,16,38,.32),inset 0 18px 24px -16px rgba(10,16,38,.42);}
-body.dark .lc-shelfwrap{background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.12));box-shadow:inset 15px 0 22px -16px rgba(0,0,0,.5),inset -15px 0 22px -16px rgba(0,0,0,.5),inset 0 18px 24px -16px rgba(0,0,0,.6);}
-.lc-shelfwrap::after{content:'';position:absolute;left:0;right:0;bottom:0;height:14px;border-radius:0 0 3px 3px;background:linear-gradient(180deg,#2c3a5e 0%,#1f2a48 48%,#141d36 100%);box-shadow:0 9px 20px rgba(10,16,38,.34),inset 0 1.5px 0 rgba(201,168,74,.55);}
-body.dark .lc-shelfwrap::after{background:linear-gradient(180deg,#26324f 0%,#1a2440 50%,#101830 100%);box-shadow:0 9px 20px rgba(0,0,0,.5),inset 0 1.5px 0 rgba(201,168,74,.5);}
+/* 원목 서재 — 어두운 뒷벽 + 라이트 오크 선반 + 따뜻한 LED 조명 */
+.lc-shelfwrap{position:relative;padding:0 10px 18px;margin-top:14px;border-radius:4px;background:linear-gradient(180deg,#2b2018 0%,#241a13 100%);box-shadow:inset 0 8px 18px -6px rgba(255,196,120,.28),inset 16px 0 22px -16px rgba(0,0,0,.5),inset -16px 0 22px -16px rgba(0,0,0,.5),0 14px 30px rgba(40,28,14,.3);}
+body.dark .lc-shelfwrap{background:linear-gradient(180deg,#201712 0%,#190f0a 100%);box-shadow:inset 0 8px 18px -6px rgba(255,180,100,.22),inset 16px 0 22px -16px rgba(0,0,0,.65),inset -16px 0 22px -16px rgba(0,0,0,.65),0 14px 30px rgba(0,0,0,.45);}
+.lc-shelfwrap::before{content:'';position:absolute;left:0;right:0;top:0;height:9px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#cda062,#9c733e);box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -1px 0 rgba(255,210,150,.5);z-index:2;pointer-events:none;}
+.lc-shelfwrap::after{content:'';position:absolute;left:0;right:0;bottom:0;height:17px;border-radius:0 0 4px 4px;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(110,72,28,.07) 7px 8px),linear-gradient(180deg,#e3c389 0%,#cda062 40%,#ad7e46 76%,#8a6234 100%);box-shadow:0 12px 22px rgba(40,28,14,.4),inset 0 1px 0 rgba(255,236,200,.55);z-index:1;}
 .lc-shelf{display:flex;gap:9px;align-items:flex-end;overflow-x:auto;padding:24px 6px 0;scrollbar-width:none;}
 .lc-shelf::-webkit-scrollbar{display:none;}
 .lc-spine{position:relative;flex:0 0 auto;width:44px;height:172px;border-radius:3px 6px 6px 3px;overflow:hidden;cursor:pointer;box-shadow:0 6px 15px rgba(20,20,45,.22);transition:width .26s cubic-bezier(.2,.7,.2,1),transform .26s cubic-bezier(.2,.7,.2,1),box-shadow .26s;}
