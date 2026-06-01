@@ -1789,6 +1789,7 @@ function nav(page){
 let LC_PUB=[];
 function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
+const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function lcGridHTML(){
   return LC_PUB.map((c,ci)=>`
     <div class="lc-card">
@@ -1815,7 +1816,7 @@ async function backfillCovers(){
   const missing = [...new Set([].concat(...LC_PUB.map(c=>(c.books||[]).filter(b=>!b.cover && b.isbn).map(b=>b.isbn))))];
   if(!missing.length) return;
   try{
-    const r = await fetch(COVER_FN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({isbns:missing})});
+    const r = await fetch(COVER_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:missing})});
     const d = await r.json(); const cov = d.covers||{};
     let changed=false;
     LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(!b.cover && cov[b.isbn]){ b.cover=cov[b.isbn]; changed=true; } }));
