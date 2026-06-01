@@ -851,6 +851,11 @@ body.dark #airOv .air-cta{color:#0f172a;}
     <input class="search-input" placeholder="책·작가·테마 검색 — AI가 추천해줘요" onkeyup="onSearch(event)">
   </div>
 
+  <div class="section" id="libCurationSec" style="display:none">
+    <div class="section-head"><div class="section-title"><em>우리 도서관 큐레이션</em></div></div>
+    <div id="libCurationGrid"></div>
+  </div>
+
   <div class="section">
     <div class="section-head">
       <div class="section-title"><em>테마 컬렉션</em></div>
@@ -1744,11 +1749,38 @@ function nav(page){
   if(page === 'home') {
     setTimeout(()=>renderHomeHub(), 50);
   }
+  if(page === 'collection') {
+    setTimeout(()=>renderLibCuration(), 30);
+  }
   if(page === 'mypage') {
     setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); }, 50);
   }
 }
 
+function renderLibCuration(){
+  const sec = document.getElementById('libCurationSec'); if(!sec) return;
+  let pub = [];
+  try { pub = JSON.parse(localStorage.getItem('bookstar_pub') || '[]'); } catch(e){}
+  if(!pub.length){ sec.style.display='none'; return; }
+  sec.style.display = '';
+  document.getElementById('libCurationGrid').innerHTML = pub.map(c=>`
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:8px">✦ ${esc(c.library||'우리 도서관')} · 사서 추천</div>
+      <div style="font-size:18px;font-weight:800;letter-spacing:-0.5px">${esc(c.title)}</div>
+      ${c.intro?`<div style="font-size:13px;color:var(--text-sub);margin-top:7px;line-height:1.6">${esc(c.intro)}</div>`:''}
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+        ${(c.books||[]).map(b=>`<div style="display:flex;gap:11px;align-items:flex-start">
+          <div style="width:30px;height:42px;border-radius:4px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px">📕</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700">${esc(b.t)}</div>
+            <div style="font-size:11.5px;color:var(--text-light)">${esc(b.a)}</div>
+            ${b.note?`<div style="font-size:11.5px;color:var(--primary);margin-top:3px;font-style:italic">“${esc(b.note)}”</div>`:''}
+          </div>
+          <span style="font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:3px 8px;border-radius:6px;white-space:nowrap">소장·전자책</span>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
   if(!el) return;
