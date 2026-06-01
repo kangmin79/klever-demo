@@ -685,6 +685,21 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 .viewer-pane .chapter-anchor{scroll-margin-top:20px;}
 .viewer-pane h3.ch-title{font-size:1.15em;font-weight:800;margin:1.6em 0 0.6em;padding-top:0.4em;border-top:1px solid var(--border);color:var(--primary);}
 
+/* ═══ 장르별 조판 (브런치: 템플릿은 예쁨보다 장르 적합성) — #viewerBody.gv-* ═══ */
+/* 행간/글꼴크기는 독자 설정(--reader-*) 존중 → 정렬·들여쓰기·여백·단(段) 폭만 장르화 */
+/* 시·서사시: 행을 그대로, 좌측 정렬, 좁은 단을 가운데로, 행 사이 촘촘·연(聯) 사이만 여백감 */
+.gv-poem .viewer-pane p{text-align:left;text-indent:0;margin:0 auto .5em;max-width:32em;}
+.gv-poem .viewer-pane.left{font-family:'Noto Serif KR',var(--reader-ff),serif;}
+/* 소설: 첫 줄 들여쓰기 + 양끝맞춤 + 단락 촘촘(이야기 흐름) */
+.gv-novel .viewer-pane p{text-align:justify;text-indent:1.1em;margin:0 0 .4em;}
+.gv-novel .viewer-pane p:first-of-type,.gv-novel .viewer-pane h3.ch-title + p{text-indent:0;}
+/* 희곡: 내어쓰기(화자·지문 줄바꿈 가독), 좌측 정렬 */
+.gv-drama .viewer-pane p{text-align:left;padding-left:1.5em;text-indent:-1.5em;margin:0 0 .55em;}
+/* 철학·사상: 양끝맞춤, 단락 또렷이 구분(논지 단위), 편안한 단 폭 */
+.gv-idea .viewer-pane p{text-align:justify;margin:0 0 1.15em;max-width:38em;}
+/* 수필·에세이: 미니멀, 좌측 정렬, 들여쓰기 없이 넉넉한 여백, 좁은 단 가운데 */
+.gv-essay .viewer-pane p{text-align:left;text-indent:0;margin:0 auto 1.2em;max-width:33em;}
+
 /* TOC 드로어 */
 .toc-drawer{
   position:absolute;top:0;left:0;bottom:0;width:300px;background:var(--bg-card);border-right:1px solid var(--border);
@@ -2401,6 +2416,18 @@ function setMode(mode){
   setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); }, 0);
 }
 
+// 장르 버킷 (category → 조판 템플릿). 시 먼저 검사(서사시의 '시' 우선).
+function genreOf(cat){
+  cat = cat || '';
+  if(/시|운문/.test(cat)) return 'poem';          // 근대 시, 시, 고대 서사시, 서사시
+  if(/소설/.test(cat)) return 'novel';
+  if(/희곡|비극|戱/.test(cat)) return 'drama';
+  if(/수필|에세이|기행/.test(cat)) return 'essay';
+  if(/사상|철학|심리|경제|과학|논어|학$/.test(cat)) return 'idea';  // 정치사상·고대철학·심리학·과학…
+  return 'prose';   // 기본(기존 양끝맞춤 유지)
+}
+const GENRE_CLASSES = ['gv-poem','gv-novel','gv-drama','gv-idea','gv-essay','gv-prose'];
+
 function bodyToHtml(text){
   if(!text) return '';
   const chPat = /^\s*(CHAPTER|BOOK|PART|ACT|SCENE|CANTO)\s+[IVXLCDM\d]+[.:]?[^\n]*$/i;
@@ -2481,6 +2508,9 @@ function renderViewer(){
   const c = viewerBodies(currentBook);
   const body = document.getElementById('viewerBody');
   const info = document.getElementById('viewerFooterInfo');
+  // 장르별 조판 클래스 (category 기반)
+  body.classList.remove(...GENRE_CLASSES);
+  body.classList.add('gv-' + genreOf(currentBook.category));
 
   if(currentMode === 'challenge'){
     info.innerHTML = '제3장 핵심 페이지 (5/10) · <b>+50 점수</b>';
