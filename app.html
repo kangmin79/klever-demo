@@ -162,8 +162,17 @@ body.dark .side-node .icon{color:var(--gold);}
 .ml-h-t{font-size:20px;font-weight:800;letter-spacing:-.6px;color:var(--text);}
 .ml-h-s{font-size:13px;color:var(--text-light);margin-top:5px;}
 .ml-h-x{font-size:22px;color:var(--text-light);cursor:pointer;line-height:1;padding-top:2px;}
-.ml [class$="-cv"]{position:relative;overflow:hidden;border-radius:7px;box-shadow:0 9px 20px -8px rgba(20,20,45,.32);background:var(--bg-input);}
-.ml [class$="-cv"] img{width:100%;height:100%;object-fit:cover;display:block;}
+.ml [class$="-cv"]{position:relative;overflow:hidden;border-radius:7px;box-shadow:0 9px 20px -8px rgba(20,20,45,.32);background:var(--bg-input);transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
+.ml [class$="-cv"] img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s cubic-bezier(.2,.7,.2,1);}
+/* 책 호버 — 떠오름 */
+.ml-bk,.ml-rkc{transition:transform .2s cubic-bezier(.2,.7,.2,1);}
+.ml-bk:hover,.ml-rkc:hover{transform:translateY(-5px);}
+.ml-bk:hover .ml-bk-cv,.ml-rkc:hover .ml-rkc-cv,.ml-life:hover .ml-life-cv{transform:translateY(-2px);box-shadow:0 20px 34px -10px rgba(20,20,45,.45);}
+.ml-bk:hover .ml-bk-cv img,.ml-rkc:hover .ml-rkc-cv img,.ml-life:hover .ml-life-cv img,.ml-gc:hover .ml-gc-cv img{transform:scale(1.06);}
+.ml-bk:hover .ml-bk-t,.ml-rkc:hover .ml-rkc-t{color:var(--primary);}
+body.dark .ml-bk:hover .ml-bk-t,body.dark .ml-rkc:hover .ml-rkc-t{color:var(--gold);}
+.ml-gc,.ml-ac{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
+.ml-gc:hover,.ml-ac:hover{transform:translateY(-6px);box-shadow:0 24px 40px -12px rgba(20,20,40,.5);}
 .ml-icons{display:flex;gap:14px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none;}
 .ml-icons::-webkit-scrollbar{display:none;}
 .ml-ic{flex:0 0 auto;width:80px;text-align:center;cursor:pointer;}
@@ -185,8 +194,7 @@ body.dark .ml-cta{background:var(--gold);color:#0f172a;}
 .ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;}
 .ml-hrow::-webkit-scrollbar{display:none;}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
-.ml-bk-cv{width:130px;aspect-ratio:2/3;transition:transform .18s;}
-.ml-bk:hover .ml-bk-cv{transform:translateY(-4px);}
+.ml-bk-cv{width:130px;aspect-ratio:2/3;}
 .ml-bk-t{margin-top:10px;font-size:13.5px;font-weight:700;color:var(--text);line-height:1.32;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .ml-bk-a{font-size:11.5px;color:var(--text-light);margin-top:3px;}
 .ml-bk-r{font-size:11.5px;color:var(--text-sub);margin-top:5px;}
