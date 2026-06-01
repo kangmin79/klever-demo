@@ -191,7 +191,8 @@ body.dark .ml-life-meta span{color:var(--gold);}
 .ml-life-t span{color:var(--text-light);font-weight:500;}
 .ml-cta{display:inline-block;margin-top:16px;padding:11px 20px;border-radius:11px;background:var(--primary);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;}
 body.dark .ml-cta{background:var(--gold);color:#0f172a;}
-.ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;scroll-behavior:smooth;}
+.ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;cursor:grab;user-select:none;}
+.ml-hrow.grabbing{cursor:grabbing;}
 .ml-hrow::-webkit-scrollbar{display:none;}
 .ml-car{position:relative;}
 .ml-arrow{position:absolute;top:42%;transform:translateY(-50%);z-index:6;width:42px;height:42px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);box-shadow:0 6px 20px rgba(20,20,45,.2);font-size:22px;line-height:1;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s,transform .12s;}
@@ -1899,6 +1900,17 @@ function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div><div class="ml-h-x">›</div></div>`;}
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
+function mlBindDrag(){
+  document.querySelectorAll('#libCurationGrid .ml-hrow').forEach(row=>{
+    let down=false,sx=0,sl=0,moved=0;
+    row.addEventListener('pointerdown',e=>{ if(e.button!=null&&e.button!==0)return; down=true;moved=0;sx=e.clientX;sl=row.scrollLeft;row.classList.add('grabbing');try{row.setPointerCapture(e.pointerId);}catch(_){} });
+    row.addEventListener('pointermove',e=>{ if(!down)return; const dx=e.clientX-sx; if(Math.abs(dx)>moved)moved=Math.abs(dx); row.scrollLeft=sl-dx; });
+    const end=()=>{ down=false; row.classList.remove('grabbing'); };
+    row.addEventListener('pointerup',end);
+    row.addEventListener('pointercancel',end);
+    row.addEventListener('click',e=>{ if(moved>6){ e.stopPropagation(); e.preventDefault(); } moved=0; },true);
+  });
+}
 function libTitled(){return LIB_POOL.filter(b=>b.t);}
 function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];for(let i=0;i<n;i++)r.push(p[(off+i)%p.length]);return r;}
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
@@ -1932,6 +1944,7 @@ function renderLibCuration(){
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
   grid.innerHTML = millieHTML();
+  mlBindDrag();
   backfillPool();
 }
 async function backfillPool(){
@@ -1954,7 +1967,7 @@ async function backfillPool(){
       });
     }catch(e){}
   }
-  const g=document.getElementById('libCurationGrid'); if(g) g.innerHTML=millieHTML();
+  const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); }
 }
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
