@@ -156,6 +156,56 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .chalbox .cbar{height:8px;background:var(--input);border-radius:5px;overflow:hidden;margin-top:9px}
 .chalbox .cbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#b8902f)}
 .dr-cmt{font-size:12.5px;line-height:1.6;color:var(--sub);background:var(--primary-bg);border-radius:11px;padding:13px 15px;margin-top:18px}
+/* ── 프로그램 운영 ── */
+.btn-primary{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.14s}
+.btn-primary:hover{background:var(--primary-dark)}
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px;min-height:120px}
+.kcol .ktit{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:12px;padding:0 4px}
+.kcol .kdot{width:9px;height:9px;border-radius:50%}
+.kcol .kcount{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--light);background:var(--card);border:1px solid var(--border);padding:1px 8px;border-radius:20px}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.13s}
+.pcard:hover{box-shadow:0 8px 22px rgba(26,30,55,.08);transform:translateY(-1px)}
+.pcard .ptype{font-size:10.5px;font-weight:800;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px}
+.pcard h4{font-size:14px;font-weight:800;margin:9px 0 6px;letter-spacing:-.3px}
+.pcard .pmeta{font-size:11.5px;color:var(--light);line-height:1.6}
+.pcard .pfoot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px}
+.pcard .pbooks{font-weight:700;color:var(--primary)}
+.pcard .presult{margin-left:auto;font-weight:800;color:var(--good)}
+/* ── 큐레이션 만들기 모달 ── */
+#curOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:70;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#curOv.on{display:flex}
+.cur-modal{background:var(--card);width:100%;max-width:680px;max-height:90vh;border-radius:20px;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);display:flex;flex-direction:column}
+.cur-h{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--card);z-index:1}
+.cur-h .star{color:var(--gold);font-size:16px}.cur-h h3{font-size:17px;font-weight:800}
+.cur-h .x{margin-left:auto;cursor:pointer;color:var(--light);font-size:22px;line-height:1;padding:4px}
+.cur-b{padding:22px 24px;flex:1}
+.cur-label{font-size:12px;font-weight:800;color:var(--sub);margin-bottom:9px}
+.cur-search{display:flex;gap:8px}
+.cur-search input{flex:1;font-family:inherit;font-size:14px;border:1px solid var(--border);border-radius:11px;padding:12px 14px;outline:none}
+.cur-search input:focus{border-color:var(--primary)}
+.cur-ex{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.cur-ex span{font-size:11.5px;color:var(--sub);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:.12s}
+.cur-ex span:hover{border-color:var(--primary);color:var(--primary)}
+.cand-head{display:flex;align-items:center;margin:22px 0 12px}
+.cand-head .ct{font-size:12.5px;font-weight:800}
+.cand-head .cc{margin-left:auto;font-size:12px;color:var(--accent);font-weight:700}
+.cand{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px;transition:.12s}
+.cand.on{border-color:var(--primary);background:var(--primary-bg)}
+.cand .cv{width:30px;height:42px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
+.cand .ci{flex:1;min-width:0}
+.cand .ci .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .ci .s{font-size:11px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .loan{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
+.cand .pick{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;font-weight:800;color:var(--light);display:flex;align-items:center;justify-content:center}
+.cand.on .pick{background:var(--primary);border-color:var(--primary);color:#fff}
+.cur-loading{text-align:center;color:var(--light);font-size:13px;padding:34px 0}
+.cur-note{font-size:11px;color:var(--light);margin-top:12px;line-height:1.6}
+.cur-note b{color:var(--sub)}
+.cur-f{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cur-f input{flex:1;min-width:160px;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none}
+.cur-f input:focus{border-color:var(--primary)}
 /* ── 로그인 게이트 (데모) ── */
 #loginGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(120% 100% at 50% -10%,rgba(26,41,66,.96),#0f1a2e 70%)}
@@ -213,7 +263,7 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
     <div class="grp">운영</div>
     <div class="navi on" onclick="go(this,'dash')">📊 <span>측정 대시보드</span></div>
     <div class="navi" onclick="go(this,'students')">🎓 <span>학생 관리</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'programs')">🏆 <span>프로그램·챌린지</span><span class="soon">준비</span></div>
+    <div class="navi" onclick="go(this,'programs')">🏆 <span>프로그램·챌린지</span></div>
     <div class="navi" onclick="go(this,'curation')">✦ <span>큐레이션 편성</span><span class="soon">준비</span></div>
     <div class="grp">콘텐츠</div>
     <div class="navi" onclick="go(this,'books')">📚 <span>도서·콘텐츠</span><span class="soon">준비</span></div>
@@ -305,6 +355,34 @@ try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('login
       <p style="font-size:11.5px;color:var(--light);margin-top:12px">행을 클릭하면 학생별 독서 프로필이 열립니다 · <span id="stuCount"></span></p>
     </section>
     <div id="stuOv" onclick="if(event.target.id==='stuOv')closeStudent()"><div id="stuDr"></div></div>
+
+    <!-- 프로그램 운영 -->
+    <section id="pg-programs" style="display:none">
+      <div class="phead">
+        <div><h1>프로그램 운영 <span class="tagpill" style="color:var(--gold);background:rgba(212,169,59,.14)">데모 데이터</span></h1>
+          <p>독서 프로그램을 예정·진행중·종료로 한눈에 — 큐레이션·챌린지·행사를 여기서 굴립니다</p></div>
+        <button class="btn-primary" onclick="openCur()">✦ 새 큐레이션 만들기</button>
+      </div>
+      <div class="kanban" id="kanban"></div>
+    </section>
+    <div id="curOv" onclick="if(event.target.id==='curOv')closeCur()">
+      <div class="cur-modal">
+        <div class="cur-h"><span class="star">✦</span><h3>새 큐레이션 만들기</h3><span class="x" onclick="closeCur()">×</span></div>
+        <div class="cur-b">
+          <div class="cur-label">어떤 책을 모을까요? — 주제·대상·분위기를 말하듯이</div>
+          <div class="cur-search">
+            <input id="curQ" placeholder="예: 6월, 시험 끝난 신입생에게 가볍게 읽을 문학" onkeydown="if(event.key==='Enter')loadCand()">
+            <button class="btn-primary" onclick="loadCand()">후보 찾기</button>
+          </div>
+          <div class="cur-ex" id="curEx"></div>
+          <div id="candWrap"></div>
+        </div>
+        <div class="cur-f">
+          <input id="curTitle" placeholder="프로그램 제목 (예: 6월의 책 — 한 박자 쉬어가기)">
+          <button class="btn-primary" onclick="saveProgram()">담은 책으로 저장 →</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 나머지 메뉴: 골격(준비중) -->
     <section id="pg-other" style="display:none">
@@ -419,9 +497,10 @@ function setRole(r){
 function setRange(b,r){RANGE=r;document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();}
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['pg-dash','pg-students','pg-other'].forEach(id=>el(id).style.display='none');
+  ['pg-dash','pg-students','pg-programs','pg-other'].forEach(id=>el(id).style.display='none');
   if(page==='dash'){ el('pg-dash').style.display=''; }
   else if(page==='students'){ el('pg-students').style.display=''; renderStudents(); }
+  else if(page==='programs'){ el('pg-programs').style.display=''; renderPrograms(); }
   else{
     el('pg-other').style.display='';
     const map={programs:'프로그램·챌린지',curation:'큐레이션 편성',books:'도서·콘텐츠',report:'리포트',community:'커뮤니티 관리',settings:'설정',universities:'대학 관리',bookdb:'도서 DB·AI',billing:'구독·결제'};
@@ -544,6 +623,75 @@ function openStudent(i){const s=STUDENTS[i];if(!s)return;
   el('stuOv').classList.add('on');
 }
 function closeStudent(){el('stuOv').classList.remove('on');}
+
+/* ── 프로그램 운영 ── */
+const STATUS=[{k:'예정',c:'#c98a2b'},{k:'진행중',c:'#2e7d57'},{k:'종료',c:'#7c8597'}];
+let PROGRAMS=[
+  {title:'신입생 환영 — 첫 책', type:'큐레이션', status:'진행중', period:'3.2~3.31', target:'신입생 전체', books:8, result:'완독률 64%'},
+  {title:'이달의 고전 챌린지', type:'챌린지', status:'진행중', period:'6.1~6.30', target:'전교', books:5, result:'참여 312명'},
+  {title:'시험기간, 머리 식히는 책', type:'큐레이션', status:'예정', period:'6.15~6.30', target:'전교', books:10, result:''},
+  {title:'심리학과 추천도서', type:'큐레이션', status:'종료', period:'5.1~5.31', target:'심리학과', books:12, result:'완독률 71%'},
+  {title:'작가 초청 북토크 — 정세랑', type:'행사', status:'종료', period:'4.18', target:'신청 80명', books:3, result:'만족 4.6/5'},
+];
+function renderPrograms(){
+  el('kanban').innerHTML=STATUS.map(s=>{
+    const list=PROGRAMS.filter(p=>p.status===s.k);
+    return `<div class="kcol"><div class="ktit"><span class="kdot" style="background:${s.c}"></span>${s.k}<span class="kcount">${list.length}</span></div>
+      ${list.map(p=>`<div class="pcard">
+        <span class="ptype">${p.type}</span><h4>${p.title}</h4>
+        <div class="pmeta">${p.period} · ${p.target}</div>
+        <div class="pfoot"><span class="pbooks">📚 ${p.books}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
+      </div>`).join('')||'<div style="font-size:12px;color:var(--light);padding:10px 4px">없음</div>'}
+    </div>`;
+  }).join('');
+}
+/* ── 큐레이션 만들기 (국중 후보 — 데모) ──
+   운영 시: Supabase Edge Function이 정보나루 loanItemSrch(주제·연령·기간) 호출 →
+   도서관 카탈로그와 ISBN 매칭 → 접근 링크(소장·전자책) 부착.
+   아래 DEMO_CAND는 실제 정보나루에서 받아온 '20대 인기 문학' 응답. */
+const CUR_EX=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','과학·교양 베스트'];
+const DEMO_CAND=[
+ {t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120',loan:2313},
+ {t:'모순',a:'양귀자 · 쓰다',isbn:'9788998441012',loan:2103},
+ {t:'홍학의 자리',a:'정해연 · 문학동네',isbn:'9788954681155',loan:1746},
+ {t:'작별하지 않는다',a:'한강 · 문학동네',isbn:'9788954682152',loan:1705},
+ {t:'채식주의자',a:'한강 · 창비',isbn:'9788936434595',loan:1416},
+ {t:'급류',a:'정대건 · 민음사',isbn:'9788937473401',loan:1469},
+ {t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',loan:1280},
+ {t:'혼모노',a:'성해나 · 창비',isbn:'9788936439743',loan:1347},
+];
+let picks={};
+function openCur(){picks={};el('curQ').value='';el('curTitle').value='';el('candWrap').innerHTML='';
+  el('curEx').innerHTML=CUR_EX.map(e=>`<span onclick="exCur('${e}')">${e}</span>`).join('');
+  el('curOv').classList.add('on');}
+function closeCur(){el('curOv').classList.remove('on');}
+function exCur(t){el('curQ').value=t;loadCand();}
+function loadCand(){
+  if(!el('curQ').value.trim())return;
+  el('candWrap').innerHTML='<div class="cur-loading">✦ 국중 인기대출에서 후보 가져오는 중…</div>';
+  setTimeout(()=>{ picks={}; renderCand(); },650);
+}
+function renderCand(){
+  const n=Object.keys(picks).filter(k=>picks[k]).length;
+  el('candWrap').innerHTML=`<div class="cand-head"><span class="ct">국중 추천 후보 ${DEMO_CAND.length}권</span><span class="cc" id="pickCnt">담음 ${n}권</span></div>`+
+    DEMO_CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
+      <div class="cv">📕</div>
+      <div class="ci"><div class="t">${b.t}</div><div class="s">${b.a} · ISBN ${b.isbn}</div></div>
+      <div class="loan">대출 ${b.loan.toLocaleString()}</div>
+      <div class="pick" onclick="pick(${i})">${picks[i]?'✓':'+'}</div>
+    </div>`).join('')+
+    `<div class="cur-note">※ 데모 — 운영 시 정보나루 <b>loanItemSrch</b>(주제·연령·기간)로 실제 후보를 불러오고, 도서관 카탈로그와 매칭해 접근 링크(소장·전자책)를 붙입니다.</div>`;
+}
+function pick(i){picks[i]=!picks[i];const c=el('cand'+i);c.classList.toggle('on',picks[i]);
+  c.querySelector('.pick').textContent=picks[i]?'✓':'+';
+  el('pickCnt').textContent='담음 '+Object.keys(picks).filter(k=>picks[k]).length+'권';}
+function saveProgram(){
+  const sel=DEMO_CAND.filter((_,i)=>picks[i]);
+  if(!sel.length){alert('담은 책이 없어요. 후보에서 + 를 눌러 담아주세요.');return;}
+  const title=el('curTitle').value.trim()||el('curQ').value.trim()||'새 큐레이션';
+  PROGRAMS.unshift({title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',books:sel.length,result:''});
+  closeCur();renderPrograms();
+}
 
 initStudents();
 render();
