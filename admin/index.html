@@ -375,9 +375,13 @@ function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'
   const lbl=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전챌린지':'챌린지';return `<span class="gtag ${k}">${lbl}</span>`;}
 // 우리도서관 화면의 실제 5개 카테고리(app.html millieHTML 기준)와 1:1
 const LOCATIONS=['이달의 책','사서가 주목한 책','우리 학교 대출 랭킹','하루 15분, 핵심만','AI와 함께 읽는 책'];
+// Supabase (library_programs) — 발행물 서버 저장/공유
+const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
+const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
 
-/* ====== 데모 데이터 (PPT 예시 기반) ====== */
-let PROGRAMS=[
+/* ====== 데모 데이터 (PPT 예시 기반) — 대시보드·통계용 stats 포함 ====== */
+const DEMO_PROGRAMS=[
  {id:'p1',type:'큐레이션',title:'6월 도서관 추천 도서',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['사서가 주목한 책'],
   visits:1690,uses:1500,minutes:null,intro:'6월에 읽기 좋은 책을 모았어요',
   books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg'},
@@ -394,6 +398,21 @@ let PROGRAMS=[
   visits:980,uses:1120,minutes:null,intro:'심리학과 추천도서 완독 챌린지',mission:{quiz:true,quizN:5,review:true,question:false},
   books:[{t:'미움받을 용기',a:'기시미 이치로',isbn:'',cover:''}]},
 ];
+let PROGRAMS=DEMO_PROGRAMS.slice();
+// 서버(library_programs)의 실제 발행물을 불러와 데모 앞에 합침
+async function loadServerPrograms(){
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok)return;
+    const rows=await r.json(); if(!Array.isArray(rows))return;
+    const mapped=rows.map(x=>({id:x.id,type:x.type,title:x.title,status:x.status,from:x.start_date||'',to:x.end_date||'',
+      loc:x.location?[x.location]:[],visits:0,uses:0,minutes:x.type==='고전챌린지'?0:null,intro:x.intro||'',
+      mission:x.mission||undefined,books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
+    PROGRAMS=mapped.concat(DEMO_PROGRAMS);
+    if(el('pg-dash').style.display!=='none')renderDash();
+    if(el('pg-history').style.display!=='none')renderHistory();
+  }catch(e){}
+}
 /* 이용자별 (PPT slide4) */
 const USERS=[
  {id:'C336122',uses:41,review:10,quiz:80,question:10,total:85,minutes:20},
@@ -619,16 +638,27 @@ function syncPreview(){
       <div class="pv-loc">📍 ${MK.loc.length?esc(MK.loc.join(' · ')):'위치 미지정'}</div>
     </div>`;
 }
-function finishMake(){
+async function finishMake(){
   if(!MK.title){toast('제목을 입력해주세요');return;}
   if(!MK.books.length){toast('책을 1권 이상 담아주세요');return;}
   if(MK.type!=='큐레이션'&&!MK.mission.quiz&&!MK.mission.review&&!MK.mission.question){toast('미션을 1개 이상 선택해주세요');return;}
   if(!MK.loc.length){toast('노출 위치를 1개 이상 지정해주세요');return;}
-  const id='c'+Date.now().toString(36);
-  PROGRAMS.unshift({id,type:MK.type,title:MK.title,status:'예정',from:MK.from,to:MK.to,loc:MK.loc.slice(),
-    visits:0,uses:0,minutes:MK.type==='고전챌린지'?0:null,intro:MK.intro,
-    mission:MK.type!=='큐레이션'?Object.assign({},MK.mission):undefined,books:MK.books.slice()});
-  toast('만들기 완료! ‘예정’ 상태로 등록됐어요');
+  const status=calcStatus(MK.from,MK.to);
+  const mission=MK.type!=='큐레이션'?Object.assign({},MK.mission):null;
+  const row={school:'중앙대학교',type:MK.type,title:MK.title,intro:MK.intro||'',location:MK.loc[0]||'',status,
+    start_date:MK.from||null,end_date:MK.to||null,mission,
+    books:MK.books.map(b=>({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:b.note||''}))};
+  let saved=null;
+  try{
+    const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=representation'},
+      body:JSON.stringify(row)});
+    if(r.ok) saved=(await r.json())[0];
+  }catch(e){}
+  PROGRAMS.unshift({id:(saved&&saved.id)||'c'+Date.now().toString(36),type:MK.type,title:MK.title,status,from:MK.from,to:MK.to,
+    loc:MK.loc.slice(),visits:0,uses:0,minutes:MK.type==='고전챌린지'?0:null,intro:MK.intro,
+    mission:mission||undefined,books:MK.books.slice()});
+  toast(saved?'발행 완료! 서버에 저장돼 학생 앱에 노출됩니다':'저장됨(서버 연결 실패 — 로컬만)');
   resetType();go(document.querySelectorAll('.navi')[4],'history');
 }
 
@@ -678,5 +708,6 @@ function renderHistory(){
 /* ====== 초기화 ====== */
 buildNtLoc();
 renderDash();
+loadServerPrograms();
 </script>
 </body></html>

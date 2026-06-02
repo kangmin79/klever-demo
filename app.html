@@ -2032,15 +2032,34 @@ function millieHTML(){
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
   return `<div class="ml">${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libTitled())}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
 }
-function renderLibCuration(){
-  const grid=document.getElementById('libCurationGrid'); if(!grid) return;
-  try{ LC_PUB=JSON.parse(localStorage.getItem('bookstar_pub')||'[]'); }catch(e){ LC_PUB=[]; }
+const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
+function rebuildLibPool(){
   const seen=new Set(); LIB_POOL=[];
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
+}
+function renderLibCuration(){
+  const grid=document.getElementById('libCurationGrid'); if(!grid) return;
+  // 즉시 표시(로컬 폴백) → 서버 발행물로 갱신
+  try{ LC_PUB=JSON.parse(localStorage.getItem('bookstar_pub')||'[]'); }catch(e){ LC_PUB=[]; }
+  rebuildLibPool();
   grid.innerHTML = millieHTML();
   mlBindDrag();
   backfillPool();
+  loadServerPub();
+}
+async function loadServerPub(){
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return;
+    const rows=await r.json();
+    if(!Array.isArray(rows)) return;
+    LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
+      books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
+    rebuildLibPool();
+    const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); backfillPool(); }
+  }catch(e){}
 }
 async function backfillPool(){
   const need=[...new Set(LIB_POOL.filter(b=>b.isbn&&(!b.t||!b.cover||b.rating===undefined||b.description===undefined)).map(b=>b.isbn))];
