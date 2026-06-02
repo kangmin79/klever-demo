@@ -1,6 +1,6 @@
 <!doctype html><html lang=ko><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Bookstar 관리자 · 측정 대시보드</title>
+<title>Bookstar 관리자 · 도서관 운영</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
@@ -11,244 +11,191 @@
   --primary:#1a2942; --primary-dark:#0f1a2e; --accent:#3a6ea5; --primary-bg:rgba(26,41,66,.06);
   --gold:#d4a93b; --bg:#f7f6f1; --card:#fff; --input:#f0efeb;
   --text:#1a2942; --sub:#475569; --light:#64748b; --border:#e3dfd5;
-  --good:#2e7d57; --bad:#c0392b; --sans:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
+  --good:#2e7d57; --bad:#c0392b; --blue:#2563c9; --sans:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;letter-spacing:-.02em;font-feature-settings:'ss03'}
 a{color:inherit;text-decoration:none}
-/* ── 상단바 ── */
+/* 상단바 */
 .topbar{height:60px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:16px;position:sticky;top:0;z-index:30}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.5px}
 .brand .logo{width:30px;height:30px;border-radius:9px;display:block}
 .brand small{font-weight:600;font-size:11px;color:var(--light);background:var(--input);padding:3px 8px;border-radius:6px;margin-left:2px}
 .spacer{flex:1}
-.roleswitch{display:flex;background:var(--input);border-radius:10px;padding:3px;gap:2px}
-.roleswitch button{border:0;background:transparent;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--light);padding:7px 13px;border-radius:8px;cursor:pointer;transition:.15s}
-.roleswitch button.on{background:var(--card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .school{font-size:12.5px;font-weight:600;color:var(--primary);background:var(--input);padding:7px 13px;border-radius:20px;display:flex;align-items:center;gap:6px}
 .who{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--sub)}
 .who .av{width:30px;height:30px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
-/* ── 레이아웃 ── */
+.lo{cursor:pointer;color:var(--light);font-size:12px;border:1px solid var(--border);padding:5px 10px;border-radius:8px}
+/* 레이아웃 */
 .shell{display:flex;min-height:calc(100vh - 60px)}
-.side{width:218px;flex:0 0 218px;background:var(--card);border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:60px;height:calc(100vh - 60px);overflow:auto}
-.side .grp{font-size:10.5px;font-weight:800;color:var(--light);letter-spacing:1px;margin:16px 10px 7px}
-.navi{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;transition:.13s;margin-bottom:2px}
+.side{width:212px;flex:0 0 212px;background:var(--card);border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:60px;height:calc(100vh - 60px);overflow:auto}
+.side .grp{font-size:10.5px;font-weight:800;color:var(--light);letter-spacing:1px;margin:6px 10px 7px}
+.navi{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;transition:.13s;margin-bottom:3px}
 .navi:hover{background:var(--primary-bg);color:var(--primary)}
 .navi.on{background:var(--primary);color:#fff}
-.navi .ic{width:17px;height:17px;flex:0 0 17px}
-.navi .soon{margin-left:auto;font-size:9.5px;font-weight:700;color:var(--light);background:var(--input);padding:2px 6px;border-radius:5px}
-.navi.on .soon{color:var(--primary);background:#fff}
-.op-only{display:none}
-body.operator .op-only{display:flex}
-.main{flex:1;padding:26px 30px 60px;max-width:1180px}
-/* ── 헤더 ── */
+.navi .em{font-size:15px;width:18px;text-align:center}
+.main{flex:1;padding:26px 30px 70px;max-width:1200px}
+/* 헤더 */
 .phead{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
 .phead h1{font-size:23px;font-weight:800;letter-spacing:-.6px}
 .phead p{font-size:13px;color:var(--light);margin-top:5px}
 .seg{display:flex;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .seg button{border:0;background:transparent;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--light);padding:8px 14px;cursor:pointer}
 .seg button.on{background:var(--primary);color:#fff}
-/* ── KPI ── */
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
-@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:17px 18px}
+.tagpill{display:inline-block;font-size:10.5px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px;margin-left:6px}
+.tagpill.gold{color:var(--gold);background:rgba(212,169,59,.14)}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:18px}
 .kpi .lab{font-size:12px;color:var(--light);font-weight:600;display:flex;align-items:center;gap:6px}
-.kpi .val{font-size:27px;font-weight:800;letter-spacing:-1px;margin-top:9px;line-height:1}
+.kpi .val{font-size:28px;font-weight:800;letter-spacing:-1px;margin-top:9px;line-height:1}
 .kpi .val small{font-size:14px;font-weight:700;color:var(--light)}
 .kpi .delta{font-size:11.5px;font-weight:700;margin-top:8px;display:inline-flex;align-items:center;gap:3px}
 .delta.up{color:var(--good)}.delta.down{color:var(--bad)}
-/* ── 카드/차트 ── */
+/* 카드 */
 .row{display:grid;gap:16px;margin-bottom:16px}
-.row.c2{grid-template-columns:1.5fr 1fr}
+.row.c2{grid-template-columns:1.4fr 1fr}
 .row.c2b{grid-template-columns:1fr 1fr}
-@media(max-width:900px){.row.c2,.row.c2b{grid-template-columns:1fr}}
+@media(max-width:920px){.row.c2,.row.c2b{grid-template-columns:1fr}}
 .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
 .panel h3{font-size:14.5px;font-weight:800;letter-spacing:-.3px;margin-bottom:3px}
 .panel .ph-sub{font-size:11.5px;color:var(--light);margin-bottom:16px}
-/* 추세(영역 라인) */
-.trend{width:100%;height:170px}
-.trend text{font-size:9px;fill:var(--light);font-family:var(--sans)}
-/* 도넛 */
-.donut-wrap{display:flex;align-items:center;gap:20px}
-.legend{display:flex;flex-direction:column;gap:10px}
-.legend .li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub)}
-.legend .dot{width:11px;height:11px;border-radius:3px}
-.legend b{color:var(--text);margin-left:auto;padding-left:14px}
-/* 가로 막대 */
-.bars{display:flex;flex-direction:column;gap:13px}
-.bar{display:grid;grid-template-columns:96px 1fr 46px;align-items:center;gap:10px;font-size:12.5px}
-.bar .nm{color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar .track{height:9px;background:var(--input);border-radius:6px;overflow:hidden}
-.bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:6px}
-.bar .v{text-align:right;font-weight:700;color:var(--text)}
-/* 리스트 */
+/* 리스트(랭킹) */
 .rank{display:flex;flex-direction:column;gap:2px}
 .rk{display:flex;align-items:center;gap:12px;padding:9px 6px;border-radius:9px}
 .rk:hover{background:var(--primary-bg)}
-.rk .no{width:20px;font-weight:800;color:var(--light);text-align:center;font-size:13px}
+.rk .no{width:22px;font-weight:800;color:var(--light);text-align:center;font-size:13px}
 .rk .no.top{color:var(--gold)}
-.rk .cv{width:30px;height:42px;border-radius:4px;background:var(--input);flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:13px}
 .rk .info{flex:1;min-width:0}
 .rk .info .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rk .info .s{font-size:11px;color:var(--light)}
-.rk .n2{font-size:12.5px;font-weight:800;color:var(--primary)}
-/* 활동 피드 */
-.feed{display:flex;flex-direction:column;gap:1px}
-.fi{display:flex;gap:11px;padding:10px 4px;font-size:12.5px;align-items:flex-start}
-.fi .fav{width:26px;height:26px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex:0 0 26px}
-.fi .ft{color:var(--sub);line-height:1.45}
-.fi .ft b{color:var(--text)}
-.fi .fz{margin-left:auto;color:var(--light);font-size:11px;white-space:nowrap;flex:0 0 auto}
-.placeholder{padding:70px 0;text-align:center;color:var(--light)}
-.placeholder .big{font-size:40px;margin-bottom:12px}
-.tagpill{display:inline-block;font-size:10.5px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px;margin-left:6px}
-/* ── 학생 관리 ── */
+.rk .n2{font-size:12.5px;font-weight:800;color:var(--primary);white-space:nowrap}
+/* 표 */
+.tblwrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+.tbl thead th{text-align:left;font-size:11.5px;font-weight:700;color:var(--light);padding:13px 14px;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.tbl .ctr{text-align:center}
+.gtag{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.gtag.cur{color:#1d6b48;background:rgba(46,125,87,.13)}
+.gtag.chal{color:#9a5b12;background:rgba(212,140,40,.16)}
+.gtag.clas{color:#2f5d8a;background:rgba(58,110,165,.13)}
+.muted{color:#a8a39a}
+/* 도구바 / 탭 / 버튼 */
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .toolbar input,.toolbar select{font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--card);border-radius:9px;padding:9px 12px;color:var(--text);outline:none}
-.toolbar input{flex:1;min-width:180px}
 .toolbar input:focus,.toolbar select:focus{border-color:var(--primary)}
-.fchips{display:flex;gap:6px;flex-wrap:wrap}
-.fchip{font-size:12.5px;font-weight:600;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;transition:.12s}
-.fchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
-.tblwrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-table.tbl{width:100%;border-collapse:collapse;font-size:13px}
-.tbl thead th{text-align:left;font-size:11.5px;font-weight:700;color:var(--light);padding:13px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
-.tbl td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
-.tbl tbody tr{cursor:pointer;transition:.12s}
-.tbl tbody tr:hover{background:var(--primary-bg)}
-.tbl tbody tr:last-child td{border-bottom:0}
-.stu{display:flex;align-items:center;gap:10px}
-.stu .av2{width:32px;height:32px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:0 0 32px}
-.stu .nm{font-weight:700}.stu .sd{font-size:11px;color:var(--light)}
-.mbar{height:6px;background:var(--input);border-radius:4px;overflow:hidden;width:64px;display:inline-block;vertical-align:middle;margin-right:7px}
-.mbar i{display:block;height:100%;background:var(--accent);border-radius:4px}
-.badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;white-space:nowrap}
-.badge.good{color:#1d6b48;background:rgba(46,125,87,.13)}
-.badge.ok{color:#2f5d8a;background:rgba(58,110,165,.13)}
-.badge.warn{color:#9a5b12;background:rgba(212,140,40,.16)}
-.intl-tag{font-size:10px;font-weight:700;color:var(--accent);border:1px solid rgba(58,110,165,.3);border-radius:5px;padding:1px 5px;margin-left:6px}
-/* 학생 상세 드로어 */
-#stuOv{position:fixed;inset:0;background:rgba(15,20,35,.4);display:none;z-index:60;backdrop-filter:blur(2px)}
-#stuOv.on{display:block}
-#stuDr{position:absolute;top:0;right:0;width:430px;max-width:93vw;height:100%;background:var(--card);box-shadow:-14px 0 44px rgba(0,0,0,.18);padding:24px 26px 44px;overflow:auto;animation:slidein .26s cubic-bezier(.2,.7,.2,1)}
-@keyframes slidein{from{transform:translateX(46px);opacity:.4}to{transform:none;opacity:1}}
-.dr-head{display:flex;align-items:center;gap:13px;margin-bottom:6px}
-.dr-head .av3{width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:0 0 48px}
-.dr-head h2{font-size:19px;font-weight:800;letter-spacing:-.5px}
-.dr-head .ds{font-size:12px;color:var(--light);margin-top:2px}
-.dr-x{margin-left:auto;cursor:pointer;color:var(--light);font-size:22px;line-height:1;padding:4px}
-.dr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}
-.dr-stats .s{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:11px 8px;text-align:center}
-.dr-stats .s .v{font-size:18px;font-weight:800;letter-spacing:-.5px}
-.dr-stats .s .l{font-size:10.5px;color:var(--light);margin-top:3px}
-.dr-sec{margin-top:20px}
-.dr-sec h4{font-size:12px;font-weight:800;color:var(--sub);margin-bottom:10px;letter-spacing:-.2px}
-.genchips{display:flex;gap:6px;flex-wrap:wrap}
-.genchip{font-size:11.5px;font-weight:600;color:var(--accent);background:rgba(58,110,165,.1);padding:5px 11px;border-radius:7px}
-.bklist{display:flex;flex-direction:column;gap:9px}
-.bkrow{display:flex;align-items:center;gap:10px;font-size:12.5px}
-.bkrow .bt{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bkrow .bp{font-size:11px;color:var(--light);width:54px;text-align:right}
-.bkrow .pbar{width:70px;height:6px;background:var(--input);border-radius:4px;overflow:hidden}
-.bkrow .pbar i{display:block;height:100%;background:var(--primary)}
-.chalbox{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
-.chalbox .ct{font-size:12.5px;font-weight:700;display:flex;justify-content:space-between}
-.chalbox .cbar{height:8px;background:var(--input);border-radius:5px;overflow:hidden;margin-top:9px}
-.chalbox .cbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#b8902f)}
-.dr-cmt{font-size:12.5px;line-height:1.6;color:var(--sub);background:var(--primary-bg);border-radius:11px;padding:13px 15px;margin-top:18px}
-/* ── 프로그램 운영 ── */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.tab{font-size:13px;font-weight:700;color:var(--light);background:transparent;border:0;border-bottom:2.5px solid transparent;padding:9px 14px;cursor:pointer;margin-bottom:-1px}
+.tab.on{color:var(--primary);border-bottom-color:var(--primary)}
 .btn-primary{background:var(--primary);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.14s}
 .btn-primary:hover{background:var(--primary-dark)}
-.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:900px){.kanban{grid-template-columns:1fr}}
-.kcol{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:14px;min-height:120px}
-.kcol .ktit{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:12px;padding:0 4px}
-.kcol .kdot{width:9px;height:9px;border-radius:50%}
-.kcol .kcount{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--light);background:var(--card);border:1px solid var(--border);padding:1px 8px;border-radius:20px}
-.pcard{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.13s}
-.pcard:hover{box-shadow:0 8px 22px rgba(26,30,55,.08);transform:translateY(-1px)}
-.pcard .ptype{font-size:10.5px;font-weight:800;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px}
-.pcard h4{font-size:14px;font-weight:800;margin:9px 0 6px;letter-spacing:-.3px}
-.pcard .pmeta{font-size:11.5px;color:var(--light);line-height:1.6}
-.pcard .pfoot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px}
-.pcard .pbooks{font-weight:700;color:var(--primary)}
-.pcard .presult{margin-left:auto;font-weight:800;color:var(--good)}
-/* ── 큐레이션 만들기 모달 ── */
-#curOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:70;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
-#curOv.on{display:flex}
-.cur-modal{background:var(--card);width:100%;max-width:680px;max-height:90vh;border-radius:20px;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.3);display:flex;flex-direction:column}
-.cur-h{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--card);z-index:1}
-.cur-h .star{color:var(--gold);font-size:16px}.cur-h h3{font-size:17px;font-weight:800}
-.cur-h .x{margin-left:auto;cursor:pointer;color:var(--light);font-size:22px;line-height:1;padding:4px}
-.cur-b{padding:22px 24px;flex:1}
-.cur-label{font-size:12px;font-weight:800;color:var(--sub);margin-bottom:9px}
-.cur-search{display:flex;gap:8px}
-.cur-search input{flex:1;font-family:inherit;font-size:14px;border:1px solid var(--border);border-radius:11px;padding:12px 14px;outline:none}
-.cur-search input:focus{border-color:var(--primary)}
-.cur-ex{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.cur-ex span{font-size:11.5px;color:var(--sub);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;transition:.12s}
-.cur-ex span:hover{border-color:var(--primary);color:var(--primary)}
-.cand-head{display:flex;align-items:center;margin:22px 0 12px}
-.cand-head .ct{font-size:12.5px;font-weight:800}
-.cand-head .cc{margin-left:auto;font-size:12px;color:var(--accent);font-weight:700}
-.cand{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px;transition:.12s}
-.cand.on{border-color:var(--primary);background:var(--primary-bg)}
-.cand .cv{width:30px;height:42px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
-.cand .ci{flex:1;min-width:0}
-.cand .ci .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cand .ci .s{font-size:11px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cand .loan{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
-.cand .pick{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;font-weight:800;color:var(--light);display:flex;align-items:center;justify-content:center}
-.cand.on .pick{background:var(--primary);border-color:var(--primary);color:#fff}
-.cur-loading{text-align:center;color:var(--light);font-size:13px;padding:34px 0}
-.cur-note{font-size:11px;color:var(--light);margin-top:12px;line-height:1.6}
-.cur-note b{color:var(--sub)}
-.cur-f{padding:16px 24px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.cur-f input{flex:1;min-width:160px;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none}
-.cur-f input:focus{border-color:var(--primary)}
-/* ── 큐레이션 편집/발행 모달 ── */
-#progOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:70;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
-#progOv.on{display:flex}
+.btn-ghost{background:var(--card);color:var(--sub);border:1px solid var(--border);border-radius:10px;padding:10px 15px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-excel{background:#eaf1fb;color:var(--blue);border:1px solid #c5d8f5;border-radius:10px;padding:10px 15px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn-excel:hover{background:#ddeafc}
+.note{font-size:11.5px;color:var(--light);margin-top:12px;line-height:1.6}
+.note b{color:var(--sub)}
+/* 프로그램 만들기 — 타입 선택 */
+.typecards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:8px}
+@media(max-width:820px){.typecards{grid-template-columns:1fr}}
+.tcard{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:20px 18px;cursor:pointer;transition:.14s}
+.tcard:hover{border-color:var(--primary);box-shadow:0 8px 22px rgba(26,30,55,.08);transform:translateY(-2px)}
+.tcard.on{border-color:var(--primary);background:var(--primary-bg)}
+.tcard .em{font-size:24px}
+.tcard h4{font-size:15.5px;font-weight:800;margin:11px 0 6px}
+.tcard p{font-size:12px;color:var(--light);line-height:1.6}
+/* 빌더 */
+.make-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+@media(max-width:980px){.make-grid{grid-template-columns:1fr}}
+.flabel{font-size:12px;font-weight:800;color:var(--sub);margin:16px 0 8px}
+.flabel:first-child{margin-top:0}
 .cur-inp{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;outline:none;color:var(--text);background:var(--card)}
 .cur-inp:focus{border-color:var(--primary)}
 textarea.cur-inp{resize:vertical;line-height:1.5}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-ghost2{background:var(--card);color:var(--sub);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
-.btn-ghost2:hover{border-color:var(--primary);color:var(--primary)}
-.bk{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px}
-.bk .cv{width:30px;height:42px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
-.bk-i{flex:1;min-width:0}
-.bk-i .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bk-i .s{font-size:11px;color:var(--light);margin:2px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bk-note{width:100%;font-family:inherit;font-size:11.5px;border:1px solid var(--border);border-radius:8px;padding:6px 9px;outline:none;color:var(--text)}
-.bk-note:focus{border-color:var(--primary)}
-.bk-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:0 0 auto}
-.avbadge{font-size:10px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 7px;border-radius:6px;white-space:nowrap}
-.bk-x{cursor:pointer;color:var(--light);font-size:16px;line-height:1;padding:0 2px}
-.bk-x:hover{color:var(--bad)}
-/* ── 로그인 게이트 (데모) ── */
-#loginGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:radial-gradient(120% 100% at 50% -10%,rgba(26,41,66,.96),#0f1a2e 70%)}
+.searchrow{display:flex;gap:8px}
+.searchrow input{flex:1}
+.cur-ex{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.cur-ex span{font-size:11.5px;color:var(--sub);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer}
+.cur-ex span:hover{border-color:var(--primary);color:var(--primary)}
+.cand{display:flex;align-items:center;gap:11px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;transition:.12s}
+.cand.on{border-color:var(--primary);background:var(--primary-bg)}
+.cand .cv{width:30px;height:42px;border-radius:4px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
+.cand .ci{flex:1;min-width:0}.cand .ci .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .ci .s{font-size:11px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cand .loan{font-size:11px;color:var(--accent);font-weight:700;white-space:nowrap}
+.cand .pick{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;font-weight:800;color:var(--light);display:flex;align-items:center;justify-content:center}
+.cand.on .pick{background:var(--primary);border-color:var(--primary);color:#fff}
+.cur-loading{text-align:center;color:var(--light);font-size:13px;padding:28px 0}
+/* 미션 빌더 */
+.mission{display:flex;flex-direction:column;gap:10px}
+.mrow{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:11px;padding:12px 14px}
+.mrow .mt{flex:1}.mrow .mt b{font-size:13px;font-weight:700}.mrow .mt span{display:block;font-size:11px;color:var(--light);margin-top:2px}
+.tg{width:42px;height:24px;border-radius:13px;background:var(--input);position:relative;cursor:pointer;flex:0 0 42px;transition:.15s}
+.tg::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.15s}
+.tg.on{background:var(--primary)}.tg.on::after{left:21px}
+.tg.lock{opacity:.6;cursor:not-allowed}
+.qn{display:flex;gap:6px;margin-top:4px}
+.qn span{font-size:12px;font-weight:700;color:var(--sub);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer}
+.qn span.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.scorebox{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:12.5px;color:var(--sub);line-height:1.7;margin-top:10px}
+.scorebox b{color:var(--primary)}
+/* 위치 chips */
+.locchips{display:flex;flex-wrap:wrap;gap:8px}
+.locchip{font-size:12.5px;font-weight:700;color:var(--sub);background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:9px 13px;cursor:pointer;transition:.12s}
+.locchip.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* 미리보기 */
+.preview{position:sticky;top:80px}
+.pv-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.pv-top{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:18px 18px 16px}
+.pv-type{font-size:10.5px;font-weight:800;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:6px}
+.pv-top h4{font-size:16px;font-weight:800;margin:9px 0 4px;line-height:1.3}
+.pv-top .pv-meta{font-size:11.5px;opacity:.85}
+.pv-body{padding:16px 18px}
+.pv-intro{font-size:12.5px;color:var(--sub);line-height:1.6;margin-bottom:14px}
+.pv-books{display:flex;flex-direction:column;gap:8px}
+.pv-bk{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.pv-bk .cv{width:26px;height:36px;border-radius:3px;background:var(--input);display:flex;align-items:center;justify-content:center;font-size:13px;flex:0 0 26px;overflow:hidden}
+.pv-bk .cv img{width:100%;height:100%;object-fit:cover}
+.pv-bk .t{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-mission{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+.pv-mission span{font-size:10.5px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:3px 9px;border-radius:6px}
+.pv-loc{margin-top:12px;font-size:11px;color:var(--light)}
+.pv-empty{color:var(--light);font-size:12.5px;padding:8px 0}
+.makefoot{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+/* 공지 */
+.notice-i{display:flex;gap:12px;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.notice-i .nx{flex:1}.notice-i h4{font-size:14px;font-weight:800}.notice-i .nm{font-size:11.5px;color:var(--light);margin-top:4px}
+.notice-i p{font-size:12.5px;color:var(--sub);margin-top:8px;line-height:1.6}
+.notice-i .nloc{font-size:10.5px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:6px;white-space:nowrap;height:fit-content}
+/* 토스트 */
+#toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:var(--primary);color:#fff;padding:13px 22px;border-radius:12px;font-size:13.5px;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:200}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* 로그인 게이트 */
+#loginGate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(120% 100% at 50% -10%,rgba(26,41,66,.96),#0f1a2e 70%)}
 .lg-card{width:100%;max-width:360px;background:#fff;border-radius:20px;padding:34px 30px 26px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4)}
 .lg-logo{width:54px;height:54px;border-radius:14px;display:block;margin:0 auto 16px}
 .lg-title{font-size:20px;font-weight:800;letter-spacing:-.5px}
 .lg-sub{font-size:12.5px;color:var(--light);margin:7px 0 22px;line-height:1.5}
 .lg-card input{width:100%;font-family:inherit;font-size:15px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;color:var(--text);outline:none;transition:.15s}
 .lg-card input:focus{border-color:var(--primary)}
-.lg-card button{width:100%;margin-top:10px;background:var(--primary);color:#fff;border:0;border-radius:12px;padding:14px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:.15s}
+.lg-card button{width:100%;margin-top:10px;background:var(--primary);color:#fff;border:0;border-radius:12px;padding:14px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
 .lg-card button:hover{background:var(--primary-dark)}
 .lg-err{font-size:12px;color:var(--bad);font-weight:600;margin-top:12px;min-height:16px}
-.lg-demo{font-size:11.5px;color:var(--light);margin-top:8px}
-.lg-demo b{color:var(--primary)}
+.lg-demo{font-size:11.5px;color:var(--light);margin-top:8px}.lg-demo b{color:var(--primary)}
 </style></head>
-<body class="library">
+<body>
 
-<!-- 데모 로그인 게이트 (정적 페이지 → 진짜 인증 아님. 라이브 시 Supabase Auth+권한체크로 교체) -->
+<!-- 데모 로그인 게이트 (정적 → 라이브 시 Supabase Auth+권한체크로 교체) -->
 <div id="loginGate">
   <div class="lg-card">
     <img class="lg-logo" src="/apple-touch-icon.png" alt="bookstar" width=54 height=54>
     <div class="lg-title">bookstar 관리자</div>
-    <div class="lg-sub">도서관 관리자·운영자 전용 페이지입니다.<br>로그인 후 이용하세요.</div>
+    <div class="lg-sub">도서관 관리자 전용 페이지입니다.<br>로그인 후 이용하세요.</div>
     <input id="lgPw" type="password" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')lgTry()" autofocus>
     <button onclick="lgTry()">로그인</button>
     <div class="lg-err" id="lgErr"></div>
@@ -256,534 +203,479 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
   </div>
 </div>
 <script>
-function lgTry(){
-  var v=(document.getElementById('lgPw').value||'').trim();
-  if(v==='bookstar'){ try{sessionStorage.setItem('bs_admin','1');}catch(e){} document.getElementById('loginGate').style.display='none'; }
-  else{ document.getElementById('lgErr').textContent='비밀번호가 올바르지 않습니다.'; }
-}
-function lgOut(){ try{sessionStorage.removeItem('bs_admin');}catch(e){} var g=document.getElementById('loginGate'); g.style.display='flex'; document.getElementById('lgPw').value=''; document.getElementById('lgErr').textContent=''; }
-try{ if(sessionStorage.getItem('bs_admin')==='1') document.getElementById('loginGate').style.display='none'; }catch(e){}
+function lgTry(){var v=(document.getElementById('lgPw').value||'').trim();
+  if(v==='bookstar'){try{sessionStorage.setItem('bs_admin','1');}catch(e){}document.getElementById('loginGate').style.display='none';}
+  else{document.getElementById('lgErr').textContent='비밀번호가 올바르지 않습니다.';}}
+function lgOut(){try{sessionStorage.removeItem('bs_admin');}catch(e){}var g=document.getElementById('loginGate');g.style.display='flex';document.getElementById('lgPw').value='';document.getElementById('lgErr').textContent='';}
+try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGate').style.display='none';}catch(e){}
 </script>
 
 <div class="topbar">
   <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>관리자</small></div>
-  <div class="school" id="scopeLabel">한국대학교 도서관</div>
+  <div class="school">📚 중앙대학교 도서관</div>
   <div class="spacer"></div>
-  <div class="roleswitch">
-    <button class="on" id="rbLib" onclick="setRole('library')">도서관 관리자</button>
-    <button id="rbOp" onclick="setRole('operator')">운영자</button>
-  </div>
-  <div class="who"><span class="av" id="avatar">한</span><span id="whoName">한국대 사서</span>
-    <span onclick="lgOut()" style="cursor:pointer;color:var(--light);font-size:12px;margin-left:4px;border:1px solid var(--border);padding:5px 10px;border-radius:8px">로그아웃</span></div>
+  <div class="who"><span class="av">중</span><span>중앙대 사서</span>
+    <span class="lo" onclick="lgOut()">로그아웃</span></div>
 </div>
 
 <div class="shell">
-  <!-- 사이드 -->
   <aside class="side">
     <div class="grp">운영</div>
-    <div class="navi on" onclick="go(this,'dash')"><span>측정 대시보드</span></div>
-    <div class="navi" onclick="go(this,'students')"><span>학생 관리</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'programs')"><span>프로그램·챌린지</span></div>
-    <div class="navi" onclick="go(this,'curation')"><span>큐레이션 편성</span><span class="soon">준비</span></div>
-    <div class="grp">콘텐츠</div>
-    <div class="navi" onclick="go(this,'books')"><span>도서·콘텐츠</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'report')"><span>리포트</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'community')"><span>커뮤니티 관리</span><span class="soon">준비</span></div>
-    <div class="navi" onclick="go(this,'settings')"><span>설정</span><span class="soon">준비</span></div>
-    <div class="grp op-only" style="display:none">운영자 전용</div>
-    <div class="navi op-only" onclick="go(this,'universities')"><span>대학 관리</span><span class="soon">준비</span></div>
-    <div class="navi op-only" onclick="go(this,'bookdb')"><span>도서 DB·AI</span><span class="soon">준비</span></div>
-    <div class="navi op-only" onclick="go(this,'billing')"><span>구독·결제</span><span class="soon">준비</span></div>
+    <div class="navi on" onclick="go(this,'dash')"><span class="em">📊</span><span>대시보드</span></div>
+    <div class="navi" onclick="go(this,'stats')"><span class="em">📈</span><span>이용통계</span></div>
+    <div class="navi" onclick="go(this,'make')"><span class="em">✦</span><span>프로그램 만들기</span></div>
+    <div class="navi" onclick="go(this,'notice')"><span class="em">📢</span><span>공지글 작성</span></div>
+    <div class="navi" onclick="go(this,'history')"><span class="em">🕘</span><span>히스토리 보기</span></div>
   </aside>
 
-  <!-- 본문 -->
   <main class="main">
-    <!-- 대시보드 -->
+
+    <!-- ===== 대시보드 ===== -->
     <section id="pg-dash">
       <div class="phead">
-        <div>
-          <h1>측정 대시보드 <span class="tagpill" id="scopeTag">한국대학교</span><span class="tagpill" id="demoTag" style="color:var(--gold);background:rgba(212,169,59,.14)">데모 데이터</span></h1>
-          <p id="dashSub">학생들이 실제로 ‘얼마나 읽었는지’를 한눈에 — 추천을 넘어 측정·검증</p>
-        </div>
+        <div><h1>대시보드 <span class="tagpill">중앙대학교</span><span class="tagpill gold">데모 데이터</span></h1>
+          <p>도서관 독서 프로그램의 접속·이용 현황을 한눈에</p></div>
         <div class="seg">
           <button onclick="setRange(this,'week')">주간</button>
           <button class="on" onclick="setRange(this,'month')">이번 달</button>
           <button onclick="setRange(this,'term')">이번 학기</button>
         </div>
       </div>
-
       <div class="kpis" id="kpis"></div>
-
       <div class="row c2">
         <div class="panel">
-          <h3 id="trendTitle">주간 완독 추세</h3>
-          <div class="ph-sub" id="trendSub">최근 8주간 완독 권수</div>
-          <svg class="trend" id="trend" viewBox="0 0 640 170" preserveAspectRatio="none"></svg>
-        </div>
-        <div class="panel">
-          <h3>독서 진행 상태</h3>
-          <div class="ph-sub">배정 도서 대비 완독률</div>
-          <div class="donut-wrap">
-            <svg width="130" height="130" viewBox="0 0 42 42" id="donut"></svg>
-            <div class="legend" id="donutLeg"></div>
+          <h3>프로그램별 참여 현황</h3><div class="ph-sub">진행 중·종료 프로그램의 접속·이용 건수</div>
+          <div class="tblwrap" style="border:0">
+            <table class="tbl" style="min-width:0"><thead><tr><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead>
+            <tbody id="dashProg"></tbody></table>
           </div>
         </div>
-      </div>
-
-      <div class="row c2b">
         <div class="panel">
-          <h3>학과별 독서량</h3>
-          <div class="ph-sub">학생 1인당 평균 완독 권수</div>
-          <div class="bars" id="deptBars"></div>
-        </div>
-        <div class="panel">
-          <h3>인기 도서 TOP 5 <span class="tagpill">완독 기준</span></h3>
-          <div class="ph-sub">이번 달 가장 많이 완독한 책</div>
-          <div class="rank" id="topBooks"></div>
+          <h3>이용건수 상위 도서</h3><div class="ph-sub">가장 많이 이용된 도서</div>
+          <div class="rank" id="dashBooks"></div>
         </div>
       </div>
-
       <div class="row c2b">
-        <div class="panel">
-          <h3>우수 독자 TOP 5</h3>
-          <div class="ph-sub">완독·퀴즈 정답률 종합</div>
-          <div class="rank" id="topReaders"></div>
-        </div>
-        <div class="panel">
-          <h3>최근 활동</h3>
-          <div class="ph-sub">실시간 독서 이벤트</div>
-          <div class="feed" id="feed"></div>
-        </div>
+        <div class="panel"><h3>이용건수 상위 이용자</h3><div class="ph-sub">활동량 기준 상위 학생</div><div class="rank" id="dashUsers"></div></div>
+        <div class="panel"><h3>최근 활동</h3><div class="ph-sub">실시간 이용 이벤트</div><div class="rank" id="dashFeed"></div></div>
       </div>
     </section>
 
-    <!-- 학생 관리 -->
-    <section id="pg-students" style="display:none">
+    <!-- ===== 이용통계 ===== -->
+    <section id="pg-stats" style="display:none">
       <div class="phead">
-        <div><h1>학생 관리</h1><p>학생별 ‘어떻게 읽었는지’ — 완독·퀴즈·어휘 수준까지 개인 단위 측정</p></div>
+        <div><h1>이용통계</h1><p>프로그램·월·이용자·도서 단위로 보고, 엑셀로 내려받아 우수 이용자 선정·시상에 활용</p></div>
+        <button class="btn-excel" onclick="downloadExcel()">⤓ 엑셀 다운로드</button>
       </div>
+      <div class="tabs" id="statTabs"></div>
       <div class="toolbar">
-        <input id="stuSearch" placeholder="이름·학번 검색" oninput="renderStudents()">
-        <select id="stuDept" onchange="renderStudents()"><option value="">전체 학과</option></select>
-        <div class="fchips" id="stuStatus"></div>
+        <select id="stKind" onchange="renderStats()"><option value="">전체 구분</option><option>큐레이션</option><option>챌린지</option></select>
+        <input type="month" id="stFrom" value="2026-01" onchange="renderStats()">
+        <span style="color:var(--light);font-size:13px">~</span>
+        <input type="month" id="stTo" value="2026-06" onchange="renderStats()">
       </div>
-      <div class="tblwrap">
-        <table class="tbl"><thead><tr>
-          <th>학생</th><th>완독</th><th>완독률</th><th>퀴즈 정답률</th><th>어휘 수준</th><th>상태</th>
-        </tr></thead><tbody id="stuBody"></tbody></table>
-      </div>
-      <p style="font-size:11.5px;color:var(--light);margin-top:12px">행을 클릭하면 학생별 독서 프로필이 열립니다 · <span id="stuCount"></span></p>
+      <div class="tblwrap"><table class="tbl" id="statTbl"></table></div>
+      <div class="note" id="statNote"></div>
     </section>
-    <div id="stuOv" onclick="if(event.target.id==='stuOv')closeStudent()"><div id="stuDr"></div></div>
 
-    <!-- 프로그램 운영 -->
-    <section id="pg-programs" style="display:none">
-      <div class="phead">
-        <div><h1>프로그램 운영 <span class="tagpill" style="color:var(--gold);background:rgba(212,169,59,.14)">데모 데이터</span></h1>
-          <p>독서 프로그램을 예정·진행중·종료로 한눈에 — 큐레이션·챌린지·행사를 여기서 굴립니다</p></div>
-        <button class="btn-primary" onclick="openCur()">✦ 새 큐레이션 만들기</button>
+    <!-- ===== 프로그램 만들기 ===== -->
+    <section id="pg-make" style="display:none">
+      <div class="phead"><div><h1>프로그램 만들기</h1><p>큐레이션 · 소장자료 챌린지 · 고전 클래식 챌린지를 만들어 원하는 위치에 노출</p></div></div>
+      <div class="typecards" id="typeCards">
+        <div class="tcard" data-t="큐레이션" onclick="pickType('큐레이션')">
+          <div class="em">📚</div><h4>큐레이션 만들기</h4>
+          <p>주제에 맞는 도서를 모아 추천 목록을 만듭니다. 소장도서·AI추천에서 골라 담기만 하면 끝.</p></div>
+        <div class="tcard" data-t="소장챌린지" onclick="pickType('소장챌린지')">
+          <div class="em">🏛️</div><h4>소장자료 챌린지</h4>
+          <p>도서관 소장도서로 챌린지를 만듭니다. 퀴즈·한 줄 소감·질문 미션을 자유 조합.</p></div>
+        <div class="tcard" data-t="고전챌린지" onclick="pickType('고전챌린지')">
+          <div class="em">🏺</div><h4>고전 클래식 챌린지</h4>
+          <p>북스타 고전 요약본 대상. 퀴즈(필수)+소감+질문 100점제로 우수자를 가립니다.</p></div>
       </div>
-      <div class="kanban" id="kanban"></div>
-    </section>
-    <div id="curOv" onclick="if(event.target.id==='curOv')closeCur()">
-      <div class="cur-modal">
-        <div class="cur-h"><span class="star">✦</span><h3>새 큐레이션 만들기</h3><span class="x" onclick="closeCur()">×</span></div>
-        <div class="cur-b">
-          <div class="cur-label">어떤 책을 모을까요? — 주제·대상·분위기를 말하듯이</div>
-          <div class="cur-search">
-            <input id="curQ" placeholder="예: 6월, 시험 끝난 신입생에게 가볍게 읽을 문학" onkeydown="if(event.key==='Enter')loadCand()">
-            <button class="btn-primary" onclick="loadCand()">후보 찾기</button>
+
+      <div id="builder" style="display:none;margin-top:18px">
+        <div class="make-grid">
+          <div class="panel">
+            <div class="flabel">제목</div>
+            <input class="cur-inp" id="mkTitle" placeholder="예: 중앙대학교 도서관 6월 추천 도서" oninput="syncPreview()">
+            <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="mkFrom" value="2026-06-01" onchange="syncPreview()"></div>
+              <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="mkTo" value="2026-06-30" onchange="syncPreview()"></div></div>
+            <div class="flabel">내용 — 학생에게 보일 소개</div>
+            <textarea class="cur-inp" id="mkIntro" rows="2" placeholder="예: 6월 동안 가장 많은 서평을 작성한 학생에게 경품을 드려요" oninput="syncPreview()"></textarea>
+
+            <div class="flabel" id="srcLabel">도서 담기 — 소장도서 검색 / AI 추천</div>
+            <div class="searchrow">
+              <input class="cur-inp" id="mkQ" placeholder="예: 6월 신입생에게 가볍게 읽을 문학" onkeydown="if(event.key==='Enter')searchBooks()">
+              <button class="btn-primary" onclick="searchBooks()">찾기</button>
+            </div>
+            <div class="cur-ex" id="mkEx"></div>
+            <div id="candWrap" style="margin-top:12px"></div>
+
+            <div id="missionWrap" style="display:none">
+              <div class="flabel">챌린저 미션 만들기</div>
+              <div class="mission">
+                <div class="mrow"><div class="mt"><b>퀴즈 풀기</b><span>도서 요약·내용 기반 퀴즈</span></div><div class="tg" id="tgQuiz" onclick="toggleM('quiz')"></div></div>
+                <div id="quizNwrap" style="display:none;padding:0 2px"><span style="font-size:11.5px;color:var(--light)">문항 수</span>
+                  <div class="qn" id="quizN"></div></div>
+                <div class="mrow"><div class="mt"><b>한 줄 소감</b><span>작성 10점 · 미작성 0점</span></div><div class="tg" id="tgReview" onclick="toggleM('review')"></div></div>
+                <div class="mrow"><div class="mt"><b>질문 만들기</b><span>작성 10점 · 미작성 0점</span></div><div class="tg" id="tgQuestion" onclick="toggleM('question')"></div></div>
+              </div>
+              <div class="scorebox" id="scoreBox"></div>
+            </div>
+
+            <div class="flabel">위치 지정 — 학생 앱 어디에 노출할까요? (복수 선택)</div>
+            <div class="locchips" id="locChips"></div>
+
+            <div class="makefoot">
+              <button class="btn-ghost" onclick="resetType()">← 종류 다시 선택</button>
+              <button class="btn-primary" onclick="finishMake()">만들기 완료 →</button>
+            </div>
+            <div class="note">완료하면 ‘예정’ 상태로 등록돼요. 발행 후 학생 앱의 지정 위치에 노출됩니다.<br>
+              ※ 발행 시 도서관 카탈로그와 ISBN을 매칭해 책마다 실제 접근 링크(소장 위치·전자책)가 자동으로 붙습니다.</div>
           </div>
-          <div class="cur-ex" id="curEx"></div>
-          <div id="candWrap"></div>
-        </div>
-        <div class="cur-f">
-          <input id="curTitle" placeholder="프로그램 제목 (예: 6월의 책 — 한 박자 쉬어가기)">
-          <button class="btn-primary" onclick="saveProgram()">담은 책으로 저장 →</button>
+          <div class="preview"><div class="pv-card" id="pvCard"></div></div>
         </div>
       </div>
-    </div>
-    <div id="progOv" onclick="if(event.target.id==='progOv')closeProg()">
-      <div class="cur-modal" id="progModal"></div>
-    </div>
-
-    <!-- 나머지 메뉴: 골격(준비중) -->
-    <section id="pg-other" style="display:none">
-      <div class="phead"><div><h1 id="otherTitle">메뉴</h1><p id="otherSub"></p></div></div>
-      <div class="panel"><div class="placeholder"><div class="big">🛠</div><div id="otherDesc">이 화면은 측정 대시보드 다음 단계로 제작합니다.</div></div></div>
     </section>
+
+    <!-- ===== 공지글 작성 ===== -->
+    <section id="pg-notice" style="display:none">
+      <div class="phead"><div><h1>공지글 작성</h1><p>학생 앱에 노출되는 도서관 공지를 작성·관리합니다</p></div></div>
+      <div class="make-grid">
+        <div class="panel">
+          <div class="flabel">제목</div><input class="cur-inp" id="ntTitle" placeholder="예: 여름방학 도서관 운영시간 안내">
+          <div class="row2"><div><div class="flabel">대상</div><input class="cur-inp" id="ntTarget" placeholder="예: 전교생" value="전교생"></div>
+            <div><div class="flabel">게시 기간</div><input class="cur-inp" id="ntPeriod" placeholder="예: 6.1 ~ 6.30" value="6.1 ~ 6.30"></div></div>
+          <div class="flabel">노출 위치 (복수 선택)</div><div class="locchips" id="ntLoc"></div>
+          <div class="flabel">내용</div><textarea class="cur-inp" id="ntBody" rows="5" placeholder="공지 내용을 입력하세요"></textarea>
+          <div class="makefoot"><button class="btn-primary" onclick="publishNotice()">공지 발행 →</button></div>
+        </div>
+        <div class="panel"><h3>게시된 공지</h3><div class="ph-sub">최근 발행 순</div><div id="noticeList"></div></div>
+      </div>
+    </section>
+
+    <!-- ===== 히스토리 ===== -->
+    <section id="pg-history" style="display:none">
+      <div class="phead"><div><h1>히스토리 보기</h1><p>진행했던 큐레이션·챌린지·커뮤니티·공지 이력을 조회합니다</p></div></div>
+      <div class="tabs" id="hisTabs"></div>
+      <div class="tblwrap"><table class="tbl" id="hisTbl"></table></div>
+    </section>
+
   </main>
 </div>
+<div id="toast"></div>
 
 <script>
-/* ── 목업 데이터 (도서관 / 운영자 두 스코프) ── */
-const DATA = {
-  library: {
-    scope:'한국대학교', label:'한국대학교 도서관', who:'한국대 사서', av:'한',
-    sub:'학생들이 실제로 ‘얼마나 읽었는지’를 한눈에 — 추천을 넘어 측정·검증',
-    donut:[{n:'완독',v:67,c:'#1a2942'},{n:'진행중',v:21,c:'#3a6ea5'},{n:'미시작',v:12,c:'#d8d3c8'}],
-    dept:[['국어국문',5.8],['심리학',5.1],['사학',4.6],['경영',3.9],['컴퓨터공학',3.2],['간호',2.8]],
-    books:[['코스모스','칼 세이건',182],['사피엔스','유발 하라리',164],['미움받을 용기','기시미 이치로',151],['데미안','헤르만 헤세',133],['1984','조지 오웰',120]],
-    readers:[['김민준','컴퓨터공학 · 완독 12',96],['이서연','국어국문 · 완독 11',94],['박도윤','심리학 · 완독 10',91],['최지우','경영 · 완독 9',88],['정하준','사학 · 완독 9',85]],
-    feed:[['김','김민준 학생이 《코스모스》 완독','방금'],['이','이서연 학생이 챌린지 ‘이달의 고전’ 달성','7분 전'],['박','박도윤 학생이 《데미안》 퀴즈 100점','22분 전'],['최','International 학생 3명 신규 가입','1시간 전'],['정','정하준 학생이 《1984》 서평 등록','2시간 전']],
-    ranges:{
-      week:{
-        kpis:[
-          {lab:'주간 활성 학생', val:'612', unit:'명', d:'+5.4%', up:true},
-          {lab:'주간 완독',    val:'824', unit:'권', d:'+9.1%', up:true},
-          {lab:'평균 완독률',  val:'64', unit:'%', d:'+2.2%p', up:true},
-          {lab:'챌린지 참여율', val:'39', unit:'%', d:'+3.0%p', up:true},
-          {lab:'퀴즈 정답률',  val:'77', unit:'%', d:'-0.8%p', up:false},
-        ],
-        trend:[88,96,72,110,131,98,142], labs:['월','화','수','목','금','토','일'],
-        tTitle:'일별 완독 추세', tSub:'최근 7일간 완독 권수'
-      },
-      month:{
-        kpis:[
-          {lab:'활성 학생',   val:'1,284', unit:'명', d:'+8.2%', up:true},
-          {lab:'이달 완독',   val:'3,471', unit:'권', d:'+12.4%', up:true},
-          {lab:'평균 완독률', val:'67', unit:'%', d:'+4.0%p', up:true},
-          {lab:'챌린지 참여율', val:'42', unit:'%', d:'+6.1%p', up:true},
-          {lab:'퀴즈 정답률', val:'78', unit:'%', d:'-1.2%p', up:false},
-        ],
-        trend:[210,245,232,290,275,330,360,412], labs:['7주전','','5주전','','3주전','','지난주','이번주'],
-        tTitle:'주간 완독 추세', tSub:'최근 8주간 완독 권수'
-      },
-      term:{
-        kpis:[
-          {lab:'학기 활성 학생', val:'3,920', unit:'명', d:'+11.0%', up:true},
-          {lab:'학기 완독',    val:'12,640', unit:'권', d:'+15.8%', up:true},
-          {lab:'평균 완독률',  val:'69', unit:'%', d:'+5.1%p', up:true},
-          {lab:'챌린지 참여율', val:'47', unit:'%', d:'+8.4%p', up:true},
-          {lab:'퀴즈 정답률',  val:'79', unit:'%', d:'+0.6%p', up:true},
-        ],
-        trend:[1480,1760,2120,2540,2960,3380,3720], labs:['1월','2월','3월','4월','5월','6월','이번'],
-        tTitle:'월별 완독 추세', tSub:'이번 학기 월별 완독 권수'
-      }
-    }
-  },
-  operator: {
-    scope:'전체 12개 대학', label:'Bookstar 운영', who:'Bookstar 운영자', av:'B',
-    sub:'전체 도입 대학의 독서 측정·운영 현황 (본사 슈퍼관리자)',
-    donut:[{n:'활성 대학',v:75,c:'#1a2942'},{n:'온보딩',v:17,c:'#3a6ea5'},{n:'휴면',v:8,c:'#d8d3c8'}],
-    dept:[['한국대',5.2],['경기대',4.8],['목원대',4.3],['서울여대',3.7],['부산대',3.1],['전남대',2.6]],
-    books:[['사피엔스','유발 하라리',1842],['코스모스','칼 세이건',1655],['미움받을 용기','기시미',1402],['데미안','헤르만 헤세',1190],['총균쇠','재레드 다이아몬드',1033]],
-    readers:[['한국대','완독 3,471 · 활성 1,284',97],['경기대','완독 3,102 · 활성 1,150',93],['목원대','완독 2,740 · 활성 980',90],['서울여대','완독 2,210 · 활성 870',86],['부산대','완독 1,980 · 활성 760',82]],
-    feed:[['경','경기대 신규 온보딩 완료','12분 전'],['B','AI 추천 호출 일 12,400건 돌파','40분 전'],['목','목원대 구독 연장(연간)','3시간 전'],['서','서울여대 도서 풀 +320권 증분','5시간 전'],['B','신규 도서 DB 빌드 완료(1,133→1,460)','어제']],
-    ranges:{
-      week:{
-        kpis:[
-          {lab:'도입 대학',    val:'12', unit:'곳', d:'+2곳', up:true},
-          {lab:'전체 학생',    val:'18,402', unit:'명', d:'+9.6%', up:true},
-          {lab:'주간 완독 합계', val:'9,640', unit:'권', d:'+7.2%', up:true},
-          {lab:'평균 완독률',  val:'61', unit:'%', d:'+1.8%p', up:true},
-          {lab:'MRR(구독)',   val:'1,840', unit:'만원', d:'+18%', up:true},
-        ],
-        trend:[1180,1320,980,1510,1720,1290,1640], labs:['월','화','수','목','금','토','일'],
-        tTitle:'일별 완독 추세', tSub:'전체 대학 최근 7일 완독 합계'
-      },
-      month:{
-        kpis:[
-          {lab:'도입 대학',   val:'12', unit:'곳', d:'+2곳', up:true},
-          {lab:'전체 학생',   val:'18,402', unit:'명', d:'+9.6%', up:true},
-          {lab:'월 완독 합계', val:'41,250', unit:'권', d:'+14.1%', up:true},
-          {lab:'평균 완독률', val:'63', unit:'%', d:'+3.2%p', up:true},
-          {lab:'MRR(구독)',  val:'1,840', unit:'만원', d:'+18%', up:true},
-        ],
-        trend:[2200,2480,2610,2900,3100,3450,3720,4125], labs:['7주전','','5주전','','3주전','','지난주','이번주'],
-        tTitle:'주간 완독 추세', tSub:'전체 대학 최근 8주 완독 합계'
-      },
-      term:{
-        kpis:[
-          {lab:'도입 대학',    val:'12', unit:'곳', d:'+2곳', up:true},
-          {lab:'전체 학생',    val:'18,402', unit:'명', d:'+9.6%', up:true},
-          {lab:'학기 완독 합계', val:'152,400', unit:'권', d:'+16.0%', up:true},
-          {lab:'평균 완독률',  val:'64', unit:'%', d:'+3.0%p', up:true},
-          {lab:'MRR(구독)',   val:'1,840', unit:'만원', d:'+18%', up:true},
-        ],
-        trend:[9800,11200,13400,16100,18900,21500], labs:['1월','2월','3월','4월','5월','이번'],
-        tTitle:'월별 완독 추세', tSub:'이번 학기 월별 완독 합계'
-      }
-    }
-  }
-};
-let ROLE='library', RANGE='month';
-
+/* ====== 헬퍼 ====== */
 const el=id=>document.getElementById(id);
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let PID=200;
-function setRole(r){
-  ROLE=r; document.body.className=r;
-  el('rbLib').classList.toggle('on',r==='library');
-  el('rbOp').classList.toggle('on',r==='operator');
-  document.querySelectorAll('.grp.op-only').forEach(g=>g.style.display=r==='operator'?'block':'none');
-  render();
-}
-function setRange(b,r){RANGE=r;document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');render();}
+const nf=n=>(n||0).toLocaleString();
+function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
+function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'chal';
+  const lbl=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전챌린지':'챌린지';return `<span class="gtag ${k}">${lbl}</span>`;}
+const LOCATIONS=['우리도서관','고전컬렉션','독서프로그램','International Students','커뮤니티','마이페이지'];
+
+/* ====== 데모 데이터 (PPT 예시 기반) ====== */
+let PROGRAMS=[
+ {id:'p1',type:'큐레이션',title:'6월 도서관 추천 도서',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['우리도서관'],
+  visits:1690,uses:1500,minutes:null,intro:'6월에 읽기 좋은 책을 모았어요',
+  books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg'},
+         {t:'오늘도 행복할꺼야?',a:'정문정',isbn:'',cover:''},{t:'안중근 열사 이야기',a:'',isbn:'',cover:''}]},
+ {id:'p2',type:'고전챌린지',title:'고전에서 배우는 삶의 지혜',status:'진행중',from:'2026-03-01',to:'2026-06-30',loc:['고전컬렉션'],
+  visits:1340,uses:1340,minutes:60,intro:'서양 고전 요약본을 읽고 퀴즈에 도전하세요',mission:{quiz:true,quizN:5,review:true,question:false},
+  books:[{t:'돈키호테',a:'세르반테스',isbn:'',cover:''},{t:'햄릿',a:'셰익스피어',isbn:'',cover:''},{t:'로빈슨 크루소',a:'대니얼 디포',isbn:'',cover:''}]},
+ {id:'p3',type:'큐레이션',title:'나는 이래서 도서관이 좋다',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['독서프로그램'],
+  visits:840,uses:630,minutes:null,intro:'도서관을 사랑하는 마음을 담은 책들',books:[{t:'도서관의 삶, 책들의 운명',a:'',isbn:'',cover:''}]},
+ {id:'p4',type:'고전챌린지',title:'AI가 고전에 질문을 던지다',status:'진행중',from:'2026-06-01',to:'2026-07-31',loc:['고전컬렉션','International Students'],
+  visits:2500,uses:7895,minutes:90,intro:'AI와 함께 고전을 깊이 읽는 챌린지',mission:{quiz:true,quizN:7,review:true,question:true},
+  books:[{t:'군주론',a:'마키아벨리',isbn:'',cover:''},{t:'국부론',a:'애덤 스미스',isbn:'',cover:''}]},
+ {id:'p5',type:'소장챌린지',title:'5월 심리학과 독서 챌린지',status:'종료',from:'2026-05-01',to:'2026-05-31',loc:['독서프로그램'],
+  visits:980,uses:1120,minutes:null,intro:'심리학과 추천도서 완독 챌린지',mission:{quiz:true,quizN:5,review:true,question:false},
+  books:[{t:'미움받을 용기',a:'기시미 이치로',isbn:'',cover:''}]},
+];
+/* 이용자별 (PPT slide4) */
+const USERS=[
+ {id:'C336122',uses:41,review:10,quiz:80,question:10,total:85,minutes:20},
+ {id:'nayuta16',uses:101,review:null,quiz:null,question:null,total:null,minutes:60},
+ {id:'hs1',uses:33,review:12,quiz:95,question:0,total:90,minutes:75},
+ {id:'reader_kim',uses:64,review:8,quiz:88,question:10,total:92,minutes:50},
+ {id:'lib_lee',uses:52,review:10,quiz:76,question:10,total:84,minutes:35},
+];
+/* 도서별 (PPT slide4) */
+const BOOKS_STAT=[
+ {t:'지적 대화를 위한 넓고 얕은 지식',uses:521,minutes:null},
+ {t:'불행은 어떻게 질병으로 이어지는가',uses:23,minutes:350},
+ {t:'패션, 영화를 스타일링하다',uses:21,minutes:null},
+ {t:'돈키호테',uses:340,minutes:90},
+ {t:'군주론',uses:298,minutes:120},
+];
+/* 월별 (PPT slide4) */
+const MONTHLY=[
+ {m:'2026-01',visits:1690,uses:1500},{m:'2026-02',visits:1340,uses:1340},{m:'2026-03',visits:840,uses:630},
+ {m:'2026-04',visits:1180,uses:1290},{m:'2026-05',visits:1620,uses:2240},{m:'2026-06',visits:2500,uses:7895},
+];
+let NOTICES=[
+ {title:'여름방학 도서관 운영시간 안내',target:'전교생',period:'6.1 ~ 8.31',loc:['우리도서관'],body:'여름방학 동안 평일 09:00~18:00 운영합니다. 주말은 휴관입니다.',at:'2026-06-01'},
+ {title:'고전 챌린지 우수자 시상 안내',target:'챌린지 참여자',period:'6.15 ~ 6.30',loc:['고전컬렉션'],body:'6월 고전 챌린지 퀴즈 점수 우수자에게 도서관 포인트를 드립니다.',at:'2026-05-28'},
+];
+const COMMUNITY=[
+ {title:'이달의 독서 모임 — 한강 작가 특집',by:'국어국문 독서동아리',at:'2026-05-20',members:24},
+ {title:'고전 함께 읽기 오픈채팅',by:'중앙대 책벗',at:'2026-05-12',members:58},
+];
+
+/* ====== 네비게이션 ====== */
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['pg-dash','pg-students','pg-programs','pg-other'].forEach(id=>el(id).style.display='none');
-  if(page==='dash'){ el('pg-dash').style.display=''; }
-  else if(page==='students'){ el('pg-students').style.display=''; renderStudents(); }
-  else if(page==='programs'){ el('pg-programs').style.display=''; renderPrograms(); }
-  else{
-    el('pg-other').style.display='';
-    const map={programs:'프로그램·챌린지',curation:'큐레이션 편성',books:'도서·콘텐츠',report:'리포트',community:'커뮤니티 관리',settings:'설정',universities:'대학 관리',bookdb:'도서 DB·AI',billing:'구독·결제'};
-    el('otherTitle').textContent=map[page]||'메뉴';
-    el('otherSub').textContent='측정 대시보드 다음 단계로 순차 제작';
-  }
+  ['dash','stats','make','notice','history'].forEach(id=>el('pg-'+id).style.display='none');
+  el('pg-'+page).style.display='';
+  if(page==='dash')renderDash();
+  else if(page==='stats')renderStats();
+  else if(page==='history')renderHistory();
+  else if(page==='notice')renderNotices();
+  window.scrollTo(0,0);
 }
 
-/* ── 렌더 ── */
-function render(){
-  const d=DATA[ROLE], rg=d.ranges[RANGE];
-  el('scopeLabel').textContent=d.label; el('scopeTag').textContent=d.scope;
-  el('whoName').textContent=d.who; el('avatar').textContent=d.av; el('dashSub').textContent=d.sub;
-  // KPI
-  el('kpis').innerHTML=rg.kpis.map(k=>`<div class="kpi"><div class="lab">${k.lab}</div>
+/* ====== 대시보드 ====== */
+let RANGE='month';
+const RANGE_MULT={week:0.25,month:1,term:4.1};
+function setRange(b,r){RANGE=r;document.querySelectorAll('#pg-dash .seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderDash();}
+function renderDash(){
+  const m=RANGE_MULT[RANGE];
+  const totV=PROGRAMS.reduce((a,p)=>a+p.visits,0), totU=PROGRAMS.reduce((a,p)=>a+p.uses,0);
+  const active=PROGRAMS.filter(p=>p.status==='진행중').length;
+  const kpis=[
+    {lab:'접속자수',val:nf(Math.round(totV*m)),unit:'명',d:'+8.2%',up:true},
+    {lab:'이용건수',val:nf(Math.round(totU*m)),unit:'건',d:'+12.4%',up:true},
+    {lab:'클릭수',val:nf(Math.round(totU*m*2.3)),unit:'회',d:'+9.1%',up:true},
+    {lab:'진행 중 프로그램',val:active,unit:'개',d:'+2개',up:true},
+  ];
+  el('kpis').innerHTML=kpis.map(k=>`<div class="kpi"><div class="lab">${k.lab}</div>
     <div class="val">${k.val}<small> ${k.unit}</small></div>
     <div class="delta ${k.up?'up':'down'}">${k.up?'▲':'▼'} ${k.d}</div></div>`).join('');
-  el('trendTitle').textContent=rg.tTitle; el('trendSub').textContent=rg.tSub;
-  drawTrend(rg.trend,rg.labs); drawDonut(d.donut); drawDept(d.dept);
-  // TOP 도서
-  el('topBooks').innerHTML=d.books.map((b,i)=>`<div class="rk"><div class="no ${i<3?'top':''}">${i+1}</div>
-    <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><div class="info"><div class="t">${b[0]}</div><div class="s">${b[1]}</div></div>
-    <div class="n2">${b[2].toLocaleString()}</div></div>`).join('');
-  // 우수 독자
-  el('topReaders').innerHTML=d.readers.map((r,i)=>`<div class="rk"><div class="no ${i<3?'top':''}">${i+1}</div>
-    <div class="info"><div class="t">${r[0]}</div><div class="s">${r[1]}</div></div>
-    <div class="n2">${r[2]}점</div></div>`).join('');
-  // 피드
-  el('feed').innerHTML=d.feed.map(f=>`<div class="fi"><div class="fav">${f[0]}</div>
-    <div class="ft">${f[1]}</div><div class="fz">${f[2]}</div></div>`).join('');
+  el('dashProg').innerHTML=PROGRAMS.slice().sort((a,b)=>b.uses-a.uses).map(p=>`<tr>
+    <td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
+    <td class="num">${nf(Math.round(p.visits*m))}</td><td class="num">${nf(Math.round(p.uses*m))}</td></tr>`).join('');
+  el('dashBooks').innerHTML=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses).slice(0,5).map((b,i)=>`<div class="rk">
+    <div class="no ${i<3?'top':''}">${i+1}</div><div class="info"><div class="t">${esc(b.t)}</div>
+    <div class="s">${b.minutes?'고전 클래식':'소장도서'}</div></div><div class="n2">${nf(b.uses)}건</div></div>`).join('');
+  el('dashUsers').innerHTML=USERS.slice().sort((a,b)=>b.uses-a.uses).slice(0,5).map((u,i)=>`<div class="rk">
+    <div class="no ${i<3?'top':''}">${i+1}</div><div class="info"><div class="t">${esc(u.id)}</div>
+    <div class="s">${u.total!=null?'합계 '+u.total+'점':'참여 중'}</div></div><div class="n2">${nf(u.uses)}건</div></div>`).join('');
+  el('dashFeed').innerHTML=[
+    ['📕','reader_kim 님이 《돈키호테》 퀴즈 7문항 완료','방금'],
+    ['✍️','hs1 님이 한 줄 소감 작성','9분 전'],
+    ['🏺','‘AI가 고전에 질문을 던지다’ 신규 참여 12명','31분 전'],
+    ['📚','‘6월 도서관 추천 도서’ 클릭 240회','1시간 전'],
+  ].map(f=>`<div class="rk"><div class="no">${f[0]}</div><div class="info"><div class="t" style="font-weight:600">${f[1]}</div></div><div class="s" style="color:var(--light);font-size:11px">${f[2]}</div></div>`).join('');
 }
-function drawTrend(vals,labs){
-  const W=640,H=170,pad=18,mx=Math.max(...vals),mn=Math.min(...vals);
-  const x=i=>pad+i*(W-pad*2)/(vals.length-1);
-  const y=v=>H-22-(v-mn)/(mx-mn||1)*(H-46);
-  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
-  const area=`${pad},${H-22} ${pts} ${W-pad},${H-22}`;
-  labs=labs||[];
-  el('trend').innerHTML=`<defs><linearGradient id="g" x1=0 y1=0 x2=0 y2=1>
-    <stop offset="0" stop-color="#3a6ea5" stop-opacity=".22"/><stop offset="1" stop-color="#3a6ea5" stop-opacity="0"/></linearGradient></defs>
-    <polygon points="${area}" fill="url(#g)"/>
-    <polyline points="${pts}" fill="none" stroke="#1a2942" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-    ${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="${i===vals.length-1?4:2.6}" fill="#1a2942"/>`).join('')}
-    ${labs.map((l,i)=>l?`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${l}</text>`:'').join('')}`;
-}
-function drawDonut(segs){
-  const tot=segs.reduce((a,s)=>a+s.v,0);let off=25;
-  el('donut').innerHTML=`<circle cx=21 cy=21 r=15.9 fill="none" stroke="#f0efeb" stroke-width="6"/>`+
-    segs.map(s=>{const dash=s.v/tot*100;const c=`<circle cx=21 cy=21 r=15.9 fill="none" stroke="${s.c}" stroke-width="6" stroke-dasharray="${dash} ${100-dash}" stroke-dashoffset="${off}"/>`;off-=dash;return c;}).join('')+
-    `<text x=21 y=20.5 text-anchor="middle" font-size="7" font-weight="800" fill="#1a2942">${segs[0].v}%</text>
-     <text x=21 y=26 text-anchor="middle" font-size="3.4" fill="#64748b">${segs[0].n}</text>`;
-  el('donutLeg').innerHTML=segs.map(s=>`<div class="li"><span class="dot" style="background:${s.c}"></span>${s.n}<b>${s.v}%</b></div>`).join('');
-}
-function drawDept(rows){
-  const mx=Math.max(...rows.map(r=>r[1]));
-  el('deptBars').innerHTML=rows.map(r=>`<div class="bar"><div class="nm">${r[0]}</div>
-    <div class="track"><div class="fill" style="width:${r[1]/mx*100}%"></div></div>
-    <div class="v">${r[1]}권</div></div>`).join('');
-}
-/* ── 학생 관리 ── */
-const STUDENTS=[
- {n:'김민준',dept:'컴퓨터공학',sid:'2021-3344',done:12,rate:92,quiz:96,vocab:'상위 8%',st:'우수',intl:false,gen:['과학','SF','철학'],books:[['코스모스',100],['사피엔스',100],['1984',88]],chal:{name:'이달의 고전',pct:80},cmt:'과학·SF에서 완독률 최상위. 다음은 『총,균,쇠』 추천'},
- {n:'이서연',dept:'국어국문',sid:'2020-1187',done:11,rate:89,quiz:91,vocab:'상위 12%',st:'우수',intl:false,gen:['소설','시','에세이'],books:[['데미안',100],['미움받을 용기',100],['난쟁이가 쏘아올린 작은 공',75]],chal:{name:'이달의 고전',pct:100},cmt:'문학 완독·서평 품질 모두 우수'},
- {n:'박도윤',dept:'심리학',sid:'2021-2290',done:10,rate:84,quiz:88,vocab:'상위 18%',st:'우수',intl:false,gen:['심리','철학'],books:[['미움받을 용기',100],['아주 작은 습관의 힘',90]],chal:{name:'습관 챌린지',pct:70},cmt:'심리·자기계발 몰입도 높음'},
- {n:'최지우',dept:'경영',sid:'2022-0512',done:9,rate:78,quiz:82,vocab:'평균',st:'양호',intl:false,gen:['경제','자기계발'],books:[['부의 추월차선',80],['넛지',65]],chal:{name:'신입생 챌린지',pct:55},cmt:'경제경영 위주 — 장르 확장 권장'},
- {n:'정하준',dept:'사학',sid:'2020-0934',done:9,rate:81,quiz:79,vocab:'상위 20%',st:'양호',intl:false,gen:['역사','서사시'],books:[['사피엔스',100],['총,균,쇠',70]],chal:{name:'이달의 고전',pct:60},cmt:'역사 분야 완독률 우수'},
- {n:'강서윤',dept:'간호',sid:'2022-1641',done:7,rate:72,quiz:76,vocab:'평균',st:'양호',intl:false,gen:['에세이','과학'],books:[['떨림과 울림',68],['아픔이 길이 되려면',55]],chal:{name:'신입생 챌린지',pct:45},cmt:''},
- {n:'윤지호',dept:'컴퓨터공학',sid:'2023-3380',done:6,rate:69,quiz:74,vocab:'평균',st:'양호',intl:false,gen:['SF','과학'],books:[['파운데이션',60]],chal:{name:'SF 고전 읽기',pct:40},cmt:''},
- {n:'응웬 린',dept:'국어국문',sid:'2023-I021',done:5,rate:63,quiz:68,vocab:'학습 중',st:'양호',intl:true,gen:['한국문학','에세이'],books:[['소나기',90],['메밀꽃 필 무렵',50]],chal:{name:'Korean Classics',pct:60},cmt:'한국 고전으로 한국어·정서 학습 중'},
- {n:'왕 웨이',dept:'경영',sid:'2023-I044',done:4,rate:58,quiz:61,vocab:'학습 중',st:'양호',intl:true,gen:['한국문학'],books:[['운수 좋은 날',70]],chal:{name:'Korean Classics',pct:45},cmt:''},
- {n:'임채원',dept:'경영',sid:'2022-0788',done:3,rate:41,quiz:55,vocab:'평균 이하',st:'주의',intl:false,gen:['자기계발'],books:[['설득의 심리학',38]],chal:{name:'신입생 챌린지',pct:20},cmt:'최근 한 달 활동 급감 — 리마인드 권장'},
- {n:'오세훈',dept:'컴퓨터공학',sid:'2023-3399',done:2,rate:33,quiz:0,vocab:'평균 이하',st:'주의',intl:false,gen:['—'],books:[['클린 코드',28]],chal:{name:'신입생 챌린지',pct:10},cmt:'챌린지 시작 후 미접속 — 이탈 위험'},
- {n:'한가람',dept:'심리학',sid:'2023-2255',done:1,rate:22,quiz:0,vocab:'미측정',st:'주의',intl:false,gen:['—'],books:[['데미안',12]],chal:{name:'신입생 챌린지',pct:5},cmt:'거의 미시작 — 온보딩 재안내 필요'},
-];
-const STU_STATS=['전체','우수','양호','주의','유학생만'];
-let stuStat='전체';
-function initStudents(){
-  const depts=[...new Set(STUDENTS.map(s=>s.dept))];
-  el('stuDept').innerHTML='<option value="">전체 학과</option>'+depts.map(d=>`<option>${d}</option>`).join('');
-  el('stuStatus').innerHTML=STU_STATS.map(s=>`<span class="fchip ${s==='전체'?'on':''}" onclick="setStuStat(this,'${s}')">${s}</span>`).join('');
-}
-function setStuStat(elm,s){stuStat=s;document.querySelectorAll('#stuStatus .fchip').forEach(c=>c.classList.remove('on'));elm.classList.add('on');renderStudents();}
-function renderStudents(){
-  const q=el('stuSearch').value.trim(),dept=el('stuDept').value;
-  const list=STUDENTS.filter(s=>{
-    if(q && !(s.n.includes(q)||s.sid.includes(q)))return false;
-    if(dept && s.dept!==dept)return false;
-    if(stuStat==='유학생만')return s.intl;
-    if(stuStat!=='전체' && s.st!==stuStat)return false;
-    return true;
-  });
-  el('stuBody').innerHTML=list.map(s=>{
-    const idx=STUDENTS.indexOf(s),bcls=s.st==='우수'?'good':s.st==='양호'?'ok':'warn';
-    return `<tr onclick="openStudent(${idx})"><td><div class="stu"><div class="av2">${s.n[0]}</div>
-      <div><div class="nm">${s.n}${s.intl?'<span class="intl-tag">INTL</span>':''}</div><div class="sd">${s.dept} · ${s.sid}</div></div></div></td>
-      <td><b>${s.done}</b>권</td>
-      <td><span class="mbar"><i style="width:${s.rate}%"></i></span>${s.rate}%</td>
-      <td>${s.quiz?s.quiz+'%':'<span style="color:#9c9aa3">—</span>'}</td>
-      <td>${s.vocab}</td>
-      <td><span class="badge ${bcls}">${s.st}</span></td></tr>`;
-  }).join('');
-  el('stuCount').textContent=`${list.length}명 표시`;
-}
-function openStudent(i){const s=STUDENTS[i];if(!s)return;
-  const bcls=s.st==='우수'?'good':s.st==='양호'?'ok':'warn';
-  el('stuDr').innerHTML=`<div class="dr-head"><div class="av3">${s.n[0]}</div>
-    <div><h2>${s.n}${s.intl?'<span class="intl-tag">INTL</span>':''}</h2><div class="ds">${s.dept} · ${s.sid}</div></div>
-    <span class="dr-x" onclick="closeStudent()">×</span></div>
-    <span class="badge ${bcls}">${s.st}</span>
-    <div class="dr-stats">
-      <div class="s"><div class="v">${s.done}</div><div class="l">완독(권)</div></div>
-      <div class="s"><div class="v">${s.rate}%</div><div class="l">완독률</div></div>
-      <div class="s"><div class="v">${s.quiz?s.quiz+'%':'—'}</div><div class="l">퀴즈</div></div>
-      <div class="s"><div class="v" style="font-size:13px">${s.vocab}</div><div class="l">어휘</div></div>
-    </div>
-    <div class="dr-sec"><h4>강점 장르</h4><div class="genchips">${s.gen.map(g=>`<span class="genchip">${g}</span>`).join('')}</div></div>
-    <div class="dr-sec"><h4>최근 읽은 책</h4><div class="bklist">${s.books.map(b=>`<div class="bkrow"><div class="bt">${b[0]}</div><div class="pbar"><i style="width:${b[1]}%"></i></div><div class="bp">${b[1]}%</div></div>`).join('')}</div></div>
-    <div class="dr-sec"><h4>진행 중 챌린지</h4><div class="chalbox"><div class="ct"><span>${s.chal.name}</span><span>${s.chal.pct}%</span></div><div class="cbar"><i style="width:${s.chal.pct}%"></i></div></div></div>
-    ${s.cmt?`<div class="dr-cmt">💡 ${s.cmt}</div>`:''}`;
-  el('stuOv').classList.add('on');
-}
-function closeStudent(){el('stuOv').classList.remove('on');}
 
-/* ── 프로그램 운영 ── */
-const STATUS=[{k:'예정',c:'#c98a2b'},{k:'진행중',c:'#2e7d57'},{k:'종료',c:'#7c8597'}];
-let PROGRAMS=[
-  {id:'p1', title:'신입생 환영 — 첫 책', type:'큐레이션', status:'진행중', period:'3.2~3.31', target:'신입생 전체', n:8, books:[], intro:'', result:'완독률 64%'},
-  {id:'p2', title:'이달의 고전 챌린지', type:'챌린지', status:'진행중', period:'6.1~6.30', target:'전교', n:5, books:[], intro:'', result:'참여 312명'},
-  {id:'p3', title:'시험기간, 머리 식히는 책', type:'큐레이션', status:'예정', period:'6.15~6.30', target:'전교', intro:'시험 끝, 가볍게 머리 식히며 읽기 좋은 소설들이에요',
-    books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg',note:''},{t:'달러구트 꿈 백화점',a:'이미예 · 팩토리나인',isbn:'9791165341909',cover:'https://image.aladin.co.kr/product/24512/70/cover/k392630952_1.jpg',note:''},{t:'지구에서 한아뿐',a:'정세랑 · 난다',isbn:'9791188862290',cover:'https://image.aladin.co.kr/product/19804/82/cover/k072635131_1.jpg',note:''},{t:'아몬드',a:'손원평 · 창비',isbn:'9788936434267',cover:'https://image.aladin.co.kr/product/16839/4/cover/k492534773_1.jpg',note:''}], result:''},
-  {id:'p4', title:'심리학과 추천도서', type:'큐레이션', status:'종료', period:'5.1~5.31', target:'심리학과', n:12, books:[], intro:'', result:'완독률 71%'},
-  {id:'p5', title:'작가 초청 북토크 — 정세랑', type:'행사', status:'종료', period:'4.18', target:'신청 80명', n:3, books:[], intro:'', result:'만족 4.6/5'},
-];
-function pgCount(p){return (p.books&&p.books.length)?p.books.length:(p.n||0);}
-function renderPrograms(){
-  el('kanban').innerHTML=STATUS.map(s=>{
-    const list=PROGRAMS.filter(p=>p.status===s.k);
-    return `<div class="kcol"><div class="ktit"><span class="kdot" style="background:${s.c}"></span>${s.k}<span class="kcount">${list.length}</span></div>
-      ${list.map(p=>`<div class="pcard" onclick="openProg('${p.id}')">
-        <span class="ptype">${p.type}</span><h4>${esc(p.title)}</h4>
-        <div class="pmeta">${p.period} · ${esc(p.target)}</div>
-        <div class="pfoot"><span class="pbooks">도서 ${pgCount(p)}권</span>${p.result?`<span class="presult">${p.result}</span>`:'<span style="margin-left:auto;color:var(--light)">준비 중</span>'}</div>
-      </div>`).join('')||'<div style="font-size:12px;color:var(--light);padding:10px 4px">없음</div>'}
-    </div>`;
-  }).join('');
+/* ====== 이용통계 ====== */
+const STAT_TABS=[['프로그램별','prog'],['월별','month'],['이용자별','user'],['도서별','book']];
+let statTab='prog';
+function initStatTabs(){el('statTabs').innerHTML=STAT_TABS.map(t=>`<button class="tab ${t[1]===statTab?'on':''}" onclick="setStatTab('${t[1]}')">${t[0]} 건수</button>`).join('');}
+function setStatTab(t){statTab=t;initStatTabs();renderStats();}
+function inRange(ym){const f=el('stFrom').value,t=el('stTo').value;return (!f||ym>=f)&&(!t||ym<=t);}
+function renderStats(){
+  initStatTabs();
+  const kind=el('stKind').value;
+  let html='',note='';
+  if(statTab==='prog'){
+    const rows=PROGRAMS.filter(p=>!kind||(kind==='챌린지'?p.type.includes('챌린지'):p.type==='큐레이션'));
+    html=`<thead><tr><th class="ctr">번호</th><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
+      rows.map((p,i)=>`<tr><td class="ctr">${i+1}</td><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
+        <td class="num">${nf(p.visits)}</td><td class="num">${nf(p.uses)}</td>
+        <td class="num">${p.minutes!=null?nf(p.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
+    note='※ 이용시간은 <b>북스타 고전 클래식 도서</b>에만 집계됩니다. 소장도서 프로그램은 “—”.';
+  }else if(statTab==='month'){
+    const rows=MONTHLY.filter(r=>inRange(r.m));
+    html=`<thead><tr><th>월</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead><tbody>`+
+      rows.map(r=>`<tr><td style="font-weight:600">${r.m.replace('-','년 ')}월</td><td class="num">${nf(r.visits)}</td><td class="num">${nf(r.uses)}</td></tr>`).join('')+`</tbody>`;
+    note='선택한 기간 내 월별 합계입니다.';
+  }else if(statTab==='user'){
+    html=`<thead><tr><th class="ctr">번호</th><th>아이디</th><th class="num">이용건수</th><th class="num">한줄서평</th><th class="num">퀴즈점수</th><th class="num">질문점수</th><th class="num">합계점수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
+      USERS.map((u,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:700">${esc(u.id)}</td><td class="num">${nf(u.uses)}</td>
+        <td class="num">${u.review!=null?u.review:'<span class="muted">—</span>'}</td>
+        <td class="num">${u.quiz!=null?u.quiz:'<span class="muted">—</span>'}</td>
+        <td class="num">${u.question!=null?u.question:'<span class="muted">—</span>'}</td>
+        <td class="num"><b>${u.total!=null?u.total:'<span class="muted">—</span>'}</b></td>
+        <td class="num">${u.minutes!=null?nf(u.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
+    note='프로그램마다 평가 항목이 달라 빈 칸이 생길 수 있어요. <b>합계점수</b>로 우수 이용자를 선정해 포인트·시상에 활용하세요.';
+  }else{
+    const rows=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses);
+    html=`<thead><tr><th class="ctr">번호</th><th>도서명</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
+      rows.map((b,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:600">${esc(b.t)}</td><td class="num">${nf(b.uses)}</td>
+        <td class="num">${b.minutes!=null?nf(b.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
+    note='도서별 이용 현황입니다. 이용시간은 고전 클래식 도서만 집계됩니다.';
+  }
+  el('statTbl').innerHTML=html; el('statNote').innerHTML=note;
 }
-/* ── 큐레이션 편집 / 발행 ── */
-function progById(id){return PROGRAMS.find(p=>p.id===id);}
-function openProg(id){
-  const p=progById(id); if(!p) return;
-  const editable = p.status!=='종료';
-  el('progModal').innerHTML=`
-    <div class="cur-h"><span class="star">✦</span><h3>${p.type==='큐레이션'?'큐레이션 편집':'프로그램'}</h3>
-      <span class="ptype" style="margin-left:4px">${p.type}</span><span class="x" onclick="closeProg()">×</span></div>
-    <div class="cur-b">
-      <div class="cur-label">제목</div>
-      <input class="cur-inp" id="pgTitle" value="${esc(p.title)}" ${editable?'':'disabled'}>
-      <div class="cur-label" style="margin-top:16px">소개글 — 학생에게 보일 한두 줄</div>
-      <textarea class="cur-inp" id="pgIntro" rows="2" placeholder="예: 시험 끝, 머리 식히며 읽기 좋은 소설들이에요" ${editable?'':'disabled'}>${esc(p.intro||'')}</textarea>
-      <div class="row2">
-        <div><div class="cur-label" style="margin-top:16px">대상</div><input class="cur-inp" id="pgTarget" value="${esc(p.target||'')}" ${editable?'':'disabled'}></div>
-        <div><div class="cur-label" style="margin-top:16px">기간</div><input class="cur-inp" id="pgPeriod" value="${esc(p.period||'')}" ${editable?'':'disabled'}></div>
-      </div>
-      <div class="cand-head" style="margin-top:18px"><span class="ct">담은 책 ${(p.books||[]).length}권</span></div>
-      <div id="pgBooks">${renderBooks(p,editable)}</div>
-      <div class="cur-note">※ '소장·전자책'은 예시 표기예요 — 도서관 카탈로그 연동 시 책마다 실제 접근 링크(소장 위치·전자책)가 자동으로 붙습니다.</div>
-    </div>
-    <div class="cur-f">
-      ${p.status==='종료'?'<span style="color:var(--light);font-size:12.5px">종료된 프로그램입니다</span>':`
-        <button class="btn-ghost2" onclick="saveProg('${id}')">임시 저장</button>
-        <button class="btn-primary" onclick="publishProg('${id}')">${p.status==='예정'?'발행하기 →':'변경 발행'}</button>`}
-    </div>`;
-  el('progOv').classList.add('on');
+function downloadExcel(){
+  let rows=[],name='';
+  if(statTab==='prog'){name='이용통계_프로그램별';rows.push(['번호','구분','프로그램','접속건수','이용건수','이용시간(분)']);
+    PROGRAMS.forEach((p,i)=>rows.push([i+1,(p.type==='큐레이션'?'큐레이션':p.type==='고전챌린지'?'고전챌린지':'챌린지'),p.title,p.visits,p.uses,p.minutes!=null?p.minutes:'']));}
+  else if(statTab==='month'){name='이용통계_월별';rows.push(['월','접속건수','이용건수']);MONTHLY.filter(r=>inRange(r.m)).forEach(r=>rows.push([r.m,r.visits,r.uses]));}
+  else if(statTab==='user'){name='이용통계_이용자별';rows.push(['번호','아이디','이용건수','한줄서평','퀴즈점수','질문점수','합계점수','이용시간(분)']);
+    USERS.forEach((u,i)=>rows.push([i+1,u.id,u.uses,u.review==null?'':u.review,u.quiz==null?'':u.quiz,u.question==null?'':u.question,u.total==null?'':u.total,u.minutes==null?'':u.minutes]));}
+  else{name='이용통계_도서별';rows.push(['번호','도서명','이용건수','이용시간(분)']);BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses).forEach((b,i)=>rows.push([i+1,b.t,b.uses,b.minutes==null?'':b.minutes]));}
+  const csv='﻿'+rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name+'.csv';a.click();URL.revokeObjectURL(url);
+  toast('엑셀(CSV) 파일을 내려받았어요');
 }
-function renderBooks(p,editable){
-  return (p.books||[]).map((b,i)=>`<div class="bk">
-    <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
-    <div class="bk-i"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
-      <input class="bk-note" placeholder="사서 한마디 (선택)" value="${esc(b.note||'')}" oninput="noteBook('${p.id}',${i},this.value)" ${editable?'':'disabled'}></div>
-    <div class="bk-side"><span class="avbadge">소장·전자책</span>${editable?`<span class="bk-x" onclick="delBook('${p.id}',${i})">×</span>`:''}</div>
-  </div>`).join('') || '<div style="color:var(--light);font-size:12.5px;padding:8px 0">담은 책이 없어요.</div>';
-}
-function noteBook(id,i,v){const p=progById(id);if(p&&p.books[i])p.books[i].note=v;}
-function delBook(id,i){const p=progById(id);if(!p)return;p.books.splice(i,1);el('pgBooks').innerHTML=renderBooks(p,true);el('progModal').querySelector('.cand-head .ct').textContent='담은 책 '+p.books.length+'권';}
-function readProg(id){const p=progById(id);if(!p)return null;
-  p.title=el('pgTitle').value.trim()||p.title;p.intro=el('pgIntro').value.trim();
-  p.target=el('pgTarget').value.trim()||p.target;p.period=el('pgPeriod').value.trim()||p.period;return p;}
-function closeProg(){el('progOv').classList.remove('on');}
-function saveProg(id){readProg(id);closeProg();renderPrograms();}
-function publishProg(id){const p=readProg(id);if(!p)return;
-  if(!p.books||!p.books.length){alert('담은 책이 없어요. 책을 담은 큐레이션만 발행할 수 있어요.');return;}
-  p.status='진행중'; if(p.period==='발행 대기')p.period='발행됨';
-  try{
-    const pub=JSON.parse(localStorage.getItem('bookstar_pub')||'[]');
-    pub.unshift({id:p.id,title:p.title,intro:p.intro,library:'한국대학교 도서관',target:p.target,
-      books:p.books.map(b=>({t:b.t,a:b.a,isbn:b.isbn,cover:b.cover||'',note:b.note||''}))});
-    localStorage.setItem('bookstar_pub',JSON.stringify(pub.slice(0,20)));
-  }catch(e){}
-  closeProg();renderPrograms();
-  alert('발행됐어요! 학생 앱 큐레이션에 노출됩니다.');
-}
-/* ── 큐레이션 만들기 (국중 라이브) ──
-   admin → Supabase Edge Function 'curate' → (Claude Haiku 자연어→파라미터) → 정보나루 loanItemSrch 실시간.
-   authKey는 함수 env에 숨김. 발행 시 도서관 카탈로그와 ISBN 매칭해 접근 링크 부착(다음 단계). */
+
+/* ====== 프로그램 만들기 ====== */
 const CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";
 const CURATE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
-const CUR_EX=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','심리학 입문','과학·교양 베스트'];
-// 연결 실패 시 대체 후보 (정보나루에서 받아온 실제 데이터)
-const DEMO_CAND=[
- {t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120',loan:2313},
- {t:'모순',a:'양귀자 · 쓰다',isbn:'9788998441012',loan:2103},
- {t:'채식주의자',a:'한강 · 창비',isbn:'9788936434595',loan:1416},
- {t:'급류',a:'정대건 · 민음사',isbn:'9788937473401',loan:1469},
-];
-let CAND=[], picks={};
-function openCur(){picks={};CAND=[];el('curQ').value='';el('curTitle').value='';el('candWrap').innerHTML='';
-  el('curEx').innerHTML=CUR_EX.map(e=>`<span onclick="exCur('${e}')">${e}</span>`).join('');
-  el('curOv').classList.add('on');}
-function closeCur(){el('curOv').classList.remove('on');}
-function exCur(t){el('curQ').value=t;loadCand();}
-async function loadCand(){
-  const q=el('curQ').value.trim();if(!q)return;
-  picks={};
-  el('candWrap').innerHTML='<div class="cur-loading">✦ 국중 인기대출에서 후보 가져오는 중…</div>';
+const DEMO_CAND=[{t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120',loan:2313},{t:'모순',a:'양귀자 · 쓰다',isbn:'9788998441012',loan:2103},{t:'채식주의자',a:'한강 · 창비',isbn:'9788936434595',loan:1416},{t:'급류',a:'정대건 · 민음사',isbn:'9788937473401',loan:1469}];
+const CLASSICS=[{t:'돈키호테',a:'세르반테스',loan:0},{t:'햄릿',a:'셰익스피어',loan:0},{t:'로빈슨 크루소',a:'대니얼 디포',loan:0},{t:'군주론',a:'마키아벨리',loan:0},{t:'국부론',a:'애덤 스미스',loan:0},{t:'위대한 개츠비',a:'피츠제럴드',loan:0},{t:'1984',a:'조지 오웰',loan:0},{t:'변신',a:'프란츠 카프카',loan:0},{t:'노인과 바다',a:'헤밍웨이',loan:0},{t:'데미안',a:'헤르만 헤세',loan:0}];
+const EX_HOLD=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','심리학 입문'];
+const EX_CLASSIC=['삶의 지혜를 주는 고전','처음 읽는 서양 고전','짧고 강한 고전 명작'];
+let MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
+let CAND=[],picks={};
+
+function pickType(t){
+  MK={type:t,books:[],mission:{quiz:t==='고전챌린지',quizN:5,review:false,question:false},loc:t==='고전챌린지'?['고전컬렉션']:[]};
+  CAND=[];picks={};
+  document.querySelectorAll('.tcard').forEach(c=>c.classList.toggle('on',c.dataset.t===t));
+  el('builder').style.display='';
+  el('mkTitle').value='';el('mkIntro').value='';el('mkQ').value='';el('candWrap').innerHTML='';
+  const isChal=t!=='큐레이션', isClassic=t==='고전챌린지';
+  el('missionWrap').style.display=isChal?'':'none';
+  el('srcLabel').textContent=isClassic?'고전 도서 담기 — 고전컬렉션 검색 / AI 추천':'도서 담기 — 소장도서 검색 / AI 추천';
+  el('mkEx').innerHTML=(isClassic?EX_CLASSIC:EX_HOLD).map(e=>`<span onclick="exMk('${e}')">${e}</span>`).join('');
+  el('quizN').innerHTML=[3,5,7,10].map(n=>`<span class="${n===MK.mission.quizN?'on':''}" onclick="setQuizN(${n})">${n}개</span>`).join('');
+  el('tgQuiz').className='tg'+(MK.mission.quiz?' on':'')+(isClassic?' lock':'');
+  el('quizNwrap').style.display=MK.mission.quiz?'':'none';
+  el('tgReview').className='tg';el('tgQuestion').className='tg';
+  buildLoc();syncPreview();
+  el('builder').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function resetType(){MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
+  el('builder').style.display='none';document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));window.scrollTo(0,0);}
+function exMk(t){el('mkQ').value=t;searchBooks();}
+function buildLoc(){el('locChips').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${MK.loc.includes(l)?'on':''}" onclick="toggleLoc('${l}')">${l}</span>`).join('');}
+function toggleLoc(l){const i=MK.loc.indexOf(l);if(i<0)MK.loc.push(l);else MK.loc.splice(i,1);buildLoc();syncPreview();}
+function setQuizN(n){MK.mission.quizN=n;el('quizN').innerHTML=[3,5,7,10].map(x=>`<span class="${x===n?'on':''}" onclick="setQuizN(${x})">${x}개</span>`).join('');syncPreview();}
+function toggleM(k){
+  if(k==='quiz'&&MK.type==='고전챌린지')return;
+  MK.mission[k]=!MK.mission[k];
+  el('tg'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('on',MK.mission[k]);
+  if(k==='quiz')el('quizNwrap').style.display=MK.mission.quiz?'':'none';
+  syncPreview();
+}
+function scoreText(){
+  const m=MK.mission;if(!m.quiz&&!m.review&&!m.question)return '미션을 1개 이상 선택하세요.';
+  if(MK.type==='고전챌린지'){
+    const opt=(m.review?1:0)+(m.question?1:0);const q=opt===2?80:opt===1?90:100;
+    let s=`<b>퀴즈 ${q}점</b>`;if(m.review)s+=' + 한줄소감 10점';if(m.question)s+=' + 질문하기 10점';
+    return s+' = <b>100점 만점</b><br>한줄소감·질문하기: 작성 10점 / 미작성 0점';
+  }
+  let parts=[];if(m.quiz)parts.push(`퀴즈 ${m.quizN}문항`);if(m.review)parts.push('한 줄 소감');if(m.question)parts.push('질문 만들기');
+  return '선택 미션: <b>'+parts.join(' · ')+'</b>';
+}
+async function searchBooks(){
+  const q=el('mkQ').value.trim();if(!q)return;picks={};
+  if(MK.type==='고전챌린지'){CAND=CLASSICS.slice();renderCand('고전컬렉션 '+CAND.length+'권 (요약본 보유)');return;}
+  el('candWrap').innerHTML='<div class="cur-loading">✦ 후보 도서를 가져오는 중…</div>';
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
     const d=await r.json();
     CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||''}));
-    if(d.title && !el('curTitle').value.trim()) el('curTitle').value=d.title;
+    if(d.title&&!el('mkTitle').value.trim()){el('mkTitle').value=d.title;syncPreview();}
     if(!CAND.length){el('candWrap').innerHTML='<div class="cur-loading">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
-    renderCand(true);
-  }catch(e){ CAND=DEMO_CAND.slice(); renderCand(false); }
+    renderCand('추천 후보 '+CAND.length+'권 · 정보나루 실시간');
+  }catch(e){CAND=DEMO_CAND.slice();renderCand('대체 후보 '+CAND.length+'권 (연결 재시도 가능)');}
 }
-function renderCand(live){
-  const n=Object.keys(picks).filter(k=>picks[k]).length;
-  el('candWrap').innerHTML=`<div class="cand-head"><span class="ct">국중 추천 후보 ${CAND.length}권</span><span class="cc" id="pickCnt">담음 ${n}권</span></div>`+
+function renderCand(head){
+  el('candWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
     CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
       <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
-      <div class="ci"><div class="t">${b.t}</div><div class="s">${b.a}${b.isbn?' · ISBN '+b.isbn:''}</div></div>
-      <div class="loan">${b.loan?'대출 '+b.loan.toLocaleString():''}</div>
-      <div class="pick" onclick="pick(${i})">${picks[i]?'✓':'+'}</div>
-    </div>`).join('')+
-    `<div class="cur-note">${live?'✓ 정보나루 <b>loanItemSrch</b> 실시간 결과 · 발행 시 도서관 카탈로그와 매칭해 접근 링크(소장·전자책)를 붙입니다.':'⚠ 연결이 잠시 안 돼 대체 후보를 보여줘요. 다시 시도하면 실시간으로 가져옵니다.'}</div>`;
+      <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · ISBN '+esc(b.isbn):''}</div></div>
+      ${b.loan?`<div class="loan">대출 ${nf(b.loan)}</div>`:''}
+      <div class="pick" onclick="pickCand(${i})">${picks[i]?'✓':'+'}</div></div>`).join('');
 }
-function pick(i){picks[i]=!picks[i];const c=el('cand'+i);c.classList.toggle('on',picks[i]);
-  c.querySelector('.pick').textContent=picks[i]?'✓':'+';
-  el('pickCnt').textContent='담음 '+Object.keys(picks).filter(k=>picks[k]).length+'권';}
-function saveProgram(){
-  const sel=CAND.filter((_,i)=>picks[i]);
-  if(!sel.length){alert('담은 책이 없어요. 후보에서 + 를 눌러 담아주세요.');return;}
-  const title=el('curTitle').value.trim()||el('curQ').value.trim()||'새 큐레이션';
-  const id='c'+(++PID);
-  PROGRAMS.unshift({id,title,type:'큐레이션',status:'예정',period:'발행 대기',target:'대상 미설정',intro:'',
-    books:sel.map(b=>({t:b.t,a:b.a,isbn:b.isbn,cover:b.cover||'',note:''})),result:''});
-  closeCur();renderPrograms();openProg(id);
+function pickCand(i){
+  picks[i]=!picks[i];const b=CAND[i];
+  if(picks[i])MK.books.push({t:b.t,a:b.a,isbn:b.isbn||'',cover:b.cover||''});
+  else MK.books=MK.books.filter(x=>!(x.t===b.t&&x.a===b.a));
+  const c=el('cand'+i);c.classList.toggle('on',picks[i]);c.querySelector('.pick').textContent=picks[i]?'✓':'+';
+  syncPreview();
+}
+function syncPreview(){
+  MK.title=el('mkTitle').value.trim();MK.intro=el('mkIntro').value.trim();
+  MK.from=el('mkFrom').value;MK.to=el('mkTo').value;
+  const t=MK.type;const typeLabel=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전 클래식 챌린지':'소장자료 챌린지';
+  const isChal=t!=='큐레이션';
+  if(isChal)el('scoreBox').innerHTML=scoreText();
+  el('pvCard').innerHTML=`
+    <div class="pv-top"><span class="pv-type">${typeLabel}</span>
+      <h4>${esc(MK.title||'제목을 입력하세요')}</h4>
+      <div class="pv-meta">${MK.from||'시작일'} ~ ${MK.to||'종료일'}</div></div>
+    <div class="pv-body">
+      ${MK.intro?`<div class="pv-intro">${esc(MK.intro)}</div>`:''}
+      ${MK.books.length?`<div class="pv-books">${MK.books.map(b=>`<div class="pv-bk"><div class="cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><div class="t">${esc(b.t)}</div></div>`).join('')}</div>`:'<div class="pv-empty">담은 책이 여기에 표시돼요.</div>'}
+      ${isChal&&(MK.mission.quiz||MK.mission.review||MK.mission.question)?`<div class="pv-mission">${MK.mission.quiz?`<span>퀴즈 ${MK.mission.quizN}문항</span>`:''}${MK.mission.review?'<span>한 줄 소감</span>':''}${MK.mission.question?'<span>질문 만들기</span>':''}</div>`:''}
+      <div class="pv-loc">📍 ${MK.loc.length?esc(MK.loc.join(' · ')):'위치 미지정'}</div>
+    </div>`;
+}
+function finishMake(){
+  if(!MK.title){toast('제목을 입력해주세요');return;}
+  if(!MK.books.length){toast('책을 1권 이상 담아주세요');return;}
+  if(MK.type!=='큐레이션'&&!MK.mission.quiz&&!MK.mission.review&&!MK.mission.question){toast('미션을 1개 이상 선택해주세요');return;}
+  if(!MK.loc.length){toast('노출 위치를 1개 이상 지정해주세요');return;}
+  const id='c'+Date.now().toString(36);
+  PROGRAMS.unshift({id,type:MK.type,title:MK.title,status:'예정',from:MK.from,to:MK.to,loc:MK.loc.slice(),
+    visits:0,uses:0,minutes:MK.type==='고전챌린지'?0:null,intro:MK.intro,
+    mission:MK.type!=='큐레이션'?Object.assign({},MK.mission):undefined,books:MK.books.slice()});
+  toast('만들기 완료! ‘예정’ 상태로 등록됐어요');
+  resetType();go(document.querySelectorAll('.navi')[4],'history');
 }
 
-initStudents();
-render();
+/* ====== 공지글 ====== */
+let ntLocSel=[];
+function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLoc('${l}')">${l}</span>`).join('');}
+function toggleNtLoc(l){const i=ntLocSel.indexOf(l);if(i<0)ntLocSel.push(l);else ntLocSel.splice(i,1);buildNtLoc();}
+function publishNotice(){
+  const title=el('ntTitle').value.trim(),body=el('ntBody').value.trim();
+  if(!title){toast('공지 제목을 입력해주세요');return;}
+  if(!body){toast('공지 내용을 입력해주세요');return;}
+  NOTICES.unshift({title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),loc:ntLocSel.slice(),body,at:'2026-06-03'});
+  el('ntTitle').value='';el('ntBody').value='';ntLocSel=[];buildNtLoc();renderNotices();
+  toast('공지가 발행됐어요');
+}
+function renderNotices(){
+  el('noticeList').innerHTML=NOTICES.map(n=>`<div class="notice-i"><div class="nx">
+    <h4>${esc(n.title)}</h4><div class="nm">${esc(n.target)} · ${esc(n.period||'')} · ${esc(n.at)}</div>
+    <p>${esc(n.body)}</p></div>${n.loc&&n.loc.length?`<span class="nloc">${esc(n.loc.join(' · '))}</span>`:''}</div>`).join('')
+    ||'<div class="pv-empty">게시된 공지가 없어요.</div>';
+}
+
+/* ====== 히스토리 ====== */
+const HIS_TABS=[['큐레이션','큐레이션'],['챌린지','챌린지'],['커뮤니티','커뮤니티'],['공지글','공지글']];
+let hisTab='큐레이션';
+function initHisTabs(){el('hisTabs').innerHTML=HIS_TABS.map(t=>`<button class="tab ${t[1]===hisTab?'on':''}" onclick="setHisTab('${t[1]}')">${t[0]}</button>`).join('');}
+function setHisTab(t){hisTab=t;renderHistory();}
+function renderHistory(){
+  initHisTabs();let html='';
+  if(hisTab==='큐레이션'||hisTab==='챌린지'){
+    const rows=PROGRAMS.filter(p=>hisTab==='큐레이션'?p.type==='큐레이션':p.type.includes('챌린지'));
+    html=`<thead><tr><th>구분</th><th>프로그램</th><th>기간</th><th>위치</th><th class="ctr">상태</th><th class="num">이용건수</th></tr></thead><tbody>`+
+      rows.map(p=>`<tr><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
+        <td>${p.from} ~ ${p.to}</td><td style="font-size:12px;color:var(--sub)">${esc((p.loc||[]).join(', '))}</td>
+        <td class="ctr"><span class="gtag ${p.status==='진행중'?'cur':p.status==='예정'?'chal':'clas'}">${p.status}</span></td>
+        <td class="num">${nf(p.uses)}</td></tr>`).join('')+`</tbody>`;
+  }else if(hisTab==='커뮤니티'){
+    html=`<thead><tr><th>모임/채널</th><th>개설자</th><th>개설일</th><th class="num">멤버</th></tr></thead><tbody>`+
+      COMMUNITY.map(c=>`<tr><td style="font-weight:600">${esc(c.title)}</td><td>${esc(c.by)}</td><td>${esc(c.at)}</td><td class="num">${nf(c.members)}명</td></tr>`).join('')+`</tbody>`;
+  }else{
+    html=`<thead><tr><th>제목</th><th>대상</th><th>기간</th><th>발행일</th></tr></thead><tbody>`+
+      NOTICES.map(n=>`<tr><td style="font-weight:600">${esc(n.title)}</td><td>${esc(n.target)}</td><td>${esc(n.period||'')}</td><td>${esc(n.at)}</td></tr>`).join('')+`</tbody>`;
+  }
+  el('hisTbl').innerHTML=html;
+}
+
+/* ====== 초기화 ====== */
+buildNtLoc();
+renderDash();
 </script>
 </body></html>
