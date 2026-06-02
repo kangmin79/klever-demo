@@ -469,7 +469,9 @@ function readSecInputs(){
     if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value; if(!Array.isArray(s.books))s.books=[];});
 }
 function addSection(){readSecInputs();SECTIONS.push({slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
-function delSection(i){readSecInputs();if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
+function delSection(i){readSecInputs();
+  if(SECTIONS[i].slot==='rank'){toast('대출 랭킹은 삭제할 수 없어요 (자동 집계 고정)');return;}
+  if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
 function moveSection(i,d){readSecInputs();const j=i+d;if(j<0||j>=SECTIONS.length)return;const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
 function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
 async function saveSections(){
@@ -492,16 +494,19 @@ async function saveSections(){
 }
 function renderSettings(){
   el('secList').innerHTML=SECTIONS.map((s,i)=>{
-    const isRank=s.style==='rank', books=s.books||[];
+    const isRank=s.slot==='rank', books=s.books||[];
     return `<div class="panel" style="margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-      <span style="font-size:11px;font-weight:800;color:var(--light)">칸 ${i+1}</span><span style="flex:1"></span>
+      <span style="font-size:11px;font-weight:800;color:var(--light)">칸 ${i+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${i===0?'disabled':''}>↑</button>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${i===SECTIONS.length-1?'disabled':''}>↓</button>
-      <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>
+      ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
+        :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
     </div>
     <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}"></div>
-      <div><div class="flabel">스타일(앱 표시 형태)</div><select class="cur-inp" id="sec_style_${s.slot}" onchange="readSecInputs();renderSettings()">${STYLES.map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select></div></div>
+      <div><div class="flabel">스타일(앱 표시 형태)</div>${isRank
+        ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
+        :`<select class="cur-inp" id="sec_style_${s.slot}" onchange="readSecInputs();renderSettings()">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`}</div></div>
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}">
     ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
