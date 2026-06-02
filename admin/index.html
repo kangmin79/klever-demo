@@ -144,6 +144,22 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .sig-l{color:var(--accent);background:rgba(58,110,165,.1)}
 .sig-own{color:#1d6b48;background:rgba(46,125,87,.13)}
 .book-empty{text-align:center;color:var(--light);font-size:12.5px;padding:24px 0;line-height:1.7}
+/* 우리도서관 꾸미기 — 칸별 책 strip */
+.deco-books{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;margin:6px 0 2px}
+.deco-bk{position:relative;width:46px}
+.deco-bk .c{width:46px;height:64px;border-radius:5px;background:var(--input);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.deco-bk .c img{width:100%;height:100%;object-fit:cover}
+.deco-bk .rm{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--bad);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid #fff;padding:0}
+.deco-add{align-self:center;font-size:12.5px;font-weight:700;color:var(--primary);background:var(--primary-bg);border:1px dashed var(--primary);border-radius:9px;padding:9px 13px;cursor:pointer;height:fit-content}
+/* 칸별 책 담기 모달 */
+#secOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:80;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#secOv.on{display:flex}
+.sec-modal{background:var(--card);width:100%;max-width:620px;max-height:88vh;border-radius:20px;overflow:auto;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.sec-h{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--card);z-index:1}
+.sec-h h3{font-size:16px;font-weight:800;flex:1}.sec-h .x{cursor:pointer;color:var(--light);font-size:22px;line-height:1;padding:4px}
+.sec-b{padding:18px 22px;flex:1}
+.sec-f{padding:14px 22px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0;display:flex;align-items:center;gap:10px}
+.sec-f .btn-primary{margin-left:auto}
 /* 미션 빌더 */
 .mission{display:flex;flex-direction:column;gap:10px}
 .mrow{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:11px;padding:12px 14px}
@@ -240,7 +256,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="navi" onclick="go(this,'notice')"><span class="em">📢</span><span>공지글 작성</span></div>
     <div class="navi" onclick="go(this,'history')"><span class="em">🕘</span><span>히스토리 보기</span></div>
     <div class="grp">우리도서관</div>
-    <div class="navi" onclick="go(this,'settings')"><span class="em">⚙️</span><span>카테고리 설정</span></div>
+    <div class="navi" onclick="go(this,'settings')"><span class="em">🎨</span><span>우리도서관 꾸미기</span></div>
   </aside>
 
   <main class="main">
@@ -383,18 +399,32 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
     <!-- ===== 우리도서관 카테고리 설정 ===== -->
     <section id="pg-settings" style="display:none">
-      <div class="phead"><div><h1>우리도서관 카테고리 설정</h1>
-        <p>학생 앱 ‘우리도서관’에 보이는 카테고리를 추가·삭제·순서변경·이름변경 — 저장하면 학생 앱에 바로 반영</p></div>
+      <div class="phead"><div><h1>우리도서관 꾸미기</h1>
+        <p>학생 앱 ‘우리도서관’ 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기. 저장하면 바로 반영</p></div>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div>
-      <div class="make-grid">
-        <div><div id="secList"></div>
-          <div class="note">※ 스타일 = 학생 앱에서 보이는 형태: <b>히어로</b>(대표 1권 큰 카드)·<b>가로 목록</b>·<b>랭킹</b>(대출수 자동정렬)·<b>요약 카드</b>·<b>AI 카드</b>.<br>
-            ※ 히어로 스타일은 부제 대신 업데이트 날짜가 표시됩니다. ↑↓로 순서를 바꾸고, 저장해야 반영됩니다.</div></div>
-        <div class="preview"><div class="panel"><h3>미리보기 — 우리도서관 화면 순서</h3>
-          <div class="ph-sub">학생이 보게 될 카테고리 제목</div>
-          <div id="secPreview" class="rank"></div></div></div>
-      </div>
+      <div id="secList"></div>
+      <div class="note">※ 스타일 = 학생 앱 표시 형태: <b>히어로</b>(대표 1권 큰 카드)·<b>가로 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>. 랭킹은 책을 담지 않습니다.<br>
+        ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
     </section>
+
+    <!-- 칸별 책 담기 모달 -->
+    <div id="secOv" onclick="if(event.target.id==='secOv')secClosePicker()">
+      <div class="sec-modal">
+        <div class="sec-h"><h3 id="secModalTitle">책 담기</h3><span class="x" onclick="secClosePicker()">×</span></div>
+        <div class="sec-b">
+          <div class="booktabs">
+            <button class="btab" data-sbt="lib" onclick="secTab('lib')">도서관 내</button>
+            <button class="btab on" data-sbt="nat" onclick="secTab('nat')">국중 추천</button>
+            <button class="btab" data-sbt="isbn" onclick="secTab('isbn')">ISBN 입력</button>
+          </div>
+          <div class="searchrow"><input class="cur-inp" id="secQ" onkeydown="if(event.key==='Enter')secSearch()"><button class="btn-primary" id="secBtn" onclick="secSearch()">찾기</button></div>
+          <div class="cur-ex" id="secEx"></div>
+          <div id="secCandWrap" style="margin-top:12px"></div>
+        </div>
+        <div class="sec-f"><span id="secAddedNote" style="font-size:12px;color:var(--light)"></span>
+          <button class="btn-primary" onclick="secClosePicker()">완료</button></div>
+      </div>
+    </div>
 
   </main>
 </div>
@@ -415,19 +445,19 @@ function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(fro
 // 우리도서관 카테고리(app.html millieHTML와 동일) — 관리자가 추가·삭제·편집
 const STYLES=[['hero','히어로(대표 1권)'],['row','가로 목록'],['rank','랭킹(대출 자동)'],['grad','요약 카드'],['ai','AI 카드']];
 let SECTIONS=[
-  {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero'},
-  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row'},
-  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank'},
-  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
-  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai'},
+  {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero',books:[]},
+  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row',books:[]},
+  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank',books:[]},
+  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad',books:[]},
+  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai',books:[]},
 ];
 let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
 let LOCATIONS=SECTIONS.map(s=>s.title);
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row'}));
+    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
     LOCATIONS=SECTIONS.map(s=>s.title);
     buildNtLoc(); if(MK.type)buildLoc();
@@ -436,14 +466,15 @@ async function loadSections(){
 }
 function readSecInputs(){
   SECTIONS.forEach(s=>{const t=el('sec_t_'+s.slot),sub=el('sec_s_'+s.slot),st=el('sec_style_'+s.slot);
-    if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value;});
+    if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value; if(!Array.isArray(s.books))s.books=[];});
 }
-function addSection(){readSecInputs();SECTIONS.push({slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row'});renderSettings();}
+function addSection(){readSecInputs();SECTIONS.push({slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
 function delSection(i){readSecInputs();if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
 function moveSection(i,d){readSecInputs();const j=i+d;if(j<0||j>=SECTIONS.length)return;const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
+function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
 async function saveSections(){
   readSecInputs();
-  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i}));
+  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
   try{
     const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -456,30 +487,87 @@ async function saveSections(){
     }
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
     LOCATIONS=SECTIONS.map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();
-    toast('카테고리를 저장했어요 — 학생 앱에 반영됩니다');
+    toast('저장 완료 — 학생 앱 우리도서관에 반영됩니다');
   }catch(e){toast('저장 실패 — 연결 확인');}
 }
 function renderSettings(){
-  el('secList').innerHTML=SECTIONS.map((s,i)=>`<div class="panel" style="margin-bottom:12px">
+  el('secList').innerHTML=SECTIONS.map((s,i)=>{
+    const isRank=s.style==='rank', books=s.books||[];
+    return `<div class="panel" style="margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-      <span style="font-size:11px;font-weight:800;color:var(--light)">카테고리 ${i+1}</span><span style="flex:1"></span>
+      <span style="font-size:11px;font-weight:800;color:var(--light)">칸 ${i+1}</span><span style="flex:1"></span>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${i===0?'disabled':''}>↑</button>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${i===SECTIONS.length-1?'disabled':''}>↓</button>
       <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>
     </div>
-    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="secPrev()"></div>
-      <div><div class="flabel">스타일(앱 표시 형태)</div><select class="cur-inp" id="sec_style_${s.slot}" onchange="secPrev()">${STYLES.map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select></div></div>
+    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}"></div>
+      <div><div class="flabel">스타일(앱 표시 형태)</div><select class="cur-inp" id="sec_style_${s.slot}" onchange="readSecInputs();renderSettings()">${STYLES.map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select></div></div>
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}">
-  </div>`).join('')
+    ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
+      :`<div class="flabel">담긴 책 ${books.length}권</div>
+        <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="secRemoveBook(${i},${bi})">×</button></div>`).join('')}
+          <span class="deco-add" onclick="secOpenPicker(${i})">+ 책 담기</span></div>`}
+  </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
-  secPrev();
 }
-function secPrev(){
-  el('secPreview').innerHTML=SECTIONS.map((s,i)=>{const t=(el('sec_t_'+s.slot)&&el('sec_t_'+s.slot).value.trim())||s.title;
-    const stv=(el('sec_style_'+s.slot)&&el('sec_style_'+s.slot).value)||s.style;
-    const lbl=(STYLES.find(o=>o[0]===stv)||['','목록'])[1];
-    return `<div class="rk"><div class="no top">${i+1}</div><div class="info"><div class="t">${esc(t)}</div>
-    <div class="s">${esc(lbl)}</div></div></div>`;}).join('');
+/* ── 칸별 책 담기 모달 (공유 3탭) ── */
+let scTab='nat', scIdx=-1, SCAND=[], scHead='';
+function secExample(t){el('secQ').value=t;secSearch();}
+function secOpenPicker(i){readSecInputs();scIdx=i;scTab='nat';SCAND=[];
+  el('secModalTitle').textContent=`‘${SECTIONS[i].title}’에 책 담기`;
+  document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt==='nat'));
+  el('secOv').classList.add('on');secApplyTab();loadInventory();}
+function secClosePicker(){el('secOv').classList.remove('on');renderSettings();}
+function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
+function secNote(){el('secAddedNote').textContent='담긴 책 '+((SECTIONS[scIdx]&&SECTIONS[scIdx].books||[]).length)+'권';}
+function secApplyTab(){const q=el('secQ');
+  if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
+  else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
+  else{q.placeholder='예: 6월 신입생에게 가볍게 읽을 문학';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='';}
+  q.value='';secNote();
+}
+function secRenderLib(){const q=(el('secQ').value||'').trim();const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;SCAND=list.slice(0,40);
+  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 담으면 여기에 쌓입니다.</div>';return;}
+  secRenderCands('우리 도서관 소장 '+SCAND.length+'권');}
+async function secSearch(){
+  if(scTab==='lib'){secRenderLib();return;}
+  if(scTab==='isbn'){return secLookupISBN();}
+  const q=el('secQ').value.trim();if(!q)return;
+  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 국중에서 후보 도서를 가져오는 중…</div>';
+  try{
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
+    const d=await r.json();
+    SCAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating}));
+    if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요.</div>';return;}
+    secRenderCands('국중 추천 '+SCAND.length+'권 · 정보나루 실시간');
+  }catch(e){SCAND=DEMO_CAND.slice();secRenderCands('대체 후보 '+SCAND.length+'권');}
+}
+async function secLookupISBN(){
+  const raw=(el('secQ').value||'').replace(/[^0-9Xx]/g,'');
+  if(raw.length<10){el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 정확히 입력해주세요 (10~13자리).</div>';return;}
+  el('secCandWrap').innerHTML='<div class="cur-loading">📘 ISBN으로 도서 정보를 조회하는 중…</div>';
+  try{
+    const r=await fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+SB_ANON,'apikey':SB_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:[raw]})});
+    const d=await r.json();const x=(d.info||{})[raw];
+    if(!x||!x.title){el('secCandWrap').innerHTML='<div class="book-empty">해당 ISBN의 책을 찾지 못했어요.</div>';return;}
+    SCAND=[{t:x.title,a:x.author||'',isbn:raw,loan:x.loan||0,cover:x.cover||'',rating:x.rating}];
+    secRenderCands('조회 결과 — + 를 눌러 담으세요');
+  }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
+}
+function secRenderCands(head){scHead=head;const have=new Set((SECTIONS[scIdx].books||[]).map(b=>b.isbn).filter(Boolean));
+  el('secCandWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
+    SCAND.map((b,i)=>{const added=b.isbn&&have.has(b.isbn);const own=b.isbn&&LIB_INV.has(b.isbn);
+    return `<div class="cand ${added?'on':''}">
+      <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
+      <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
+        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${own?'<span class="sig-own">🟢 소장중</span>':''}</div></div>
+      <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
+}
+function secAdd(i){const b=SCAND[i];const arr=SECTIONS[scIdx].books;
+  const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(x.title===b.t));
+  if(idx>=0)arr.splice(idx,1);
+  else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:''});if(b.isbn){LIB_INV.add(b.isbn);upsertInventory([b]);}}
+  secRenderCands(scHead);secNote();
 }
 
 /* ====== 데모 데이터 (PPT 예시 기반) — 대시보드·통계용 stats 포함 ====== */

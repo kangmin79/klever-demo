@@ -2042,12 +2042,13 @@ function millieHTML(){
   SECTIONS.forEach((s,i)=>{
     const st=s.style||'row';
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank); return; }   // 랭킹은 대출수 자동
-    const assigned=booksForSlot(s.slot);                               // 이 카테고리로 발행한 책
+    const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
+    const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
       out+=mlLife(assigned[0]||life,(hc&&hc.intro)||note,hc||cur,s.title); return;
     }
-    const books=assigned.length?assigned:libPick(8,i*3+2);             // 지정 없으면 풀에서 채움(폴백)
+    const books=assigned.length?assigned:libPick(8,i*3+2);            // 둘 다 없으면 풀 폴백
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
     else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
     else out+=mlRow(s.title,s.subtitle,books);
@@ -2065,16 +2066,22 @@ let SECTIONS=[
 ];
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order&order=sort_order`,
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books&order=sort_order`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row'}));
+    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
   }catch(e){}
 }
 function rebuildLibPool(){
   const seen=new Set(); LIB_POOL=[];
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
+  SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
+}
+// 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
+function booksForSection(s){
+  return (s.books||[]).map(b=>{ const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note}; })
+    .filter(b=>b.t||b.title);
 }
 function renderLibCuration(){
   const grid=document.getElementById('libCurationGrid'); if(!grid) return;
