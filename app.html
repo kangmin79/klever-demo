@@ -1033,6 +1033,10 @@ body.dark .hwc-send{color:#0f172a;}
   </div>
 
   <div class="section">
+    <div class="subtabs" id="classicTabs">
+      <div class="subtab active" data-ctab="modern" onclick="setClassicTab(this,'modern')">한국 고전 <span id="clCntK"></span></div>
+      <div class="subtab" data-ctab="foreign" onclick="setClassicTab(this,'foreign')">해외 고전 <span id="clCntF"></span></div>
+    </div>
     <div id="classicShelves"></div>
   </div>
 
@@ -2168,20 +2172,33 @@ function clShelf(title, books){
   return `<div class="cl-shelf">${mlHead(title, (CLASSIC_SUB[title]||'')+' · '+books.length+'권')}`
     + `${mlCarousel(`<div class="ml-hrow">${books.map(clCard).join('')}</div>`)}</div>`;
 }
+let currentClassicLocale = 'modern';   // 한국 고전이 기본
+function setClassicTab(el, loc){
+  document.querySelectorAll('#classicTabs .subtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentClassicLocale = loc;
+  renderClassicShelves();
+}
 function renderClassicShelves(){
   const host = document.getElementById('classicShelves');
   if(!host || typeof BOOKS==='undefined') return;
+  // 탭별 권수 배지
+  const ck=document.getElementById('clCntK'), cf=document.getElementById('clCntF');
+  if(ck) ck.textContent = BOOKS.filter(b=>b.locale==='modern').length;
+  if(cf) cf.textContent = BOOKS.filter(b=>b.locale==='foreign').length;
+  // 현재 탭(국내/해외) 풀에서 카테고리별 선반
+  const pool = BOOKS.filter(b=> b.locale===currentClassicLocale);
   const covered = new Set();
   let html = '';
   REC_GENRES.forEach(g=>{
-    const books = BOOKS.filter(b=> g.cats.includes(b.category));
+    const books = pool.filter(b=> g.cats.includes(b.category));
     if(!books.length) return;
     books.forEach(b=>covered.add(b.id));
     html += clShelf(g.label, books);
   });
-  const rest = BOOKS.filter(b=> !covered.has(b.id));
+  const rest = pool.filter(b=> !covered.has(b.id));
   if(rest.length) html += clShelf('그 외 고전', rest);
-  host.innerHTML = html;
+  host.innerHTML = html || '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>';
   bindClassicDrag();
 }
 function bindClassicDrag(){
