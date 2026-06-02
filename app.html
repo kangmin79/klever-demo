@@ -328,8 +328,11 @@ body.dark .program-card:not(.featured) .program-cta{background:var(--gold);color
    6. 책 그리드
    ═══════════════════════════════════════════════════════════ */
 .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:20px;}
-.book-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+.book-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
 .book-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(26,41,66,0.14);border-color:var(--primary);}
+.book-card.has-mns{border-color:var(--gold);}
+.mns-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--gold);color:#1a1208;font-size:10px;font-weight:800;letter-spacing:-.2px;padding:3px 7px;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,.18);}
+.detail-meta-chip.mns-chip{background:var(--gold);color:#1a1208;}
 .book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;position:relative;overflow:hidden;}
 .book-cover.has-img{padding:0;background:#1a1a1a;}
 .book-cover.has-img>div{display:none;}
@@ -1377,11 +1380,18 @@ const Student = {
   booksDone:4, quizzes:12, reviews:3, rank:14, hours:14.5,
 };
 
-const BOOKS = (typeof BOOKS_MVP35 !== 'undefined' && BOOKS_MVP35.length) ? BOOKS_MVP35 : [
+// ═══ 출판사 검증 큐레이션 (공유마당∩문지·민음사 / 민음사 세계문학전집∩구텐베르크) ═══
+// DROP: 교집합 외 국내 고전(출판사 미검증 — 정철·이육사·신채호·권환·김상용). 콘텐츠는 보존, 노출만 제외
+const DROP_IDS = new Set(["k13313590","k13313606","k13313608","k13313607","k9001059","k9001047","k9001048","k9001052","k9001060","k9001035","k9020973","k9032975","k9000607","k9031445","k9032996","k9032995","k9032994","k9032993","k13313736","k13313731","k13313732","k13313735","k13313734","k13313733"]);
+// MINUMSA: 민음사 세계문학전집 선정작 (배지)
+const MINUMSA_IDS = new Set(["g31","g21765","g41537","g996","g1122","g1112","g1129","g1128","g1127","g1113","g1400","g98","g730","g46","g1342","g161","g158","g1260","g768","g145","g550","g110","g345","g120","g42","g174","g844","g1661","g2852","g135","g2610","g1184","g1257","g1237","g2413","g44747","g2554","g28054","g2638","g600","g2600","g1399","g1754","g30723","g1081","g76","g74","g205","g15","g33","g203","g209","g215","g910","g5200","g7849","g2814","g219","g5658","g541","g4517","g1998","g4363"]);
+const BOOKS_RAW = (typeof BOOKS_MVP35 !== 'undefined' && BOOKS_MVP35.length) ? BOOKS_MVP35 : [
   {id:'guun', title:'구운몽', author:'김만중', cover:2, progress:100, category:'한국고전', period:'조선', participants:42, reviews:11, quizzes:38, intl:true},
   {id:'yulgi', title:'양반전', author:'박지원', cover:4, progress:100, category:'한국고전', period:'조선', participants:67, reviews:23, quizzes:71, intl:true},
   {id:'meilkkot', title:'메밀꽃 필 무렵', author:'이효석', cover:8, progress:60, category:'근대소설', period:'근대', participants:73, reviews:26, quizzes:55, intl:true},
 ];
+const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
+                       .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b);
 
 const CURATIONS = [
   {id:'c1', cls:'cur-1', eyebrow:'심리·자아',     title:'나를 바꾸는 심리 챌린지',       desc:'논어·맹자·니체로 떠나는 자기 탐구',         meta:'8권 · 423명 참여'},
@@ -2298,7 +2308,8 @@ function renderBookGrid(targetId, filterIntl){
     list = BOOKS.filter(b => b.intl);
   }
   el.innerHTML = list.map(b=>`
-    <div class="book-card" onclick="openDetail('${b.id}')">
+    <div class="book-card${b.minumsa?' has-mns':''}" onclick="openDetail('${b.id}')">
+      ${b.minumsa?'<span class="mns-badge">★ 민음사</span>':''}
       ${bookCoverHTML(b)}
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
@@ -2333,6 +2344,7 @@ function openDetail(bookId){
         <div class="detail-title">${esc(b.title)}</div>
         <div class="detail-author">${esc(b.author)}</div>
         <div class="detail-meta">
+          ${b.minumsa?'<span class="detail-meta-chip mns-chip">★ 민음사 세계문학전집</span>':''}
           <span class="detail-meta-chip">${esc(b.category)}</span>
           <span class="detail-meta-chip">${esc(b.period)}</span>
           <span class="detail-meta-chip">저작권 만료 (PD)</span>
