@@ -1332,6 +1332,7 @@ body.dark .hwc-send{color:#0f172a;}
 </div>
 
 <script src="mvp35_data.js"></script>
+<script src="books_extra.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -1391,7 +1392,8 @@ const BOOKS_RAW = (typeof BOOKS_MVP35 !== 'undefined' && BOOKS_MVP35.length) ? B
   {id:'meilkkot', title:'메밀꽃 필 무렵', author:'이효석', cover:8, progress:60, category:'근대소설', period:'근대', participants:73, reviews:26, quizzes:55, intl:true},
 ];
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
-                       .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b);
+                       .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b)
+                       .concat(typeof BOOKS_EXTRA !== 'undefined' ? BOOKS_EXTRA : []);
 
 const CURATIONS = [
   {id:'c1', cls:'cur-1', eyebrow:'심리·자아',     title:'나를 바꾸는 심리 챌린지',       desc:'논어·맹자·니체로 떠나는 자기 탐구',         meta:'8권 · 423명 참여'},
