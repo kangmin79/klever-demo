@@ -131,6 +131,19 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .cand .pick{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;font-weight:800;color:var(--light);display:flex;align-items:center;justify-content:center}
 .cand.on .pick{background:var(--primary);border-color:var(--primary);color:#fff}
 .cur-loading{text-align:center;color:var(--light);font-size:13px;padding:28px 0}
+/* 도서 담기 탭 */
+.booktabs{display:flex;gap:6px;margin-bottom:10px}
+.btab{font-size:12.5px;font-weight:700;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 13px;cursor:pointer}
+.btab.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+/* 후보 카드 — 큰 표지 + 신호 배지 */
+.cand .cv2{width:44px;height:62px;border-radius:5px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 44px;overflow:hidden}
+.cand .cv2 img{width:100%;height:100%;object-fit:cover}
+.sig{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.sig span{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px}
+.sig-r{color:#9a5b12;background:rgba(212,140,40,.14)}
+.sig-l{color:var(--accent);background:rgba(58,110,165,.1)}
+.sig-own{color:#1d6b48;background:rgba(46,125,87,.13)}
+.book-empty{text-align:center;color:var(--light);font-size:12.5px;padding:24px 0;line-height:1.7}
 /* 미션 빌더 */
 .mission{display:flex;flex-direction:column;gap:10px}
 .mrow{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:11px;padding:12px 14px}
@@ -305,10 +318,15 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
             <div class="flabel">내용 — 학생에게 보일 소개</div>
             <textarea class="cur-inp" id="mkIntro" rows="2" placeholder="예: 6월 동안 가장 많은 서평을 작성한 학생에게 경품을 드려요" oninput="syncPreview()"></textarea>
 
-            <div class="flabel" id="srcLabel">도서 담기 — 소장도서 검색 / AI 추천</div>
+            <div class="flabel" id="srcLabel">도서 담기</div>
+            <div class="booktabs" id="bookTabs">
+              <button class="btab" data-bt="lib" onclick="setBookTab('lib')">도서관 내</button>
+              <button class="btab on" data-bt="nat" onclick="setBookTab('nat')">국중 추천</button>
+              <button class="btab" data-bt="isbn" onclick="setBookTab('isbn')">ISBN 입력</button>
+            </div>
             <div class="searchrow">
               <input class="cur-inp" id="mkQ" placeholder="예: 6월 신입생에게 가볍게 읽을 문학" onkeydown="if(event.key==='Enter')searchBooks()">
-              <button class="btn-primary" onclick="searchBooks()">찾기</button>
+              <button class="btn-primary" onclick="searchBooks()" id="mkSearchBtn">찾기</button>
             </div>
             <div class="cur-ex" id="mkEx"></div>
             <div id="candWrap" style="margin-top:12px"></div>
@@ -635,8 +653,27 @@ const DEMO_CAND=[{t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120'
 const CLASSICS=[{t:'돈키호테',a:'세르반테스',loan:0},{t:'햄릿',a:'셰익스피어',loan:0},{t:'로빈슨 크루소',a:'대니얼 디포',loan:0},{t:'군주론',a:'마키아벨리',loan:0},{t:'국부론',a:'애덤 스미스',loan:0},{t:'위대한 개츠비',a:'피츠제럴드',loan:0},{t:'1984',a:'조지 오웰',loan:0},{t:'변신',a:'프란츠 카프카',loan:0},{t:'노인과 바다',a:'헤밍웨이',loan:0},{t:'데미안',a:'헤르만 헤세',loan:0}];
 const EX_HOLD=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','심리학 입문'];
 const EX_CLASSIC=['삶의 지혜를 주는 고전','처음 읽는 서양 고전','짧고 강한 고전 명작'];
+const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 let MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
 let CAND=[],picks={};
+let bookTab='nat';            // lib | nat | isbn
+let LIB_INV=new Set();        // 우리 도서관 소장 ISBN 집합
+let LIB_BOOKS=[];             // 소장 도서 목록(도서관 내 탭)
+async function loadInventory(){
+  try{
+    const r=await fetch(`${SB_REST}/library_books?select=isbn,title,author,cover,rating,loan&order=added_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows))return;
+    LIB_BOOKS=rows.map(x=>({t:x.title,a:x.author||'',isbn:x.isbn,cover:x.cover||'',rating:x.rating,loan:x.loan||0}));
+    LIB_INV=new Set(LIB_BOOKS.map(b=>b.isbn));
+  }catch(e){}
+}
+async function upsertInventory(books){
+  const rows=books.filter(b=>b.isbn).map(b=>({school:'중앙대학교',isbn:b.isbn,title:b.t||b.title||'',author:b.a||b.author||'',cover:b.cover||'',rating:(b.rating!=null?b.rating:null),loan:(b.loan||null)}));
+  if(!rows.length)return;
+  try{ await fetch(`${SB_REST}/library_books?on_conflict=school,isbn`,{method:'POST',
+    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(rows)}); rows.forEach(r=>LIB_INV.add(r.isbn)); }catch(e){}
+}
 
 function pickType(t){
   MK={type:t,books:[],mission:{quiz:t==='고전챌린지',quizN:5,review:false,question:false},loc:[]};
@@ -646,8 +683,12 @@ function pickType(t){
   el('mkTitle').value='';el('mkIntro').value='';el('mkQ').value='';el('candWrap').innerHTML='';
   const isChal=t!=='큐레이션', isClassic=t==='고전챌린지';
   el('missionWrap').style.display=isChal?'':'none';
-  el('srcLabel').textContent=isClassic?'고전 도서 담기 — 고전컬렉션 검색 / AI 추천':'도서 담기 — 소장도서 검색 / AI 추천';
-  el('mkEx').innerHTML=(isClassic?EX_CLASSIC:EX_HOLD).map(e=>`<span onclick="exMk('${e}')">${e}</span>`).join('');
+  el('srcLabel').textContent=isClassic?'고전 도서 담기 — 고전 컬렉션':'도서 담기';
+  el('bookTabs').style.display=isClassic?'none':'flex';
+  bookTab=isClassic?'classic':'nat';
+  el('mkEx').innerHTML=(isClassic?EX_CLASSIC:EX_HOLD).map(e=>`<span onclick="exMk('${e}')">${esc(e)}</span>`).join('');
+  if(!isClassic){document.querySelectorAll('.btab').forEach(b=>b.classList.toggle('on',b.dataset.bt==='nat'));applyBookTab();loadInventory();}
+  else{el('mkQ').placeholder='예: 삶의 지혜를 주는 고전';}
   el('quizN').innerHTML=[3,5,7,10].map(n=>`<span class="${n===MK.mission.quizN?'on':''}" onclick="setQuizN(${n})">${n}개</span>`).join('');
   el('tgQuiz').className='tg'+(MK.mission.quiz?' on':'')+(isClassic?' lock':'');
   el('quizNwrap').style.display=MK.mission.quiz?'':'none';
@@ -658,6 +699,21 @@ function pickType(t){
 function resetType(){MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
   el('builder').style.display='none';document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));window.scrollTo(0,0);}
 function exMk(t){el('mkQ').value=t;searchBooks();}
+function setBookTab(t){bookTab=t;document.querySelectorAll('.btab').forEach(b=>b.classList.toggle('on',b.dataset.bt===t));picks={};CAND=[];applyBookTab();}
+function applyBookTab(){
+  const q=el('mkQ');
+  if(bookTab==='lib'){q.placeholder='우리 도서관에 담긴 책 검색 (제목·저자)';el('mkSearchBtn').textContent='검색';el('mkEx').innerHTML='';renderLib();}
+  else if(bookTab==='isbn'){q.placeholder='ISBN 13자리 입력 (예: 9788936434267)';el('mkSearchBtn').textContent='조회';el('mkEx').innerHTML='';el('candWrap').innerHTML='<div class="book-empty">사서가 아는 책의 ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
+  else{q.placeholder='예: 6월 신입생에게 가볍게 읽을 문학';el('mkSearchBtn').textContent='찾기';el('mkEx').innerHTML=EX_HOLD.map(e=>`<span onclick="exMk('${esc(e)}')">${esc(e)}</span>`).join('');el('candWrap').innerHTML='';}
+  q.value='';
+}
+function renderLib(){
+  const q=(el('mkQ').value||'').trim();
+  const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;
+  CAND=list.slice(0,40);
+  if(!CAND.length){el('candWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 책을 담으면 여기에 쌓입니다.</div>';return;}
+  renderCand('우리 도서관 소장 '+CAND.length+'권');
+}
 // 위치 칩은 제목을 보여주되 slot(고정 ID)을 저장 → 카테고리 이름 바꿔도 연결 유지
 function locLabel(x){const s=SECTIONS.find(v=>v.slot===x);return s?s.title:x;}
 function buildLoc(){el('locChips').innerHTML=SECTIONS.map(s=>`<span class="locchip ${MK.loc.includes(s.slot)?'on':''}" onclick="toggleLoc('${s.slot}')">${esc(s.title)}</span>`).join('');}
@@ -681,30 +737,47 @@ function scoreText(){
   return '선택 미션: <b>'+parts.join(' · ')+'</b>';
 }
 async function searchBooks(){
+  if(MK.type==='고전챌린지'){const q=el('mkQ').value.trim();picks={};CAND=CLASSICS.slice();renderCand('고전 컬렉션 '+CAND.length+'권 (요약본 보유)');return;}
+  if(bookTab==='lib'){renderLib();return;}
+  if(bookTab==='isbn'){return lookupISBN();}
   const q=el('mkQ').value.trim();if(!q)return;picks={};
-  if(MK.type==='고전챌린지'){CAND=CLASSICS.slice();renderCand('고전컬렉션 '+CAND.length+'권 (요약본 보유)');return;}
-  el('candWrap').innerHTML='<div class="cur-loading">✦ 후보 도서를 가져오는 중…</div>';
+  el('candWrap').innerHTML='<div class="cur-loading">✦ 국중에서 후보 도서를 가져오는 중…</div>';
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
     const d=await r.json();
-    CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||''}));
+    CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating}));
     if(d.title&&!el('mkTitle').value.trim()){el('mkTitle').value=d.title;syncPreview();}
-    if(!CAND.length){el('candWrap').innerHTML='<div class="cur-loading">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
-    renderCand('추천 후보 '+CAND.length+'권 · 정보나루 실시간');
+    if(!CAND.length){el('candWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
+    renderCand('국중 추천 '+CAND.length+'권 · 정보나루 실시간');
   }catch(e){CAND=DEMO_CAND.slice();renderCand('대체 후보 '+CAND.length+'권 (연결 재시도 가능)');}
+}
+async function lookupISBN(){
+  const raw=(el('mkQ').value||'').replace(/[^0-9Xx]/g,'');picks={};
+  if(raw.length<10){el('candWrap').innerHTML='<div class="book-empty">ISBN을 정확히 입력해주세요 (10~13자리).</div>';return;}
+  el('candWrap').innerHTML='<div class="cur-loading">📘 ISBN으로 도서 정보를 조회하는 중…</div>';
+  try{
+    const r=await fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+SB_ANON,'apikey':SB_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:[raw]})});
+    const d=await r.json();const x=(d.info||{})[raw];
+    if(!x||!x.title){el('candWrap').innerHTML='<div class="book-empty">해당 ISBN의 책을 찾지 못했어요. 번호를 확인해주세요.</div>';return;}
+    CAND=[{t:x.title,a:x.author||'',isbn:raw,loan:x.loan||0,cover:x.cover||'',rating:x.rating}];
+    renderCand('조회 결과 — + 를 눌러 담으세요');
+  }catch(e){el('candWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
 }
 function renderCand(head){
   el('candWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
-    CAND.map((b,i)=>`<div class="cand ${picks[i]?'on':''}" id="cand${i}">
-      <div class="cv">${b.cover?`<img src="${esc(b.cover)}" style="width:100%;height:100%;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
-      <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · ISBN '+esc(b.isbn):''}</div></div>
-      ${b.loan?`<div class="loan">대출 ${nf(b.loan)}</div>`:''}
-      <div class="pick" onclick="pickCand(${i})">${picks[i]?'✓':'+'}</div></div>`).join('');
+    CAND.map((b,i)=>{const own=b.isbn&&LIB_INV.has(b.isbn);
+    return `<div class="cand ${picks[i]?'on':''}" id="cand${i}">
+      <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
+      <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
+        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${own?'<span class="sig-own">🟢 소장중</span>':''}</div>
+      </div>
+      <div class="pick" onclick="pickCand(${i})">${picks[i]?'✓':'+'}</div></div>`;}).join('');
 }
 function pickCand(i){
   picks[i]=!picks[i];const b=CAND[i];
-  if(picks[i])MK.books.push({t:b.t,a:b.a,isbn:b.isbn||'',cover:b.cover||''});
+  if(picks[i])MK.books.push({t:b.t,a:b.a,isbn:b.isbn||'',cover:b.cover||'',rating:b.rating,loan:b.loan});
   else MK.books=MK.books.filter(x=>!(x.t===b.t&&x.a===b.a));
+  if(picks[i]&&b.isbn)LIB_INV.add(b.isbn);   // 담으면 소장 신호 즉시 갱신
   const c=el('cand'+i);c.classList.toggle('on',picks[i]);c.querySelector('.pick').textContent=picks[i]?'✓':'+';
   syncPreview();
 }
@@ -745,6 +818,7 @@ async function finishMake(){
   PROGRAMS.unshift({id:(saved&&saved.id)||'c'+Date.now().toString(36),type:MK.type,title:MK.title,status,from:MK.from,to:MK.to,
     loc:MK.loc.slice(),visits:0,uses:0,minutes:MK.type==='고전챌린지'?0:null,intro:MK.intro,
     mission:mission||undefined,books:MK.books.slice()});
+  upsertInventory(MK.books);   // 담은 책을 우리 도서관 소장 목록에 등록(누적)
   toast(saved?'발행 완료! 서버에 저장돼 학생 앱에 노출됩니다':'저장됨(서버 연결 실패 — 로컬만)');
   resetType();go(document.querySelectorAll('.navi')[4],'history');
 }
@@ -797,5 +871,6 @@ buildNtLoc();
 renderDash();
 loadSections();
 loadServerPrograms();
+loadInventory();
 </script>
 </body></html>
