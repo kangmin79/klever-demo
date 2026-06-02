@@ -1041,18 +1041,6 @@ body.dark .hwc-send{color:#0f172a;}
     </div>
     <div id="classicShelves"></div>
   </div>
-
-  <div class="section">
-    <div class="section-head">
-      <div class="section-title"><em>정전 도서</em></div>
-    </div>
-    <div class="subtabs" id="libTabs">
-      <div class="subtab active" data-tab="modern" onclick="setLibTab(this,'modern')">한국 고전 <span id="libCntK"></span></div>
-      <div class="subtab" data-tab="foreign" onclick="setLibTab(this,'foreign')">해외 고전 <span id="libCntF"></span></div>
-      <div class="subtab" data-tab="all" onclick="setLibTab(this,'all')">전체 <span id="libCntAll"></span></div>
-    </div>
-    <div class="book-grid" id="bookGridAll"></div>
-  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -2935,25 +2923,26 @@ function changeLang(lang){
 
 function onSearch(e){
   if(e.key !== 'Enter') return;
+  const host = document.getElementById('classicShelves');
+  if(!host) return;
   const q = e.target.value.trim().toLowerCase();
-  if(!q) return;
+  if(!q){ renderClassicShelves(); return; }   // 빈 검색어 → 카테고리 캐러셀 복원
   const filtered = BOOKS.filter(b =>
     b.title.toLowerCase().includes(q) ||
     b.author.toLowerCase().includes(q) ||
     b.category.toLowerCase().includes(q) ||
     b.period.toLowerCase().includes(q)
   );
-  document.getElementById('bookGridAll').innerHTML = filtered.length===0
+  host.innerHTML = filtered.length===0
     ? '<div style="padding:40px;text-align:center;color:var(--text-light);">검색 결과 없음</div>'
-    : filtered.map(b=>`
+    : `<div class="book-grid">${filtered.map(b=>`
       <div class="book-card" onclick="openDetail('${b.id}')">
         ${bookCoverHTML(b)}
         <div class="book-info">
           <div class="book-title">${esc(b.title)}</div>
           <div class="book-author">${esc(b.author)} · ${esc(b.category)}</div>
         </div>
-      </div>
-    `).join('');
+      </div>`).join('')}</div>`;
 }
 
 function toggleTheme(){
@@ -2984,11 +2973,6 @@ window.addEventListener('DOMContentLoaded', () => {
   setupDictHandlers();
   renderClassicShelves();
   renderCurations('curationIntl', true);
-  const nK = BOOKS.filter(b=>b.locale==='modern').length;
-  const nF = BOOKS.filter(b=>b.locale==='foreign').length;
-  const setTxt = (id,n)=>{ const e=document.getElementById(id); if(e) e.textContent = ' ' + n; };
-  setTxt('libCntK', nK); setTxt('libCntF', nF); setTxt('libCntAll', nK+nF);
-  renderBookGrid('bookGridAll', false);
   renderBookGrid('bookGridIntl', true);
   renderRecChips();
   loadLoanData();
