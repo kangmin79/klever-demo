@@ -211,6 +211,9 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-arrow-l{left:-10px;}
 .ml-arrow-r{right:-10px;}
 @media(max-width:760px){.ml-arrow{display:none;}}
+.cl-shelf{margin-bottom:34px;}
+.ml-hrow .cl-card{flex:0 0 150px;width:150px;}
+@media(max-width:760px){.ml-hrow .cl-card{flex:0 0 124px;width:124px;}}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
 .ml-bk-cv{width:130px;aspect-ratio:2/3;}
 .ml-bk-t{margin-top:10px;font-size:13.5px;font-weight:700;color:var(--text);line-height:1.32;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
@@ -1030,10 +1033,7 @@ body.dark .hwc-send{color:#0f172a;}
   </div>
 
   <div class="section">
-    <div class="section-head">
-      <div class="section-title"><em>테마 컬렉션</em></div>
-    </div>
-    <div class="curation-grid" id="curationFull"></div>
+    <div id="classicShelves"></div>
   </div>
 
   <div class="section">
@@ -2148,6 +2148,53 @@ const REC_GENRES = [
   {key:'essay',   label:'수필·에세이',cats:['수필','근대 수필'], kdc:'8'},
   {key:'sci',     label:'과학·심리',  cats:['과학','심리학'], kdc:'4'},
 ];
+
+/* ═══════════════════════════════════════════════════════════
+   고전 클래식 — 카테고리별 책 캐러셀 (우리 도서관 형식)
+   ═══════════════════════════════════════════════════════════ */
+const CLASSIC_SUB = {
+  '소설':'한 편의 이야기로 시대를 읽다', '시':'짧은 행에 담긴 깊은 울림',
+  '철학·사상':'생각하는 법을 배우는 고전', '희곡':'무대 위에서 살아나는 인간',
+  '서사시·고전':'문명의 뿌리가 된 위대한 서사', '수필·에세이':'삶을 들여다보는 작가의 시선',
+  '과학·심리':'세계와 마음을 탐구하다',
+};
+function clCard(b){
+  return `<div class="book-card cl-card${b.minumsa?' has-mns':''}" onclick="openDetail('${b.id}')">`
+    + `${b.minumsa?'<span class="mns-badge">★ 민음사</span>':''}${bookCoverHTML(b)}`
+    + `<div class="book-info"><div class="book-title">${esc(b.title)}</div>`
+    + `<div class="book-author">${esc(b.author)}</div></div></div>`;
+}
+function clShelf(title, books){
+  return `<div class="cl-shelf">${mlHead(title, (CLASSIC_SUB[title]||'')+' · '+books.length+'권')}`
+    + `${mlCarousel(`<div class="ml-hrow">${books.map(clCard).join('')}</div>`)}</div>`;
+}
+function renderClassicShelves(){
+  const host = document.getElementById('classicShelves');
+  if(!host || typeof BOOKS==='undefined') return;
+  const covered = new Set();
+  let html = '';
+  REC_GENRES.forEach(g=>{
+    const books = BOOKS.filter(b=> g.cats.includes(b.category));
+    if(!books.length) return;
+    books.forEach(b=>covered.add(b.id));
+    html += clShelf(g.label, books);
+  });
+  const rest = BOOKS.filter(b=> !covered.has(b.id));
+  if(rest.length) html += clShelf('그 외 고전', rest);
+  host.innerHTML = html;
+  bindClassicDrag();
+}
+function bindClassicDrag(){
+  document.querySelectorAll('#classicShelves .ml-hrow').forEach(row=>{
+    let down=false,sx=0,sl=0,moved=0;
+    row.addEventListener('pointerdown',e=>{ if(e.button!=null&&e.button!==0)return; down=true;moved=0;sx=e.clientX;sl=row.scrollLeft;row.classList.add('grabbing');try{row.setPointerCapture(e.pointerId);}catch(_){} });
+    row.addEventListener('pointermove',e=>{ if(!down)return; const dx=e.clientX-sx; if(Math.abs(dx)>moved)moved=Math.abs(dx); row.scrollLeft=sl-dx; });
+    const end=()=>{ down=false; row.classList.remove('grabbing'); };
+    row.addEventListener('pointerup',end);
+    row.addEventListener('pointercancel',end);
+    row.addEventListener('click',e=>{ if(moved>6){ e.stopPropagation(); e.preventDefault(); } moved=0; },true);
+  });
+}
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
 let LOAN_DATA = {};
 async function loadLoanData(){
@@ -2950,7 +2997,7 @@ window.addEventListener('DOMContentLoaded', () => {
   applyReaderPrefs();
   setupHighlightHandlers();
   setupDictHandlers();
-  renderCurations('curationFull', false);
+  renderClassicShelves();
   renderCurations('curationIntl', true);
   const nK = BOOKS.filter(b=>b.locale==='modern').length;
   const nF = BOOKS.filter(b=>b.locale==='foreign').length;
