@@ -373,23 +373,24 @@ const nf=n=>(n||0).toLocaleString();
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
 function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'chal';
   const lbl=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전챌린지':'챌린지';return `<span class="gtag ${k}">${lbl}</span>`;}
-const LOCATIONS=['우리도서관','고전컬렉션','독서프로그램','International Students','커뮤니티','마이페이지'];
+// 우리도서관 화면의 실제 5개 카테고리(app.html millieHTML 기준)와 1:1
+const LOCATIONS=['이달의 책','사서가 주목한 책','우리 학교 대출 랭킹','하루 15분, 핵심만','AI와 함께 읽는 책'];
 
 /* ====== 데모 데이터 (PPT 예시 기반) ====== */
 let PROGRAMS=[
- {id:'p1',type:'큐레이션',title:'6월 도서관 추천 도서',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['우리도서관'],
+ {id:'p1',type:'큐레이션',title:'6월 도서관 추천 도서',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['사서가 주목한 책'],
   visits:1690,uses:1500,minutes:null,intro:'6월에 읽기 좋은 책을 모았어요',
   books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg'},
          {t:'오늘도 행복할꺼야?',a:'정문정',isbn:'',cover:''},{t:'안중근 열사 이야기',a:'',isbn:'',cover:''}]},
- {id:'p2',type:'고전챌린지',title:'고전에서 배우는 삶의 지혜',status:'진행중',from:'2026-03-01',to:'2026-06-30',loc:['고전컬렉션'],
-  visits:1340,uses:1340,minutes:60,intro:'서양 고전 요약본을 읽고 퀴즈에 도전하세요',mission:{quiz:true,quizN:5,review:true,question:false},
+ {id:'p2',type:'고전챌린지',title:'고전에서 배우는 삶의 지혜',status:'진행중',from:'2026-03-01',to:'2026-06-30',
+  loc:['이달의 책'],visits:1340,uses:1340,minutes:60,intro:'서양 고전 요약본을 읽고 퀴즈에 도전하세요',mission:{quiz:true,quizN:5,review:true,question:false},
   books:[{t:'돈키호테',a:'세르반테스',isbn:'',cover:''},{t:'햄릿',a:'셰익스피어',isbn:'',cover:''},{t:'로빈슨 크루소',a:'대니얼 디포',isbn:'',cover:''}]},
- {id:'p3',type:'큐레이션',title:'나는 이래서 도서관이 좋다',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['독서프로그램'],
+ {id:'p3',type:'큐레이션',title:'나는 이래서 도서관이 좋다',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['하루 15분, 핵심만'],
   visits:840,uses:630,minutes:null,intro:'도서관을 사랑하는 마음을 담은 책들',books:[{t:'도서관의 삶, 책들의 운명',a:'',isbn:'',cover:''}]},
- {id:'p4',type:'고전챌린지',title:'AI가 고전에 질문을 던지다',status:'진행중',from:'2026-06-01',to:'2026-07-31',loc:['고전컬렉션','International Students'],
+ {id:'p4',type:'고전챌린지',title:'AI가 고전에 질문을 던지다',status:'진행중',from:'2026-06-01',to:'2026-07-31',loc:['AI와 함께 읽는 책'],
   visits:2500,uses:7895,minutes:90,intro:'AI와 함께 고전을 깊이 읽는 챌린지',mission:{quiz:true,quizN:7,review:true,question:true},
   books:[{t:'군주론',a:'마키아벨리',isbn:'',cover:''},{t:'국부론',a:'애덤 스미스',isbn:'',cover:''}]},
- {id:'p5',type:'소장챌린지',title:'5월 심리학과 독서 챌린지',status:'종료',from:'2026-05-01',to:'2026-05-31',loc:['독서프로그램'],
+ {id:'p5',type:'소장챌린지',title:'5월 심리학과 독서 챌린지',status:'종료',from:'2026-05-01',to:'2026-05-31',loc:['사서가 주목한 책'],
   visits:980,uses:1120,minutes:null,intro:'심리학과 추천도서 완독 챌린지',mission:{quiz:true,quizN:5,review:true,question:false},
   books:[{t:'미움받을 용기',a:'기시미 이치로',isbn:'',cover:''}]},
 ];
@@ -415,8 +416,8 @@ const MONTHLY=[
  {m:'2026-04',visits:1180,uses:1290},{m:'2026-05',visits:1620,uses:2240},{m:'2026-06',visits:2500,uses:7895},
 ];
 let NOTICES=[
- {title:'여름방학 도서관 운영시간 안내',target:'전교생',period:'6.1 ~ 8.31',loc:['우리도서관'],body:'여름방학 동안 평일 09:00~18:00 운영합니다. 주말은 휴관입니다.',at:'2026-06-01'},
- {title:'고전 챌린지 우수자 시상 안내',target:'챌린지 참여자',period:'6.15 ~ 6.30',loc:['고전컬렉션'],body:'6월 고전 챌린지 퀴즈 점수 우수자에게 도서관 포인트를 드립니다.',at:'2026-05-28'},
+ {title:'여름방학 도서관 운영시간 안내',target:'전교생',period:'6.1 ~ 8.31',loc:['이달의 책'],body:'여름방학 동안 평일 09:00~18:00 운영합니다. 주말은 휴관입니다.',at:'2026-06-01'},
+ {title:'고전 챌린지 우수자 시상 안내',target:'챌린지 참여자',period:'6.15 ~ 6.30',loc:['AI와 함께 읽는 책'],body:'6월 고전 챌린지 퀴즈 점수 우수자에게 도서관 포인트를 드립니다.',at:'2026-05-28'},
 ];
 const COMMUNITY=[
  {title:'이달의 독서 모임 — 한강 작가 특집',by:'국어국문 독서동아리',at:'2026-05-20',members:24},
@@ -534,7 +535,7 @@ let MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:fal
 let CAND=[],picks={};
 
 function pickType(t){
-  MK={type:t,books:[],mission:{quiz:t==='고전챌린지',quizN:5,review:false,question:false},loc:t==='고전챌린지'?['고전컬렉션']:[]};
+  MK={type:t,books:[],mission:{quiz:t==='고전챌린지',quizN:5,review:false,question:false},loc:[]};
   CAND=[];picks={};
   document.querySelectorAll('.tcard').forEach(c=>c.classList.toggle('on',c.dataset.t===t));
   el('builder').style.display='';
