@@ -2023,6 +2023,14 @@ function mlRank(t,s,books){
     <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(cleanA(b.a))}</div></div></div>`).join('')}</div></div>`;}
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
+// 특정 카테고리(slot)로 발행된 큐레이션의 책들 (pool에서 표지·별점 보강)
+function booksForSlot(slot){
+  const out=[],seen=new Set();
+  LC_PUB.forEach(c=>{ const locs=(c.location||'').split(',').filter(Boolean); if(!locs.includes(slot))return;
+    (c.books||[]).forEach(b=>{ const key=b.isbn||b.t; if(!key||seen.has(key))return; seen.add(key);
+      const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn))||b; if(p&&(p.t||p.title))out.push(p); }); });
+  return out;
+}
 function millieHTML(){
   const P=libTitled();
   if(!P.length) return '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:60px 0">불러오는 중…</div>';
@@ -2033,11 +2041,16 @@ function millieHTML(){
   let out='';
   SECTIONS.forEach((s,i)=>{
     const st=s.style||'row';
-    if(st==='hero') out+=mlLife(life,note,cur,s.title);
-    else if(st==='rank') out+=mlRank(s.title,s.subtitle,rank);
-    else if(st==='grad') out+=mlGrad(s.title,s.subtitle,libPick(6,i*2));
-    else if(st==='ai') out+=mlAI(s.title,s.subtitle,libPick(6,i*2+1));
-    else out+=mlRow(s.title,s.subtitle,i===1?libTitled():libPick(8,i*3));
+    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank); return; }   // 랭킹은 대출수 자동
+    const assigned=booksForSlot(s.slot);                               // 이 카테고리로 발행한 책
+    if(st==='hero'){
+      const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
+      out+=mlLife(assigned[0]||life,(hc&&hc.intro)||note,hc||cur,s.title); return;
+    }
+    const books=assigned.length?assigned:libPick(8,i*3+2);             // 지정 없으면 풀에서 채움(폴백)
+    if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
+    else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
+    else out+=mlRow(s.title,s.subtitle,books);
   });
   return `<div class="ml">${out}</div>`;
 }
