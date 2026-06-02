@@ -366,12 +366,12 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <!-- ===== 우리도서관 카테고리 설정 ===== -->
     <section id="pg-settings" style="display:none">
       <div class="phead"><div><h1>우리도서관 카테고리 설정</h1>
-        <p>학생 앱 ‘우리도서관’ 화면에 보이는 5개 카테고리 제목·부제를 직접 바꿉니다 — 저장하면 학생 앱에 바로 반영</p></div>
+        <p>학생 앱 ‘우리도서관’에 보이는 카테고리를 추가·삭제·순서변경·이름변경 — 저장하면 학생 앱에 바로 반영</p></div>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div>
       <div class="make-grid">
         <div><div id="secList"></div>
-          <div class="note">※ ‘우리 학교 대출 랭킹’은 대출 수로 자동 정렬되는 영역이라 제목만 바뀌고 목록은 자동 집계됩니다.<br>
-            ※ 첫 번째(오늘의 사서 추천)는 히어로 영역이라 부제 자리에 업데이트 날짜가 표시됩니다.</div></div>
+          <div class="note">※ 스타일 = 학생 앱에서 보이는 형태: <b>히어로</b>(대표 1권 큰 카드)·<b>가로 목록</b>·<b>랭킹</b>(대출수 자동정렬)·<b>요약 카드</b>·<b>AI 카드</b>.<br>
+            ※ 히어로 스타일은 부제 대신 업데이트 날짜가 표시됩니다. ↑↓로 순서를 바꾸고, 저장해야 반영됩니다.</div></div>
         <div class="preview"><div class="panel"><h3>미리보기 — 우리도서관 화면 순서</h3>
           <div class="ph-sub">학생이 보게 될 카테고리 제목</div>
           <div id="secPreview" class="rank"></div></div></div>
@@ -394,48 +394,74 @@ function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
-// 우리도서관 5개 카테고리(app.html millieHTML와 동일) — 관리자가 제목 편집 가능
+// 우리도서관 카테고리(app.html millieHTML와 동일) — 관리자가 추가·삭제·편집
+const STYLES=[['hero','히어로(대표 1권)'],['row','가로 목록'],['rank','랭킹(대출 자동)'],['grad','요약 카드'],['ai','AI 카드']];
 let SECTIONS=[
-  {slot:'life',title:'오늘의 사서 추천',subtitle:''},
-  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책'},
-  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책'},
-  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에'},
-  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요'},
+  {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero'},
+  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row'},
+  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank'},
+  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
+  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai'},
 ];
+let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
 let LOCATIONS=SECTIONS.map(s=>s.title);
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,sort_order&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||''}));
+    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row'}));
+    ORIG_SLOTS=SECTIONS.map(s=>s.slot);
     LOCATIONS=SECTIONS.map(s=>s.title);
     buildNtLoc(); if(MK.type)buildLoc();
     if(el('pg-settings').style.display!=='none')renderSettings();
   }catch(e){}
 }
+function readSecInputs(){
+  SECTIONS.forEach(s=>{const t=el('sec_t_'+s.slot),sub=el('sec_s_'+s.slot),st=el('sec_style_'+s.slot);
+    if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value;});
+}
+function addSection(){readSecInputs();SECTIONS.push({slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row'});renderSettings();}
+function delSection(i){readSecInputs();if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
+function moveSection(i,d){readSecInputs();const j=i+d;if(j<0||j>=SECTIONS.length)return;const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
 async function saveSections(){
-  SECTIONS.forEach((s,i)=>{ s.title=(el('sec_t_'+s.slot).value.trim()||s.title); s.subtitle=el('sec_s_'+s.slot).value.trim(); });
-  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,sort_order:i}));
+  readSecInputs();
+  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i}));
   try{
     const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify(rows)});
-    if(r.ok){LOCATIONS=SECTIONS.map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();toast('카테고리 제목을 저장했어요 — 학생 앱에 반영됩니다');}
-    else toast('저장 실패 ('+r.status+')');
+    if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
+    const cur=new Set(SECTIONS.map(s=>s.slot));
+    for(const slot of ORIG_SLOTS.filter(x=>!cur.has(x))){
+      await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('중앙대학교')}&slot=eq.${encodeURIComponent(slot)}`,
+        {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    }
+    ORIG_SLOTS=SECTIONS.map(s=>s.slot);
+    LOCATIONS=SECTIONS.map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();
+    toast('카테고리를 저장했어요 — 학생 앱에 반영됩니다');
   }catch(e){toast('저장 실패 — 연결 확인');}
 }
 function renderSettings(){
   el('secList').innerHTML=SECTIONS.map((s,i)=>`<div class="panel" style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:800;color:var(--light);margin-bottom:10px">카테고리 ${i+1} <span class="muted">(${s.slot}${s.slot==='rank'?' · 대출수 자동정렬':''})</span></div>
-    <div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="secPrev()">
-    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" ${s.slot==='life'?'placeholder="히어로는 부제 대신 업데이트 날짜가 표시돼요" disabled':''}>
-  </div>`).join('');
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+      <span style="font-size:11px;font-weight:800;color:var(--light)">카테고리 ${i+1}</span><span style="flex:1"></span>
+      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${i===0?'disabled':''}>↑</button>
+      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${i===SECTIONS.length-1?'disabled':''}>↓</button>
+      <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>
+    </div>
+    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="secPrev()"></div>
+      <div><div class="flabel">스타일(앱 표시 형태)</div><select class="cur-inp" id="sec_style_${s.slot}" onchange="secPrev()">${STYLES.map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select></div></div>
+    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}">
+  </div>`).join('')
+  +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
   secPrev();
 }
 function secPrev(){
   el('secPreview').innerHTML=SECTIONS.map((s,i)=>{const t=(el('sec_t_'+s.slot)&&el('sec_t_'+s.slot).value.trim())||s.title;
+    const stv=(el('sec_style_'+s.slot)&&el('sec_style_'+s.slot).value)||s.style;
+    const lbl=(STYLES.find(o=>o[0]===stv)||['','목록'])[1];
     return `<div class="rk"><div class="no top">${i+1}</div><div class="info"><div class="t">${esc(t)}</div>
-    <div class="s">${s.slot==='rank'?'대출수 자동':s.slot==='life'?'사서 추천 히어로':'사서 큐레이션'}</div></div></div>`;}).join('');
+    <div class="s">${esc(lbl)}</div></div></div>`;}).join('');
 }
 
 /* ====== 데모 데이터 (PPT 예시 기반) — 대시보드·통계용 stats 포함 ====== */
