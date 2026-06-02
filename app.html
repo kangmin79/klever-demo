@@ -261,6 +261,8 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-i .au{font-size:12.5px;color:var(--text-light);margin-top:6px;}
 .lcd-note{font-size:12.5px;color:var(--primary);margin-top:11px;font-style:italic;line-height:1.55;}
 .lcd-meta{font-size:12px;color:var(--text-sub);margin-top:9px;}
+.lcd-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+.lcd-chip{font-size:11px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:3px 9px;}
 .lcd-desc{font-size:12.5px;color:var(--text-sub);line-height:1.7;padding:0 24px;margin:2px 0 18px;max-height:9.5em;overflow:hidden;}
 .lcd-src{font-size:10px;color:var(--text-light);padding:0 24px 18px;}
 .lcd-acts{padding:0 24px 18px;display:flex;flex-direction:column;gap:9px;}
@@ -2392,64 +2394,28 @@ function renderBookGrid(targetId, filterIntl){
 function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
-  const el = document.getElementById('detailContent');
-  const detailCoverCls = b.coverSrc ? 'book-cover has-img' : `book-cover style-${b.cover||1}`;
-  const detailCoverImg = b.coverSrc ? `<img src="${esc(b.coverSrc)}" alt="${esc(b.title)}">` : '';
-  el.innerHTML = `
-    <div class="detail-layout">
-      <div class="detail-cover">
-        <div class="${detailCoverCls}" style="aspect-ratio:2/3;border-radius:14px;">
-          ${detailCoverImg}
-          <div>
-            <div class="book-cover-title" style="font-size:18px;">${esc(b.title)}</div>
-            <div class="book-cover-author">${esc(b.author)}</div>
-          </div>
-        </div>
-      </div>
-      <div class="detail-info">
-        <div class="detail-title">${esc(b.title)}</div>
-        <div class="detail-author">${esc(b.author)}</div>
-        <div class="detail-meta">
-          ${b.minumsa?'<span class="detail-meta-chip mns-chip">★ 민음사 세계문학전집</span>':''}
-          <span class="detail-meta-chip">${esc(b.category)}</span>
-          <span class="detail-meta-chip">${esc(b.period)}</span>
-          <span class="detail-meta-chip">저작권 만료 (PD)</span>
-          ${b.intl?'<span class="detail-meta-chip">🌏 International OK</span>':''}
-        </div>
-        <div class="detail-stats">
-          <div class="detail-stat"><div class="detail-stat-num">${b.participants}</div><div class="detail-stat-label">챌린지 참가자</div></div>
-          <div class="detail-stat"><div class="detail-stat-num">${b.reviews}</div><div class="detail-stat-label">참가자 서평</div></div>
-          <div class="detail-stat"><div class="detail-stat-num">${b.quizzes}</div><div class="detail-stat-label">참가자 퀴즈</div></div>
-        </div>
-        <div class="detail-actions">
-          <button class="btn-primary" onclick="openViewer('${b.id}','challenge')">챌린지 모드로 시작</button>
-          <button class="btn-outline" onclick="openViewer('${b.id}','full')">완독 모드</button>
-          ${b.intl?`<button class="btn-outline" onclick="openViewer('${b.id}','intl')">International</button>`:''}
-        </div>
-      </div>
+  const ov = document.getElementById('lcDetail');
+  if(!ov){ nav('detail'); return; }
+  const cover = b.coverSrc
+    ? `<img src="${esc(b.coverSrc)}" alt="${esc(b.title)}" onerror="this.style.display='none'">`
+    : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📖</div>';
+  const others = BOOKS.filter(x=>x.author===b.author&&x.id!==b.id).length;
+  const chips = [b.minumsa?'★ 민음사':'', b.category, b.period, '저작권 만료(PD)', b.intl?'🌏 International OK':'']
+    .filter(Boolean).map(c=>`<span class="lcd-chip">${esc(c)}</span>`).join('');
+  const intro = `${b.author}의 ${b.period} 시대 ${b.category} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
+  ov.querySelector('.lcd').innerHTML = `<span class="lcd-x" onclick="closeLc()">×</span>
+    <div class="lcd-top">
+      <div class="lcd-cv">${cover}</div>
+      <div class="lcd-i"><h2>${esc(b.title)}</h2><div class="au">${esc(b.author)}${b.period?` · ${esc(b.period)}`:''}</div>
+        <div class="lcd-chips">${chips}</div></div>
     </div>
-
-    <div class="detail-section">
-      <h3>책 소개</h3>
-      <p>${esc(b.title)}은 ${esc(b.author)}이 쓴 ${esc(b.period)} 시대 ${esc(b.category)} 정전입니다. 저작권 만료(PD) 상태로 자유 이용 가능하며, 북스타 표준 격조체 번역으로 제공됩니다.</p>
+    <p class="lcd-desc">${esc(intro)}</p>
+    <div class="lcd-acts">
+      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 책 읽기<span class="ar">›</span></div>
+      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 챌린지로 읽기<span class="ar">›</span></div>
     </div>
-
-    <div class="detail-section">
-      <h3>저자 소개</h3>
-      <p>${esc(b.author)}의 일생과 사상, 시대 배경. ${esc(b.author)}이 쓴 다른 책들도 북스타에서 만나보세요.</p>
-    </div>
-
-    <div class="detail-section">
-      <h3>${esc(b.author)}의 다른 책</h3>
-      <div class="book-grid">${BOOKS.filter(x=>x.author===b.author&&x.id!==b.id).map(x=>`
-        <div class="book-card" onclick="openDetail('${x.id}')">
-          ${bookCoverHTML(x)}
-          <div class="book-info"><div class="book-title">${esc(x.title)}</div></div>
-        </div>
-      `).join('') || '<p style="color:var(--text-light);">다른 책 없음 (라이브러리에 더 추가될 예정)</p>'}</div>
-    </div>
-  `;
-  nav('detail');
+    <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>`;
+  ov.classList.add('on');
 }
 
 /* ═══════════════════════════════════════════════════════════
