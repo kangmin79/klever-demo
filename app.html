@@ -1969,19 +1969,31 @@ function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div><div class="ml-h-x">›</div></div>`;}
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
-function mlBindDrag(){
-  document.querySelectorAll('#libCurationGrid .ml-hrow').forEach(row=>{
-    let down=false,sx=0,sl=0,moved=0;
-    // setPointerCapture 미사용: 포인터 캡처 시 click 타깃이 row로 바뀌어 카드 onclick이 안 불림
-    row.addEventListener('pointerdown',e=>{ if(e.button!=null&&e.button!==0)return; down=true;moved=0;sx=e.clientX;sl=row.scrollLeft;row.classList.add('grabbing'); });
-    row.addEventListener('pointermove',e=>{ if(!down)return; const dx=e.clientX-sx; if(Math.abs(dx)>moved)moved=Math.abs(dx); row.scrollLeft=sl-dx; });
-    const end=()=>{ down=false; row.classList.remove('grabbing'); };
-    row.addEventListener('pointerup',end);
-    row.addEventListener('pointercancel',end);
-    row.addEventListener('pointerleave',end);
-    row.addEventListener('click',e=>{ if(moved>8){ e.stopPropagation(); e.preventDefault(); } moved=0; },true);
+// ── 캐러셀 드래그 스크롤 (클릭 안전 + 누수 없음) ──
+// setPointerCapture 미사용(click 타깃이 row로 바뀌어 카드 onclick이 안 불림).
+// move/up은 document에 단 1회만 바인딩 → 캐러셀 밖에서 떼도 down이 안 끼고,
+// hover 중 moved가 쌓여 클릭이 막히는 문제 없음.
+let _dragRow=null, _dragSX=0, _dragSL=0, _dragMoved=0;
+function _initDragOnce(){
+  if(window.__dragInit) return; window.__dragInit=true;
+  document.addEventListener('pointermove',e=>{
+    if(!_dragRow) return;
+    const dx=e.clientX-_dragSX; if(Math.abs(dx)>_dragMoved)_dragMoved=Math.abs(dx);
+    _dragRow.scrollLeft=_dragSL-dx;
+  });
+  const stop=()=>{ if(_dragRow){_dragRow.classList.remove('grabbing'); _dragRow=null;} };
+  document.addEventListener('pointerup',stop);
+  document.addEventListener('pointercancel',stop);
+}
+function bindDragScroll(sel){
+  _initDragOnce();
+  document.querySelectorAll(sel).forEach(row=>{
+    if(row.__dragBound) return; row.__dragBound=true;
+    row.addEventListener('pointerdown',e=>{ if(e.button!=null&&e.button!==0)return; _dragRow=row;_dragMoved=0;_dragSX=e.clientX;_dragSL=row.scrollLeft;row.classList.add('grabbing'); });
+    row.addEventListener('click',e=>{ if(_dragMoved>8){ e.stopPropagation(); e.preventDefault(); } },true);
   });
 }
+function mlBindDrag(){ bindDragScroll('#libCurationGrid .ml-hrow'); }
 function libTitled(){return LIB_POOL.filter(b=>b.t);}
 function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];for(let i=0;i<n;i++)r.push(p[(off+i)%p.length]);return r;}
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
@@ -2195,19 +2207,7 @@ function renderClassicShelves(){
   host.innerHTML = html || '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>';
   bindClassicDrag();
 }
-function bindClassicDrag(){
-  document.querySelectorAll('#classicShelves .ml-hrow').forEach(row=>{
-    let down=false,sx=0,sl=0,moved=0;
-    // setPointerCapture 미사용: 포인터 캡처 시 click 타깃이 row로 바뀌어 카드 onclick이 안 불림
-    row.addEventListener('pointerdown',e=>{ if(e.button!=null&&e.button!==0)return; down=true;moved=0;sx=e.clientX;sl=row.scrollLeft;row.classList.add('grabbing'); });
-    row.addEventListener('pointermove',e=>{ if(!down)return; const dx=e.clientX-sx; if(Math.abs(dx)>moved)moved=Math.abs(dx); row.scrollLeft=sl-dx; });
-    const end=()=>{ down=false; row.classList.remove('grabbing'); };
-    row.addEventListener('pointerup',end);
-    row.addEventListener('pointercancel',end);
-    row.addEventListener('pointerleave',end);
-    row.addEventListener('click',e=>{ if(moved>8){ e.stopPropagation(); e.preventDefault(); } moved=0; },true);
-  });
-}
+function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
 let LOAN_DATA = {};
 async function loadLoanData(){
