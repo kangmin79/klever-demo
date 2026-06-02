@@ -226,6 +226,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="navi" onclick="go(this,'make')"><span class="em">✦</span><span>프로그램 만들기</span></div>
     <div class="navi" onclick="go(this,'notice')"><span class="em">📢</span><span>공지글 작성</span></div>
     <div class="navi" onclick="go(this,'history')"><span class="em">🕘</span><span>히스토리 보기</span></div>
+    <div class="grp">우리도서관</div>
+    <div class="navi" onclick="go(this,'settings')"><span class="em">⚙️</span><span>카테고리 설정</span></div>
   </aside>
 
   <main class="main">
@@ -361,6 +363,21 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
       <div class="tblwrap"><table class="tbl" id="hisTbl"></table></div>
     </section>
 
+    <!-- ===== 우리도서관 카테고리 설정 ===== -->
+    <section id="pg-settings" style="display:none">
+      <div class="phead"><div><h1>우리도서관 카테고리 설정</h1>
+        <p>학생 앱 ‘우리도서관’ 화면에 보이는 5개 카테고리 제목·부제를 직접 바꿉니다 — 저장하면 학생 앱에 바로 반영</p></div>
+        <button class="btn-primary" onclick="saveSections()">저장 →</button></div>
+      <div class="make-grid">
+        <div><div id="secList"></div>
+          <div class="note">※ ‘우리 학교 대출 랭킹’은 대출 수로 자동 정렬되는 영역이라 제목만 바뀌고 목록은 자동 집계됩니다.<br>
+            ※ 첫 번째(오늘의 사서 추천)는 히어로 영역이라 부제 자리에 업데이트 날짜가 표시됩니다.</div></div>
+        <div class="preview"><div class="panel"><h3>미리보기 — 우리도서관 화면 순서</h3>
+          <div class="ph-sub">학생이 보게 될 카테고리 제목</div>
+          <div id="secPreview" class="rank"></div></div></div>
+      </div>
+    </section>
+
   </main>
 </div>
 <div id="toast"></div>
@@ -373,12 +390,53 @@ const nf=n=>(n||0).toLocaleString();
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
 function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'chal';
   const lbl=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전챌린지':'챌린지';return `<span class="gtag ${k}">${lbl}</span>`;}
-// 우리도서관 화면의 실제 5개 카테고리(app.html millieHTML 기준)와 1:1
-const LOCATIONS=['이달의 책','사서가 주목한 책','우리 학교 대출 랭킹','하루 15분, 핵심만','AI와 함께 읽는 책'];
-// Supabase (library_programs) — 발행물 서버 저장/공유
+// Supabase — 발행물(library_programs) + 우리도서관 카테고리(library_sections)
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
+// 우리도서관 5개 카테고리(app.html millieHTML와 동일) — 관리자가 제목 편집 가능
+let SECTIONS=[
+  {slot:'life',title:'오늘의 사서 추천',subtitle:''},
+  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책'},
+  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책'},
+  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에'},
+  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요'},
+];
+let LOCATIONS=SECTIONS.map(s=>s.title);
+async function loadSections(){
+  try{
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,sort_order&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
+    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||''}));
+    LOCATIONS=SECTIONS.map(s=>s.title);
+    buildNtLoc(); if(MK.type)buildLoc();
+    if(el('pg-settings').style.display!=='none')renderSettings();
+  }catch(e){}
+}
+async function saveSections(){
+  SECTIONS.forEach((s,i)=>{ s.title=(el('sec_t_'+s.slot).value.trim()||s.title); s.subtitle=el('sec_s_'+s.slot).value.trim(); });
+  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,sort_order:i}));
+  try{
+    const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(rows)});
+    if(r.ok){LOCATIONS=SECTIONS.map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();toast('카테고리 제목을 저장했어요 — 학생 앱에 반영됩니다');}
+    else toast('저장 실패 ('+r.status+')');
+  }catch(e){toast('저장 실패 — 연결 확인');}
+}
+function renderSettings(){
+  el('secList').innerHTML=SECTIONS.map((s,i)=>`<div class="panel" style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:800;color:var(--light);margin-bottom:10px">카테고리 ${i+1} <span class="muted">(${s.slot}${s.slot==='rank'?' · 대출수 자동정렬':''})</span></div>
+    <div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="secPrev()">
+    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" ${s.slot==='life'?'placeholder="히어로는 부제 대신 업데이트 날짜가 표시돼요" disabled':''}>
+  </div>`).join('');
+  secPrev();
+}
+function secPrev(){
+  el('secPreview').innerHTML=SECTIONS.map((s,i)=>{const t=(el('sec_t_'+s.slot)&&el('sec_t_'+s.slot).value.trim())||s.title;
+    return `<div class="rk"><div class="no top">${i+1}</div><div class="info"><div class="t">${esc(t)}</div>
+    <div class="s">${s.slot==='rank'?'대출수 자동':s.slot==='life'?'사서 추천 히어로':'사서 큐레이션'}</div></div></div>`;}).join('');
+}
 
 /* ====== 데모 데이터 (PPT 예시 기반) — 대시보드·통계용 stats 포함 ====== */
 const DEMO_PROGRAMS=[
@@ -446,12 +504,13 @@ const COMMUNITY=[
 /* ====== 네비게이션 ====== */
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['dash','stats','make','notice','history'].forEach(id=>el('pg-'+id).style.display='none');
+  ['dash','stats','make','notice','history','settings'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
   if(page==='dash')renderDash();
   else if(page==='stats')renderStats();
   else if(page==='history')renderHistory();
   else if(page==='notice')renderNotices();
+  else if(page==='settings')renderSettings();
   window.scrollTo(0,0);
 }
 
@@ -708,6 +767,7 @@ function renderHistory(){
 /* ====== 초기화 ====== */
 buildNtLoc();
 renderDash();
+loadSections();
 loadServerPrograms();
 </script>
 </body></html>

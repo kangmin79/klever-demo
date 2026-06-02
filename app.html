@@ -2001,7 +2001,7 @@ function mlLife(b,note,cur){
   if(b.rating!=null) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${ym} 평균 별점 <b>${b.rating}</b></div>`);
   if(cur&&cur.title) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${esc(cur.title)}</div>`);
   else if(b.loan) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> 누적 대출 <b>${Number(b.loan).toLocaleString()}회</b></div>`);
-  return `<div>${mlHead('오늘의 사서 추천',dateStr)}
+  return `<div>${mlHead(secT('life'),dateStr)}
     <div class="ml-life">
       <div class="ml-life-stage" onclick="libDetail('${b.isbn}')">${glow}${mlcv('ml-life-cv',b)}</div>
       <div class="ml-life-card">
@@ -2030,9 +2030,25 @@ function millieHTML(){
   const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:P[0];
   const note=life.note||(cur&&cur.intro)||'';
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
-  return `<div class="ml">${mlLife(life,note,cur)}${mlRow('사서가 주목한 책','우리 학교 사서가 직접 고른 책',libTitled())}${mlRank('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책',rank)}${mlGrad('하루 15분, 핵심만','책 한 권의 핵심을 15분만에',libPick(5,2))}${mlAI('AI와 함께 읽는 책','책의 핵심을 AI가 찾아줘요',libPick(5,4))}</div>`;
+  return `<div class="ml">${mlLife(life,note,cur)}${mlRow(secT('row'),secS('row'),libTitled())}${mlRank(secT('rank'),secS('rank'),rank)}${mlGrad(secT('grad'),secS('grad'),libPick(5,2))}${mlAI(secT('ai'),secS('ai'),libPick(5,4))}</div>`;
 }
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
+// 우리도서관 5개 카테고리 제목(관리자 편집 가능) — 서버 library_sections에서 덮어씀
+let SEC={life:{title:'오늘의 사서 추천',subtitle:''},
+  row:{title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책'},
+  rank:{title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책'},
+  grad:{title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에'},
+  ai:{title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요'}};
+const secT=k=>(SEC[k]&&SEC[k].title)||'';
+const secS=k=>(SEC[k]&&SEC[k].subtitle)||'';
+async function loadSections(){
+  try{
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle&order=sort_order`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows))return;
+    rows.forEach(x=>{ if(SEC[x.slot]) SEC[x.slot]={title:x.title,subtitle:x.subtitle||''}; });
+  }catch(e){}
+}
 function rebuildLibPool(){
   const seen=new Set(); LIB_POOL=[];
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
@@ -2050,6 +2066,7 @@ function renderLibCuration(){
 }
 async function loadServerPub(){
   try{
+    await loadSections();
     const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return;
