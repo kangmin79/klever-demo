@@ -2688,9 +2688,10 @@ const GENRE_CLASSES = ['gv-poem','gv-novel','gv-drama','gv-idea','gv-essay','gv-
 function bodyToHtml(text){
   if(!text) return '';
   const chPat = /^\s*(CHAPTER|BOOK|PART|ACT|SCENE|CANTO)\s+[IVXLCDM\d]+[.:]?[^\n]*$/i;
+  const mdPat = /^\s*#{1,6}\s+\S/; // 마크다운 ATX 헤더 (시집 `# 시제목`, `## 시제N호`)
   const lines = text.split(/\n/);
   const headerIdx = [];
-  for(let i = 0; i < lines.length; i++) if(chPat.test(lines[i])) headerIdx.push(i);
+  for(let i = 0; i < lines.length; i++) if(chPat.test(lines[i]) || mdPat.test(lines[i])) headerIdx.push(i);
   const paraHtml = body => body.split(/\n{2,}/).map(p => {
     const t = p.trim(); if(!t) return '';
     return `<p>${esc(t).replace(/\n/g,'<br>')}</p>`;
@@ -2706,7 +2707,7 @@ function bodyToHtml(text){
   }
   for(let i = 0; i < headerIdx.length; i++){
     const s = headerIdx[i], e = i+1 < headerIdx.length ? headerIdx[i+1] : lines.length;
-    const title = lines[s].trim().replace(/\s+/g,' ');
+    const title = lines[s].trim().replace(/^#{1,6}\s+/,'').replace(/\s+/g,' ');
     const body = lines.slice(s+1, e).join('\n').trim();
     html += `<section class="chapter-anchor" data-ch-title="${esc(title)}"><h3 class="ch-title">${esc(title)}</h3>${paraHtml(body)}</section>`;
   }
