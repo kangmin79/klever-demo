@@ -2222,7 +2222,16 @@ function renderLibCuration(){
   backfillPool();
   loadServerPub();
 }
-if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){} window.addEventListener('DOMContentLoaded',()=>{ try{ nav('ourlib'); }catch(e){} }); setTimeout(()=>{ try{ nav('ourlib'); }catch(e){} },60); }
+if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){} window.addEventListener('DOMContentLoaded',()=>{ try{ nav('ourlib'); }catch(e){} }); setTimeout(()=>{ try{ nav('ourlib'); }catch(e){} },60);
+  // 관리자 '꾸미기' 실시간 미리보기 — 부모창이 보낸 SECTIONS로 즉시 재렌더(새로고침 없음)
+  window.addEventListener('message',function(e){
+    var d=e.data; if(!d||d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
+    try{ SECTIONS=d.sections.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+      LC_PUB=[]; rebuildLibPool();
+      var g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); backfillPool(); }
+    }catch(err){}
+  });
+}
 async function loadServerPub(){
   try{
     // 칸(sections)·발행물(programs) 두 fetch를 병렬로 — 서로 독립

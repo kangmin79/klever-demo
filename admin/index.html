@@ -154,6 +154,15 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 /* 칸별 책 담기 모달 */
 #secOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:80;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
 #secOv.on{display:flex}
+/* 우리 도서관 꾸미기 — 좌(편집)/우(실시간 폰 미리보기) 분할 */
+.settings-wrap{display:flex;gap:20px;align-items:flex-start}
+.settings-main{flex:1;min-width:0}
+.settings-pv{display:none;width:360px;flex:none;position:sticky;top:78px}
+.settings-pv.on{display:block}
+.pv-phone{border:9px solid #15181f;border-radius:34px;overflow:hidden;height:720px;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+.pv-phone iframe{width:100%;height:100%;border:0;background:#fff;display:block}
+.pv-phone-cap{text-align:center;font-size:11.5px;color:var(--light);margin-top:8px}
+@media(max-width:1180px){.settings-pv{position:static;width:100%;margin-top:16px}.settings-wrap{flex-direction:column}}
 /* 우리 도서관 미리보기 모달 */
 #pvOv{position:fixed;inset:0;background:rgba(15,20,35,.55);display:none;z-index:90;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(3px)}
 #pvOv.on{display:flex}
@@ -357,12 +366,20 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <section id="pg-settings" style="display:none">
       <div class="phead"><div><h1>우리도서관 꾸미기 <span class="tagpill">추천 도서 큐레이션</span></h1>
         <p>학생 앱 ‘우리도서관’ 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기. 추천 도서 큐레이션이 여기서 이뤄집니다.</p></div>
-        <div style="display:flex;gap:8px"><button class="btn-ghost" onclick="previewSections()">👁 미리보기</button>
+        <div style="display:flex;gap:8px"><button id="pvToggleBtn" class="btn-ghost" onclick="toggleLivePreview()">👁 미리보기</button>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div></div>
-      <div id="secList"></div>
-      <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
-        <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
-        ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+      <div class="settings-wrap">
+        <div class="settings-main">
+          <div id="secList"></div>
+          <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
+            <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
+            ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+        </div>
+        <aside class="settings-pv" id="livePv">
+          <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기"></iframe></div>
+          <div class="pv-phone-cap">학생 앱 ‘우리 도서관’ · 편집 즉시 반영</div>
+        </aside>
+      </div>
     </section>
 
     <!-- 칸별 책 담기 모달 -->
@@ -457,6 +474,24 @@ function previewSections(){
 }
 function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='about:blank'; }
 async function applyFromPreview(){ closePreview(); await saveSections(); }
+// ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
+function pvBuildRows(){ readSecInputs(); return SECTIONS.map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
+function toggleLivePreview(){
+  const p=el('livePv'); const on=p.classList.toggle('on'); const btn=el('pvToggleBtn');
+  if(on){ try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
+    el('pvLiveFrame').src='/app.html?preview=1&t='+Date.now();
+    if(btn) btn.textContent='👁 미리보기 닫기';
+  } else { el('pvLiveFrame').src='about:blank'; if(btn) btn.textContent='👁 미리보기'; }
+}
+let _pvTimer=null;
+function pvSync(){
+  const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
+  clearTimeout(_pvTimer);
+  _pvTimer=setTimeout(()=>{ const rows=pvBuildRows();
+    try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(rows)); }catch(e){}
+    const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:rows},'*'); }catch(e){} }
+  },200);
+}
 async function saveSections(){
   readSecInputs();
   const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
@@ -486,17 +521,18 @@ function renderSettings(){
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
     </div>
-    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}"></div>
+    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
       <div><div class="flabel">스타일(앱 표시 형태)</div>${isRank
         ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
         :`<select class="cur-inp" id="sec_style_${s.slot}" onchange="readSecInputs();renderSettings()">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`}</div></div>
-    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}">
+    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
     ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="secRemoveBook(${i},${bi})">×</button></div>`).join('')}
           <span class="deco-add" onclick="secOpenPicker(${i})">+ 책 담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
+  pvSync();
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
 let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
