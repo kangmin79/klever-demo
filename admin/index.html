@@ -348,7 +348,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <p>학생 앱 ‘우리도서관’ 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기. 추천 도서 큐레이션이 여기서 이뤄집니다. 저장하면 바로 반영</p></div>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div>
       <div id="secList"></div>
-      <div class="note">※ 스타일 = 학생 앱 표시 형태: <b>히어로</b>(대표 1권 큰 카드)·<b>가로 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>. 랭킹은 책을 담지 않습니다.<br>
+      <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
+        <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
         ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
     </section>
 
@@ -388,7 +389,12 @@ const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
 // 우리도서관 카테고리(app.html millieHTML와 동일) — 관리자가 추가·삭제·편집
-const STYLES=[['hero','히어로(대표 1권)'],['row','가로 목록'],['rank','랭킹(대출 자동)'],['grad','요약 카드'],['ai','AI 카드']];
+const STYLES=[
+  ['hero','히어로 (대표 1권)'],['row','가로 표지 목록'],['rank','랭킹 (대출 자동)'],
+  ['grad','요약 카드 (15분)'],['ai','AI 카드'],
+  ['grid','표지 그리드 (서가)'],['mag','매거진'],['banner','와이드 띠배너'],
+  ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션']
+];
 let SECTIONS=[
   {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero',books:[]},
   {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row',books:[]},

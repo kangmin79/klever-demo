@@ -953,6 +953,61 @@ body.dark .hwc-send{color:#0f172a;}
   #hwcBubble{bottom:78px;right:14px;}
   #hwcPanel{bottom:0;right:0;left:0;width:100%;max-width:100%;height:88vh;max-height:88vh;border-radius:20px 20px 0 0;}
 }
+/* ── 추가 칸 스타일 (꾸미기 신규 템플릿) ── */
+.ml-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px;}
+.ml-gd{cursor:pointer;}
+.ml-gd-cv{width:100%;aspect-ratio:5/7;border-radius:7px;overflow:hidden;background:var(--bg-input);box-shadow:0 6px 16px rgba(20,28,50,.16);}
+.ml-gd-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-gd-t{font-size:11.5px;font-weight:700;margin-top:7px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ml-mg{display:flex;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--border);cursor:pointer;}
+.ml-mg:first-of-type{border-top:0;padding-top:2px;}
+.ml-mg.rev{flex-direction:row-reverse;}
+.ml-mg-cv{width:84px;height:120px;flex:0 0 84px;border-radius:7px;overflow:hidden;background:var(--bg-input);box-shadow:0 6px 16px rgba(20,28,50,.16);}
+.ml-mg-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-mg-x{flex:1;min-width:0;}
+.ml-mg-k{font-size:11px;font-weight:800;color:var(--accent);}
+.ml-mg-h{font-size:17px;font-weight:800;margin:5px 0;line-height:1.35;}
+.ml-mg-d{font-size:12.5px;color:var(--text-sub);line-height:1.55;}
+.ml-bn{display:flex;gap:20px;align-items:center;border-radius:16px;padding:22px;color:#fff;background:linear-gradient(120deg,#2a3650,#3a6ea5);cursor:pointer;}
+.ml-bn-cv{width:92px;height:132px;flex:0 0 92px;border-radius:7px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.3);}
+.ml-bn-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-bn-x{flex:1;min-width:0;}
+.ml-bn-k{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.5px;}
+.ml-bn-h{font-size:19px;font-weight:800;line-height:1.4;margin:8px 0 6px;}
+.ml-bn-a{font-size:12.5px;opacity:.9;}
+.ml-nw{width:104px;flex:0 0 104px;position:relative;cursor:pointer;}
+.ml-nw-b{position:absolute;top:7px;right:7px;z-index:2;background:var(--gold);color:#1a1208;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px;}
+.ml-nw-cv{width:104px;height:150px;border-radius:7px;overflow:hidden;background:var(--bg-input);margin-bottom:7px;box-shadow:0 6px 16px rgba(20,28,50,.16);}
+.ml-nw-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-qc{width:248px;flex:0 0 248px;border:1px solid var(--border);border-radius:16px;padding:18px;background:var(--bg-card);display:flex;flex-direction:column;min-height:172px;}
+.ml-qc-m{font-size:34px;color:var(--gold);line-height:.4;height:18px;font-weight:800;}
+.ml-qc-q{font-size:15px;font-weight:700;line-height:1.55;flex:1;margin:12px 0;}
+.ml-qc-f{display:flex;align-items:center;gap:10px;}
+.ml-qc-cv{width:30px;height:42px;flex:0 0 30px;border-radius:4px;overflow:hidden;background:var(--bg-input);}
+.ml-qc-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-qc-cv .lc-fb{font-size:8px;padding:2px;}
+.ml-qc-a{font-size:11.5px;color:var(--text-sub);font-weight:700;}
+.ml-sw-wrap{display:flex;flex-direction:column;align-items:center;}
+.ml-sw{width:282px;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--bg-card);box-shadow:0 18px 50px rgba(20,28,50,.2);cursor:pointer;}
+.ml-sw-cv{height:300px;position:relative;background:var(--bg-input);}
+.ml-sw-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-sw-cv .lc-fb{font-size:18px;}
+.ml-sw-ov{position:absolute;inset:0;display:flex;align-items:flex-end;padding:18px;background:linear-gradient(to top,rgba(15,20,35,.82),rgba(15,20,35,0) 55%);}
+.ml-sw-t{color:#fff;font-size:22px;font-weight:800;text-shadow:0 2px 10px rgba(0,0,0,.5);}
+.ml-sw-b{padding:16px 18px;}
+.ml-sw-d{font-size:12.5px;color:var(--text-sub);line-height:1.6;}
+.ml-sw-a{display:flex;gap:10px;margin-top:14px;}
+.ml-sw-a>div{flex:1;text-align:center;padding:12px;border-radius:13px;font-weight:800;font-size:14px;}
+.ml-sw-a .x{background:var(--bg-input);color:var(--text-light);}
+.ml-sw-a .o{background:var(--primary);color:#fff;}
+body.dark .ml-sw-a .o{background:var(--gold);color:#0f172a;}
+.ml-sw-hint{font-size:11.5px;color:var(--text-light);margin-top:11px;}
+.ml-cl{display:flex;gap:16px;align-items:center;border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--bg-card);cursor:pointer;}
+.ml-cl-cvs{display:flex;gap:8px;}
+.ml-cl-cv{width:54px;height:78px;flex:0 0 54px;border-radius:6px;overflow:hidden;background:var(--bg-input);box-shadow:0 4px 12px rgba(20,28,50,.16);}
+.ml-cl-cv img{width:100%;height:100%;object-fit:cover;}
+.ml-cl-cv .lc-fb{font-size:8px;padding:3px;}
+.ml-cl-n{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -2058,6 +2113,20 @@ function mlRank(t,s,books){
     <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(cleanA(b.a))}</div></div></div>`).join('')}</div></div>`;}
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
+// 표지 그리드(서가)
+function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
+// 매거진
+function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg ${i%2?'rev':''}" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`;}
+// 와이드 띠배너(대표 1권)
+function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-bn" onclick="libDetail('${b.isbn}')">${mlcv('ml-bn-cv',b)}<div class="ml-bn-x"><div class="ml-bn-k">BOOK OF THE MONTH</div><div class="ml-bn-h">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-bn-a">${esc(cleanT(b.t))} · ${esc(cleanA(b.a))}</div></div></div></div>`;}
+// 신간 입고
+function mlNew(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-nw" onclick="libDetail('${b.isbn}')"><span class="ml-nw-b">NEW</span>${mlcv('ml-nw-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(cleanA(b.a))}</div></div>`).join('')}</div>`)}</div>`;}
+// 책 속 한 문장
+function mlQuote(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-qc"><div class="ml-qc-m">“</div><div class="ml-qc-q">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-qc-f" onclick="libDetail('${b.isbn}')">${mlcv('ml-qc-cv',b)}<div class="ml-qc-a">${esc(cleanT(b.t))} · ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`)}</div>`;}
+// 스와이프 카드(틴더형)
+function mlSwipe(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-sw-wrap"><div class="ml-sw" onclick="libDetail('${b.isbn}')"><div class="ml-sw-cv">${lcCvHTML(b)}<div class="ml-sw-ov"><div class="ml-sw-t">${esc(cleanT(b.t))}</div></div></div><div class="ml-sw-b"><div class="ml-sw-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div><div class="ml-sw-a"><div class="x">✕ 다음</div><div class="o">♥ 읽을래요</div></div></div></div><div class="ml-sw-hint">한 권씩 넘기며 빠르게 골라요</div></div></div>`;}
+// 테마 컬렉션(한 칸 = 한 묶음)
+function mlColl(t,s,books){const cv=books.slice(0,5),first=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-cl" onclick="libDetail('${first.isbn}')"><div class="ml-cl-cvs">${cv.map(b=>mlcv('ml-cl-cv',b)).join('')}</div><span class="ml-cl-n">${books.length}권 묶음 →</span></div></div>`;}
 // 특정 카테고리(slot)로 발행된 큐레이션의 책들 (pool에서 표지·별점 보강)
 function booksForSlot(slot){
   const out=[],seen=new Set();
@@ -2086,6 +2155,13 @@ function millieHTML(){
     const books=assigned.length?assigned:libPick(8,i*3+2);            // 둘 다 없으면 풀 폴백
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
     else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
+    else if(st==='grid') out+=mlGrid(s.title,s.subtitle,books);
+    else if(st==='mag') out+=mlMag(s.title,s.subtitle,books);
+    else if(st==='banner') out+=mlBanner(s.title,s.subtitle,books);
+    else if(st==='new') out+=mlNew(s.title,s.subtitle,books);
+    else if(st==='quote') out+=mlQuote(s.title,s.subtitle,books);
+    else if(st==='swipe') out+=mlSwipe(s.title,s.subtitle,books);
+    else if(st==='coll') out+=mlColl(s.title,s.subtitle,books);
     else out+=mlRow(s.title,s.subtitle,books);
   });
   return `<div class="ml">${out}</div>`;
