@@ -386,7 +386,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
             ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
         </div>
         <aside class="settings-pv" id="livePv">
-          <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기"></iframe></div>
+          <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="pvFrameLoaded()"></iframe></div>
           <div class="pv-phone-cap">학생 앱 ‘우리 도서관’ · 편집 즉시 반영</div>
         </aside>
       </div>
@@ -486,14 +486,23 @@ function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='a
 async function applyFromPreview(){ closePreview(); await saveSections(); }
 // ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
 function pvBuildRows(){ readSecInputs(); return SECTIONS.map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
-function toggleLivePreview(){
-  const p=el('livePv'); const on=p.classList.toggle('on'); const btn=el('pvToggleBtn');
-  if(on){ document.body.classList.add('pv-open');
-    try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
-    el('pvLiveFrame').src='/app.html?preview=1&t='+Date.now();
-    if(btn) btn.textContent='👁 미리보기 닫기';
-  } else { document.body.classList.remove('pv-open'); el('pvLiveFrame').src='about:blank'; if(btn) btn.textContent='👁 미리보기'; }
+function _pvOpen(){
+  const p=el('livePv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
+  try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
+  el('pvLiveFrame').src='/app.html?preview=1&t='+Date.now();
+  const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기 닫기';
 }
+function _pvClose(){
+  const p=el('livePv'); if(!p) return; p.classList.remove('on'); document.body.classList.remove('pv-open');
+  const f=el('pvLiveFrame'); if(f) f.src='about:blank';
+  const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기';
+}
+function toggleLivePreview(){ const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
+// 꾸미기 진입 시 넓은 화면이면 자동으로 열기(좁으면 토글 유지)
+function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); if(p&&!p.classList.contains('on')) _pvOpen(); } }
+// iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지)
+function pvFrameLoaded(){ const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
+  const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} } }
 let _pvTimer=null;
 function pvSync(){
   const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
@@ -688,12 +697,13 @@ function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
   ['dash','stats','make','notice','history','settings'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
+  _pvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
   if(page==='dash')renderDash();
   else if(page==='make')renderChallenges();
   else if(page==='stats')renderStats();
   else if(page==='history')renderHistory();
   else if(page==='notice'){renderNotices();loadNotices();}
-  else if(page==='settings')renderSettings();
+  else if(page==='settings'){ renderSettings(); autoOpenPreview(); }
   window.scrollTo(0,0);
 }
 
