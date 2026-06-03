@@ -492,6 +492,7 @@ function _pvOpen(){
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
   el('pvLiveFrame').src='/app.html?preview=1&t='+Date.now();
   const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기 닫기';
+  requestAnimationFrame(pvFitScale);
 }
 function _pvClose(){
   const p=el('livePv'); if(!p) return; p.classList.remove('on'); document.body.classList.remove('pv-open');
@@ -501,9 +502,22 @@ function _pvClose(){
 function toggleLivePreview(){ const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
 // 꾸미기 진입 시 넓은 화면이면 자동으로 열기(좁으면 토글 유지)
 function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); if(p&&!p.classList.contains('on')) _pvOpen(); } }
-// iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지)
+// iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지) + 축소 적용
 function pvFrameLoaded(){ const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
-  const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} } }
+  const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} }
+  pvFitScale(); }
+// 실제 웹을 PV_DEVICE_W 너비로 렌더한 뒤 패널 폭에 맞춰 축소 → "작은 실제 화면"
+let _pvScale=1;
+const PV_DEVICE_W=1024;   // 이 너비로 렌더 후 축소(작게 보고 싶으면 키우고, 크게 보려면 줄이기)
+function pvFitScale(){
+  const ph=document.querySelector('#livePv .pv-phone'); const f=el('pvLiveFrame');
+  if(!ph||!f) return; const w=ph.clientWidth, h=ph.clientHeight; if(!w) return;
+  const s=w/PV_DEVICE_W; _pvScale=s;
+  f.style.width=PV_DEVICE_W+'px';
+  f.style.height=Math.ceil(h/s)+'px';
+  f.style.transformOrigin='top left';
+  f.style.transform='scale('+s+')';
+}
 // 관리자 화면 스크롤 → 미리보기(iframe) 내용을 픽셀 1:1로 따라 스크롤
 // (미리보기가 화면에 고정되는 지점부터, 그 이후 스크롤한 px만큼 동일하게 이동 → 손가락 따라 붙는 느낌)
 let _pvScrollRAF=0;
@@ -518,11 +532,13 @@ function pvSyncScroll(){
     const se=document.scrollingElement||document.documentElement;
     const wrap=document.querySelector('.settings-wrap');
     const pin=wrap?Math.max(0,(wrap.getBoundingClientRect().top+se.scrollTop)-PV_STICKY_TOP):0;
-    inner.scrollTop=Math.max(0, se.scrollTop-pin);   // 핀 지점 이후 px 1:1
+    // 축소(scale) 보정 → 화면에서 보이는 이동량이 왼쪽과 1:1로 일치
+    inner.scrollTop=Math.max(0,(se.scrollTop-pin)/(_pvScale||1));
   }catch(e){}
 }
 function pvOnScroll(){ if(_pvScrollRAF) return; _pvScrollRAF=requestAnimationFrame(function(){ _pvScrollRAF=0; pvSyncScroll(); }); }
 window.addEventListener('scroll',pvOnScroll,{passive:true});
+window.addEventListener('resize',function(){ const p=el('livePv'); if(p&&p.classList.contains('on')){ pvFitScale(); pvSyncScroll(); } });
 let _pvTimer=null;
 function pvSync(){
   const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
