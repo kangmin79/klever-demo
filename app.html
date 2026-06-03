@@ -1008,6 +1008,10 @@ body.dark .ml-sw-a .o{background:var(--gold);color:#0f172a;}
 .ml-cl-cv img{width:100%;height:100%;object-fit:cover;}
 .ml-cl-cv .lc-fb{font-size:8px;padding:3px;}
 .ml-cl-n{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;}
+/* 관리자 미리보기 모드 — 앱 크롬 숨기고 우리 도서관만 */
+body.preview-mode .header,body.preview-mode .side-nav,body.preview-mode #hwcBubble,body.preview-mode #hwcPanel{display:none !important;}
+body.preview-mode .main{padding-top:8px;}
+body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 </style>
 </head>
 <body>
@@ -2194,8 +2198,16 @@ function booksForSection(s){
   return (s.books||[]).map(b=>{ const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note}; })
     .filter(b=>b.t||b.title);
 }
+const PREVIEW = new URLSearchParams(location.search).get('preview')==='1';
 function renderLibCuration(){
   const grid=document.getElementById('libCurationGrid'); if(!grid) return;
+  if(PREVIEW){                 // 관리자 미리보기 — 저장 전 SECTIONS를 localStorage로 받아 그대로 렌더(서버 로드 안 함)
+    try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]');
+      if(Array.isArray(ps)&&ps.length) SECTIONS=ps.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+    }catch(e){}
+    LC_PUB=[]; rebuildLibPool(); grid.innerHTML=millieHTML(); mlBindDrag(); backfillPool();
+    return;
+  }
   // 즉시 표시(로컬 폴백) → 서버 발행물로 갱신
   try{ LC_PUB=JSON.parse(localStorage.getItem('bookstar_pub')||'[]'); }catch(e){ LC_PUB=[]; }
   rebuildLibPool();
@@ -2204,6 +2216,7 @@ function renderLibCuration(){
   backfillPool();
   loadServerPub();
 }
+if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){} window.addEventListener('DOMContentLoaded',()=>{ try{ nav('ourlib'); }catch(e){} }); setTimeout(()=>{ try{ nav('ourlib'); }catch(e){} },60); }
 async function loadServerPub(){
   try{
     await loadSections();
