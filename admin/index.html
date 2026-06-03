@@ -632,7 +632,7 @@ function go(elm,page){
   else if(page==='make')renderChallenges();
   else if(page==='stats')renderStats();
   else if(page==='history')renderHistory();
-  else if(page==='notice')renderNotices();
+  else if(page==='notice'){renderNotices();loadNotices();}
   else if(page==='settings')renderSettings();
   window.scrollTo(0,0);
 }
@@ -1009,13 +1009,28 @@ async function saveChallenges(){
 let ntLocSel=[];
 function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLoc('${l}')">${l}</span>`).join('');}
 function toggleNtLoc(l){const i=ntLocSel.indexOf(l);if(i<0)ntLocSel.push(l);else ntLocSel.splice(i,1);buildNtLoc();}
-function publishNotice(){
+async function loadNotices(){
+  try{
+    const r=await fetch(`${SB_REST}/library_notices?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows))return;
+    NOTICES=rows.map(x=>({id:x.id,title:x.title,target:x.target||'전교생',period:x.period||'',loc:(x.location||'').split(',').filter(Boolean),body:x.body||'',at:(x.created_at||'').slice(0,10)}));
+    if(el('pg-notice').style.display!=='none')renderNotices();
+  }catch(e){}
+}
+async function publishNotice(){
   const title=el('ntTitle').value.trim(),body=el('ntBody').value.trim();
   if(!title){toast('공지 제목을 입력해주세요');return;}
   if(!body){toast('공지 내용을 입력해주세요');return;}
-  NOTICES.unshift({title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),loc:ntLocSel.slice(),body,at:'2026-06-03'});
-  el('ntTitle').value='';el('ntBody').value='';ntLocSel=[];buildNtLoc();renderNotices();
-  toast('공지가 발행됐어요');
+  const row={school:'중앙대학교',title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),location:ntLocSel.join(','),body};
+  try{
+    const r=await fetch(`${SB_REST}/library_notices`,{method:'POST',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify(row)});
+    if(!r.ok){toast('발행 실패 ('+r.status+')');return;}
+  }catch(e){toast('발행 실패 — 연결 확인');return;}
+  el('ntTitle').value='';el('ntBody').value='';ntLocSel=[];buildNtLoc();
+  await loadNotices();
+  toast('공지가 발행됐어요 — 학생 앱에 노출됩니다');
 }
 function renderNotices(){
   el('noticeList').innerHTML=NOTICES.map(n=>`<div class="notice-i"><div class="nx">
@@ -1055,6 +1070,7 @@ renderChallenges();
 loadSections();
 loadServerPrograms();
 loadChallenges();
+loadNotices();
 loadInventory();
 </script>
 </body></html>

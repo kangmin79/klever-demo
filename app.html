@@ -1497,6 +1497,7 @@ const COMMUNITY_POSTS = {
     {tag:'안내', title:'리포트 출력 기능 정식 오픈',                  meta:['1주 전']},
   ],
 };
+let NOTICES_PUB=[];   // 서버 공지(library_notices) — 관리자 발행
 
 // 군주론 본문 mock
 const BOOK_CONTENT = {
@@ -3080,7 +3081,10 @@ function setCommunityTab(el, tab){
 }
 
 function renderCommunity(tab){
-  const list = COMMUNITY_POSTS[tab] || [];
+  let list = COMMUNITY_POSTS[tab] || [];
+  if(tab==='notice' && NOTICES_PUB.length){
+    list = NOTICES_PUB.map(n=>({tag:'공지', title:n.title, meta:[n.target,n.period,n.at].filter(Boolean)}));
+  }
   document.getElementById('communityContent').innerHTML = list.map(p=>`
     <div class="list-card">
       <div class="list-card-head">
@@ -3091,6 +3095,17 @@ function renderCommunity(tab){
     </div>
   `).join('');
 }
+async function loadNoticesPub(){
+  try{
+    const r=await fetch(`${SB_REST}/library_notices?select=title,target,period,location,body,created_at&order=created_at.desc`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+    NOTICES_PUB=rows.map(x=>({title:x.title,target:x.target||'',period:x.period||'',body:x.body||'',at:(x.created_at||'').slice(0,10)}));
+    const cp=document.getElementById('page-community');
+    const on=document.querySelector('#page-community .subtab.active');
+    if(cp&&cp.classList.contains('active')&&on&&on.textContent.includes('공지')) renderCommunity('notice');
+  }catch(e){}
+}
+loadNoticesPub();
 
 /* ═══════════════════════════════════════════════════════════
    기타
