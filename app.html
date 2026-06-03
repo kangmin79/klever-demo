@@ -307,6 +307,34 @@ body.dark .program-card.featured .program-desc{color:rgba(15,23,42,0.85);}
 }
 .program-card:not(.featured) .program-cta{background:var(--primary);color:#fff;border:none;}
 body.dark .program-card:not(.featured) .program-cta{background:var(--gold);color:#0f172a;}
+/* 사서가 만든 챌린지 카드 (독서 챌린지 페이지) */
+.chal-live-wrap{margin-bottom:38px;}
+.chal-live-head{font-size:17px;font-weight:800;letter-spacing:-0.4px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.chal-live-tag{font-size:11px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:3px 9px;border-radius:7px;}
+body.dark .chal-live-tag{color:var(--gold);}
+.chal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+.chal-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:11px;transition:all 0.2s;}
+.chal-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(26,41,66,0.12);}
+.chal-c-top{display:flex;align-items:center;gap:13px;}
+.chal-covers{display:flex;flex:0 0 auto;}
+.chal-covers .cv{width:38px;height:54px;border-radius:5px;background:var(--bg-input);margin-left:-12px;box-shadow:0 2px 7px rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:1.5px solid var(--bg-card);}
+.chal-covers .cv:first-child{margin-left:0;}
+.chal-covers .cv img{width:100%;height:100%;object-fit:cover;}
+.chal-type{font-size:11px;font-weight:800;color:var(--accent);background:rgba(58,110,165,0.12);padding:3px 9px;border-radius:7px;align-self:flex-start;}
+.chal-type.classic{color:#9a5b12;background:rgba(212,140,40,0.16);}
+.chal-title{font-size:16px;font-weight:800;letter-spacing:-0.4px;line-height:1.35;}
+.chal-desc{font-size:12.5px;line-height:1.55;color:var(--text-sub);flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.chal-mission{display:flex;flex-wrap:wrap;gap:6px;}
+.chal-mission span{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:3px 8px;border-radius:6px;}
+body.dark .chal-mission span{color:var(--gold);}
+.chal-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px;}
+.chal-meta{font-size:11.5px;color:var(--text-light);font-weight:700;}
+.chal-dday{color:var(--accent);font-weight:800;}
+.chal-join{font-size:12.5px;font-weight:800;color:#fff;background:var(--primary);border:none;padding:9px 15px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:filter 0.15s;}
+.chal-join:hover{filter:brightness(1.08);}
+body.dark .chal-join{background:var(--gold);color:#0f172a;}
+.chal-empty{grid-column:1/-1;text-align:center;color:var(--text-light);font-size:13px;padding:40px 0;line-height:1.7;}
+.chal-ai-head{font-size:15px;font-weight:800;color:var(--text-sub);margin:6px 0 16px;letter-spacing:-0.3px;}
 
 /* ═══════════════════════════════════════════════════════════
    5. 큐레이션 카드 (홈/컬렉션)
@@ -1054,8 +1082,15 @@ body.dark .hwc-send{color:#0f172a;}
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-curation">
   <h1 class="page-title">독서 챌린지</h1>
-  <p class="page-subtitle">조건을 고르면 AI가 181편의 고전 중에서 딱 맞는 책을 추천해 드려요 · 바로 챌린지로 이어집니다</p>
+  <p class="page-subtitle">사서가 운영하는 챌린지에 참여하고, 퀴즈·소감으로 완독을 인증하세요</p>
 
+  <!-- 사서가 만든 챌린지 (library_programs · 진행중) -->
+  <div class="chal-live-wrap">
+    <div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>
+    <div class="chal-grid" id="chalLive"><div class="chal-empty">불러오는 중…</div></div>
+  </div>
+
+  <div class="chal-ai-head">뭘 읽을지 모르겠다면 · AI 추천</div>
   <div class="subtabs" id="curationTabs">
     <div class="subtab active" data-ctab="match" onclick="setCurationTab(this,'match')">맞춤 추천</div>
     <div class="subtab" data-ctab="persona" onclick="setCurationTab(this,'persona')">나만의 추천</div>
@@ -1932,9 +1967,55 @@ function nav(page){
   if(page === 'ourlib') {
     setTimeout(()=>renderLibCuration(), 30);
   }
+  if(page === 'curation') {
+    setTimeout(()=>loadChalCards(), 30);
+  }
   if(page === 'mypage') {
     setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); }, 50);
   }
+}
+
+/* ── 사서가 만든 챌린지 카드 (독서 챌린지 페이지 · library_programs) ── */
+let CHAL_PUB=[];
+function ddayText(to){ if(!to) return ''; const end=new Date(to+'T23:59:59'); const now=new Date();
+  const d=Math.ceil((end-now)/86400000); if(isNaN(d)) return ''; return d<0?'종료':d===0?'D-day':'D-'+d; }
+async function loadChalCards(){
+  renderChalCards();
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+    CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
+      id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',
+      mission:x.mission||null,books:(x.books||[]).map(b=>({t:b.title,cover:b.cover,isbn:b.isbn}))}));
+    renderChalCards();
+  }catch(e){}
+}
+function chalMissionBadges(m){ if(!m) return ''; const out=[];
+  if(m.quiz) out.push('🎯 퀴즈 '+(m.quizN||5)+'문항'); if(m.review) out.push('✍️ 한 줄 소감'); if(m.question) out.push('❓ 질문 만들기');
+  return out.map(t=>`<span>${esc(t)}</span>`).join(''); }
+function chalMissionPlain(m){ if(!m) return '-'; const o=[]; if(m.quiz)o.push('퀴즈 '+(m.quizN||5)+'문항'); if(m.review)o.push('한 줄 소감'); if(m.question)o.push('질문 만들기'); return o.join(' · ')||'-'; }
+function renderChalCards(){
+  const g=document.getElementById('chalLive'); if(!g) return;
+  if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
+  g.innerHTML=CHAL_PUB.map(c=>{
+    const isClassic=c.type==='고전챌린지';
+    const covers=(c.books||[]).slice(0,3).map(b=>`<div class="cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>`).join('')||'<div class="cv">📚</div>';
+    const dd=ddayText(c.to);
+    return `<div class="chal-card">
+      <div class="chal-c-top"><div class="chal-covers">${covers}</div>
+        <span class="chal-type${isClassic?' classic':''}">${isClassic?'고전 클래식':'소장자료'}</span></div>
+      <div class="chal-title">${esc(c.title)}</div>
+      ${c.intro?`<div class="chal-desc">${esc(c.intro)}</div>`:''}
+      <div class="chal-mission">${chalMissionBadges(c.mission)}</div>
+      <div class="chal-foot"><span class="chal-meta">${(c.books||[]).length}권${dd?' · <span class="chal-dday">'+dd+'</span>':''}</span>
+        <button class="chal-join" onclick="chalJoin('${esc(String(c.id))}')">참여하기 →</button></div>
+    </div>`;
+  }).join('');
+}
+function chalJoin(id){
+  const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
+  alert(`‘${c.title}’ 챌린지에 참여합니다!\n\n· 담긴 책 ${(c.books||[]).length}권\n· 미션: ${chalMissionPlain(c.mission)}\n\n(데모) 마이 페이지 → 챌린지에서 진행률을 확인하세요.`);
 }
 
 let LC_PUB=[];
