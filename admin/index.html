@@ -160,11 +160,14 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .settings-pv{display:none;width:46%;min-width:440px;max-width:780px;flex:none;position:sticky;top:78px}
 .settings-pv.on{display:block}
 body.pv-open .main{max-width:none}
-.sec-drag{font-size:11px;font-weight:800;color:var(--light);cursor:grab;user-select:none;padding:3px 7px;border-radius:7px;border:1px solid transparent}
-.sec-drag:hover{background:var(--bg2,#f1f0ea);border-color:var(--border)}
-.sec-drag:active{cursor:grabbing}
-.sec-panel{transition:box-shadow .12s,transform .12s}
-.sec-panel.drag-over{outline:2px dashed var(--accent,#6366f1);outline-offset:2px}
+.sec-drag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--accent);user-select:none;padding:4px 10px;border-radius:8px;background:var(--primary-bg);letter-spacing:.2px}
+.sec-panel{transition:box-shadow .14s,transform .14s,opacity .14s;cursor:grab}
+.sec-panel:active{cursor:grabbing}
+.sec-panel input,.sec-panel select,.sec-panel textarea{cursor:auto}
+.sec-panel button,.sec-panel .deco-add,.sec-panel .deco-bk .rm{cursor:pointer}
+.sec-panel.dragging{opacity:.5;box-shadow:0 18px 44px rgba(0,0,0,.24);transform:scale(.99)}
+.sec-panel.drag-over{outline:2.5px dashed var(--accent,#3a6ea5);outline-offset:3px;background:rgba(58,110,165,.07)}
+.sec-panel.drag-over .sec-drag::after{content:'여기로 이동';margin-left:4px;font-size:10.5px;color:var(--accent);font-weight:800}
 .pv-phone{border:1px solid var(--border);border-radius:14px;overflow:hidden;height:calc(100vh - 118px);min-height:540px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.10)}
 .pv-phone iframe{width:100%;height:100%;border:0;background:#fff;display:block}
 .pv-phone-cap{text-align:center;font-size:11.5px;color:var(--light);margin-top:8px}
@@ -519,19 +522,23 @@ async function saveSections(){
 }
 // ── 칸 드래그&드롭 순서 변경 (↑↓ 버튼과 병행) ──
 let _secDragFrom=-1;
-function secDragStart(e,i){ _secDragFrom=i; try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(i)); }catch(_){}}
+function secDragStart(e,i){
+  // 입력칸/버튼 위에서 시작하면 드래그 취소 → 타이핑·클릭 정상 동작
+  const t=e.target; if(t&&t.closest&&t.closest('input,select,textarea,button,.deco-bk')){ e.preventDefault(); return; }
+  _secDragFrom=i; const panel=e.currentTarget; if(panel) panel.classList.add('dragging');
+  try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(i)); }catch(_){}}
 function secDragOver(e,i){ if(_secDragFrom<0||_secDragFrom===i) return; e.preventDefault(); try{ e.dataTransfer.dropEffect='move'; }catch(_){}
   const p=e.currentTarget; document.querySelectorAll('.sec-panel.drag-over').forEach(x=>{if(x!==p)x.classList.remove('drag-over')}); p.classList.add('drag-over'); }
 function secDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
 function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; e.currentTarget.classList.remove('drag-over'); _secDragFrom=-1;
   if(from<0||from===i) return; readSecInputs(); const moved=SECTIONS.splice(from,1)[0]; SECTIONS.splice(i,0,moved); renderSettings(); }
-function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over').forEach(x=>x.classList.remove('drag-over')); }
+function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over,.sec-panel.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
 function renderSettings(){
   el('secList').innerHTML=SECTIONS.map((s,i)=>{
     const isRank=s.slot==='rank', books=s.books||[];
-    return `<div class="panel sec-panel" style="margin-bottom:12px" data-i="${i}" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
+    return `<div class="panel sec-panel" style="margin-bottom:12px" data-i="${i}" draggable="true" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-      <span class="sec-drag" draggable="true" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" title="드래그해서 순서 변경">⠿ 칸 ${i+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
+      <span class="sec-drag" title="카드 아무 곳이나 잡고 끌어서 순서 변경">⠿ 칸 ${i+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${i===0?'disabled':''}>↑</button>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${i===SECTIONS.length-1?'disabled':''}>↓</button>
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
