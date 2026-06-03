@@ -311,64 +311,12 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
     <!-- ===== 프로그램 만들기 ===== -->
     <section id="pg-make" style="display:none">
-      <div class="phead"><div><h1>챌린지 만들기</h1><p>소장자료 챌린지 · 고전 클래식 챌린지를 만들어 학생의 완독을 측정합니다 <span style="color:var(--light)">(추천 도서 목록은 ‘우리도서관 꾸미기’에서 칸별로 담으세요)</span></p></div></div>
-      <div class="typecards" id="typeCards">
-        <div class="tcard" data-t="소장챌린지" onclick="pickType('소장챌린지')">
-          <div class="em">🏛️</div><h4>소장자료 챌린지</h4>
-          <p>도서관 소장도서로 챌린지를 만듭니다. 퀴즈·한 줄 소감·질문 미션을 자유 조합.</p></div>
-        <div class="tcard" data-t="고전챌린지" onclick="pickType('고전챌린지')">
-          <div class="em">🏺</div><h4>고전 클래식 챌린지</h4>
-          <p>북스타 고전 요약본 대상. 퀴즈(필수)+소감+질문 100점제로 우수자를 가립니다.</p></div>
-      </div>
-
-      <div id="builder" style="display:none;margin-top:18px">
-        <div class="make-grid">
-          <div class="panel">
-            <div class="flabel">제목</div>
-            <input class="cur-inp" id="mkTitle" placeholder="예: 중앙대학교 도서관 6월 추천 도서" oninput="syncPreview()">
-            <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="mkFrom" value="2026-06-01" onchange="syncPreview()"></div>
-              <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="mkTo" value="2026-06-30" onchange="syncPreview()"></div></div>
-            <div class="flabel">내용 — 학생에게 보일 소개</div>
-            <textarea class="cur-inp" id="mkIntro" rows="2" placeholder="예: 6월 동안 가장 많은 서평을 작성한 학생에게 경품을 드려요" oninput="syncPreview()"></textarea>
-
-            <div class="flabel" id="srcLabel">도서 담기</div>
-            <div class="booktabs" id="bookTabs">
-              <button class="btab" data-bt="lib" onclick="setBookTab('lib')">도서관 내</button>
-              <button class="btab on" data-bt="nat" onclick="setBookTab('nat')">국중 추천</button>
-              <button class="btab" data-bt="isbn" onclick="setBookTab('isbn')">ISBN 입력</button>
-            </div>
-            <div class="searchrow">
-              <input class="cur-inp" id="mkQ" placeholder="예: 6월 신입생에게 가볍게 읽을 문학" onkeydown="if(event.key==='Enter')searchBooks()">
-              <button class="btn-primary" onclick="searchBooks()" id="mkSearchBtn">찾기</button>
-            </div>
-            <div class="cur-ex" id="mkEx"></div>
-            <div id="candWrap" style="margin-top:12px"></div>
-
-            <div id="missionWrap" style="display:none">
-              <div class="flabel">챌린저 미션 만들기</div>
-              <div class="mission">
-                <div class="mrow"><div class="mt"><b>퀴즈 풀기</b><span>도서 요약·내용 기반 퀴즈</span></div><div class="tg" id="tgQuiz" onclick="toggleM('quiz')"></div></div>
-                <div id="quizNwrap" style="display:none;padding:0 2px"><span style="font-size:11.5px;color:var(--light)">문항 수</span>
-                  <div class="qn" id="quizN"></div></div>
-                <div class="mrow"><div class="mt"><b>한 줄 소감</b><span>작성 10점 · 미작성 0점</span></div><div class="tg" id="tgReview" onclick="toggleM('review')"></div></div>
-                <div class="mrow"><div class="mt"><b>질문 만들기</b><span>작성 10점 · 미작성 0점</span></div><div class="tg" id="tgQuestion" onclick="toggleM('question')"></div></div>
-              </div>
-              <div class="scorebox" id="scoreBox"></div>
-            </div>
-
-            <div class="flabel">위치 지정 — 학생 앱 어디에 노출할까요? (복수 선택)</div>
-            <div class="locchips" id="locChips"></div>
-
-            <div class="makefoot">
-              <button class="btn-ghost" onclick="resetType()">← 종류 다시 선택</button>
-              <button class="btn-primary" onclick="finishMake()">만들기 완료 →</button>
-            </div>
-            <div class="note">완료하면 ‘예정’ 상태로 등록돼요. 발행 후 학생 앱의 지정 위치에 노출됩니다.<br>
-              ※ 발행 시 도서관 카탈로그와 ISBN을 매칭해 책마다 실제 접근 링크(소장 위치·전자책)가 자동으로 붙습니다.</div>
-          </div>
-          <div class="preview"><div class="pv-card" id="pvCard"></div></div>
-        </div>
-      </div>
+      <div class="phead"><div><h1>챌린지 만들기 <span class="tagpill">완독 측정</span></h1>
+        <p>우리도서관 꾸미기처럼 — 챌린지를 카테고리 단위로 만들고, 상세내용·미션·담을 책을 정합니다. 저장하면 학생 앱에 노출</p></div>
+        <button class="btn-primary" onclick="saveChallenges()">저장 →</button></div>
+      <div id="chalList"></div>
+      <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 클래식</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
+        ※ 책은 ‘도서관 내·국중 추천·ISBN 입력’ 3가지로 담을 수 있어요. <b>저장</b>해야 학생 앱에 반영됩니다.</div>
     </section>
 
     <!-- ===== 공지글 작성 ===== -->
@@ -513,15 +461,17 @@ function renderSettings(){
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
-let scTab='nat', scIdx=-1, SCAND=[], scHead='';
+let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
+function pkObj(){return scMode==='chal'?CHALLENGES[scIdx]:SECTIONS[scIdx];}   // 책 담기 대상
 function secExample(t){el('secQ').value=t;secSearch();}
-function secOpenPicker(i){readSecInputs();scIdx=i;scTab='nat';SCAND=[];
-  el('secModalTitle').textContent=`‘${SECTIONS[i].title}’에 책 담기`;
+function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInputs();else readSecInputs();
+  scIdx=i;scTab='nat';SCAND=[];
+  el('secModalTitle').textContent=`‘${pkObj().title}’에 책 담기`;
   document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt==='nat'));
   el('secOv').classList.add('on');secApplyTab();loadInventory();}
-function secClosePicker(){el('secOv').classList.remove('on');renderSettings();}
+function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')renderChallenges();else renderSettings();}
 function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
-function secNote(){el('secAddedNote').textContent='담긴 책 '+((SECTIONS[scIdx]&&SECTIONS[scIdx].books||[]).length)+'권';}
+function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
   if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
@@ -556,7 +506,7 @@ async function secLookupISBN(){
     secRenderCands('조회 결과 — + 를 눌러 담으세요');
   }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
 }
-function secRenderCands(head){scHead=head;const have=new Set((SECTIONS[scIdx].books||[]).map(b=>b.isbn).filter(Boolean));
+function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[]).map(b=>b.isbn).filter(Boolean));
   el('secCandWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
     SCAND.map((b,i)=>{const added=b.isbn&&have.has(b.isbn);const own=b.isbn&&LIB_INV.has(b.isbn);
     return `<div class="cand ${added?'on':''}">
@@ -565,7 +515,7 @@ function secRenderCands(head){scHead=head;const have=new Set((SECTIONS[scIdx].bo
         <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${own?'<span class="sig-own">🟢 소장중</span>':''}</div></div>
       <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
 }
-function secAdd(i){const b=SCAND[i];const arr=SECTIONS[scIdx].books;
+function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(x.title===b.t));
   if(idx>=0)arr.splice(idx,1);
   else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:''});if(b.isbn){LIB_INV.add(b.isbn);upsertInventory([b]);}}
@@ -641,6 +591,7 @@ function go(elm,page){
   ['dash','stats','make','notice','history','settings'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
   if(page==='dash')renderDash();
+  else if(page==='make')renderChallenges();
   else if(page==='stats')renderStats();
   else if(page==='history')renderHistory();
   else if(page==='notice')renderNotices();
@@ -746,6 +697,7 @@ const EX_CLASSIC=['삶의 지혜를 주는 고전','처음 읽는 서양 고전'
 const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 let MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
 let CAND=[],picks={};
+let CHALLENGES=[],ORIG_CHAL_IDS=[];   // 챌린지 카테고리 목록(우리도서관 칸과 유사 구조)
 let bookTab='nat';            // lib | nat | isbn
 let LIB_INV=new Set();        // 우리 도서관 소장 ISBN 집합
 let LIB_BOOKS=[];             // 소장 도서 목록(도서관 내 탭)
@@ -913,6 +865,108 @@ async function finishMake(){
   resetType();go(document.querySelectorAll('.navi')[4],'history');
 }
 
+/* ====== 챌린지 만들기 (카테고리 목록형 — 우리도서관 꾸미기와 동일 패턴) ====== */
+async function loadChallenges(){
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok){renderChallenges();return;}
+    const rows=await r.json(); if(!Array.isArray(rows)){renderChallenges();return;}
+    CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
+      id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',
+      mission:x.mission||{quiz:x.type==='고전챌린지',quizN:5,review:false,question:false},
+      books:(x.books||[]).map(b=>({isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
+    ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
+    if(el('pg-make').style.display!=='none')renderChallenges();
+  }catch(e){renderChallenges();}
+}
+function chalScoreText(c){
+  const m=c.mission;if(!m.quiz&&!m.review&&!m.question)return '미션을 1개 이상 선택하세요.';
+  if(c.type==='고전챌린지'){const opt=(m.review?1:0)+(m.question?1:0);const q=opt===2?80:opt===1?90:100;
+    let s=`<b>퀴즈 ${q}점</b>`;if(m.review)s+=' + 한줄소감 10점';if(m.question)s+=' + 질문하기 10점';
+    return s+' = <b>100점 만점</b>';}
+  let parts=[];if(m.quiz)parts.push(`퀴즈 ${m.quizN}문항`);if(m.review)parts.push('한 줄 소감');if(m.question)parts.push('질문 만들기');
+  return '선택 미션: <b>'+parts.join(' · ')+'</b>';
+}
+function readChalInputs(){
+  CHALLENGES.forEach((c,i)=>{
+    const t=el('ch_t_'+i),d=el('ch_d_'+i),f=el('ch_f_'+i),to=el('ch_to_'+i),ty=el('ch_type_'+i);
+    if(t)c.title=t.value.trim()||c.title; if(d)c.detail=d.value; if(f)c.from=f.value; if(to)c.to=to.value;
+    if(ty){c.type=ty.value; if(c.type==='고전챌린지')c.mission.quiz=true;}
+    if(!c.mission)c.mission={quiz:c.type==='고전챌린지',quizN:5,review:false,question:false};
+    if(!Array.isArray(c.books))c.books=[];
+  });
+}
+function renderChallenges(){
+  el('chalList').innerHTML=CHALLENGES.map((c,i)=>{
+    if(!c.mission)c.mission={quiz:c.type==='고전챌린지',quizN:5,review:false,question:false};
+    const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[];
+    return `<div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span><span style="flex:1"></span>
+        <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},1)" ${i===CHALLENGES.length-1?'disabled':''}>↓</button>
+        <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="chalDel(${i})">삭제</button>
+      </div>
+      <div class="row2">
+        <div><div class="flabel">제목</div><input class="cur-inp" id="ch_t_${i}" value="${esc(c.title)}"></div>
+        <div><div class="flabel">종류</div><select class="cur-inp" id="ch_type_${i}" onchange="readChalInputs();renderChallenges()">
+          <option value="소장챌린지" ${!isClassic?'selected':''}>소장자료 챌린지</option>
+          <option value="고전챌린지" ${isClassic?'selected':''}>고전 클래식 챌린지</option></select></div>
+      </div>
+      <div class="flabel">상세내용 — 학생에게 보일 설명</div>
+      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 심리학과 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
+      <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}"></div>
+        <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}"></div></div>
+      <div class="flabel">미션 — 완독 측정</div>
+      <div class="mission">
+        <div class="mrow"><div class="mt"><b>퀴즈 풀기</b><span>${isClassic?'고전 챌린지 필수 미션':'도서 내용 기반 퀴즈'}</span></div>
+          <div class="tg${m.quiz?' on':''}${isClassic?' lock':''}" onclick="chalToggleM(${i},'quiz')"></div></div>
+        ${m.quiz?`<div style="padding:0 2px;margin-bottom:2px"><span style="font-size:11.5px;color:var(--light)">문항 수</span>
+          <div class="qn">${[3,5,7,10].map(n=>`<span class="${n===m.quizN?'on':''}" onclick="chalSetQuizN(${i},${n})">${n}개</span>`).join('')}</div></div>`:''}
+        <div class="mrow"><div class="mt"><b>한 줄 소감</b><span>작성 10점 · 미작성 0점</span></div><div class="tg${m.review?' on':''}" onclick="chalToggleM(${i},'review')"></div></div>
+        <div class="mrow"><div class="mt"><b>질문 만들기</b><span>작성 10점 · 미작성 0점</span></div><div class="tg${m.question?' on':''}" onclick="chalToggleM(${i},'question')"></div></div>
+      </div>
+      <div class="scorebox">${chalScoreText(c)}</div>
+      <div class="flabel">담긴 책 ${books.length}권</div>
+      <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`).join('')}
+        <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
+    </div>`;
+  }).join('')
+  +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="chalAdd()">+ 새 챌린지 추가</button>`;
+}
+function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{quiz:false,quizN:5,review:false,question:false},books:[]});renderChallenges();}
+function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
+function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
+function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;c.mission[k]=!c.mission[k];renderChallenges();}
+function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
+function chalRemoveBook(i,bi){readChalInputs();CHALLENGES[i].books.splice(bi,1);renderChallenges();}
+async function saveChallenges(){
+  readChalInputs();
+  for(const c of CHALLENGES){
+    if(!c.title||!c.title.trim()){toast('제목이 빈 챌린지가 있어요');return;}
+    if(!c.books||!c.books.length){toast(`‘${c.title}’에 책을 1권 이상 담아주세요`);return;}
+    if(!c.mission.quiz&&!c.mission.review&&!c.mission.question){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
+  }
+  try{
+    if(CHALLENGES.length){
+      const rows=CHALLENGES.map(c=>({school:'중앙대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',
+        status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
+        books:(c.books||[]).map(b=>({isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
+      const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
+        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
+        body:JSON.stringify(rows)});
+      if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
+    }
+    // 새로 올린 뒤 기존 챌린지 행 삭제(중복 방지) — 목록 전체 교체 방식
+    if(ORIG_CHAL_IDS.length){
+      await fetch(`${SB_REST}/library_programs?id=in.(${ORIG_CHAL_IDS.map(encodeURIComponent).join(',')})`,
+        {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    }
+    toast('저장 완료 — 학생 앱에 반영됩니다');
+    await loadChallenges(); loadServerPrograms();
+  }catch(e){toast('저장 실패 — 연결 확인');}
+}
+
 /* ====== 공지글 ====== */
 let ntLocSel=[];
 function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLoc('${l}')">${l}</span>`).join('');}
@@ -959,8 +1013,10 @@ function renderHistory(){
 /* ====== 초기화 ====== */
 buildNtLoc();
 renderDash();
+renderChallenges();
 loadSections();
 loadServerPrograms();
+loadChallenges();
 loadInventory();
 </script>
 </body></html>
