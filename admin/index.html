@@ -157,7 +157,8 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 /* 우리 도서관 꾸미기 — 좌(편집)/우(실시간 폰 미리보기) 분할 */
 .settings-wrap{display:flex;gap:20px;align-items:flex-start}
 .settings-main{flex:1;min-width:0;max-width:860px}
-body.pv-open .settings-wrap{justify-content:space-between}
+body.pv-open .settings-main{flex:1;max-width:none}
+body.pv-open .settings-pv{flex:1;width:auto;min-width:0;max-width:none}
 .settings-pv{display:none;width:46%;min-width:440px;max-width:780px;flex:none;position:sticky;top:78px}
 .settings-pv.on{display:block}
 body.pv-open .main{max-width:none}
@@ -540,8 +541,15 @@ function secDragStart(e,i){
 function secDragOver(e,i){ if(_secDragFrom<0||_secDragFrom===i) return; e.preventDefault(); try{ e.dataTransfer.dropEffect='move'; }catch(_){}
   const p=e.currentTarget; document.querySelectorAll('.sec-panel.drag-over').forEach(x=>{if(x!==p)x.classList.remove('drag-over')}); p.classList.add('drag-over'); }
 function secDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
-function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; e.currentTarget.classList.remove('drag-over'); _secDragFrom=-1;
-  if(from<0||from===i) return; readSecInputs(); const moved=SECTIONS.splice(from,1)[0]; SECTIONS.splice(i,0,moved); renderSettings(); }
+function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; const panel=e.currentTarget; panel.classList.remove('drag-over'); _secDragFrom=-1;
+  if(from<0||from===i) return; readSecInputs();
+  // 드롭한 칸의 위/아래 절반 판정 → 그 앞/뒤에 삽입(위·아래 양방향 정확히)
+  const rect=panel.getBoundingClientRect(); const after=e.clientY>rect.top+rect.height/2;
+  let target=i+(after?1:0);
+  const moved=SECTIONS.splice(from,1)[0];
+  if(from<target) target--;                 // 앞쪽을 빼면 인덱스가 당겨지므로 보정
+  if(target<0)target=0; if(target>SECTIONS.length)target=SECTIONS.length;
+  SECTIONS.splice(target,0,moved); renderSettings(); }
 function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over,.sec-panel.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
 function renderSettings(){
   el('secList').innerHTML=SECTIONS.map((s,i)=>{
