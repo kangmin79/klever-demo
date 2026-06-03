@@ -2220,37 +2220,54 @@ function renderLibCuration(){
 if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){} window.addEventListener('DOMContentLoaded',()=>{ try{ nav('ourlib'); }catch(e){} }); setTimeout(()=>{ try{ nav('ourlib'); }catch(e){} },60); }
 async function loadServerPub(){
   try{
-    await loadSections();
-    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+    // 칸(sections)·발행물(programs) 두 fetch를 병렬로 — 서로 독립
+    const progReq=fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    if(!r.ok) return;
-    const rows=await r.json();
-    if(!Array.isArray(rows)) return;
-    LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
-      books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
+    await loadSections();
+    const r=await progReq;
+    if(r.ok){
+      const rows=await r.json();
+      if(Array.isArray(rows)) LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
+        books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
+    }
+    // programs 실패해도 새로 받은 sections는 반영해서 렌더
     rebuildLibPool();
     const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); backfillPool(); }
   }catch(e){}
 }
+// bookinfo(표지·별점·소개) localStorage 캐시 — 재방문 즉시 표시, 반복 조회 방지
+const BOOKINFO_CACHE_KEY='bookstar_bookinfo_v1';
+const BOOKINFO_TTL=7*24*3600*1000; // 7일
+function _biCacheLoad(){ try{ return JSON.parse(localStorage.getItem(BOOKINFO_CACHE_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function _biCacheSave(c){ try{ localStorage.setItem(BOOKINFO_CACHE_KEY, JSON.stringify(c)); }catch(e){} }
+function _applyInfo(b,x){ if(!x) return;
+  if(!b.t&&x.title) b.t=x.title;
+  if(!b.a&&x.author) b.a=x.author;
+  if(!b.cover&&x.cover) b.cover=x.cover;
+  if(b.rating===undefined&&x.rating!=null){ b.rating=x.rating; b.ratingCount=x.ratingCount||0; }
+  if(!b.loan&&x.loan) b.loan=x.loan;
+  if(!b.pages&&x.pages) b.pages=x.pages;
+  if(!b.pubYear&&x.pubYear) b.pubYear=x.pubYear;
+  if(b.description===undefined&&x.description) b.description=x.description;
+}
 async function backfillPool(){
   const need=[...new Set(LIB_POOL.filter(b=>b.isbn&&(!b.t||!b.cover||b.rating===undefined||b.description===undefined)).map(b=>b.isbn))];
   if(!need.length) return;
-  for(let i=0;i<need.length;i+=24){
-    const batch=need.slice(i,i+24);
-    try{
-      const r=await fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:batch})});
-      const d=await r.json(); const info=d.info||{};
-      LIB_POOL.forEach(b=>{ const x=info[b.isbn]; if(!x) return;
-        if(!b.t&&x.title) b.t=x.title;
-        if(!b.a&&x.author) b.a=x.author;
-        if(!b.cover&&x.cover) b.cover=x.cover;
-        if(b.rating===undefined&&x.rating!=null){ b.rating=x.rating; b.ratingCount=x.ratingCount||0; }
-        if(!b.loan&&x.loan) b.loan=x.loan;
-        if(!b.pages&&x.pages) b.pages=x.pages;
-        if(!b.pubYear&&x.pubYear) b.pubYear=x.pubYear;
-        if(b.description===undefined&&x.description) b.description=x.description;
-      });
-    }catch(e){}
+  // isbn → 해당 책 객체들(같은 isbn이 여러 칸에 있을 수 있음)
+  const byIsbn={}; LIB_POOL.forEach(b=>{ if(b.isbn){ (byIsbn[b.isbn]||(byIsbn[b.isbn]=[])).push(b); } });
+  const apply=(isbn,x)=>{ (byIsbn[isbn]||[]).forEach(b=>_applyInfo(b,x)); };
+  // 1) 캐시 먼저 적용 → 미스만 추림
+  const cache=_biCacheLoad(); const now=Date.now(); const miss=[];
+  need.forEach(isbn=>{ const c=cache[isbn]; if(c&&c._ts&&(now-c._ts)<BOOKINFO_TTL){ apply(isbn,c); } else miss.push(isbn); });
+  // 2) 미스만 24개 배치로 병렬 조회
+  if(miss.length){
+    const batches=[]; for(let i=0;i<miss.length;i+=24) batches.push(miss.slice(i,i+24));
+    const results=await Promise.all(batches.map(batch=>
+      fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:batch})})
+        .then(r=>r.ok?r.json():null).catch(()=>null)));
+    let changed=false;
+    results.forEach(d=>{ const info=(d&&d.info)||{}; for(const isbn in info){ const x=info[isbn]; cache[isbn]=Object.assign({},x,{_ts:now}); changed=true; apply(isbn,x); } });
+    if(changed) _biCacheSave(cache);
   }
   const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); }
 }
