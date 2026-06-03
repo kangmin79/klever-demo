@@ -1,0 +1,170 @@
+<!doctype html><html lang=ko><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=robots content="noindex,nofollow">
+<title>우리 도서관 · 책 보여주기 템플릿 쇼케이스</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --primary:#1a2942; --primary-dark:#0f1a2e; --accent:#3a6ea5; --primary-bg:rgba(26,41,66,.06);
+  --gold:#d4a93b; --bg:#f7f6f1; --card:#fff; --input:#f0efeb;
+  --text:#1a2942; --sub:#475569; --light:#64748b; --border:#e3dfd5;
+  --sans:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
+  --serif:'Nanum Myeongjo','Apple SD Gothic Neo',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;letter-spacing:-.02em}
+.wrap{max-width:1040px;margin:0 auto;padding:34px 22px 90px}
+.top{text-align:center;margin-bottom:10px}
+.top h1{font-size:25px;font-weight:800;letter-spacing:-.6px}
+.top p{font-size:13.5px;color:var(--light);margin-top:8px;line-height:1.6}
+.legend{font-size:12px;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin:18px auto 30px;max-width:680px;text-align:center;line-height:1.7}
+.legend b{color:var(--primary)}
+/* 템플릿 블록 */
+.tpl{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:0;margin-bottom:26px;overflow:hidden}
+.tpl-h{display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fbfaf6,#fff)}
+.tpl-no{width:30px;height:30px;border-radius:9px;background:var(--primary);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:0 0 30px}
+.tpl-h .tt{font-size:15.5px;font-weight:800;letter-spacing:-.3px}
+.tpl-h .td{font-size:12px;color:var(--light);margin-top:2px}
+.tpl-h .pick{margin-left:auto;font-size:12px;font-weight:700;color:var(--accent);background:rgba(58,110,165,.1);border:1px solid rgba(58,110,165,.25);border-radius:9px;padding:7px 13px;cursor:pointer}
+.tpl-h .pick.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tpl-b{padding:20px 22px 24px}
+/* 섹션 헤더(앱 안에서의 칸 제목) */
+.sec-t{font-family:var(--serif);font-size:18px;font-weight:800;letter-spacing:-.3px}
+.sec-s{font-size:12px;color:var(--light);margin:3px 0 14px}
+/* 표지 공통 */
+.cv{border-radius:7px;overflow:hidden;display:flex;align-items:flex-end;color:#fff;position:relative;box-shadow:0 6px 16px rgba(20,28,50,.18);flex:0 0 auto}
+.cv .cvt{padding:9px 10px;font-weight:800;font-size:12.5px;line-height:1.25;letter-spacing:-.3px;text-shadow:0 1px 4px rgba(0,0,0,.35)}
+.cv .cva{position:absolute;top:9px;left:10px;font-size:9.5px;font-weight:700;opacity:.85}
+/* 1 히어로 */
+.t-hero{display:flex;gap:20px;align-items:center;background:linear-gradient(135deg,#f6f4ee,#fff);border:1px solid var(--border);border-radius:16px;padding:18px}
+.t-hero .cv{width:118px;height:168px}
+.t-hero .hx{flex:1;min-width:0}
+.t-hero .hk{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.5px}
+.t-hero .hh{font-family:var(--serif);font-size:21px;font-weight:800;margin:7px 0 4px;line-height:1.3}
+.t-hero .ha{font-size:12.5px;color:var(--light)}
+.t-hero .hd{font-size:13px;color:var(--sub);line-height:1.6;margin:11px 0 15px}
+.t-hero .hb{display:inline-flex;background:var(--primary);color:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:11px}
+/* 2 가로 목록 */
+.t-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+.t-row .it{width:104px;flex:0 0 104px}
+.t-row .cv{width:104px;height:150px;margin-bottom:8px}
+.t-row .rt{font-size:12.5px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-row .ra{font-size:11px;color:var(--light)}
+/* 3 랭킹 */
+.t-rank{display:flex;flex-direction:column;gap:4px}
+.rk{display:flex;align-items:center;gap:13px;padding:8px 6px;border-radius:10px}
+.rk:hover{background:var(--primary-bg)}
+.rk .n{width:24px;text-align:center;font-weight:900;font-size:17px;color:var(--gold);font-family:var(--serif)}
+.rk .cv{width:38px;height:54px}
+.rk .ri{flex:1;min-width:0}.rk .ri .t{font-size:13.5px;font-weight:700}.rk .ri .a{font-size:11.5px;color:var(--light)}
+.rk .lo{font-size:12px;font-weight:800;color:var(--accent)}
+/* 4 요약 카드 */
+.t-grad{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+.gc{width:210px;flex:0 0 210px;border-radius:15px;padding:16px;color:#fff;display:flex;flex-direction:column;min-height:176px;position:relative;overflow:hidden}
+.gc .gk{font-size:10.5px;font-weight:800;opacity:.85;letter-spacing:.4px}
+.gc .gh{font-family:var(--serif);font-size:16px;font-weight:800;line-height:1.4;margin-top:8px;flex:1}
+.gc .gf{font-size:11.5px;font-weight:700;opacity:.9}
+/* 5 AI 카드 */
+.t-ai{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+.ac{width:230px;flex:0 0 230px;border-radius:15px;padding:16px;color:#eef2fb;background:linear-gradient(160deg,#1a2942,#0f1a2e);display:flex;flex-direction:column;min-height:184px}
+.ac .ak{font-size:10.5px;font-weight:800;color:var(--gold)}
+.ac .ah{font-family:var(--serif);font-size:15.5px;font-weight:700;line-height:1.45;margin:8px 0;flex:1}
+.ac .ab{font-size:12px;font-weight:700;background:var(--gold);color:#1a1208;border-radius:9px;padding:9px;text-align:center}
+/* 6 표지 그리드 */
+.t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:14px}
+.t-grid .it{text-align:center}
+.t-grid .cv{width:100%;aspect-ratio:5/7;height:auto}
+.t-grid .gt{font-size:11.5px;font-weight:700;margin-top:7px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 7 매거진 */
+.mg{display:flex;gap:18px;align-items:center;padding:14px 0;border-top:1px solid var(--border)}
+.mg:first-child{border-top:0;padding-top:0}
+.mg.rev{flex-direction:row-reverse}
+.mg .cv{width:96px;height:138px}
+.mg .mx{flex:1}
+.mg .mk{font-size:11px;font-weight:800;color:var(--accent)}
+.mg .mh{font-family:var(--serif);font-size:17px;font-weight:800;margin:5px 0;line-height:1.35}
+.mg .md{font-size:12.5px;color:var(--sub);line-height:1.6}
+/* 8 와이드 띠배너 */
+.bn{border-radius:16px;padding:24px 26px;color:#fff;display:flex;gap:22px;align-items:center;background:linear-gradient(120deg,#2a3650,#3a6ea5)}
+.bn .cv{width:96px;height:138px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.bn .bx{flex:1}
+.bn .bk{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.5px}
+.bn .bq{font-family:var(--serif);font-size:20px;font-weight:800;line-height:1.4;margin:8px 0 6px}
+.bn .ba{font-size:12.5px;opacity:.9}
+.foot{text-align:center;font-size:12.5px;color:var(--light);margin-top:30px;line-height:1.8}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>우리 도서관 · 책 보여주기 템플릿</h1>
+    <p>같은 책을 여러 방식으로 보여줍니다. 마음에 드는 템플릿을 골라주세요 — 고른 것만 우리 도서관 ‘꾸미기’의 칸 스타일로 넣겠습니다.</p>
+  </div>
+  <div class="legend">현재 라이브 = <b>1·2·3·4·5번</b> (히어로·가로목록·랭킹·요약카드·AI카드) · <b>6·7·8번</b>은 새 후보입니다.<br>각 템플릿의 <b>이 스타일로</b> 버튼을 눌러 표시(여러 개 가능). 다 고르면 알려주세요.</div>
+  <div id="tpls"></div>
+  <div class="foot">표지는 미리보기용 타이포 그래픽입니다 · 실제로는 알라딘 표지 이미지가 들어갑니다.</div>
+</div>
+<script>
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// 샘플 책
+const BOOKS=[
+ {t:'불편한 편의점',a:'김호연',loan:2313,q:'평범한 사람들의 위로는 어디서 오는가?',sum:'서울 청파동 작은 편의점에서 벌어지는 따뜻한 사람들의 이야기.'},
+ {t:'미움받을 용기',a:'기시미 이치로',loan:2103,q:'타인의 시선에서 자유로워질 수 있을까?',sum:'아들러 심리학을 대화체로 풀어낸 자기 결정의 철학.'},
+ {t:'데미안',a:'헤르만 헤세',loan:1416,q:'알을 깨고 나오는 새는 무엇을 향하는가?',sum:'한 소년이 자아를 찾아가는 성장의 고전.'},
+ {t:'코스모스',a:'칼 세이건',loan:1290,q:'우리는 우주에서 어떤 존재인가?',sum:'과학과 시적 상상력으로 그린 우주의 대서사.'},
+ {t:'1984',a:'조지 오웰',loan:1180,q:'감시받는 사회에서 자유란 무엇인가?',sum:'전체주의의 공포를 그린 디스토피아의 원형.'},
+ {t:'사피엔스',a:'유발 하라리',loan:1469,q:'무엇이 인간을 지구의 지배자로 만들었나?',sum:'인지혁명에서 현재까지, 인류의 빅히스토리.'},
+ {t:'어린 왕자',a:'생텍쥐페리',loan:990,q:'정말 중요한 것은 왜 눈에 보이지 않는가?',sum:'사막에 불시착한 조종사와 어린 왕자의 만남.'},
+ {t:'총 균 쇠',a:'재레드 다이아몬드',loan:840,q:'문명의 격차는 어디서 비롯됐는가?',sum:'지리와 환경으로 읽는 인류 문명의 불균형.'},
+];
+const PAL=[['#2a3650','#1a2942'],['#3a4a6b','#26324d'],['#4a3f6b','#2f2950'],['#5b3a52','#3a2438'],['#3a5b52','#243a34'],['#5b4a2f','#3a2f1d'],['#2f5066','#1d3540'],['#4a2f3a','#301d24']];
+function pal(t){let h=0;for(let i=0;i<t.length;i++)h+=t.charCodeAt(i);return PAL[h%PAL.length];}
+function cover(b,cls){const g=pal(b.t);return `<div class="cv ${cls||''}" style="background:linear-gradient(155deg,${g[0]},${g[1]})"><span class="cva">${esc(b.a)}</span><span class="cvt">${esc(b.t)}</span></div>`;}
+const GG=[['#3a6ea5','#1a2942'],['#7c6a3a','#3a2f1d'],['#4a3f6b','#241d3a'],['#3a5b52','#1d3a32']];
+
+function tpl(no,name,desc,bodyHTML){
+  return `<div class="tpl"><div class="tpl-h"><div class="tpl-no">${no}</div>
+    <div><div class="tt">${esc(name)}</div><div class="td">${esc(desc)}</div></div>
+    <div class="pick" onclick="this.classList.toggle('on');this.textContent=this.classList.contains('on')?'✓ 선택됨':'이 스타일로'">이 스타일로</div></div>
+    <div class="tpl-b">${bodyHTML}</div></div>`;
+}
+function head(t,s){return `<div class="sec-t">${t}</div><div class="sec-s">${s}</div>`;}
+
+// 1 히어로
+function tHero(){const b=BOOKS[0];return head('오늘의 사서 추천','우리 학교 사서가 직접 고른 한 권')+
+  `<div class="t-hero">${cover(b)}<div class="hx"><div class="hk">✦ 사서의 선택</div>
+    <div class="hh">${esc(b.t)}</div><div class="ha">${esc(b.a)}</div>
+    <div class="hd">${esc(b.sum)}</div><span class="hb">읽으러 가기 →</span></div></div>`;}
+// 2 가로 목록
+function tRow(){return head('사서가 주목한 책','이번 달 추천 도서')+
+  `<div class="t-row">${BOOKS.map(b=>`<div class="it">${cover(b)}<div class="rt">${esc(b.t)}</div><div class="ra">${esc(b.a)}</div></div>`).join('')}</div>`;}
+// 3 랭킹
+function tRank(){const r=[...BOOKS].sort((a,b)=>b.loan-a.loan);return head('우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책')+
+  `<div class="t-rank">${r.map((b,i)=>`<div class="rk"><div class="n">${i+1}</div>${cover(b)}<div class="ri"><div class="t">${esc(b.t)}</div><div class="a">${esc(b.a)}</div></div><div class="lo">${b.loan.toLocaleString()}</div></div>`).join('')}</div>`;}
+// 4 요약 카드
+function tGrad(){return head('하루 15분, 핵심만','책 한 권의 핵심을 15분에')+
+  `<div class="t-grad">${BOOKS.slice(0,5).map((b,i)=>{const g=GG[i%GG.length];return `<div class="gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="gk">감상 Point</div><div class="gh">${esc(b.sum)}</div><div class="gf">${esc(b.t)} · 15분 요약</div></div>`;}).join('')}</div>`;}
+// 5 AI 카드
+function tAI(){return head('AI와 함께 읽는 책','책의 핵심 질문을 AI가 던져요')+
+  `<div class="t-ai">${BOOKS.slice(0,5).map(b=>`<div class="ac"><div class="ak">✦ 이 책의 질문</div><div class="ah">${esc(b.q)}</div><div class="ab">🤖 AI와 함께 읽기</div></div>`).join('')}</div>`;}
+// 6 표지 그리드
+function tGrid(){return head('우리 도서관 서가','표지로 한눈에 둘러보기')+
+  `<div class="t-grid">${BOOKS.map(b=>`<div class="it">${cover(b)}<div class="gt">${esc(b.t)}</div></div>`).join('')}</div>`;}
+// 7 매거진
+function tMag(){return head('이주의 큐레이션','사서가 풀어 쓴 추천사')+
+  BOOKS.slice(0,3).map((b,i)=>`<div class="mg ${i%2?'rev':''}">${cover(b)}<div class="mx"><div class="mk">EDITOR'S PICK</div><div class="mh">${esc(b.t)}</div><div class="md">${esc(b.sum)} — ${esc(b.a)}</div></div></div>`).join('');}
+// 8 와이드 띠배너
+function tBanner(){const b=BOOKS[2];return head('이달의 한 문장','마음에 남는 한 권')+
+  `<div class="bn">${cover(b)}<div class="bx"><div class="bk">BOOK OF THE MONTH</div><div class="bq">“${esc(b.q)}”</div><div class="ba">${esc(b.t)} · ${esc(b.a)}</div></div></div>`;}
+
+document.getElementById('tpls').innerHTML=[
+ tpl(1,'히어로 (대표 1권)','큰 표지 + 추천사 + 버튼. 가장 눈에 띄는 한 권.',tHero()),
+ tpl(2,'가로 표지 목록','표지를 옆으로 넘기며 보는 기본형. 여러 권 추천에 적합.',tRow()),
+ tpl(3,'대출 랭킹','대출 수로 자동 정렬되는 순위 목록. 숫자가 신뢰를 줌.',tRank()),
+ tpl(4,'요약 카드','책의 핵심을 컬러 카드로. “15분 요약” 같은 콘텐츠 강조.',tGrad()),
+ tpl(5,'AI 카드','책이 던지는 질문 + AI 읽기. 호기심 자극형.',tAI()),
+ tpl(6,'표지 그리드 (서가)','표지를 격자로 펼친 서가 느낌. 많은 책을 한 화면에.',tGrid()),
+ tpl(7,'매거진','큰 표지 + 편집 글이 좌우로 교차. 잡지처럼 읽는 큐레이션.',tMag()),
+ tpl(8,'와이드 띠배너','문장 한 줄을 크게. 이달의 책·캠페인 강조용.',tBanner()),
+].join('');
+</script>
+</body></html>
