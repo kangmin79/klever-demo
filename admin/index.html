@@ -504,6 +504,22 @@ function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); i
 // iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지)
 function pvFrameLoaded(){ const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
   const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} } }
+// 관리자 화면 스크롤 → 미리보기(iframe) 내용도 같은 비율로 따라 스크롤
+let _pvScrollRAF=0;
+function pvSyncScroll(){
+  const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
+  const f=el('pvLiveFrame'); if(!f||!f.contentWindow) return;
+  try{
+    const doc=f.contentDocument||f.contentWindow.document; if(!doc) return;
+    const cands=[doc.querySelector('.main'),doc.scrollingElement,doc.documentElement,doc.body].filter(Boolean);
+    const inner=cands.find(c=>(c.scrollHeight-c.clientHeight)>4)||cands[0]; if(!inner) return;
+    const se=document.scrollingElement||document.documentElement;
+    const aMax=se.scrollHeight-se.clientHeight; const ratio=aMax>0?(se.scrollTop/aMax):0;
+    inner.scrollTop=ratio*(inner.scrollHeight-inner.clientHeight);
+  }catch(e){}
+}
+function pvOnScroll(){ if(_pvScrollRAF) return; _pvScrollRAF=requestAnimationFrame(function(){ _pvScrollRAF=0; pvSyncScroll(); }); }
+window.addEventListener('scroll',pvOnScroll,{passive:true});
 let _pvTimer=null;
 function pvSync(){
   const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
