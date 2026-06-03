@@ -156,7 +156,8 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #secOv.on{display:flex}
 /* 우리 도서관 꾸미기 — 좌(편집)/우(실시간 폰 미리보기) 분할 */
 .settings-wrap{display:flex;gap:20px;align-items:flex-start}
-.settings-main{flex:1;min-width:0}
+.settings-main{flex:1;min-width:0;max-width:860px}
+body.pv-open .settings-wrap{justify-content:space-between}
 .settings-pv{display:none;width:46%;min-width:440px;max-width:780px;flex:none;position:sticky;top:78px}
 .settings-pv.on{display:block}
 body.pv-open .main{max-width:none}
