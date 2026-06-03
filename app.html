@@ -1373,6 +1373,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <script src="mvp35_data.js"></script>
 <script src="books_extra.js"></script>
+<script src="classics_kr_data.js"></script>
 <script src="bodies_dq.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -1427,11 +1428,10 @@ const Student = {
 const DROP_IDS = new Set(["k13313590","k13313606","k13313608","k13313607","k9001059","k9001047","k9001048","k9001052","k9001060","k9001035","k9020973","k9032975","k9000607","k9031445","k9032996","k9032995","k9032994","k9032993","k13313736","k13313731","k13313732","k13313735","k13313734","k13313733"]);
 // MINUMSA: 민음사 세계문학전집 선정작 (배지)
 const MINUMSA_IDS = new Set(["g31","g21765","g41537","g996","g1122","g1112","g1129","g1128","g1127","g1113","g1400","g98","g730","g46","g1342","g161","g158","g1260","g768","g145","g550","g110","g345","g120","g42","g174","g844","g1661","g2852","g135","g2610","g1184","g1257","g1237","g2413","g44747","g2554","g28054","g2638","g600","g2600","g1399","g1754","g30723","g1081","g76","g74","g205","g15","g33","g203","g209","g215","g910","g5200","g7849","g2814","g219","g5658","g541","g4517","g1998","g4363"]);
-const BOOKS_RAW = (typeof BOOKS_MVP35 !== 'undefined' && BOOKS_MVP35.length) ? BOOKS_MVP35 : [
-  {id:'guun', title:'구운몽', author:'김만중', cover:2, progress:100, category:'한국고전', period:'조선', participants:42, reviews:11, quizzes:38, intl:true},
-  {id:'yulgi', title:'양반전', author:'박지원', cover:4, progress:100, category:'한국고전', period:'조선', participants:67, reviews:23, quizzes:71, intl:true},
-  {id:'meilkkot', title:'메밀꽃 필 무렵', author:'이효석', cover:8, progress:60, category:'근대소설', period:'근대', participants:73, reviews:26, quizzes:55, intl:true},
-];
+// 국내(고전) = 한국 고전 110권(제목만 표지, 본문은 Supabase classics fetch)
+// 해외 = 기존 mvp35 foreign + books_extra
+const BOOKS_RAW = (typeof BOOKS_CLASSICS_KR !== 'undefined' ? BOOKS_CLASSICS_KR : [])
+  .concat(typeof BOOKS_MVP35 !== 'undefined' ? BOOKS_MVP35.filter(b => b.locale === 'foreign') : []);
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
                        .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b)
                        .concat(typeof BOOKS_EXTRA !== 'undefined' ? BOOKS_EXTRA : []);
@@ -2632,7 +2632,7 @@ function openDetail(bookId){
 /* ═══════════════════════════════════════════════════════════
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
-function openViewer(bookId, mode){
+async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
   currentBook = b;
@@ -2642,6 +2642,8 @@ function openViewer(bookId, mode){
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
   renderViewer();
+  // 한국 고전: 본문을 Supabase에서 받아와 다시 렌더
+  if(bookId.startsWith('kr-')){ await ensureClassicBody(bookId); if(currentBook===b) renderViewer(); }
   // 리더 모듈 초기화
   setTimeout(() => {
     applyReaderPrefs();
@@ -2745,11 +2747,24 @@ function viewerLabels(book){
   };
 }
 
+// 한국 고전 110권 본문 캐시 (Supabase classics 테이블서 fetch)
+const CLASSIC_BODIES = {};
+async function ensureClassicBody(id){
+  if(!id || !id.startsWith('kr-') || CLASSIC_BODIES[id] !== undefined) return;
+  try{
+    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(id)}&select=body`,
+      {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}});
+    const rows = await r.json();
+    CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
+  }catch(e){ CLASSIC_BODIES[id] = ''; }
+}
+
 function viewerBodies(book){
-  // BOOK_CONTENT 우선(mock 군주론 등), 없으면 BODIES_ORIG/TRANS
+  // BOOK_CONTENT 우선(mock 군주론 등), 없으면 CLASSIC_BODIES(한국고전 fetch) → BODIES_ORIG/TRANS
   const mock = BOOK_CONTENT[book.id] || {};
   const id = book.id;
   const orig = mock.origin
+    || (CLASSIC_BODIES[id] ? bodyToHtml(CLASSIC_BODIES[id]) : '')
     || (typeof BODIES_ORIG !== 'undefined' && BODIES_ORIG[id] ? bodyToHtml(BODIES_ORIG[id]) : '');
   let trans = mock.trans
     || (typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id] ? bodyToHtml(BODIES_TRANS[id]) : '');
