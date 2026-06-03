@@ -2126,7 +2126,7 @@ function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml
 // 표지 그리드(서가)
 function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
 // 매거진
-function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg ${i%2?'rev':''}" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`;}
+function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`;}
 // 와이드 띠배너(대표 1권)
 function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-bn" onclick="libDetail('${b.isbn}')">${mlcv('ml-bn-cv',b)}<div class="ml-bn-x"><div class="ml-bn-k">BOOK OF THE MONTH</div><div class="ml-bn-h">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-bn-a">${esc(cleanT(b.t))} · ${esc(cleanA(b.a))}</div></div></div></div>`;}
 // 신간 입고
