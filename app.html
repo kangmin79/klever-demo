@@ -17,6 +17,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://gkujptyfrzqrjrvovbnc.supabase.co">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
 <style>
 /* ═══════════════════════════════════════════════════════════
@@ -2014,7 +2016,7 @@ function renderChalCards(){
   if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
   g.innerHTML=CHAL_PUB.map(c=>{
     const isClassic=c.type==='고전챌린지';
-    const covers=(c.books||[]).slice(0,3).map(b=>`<div class="cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>`).join('')||'<div class="cv">📚</div>';
+    const covers=(c.books||[]).slice(0,3).map(b=>`<div class="cv">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>`).join('')||'<div class="cv">📚</div>';
     const dd=ddayText(c.to);
     return `<div class="chal-card">
       <div class="chal-c-top"><div class="chal-covers">${covers}</div>
