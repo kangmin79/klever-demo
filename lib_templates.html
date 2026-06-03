@@ -33,6 +33,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font
 .sec-s{font-size:12px;color:var(--light);margin:3px 0 14px}
 /* 표지 공통 */
 .cv{border-radius:7px;overflow:hidden;display:flex;align-items:flex-end;color:#fff;position:relative;box-shadow:0 6px 16px rgba(20,28,50,.18);flex:0 0 auto}
+.cv{background:var(--input)}
+.cv img{width:100%;height:100%;object-fit:cover;display:block}
+.cv.cv-x::after{content:'📕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px}
 .cv .cvt{padding:9px 10px;font-weight:800;font-size:12.5px;line-height:1.25;letter-spacing:-.3px;text-shadow:0 1px 4px rgba(0,0,0,.35)}
 .cv .cva{position:absolute;top:9px;left:10px;font-size:9.5px;font-weight:700;opacity:.85}
 /* 1 히어로 */
@@ -102,9 +105,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font
 /* 10 테마 컬렉션(묶음) */
 .t-coll{display:flex;gap:16px;overflow-x:auto;padding-bottom:6px}
 .cl{width:236px;flex:0 0 236px;border:1px solid var(--border);border-radius:16px;padding:16px;background:linear-gradient(160deg,#f6f4ee,#fff)}
-.cl-cvs{display:flex;height:96px;align-items:flex-end;margin-bottom:13px;padding-left:4px}
-.cl-cvs .cv{width:62px;height:90px;margin-left:-24px;border:2px solid #fff}
-.cl-cvs .cv:first-child{margin-left:0}
+.cl-cvs{display:flex;gap:8px;height:92px;align-items:flex-end;margin-bottom:13px}
+.cl-cvs .cv{width:58px;height:84px}
 .cl-tt{font-family:var(--serif);font-size:16px;font-weight:800;letter-spacing:-.3px}
 .cl-ds{font-size:11.5px;color:var(--light);margin-top:5px;line-height:1.5}
 .cl-n{display:inline-block;font-size:11px;font-weight:800;color:var(--accent);background:rgba(58,110,165,.1);padding:3px 9px;border-radius:7px;margin-top:10px}
@@ -154,24 +156,41 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font
   </div>
   <div class="legend">현재 라이브 = <b>1~5번</b> (히어로·가로목록·랭킹·요약카드·AI카드) · <b>6~14번</b>은 새 후보입니다.<br>각 템플릿의 <b>이 스타일로</b> 버튼을 눌러 표시(여러 개 가능). 다 고르면 알려주세요.</div>
   <div id="tpls"></div>
-  <div class="foot">표지는 미리보기용 타이포 그래픽입니다 · 실제로는 알라딘 표지 이미지가 들어갑니다.</div>
+  <div class="foot">표지·도서 정보 출처: 알라딘 (ISBN 실시간 조회) · 표지가 잠깐 안 보이면 새로고침</div>
 </div>
 <script>
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-// 샘플 책
+// 샘플 책 (isbn으로 실제 알라딘 표지 실시간 조회)
 const BOOKS=[
- {t:'불편한 편의점',a:'김호연',loan:2313,q:'평범한 사람들의 위로는 어디서 오는가?',sum:'서울 청파동 작은 편의점에서 벌어지는 따뜻한 사람들의 이야기.'},
- {t:'미움받을 용기',a:'기시미 이치로',loan:2103,q:'타인의 시선에서 자유로워질 수 있을까?',sum:'아들러 심리학을 대화체로 풀어낸 자기 결정의 철학.'},
- {t:'데미안',a:'헤르만 헤세',loan:1416,q:'알을 깨고 나오는 새는 무엇을 향하는가?',sum:'한 소년이 자아를 찾아가는 성장의 고전.'},
- {t:'코스모스',a:'칼 세이건',loan:1290,q:'우리는 우주에서 어떤 존재인가?',sum:'과학과 시적 상상력으로 그린 우주의 대서사.'},
- {t:'1984',a:'조지 오웰',loan:1180,q:'감시받는 사회에서 자유란 무엇인가?',sum:'전체주의의 공포를 그린 디스토피아의 원형.'},
- {t:'사피엔스',a:'유발 하라리',loan:1469,q:'무엇이 인간을 지구의 지배자로 만들었나?',sum:'인지혁명에서 현재까지, 인류의 빅히스토리.'},
- {t:'어린 왕자',a:'생텍쥐페리',loan:990,q:'정말 중요한 것은 왜 눈에 보이지 않는가?',sum:'사막에 불시착한 조종사와 어린 왕자의 만남.'},
- {t:'총 균 쇠',a:'재레드 다이아몬드',loan:840,q:'문명의 격차는 어디서 비롯됐는가?',sum:'지리와 환경으로 읽는 인류 문명의 불균형.'},
+ {t:'불편한 편의점',a:'김호연',isbn:'9791161571188',loan:2313,q:'평범한 사람들의 위로는 어디서 오는가?',sum:'서울 청파동 작은 편의점에서 벌어지는 따뜻한 사람들의 이야기.'},
+ {t:'미움받을 용기',a:'기시미 이치로',isbn:'9788996991342',loan:2103,q:'타인의 시선에서 자유로워질 수 있을까?',sum:'아들러 심리학을 대화체로 풀어낸 자기 결정의 철학.'},
+ {t:'데미안',a:'헤르만 헤세',isbn:'9788937460449',loan:1416,q:'알을 깨고 나오는 새는 무엇을 향하는가?',sum:'한 소년이 자아를 찾아가는 성장의 고전.'},
+ {t:'코스모스',a:'칼 세이건',isbn:'9788983711892',loan:1290,q:'우리는 우주에서 어떤 존재인가?',sum:'과학과 시적 상상력으로 그린 우주의 대서사.'},
+ {t:'1984',a:'조지 오웰',isbn:'9788937460777',loan:1180,q:'감시받는 사회에서 자유란 무엇인가?',sum:'전체주의의 공포를 그린 디스토피아의 원형.'},
+ {t:'사피엔스',a:'유발 하라리',isbn:'9788934972464',loan:1469,q:'무엇이 인간을 지구의 지배자로 만들었나?',sum:'인지혁명에서 현재까지, 인류의 빅히스토리.'},
+ {t:'어린 왕자',a:'생텍쥐페리',isbn:'9788932917245',loan:990,q:'정말 중요한 것은 왜 눈에 보이지 않는가?',sum:'사막에 불시착한 조종사와 어린 왕자의 만남.'},
+ {t:'총 균 쇠',a:'재레드 다이아몬드',isbn:'9788970127248',loan:840,q:'문명의 격차는 어디서 비롯됐는가?',sum:'지리와 환경으로 읽는 인류 문명의 불균형.'},
 ];
 const PAL=[['#2a3650','#1a2942'],['#3a4a6b','#26324d'],['#4a3f6b','#2f2950'],['#5b3a52','#3a2438'],['#3a5b52','#243a34'],['#5b4a2f','#3a2f1d'],['#2f5066','#1d3540'],['#4a2f3a','#301d24']];
-function pal(t){let h=0;for(let i=0;i<t.length;i++)h+=t.charCodeAt(i);return PAL[h%PAL.length];}
-function cover(b,cls){const g=pal(b.t);return `<div class="cv ${cls||''}" style="background:linear-gradient(155deg,${g[0]},${g[1]})"><span class="cva">${esc(b.a)}</span><span class="cvt">${esc(b.t)}</span></div>`;}
+function pal(t){let h=0;for(let i=0;i<(t||'').length;i++)h+=t.charCodeAt(i);return PAL[h%PAL.length];}
+function cover(b,cls){
+  if(b.cover) return `<div class="cv ${cls||''}"><img src="${esc(b.cover)}" loading="lazy" alt="${esc(b.t)}" onerror="this.remove();this.parentNode.classList.add('cv-x')"></div>`;
+  const g=pal(b.t);
+  return `<div class="cv cv-fb ${cls||''}" style="background:linear-gradient(155deg,${g[0]},${g[1]})"><span class="cva">${esc(b.a)}</span><span class="cvt">${esc(b.t)}</span></div>`;
+}
+// 실제 표지 로드 (bookinfo Edge Function)
+const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+async function loadCovers(){
+  const all=[...BOOKS, ...AUTHOR.works];
+  const isbns=[...new Set(all.map(b=>b.isbn).filter(Boolean))];
+  try{
+    const r=await fetch(INFO_FN,{method:'POST',headers:{Authorization:'Bearer '+ANON,apikey:ANON,'content-type':'application/json'},body:JSON.stringify({isbns})});
+    const d=await r.json(); const info=d.info||{};
+    all.forEach(b=>{ if(b.isbn&&info[b.isbn]&&info[b.isbn].cover) b.cover=info[b.isbn].cover; });
+    render();
+  }catch(e){}
+}
 const GG=[['#3a6ea5','#1a2942'],['#7c6a3a','#3a2f1d'],['#4a3f6b','#241d3a'],['#3a5b52','#1d3a32']];
 
 function tpl(no,name,desc,bodyHTML){
@@ -230,21 +249,24 @@ const CATS=[['📖','소설',312],['✒️','에세이',148],['🔬','과학',96
 function tCat(){return head('분야별로 둘러보기','관심 분야를 눌러 책을 찾아요')+
   `<div class="t-cat">${CATS.map(c=>`<div class="ct"><div class="ce">${c[0]}</div><div class="cn">${esc(c[1])}</div><div class="cc">${c[2]}권</div></div>`).join('')}</div>`;}
 // 13 저자 스포트라이트
-const AUTHOR={name:'헤르만 헤세',init:'H',d:'자아를 찾는 여정을 그린 20세기 독일 문학의 거장. 우리 도서관 소장 4종.',works:['데미안','수레바퀴 아래서','싯다르타','유리알 유희']};
+const AUTHOR={name:'조지 오웰',init:'O',d:'전체주의와 권력의 본질을 꿰뚫어 본 20세기 영국의 작가. 우리 도서관 소장.',works:[{t:'1984',isbn:'9788937460777'},{t:'카탈로니아 찬가',isbn:'9788937460463'}]};
 function tAuth(){return head('이주의 작가','한 작가를 깊이 읽어요')+
   `<div class="t-auth"><div class="au-av">${esc(AUTHOR.init)}</div><div class="au-x">
     <div class="au-k">✦ AUTHOR SPOTLIGHT</div><div class="au-n">${esc(AUTHOR.name)}</div>
     <div class="au-d">${esc(AUTHOR.d)}</div>
-    <div class="au-row">${AUTHOR.works.map(t=>cover({t,a:AUTHOR.name})).join('')}</div></div></div>`;}
+    <div class="au-row">${AUTHOR.works.map(w=>cover({t:w.t,a:AUTHOR.name,cover:w.cover})).join('')}</div></div></div>`;}
 // 14 스와이프 카드(틴더형)
-function tSwipe(){const b=BOOKS[0];const g=pal(b.t);return head('오늘의 한 권 (스와이프)','한 권씩 넘기며 빠르게 고르기')+
+function tSwipe(){const b=BOOKS[0];const g=pal(b.t);
+  const bg=b.cover?`background:linear-gradient(to top,rgba(15,20,35,.78),rgba(15,20,35,.04)),url('${esc(b.cover)}');background-size:cover;background-position:center`:`background:linear-gradient(160deg,${g[0]},${g[1]})`;
+  return head('오늘의 한 권 (스와이프)','한 권씩 넘기며 빠르게 고르기')+
   `<div class="t-swipe"><div class="sw">
-    <div class="swcv" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><span class="swk">사서 추천</span><div><div class="swt">${esc(b.t)}</div></div></div>
+    <div class="swcv" style="${bg}"><span class="swk">사서 추천</span><div><div class="swt">${esc(b.t)}</div></div></div>
     <div class="swb"><div class="swd">${esc(b.sum)} — ${esc(b.a)}</div>
       <div class="swa"><div class="x">✕ 다음</div><div class="o">♥ 읽을래요</div></div></div>
     </div><div class="sw-hint">← 넘기면 다음 책 · 휙처럼 빠른 비교</div></div>`;}
 
-document.getElementById('tpls').innerHTML=[
+function render(){
+ document.getElementById('tpls').innerHTML=[
  tpl(1,'히어로 (대표 1권)','큰 표지 + 추천사 + 버튼. 가장 눈에 띄는 한 권.',tHero()),
  tpl(2,'가로 표지 목록','표지를 옆으로 넘기며 보는 기본형. 여러 권 추천에 적합.',tRow()),
  tpl(3,'대출 랭킹','대출 수로 자동 정렬되는 순위 목록. 숫자가 신뢰를 줌.',tRank()),
@@ -254,11 +276,14 @@ document.getElementById('tpls').innerHTML=[
  tpl(7,'매거진','큰 표지 + 편집 글이 좌우로 교차. 잡지처럼 읽는 큐레이션.',tMag()),
  tpl(8,'와이드 띠배너','문장 한 줄을 크게. 이달의 책·캠페인 강조용.',tBanner()),
  tpl(9,'신간 입고 (NEW)','새로 들어온 책 + 입고일 + NEW 뱃지. 신선함 강조.',tNew()),
- tpl(10,'테마 컬렉션 (묶음)','주제로 묶은 책 꾸러미. 표지가 겹쳐진 플레이리스트 느낌.',tColl()),
+ tpl(10,'테마 컬렉션 (묶음)','주제로 묶은 책 꾸러미. 표지를 나란히 모은 플레이리스트 느낌.',tColl()),
  tpl(11,'책 속 한 문장','문장 중심 카드. 책을 ‘읽고 싶게’ 만드는 감성형.',tQuote()),
  tpl(12,'카테고리 타일','분야 아이콘 타일. 탐색·검색 진입점으로.',tCat()),
  tpl(13,'저자 스포트라이트','한 작가 + 대표작 모음. 깊이 있는 큐레이션.',tAuth()),
  tpl(14,'스와이프 카드 (틴더형)','한 권씩 넘기며 고르는 휙 스타일. 빠른 비교.',tSwipe()),
-].join('');
+ ].join('');
+}
+render();
+loadCovers();
 </script>
 </body></html>
