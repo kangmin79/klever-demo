@@ -1374,6 +1374,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="mvp35_data.js"></script>
 <script src="books_extra.js"></script>
 <script src="classics_kr_data.js"></script>
+<script src="classics_foreign_data.js"></script>
 <script src="bodies_dq.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -1431,7 +1432,8 @@ const MINUMSA_IDS = new Set(["g31","g21765","g41537","g996","g1122","g1112","g11
 // 국내(고전) = 한국 고전 110권(제목만 표지, 본문은 Supabase classics fetch)
 // 해외 = 기존 mvp35 foreign + books_extra
 const BOOKS_RAW = (typeof BOOKS_CLASSICS_KR !== 'undefined' ? BOOKS_CLASSICS_KR : [])
-  .concat(typeof BOOKS_MVP35 !== 'undefined' ? BOOKS_MVP35.filter(b => b.locale === 'foreign') : []);
+  .concat(typeof BOOKS_MVP35 !== 'undefined' ? BOOKS_MVP35.filter(b => b.locale === 'foreign') : [])
+  .concat(typeof BOOKS_CLASSICS_FOREIGN !== 'undefined' ? BOOKS_CLASSICS_FOREIGN : []);
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
                        .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b)
                        .concat(typeof BOOKS_EXTRA !== 'undefined' ? BOOKS_EXTRA : []);
@@ -2642,8 +2644,8 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
   renderViewer();
-  // 한국 고전: 본문을 Supabase에서 받아와 다시 렌더
-  if(bookId.startsWith('kr-')){ await ensureClassicBody(bookId); if(currentBook===b) renderViewer(); }
+  // 고전(국내 kr-* / 해외 gb-*·옛 g{N}): 본문을 Supabase에서 받아와 다시 렌더
+  if(classicFetchId(bookId)){ await ensureClassicBody(bookId); if(currentBook===b) renderViewer(); }
   // 리더 모듈 초기화
   setTimeout(() => {
     applyReaderPrefs();
@@ -2748,12 +2750,20 @@ function viewerLabels(book){
   };
 }
 
-// 한국 고전 110권 본문 캐시 (Supabase classics 테이블서 fetch)
+// 고전 본문 캐시 (Supabase classics 테이블서 fetch)
+// kr-* = 한국 고전, gb-* = 해외 고전, 옛 해외 g{N} = gb-{N} 로 매핑
 const CLASSIC_BODIES = {};
+function classicFetchId(id){
+  if(!id) return null;
+  if(id.startsWith('kr-') || id.startsWith('gb-')) return id;
+  const m = id.match(/^g(\d+)$/);        // 옛 해외 g15 → gb-15
+  return m ? 'gb-' + m[1] : null;
+}
 async function ensureClassicBody(id){
-  if(!id || !id.startsWith('kr-') || CLASSIC_BODIES[id] !== undefined) return;
+  const fid = classicFetchId(id);
+  if(!fid || CLASSIC_BODIES[id] !== undefined) return;
   try{
-    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(id)}&select=body`,
+    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}&select=body`,
       {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}});
     const rows = await r.json();
     CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
