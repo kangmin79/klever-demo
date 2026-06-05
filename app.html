@@ -3276,7 +3276,9 @@ window.addEventListener('DOMContentLoaded', () => {
   renderRecChips();
   loadLoanData();
   renderCommunity('program');
-  nav('ourlib');   // 첫 화면 = 우리 도서관 (홈 폐지)
+  // ?page=airec/community/mypage 등 딥링크(관리자에서 학생앱 화면 연결용) — 없으면 우리 도서관
+  const _ip=new URLSearchParams(location.search).get('page');
+  nav(_ip && document.getElementById('page-'+_ip) ? _ip : 'ourlib');
 });
 
 window.addEventListener('resize', () => {

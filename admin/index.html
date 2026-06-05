@@ -290,9 +290,9 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="navi" onclick="go(this,'make')"><span class="em">✦</span><span>독서 챌린지</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션')"><span class="em">📚</span><span>고전 컬렉션</span></div>
     <div class="navi" onclick="goArea(this,'International')"><span class="em">🌏</span><span>International Students</span></div>
-    <div class="navi" onclick="goSoon(this,'AI 추천')"><span class="em">🤖</span><span>AI 추천</span></div>
-    <div class="navi" onclick="goSoon(this,'커뮤니티')"><span class="em">💬</span><span>커뮤니티</span></div>
-    <div class="navi" onclick="goSoon(this,'마이 페이지')"><span class="em">👤</span><span>마이 페이지</span></div>
+    <div class="navi" onclick="goSoon(this,'AI 추천','airec')"><span class="em">🤖</span><span>AI 추천</span></div>
+    <div class="navi" onclick="goSoon(this,'커뮤니티','community')"><span class="em">💬</span><span>커뮤니티</span></div>
+    <div class="navi" onclick="goSoon(this,'마이 페이지','mypage')"><span class="em">👤</span><span>마이 페이지</span></div>
   </aside>
 
   <main class="main">
@@ -427,14 +427,13 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
       </div>
     </div>
 
-    <!-- ===== 자리 페이지 (AI 추천 / 커뮤니티 / 마이 페이지 — 추후) ===== -->
+    <!-- ===== 학생 앱 화면 연결 (AI 추천 / 커뮤니티 / 마이 페이지) ===== -->
     <section id="pg-soon" style="display:none">
-      <div class="phead"><div><h1><span id="soonName">AI 추천</span> <span class="tagpill gold">준비 중</span></h1>
-        <p>이 화면은 학생 앱에 이미 있어요. 사서가 직접 큐레이션하는 기능은 다음 업데이트에서 추가됩니다.</p></div></div>
-      <div class="panel" style="text-align:center;padding:60px 20px;color:var(--light)">
-        <div style="font-size:40px;margin-bottom:12px">🛠️</div>
-        <div style="font-size:15px;font-weight:600;color:var(--text,#333)">곧 만나요</div>
-        <div style="font-size:13px;margin-top:6px">학생 앱(bookstar Archive)에서는 정상 동작하는 화면입니다.</div>
+      <div class="phead"><div><h1><span id="soonName">AI 추천</span> <span class="tagpill">학생 앱 화면</span></h1>
+        <p>학생 앱(bookstar Archive)의 실제 화면입니다. 이 화면은 자동 동작해 사서가 따로 꾸미지 않아요.
+          <a id="soonOpen" href="#" target="_blank" rel="noopener" style="color:var(--accent,#6b4f1d);font-weight:600">새 탭에서 열기 ↗</a></p></div></div>
+      <div class="panel" style="padding:0;overflow:hidden">
+        <iframe id="soonFrame" title="학생 앱 화면" style="width:100%;height:74vh;border:0;display:block;background:#fff"></iframe>
       </div>
     </section>
 
@@ -790,8 +789,13 @@ function go(elm,page){
 }
 // 좌측 'bookstar Builder' — 영역별 꾸미기 진입
 function goArea(elm,area){ try{readSecInputs();}catch(e){} curArea=area; go(elm,'settings'); }
-// 아직 큐레이션 대상 없는 학생앱 화면(자리만)
-function goSoon(elm,name){ go(elm,'soon'); const t=el('soonName'); if(t) t.textContent=name; }
+// 학생 앱 화면 연결 — app.html?page=<id>를 iframe으로 표시
+function goSoon(elm,name,page){ go(elm,'soon');
+  const t=el('soonName'); if(t) t.textContent=name;
+  const url='/app.html?page='+encodeURIComponent(page||'');
+  const f=el('soonFrame'); if(f) f.src=url;
+  const a=el('soonOpen'); if(a) a.href=url;
+}
 
 /* ====== 대시보드 ====== */
 let RANGE='month';
