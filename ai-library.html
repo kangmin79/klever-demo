@@ -121,7 +121,7 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 </style></head><body>
 <div class=wrap>
   <div class=hero>
-    <div class=kicker>✦ BOOKSTAR</div>
+    <div class=kicker>BOOKSTAR</div>
     <h1>추천받고, 순천 도서관에서 바로 찾기</h1>
     <div class=sub>북스타 AI가 책을 골라주면 — 순천시 도서관에 그 책이 있는지·빌릴 수 있는지 알려드려요 (위치를 켜면 가까운 순서로)</div>
     <div class=searchwrap>
@@ -222,7 +222,7 @@ async function findLib(){
     const d=await r.json();
     renderLibs(d);
   }catch(e){ res.innerHTML='<div class=ebookline>도서관 조회에 문제가 생겼어요. 다시 시도해 주세요.</div>'; }
-  if(btn){btn.disabled=false; btn.textContent=`📚 ${LOCK?LOCK.label:''} 도서관에서 찾기`;}
+  if(btn){btn.disabled=false; btn.textContent=`${LOCK?LOCK.label:''} 도서관에서 찾기`;}
 }
 function renderLibs(d){
   const res=document.getElementById('libResult');
