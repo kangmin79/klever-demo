@@ -636,7 +636,9 @@ body.dark .rec-go .icon{color:#0f172a;}
 .rv-foot{margin-top:9px;}
 .rv-like{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-light);cursor:pointer;padding:3px 10px;border:1px solid var(--border);border-radius:20px;}
 .rv-like:hover{border-color:var(--primary);color:var(--primary);}
-.rv-empty{text-align:center;color:var(--text-light);font-size:13px;padding:28px 0;}
+.rv-empty{text-align:center;color:var(--text-light);font-size:13px;padding:28px 0;grid-column:1/-1;}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;}
+.rv-grid .rv-card{margin-bottom:0;}
 .rv-writebtn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff;background:var(--primary);border:0;border-radius:10px;padding:10px 16px;cursor:pointer;}
 /* 서평 작성 모달 */
 #rvModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}
@@ -1386,18 +1388,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 
   <!-- 서평 광장 (검증 서평 — 커뮤니티 연동) -->
-  <div style="margin-top:48px;" class="mypage-bottom" >
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
-      <div>
-        <div class="section-head"><div class="section-title"><em>내 서평</em></div>
-          <button class="rv-writebtn" onclick="openReviewModal('','')">✍️ 서평 쓰기</button></div>
-        <div id="myReviews"></div>
-      </div>
-      <div>
-        <div class="section-head"><div class="section-title"><em>다른 학생 서평</em></div></div>
-        <div id="peerReviews"></div>
-      </div>
-    </div>
+  <div style="margin-top:48px;">
+    <div class="section-head"><div class="section-title"><em>내 서평</em></div>
+      <button class="rv-writebtn" onclick="openReviewModal('','')">✍️ 서평 쓰기</button></div>
+    <div id="myReviews" class="rv-grid"></div>
+  </div>
+  <div style="margin-top:40px;">
+    <div class="section-head"><div class="section-title"><em>다른 학생 서평</em></div>
+      <span style="font-size:11px;color:var(--text-light)">완독 인증 우선</span></div>
+    <div id="peerReviews" class="rv-grid"></div>
   </div>
 </section>
 
