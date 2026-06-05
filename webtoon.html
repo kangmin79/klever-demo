@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>붉은 산 — 웹툰 (데모) · bookstar</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{ --ink:#20160a; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0c0c10;color:#f4efe6;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;}
+  .serif{font-family:Georgia,'Noto Serif KR',serif;}
+  /* 상단 바 */
+  .wt-bar{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;background:rgba(12,12,16,.72);backdrop-filter:blur(8px);z-index:50;border-bottom:1px solid rgba(255,255,255,.08);}
+  .wt-bar a.back{color:#f4efe6;text-decoration:none;font-size:20px;line-height:1;padding:4px 6px;}
+  .wt-bar .ti{font-weight:800;font-size:15px;}
+  .wt-bar .au{font-size:12px;color:#b3aa98;}
+  .wt-bar .demo{margin-left:auto;font-size:10.5px;font-weight:800;color:#1a1f33;background:#e8c66a;padding:3px 9px;border-radius:20px;}
+  .wt-prog{position:fixed;top:52px;left:0;height:3px;background:#e8c66a;width:0;z-index:50;transition:width .1s;}
+  /* 표지 */
+  .wt-cover{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 40px;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 50% 18%,#5a1c12 0,#2a0f0c 55%,#0c0c10 100%);}
+  .wt-cover .mt{position:absolute;bottom:0;left:0;right:0;height:46%;background:linear-gradient(180deg,transparent,#1a0a08);clip-path:polygon(0 100%,28% 36%,42% 60%,62% 18%,80% 52%,100% 30%,100% 100%);opacity:.85;}
+  .wt-cover .sun{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#ff6a3d,#c0341c);box-shadow:0 0 80px 20px rgba(255,90,50,.45);margin-bottom:30px;}
+  .wt-cover h1{font-size:64px;letter-spacing:-1px;text-shadow:0 4px 30px rgba(0,0,0,.6);}
+  .wt-cover .sub{margin-top:14px;font-size:15px;color:#e6cfa0;letter-spacing:2px;}
+  .wt-cover .au2{margin-top:8px;font-size:14px;color:#cdbfa6;}
+  .wt-cover .scroll{position:absolute;bottom:26px;font-size:12px;color:#bbb;animation:bob 1.6s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+  /* 컷 */
+  .wt-cut{position:relative;min-height:84vh;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;padding:0 0 60px;}
+  .wt-art{position:absolute;inset:0;}
+  .wt-fg{position:absolute;left:0;right:0;bottom:0;width:100%;height:62%;}
+  .wt-cap{position:relative;z-index:3;max-width:560px;margin:0 22px;background:rgba(10,9,14,.62);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:18px 22px;font-size:17px;line-height:1.85;letter-spacing:-.2px;text-shadow:0 1px 6px rgba(0,0,0,.5);opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s;}
+  .wt-cut.in .wt-cap{opacity:1;transform:none;}
+  .wt-cap .dlg{color:#ffd87a;font-weight:700;}
+  .wt-cap .small{display:block;font-size:13px;color:#b9b0a0;margin-top:6px;}
+  /* 무드 그라데이션 */
+  .m-plain{background:linear-gradient(180deg,#cdb583 0,#b89a63 42%,#7c6336 100%);}
+  .m-village{background:linear-gradient(180deg,#bcae86 0,#9fae72 45%,#5e6b3e 100%);}
+  .m-cold{background:linear-gradient(180deg,#5e6577 0,#444b5e 50%,#23262f 100%);}
+  .m-dusk{background:linear-gradient(180deg,#c66a3a 0,#8a3320 50%,#2a0f0c 100%);}
+  .m-night{background:linear-gradient(180deg,#1c2444 0,#121833 55%,#0a0c18 100%);}
+  .m-dawn{background:linear-gradient(180deg,#caa86a 0,#9c7d52 45%,#4a3a28 100%);}
+  .m-red{background:radial-gradient(120% 95% at 50% 30%,#7a2417 0,#3a120c 55%,#120605 100%);}
+  /* 마무리 */
+  .wt-end{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:60px 24px;background:radial-gradient(120% 90% at 50% 40%,#3a120c,#0c0c10 70%);}
+  .wt-end .fin{font-size:30px;letter-spacing:8px;color:#e6cfa0;}
+  .wt-end p{color:#c2b9a8;font-size:14px;line-height:1.8;max-width:440px;}
+  .wt-end .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+  .wt-btn{display:inline-block;text-decoration:none;font-weight:800;font-size:14px;border-radius:12px;padding:13px 22px;cursor:pointer;}
+  .wt-btn.gold{background:#e8c66a;color:#1a1f33;}
+  .wt-btn.ghost{background:transparent;color:#f4efe6;border:1px solid rgba(255,255,255,.25);}
+  .wt-note{font-size:11.5px;color:#8a8377;max-width:480px;line-height:1.7;}
+  @media(max-width:560px){.wt-cover h1{font-size:46px;}.wt-cap{font-size:15.5px;}}
+</style>
+</head>
+<body>
+
+<div class="wt-bar">
+  <a class="back" href="/app.html?page=collection" title="북스타로">←</a>
+  <div><div class="ti">붉은 산</div></div>
+  <div class="au">· 김동인</div>
+  <div class="demo">AI 웹툰 데모</div>
+</div>
+<div class="wt-prog" id="prog"></div>
+
+<!-- 표지 -->
+<section class="wt-cover">
+  <div class="mt"></div>
+  <div class="sun"></div>
+  <h1 class="serif">붉은 산</h1>
+  <div class="sub">— 어떤 의사의 手記 —</div>
+  <div class="au2">원작 김동인 · bookstar AI 웹툰</div>
+  <div class="scroll">아래로 스크롤 ↓</div>
+</section>
+
+<div id="strip"></div>
+
+<!-- 마무리 -->
+<section class="wt-end">
+  <div class="fin serif">끝</div>
+  <p>광막한 겨울의 만주 벌판, 밥버러지라 멸시받던 익호의 죽음을 조상하는 숭엄한 노래가 울렸다.<br>그 가운데 그의 몸은 점점 식어갔다.</p>
+  <div class="row">
+    <a class="wt-btn gold" href="/app.html?page=collection">📖 원작 전문 읽기</a>
+    <a class="wt-btn ghost" href="/app.html">북스타 홈</a>
+  </div>
+  <div class="wt-note">※ 이 페이지는 <b>데모</b>입니다. 컷 그림은 분위기 목업이며, AI 일러스트(Nano Banana 등) 연동 시 실제 작화로 교체됩니다. 원작은 저작권 만료(PD) 작품입니다.</div>
+</section>
+
+<script>
+/* ── 실루엣 아트 ── */
+const INK='#20160a';
+function fg(extra){return `<svg class="wt-fg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice"><path d="M0 360 Q600 330 1200 360 L1200 500 L0 500 Z" fill="${INK}" opacity=".9"/>${extra||''}</svg>`;}
+const man=(x,y,s,c)=>`<g transform="translate(${x},${y}) scale(${s})" fill="${c||INK}"><circle cx="0" cy="-46" r="13"/><path d="M-12 -34 Q0 -40 12 -34 L9 6 L-9 6 Z"/><rect x="-9" y="4" width="7" height="34" rx="3"/><rect x="2" y="4" width="7" height="34" rx="3"/></g>`;
+const ART={
+  plain: fg(`<g transform="translate(600,330)" fill="${INK}"><ellipse cx="0" cy="22" rx="40" ry="13"/><path d="M-34 14 q34 -22 68 0 l-6 12 -56 0 z"/>${''}</g>${man(606,300,0.7)}`),
+  village: fg([520,600,680,760].map((x,i)=>`<path d="M${x} 350 l28 -34 l28 34 z" fill="${INK}"/>`).join('')),
+  cold: `<svg class="wt-fg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" style="height:100%"><g><ellipse cx="520" cy="240" rx="60" ry="26" fill="#e8b14a" opacity=".92" transform="rotate(-18 520 240)"/><ellipse cx="690" cy="240" rx="60" ry="26" fill="#e8b14a" opacity=".92" transform="rotate(18 690 240)"/><circle cx="520" cy="240" r="11" fill="#1a0f06"/><circle cx="690" cy="240" r="11" fill="#1a0f06"/></g></svg>`,
+  fight: `<svg class="wt-fg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" style="height:100%;bottom:auto;top:0"><g stroke="#cdbf9a" stroke-width="10" stroke-linecap="round" opacity=".9"><line x1="520" y1="170" x2="700" y2="330"/><line x1="700" y1="170" x2="520" y2="330"/></g><circle cx="610" cy="250" r="7" fill="#ffd87a"/></svg>`,
+  corpse: fg(`<g transform="translate(580,316)" fill="${INK}"><ellipse cx="0" cy="26" rx="46" ry="14"/><path d="M-40 16 q40 -26 80 0 l-7 14 -66 0 z"/><rect x="-34" y="-2" width="76" height="12" rx="6" fill="#5a4a30"/></g>`),
+  crowd: fg([430,520,610,700,790].map((x,i)=>man(x,330,0.66+(i%2)*0.06)).join('')),
+  pair: fg(man(540,330,1.05)+man(700,344,0.7,'#3a2a16')),
+  fallen: fg(`<g transform="translate(560,344)" fill="${INK}"><path d="M-70 0 q70 -28 150 -4 l0 12 -150 0 z"/><circle cx="92" cy="-10" r="11"/></g><g stroke="#7c1f12" stroke-width="3" opacity=".5"><line x1="120" y1="332" x2="160" y2="330"/></g>`),
+  redmt: `<svg class="wt-fg" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax slice" style="height:78%"><path d="M150 480 L470 120 L760 480 Z" fill="#7a2417"/><path d="M520 480 L760 200 L1010 480 Z" fill="#5e1a10"/>${[600,660,720].map(x=>`<path d="M${x} 470 l16 -40 l16 40 z" fill="#f2ece0"/>`).join('')}</svg>`,
+  chorus: fg(crowdMusic())
+};
+function crowdMusic(){ let s=[430,520,610,700,790].map((x,i)=>man(x,330,0.66+(i%2)*0.06)).join('');
+  s+=[[470,150],[600,120],[740,160],[540,90]].map(([x,y])=>`<text x="${x}" y="${y}" fill="#ffd87a" font-size="34" opacity=".8">♪</text>`).join('');
+  return s;
+}
+/* ── 컷 ── */
+const CUTS=[
+  {m:'m-plain',a:'plain',c:`의사인 ‘나’는 만주의 풍속과 병을 살피러 일 년을 작정하고 노새에 올라 벌판을 떠돌았다.`},
+  {m:'m-plain',a:'village',c:`산 하나 보이지 않는 광막한 만주 벌판 한가운데, 조선 사람 소작인만 스무남은 호가 모여 사는 이름 없는 작은 마을 — ××촌.`},
+  {m:'m-village',a:'village',c:`비록 만주인의 소작인이나 사람들은 온순하고 정직했다. 오랜만에 만난 동족의 마을에서 나는 십여 일을 평화로이 머물렀다.`},
+  {m:'m-cold',a:'cold',c:`그곳에서 ‘삵’이라 불리는 사내, <b>정익호</b>를 보았다.<span class="small">쥐를 닮은 얼굴, 늘 교활함과 독기가 어린 눈.</span>`},
+  {m:'m-cold',a:'fight',c:`투전·싸움·트집·칼부림 — 그는 마을의 커다란 암종이었다. 아무도 그를 가까이 하지 못했다.`},
+  {m:'m-cold',a:'crowd',c:`누가 죽으면 조상 대신 이렇게들 말했다.<br><span class="dlg">“삵이나 죽지 않고…”</span><span class="small">그를 동정하는 사람은 아무도 없었다. — “흥…” 그것이 삵의 처세 철학이었다.</span>`},
+  {m:'m-dusk',a:'corpse',c:`내가 마을을 떠나기 전날. <b>송 첨지</b> 노인이 그해 소출을 나귀에 싣고 만주인 지주의 마을로 갔다.`},
+  {m:'m-dusk',a:'corpse',c:`돌아온 것은 송장이었다. 소출이 적다고 매를 맞아 뼈가 꺾인 채, 나귀 등에 묶여 와 — 마을에 닿자 숨을 거두었다.`},
+  {m:'m-dusk',a:'crowd',c:`<span class="dlg">“원수를 갚자!”</span><br>젊은이들은 발을 구르고 부르짖었다. 그러나 — 누구도 앞장서려는 사람은 없었다.`},
+  {m:'m-night',a:'pair',c:`검시를 마치고 돌아오던 길, 나는 ‘삵’을 만났다.<br><span class="dlg">“송 첨지가 죽은 줄 아나?”</span><span class="small">그 얼굴에 얼핏 스친 비창한 표정을, 나는 끝내 잊을 수 없었다.</span>`},
+  {m:'m-dawn',a:'fallen',c:`이튿날 아침. ‘삵’이 동구 밖 밭고랑에 — 허리가 기역자로 꺾인 채 피투성이로 쓰러져 있었다.`},
+  {m:'m-dawn',a:'pair',c:`<span class="dlg">“선생님, 저는 갔었습니다.”</span><br><span class="dlg">“그 놈… 지주 놈의 집에…”</span><span class="small">멸시받던 그가, 홀로 원수에게 달려갔던 것이다.</span>`},
+  {m:'m-red',a:'redmt',c:`<span class="dlg">“보고 싶어요. 붉은 산이 — 그리고 흰 옷이!”</span><br>죽음에 임하여, 그는 고국과 동포를 떠올렸다.`},
+  {m:'m-red',a:'chorus',c:`<span class="dlg">“선생님, 노래를… 동해물과 백두산이…”</span><br>나는 눈을 감고 불렀다. 둘러선 이들의 입에서도 숭엄한 합창이, 만주 벌판 위로 울려 퍼졌다.`},
+];
+const strip=document.getElementById('strip');
+strip.innerHTML=CUTS.map((x,i)=>`<section class="wt-cut ${x.m}"><div class="wt-art">${ART[x.a]||''}</div><div class="wt-cap serif">${x.c}</div></section>`).join('');
+/* 스크롤 인터랙션 */
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); }),{threshold:.25});
+document.querySelectorAll('.wt-cut').forEach(s=>io.observe(s));
+const prog=document.getElementById('prog');
+addEventListener('scroll',()=>{ const h=document.documentElement; const p=h.scrollTop/(h.scrollHeight-h.clientHeight); prog.style.width=(p*100)+'%'; },{passive:true});
+</script>
+</body>
+</html>
