@@ -92,6 +92,9 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 /* 도서관 결과 */
 .libwrap{margin-top:16px}
 .libhd{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.shelfhint{font-size:12px;color:var(--soft);background:#f4f2ee;border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:10px;line-height:1.55}
+.shelfhint b{color:var(--ac)}
+.shelfhint .sub{display:block;font-size:10.5px;color:var(--mut);margin-top:4px}
 .libs{display:flex;flex-direction:column;gap:8px}
 .libitem{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#fafaf8}
 .libtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -240,17 +243,23 @@ function renderLibs(d){
             :'<span class="badge unk">소장</span>';
     const map=`https://map.kakao.com/?q=${encodeURIComponent(l.name||l.address||'')}`;
     const tel=l.tel&&l.tel!=='-'?`<a class=liblink href="tel:${esc(l.tel)}">전화</a>`:'';
-    const hp=l.homepage?`<a class=liblink href="${esc(l.homepage)}" target=_blank rel=noopener>홈페이지</a>`:'';
+    const hp=l.homepage?`<a class=liblink href="${esc(l.homepage)}" target=_blank rel=noopener>소장위치 보기 →</a>`:'';
     return `<div class=libitem>
       <div class=libtop><span class=libname>${esc(l.name)}</span>${dist?`<span class=libdist>${dist}</span>`:''}</div>
       <div class=libaddr>${esc(l.address)}</div>
       <div class=librow>${av}<a class=liblink href="${map}" target=_blank rel=noopener>지도</a>${tel}${hp}</div>
     </div>`;
   }).join('');
+  // 서가 분류(KDC) 힌트 — 책마다 동일하므로 목록 위에 한 번
+  const kdcInt=d.kdc?String(d.kdc).split('.')[0]:'';
+  const shelf=(d.kdcName||kdcInt)
+    ? `<div class=shelfhint>📚 서가 위치 — <b>${esc(d.kdcName||'')}</b>${kdcInt?` · <b>${kdcInt}번 서가</b>`:''}
+        <span class=sub>도서관 책은 이 분류번호 순서로 꽂혀 있어요. 정확한 칸·청구기호는 각 도서관 ‘소장위치 보기’에서 확인하세요.</span></div>`
+    : '';
   const hd=useDist
     ? `📍 내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
     : `📚 ${area} 도서관 · ${d.total||0}곳 소장 <span style="font-weight:400;color:var(--mut)">(위치 켜면 거리 표시)</span>`;
-  res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div><div class=libs>${items}</div></div>`;
+  res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div>${shelf}<div class=libs>${items}</div></div>`;
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
 </script></body></html>
