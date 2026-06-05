@@ -3298,7 +3298,7 @@ function renderLeaderList(){
 function renderMyBooks(){
   const el = document.getElementById('myBooks');
   if(!el) return;
-  const mine = BOOKS.filter(b=>b.progress>0);
+  const mine = (typeof myReadBooks==='function') ? myReadBooks() : BOOKS.filter(b=>b.progress>0);
   el.innerHTML = mine.map(b=>`
     <div class="book-card" onclick="openDetail('${b.id}')">
       ${bookCoverHTML(b)}
