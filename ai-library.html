@@ -91,7 +91,9 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 .cta2{background:#fff;color:var(--soft);border:1px solid var(--line);border-radius:13px;padding:14px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
 /* 도서관 결과 */
 .libwrap{margin-top:16px}
-.libhd{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.libhd{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.distlink{font-weight:600;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.distlink:hover{color:var(--ac)}
 .shelfhint{font-size:12px;color:var(--soft);background:#f4f2ee;border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:10px;line-height:1.55}
 .shelfhint b{color:var(--ac)}
 .shelfhint .sub{display:block;font-size:10.5px;color:var(--mut);margin-top:4px}
@@ -123,11 +125,6 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
         <button id=send onclick=go()>→</button>
       </div>
       <div class=chips id=chips></div>
-      <div class=locbar>
-        <span class="locbtn on" style="cursor:default">📍 순천시 도서관</span>
-        <button id=locBtn class=locbtn onclick=getLoc()>내 위치로 거리 보기 (선택)</button>
-        <div id=locStat class=locstat>순천시 도서관에서 찾아드려요 · 위치를 켜면 내 위치에서 가까운 순서로 보여줘요</div>
-      </div>
     </div>
   </div>
   <div id=stage></div>
@@ -149,19 +146,13 @@ document.getElementById('chips').innerHTML=EXAMPLES.map(e=>`<span class=chip onc
 function run(t){document.getElementById('q').value=t;go();}
 
 /* ---- 위치 ---- */
-function setStat(t){document.getElementById('locStat').textContent=t;}
+// 위치는 선택 — 결과의 '가까운 순 보기'에서만 호출. 잡히면 거리 반영해 새로고침
 function getLoc(){
-  if(!navigator.geolocation){setStat('이 기기에선 위치를 못 써요. 그냥 목록으로 보여드릴게요.');return;}
-  setStat('위치 확인 중…');
+  if(!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(p=>{
     MYLOC={lat:p.coords.latitude,lng:p.coords.longitude};
-    document.getElementById('locBtn').classList.add('on');
-    setStat(`내 위치에서 가까운 ${LOCK?LOCK.label:''} 도서관 순으로 보여드려요 ✓`);
-    // 이미 상세가 열려 있으면 거리 반영해 새로고침
     if(document.getElementById('ov').classList.contains('on') && CURRENT && CURRENT.isbn13) findLib();
-  },()=>{
-    setStat('위치 없이도 도서관 목록은 보여드려요 (거리만 생략).');
-  },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+  },()=>{},{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
 }
 
 /* ---- 추천 ---- */
@@ -258,7 +249,7 @@ function renderLibs(d){
     : '';
   const hd=useDist
     ? `📍 내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
-    : `📚 ${area} 도서관 · ${d.total||0}곳 소장 <span style="font-weight:400;color:var(--mut)">(위치 켜면 거리 표시)</span>`;
+    : `📚 ${area} ${d.total||0}곳 소장 · <a class=distlink onclick=getLoc()>📍 가까운 순 보기</a>`;
   res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div>${shelf}<div class=libs>${items}</div></div>`;
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
