@@ -74,7 +74,11 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 .ov{position:fixed;inset:0;background:rgba(20,18,30,.44);display:none;align-items:flex-end;justify-content:center;z-index:50;backdrop-filter:blur(4px)}
 .ov.on{display:flex;animation:fade .2s}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-.sheet{background:#fff;width:100%;max-width:500px;border-radius:26px 26px 0 0;padding:28px 26px 34px;max-height:88vh;overflow:auto;animation:up .3s cubic-bezier(.2,.7,.2,1)}
+.sheet{background:#fff;width:100%;max-width:500px;border-radius:26px 26px 0 0;padding:28px 26px 34px;max-height:88vh;overflow-y:auto;overflow-x:hidden;animation:up .3s cubic-bezier(.2,.7,.2,1);scrollbar-width:thin;scrollbar-color:#e0dcd2 transparent}
+.sheet::-webkit-scrollbar{width:6px}
+.sheet::-webkit-scrollbar-track{background:transparent;margin:14px 0}
+.sheet::-webkit-scrollbar-thumb{background:#e2ded4;border-radius:99px}
+.sheet::-webkit-scrollbar-thumb:hover{background:#cfc9bc}
 @keyframes up{from{transform:translateY(30px)}to{transform:none}}
 @media(min-width:560px){.ov{align-items:center}.sheet{border-radius:22px}}
 .sheet .top{display:flex;gap:18px;margin-bottom:14px}
