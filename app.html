@@ -269,6 +269,11 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-chip{font-size:11px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:3px 9px;}
 .lcd-desc{font-size:12.5px;color:var(--text-sub);line-height:1.7;padding:0 24px;margin:2px 0 18px;max-height:9.5em;overflow:hidden;}
 .lcd-src{font-size:10px;color:var(--text-light);padding:0 24px 18px;}
+#lcdReviews{padding:16px 24px 22px;border-top:1px solid var(--border);margin-top:2px;}
+#lcdReviews .rv-card{margin-bottom:8px;}
+#lcdReviews .rvh{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+#lcdReviews .rvh b{font-size:14px;}
+#lcdReviews .rv-writebtn{margin-left:auto;font-size:12.5px;padding:8px 13px;}
 .lcd-acts{padding:0 24px 18px;display:flex;flex-direction:column;gap:9px;}
 .lcd-btn{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--bg-card);color:var(--text);}
 .lcd-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
@@ -3531,9 +3536,9 @@ async function renderDetailReviews(bookId,bookTitle){
   const host=document.getElementById('lcdReviews'); if(!host) return;
   const list=await rvFetch(`select=*&book_id=eq.${encodeURIComponent(bookId)}&order=verified.desc,likes.desc,created_at.desc`);
   const avg=list.length?(list.reduce((a,b)=>a+(b.rating||0),0)/list.length).toFixed(1):null;
-  host.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px">
-      <b style="font-size:14px">독자 서평 ${list.length}</b>${avg?`<span class="rv-stars">${rvStars(Math.round(avg))}</span><span style="font-size:12px;color:var(--text-light)">${avg}</span>`:''}
-      <button class="rv-writebtn" style="margin-left:auto" onclick="openReviewModal('${esc(bookId)}','${esc((bookTitle||'').replace(/'/g,""))}')">✍️ 서평 쓰기</button></div>
+  host.innerHTML=`<div class="rvh">
+      <b>독자 서평 ${list.length}</b>${avg?`<span class="rv-stars">${rvStars(Math.round(avg))}</span><span style="font-size:12px;color:var(--text-light)">${avg}</span>`:''}
+      <button class="rv-writebtn" onclick="openReviewModal('${esc(bookId)}','${esc((bookTitle||'').replace(/'/g,''))}')">✍️ 서평 쓰기</button></div>
     ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 첫 서평을 남겨보세요!</div>'}`;
 }
 // 서평 작성 모달
