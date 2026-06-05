@@ -677,6 +677,19 @@ body.dark .rec-go .icon{color:#0f172a;}
 .rc-bar{flex:1;height:14px;background:var(--bg-input);border-radius:7px;overflow:hidden;}
 .rc-fill{height:100%;border-radius:7px;min-width:3px;transition:width .5s;}
 .rc-v{width:22px;font-size:12px;color:var(--text-light);text-align:left;flex:0 0 22px;}
+/* 나의 독서 별자리 */
+.sky{position:relative;border-radius:18px;overflow:hidden;background:radial-gradient(130% 100% at 50% -10%,#2a3766 0,#1a2240 50%,#0d1120 100%);box-shadow:inset 0 0 80px rgba(0,0,0,.4);}
+.sky-svg{width:100%;height:360px;display:block;}
+@media(max-width:560px){.sky-svg{height:300px;}}
+.sky-star{cursor:pointer;}
+.sky-star .st-core{animation:twk 3.2s ease-in-out infinite;animation-delay:var(--d);transform-origin:center;}
+@keyframes twk{0%,100%{opacity:1}50%{opacity:.4}}
+.sky-star:hover .st-core{filter:drop-shadow(0 0 7px #fff);}
+.sky-cap{position:absolute;left:20px;bottom:16px;color:#dbe4ff;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.5);}
+.sky-cap b{color:#ffd479;font-size:17px;}
+.sky-legend{position:absolute;right:14px;top:12px;display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;max-width:62%;}
+.sky-lg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#c4ccdd;background:rgba(255,255,255,.07);padding:3px 9px;border-radius:20px;backdrop-filter:blur(2px);}
+.sky-lg i{width:8px;height:8px;border-radius:50%;display:inline-block;}
 
 /* ═══════════════════════════════════════════════════════════
    10. 도서 상세 페이지
@@ -1340,6 +1353,14 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
   <!-- 학기 결산 공유 카드 (바이럴) -->
   <div class="summary-share" id="summaryCard" style="margin-top:24px"></div>
+
+  <!-- ✨ 나의 독서 별자리 -->
+  <div style="margin-top:32px">
+    <div class="section-head"><div class="section-title"><em>나의 독서 별자리</em></div>
+      <button class="ss-share" onclick="shareSky()" style="background:var(--primary);color:#fff">✨ 별자리 공유</button></div>
+    <div id="readingSky" class="sky"></div>
+    <div style="font-size:11.5px;color:var(--text-light);margin-top:8px">읽은 책 한 권이 별 하나 — 같은 장르끼리 이어져 나만의 별자리가 됩니다. 별을 누르면 그 책으로.</div>
+  </div>
 
   <!-- 독서 데이터 분포 (StoryGraph식) -->
   <div style="margin-top:32px">
@@ -2122,7 +2143,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSky(); renderReadChart(); }, 50);
   }
 }
 
@@ -3545,6 +3566,66 @@ function renderReadChart(){
   host.innerHTML=`<div class="rc-col"><div class="rc-h">장르</div>${bars(tally('category'),'#6366f1')}</div>
     <div class="rc-col"><div class="rc-h">시대</div>${bars(tally('period'),'#0ea5a4')}</div>
     <div class="rc-col"><div class="rc-h">언어</div>${bars(langs,'#b8902f')}</div>`;
+}
+
+/* ── ✨ 나의 독서 별자리 ── */
+const SKY_W=1000, SKY_H=400;
+const GENRE_COLORS={'소설':'#8ab4ff','시':'#ffd479','수필':'#7ef0c2','희곡':'#ff9ecb','사상':'#c9a3ff','평론':'#c9a3ff','역사':'#ffb38a','과학':'#7fe0ff','해외문학':'#f2b6ff'};
+function genreColor(g){return GENRE_COLORS[g]||'#aab6e8';}
+function _seed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return function(){h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+function skyLayout(){
+  const set=myReadBooks(), W=SKY_W, H=SKY_H;
+  const groups={}; set.forEach(b=>{(groups[b.category||'기타']=groups[b.category||'기타']||[]).push(b);});
+  const gkeys=Object.keys(groups);
+  const bgr=_seed('bgstars'), bg=[];
+  for(let i=0;i<80;i++) bg.push({x:bgr()*W,y:bgr()*H,r:bgr()*1.2+0.3,o:bgr()*0.5+0.12});
+  const out=gkeys.map((g,gi)=>{
+    const rnd=_seed(g), cx=W*((gi+0.5)/gkeys.length), cy=H*(0.42+ (gi%2?0.16:0));
+    const pts=groups[g].map((b,i)=>{ const ang=rnd()*6.283, rad=38+rnd()*95;
+      return {x:Math.max(34,Math.min(W-34,cx+Math.cos(ang)*rad)), y:Math.max(46,Math.min(H-50,cy+Math.sin(ang)*rad*0.72)), b, r:3+(i%3)*0.9};
+    });
+    return {g, color:genreColor(g), pts};
+  });
+  return {W,H,bg,groups:out,count:set.length};
+}
+function renderSky(){
+  const host=document.getElementById('readingSky'); if(!host) return;
+  const L=skyLayout();
+  let bg='', lines='', stars='';
+  L.bg.forEach(s=>bg+=`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(2)}" fill="#fff" opacity="${s.o.toFixed(2)}"/>`);
+  L.groups.forEach(gp=>{
+    for(let i=0;i<gp.pts.length-1;i++) lines+=`<line x1="${gp.pts[i].x.toFixed(1)}" y1="${gp.pts[i].y.toFixed(1)}" x2="${gp.pts[i+1].x.toFixed(1)}" y2="${gp.pts[i+1].y.toFixed(1)}" stroke="${gp.color}" stroke-width="1" opacity="0.34"/>`;
+    gp.pts.forEach((p,i)=>{ stars+=`<g class="sky-star" onclick="openDetail('${p.b.id}')" style="--d:${(i*0.35).toFixed(2)}s">
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(p.r*2.4).toFixed(1)}" fill="${gp.color}" opacity="0.13"/>
+      <circle class="st-core" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}" fill="${gp.color}"><title>${esc(p.b.title)} · ${esc(p.b.author||'')}</title></circle></g>`;
+    });
+  });
+  const legend=L.groups.map(gp=>`<span class="sky-lg"><i style="background:${gp.color}"></i>${esc(gp.g)}</span>`).join('');
+  host.innerHTML=`<svg viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="xMidYMid slice" class="sky-svg">${bg}${lines}${stars}</svg>
+    <div class="sky-cap"><b>${L.count}</b>개의 별 · ${esc(readerName())}님의 독서 밤하늘</div>
+    <div class="sky-legend">${legend}</div>`;
+}
+function shareSky(){
+  const L=skyLayout(), S=2, W=L.W*S, H=L.H*S;
+  const c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
+  const g=x.createRadialGradient(W/2,-H*0.1,0,W/2,-H*0.1,H*1.3); g.addColorStop(0,'#2a3766');g.addColorStop(.5,'#1a2240');g.addColorStop(1,'#0d1120');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  L.bg.forEach(s=>{ x.globalAlpha=s.o; x.fillStyle='#fff'; x.beginPath(); x.arc(s.x*S,s.y*S,s.r*S,0,6.3); x.fill(); }); x.globalAlpha=1;
+  L.groups.forEach(gp=>{
+    x.strokeStyle=gp.color; x.globalAlpha=.34; x.lineWidth=1*S;
+    for(let i=0;i<gp.pts.length-1;i++){ x.beginPath(); x.moveTo(gp.pts[i].x*S,gp.pts[i].y*S); x.lineTo(gp.pts[i+1].x*S,gp.pts[i+1].y*S); x.stroke(); }
+    x.globalAlpha=1; x.fillStyle=gp.color;
+    gp.pts.forEach(p=>{ x.globalAlpha=.14; x.beginPath(); x.arc(p.x*S,p.y*S,p.r*2.4*S,0,6.3); x.fill();
+      x.globalAlpha=1; x.beginPath(); x.arc(p.x*S,p.y*S,p.r*S,0,6.3); x.fill(); });
+  });
+  x.globalAlpha=1; x.fillStyle='#ffd479'; x.font=`bold ${30*S}px Georgia`; x.textAlign='left'; x.fillText(L.count+'개의 별', 24*S, H-46*S);
+  x.fillStyle='#dbe4ff'; x.font=`${20*S}px sans-serif`; x.fillText(readerName()+'님의 독서 밤하늘 · bookstar Archive', 24*S, H-20*S);
+  c.toBlob(async(blob)=>{
+    try{ const f=new File([blob],'bookstar-별자리.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:'나의 독서 별자리'}); return; }
+    }catch(e){}
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='bookstar-별자리.png'; document.body.appendChild(a); a.click(); a.remove();
+  },'image/png');
 }
 
 /* ═══════════════════════════════════════════════════════════
