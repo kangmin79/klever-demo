@@ -605,7 +605,7 @@ body.dark .rec-go .icon{color:#0f172a;}
 .lc-go{margin-left:auto;color:var(--text-light);font-size:18px;}
 .acc-caret{margin-left:auto;color:var(--text-light);font-size:13px;transition:transform .2s;}
 .list-card.open .acc-caret{transform:rotate(180deg);}
-.acc-body{display:none;font-size:13.5px;line-height:1.8;color:var(--text-sub);white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.acc-body{display:none;font-size:14px;line-height:1.85;color:var(--text);white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
 .list-card.open .acc-body{display:block;}
 /* 커뮤니티 상세 모달 (독서 프로그램) */
 #commModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}
@@ -3347,7 +3347,7 @@ function openCommModal(tab,i){
       <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag||'')}</span>
       ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
     <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
-    <div style="font-size:14px;line-height:1.85;color:var(--text-sub);white-space:pre-wrap">${esc(p.body||'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.')}</div>
+    <div style="font-size:14px;line-height:1.85;color:var(--text);white-space:pre-wrap">${esc(p.body||'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.')}</div>
     <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n마이 페이지에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
   document.getElementById('commModal').classList.add('on');
 }
