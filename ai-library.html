@@ -112,8 +112,8 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 <div class=wrap>
   <div class=hero>
     <div class=kicker>✦ BOOKSTAR</div>
-    <h1>추천받고, 가까운 도서관에서 바로 찾기</h1>
-    <div class=sub>북스타 AI가 책을 골라주면 — 내 위치 기준 가까운 도서관에 그 책이 있는지·빌릴 수 있는지까지 알려드려요</div>
+    <h1>추천받고, 순천 도서관에서 바로 찾기</h1>
+    <div class=sub>북스타 AI가 책을 골라주면 — 순천시 도서관에 그 책이 있는지·빌릴 수 있는지 알려드려요 (위치를 켜면 가까운 순서로)</div>
     <div class=searchwrap>
       <div class=searchbar>
         <input id=q placeholder="예: 요즘 지쳐서 위로가 되는 책" onkeydown="if(event.key=='Enter')go()">
@@ -121,17 +121,9 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
       </div>
       <div class=chips id=chips></div>
       <div class=locbar>
-        <button id=locBtn class=locbtn onclick=getLoc()>📍 내 위치로 찾기</button>
-        <select id=regionSel class=regionSel onchange=pickRegion(this.value)>
-          <option value="">지역 선택</option>
-          <option value="11">서울</option><option value="21">부산</option><option value="22">대구</option>
-          <option value="23">인천</option><option value="24">광주</option><option value="25">대전</option>
-          <option value="26">울산</option><option value="29">세종</option><option value="31">경기</option>
-          <option value="32">강원</option><option value="33">충북</option><option value="34">충남</option>
-          <option value="35">전북</option><option value="36">전남</option><option value="37">경북</option>
-          <option value="38">경남</option><option value="39">제주</option>
-        </select>
-        <div id=locStat class=locstat>위치를 켜면 가까운 도서관부터 보여드려요 (안 켜도 지역 선택으로 가능)</div>
+        <span class="locbtn on" style="cursor:default">📍 순천시 도서관</span>
+        <button id=locBtn class=locbtn onclick=getLoc()>내 위치로 거리 보기 (선택)</button>
+        <div id=locStat class=locstat>순천시 도서관에서 찾아드려요 · 위치를 켜면 내 위치에서 가까운 순서로 보여줘요</div>
       </div>
     </div>
   </div>
@@ -144,33 +136,29 @@ const REC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
 const LIB="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/find-in-library";
 const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 const EXAMPLES=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어","김애란 책"];
-const REGION_NM={"11":"서울","21":"부산","22":"대구","23":"인천","24":"광주","25":"대전","26":"울산","29":"세종","31":"경기","32":"강원","33":"충북","34":"충남","35":"전북","36":"전남","37":"경북","38":"경남","39":"제주"};
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
 const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
-let LAST=[], CURRENT=null, MYLOC=null, MYREGION='';
+// 검색 도서관 한정: 순천시 (city=주소필터, region=36 전남). 풀려면 LOCK=null.
+const LOCK={city:'순천', region:'36', label:'순천시'};
+let LAST=[], CURRENT=null, MYLOC=null;
 document.getElementById('chips').innerHTML=EXAMPLES.map(e=>`<span class=chip onclick="run('${e}')">${e}</span>`).join('');
 function run(t){document.getElementById('q').value=t;go();}
 
 /* ---- 위치 ---- */
 function setStat(t){document.getElementById('locStat').textContent=t;}
 function getLoc(){
-  if(!navigator.geolocation){setStat('이 기기에선 위치를 못 써요. 지역을 선택해 주세요.');return;}
+  if(!navigator.geolocation){setStat('이 기기에선 위치를 못 써요. 그냥 목록으로 보여드릴게요.');return;}
   setStat('위치 확인 중…');
   navigator.geolocation.getCurrentPosition(p=>{
-    MYLOC={lat:p.coords.latitude,lng:p.coords.longitude}; MYREGION='';
-    document.getElementById('regionSel').value='';
+    MYLOC={lat:p.coords.latitude,lng:p.coords.longitude};
     document.getElementById('locBtn').classList.add('on');
-    setStat('현재 위치 기준으로 가까운 도서관을 찾아드려요 ✓');
+    setStat(`내 위치에서 가까운 ${LOCK?LOCK.label:''} 도서관 순으로 보여드려요 ✓`);
+    // 이미 상세가 열려 있으면 거리 반영해 새로고침
+    if(document.getElementById('ov').classList.contains('on') && CURRENT && CURRENT.isbn13) findLib();
   },()=>{
-    document.getElementById('locBtn').classList.remove('on');
-    setStat('위치 권한이 꺼져 있어요. 아래에서 지역을 선택하면 돼요.');
+    setStat('위치 없이도 도서관 목록은 보여드려요 (거리만 생략).');
   },{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
-}
-function pickRegion(v){
-  MYREGION=v; MYLOC=null;
-  document.getElementById('locBtn').classList.remove('on');
-  setStat(v?`${REGION_NM[v]} 지역 도서관에서 찾아드려요`:'위치를 켜거나 지역을 선택하세요');
 }
 
 /* ---- 추천 ---- */
@@ -213,7 +201,7 @@ function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
     <div class=meta>${star}${loan}${page}</div></div></div>
     ${b.reason?`<div class=why>${esc(b.reason)}</div>`:''}
     <div class=acts>
-      <button class=cta id=findBtn ${hasIsbn?'':'disabled'} onclick=findLib()>📍 내 주변 도서관에서 찾기</button>
+      <button class=cta id=findBtn ${hasIsbn?'':'disabled'} onclick=findLib()>📚 ${LOCK?LOCK.label:''} 도서관에서 찾기</button>
       <button class=cta2 onclick=closeM()>닫기</button>
     </div>
     <div id=libResult></div>
@@ -224,30 +212,29 @@ function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
 }
 async function findLib(){
   if(!CURRENT||!CURRENT.isbn13)return;
-  if(!MYLOC && !MYREGION){
-    document.getElementById('libResult').innerHTML='<div class=ebookline>먼저 위 <b>📍 내 위치로 찾기</b>를 켜거나 <b>지역</b>을 선택해 주세요.</div>';
-    getLoc(); return;
-  }
-  const btn=document.getElementById('findBtn'); btn.disabled=true; btn.textContent='도서관 찾는 중…';
+  const btn=document.getElementById('findBtn'); if(btn){btn.disabled=true; btn.textContent='도서관 찾는 중…';}
   const res=document.getElementById('libResult');
   res.innerHTML='<div class=loading style="padding:24px 0"><div class=pulse></div></div>';
   try{
-    const payload={isbn:CURRENT.isbn13,limit:6};
-    if(MYLOC){payload.lat=MYLOC.lat;payload.lng=MYLOC.lng;} else payload.region=MYREGION;
+    const payload={isbn:CURRENT.isbn13,limit:8};
+    if(LOCK){payload.region=LOCK.region; payload.city=LOCK.city;}
+    if(MYLOC){payload.lat=MYLOC.lat; payload.lng=MYLOC.lng;}
     const r=await fetch(LIB,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify(payload)});
     const d=await r.json();
     renderLibs(d);
   }catch(e){ res.innerHTML='<div class=ebookline>도서관 조회에 문제가 생겼어요. 다시 시도해 주세요.</div>'; }
-  btn.disabled=false; btn.textContent='📍 내 주변 도서관에서 찾기';
+  if(btn){btn.disabled=false; btn.textContent=`📚 ${LOCK?LOCK.label:''} 도서관에서 찾기`;}
 }
 function renderLibs(d){
   const res=document.getElementById('libResult');
+  const area=LOCK?LOCK.label:esc(d&&d.regionName||'');
   if(!d || !d.libraries || !d.libraries.length){
-    res.innerHTML=`<div class=ebookline>${esc(d&&d.regionName||'')} 지역에는 이 책을 소장한 도서관을 못 찾았어요. 지역을 바꿔보거나 전자책으로 찾아보세요.</div>`;
+    res.innerHTML=`<div class=ebookline>${area}에는 이 책을 소장한 도서관을 못 찾았어요. 아래 전자책으로 찾아보세요.</div>`;
     return;
   }
+  const useDist=!!d.usedLocation;
   const items=d.libraries.map(l=>{
-    const dist=l.distance!=null?`${l.distance}km`:'';
+    const dist=(useDist && l.distance!=null)?`${l.distance}km`:'';
     const av=l.loanAvailable===true?'<span class="badge ok">대출 가능</span>'
             :l.loanAvailable===false?'<span class="badge no">대출 중</span>'
             :'<span class="badge unk">소장</span>';
@@ -260,10 +247,10 @@ function renderLibs(d){
       <div class=librow>${av}<a class=liblink href="${map}" target=_blank rel=noopener>지도</a>${tel}${hp}</div>
     </div>`;
   }).join('');
-  const where=d.usedLocation?'현재 위치':'<b>'+esc(d.regionName)+'</b> 지역';
-  res.innerHTML=`<div class=libwrap>
-    <div class=libhd>📍 ${where} 가까운 순 · ${esc(d.regionName)} 전체 ${d.total||0}곳 소장</div>
-    <div class=libs>${items}</div></div>`;
+  const hd=useDist
+    ? `📍 내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
+    : `📚 ${area} 도서관 · ${d.total||0}곳 소장 <span style="font-weight:400;color:var(--mut)">(위치 켜면 거리 표시)</span>`;
+  res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div><div class=libs>${items}</div></div>`;
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
 </script></body></html>
