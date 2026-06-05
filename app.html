@@ -2104,29 +2104,37 @@ function bindDragScroll(sel){
     row.addEventListener('click',e=>{ if(_dragMoved>8){ e.stopPropagation(); e.preventDefault(); } },true);
   });
 }
-function mlBindDrag(){ bindDragScroll('#libCurationGrid .ml-hrow'); }
+function mlBindDrag(){ bindDragScroll('#libCurationGrid .ml-hrow, #collectionCuration .ml-hrow, #intlCuration .ml-hrow'); }
 function libTitled(){return LIB_POOL.filter(b=>b.t);}
 function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];for(let i=0;i<n;i++)r.push(p[(off+i)%p.length]);return r;}
+// 고전 큐레이션용 — 책이 곧 우리 고전(BOOKS)
+function isCls(b){ return !!(b&&b.id&&(b.id.indexOf('kr-')===0||b.id.indexOf('gb-')===0)); }
+function clOf(b){ return (typeof BOOKS!=='undefined'&&BOOKS.find(x=>x.id===b.id))||{id:b.id,title:b.t||b.title||'',author:b.a||b.author||''}; }
+function classicPick(n,off){ if(typeof BOOKS==='undefined')return []; const p=BOOKS.filter(b=>b.locale==='modern'); if(!p.length)return []; const r=[]; for(let i=0;i<n;i++){const b=p[((off||0)+i)%p.length]; r.push({id:b.id,t:b.title,a:b.author,cls:true});} return r; }
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
 function mlLife(b,note,cur,title){
   const d=new Date();const wd=['일','월','화','수','목','금','토'][d.getDay()];
   const dateStr=`${d.getMonth()+1}월 ${d.getDate()}일 ${wd}요일 업데이트`;
   const ym=`${d.getFullYear()}년 ${d.getMonth()+1}월`;
-  const glow=b.cover?`<div class="ml-life-glow" style="background-image:url('${esc(hiCover(b.cover))}')"></div>`:'';
+  const cls=isCls(b);
+  const glow=(!cls&&b.cover)?`<div class="ml-life-glow" style="background-image:url('${esc(hiCover(b.cover))}')"></div>`:'';
+  const stage=cls
+    ? `<div class="ml-life-stage" onclick="openDetail('${b.id}')">${bookCoverHTML(clOf(b),' style="width:100%;max-width:240px;margin:0 auto"')}</div>`
+    : `<div class="ml-life-stage" onclick="libDetail('${b.isbn}')">${glow}${mlcv('ml-life-cv',b)}</div>`;
   const checks=[];
-  if(b.rating!=null) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${ym} 평균 별점 <b>${b.rating}</b></div>`);
+  if(!cls&&b.rating!=null) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${ym} 평균 별점 <b>${b.rating}</b></div>`);
   if(cur&&cur.title) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${esc(cur.title)}</div>`);
-  else if(b.loan) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> 누적 대출 <b>${Number(b.loan).toLocaleString()}회</b></div>`);
+  else if(!cls&&b.loan) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> 누적 대출 <b>${Number(b.loan).toLocaleString()}회</b></div>`);
   return `<div>${mlHead(title||'오늘의 사서 추천',dateStr)}
     <div class="ml-life">
-      <div class="ml-life-stage" onclick="libDetail('${b.isbn}')">${glow}${mlcv('ml-life-cv',b)}</div>
+      ${stage}
       <div class="ml-life-card">
         <div class="ml-life-who"><div class="ml-life-av">📖</div><div><div class="ml-life-who-t">우리 학교 사서의 추천</div><div class="ml-life-who-s">${esc((cur&&cur.library)||'우리 도서관')} · 사서</div></div></div>
         <div class="ml-life-quote"><span class="ml-q-open">“</span><p>${esc(note||'이 달의 추천 도서예요.')}</p><span class="ml-q-close">”</span></div>
         ${checks.length?`<div class="ml-life-checks">${checks.join('')}</div>`:''}
       </div>
     </div></div>`;}
-function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
+function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
 const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시','인문/교양','취미/실용','어린이/청소년','매거진'];
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
 function mlChip(el){el.parentNode.querySelectorAll('.ml-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
@@ -2140,7 +2148,7 @@ function mlRank(t,s,books){
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 // 표지 그리드(서가)
-function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
+function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
 // 매거진
 function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`;}
 // 와이드 띠배너(대표 1권)
@@ -2161,12 +2169,12 @@ function booksForSlot(slot){
       const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn))||b; if(p&&(p.t||p.title))out.push(p); }); });
   return out;
 }
-function millieHTML(secs){
+function millieHTML(secs,classicMode){
   secs=secs||SECTIONS;
   const P=libTitled();
-  if(!P.length) return '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:60px 0">불러오는 중…</div>';
+  if(!P.length && !classicMode) return '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:60px 0">불러오는 중…</div>';
   const cur=LC_PUB[0];
-  const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:P[0];
+  const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:(P[0]||{});
   const note=life.note||(cur&&cur.intro)||'';
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
   let out='';
@@ -2178,9 +2186,9 @@ function millieHTML(secs){
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
-      out+=mlLife(assigned[0]||life,(hc&&hc.intro)||note,hc||cur,s.title); return;
+      out+=mlLife(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
     }
-    const books=assigned.length?assigned:libPick(8,i*3+2);            // 둘 다 없으면 풀 폴백
+    const books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
     else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
     else if(st==='grid') out+=mlGrid(s.title,s.subtitle,books);
@@ -2229,7 +2237,7 @@ async function renderAreaCuration(containerId, area){
   if(!secs.length){ grid.innerHTML=''; return; }
   // 담긴 책을 풀에 병합(표지·별점 보강)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
-  grid.innerHTML=millieHTML(secs);
+  grid.innerHTML=millieHTML(secs, area==='고전 컬렉션');
   try{ mlBindDrag(); }catch(e){}
   try{ backfillPool(); }catch(e){}
 }
@@ -2241,8 +2249,10 @@ function rebuildLibPool(){
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
-  return (s.books||[]).map(b=>{ const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note}; })
-    .filter(b=>b.t||b.title);
+  return (s.books||[]).map(b=>{
+    if(isCls(b)) return {id:b.id,t:b.title||b.t||'',a:b.author||b.a||'',cls:true};   // 우리 고전 참조 보존
+    const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note};
+  }).filter(b=>b.t||b.title||b.id);
 }
 const PREVIEW = new URLSearchParams(location.search).get('preview')==='1';
 function renderLibCuration(){
@@ -2272,7 +2282,7 @@ function _pvRender(rawSecs){
   LC_PUB=[]; rebuildLibPool();
   // 담긴 책을 풀에 보강(표지·별점)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
-  const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
+  const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs, PV_AREA==='고전 컬렉션'); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
 }
 if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
   const goPv=()=>{ try{ nav(PV_T.page); }catch(e){} try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
