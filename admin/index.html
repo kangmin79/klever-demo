@@ -375,7 +375,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <!-- ===== 커뮤니티 관리 ===== -->
     <section id="pg-comm" style="display:none">
       <div class="phead"><div><h1>커뮤니티 관리</h1>
-        <p>학생 앱 ‘커뮤니티’의 <b>도서관 행사·자유 게시판</b>을 관리합니다. (독서 프로그램은 ‘독서 챌린지’, 공지사항은 ‘공지글 작성’ 메뉴에서 관리)</p></div></div>
+        <p>학생 앱 ‘커뮤니티’의 <b>독서 프로그램·도서관 행사·자유 게시판·공지사항</b>을 한곳에서 관리합니다.</p></div></div>
       <div class="tabs" id="commTabs"></div>
       <div class="make-grid">
         <div class="panel">
@@ -1220,9 +1220,10 @@ function renderNotices(){
 }
 
 /* ====== 커뮤니티 관리 (도서관 행사 + 자유 게시판 = community_posts) ====== */
-const COMM_TABS=[['event','도서관 행사'],['free','자유 게시판']];
-const COMM_TAGS={event:['행사','강연','전시','모임'],free:['질문','추천','토론','자유']};
-let commKind='event', COMM_POSTS=[];
+const COMM_TABS=[['program','독서 프로그램'],['event','도서관 행사'],['free','자유 게시판'],['notice','공지사항']];
+const COMM_TAGS={program:['진행중','필수','곧 시작','완료'],event:['행사','강연','전시','모임'],free:['질문','추천','토론','자유'],notice:['공지','업데이트','안내','긴급']};
+const COMM_META={program:['참여 현황','기간(D-day)'],event:['기간','장소'],free:['작성자','날짜·댓글'],notice:['날짜','비고']};
+let commKind='program', COMM_POSTS=[];
 async function loadCommPosts(){
   try{
     const r=await fetch(`${SB_REST}/community_posts?select=*&order=kind,sort_order,created_at`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
@@ -1234,9 +1235,9 @@ function setCommKind(k){commKind=k;renderComm();}
 function renderComm(){
   el('commTabs').innerHTML=COMM_TABS.map(t=>`<button class="tab ${t[0]===commKind?'on':''}" onclick="setCommKind('${t[0]}')">${t[1]}</button>`).join('');
   el('cmTag').innerHTML=(COMM_TAGS[commKind]||[]).map(t=>`<option>${t}</option>`).join('');
-  el('cmM1L').textContent= commKind==='event'?'기간':'작성자';
-  el('cmM2L').textContent= commKind==='event'?'장소':'날짜·댓글';
-  el('cmListTitle').textContent= commKind==='event'?'게시된 행사':'게시된 글';
+  const ml=COMM_META[commKind]||['',''];
+  el('cmM1L').textContent=ml[0]; el('cmM2L').textContent=ml[1];
+  el('cmListTitle').textContent=(COMM_TABS.find(t=>t[0]===commKind)||[])[1]||'게시된 글';
   const list=COMM_POSTS.filter(p=>p.kind===commKind);
   el('commList').innerHTML=list.map(p=>`<div class="notice-i"><div class="nx">
     <h4><span class="gtag chal" style="margin-right:6px">${esc(p.tag||'')}</span>${esc(p.title)}</h4>

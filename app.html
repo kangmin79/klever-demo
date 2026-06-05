@@ -3197,10 +3197,8 @@ function setCommunityTab(el, tab){
 }
 
 function renderCommunity(tab){
+  // 4개 탭 모두 community_posts(관리자 커뮤니티 관리)에서 로드 — 단일 소스
   let list = COMMUNITY_POSTS[tab] || [];
-  if(tab==='notice' && NOTICES_PUB.length){
-    list = NOTICES_PUB.map(n=>({tag:'공지', title:n.title, meta:[n.target,n.period,n.at].filter(Boolean)}));
-  }
   document.getElementById('communityContent').innerHTML = list.map(p=>`
     <div class="list-card">
       <div class="list-card-head">
@@ -3222,19 +3220,18 @@ async function loadNoticesPub(){
   }catch(e){}
 }
 loadNoticesPub();
-// 커뮤니티 도서관 행사·자유 게시판 — 관리자(community_posts)에서 관리
+// 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리
 async function loadCommunityPosts(){
   try{
     const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean)}));
-    const ev=mk('event'), fr=mk('free');
-    if(ev.length) COMMUNITY_POSTS.event=ev;
-    if(fr.length) COMMUNITY_POSTS.free=fr;
+    ['program','event','free','notice'].forEach(k=>{ const arr=mk(k); if(arr.length) COMMUNITY_POSTS[k]=arr; });
     const cp=document.getElementById('page-community');
     const on=document.querySelector('#page-community .subtab.active');
     if(cp&&cp.classList.contains('active')&&on){ const t=on.textContent;
-      if(t.includes('행사')) renderCommunity('event'); else if(t.includes('자유')) renderCommunity('free'); }
+      const key=t.includes('프로그램')?'program':t.includes('행사')?'event':t.includes('자유')?'free':t.includes('공지')?'notice':null;
+      if(key) renderCommunity(key); }
   }catch(e){}
 }
 loadCommunityPosts();
