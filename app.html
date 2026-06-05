@@ -604,7 +604,11 @@ body.dark .rec-go .icon{color:#0f172a;}
 .list-card-meta{font-size:11px;color:var(--text-light);display:flex;gap:14px;}
 
 /* 검증 서평 카드 */
-.rv-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;}
+.rv-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;display:flex;gap:13px;align-items:flex-start;}
+.rv-cv{width:44px;height:62px;flex:0 0 44px;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--bg-input);}
+.rv-cv img{width:100%;height:100%;object-fit:cover;}
+.rv-cv.cls{background:linear-gradient(150deg,#6f5836 0%,#4a3a25 100%);color:#f3e9d8;font-size:8.5px;font-weight:800;text-align:center;padding:5px 4px;line-height:1.25;letter-spacing:-.3px;}
+.rv-main{flex:1;min-width:0;}
 .rv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
 .rv-who{font-size:13.5px;font-weight:700;color:var(--text);}
 .rv-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(46,125,87,.13);color:#1d6b48;}
@@ -3299,10 +3303,10 @@ async function renderCommunityReviews(){
   const host=document.getElementById('communityContent');
   host.innerHTML='<div class="rv-empty">불러오는 중…</div>';
   const list=await rvFetch('select=*&order=verified.desc,likes.desc,created_at.desc&limit=50');
-  host.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <span style="font-size:12.5px;color:var(--text-light)">완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>입니다</span>
-      <button class="rv-writebtn" style="margin-left:auto" onclick="openReviewModal('','')">✍️ 서평 쓰기</button></div>
-    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 첫 서평을 남겨보세요!</div>'}`;
+  host.innerHTML=`<div style="font-size:12.5px;color:var(--text-light);margin-bottom:12px">
+      완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>이 모이는 곳이에요.
+      서평은 <b>책 상세</b>나 <b>마이 페이지</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
+    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 책을 읽고 첫 서평을 남겨보세요!</div>'}`;
 }
 function renderCommunity(tab){
   if(tab==='review'){ renderCommunityReviews(); return; }
@@ -3351,8 +3355,18 @@ loadCommunityPosts();
 const RV_FLAG={ko:'🇰🇷',en:'🇺🇸',vi:'🇻🇳',zh:'🇨🇳',ja:'🇯🇵'};
 function readerName(){ try{ return localStorage.getItem('bookstar_reader')||'김민서'; }catch(e){ return '김민서'; } }
 function rvStars(n){ n=n||0; let s=''; for(let i=1;i<=5;i++) s+=`<span style="color:${i<=n?'#f5a623':'#d8d8d8'}">★</span>`; return s; }
+function rvCover(r){
+  const cb=(typeof BOOKS!=='undefined')&&BOOKS.find(x=>x.id===r.book_id);
+  if(cb){ if(cb.coverSrc) return `<div class="rv-cv"><img src="${esc(cb.coverSrc)}" onerror="this.parentNode.classList.add('cls');this.parentNode.textContent='${esc((cb.title||'').slice(0,8))}'"></div>`;
+    return `<div class="rv-cv cls">${esc((cb.title||r.book_title||'').slice(0,10))}</div>`; }
+  const p=(typeof LIB_POOL!=='undefined')&&LIB_POOL.find(x=>x.isbn===r.book_id);
+  if(p&&p.cover) return `<div class="rv-cv"><img src="${esc(hiCover(p.cover))}" onerror="this.parentNode.textContent='📖'"></div>`;
+  return `<div class="rv-cv">📖</div>`;
+}
 function rvCard(r){
   return `<div class="rv-card">
+    ${rvCover(r)}
+    <div class="rv-main">
     <div class="rv-head">
       <span class="rv-who">${esc(r.reviewer)}</span>
       ${r.verified?'<span class="rv-badge">✔ 완독 인증</span>':'<span class="rv-badge rv-reading">읽는 중</span>'}
@@ -3362,6 +3376,7 @@ function rvCard(r){
     ${r.book_title?`<div class="rv-book">『${esc(r.book_title)}』</div>`:''}
     <div class="rv-body">${esc(r.body)}</div>
     <div class="rv-foot"><span class="rv-like" onclick="likeReview(${r.id},this)">👍 <b>${r.likes||0}</b></span></div>
+    </div>
   </div>`;
 }
 async function rvFetch(qs){
