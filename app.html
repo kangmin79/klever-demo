@@ -705,6 +705,34 @@ body.dark .rec-go .icon{color:#0f172a;}
 body.dark .sc-day{background:rgba(255,255,255,.06);}
 .sc-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-light);margin-top:10px;}
 .sc-legend .sc-day{width:12px;height:12px;}
+/* 책장 히어로 (3D 세워진 책 + 선반) — 공용 컴포넌트 */
+.shelf-hero{position:relative;background:linear-gradient(135deg,#f5eee2 0%,#ece1cf 100%);border-radius:20px;padding:34px 30px 0;overflow:hidden;margin-bottom:10px;}
+body.dark .shelf-hero{background:linear-gradient(135deg,#1f2740,#161c2c);}
+.sh-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:center;}
+@media(max-width:680px){.sh-grid{grid-template-columns:1fr;}.sh-stage{min-height:300px;}}
+.sh-kicker{font-size:12px;letter-spacing:2.5px;font-weight:800;color:#b8902f;}
+.sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:800;font-size:33px;line-height:1.18;color:#2a2118;margin:8px 0 4px;}
+body.dark .sh-title{color:#f1ece2;}
+.sh-sub{font-size:14px;color:#7a6b54;margin-bottom:14px;}
+body.dark .sh-sub{color:#b9c2d8;}
+.sh-quote{font-size:13.5px;line-height:1.7;color:#5d5240;max-width:400px;}
+body.dark .sh-quote{color:#cdd5e6;}
+.sh-quote span{color:#a08b63;font-weight:700;}
+.sh-meta{display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#8a7a5f;font-weight:700;}
+.sh-btn{margin-top:18px;background:#2a2118;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;}
+.sh-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(42,33,24,.3);}
+body.dark .sh-btn{background:var(--gold,#e8c66a);color:#1a1f33;}
+.sh-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:340px;padding-bottom:32px;}
+.sh-side{position:absolute;left:6px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:11px;letter-spacing:3px;color:#ad9c7c;font-weight:700;}
+.book3d{position:relative;z-index:2;transform:perspective(1600px) rotateY(-20deg);filter:drop-shadow(16px 22px 22px rgba(50,38,24,.42));cursor:pointer;transition:transform .4s ease;}
+.book3d:hover{transform:perspective(1600px) rotateY(-10deg);}
+.book3d .book-cover{width:176px;height:258px;border-radius:3px 8px 8px 3px;}
+.book3d .book-cover img{width:100%;height:100%;object-fit:cover;}
+.book3d::before{content:"";position:absolute;left:0;top:0;bottom:0;width:15px;background:linear-gradient(90deg,rgba(0,0,0,.30),rgba(0,0,0,0));border-radius:3px 0 0 3px;z-index:3;pointer-events:none;}
+.book3d::after{content:"";position:absolute;top:4px;bottom:4px;right:-3px;width:7px;background:repeating-linear-gradient(90deg,#efe7d6,#efe7d6 1px,#cfc1a6 2px);border-radius:0 2px 2px 0;}
+.sh-shadow{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:150px;height:16px;background:radial-gradient(ellipse,rgba(40,30,15,.38),transparent 70%);filter:blur(3px);z-index:1;}
+.shelf{position:absolute;left:5%;right:5%;bottom:14px;height:14px;background:linear-gradient(#efe6d3,#d3c4a6);border-radius:3px;box-shadow:0 14px 22px -10px rgba(60,45,25,.4),inset 0 2px 0 rgba(255,255,255,.55);}
+body.dark .shelf{background:linear-gradient(#2b3450,#1c2238);box-shadow:0 14px 22px -10px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.08);}
 
 /* ═══════════════════════════════════════════════════════════
    10. 도서 상세 페이지
@@ -2277,6 +2305,35 @@ function isCls(b){ return !!(b&&b.id&&(b.id.indexOf('kr-')===0||b.id.indexOf('gb
 function clOf(b){ return (typeof BOOKS!=='undefined'&&BOOKS.find(x=>x.id===b.id))||{id:b.id,title:b.t||b.title||'',author:b.a||b.author||''}; }
 function classicPick(n,off){ if(typeof BOOKS==='undefined')return []; const p=BOOKS.filter(b=>b.locale==='modern'); if(!p.length)return []; const r=[]; for(let i=0;i<n;i++){const b=p[((off||0)+i)%p.length]; r.push({id:b.id,t:b.title,a:b.author,cls:true});} return r; }
 function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
+// 책장 히어로 (3D 세워진 책 + 선반) — 공용
+function mlShelf(b,note,cur,title){
+  const cls=isCls(b);
+  const face = cls ? bookCoverHTML(clOf(b))
+    : (b.cover ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
+    : `<div class="book-cover" style="background:${spineColor(b.t||b.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||b.title||''))}</div><div class="book-cover-author">${esc(cleanA(b.a||b.author||''))}</div></div></div>`);
+  const bookT = esc(cls?clOf(b).title:cleanT(b.t||b.title||'추천 도서'));
+  const bookA = esc(cls?(clOf(b).author||''):cleanA(b.a||b.author||''));
+  const checks=[];
+  if(!cls && b.rating!=null) checks.push(`★ ${b.rating}`);
+  if(!cls && b.loan) checks.push(`대출 ${Number(b.loan).toLocaleString()}회`);
+  const click = cls?`openDetail('${b.id}')`:`libDetail('${esc(b.isbn||'')}')`;
+  return `<div class="shelf-hero"><div class="sh-grid">
+    <div class="sh-left">
+      <div class="sh-kicker">✦ ${esc(title||'오늘의 사서 추천')}</div>
+      <div class="sh-title">${bookT}</div>
+      <div class="sh-sub">${bookA}</div>
+      <div class="sh-quote">“${esc(note||'이 달의 추천 도서예요.')}”<span> — 사서</span></div>
+      ${checks.length?`<div class="sh-meta">${checks.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
+      <button class="sh-btn" onclick="${click}">자세히 보기 →</button>
+    </div>
+    <div class="sh-stage">
+      <div class="sh-side">${esc(title||'사서 추천')}</div>
+      <div class="sh-shadow"></div>
+      <div class="book3d" onclick="${click}">${face}</div>
+      <div class="shelf"></div>
+    </div>
+  </div></div>`;
+}
 function mlLife(b,note,cur,title){
   const d=new Date();const wd=['일','월','화','수','목','금','토'][d.getDay()];
   const dateStr=`${d.getMonth()+1}월 ${d.getDate()}일 ${wd}요일 업데이트`;
@@ -2351,7 +2408,7 @@ function millieHTML(secs,classicMode){
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
-      out+=mlLife(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
+      out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
     }
     const books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
