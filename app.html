@@ -3222,6 +3222,22 @@ async function loadNoticesPub(){
   }catch(e){}
 }
 loadNoticesPub();
+// 커뮤니티 도서관 행사·자유 게시판 — 관리자(community_posts)에서 관리
+async function loadCommunityPosts(){
+  try{
+    const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+    const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean)}));
+    const ev=mk('event'), fr=mk('free');
+    if(ev.length) COMMUNITY_POSTS.event=ev;
+    if(fr.length) COMMUNITY_POSTS.free=fr;
+    const cp=document.getElementById('page-community');
+    const on=document.querySelector('#page-community .subtab.active');
+    if(cp&&cp.classList.contains('active')&&on){ const t=on.textContent;
+      if(t.includes('행사')) renderCommunity('event'); else if(t.includes('자유')) renderCommunity('free'); }
+  }catch(e){}
+}
+loadCommunityPosts();
 
 /* ═══════════════════════════════════════════════════════════
    기타
