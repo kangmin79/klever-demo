@@ -378,7 +378,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <p>학생 앱 ‘커뮤니티’의 <b>독서 프로그램·도서관 행사·자유 게시판·공지사항</b>을 한곳에서 관리합니다.</p></div></div>
       <div class="tabs" id="commTabs"></div>
       <div class="make-grid">
-        <div class="panel">
+        <div class="panel" id="commForm">
           <div class="flabel">분류</div><select class="cur-inp" id="cmTag"></select>
           <div class="flabel">제목</div><input class="cur-inp" id="cmTitle" placeholder="제목을 입력하세요">
           <div class="row2"><div><div class="flabel" id="cmM1L">기간</div><input class="cur-inp" id="cmM1"></div>
@@ -1245,7 +1245,7 @@ function renderNotices(){
 }
 
 /* ====== 커뮤니티 관리 (도서관 행사 + 자유 게시판 = community_posts) ====== */
-const COMM_TABS=[['program','독서 프로그램'],['event','도서관 행사'],['free','자유 게시판'],['notice','공지사항']];
+const COMM_TABS=[['program','독서 프로그램'],['event','도서관 행사'],['free','자유 게시판'],['notice','공지사항'],['review','서평 (신고·삭제)']];
 const COMM_TAGS={program:['진행중','필수','곧 시작','완료'],event:['행사','강연','전시','모임'],free:['질문','추천','토론','자유'],notice:['공지','업데이트','안내','긴급']};
 const COMM_META={program:['참여 현황','기간(D-day)'],event:['기간','장소'],free:['작성자','날짜·댓글'],notice:['날짜','비고']};
 let commKind='program', COMM_POSTS=[];
@@ -1259,10 +1259,12 @@ async function loadCommPosts(){
 function setCommKind(k){commKind=k;renderComm();}
 function renderComm(){
   el('commTabs').innerHTML=COMM_TABS.map(t=>`<button class="tab ${t[0]===commKind?'on':''}" onclick="setCommKind('${t[0]}')">${t[1]}</button>`).join('');
+  el('cmListTitle').textContent=(COMM_TABS.find(t=>t[0]===commKind)||[])[1]||'게시된 글';
+  if(commKind==='review'){ el('commForm').style.display='none'; renderCommReviews(); return; }
+  el('commForm').style.display='';
   el('cmTag').innerHTML=(COMM_TAGS[commKind]||[]).map(t=>`<option>${t}</option>`).join('');
   const ml=COMM_META[commKind]||['',''];
   el('cmM1L').textContent=ml[0]; el('cmM2L').textContent=ml[1];
-  el('cmListTitle').textContent=(COMM_TABS.find(t=>t[0]===commKind)||[])[1]||'게시된 글';
   const list=COMM_POSTS.filter(p=>p.kind===commKind);
   el('commList').innerHTML=list.map(p=>`<div class="notice-i"><div class="nx">
     <h4><span class="gtag chal" style="margin-right:6px">${esc(p.tag||'')}</span>${esc(p.title)}</h4>
@@ -1270,6 +1272,26 @@ function renderComm(){
     ${p.body?`<p>${esc(p.body)}</p>`:''}</div>
     <button class="btn-ghost" style="color:var(--bad);border-color:#e7c9c4;align-self:flex-start" onclick="delCommPost(${p.id})">삭제</button></div>`).join('')
     ||'<div class="pv-empty">아직 게시글이 없어요.</div>';
+}
+// 서평 모더레이션 — reviews 테이블 목록 + 삭제
+let COMM_REVIEWS=[];
+async function renderCommReviews(){
+  el('commList').innerHTML='<div class="pv-empty">서평을 불러오는 중…</div>';
+  try{
+    const r=await fetch(`${SB_REST}/reviews?select=*&order=created_at.desc&limit=100`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    COMM_REVIEWS=r.ok?await r.json():[];
+  }catch(e){COMM_REVIEWS=[];}
+  el('commList').innerHTML=(COMM_REVIEWS||[]).map(p=>`<div class="notice-i"><div class="nx">
+    <h4><span class="gtag ${p.verified?'cur':'chal'}" style="margin-right:6px">${p.verified?'✔ 완독':'읽는 중'}</span>${esc(p.reviewer)} · <span style="color:var(--accent)">★${p.rating}</span> <span style="color:var(--light);font-weight:600">『${esc(p.book_title||p.book_id)}』</span>${p.lang&&p.lang!=='ko'?` <span style="font-size:11px">[${esc(String(p.lang).toUpperCase())}]</span>`:''}</h4>
+    <p>${esc(p.body)}</p>
+    <div class="nm">👍 ${p.likes||0} · ${(p.created_at||'').slice(0,10)}</div></div>
+    <button class="btn-ghost" style="color:var(--bad);border-color:#e7c9c4;align-self:flex-start" onclick="delReview(${p.id})">삭제</button></div>`).join('')
+    ||'<div class="pv-empty">아직 등록된 서평이 없어요.</div>';
+}
+async function delReview(id){
+  if(!confirm('이 서평을 삭제할까요? (부적절 신고 처리)'))return;
+  try{ await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}}); }catch(e){}
+  renderCommReviews(); toast('서평을 삭제했어요');
 }
 async function addCommPost(){
   const title=el('cmTitle').value.trim(); if(!title){toast('제목을 입력해주세요');return;}

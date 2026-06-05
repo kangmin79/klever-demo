@@ -631,6 +631,31 @@ body.dark .rec-go .icon{color:#0f172a;}
 .rvm-chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);margin:12px 0;}
 .rvm-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
 
+/* 학기 결산 공유 카드 */
+.summary-share{background:linear-gradient(135deg,#1e2a4a 0%,#2d3a5e 55%,#3b2f6e 100%);border-radius:18px;padding:22px 24px;color:#fff;position:relative;overflow:hidden;}
+.ss-kicker{font-size:11px;letter-spacing:2px;color:#c9b88a;font-weight:700;}
+.ss-name{font-size:20px;font-weight:800;margin:2px 0 2px;}
+.ss-period{font-size:12px;color:#c4ccdd;margin-bottom:16px;}
+.ss-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ss-cell{background:rgba(255,255,255,.08);border-radius:12px;padding:12px 10px;text-align:center;}
+.ss-num{font-size:24px;font-weight:800;font-family:Georgia,serif;color:#fff;}
+.ss-num .u{font-size:13px;color:#c9b88a;margin-left:1px;}
+.ss-lbl{font-size:11px;color:#c4ccdd;margin-top:3px;}
+.ss-foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;}
+.ss-brand{font-family:Georgia,serif;font-weight:700;font-size:14px;color:#fff;}
+.ss-brand span{color:#e8c66a;}
+.ss-share{background:#fff;color:#1e2a4a;border:0;border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;cursor:pointer;}
+@media(max-width:560px){.ss-grid{grid-template-columns:repeat(2,1fr);}}
+/* 독서 데이터 차트 (StoryGraph식) */
+.read-chart{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+@media(max-width:760px){.read-chart{grid-template-columns:1fr;}}
+.rc-col .rc-h{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.rc-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.rc-k{width:80px;font-size:12px;color:var(--text-sub);text-align:right;flex:0 0 80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rc-bar{flex:1;height:14px;background:var(--bg-input);border-radius:7px;overflow:hidden;}
+.rc-fill{height:100%;border-radius:7px;min-width:3px;transition:width .5s;}
+.rc-v{width:22px;font-size:12px;color:var(--text-light);text-align:left;flex:0 0 22px;}
+
 /* ═══════════════════════════════════════════════════════════
    10. 도서 상세 페이지
    ═══════════════════════════════════════════════════════════ */
@@ -1284,6 +1309,16 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="stat-card"><div class="stat-num" id="statBooks">4</div><div class="stat-label">완독 (12권 중)</div></div>
     <div class="stat-card"><div class="stat-num" id="statTime">14.5h</div><div class="stat-label">독서 시간</div></div>
     <div class="stat-card"><div class="stat-num" id="statRank">#14</div><div class="stat-label">학교 순위</div></div>
+  </div>
+
+  <!-- 학기 결산 공유 카드 (바이럴) -->
+  <div class="summary-share" id="summaryCard" style="margin-top:24px"></div>
+
+  <!-- 독서 데이터 분포 (StoryGraph식) -->
+  <div style="margin-top:32px">
+    <div class="section-head"><div class="section-title"><em>내 독서 분포</em></div>
+      <span style="font-size:11px;color:var(--text-light)">읽은 책 기준</span></div>
+    <div class="read-chart" id="readChart"></div>
   </div>
 
   <!-- Quest Map 12슬롯 (풀너비) -->
@@ -2063,7 +2098,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); }, 50);
+    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderReadChart(); }, 50);
   }
 }
 
@@ -3386,6 +3421,80 @@ async function renderMyReviews(){
   const mine=all.filter(r=>r.reviewer===me), others=all.filter(r=>r.reviewer!==me).slice(0,8);
   const mh=document.getElementById('myReviews'); if(mh) mh.innerHTML=mine.length?mine.map(rvCard).join(''):'<div class="rv-empty">아직 작성한 서평이 없어요. 책을 읽고 서평을 남겨보세요!</div>';
   const oh=document.getElementById('peerReviews'); if(oh) oh.innerHTML=others.length?others.map(rvCard).join(''):'<div class="rv-empty">아직 다른 학생의 서평이 없어요.</div>';
+}
+
+/* ── 학기 결산 공유카드 + 독서 데이터 차트 ── */
+let _myRead=null;
+function myReadBooks(){
+  if(_myRead) return _myRead;
+  let r=BOOKS.filter(b=>b.progress>0);
+  if(r.length<8){   // 데모: 장르가 다양하게 섞이도록 대표 read-set 구성
+    const byCat={}; BOOKS.forEach(b=>{(byCat[b.category]=byCat[b.category]||[]).push(b);});
+    const picked=r.slice(), seen=new Set(r.map(b=>b.id));
+    Object.keys(byCat).forEach(c=>{ const arr=byCat[c]; for(let i=0;i<3&&i<arr.length;i++){ if(!seen.has(arr[i].id)){picked.push(arr[i]);seen.add(arr[i].id);} } });
+    r=picked.slice(0,14);
+  }
+  _myRead=r; return r;
+}
+async function myAvgRating(){
+  const list=await rvFetch(`select=rating&reviewer=eq.${encodeURIComponent(readerName())}`);
+  if(!list.length) return 4.3;
+  return list.reduce((a,b)=>a+(b.rating||0),0)/list.length;
+}
+async function renderSummaryCard(){
+  const host=document.getElementById('summaryCard'); if(!host) return;
+  const books=myReadBooks().length;
+  const avg=await myAvgRating();
+  const hours=(readerStats.readingTime&&readerStats.readingTime.total)?(readerStats.readingTime.total/60):14.5;
+  const streak=(readerStats.streak&&readerStats.streak.count)||7;
+  host.dataset.books=books; host.dataset.avg=avg.toFixed(1); host.dataset.hours=hours.toFixed(1);
+  host.innerHTML=`
+    <div class="ss-kicker">✦ 2026-1학기 독서 결산</div>
+    <div class="ss-name">${esc(readerName())} 님</div>
+    <div class="ss-period">한국대학교 도서관 · bookstar Archive</div>
+    <div class="ss-grid">
+      <div class="ss-cell"><div class="ss-num">${books}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
+      <div class="ss-cell"><div class="ss-num">${avg.toFixed(1)}</div><div class="ss-lbl">평균 별점</div></div>
+      <div class="ss-cell"><div class="ss-num">86<span class="u">%</span></div><div class="ss-lbl">퀴즈 정답률</div></div>
+      <div class="ss-cell"><div class="ss-num">${hours.toFixed(1)}<span class="u">h</span></div><div class="ss-lbl">독서 시간</div></div>
+    </div>
+    <div class="ss-foot"><div class="ss-brand">book<span>star</span> Archive</div>
+      <button class="ss-share" onclick="shareSummary()">📤 결산 이미지 공유</button></div>`;
+}
+function roundRect(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+function shareSummary(){
+  const d=(document.getElementById('summaryCard')||{}).dataset||{};
+  const W=1080,H=1350,c=document.createElement('canvas'); c.width=W;c.height=H; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,'#1e2a4a');g.addColorStop(.55,'#2d3a5e');g.addColorStop(1,'#3b2f6e');
+  x.fillStyle=g; x.fillRect(0,0,W,H); x.textAlign='center';
+  x.fillStyle='#c9b88a'; x.font='bold 34px Georgia'; x.fillText('✦ 2026-1학기 독서 결산', W/2, 175);
+  x.fillStyle='#fff'; x.font='bold 76px sans-serif'; x.fillText(readerName()+' 님', W/2, 285);
+  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('한국대학교 도서관 · bookstar Archive', W/2, 345);
+  const cells=[[(d.books||'0')+'권','완독'],[d.avg||'4.3','평균 별점'],['86%','퀴즈 정답률'],[(d.hours||'14.5')+'h','독서 시간']];
+  const cw=480,ch=230,gap=40,sx=(W-cw*2-gap)/2,sy=455;
+  cells.forEach((cell,i)=>{ const col=i%2,row=(i/2)|0,cx=sx+col*(cw+gap),cy=sy+row*(ch+gap);
+    roundRect(x,cx,cy,cw,ch,24); x.fillStyle='rgba(255,255,255,.09)'; x.fill();
+    x.fillStyle='#fff'; x.font='bold 88px Georgia'; x.fillText(cell[0], cx+cw/2, cy+125);
+    x.fillStyle='#c4ccdd'; x.font='32px sans-serif'; x.fillText(cell[1], cx+cw/2, cy+185); });
+  x.fillStyle='#fff'; x.font='bold 46px Georgia'; x.fillText('bookstar Archive', W/2, H-115);
+  x.fillStyle='#c9b88a'; x.font='28px sans-serif'; x.fillText('읽은 만큼 증명되는 독서 — 북스타', W/2, H-65);
+  c.toBlob(async(blob)=>{
+    try{ const file=new File([blob],'bookstar-결산.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'내 독서 결산'}); return; }
+    }catch(e){}
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='bookstar-결산.png'; document.body.appendChild(a); a.click(); a.remove();
+  },'image/png');
+}
+function renderReadChart(){
+  const host=document.getElementById('readChart'); if(!host) return;
+  const set=myReadBooks(), total=set.length||1;
+  const tally=(key)=>{const m={};set.forEach(b=>{const k=b[key]||'기타';m[k]=(m[k]||0)+1;});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);};
+  const lm={}; set.forEach(b=>{const k=b.locale==='foreign'?'영어(원문)':'한국어';lm[k]=(lm[k]||0)+1;});
+  const langs=Object.entries(lm).sort((a,b)=>b[1]-a[1]);
+  const bars=(arr,color)=>arr.map(([k,v])=>`<div class="rc-row"><div class="rc-k" title="${esc(k)}">${esc(k)}</div><div class="rc-bar"><div class="rc-fill" style="width:${Math.round(v/total*100)}%;background:${color}"></div></div><div class="rc-v">${v}</div></div>`).join('');
+  host.innerHTML=`<div class="rc-col"><div class="rc-h">장르</div>${bars(tally('category'),'#6366f1')}</div>
+    <div class="rc-col"><div class="rc-h">시대</div>${bars(tally('period'),'#0ea5a4')}</div>
+    <div class="rc-col"><div class="rc-h">언어</div>${bars(langs,'#b8902f')}</div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════
