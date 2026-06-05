@@ -271,10 +271,10 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 </script>
 
 <div class="topbar">
-  <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>관리자</small></div>
-  <div class="school">📚 중앙대학교 도서관</div>
+  <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>Builder</small></div>
+  <div class="school">📚 한국대학교 도서관</div>
   <div class="spacer"></div>
-  <div class="who"><span class="av">중</span><span>중앙대 사서</span>
+  <div class="who"><span class="av">한</span><span>한국대 사서</span>
     <span class="lo" onclick="lgOut()">로그아웃</span></div>
 </div>
 
@@ -295,7 +295,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <!-- ===== 대시보드 ===== -->
     <section id="pg-dash">
       <div class="phead">
-        <div><h1>대시보드 <span class="tagpill">중앙대학교</span><span class="tagpill gold">데모 데이터</span></h1>
+        <div><h1>대시보드 <span class="tagpill">한국대학교 관리자</span><span class="tagpill gold">데모 데이터</span></h1>
           <p>도서관 독서 프로그램의 접속·이용 현황을 한눈에</p></div>
         <div class="seg">
           <button onclick="setRange(this,'week')">주간</button>
@@ -550,7 +550,7 @@ function pvSync(){
 }
 async function saveSections(){
   readSecInputs();
-  const rows=SECTIONS.map((s,i)=>({school:'중앙대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
   try{
     const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -558,7 +558,7 @@ async function saveSections(){
     if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
     const cur=new Set(SECTIONS.map(s=>s.slot));
     for(const slot of ORIG_SLOTS.filter(x=>!cur.has(x))){
-      await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('중앙대학교')}&slot=eq.${encodeURIComponent(slot)}`,
+      await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('한국대학교')}&slot=eq.${encodeURIComponent(slot)}`,
         {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     }
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
@@ -732,7 +732,7 @@ let NOTICES=[
 ];
 const COMMUNITY=[
  {title:'이달의 독서 모임 — 한강 작가 특집',by:'국어국문 독서동아리',at:'2026-05-20',members:24},
- {title:'고전 함께 읽기 오픈채팅',by:'중앙대 책벗',at:'2026-05-12',members:58},
+ {title:'고전 함께 읽기 오픈채팅',by:'한국대 책벗',at:'2026-05-12',members:58},
 ];
 
 /* ====== 네비게이션 ====== */
@@ -861,7 +861,7 @@ async function loadInventory(){
   }catch(e){}
 }
 async function upsertInventory(books){
-  const rows=books.filter(b=>b.isbn).map(b=>({school:'중앙대학교',isbn:b.isbn,title:b.t||b.title||'',author:b.a||b.author||'',cover:b.cover||'',rating:(b.rating!=null?b.rating:null),loan:(b.loan||null)}));
+  const rows=books.filter(b=>b.isbn).map(b=>({school:'한국대학교',isbn:b.isbn,title:b.t||b.title||'',author:b.a||b.author||'',cover:b.cover||'',rating:(b.rating!=null?b.rating:null),loan:(b.loan||null)}));
   if(!rows.length)return;
   try{ await fetch(`${SB_REST}/library_books?on_conflict=school,isbn`,{method:'POST',
     headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -998,7 +998,7 @@ async function finishMake(){
   if(!MK.loc.length){toast('노출 위치를 1개 이상 지정해주세요');return;}
   const status=calcStatus(MK.from,MK.to);
   const mission=MK.type!=='큐레이션'?Object.assign({},MK.mission):null;
-  const row={school:'중앙대학교',type:MK.type,title:MK.title,intro:MK.intro||'',location:MK.loc.join(','),status,
+  const row={school:'한국대학교',type:MK.type,title:MK.title,intro:MK.intro||'',location:MK.loc.join(','),status,
     start_date:MK.from||null,end_date:MK.to||null,mission,
     books:MK.books.map(b=>({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:b.note||''}))};
   let saved=null;
@@ -1100,7 +1100,7 @@ async function saveChallenges(){
   }
   try{
     if(CHALLENGES.length){
-      const rows=CHALLENGES.map(c=>({school:'중앙대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',
+      const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(b=>({isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
       const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
@@ -1134,7 +1134,7 @@ async function publishNotice(){
   const title=el('ntTitle').value.trim(),body=el('ntBody').value.trim();
   if(!title){toast('공지 제목을 입력해주세요');return;}
   if(!body){toast('공지 내용을 입력해주세요');return;}
-  const row={school:'중앙대학교',title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),location:ntLocSel.join(','),body};
+  const row={school:'한국대학교',title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),location:ntLocSel.join(','),body};
   try{
     const r=await fetch(`${SB_REST}/library_notices`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},

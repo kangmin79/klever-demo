@@ -86,6 +86,8 @@ body.dark .logo{background:var(--gold);color:#0f172a;}
 .bl-word span{color:#b8902f;}
 body.dark .bl-word{color:#f1f5f9;}
 body.dark .bl-word span{color:var(--gold);}
+.bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
+body.dark .bl-sub{color:var(--gold);}
 .gnb{display:flex;gap:4px;flex:1;}
 .gnb-item{padding:8px 16px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:all 0.15s;letter-spacing:-0.3px;}
 .gnb-item:hover{background:var(--primary-bg);color:var(--primary);}
@@ -1023,7 +1025,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      ═══════════════════════════════════════════════════════════ -->
 <header class="header">
   <div class="brand-logo" onclick="nav('ourlib')" title="우리 도서관">
-    <span class="bl-word">book<span>star</span></span>
+    <span class="bl-word">book<span>star</span></span><span class="bl-sub">Archive</span>
   </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
