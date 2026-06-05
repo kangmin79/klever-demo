@@ -394,7 +394,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         </div>
         <aside class="settings-pv" id="livePv">
           <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="pvFrameLoaded()"></iframe></div>
-          <div class="pv-phone-cap">학생 앱 ‘우리 도서관’ · 편집 즉시 반영</div>
+          <div class="pv-phone-cap" id="pvCap">학생 앱 ‘우리 도서관’ · 편집 즉시 반영</div>
         </aside>
       </div>
     </section>
@@ -502,19 +502,20 @@ function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);rend
 // 미리보기 — 저장 전 SECTIONS를 localStorage로 넘겨 app.html?preview=1 을 iframe으로 띄움
 function previewSections(){
   readSecInputs();
-  const rows=SECTIONS.filter(s=>aOf(s)==='우리도서관').map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(rows)); }catch(e){}
-  el('pvFrame').src='/app.html?preview=1&t='+Date.now();
+  el('pvFrame').src='/app.html?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
   el('pvOv').classList.add('on');
 }
 function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='about:blank'; }
 async function applyFromPreview(){ closePreview(); await saveSections(); }
 // ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
-function pvBuildRows(){ readSecInputs(); return SECTIONS.filter(s=>aOf(s)==='우리도서관').map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
+function pvBuildRows(){ readSecInputs(); return SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
 function _pvOpen(){
   const p=el('livePv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
-  el('pvLiveFrame').src='/app.html?preview=1&t='+Date.now();
+  el('pvLiveFrame').src='/app.html?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
+  const cap=el('pvCap'); if(cap) cap.textContent='학생 앱 ‘'+(AREA_LABELS[curArea]||curArea)+'’ · 편집 즉시 반영';
   const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기 닫기';
   requestAnimationFrame(pvFitScale);
 }
@@ -523,10 +524,9 @@ function _pvClose(){
   const f=el('pvLiveFrame'); if(f) f.src='about:blank';
   const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기';
 }
-function toggleLivePreview(){ if(curArea!=='우리도서관'){ toast('실시간 미리보기는 ‘우리도서관’ 영역만 지원돼요. 고전·International은 저장 후 학생 앱에서 확인하세요.'); return; }
-  const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
+function toggleLivePreview(){ const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
 // 꾸미기 진입 시 넓은 화면이면 자동으로 열기(좁으면 토글 유지)
-function autoOpenPreview(){ if(curArea!=='우리도서관')return; if(window.innerWidth>=1180){ const p=el('livePv'); if(p&&!p.classList.contains('on')) _pvOpen(); } }
+function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); if(p&&!p.classList.contains('on')) _pvOpen(); } }
 // iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지) + 축소 적용
 function pvFrameLoaded(){ const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
   const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} }

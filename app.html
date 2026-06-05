@@ -2224,6 +2224,7 @@ async function loadAreaSections(area){
 // 영역 큐레이션을 컨테이너에 렌더(없으면 비워둠 → 기존 콘텐츠 폴백). 우리도서관과 동일한 millieHTML 사용
 async function renderAreaCuration(containerId, area){
   const grid=document.getElementById(containerId); if(!grid) return;
+  if(PREVIEW) return;   // 미리보기 모드는 _pvRender가 localStorage로 직접 렌더
   const secs=await loadAreaSections(area);
   if(!secs.length){ grid.innerHTML=''; return; }
   // 담긴 책을 풀에 병합(표지·별점 보강)
@@ -2261,14 +2262,25 @@ function renderLibCuration(){
   backfillPool();
   loadServerPub();
 }
-if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){} window.addEventListener('DOMContentLoaded',()=>{ try{ nav('ourlib'); }catch(e){} }); setTimeout(()=>{ try{ nav('ourlib'); }catch(e){} },60);
+// 미리보기 대상 영역 (관리자 꾸미기 탭과 1:1) — 우리도서관/고전 컬렉션/International
+const PV_AREA = new URLSearchParams(location.search).get('area') || '우리도서관';
+const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'}};
+const PV_T = PV_MAP[PV_AREA] || PV_MAP['우리도서관'];
+function _pvRender(rawSecs){
+  const secs=(rawSecs||[]).map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+  if(PV_AREA==='우리도서관') SECTIONS=secs;
+  LC_PUB=[]; rebuildLibPool();
+  // 담긴 책을 풀에 보강(표지·별점)
+  secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
+  const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
+}
+if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
+  const goPv=()=>{ try{ nav(PV_T.page); }catch(e){} try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
+  window.addEventListener('DOMContentLoaded',goPv); setTimeout(goPv,60);
   // 관리자 '꾸미기' 실시간 미리보기 — 부모창이 보낸 SECTIONS로 즉시 재렌더(새로고침 없음)
   window.addEventListener('message',function(e){
     var d=e.data; if(!d||d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
-    try{ SECTIONS=d.sections.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
-      LC_PUB=[]; rebuildLibPool();
-      var g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); mlBindDrag(); backfillPool(); }
-    }catch(err){}
+    try{ _pvRender(d.sections); }catch(err){}
   });
 }
 async function loadServerPub(){
