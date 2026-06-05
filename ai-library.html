@@ -84,7 +84,9 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 .sheet .au{color:var(--mut);font-size:12.5px;margin:8px 0 10px}
 .sheet .meta{font-size:12px;color:var(--soft)}.sheet .meta .star{color:var(--gold);font-weight:700}
 .sheet .meta .dot{color:#d2cdc2;margin:0 4px}
-.sheet .why{font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.6;color:#3a3942;background:linear-gradient(var(--ac-soft),var(--ac-soft)) no-repeat;background-size:3px 100%;padding:3px 0 3px 15px;margin:14px 0}
+.sheet .why{font-family:var(--serif);font-weight:600;font-size:15px;line-height:1.55;color:#1f1e27;border-left:3px solid var(--gold);padding:3px 0 3px 14px;margin:16px 0 4px}
+.sheet .desclbl{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--mut);text-transform:uppercase;margin:18px 0 7px}
+.sheet .desc{font-size:13.5px;line-height:1.85;color:#44434d;margin:0 0 6px;white-space:pre-line}
 .acts{display:flex;gap:9px;margin-top:6px}
 .cta{flex:1;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:15px;font-size:14px;font-weight:600;letter-spacing:-.2px;cursor:pointer;transition:.15s}
 .cta:hover{background:var(--ac-dark)}
@@ -199,6 +201,7 @@ function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
     <div style="flex:1"><h2>${esc(b.title)}</h2><div class=au>${esc(b.author)} · ${esc(b.publisher||'')} ${b.pub_year||''}</div>
     <div class=meta>${star}${loan}${page}</div></div></div>
     ${b.reason?`<div class=why>${esc(b.reason)}</div>`:''}
+    ${b.description?`<div class=desclbl>책 소개</div><p class=desc>${esc(b.description)}</p>`:''}
     <div class=acts>
       <button class=cta id=findBtn ${hasIsbn?'':'disabled'} onclick=findLib()>${LOCK?LOCK.label:''} 도서관에서 찾기</button>
       <button class=cta2 onclick=closeM()>닫기</button>
