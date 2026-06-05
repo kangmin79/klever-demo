@@ -151,8 +151,8 @@ const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"
 const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
 const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
 // 검색 도서관 한정: 순천시 (city=주소필터, region=36 전남). 풀려면 LOCK=null.
-// ebook = 그 지역 도서관 전자책 안내/진입 페이지(소장형·구독형, 정회원 로그인). 정적 딥링크 불가라 공식 안내 페이지로 연결.
-const LOCK={city:'순천', region:'36', label:'순천시', ebook:'https://library.suncheon.go.kr/content/view.do?menuCd=L001004'};
+// ebook = 그 지역 도서관 실제 전자책 플랫폼. 순천 = 교보문고 전자도서관(소장형). 정회원 로그인 후 대출.
+const LOCK={city:'순천', region:'36', label:'순천시', ebook:'https://suncheonlib.dkyobobook.co.kr', ebookName:'순천 교보 전자도서관'};
 let LAST=[], CURRENT=null, MYLOC=null;
 document.getElementById('chips').innerHTML=EXAMPLES.map(e=>`<span class=chip onclick="run('${e}')">${e}</span>`).join('');
 function run(t){document.getElementById('q').value=t;go();}
@@ -213,7 +213,7 @@ function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
     </div>
     <div id=libResult></div>
     <div class=ebookline>${LOCK&&LOCK.ebook
-      ? `전자책으로도 볼 수 있어요 — ${LOCK.label} 도서관 전자책(소장형·구독형, 정회원 로그인)에서 찾아보세요 <a href="${LOCK.ebook}" target=_blank rel=noopener>${LOCK.label} 도서관 전자책 →</a>`
+      ? `전자책으로도 볼 수 있어요 — ${esc(LOCK.ebookName||LOCK.label+' 전자도서관')}(정회원 로그인)에서 찾아보세요 <a href="${LOCK.ebook}" target=_blank rel=noopener>${esc(LOCK.ebookName||LOCK.label+' 전자도서관')} →</a>`
       : `전자책은 학교·지역 전자도서관에서 빌릴 수 있어요 <a href="https://search.naver.com/search.naver?query=${encodeURIComponent((b.title||'')+' 전자책 도서관')}" target=_blank rel=noopener>전자책 검색 →</a>`}</div>
     <div class=src>도서관 소장·대출 가능 여부 · 정보나루(국립중앙도서관) 실시간</div>`;
   document.getElementById('ov').classList.add('on');
