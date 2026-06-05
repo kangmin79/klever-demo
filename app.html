@@ -602,6 +602,16 @@ body.dark .rec-go .icon{color:#0f172a;}
 .list-card-tag.urgent{background:#fee2e2;color:#dc2626;}
 .list-card-title{font-size:14px;font-weight:700;flex:1;}
 .list-card-meta{font-size:11px;color:var(--text-light);display:flex;gap:14px;}
+.lc-go{margin-left:auto;color:var(--text-light);font-size:18px;}
+.acc-caret{margin-left:auto;color:var(--text-light);font-size:13px;transition:transform .2s;}
+.list-card.open .acc-caret{transform:rotate(180deg);}
+.acc-body{display:none;font-size:13.5px;line-height:1.8;color:var(--text-sub);white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.list-card.open .acc-body{display:block;}
+/* 커뮤니티 상세 모달 (독서 프로그램) */
+#commModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}
+#commModal.on{display:flex;}
+.cmm{background:var(--bg-card);border-radius:16px;max-width:520px;width:100%;padding:24px;max-height:85vh;overflow:auto;position:relative;}
+.cmm-x{position:absolute;top:14px;right:16px;font-size:24px;color:var(--text-light);cursor:pointer;line-height:1;}
 
 /* 검증 서평 카드 */
 .rv-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;display:flex;gap:13px;align-items:flex-start;}
@@ -1199,6 +1209,11 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <!-- 도서 상세 모달 (전역 — 모든 페이지에서 사용) -->
 <div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
+
+<!-- 커뮤니티 상세 모달 (독서 프로그램) -->
+<div id="commModal" onclick="if(event.target.id==='commModal')closeCommModal()">
+  <div class="cmm"><span class="cmm-x" onclick="closeCommModal()">×</span><div id="commModalBody"></div></div>
+</div>
 
 <!-- 서평 작성 모달 (전역) -->
 <div id="rvModal" onclick="if(event.target.id==='rvModal')closeReviewModal()">
@@ -3310,18 +3325,33 @@ async function renderCommunityReviews(){
 }
 function renderCommunity(tab){
   if(tab==='review'){ renderCommunityReviews(); return; }
-  // 나머지 탭은 community_posts(관리자 커뮤니티 관리)에서 로드 — 단일 소스
   let list = COMMUNITY_POSTS[tab] || [];
-  document.getElementById('communityContent').innerHTML = list.map(p=>`
-    <div class="list-card">
-      <div class="list-card-head">
+  const isProgram = tab==='program';   // 독서 프로그램=모달, 나머지=아코디언(펼침)
+  document.getElementById('communityContent').innerHTML = list.map((p,i)=>{
+    const head=`<div class="list-card-head">
         <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag)}</span>
         <span class="list-card-title">${esc(p.title)}</span>
+        ${isProgram?'<span class="lc-go">›</span>':'<span class="acc-caret">▾</span>'}
       </div>
-      <div class="list-card-meta">${p.meta.map(esc).join(' · ')}</div>
-    </div>
-  `).join('');
+      <div class="list-card-meta">${(p.meta||[]).map(esc).join(' · ')}</div>`;
+    if(isProgram) return `<div class="list-card" onclick="openCommModal('${tab}',${i})">${head}</div>`;
+    return `<div class="list-card acc" onclick="toggleAcc(this)">${head}
+      <div class="acc-body">${esc(p.body||'자세한 내용은 곧 업데이트됩니다.')}</div></div>`;
+  }).join('');
 }
+function toggleAcc(el){ el.classList.toggle('open'); }
+function openCommModal(tab,i){
+  const p=(COMMUNITY_POSTS[tab]||[])[i]; if(!p) return;
+  document.getElementById('commModalBody').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag||'')}</span>
+      ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
+    <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
+    <div style="font-size:14px;line-height:1.85;color:var(--text-sub);white-space:pre-wrap">${esc(p.body||'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.')}</div>
+    <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n마이 페이지에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
+  document.getElementById('commModal').classList.add('on');
+}
+function closeCommModal(){ document.getElementById('commModal').classList.remove('on'); }
 async function loadNoticesPub(){
   try{
     const r=await fetch(`${SB_REST}/library_notices?select=title,target,period,location,body,created_at&order=created_at.desc`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
@@ -3336,9 +3366,9 @@ loadNoticesPub();
 // 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리
 async function loadCommunityPosts(){
   try{
-    const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2,body&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
-    const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean)}));
+    const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean),body:x.body||''}));
     ['program','event','free','notice'].forEach(k=>{ const arr=mk(k); if(arr.length) COMMUNITY_POSTS[k]=arr; });
     const cp=document.getElementById('page-community');
     const on=document.querySelector('#page-community .subtab.active');
