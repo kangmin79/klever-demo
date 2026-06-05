@@ -690,6 +690,21 @@ body.dark .rec-go .icon{color:#0f172a;}
 .sky-legend{position:absolute;right:14px;top:12px;display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;max-width:62%;}
 .sky-lg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#c4ccdd;background:rgba(255,255,255,.07);padding:3px 9px;border-radius:20px;backdrop-filter:blur(2px);}
 .sky-lg i{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.sky-title{position:absolute;left:20px;top:14px;color:#ffd479;font-weight:800;font-size:15px;text-shadow:0 1px 5px rgba(0,0,0,.55);}
+/* 슈퍼래티브 결산 */
+.supl{display:flex;gap:12px;flex-wrap:wrap;}
+.supl-c{flex:1;min-width:150px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 15px;transition:transform .15s,box-shadow .15s;}
+.supl-c:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(26,30,55,.08);}
+.supl-k{font-size:11px;color:var(--text-light);}
+.supl-v{font-size:15px;font-weight:800;color:var(--text);margin-top:3px;line-height:1.3;}
+/* 독서 스트릭 캘린더(잔디) */
+.sc-grid{display:flex;gap:3px;overflow-x:auto;padding:2px 0;}
+.sc-week{display:flex;flex-direction:column;gap:3px;flex:0 0 auto;}
+.sc-day{width:13px;height:13px;border-radius:3px;background:var(--bg-input);}
+.sc-day.l1{background:#cfe8d6;}.sc-day.l2{background:#86cfa0;}.sc-day.l3{background:#3fae6e;}.sc-day.l4{background:#1d6b48;}
+body.dark .sc-day{background:rgba(255,255,255,.06);}
+.sc-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-light);margin-top:10px;}
+.sc-legend .sc-day{width:12px;height:12px;}
 
 /* ═══════════════════════════════════════════════════════════
    10. 도서 상세 페이지
@@ -1354,12 +1369,22 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <!-- 학기 결산 공유 카드 (바이럴) -->
   <div class="summary-share" id="summaryCard" style="margin-top:24px"></div>
 
+  <!-- 올해의 ○○ (슈퍼래티브) -->
+  <div id="superlatives" style="margin-top:14px"></div>
+
   <!-- ✨ 나의 독서 별자리 -->
   <div style="margin-top:32px">
     <div class="section-head"><div class="section-title"><em>나의 독서 별자리</em></div>
       <button class="ss-share" onclick="shareSky()" style="background:var(--primary);color:#fff">✨ 별자리 공유</button></div>
     <div id="readingSky" class="sky"></div>
     <div style="font-size:11.5px;color:var(--text-light);margin-top:8px">읽은 책 한 권이 별 하나 — 같은 장르끼리 이어져 나만의 별자리가 됩니다. 별을 누르면 그 책으로.</div>
+  </div>
+
+  <!-- 🌱 독서 스트릭 캘린더 -->
+  <div style="margin-top:32px">
+    <div class="section-head"><div class="section-title"><em>독서 스트릭</em></div>
+      <span id="streakNote" style="font-size:11px;color:var(--text-light)"></span></div>
+    <div id="streakCal"></div>
   </div>
 
   <!-- 독서 데이터 분포 (StoryGraph식) -->
@@ -2143,7 +2168,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSky(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -3602,6 +3627,7 @@ function renderSky(){
   });
   const legend=L.groups.map(gp=>`<span class="sky-lg"><i style="background:${gp.color}"></i>${esc(gp.g)}</span>`).join('');
   host.innerHTML=`<svg viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="xMidYMid slice" class="sky-svg">${bg}${lines}${stars}</svg>
+    <div class="sky-title">⭐ ${esc(skyTitle(L.count))}</div>
     <div class="sky-cap"><b>${L.count}</b>개의 별 · ${esc(readerName())}님의 독서 밤하늘</div>
     <div class="sky-legend">${legend}</div>`;
 }
@@ -3626,6 +3652,40 @@ function shareSky(){
     }catch(e){}
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='bookstar-별자리.png'; document.body.appendChild(a); a.click(); a.remove();
   },'image/png');
+}
+function skyTitle(n){ return n>=40?'은하의 사서':n>=20?'밤하늘의 항해사':n>=10?'별자리 수집가':n>=5?'새벽 독서가':'첫 별을 띄운 독서가'; }
+/* ── 올해의 ○○ (슈퍼래티브) ── */
+async function renderSuperlatives(){
+  const host=document.getElementById('superlatives'); if(!host) return;
+  const set=myReadBooks();
+  const top=(key)=>{const m={};set.forEach(b=>{const k=b[key];if(k)m[k]=(m[k]||0)+1;});const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0];return e?e[0]:'-';};
+  let fav=(set[0]&&(set[0].title))||'-';
+  try{ const mine=await rvFetch(`select=book_title,rating&reviewer=eq.${encodeURIComponent(readerName())}&order=rating.desc,created_at.desc&limit=1`); if(mine&&mine[0]&&mine[0].book_title) fav=mine[0].book_title; }catch(e){}
+  const cards=[['완독',set.length+'권'],['올해의 작가',top('author')],['최다 장르',top('category')],['최애 책',fav]];
+  host.innerHTML='<div class="supl">'+cards.map(c=>`<div class="supl-c"><div class="supl-k">${esc(c[0])}</div><div class="supl-v">${esc(c[1])}</div></div>`).join('')+'</div>';
+}
+/* ── 독서 스트릭 캘린더(잔디) ── */
+function _dk(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function renderStreakCal(){
+  const host=document.getElementById('streakCal'); if(!host) return;
+  const real=(readerStats.readingTime&&readerStats.readingTime.days)||{};
+  const demo=Object.keys(real).length<6;
+  const minsOf=k=>{ if(real[k]) return real[k]; if(demo){ const r=_seed('cal'+k)(); return r>0.45?Math.round(r*90):0; } return 0; };
+  const today=new Date(); today.setHours(0,0,0,0);
+  const start=new Date(today); start.setDate(start.getDate()-7*16+1); start.setDate(start.getDate()-start.getDay());
+  const weeks=[]; let cur=[]; let active=0;
+  for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
+    const k=_dk(d), mins=minsOf(k); if(mins>0)active++;
+    const lvl=mins===0?0:mins<16?1:mins<41?2:mins<81?3:4;
+    cur.push({lvl,mins,k});
+    if(d.getDay()===6){ weeks.push(cur); cur=[]; }
+  }
+  if(cur.length) weeks.push(cur);
+  let cs=0; for(let d=new Date(today);;d.setDate(d.getDate()-1)){ if(minsOf(_dk(d))>0)cs++; else break; }
+  const grid=weeks.map(w=>`<div class="sc-week">${[0,1,2,3,4,5,6].map(di=>{const c=w[di];return c?`<div class="sc-day ${c.lvl?'l'+c.lvl:''}" title="${c.k}${c.mins?(' · '+c.mins+'분'):''}"></div>`:'<div class="sc-day" style="visibility:hidden"></div>';}).join('')}</div>`).join('');
+  host.innerHTML=`<div class="sc-grid">${grid}</div>
+    <div class="sc-legend">적음 <span class="sc-day"></span><span class="sc-day l1"></span><span class="sc-day l2"></span><span class="sc-day l3"></span><span class="sc-day l4"></span> 많음</div>`;
+  const note=document.getElementById('streakNote'); if(note) note.textContent=`🔥 현재 ${cs}일 연속 · 최근 16주 ${active}일 독서`;
 }
 
 /* ═══════════════════════════════════════════════════════════
