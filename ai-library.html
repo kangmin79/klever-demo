@@ -106,6 +106,15 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 .shelflbl{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-right:8px;vertical-align:1px}
 .shelfval{color:var(--ac);font-weight:600}
 .shelfhint .sub{display:block;font-size:11px;color:#6e7687;margin-top:5px}
+.formats{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;padding:13px 15px;background:#f7f6fb;border:1px solid #ecebf3;border-radius:13px}
+.fmthd{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--mut);text-transform:uppercase;margin-bottom:1px}
+.fmtrow{font-size:12.5px;color:var(--soft);line-height:1.5;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.fmtlbl{flex:0 0 auto;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px}
+.fmtlbl.paper{background:rgba(79,70,229,.1);color:#4f46e5}
+.fmtlbl.ebook{background:rgba(184,134,11,.14);color:#b07d0a}
+.fmtrow a{color:#4f46e5;font-weight:600;text-decoration:none}
+.fmtrow a:hover{text-decoration:underline}
+.fmtnote{font-size:10.5px;color:var(--mut)}
 .libs{display:flex;flex-direction:column;gap:8px}
 .libitem{border:1px solid #efece4;border-radius:13px;padding:13px 15px;background:#fff;transition:.15s}
 .libitem:hover{border-color:#e2ddd1;box-shadow:0 4px 14px rgba(40,35,80,.04)}
@@ -212,10 +221,7 @@ function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
       <button class=cta2 onclick=closeM()>닫기</button>
     </div>
     <div id=libResult></div>
-    <div class=ebookline>${LOCK&&LOCK.ebook
-      ? `전자책으로도 볼 수 있어요 — ${esc(LOCK.ebookName||LOCK.label+' 전자도서관')}(정회원 로그인)에서 찾아보세요 <a href="${LOCK.ebook}" target=_blank rel=noopener>${esc(LOCK.ebookName||LOCK.label+' 전자도서관')} →</a>`
-      : `전자책은 학교·지역 전자도서관에서 빌릴 수 있어요 <a href="https://search.naver.com/search.naver?query=${encodeURIComponent((b.title||'')+' 전자책 도서관')}" target=_blank rel=noopener>전자책 검색 →</a>`}</div>
-    <div class=src>도서관 소장·대출 가능 여부 · 정보나루(국립중앙도서관) 실시간</div>`;
+    <div class=src>종이책 소장·대출 가능 여부 · 정보나루(국립중앙도서관) 실시간 / 전자책 · ${esc(LOCK&&LOCK.ebookName||'전자도서관')}</div>`;
   document.getElementById('ov').classList.add('on');
 }
 async function findLib(){
@@ -233,11 +239,23 @@ async function findLib(){
   }catch(e){ res.innerHTML='<div class=ebookline>도서관 조회에 문제가 생겼어요. 다시 시도해 주세요.</div>'; }
   if(btn){btn.disabled=false; btn.textContent=`${LOCK?LOCK.label:''} 도서관에서 찾기`;}
 }
+// 종이책 + 전자책 '이용 방법' 통합 요약 (정식 연동 시 전자책도 실시간 표시)
+function formatsBox(d){
+  const area=LOCK?LOCK.label:esc(d&&d.regionName||'');
+  const paperN=(d&&d.libraries&&d.libraries.length)?(d.total||d.libraries.length):0;
+  const paper=paperN
+    ? `<div class=fmtrow><span class="fmtlbl paper">종이책</span><span>${area} <b>${paperN}곳</b> 소장 · 아래에서 도서관·대출가능 확인</span></div>`
+    : `<div class=fmtrow><span class="fmtlbl paper">종이책</span><span>${area} 소장 없음</span></div>`;
+  const ebook=(LOCK&&LOCK.ebook)
+    ? `<div class=fmtrow><span class="fmtlbl ebook">전자책</span><span>${esc(LOCK.ebookName||'전자도서관')} <a href="${LOCK.ebook}" target=_blank rel=noopener>바로가기 →</a> <span class=fmtnote>· 연동 시 실시간 대출 가능 여부 표시</span></span></div>`
+    : '';
+  return `<div class=formats><div class=fmthd>이렇게 빌릴 수 있어요</div>${paper}${ebook}</div>`;
+}
 function renderLibs(d){
   const res=document.getElementById('libResult');
   const area=LOCK?LOCK.label:esc(d&&d.regionName||'');
   if(!d || !d.libraries || !d.libraries.length){
-    res.innerHTML=`<div class=ebookline>${area}에는 이 책을 소장한 도서관을 못 찾았어요. 아래 전자책으로 찾아보세요.</div>`;
+    res.innerHTML=`${formatsBox(d)}<div class=ebookline>${area}에는 이 책을 <b>종이책</b>으로 소장한 도서관이 없어요. 전자책으로 찾아보세요.</div>`;
     return;
   }
   const useDist=!!d.usedLocation;
@@ -262,9 +280,9 @@ function renderLibs(d){
         <span class=sub>책은 이 분류번호 순서로 꽂혀 있어요. 정확한 칸은 각 도서관 ‘소장위치 보기’에서 확인.</span></div>`
     : '';
   const hd=useDist
-    ? `내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
-    : `${area} ${d.total||0}곳 소장 · <a class=distlink onclick=getLoc()>가까운 순 보기</a>`;
-  res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div>${shelf}<div class=libs>${items}</div></div>`;
+    ? `종이책 — 내 위치에서 가까운 순`
+    : `종이책 소장 도서관 · <a class=distlink onclick=getLoc()>가까운 순 보기</a>`;
+  res.innerHTML=`${formatsBox(d)}${shelf}<div class=libwrap><div class=libhd>${hd}</div><div class=libs>${items}</div></div>`;
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
 </script></body></html>
