@@ -423,6 +423,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <div class="sec-h"><h3 id="secModalTitle">책 담기</h3><span class="x" onclick="secClosePicker()">×</span></div>
         <div class="sec-b">
           <div class="booktabs">
+            <button class="btab" data-sbt="cls" onclick="secTab('cls')" style="display:none">북스타 고전</button>
             <button class="btab" data-sbt="lib" onclick="secTab('lib')">도서관 내</button>
             <button class="btab on" data-sbt="nat" onclick="secTab('nat')">국중 추천</button>
             <button class="btab" data-sbt="isbn" onclick="secTab('isbn')">ISBN 입력</button>
@@ -503,6 +504,14 @@ async function loadSections(){
     if(el('pg-settings').style.display!=='none')renderSettings();
   }catch(e){}
 }
+// 북스타 고전 풀 (고전 컬렉션 큐레이션용 — classics 테이블)
+let CLASSICS_POOL=[];
+async function loadClassicsPool(){
+  try{ const r=await fetch(`${SB_REST}/classics?select=id,title,author,origin&order=origin,id`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(r.ok){ const d=await r.json(); if(Array.isArray(d)) CLASSICS_POOL=d; }
+  }catch(e){}
+}
+loadClassicsPool();
 function readSecInputs(){
   SECTIONS.forEach(s=>{const t=el('sec_t_'+s.slot),sub=el('sec_s_'+s.slot),st=el('sec_style_'+s.slot);
     if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value; if(!Array.isArray(s.books))s.books=[];});
@@ -672,23 +681,38 @@ let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(�
 function pkObj(){return scMode==='chal'?CHALLENGES[scIdx]:SECTIONS[scIdx];}   // 책 담기 대상
 function secExample(t){el('secQ').value=t;secSearch();}
 function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInputs();else readSecInputs();
-  scIdx=i;scTab='nat';SCAND=[];
+  scIdx=i;SCAND=[];
+  // 고전 컬렉션 큐레이션은 '북스타 고전' 안에서만 (국중/ISBN/도서관내 숨김)
+  const clsArea = scMode==='sec' && aOf(SECTIONS[i])==='고전 컬렉션';
+  document.querySelectorAll('#secOv .btab').forEach(btn=>{ const sbt=btn.dataset.sbt;
+    btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (sbt==='cls'?'none':''); });
+  scTab = clsArea ? 'cls' : 'nat';
   el('secModalTitle').textContent=`‘${pkObj().title}’에 책 담기`;
-  document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt==='nat'));
+  document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===scTab));
   el('secOv').classList.add('on');secApplyTab();loadInventory();}
 function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')renderChallenges();else renderSettings();}
 function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
 function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
-  if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
+  if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderClassics();}
+  else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
   else{q.placeholder='예: 6월 신입생에게 가볍게 읽을 문학';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='';}
   q.value='';secNote();
+}
+function secRenderClassics(){
+  if(!CLASSICS_POOL.length){el('secCandWrap').innerHTML='<div class="book-empty">고전 목록을 불러오는 중… 잠시 후 다시 시도해주세요.</div>';loadClassicsPool();return;}
+  const q=(el('secQ').value||'').trim();
+  let list=q?CLASSICS_POOL.filter(b=>((b.title||'')+' '+(b.author||'')).includes(q)):CLASSICS_POOL;
+  SCAND=list.slice(0,80).map(b=>({id:b.id,t:b.title,a:(b.author||'')+(b.origin==='foreign'?' · 해외 고전':' · 한국 고전'),cls:true}));
+  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">검색 결과가 없어요.</div>';return;}
+  secRenderCands('북스타 고전 '+SCAND.length+'권');
 }
 function secRenderLib(){const q=(el('secQ').value||'').trim();const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;SCAND=list.slice(0,40);
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 담으면 여기에 쌓입니다.</div>';return;}
   secRenderCands('우리 도서관 소장 '+SCAND.length+'권');}
 async function secSearch(){
+  if(scTab==='cls'){secRenderClassics();return;}
   if(scTab==='lib'){secRenderLib();return;}
   if(scTab==='isbn'){return secLookupISBN();}
   const q=el('secQ').value.trim();if(!q)return;
@@ -713,9 +737,9 @@ async function secLookupISBN(){
     secRenderCands('조회 결과 — + 를 눌러 담으세요');
   }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
 }
-function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[]).map(b=>b.isbn).filter(Boolean));
+function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[]).map(b=>b.isbn||b.id).filter(Boolean));
   el('secCandWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
-    SCAND.map((b,i)=>{const added=b.isbn&&have.has(b.isbn);const own=b.isbn&&LIB_INV.has(b.isbn);
+    SCAND.map((b,i)=>{const key=b.isbn||b.id;const added=key&&have.has(key);const own=b.isbn&&LIB_INV.has(b.isbn);
     return `<div class="cand ${added?'on':''}">
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
@@ -723,8 +747,9 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
       <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
 }
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
-  const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(x.title===b.t));
+  const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(b.id&&x.id===b.id)||(x.title===b.t));
   if(idx>=0)arr.splice(idx,1);
+  else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''});}   // 북스타 고전 참조
   else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:''});if(b.isbn){LIB_INV.add(b.isbn);upsertInventory([b]);}}
   secRenderCands(scHead);secNote();
 }
