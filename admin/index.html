@@ -144,6 +144,12 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .sig-l{color:var(--accent);background:rgba(58,110,165,.1)}
 .sig-own{color:#1d6b48;background:rgba(46,125,87,.13)}
 .book-empty{text-align:center;color:var(--light);font-size:12.5px;padding:24px 0;line-height:1.7}
+/* 꾸미기 3영역 탭 */
+.area-tabs{display:flex;gap:8px;margin:4px 0 10px;flex-wrap:wrap}
+.area-tabs .atab{padding:9px 18px;border-radius:10px;border:1.5px solid var(--line,#e6e2d8);background:var(--card,#fff);color:var(--light);font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+.area-tabs .atab:hover{border-color:#c9b88a}
+.area-tabs .atab.on{background:#1f2a44;border-color:#1f2a44;color:#fff}
+.area-tabs .atab .cnt{font-size:11px;opacity:.7;margin-left:5px;font-weight:600}
 /* 우리도서관 꾸미기 — 칸별 책 strip */
 .deco-books{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;margin:6px 0 2px}
 .deco-bk{position:relative;width:46px}
@@ -379,6 +385,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <p>학생 앱 ‘우리도서관’ 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기. 추천 도서 큐레이션이 여기서 이뤄집니다.</p></div>
         <div style="display:flex;gap:8px"><button id="pvToggleBtn" class="btn-ghost" onclick="toggleLivePreview()">👁 미리보기</button>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div></div>
+      <div id="secAreaTabs" class="area-tabs"></div>
+      <div id="secAreaHint" class="note" style="margin:0 0 12px"></div>
       <div class="settings-wrap">
         <div class="settings-main">
           <div id="secList"></div>
@@ -445,22 +453,26 @@ const STYLES=[
   ['grid','표지 그리드 (서가)'],['mag','매거진'],['banner','와이드 띠배너'],
   ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션']
 ];
+// 3영역: 우리도서관 / 고전 컬렉션 / International Students (학생앱 페이지와 1:1)
+const AREAS=['우리도서관','고전 컬렉션','International'];
+let curArea='우리도서관';
+const aOf=s=>s.area||'우리도서관';
 let SECTIONS=[
-  {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero',books:[]},
-  {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row',books:[]},
-  {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank',books:[]},
-  {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad',books:[]},
-  {slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai',books:[]},
+  {area:'우리도서관',slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero',books:[]},
+  {area:'우리도서관',slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row',books:[]},
+  {area:'우리도서관',slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank',books:[]},
+  {area:'우리도서관',slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad',books:[]},
+  {area:'우리도서관',slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai',books:[]},
 ];
 let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
-let LOCATIONS=SECTIONS.map(s=>s.title);
+let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+    SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
-    LOCATIONS=SECTIONS.map(s=>s.title);
+    LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
     buildNtLoc(); if(MK.type)buildLoc();
     if(el('pg-settings').style.display!=='none')renderSettings();
   }catch(e){}
@@ -469,16 +481,20 @@ function readSecInputs(){
   SECTIONS.forEach(s=>{const t=el('sec_t_'+s.slot),sub=el('sec_s_'+s.slot),st=el('sec_style_'+s.slot);
     if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value; if(!Array.isArray(s.books))s.books=[];});
 }
-function addSection(){readSecInputs();SECTIONS.push({slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
+function addSection(){readSecInputs();SECTIONS.push({area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
 function delSection(i){readSecInputs();
   if(SECTIONS[i].slot==='rank'){toast('대출 랭킹은 삭제할 수 없어요 (자동 집계 고정)');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
-function moveSection(i,d){readSecInputs();const j=i+d;if(j<0||j>=SECTIONS.length)return;const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
+function moveSection(i,d){readSecInputs();
+  // 같은 영역 안에서만 위/아래 이웃과 교환
+  let j=i+d; while(j>=0&&j<SECTIONS.length&&aOf(SECTIONS[j])!==aOf(SECTIONS[i]))j+=d;
+  if(j<0||j>=SECTIONS.length)return;
+  const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
 function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
 // 미리보기 — 저장 전 SECTIONS를 localStorage로 넘겨 app.html?preview=1 을 iframe으로 띄움
 function previewSections(){
   readSecInputs();
-  const rows=SECTIONS.map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.filter(s=>aOf(s)==='우리도서관').map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(rows)); }catch(e){}
   el('pvFrame').src='/app.html?preview=1&t='+Date.now();
   el('pvOv').classList.add('on');
@@ -486,7 +502,7 @@ function previewSections(){
 function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='about:blank'; }
 async function applyFromPreview(){ closePreview(); await saveSections(); }
 // ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
-function pvBuildRows(){ readSecInputs(); return SECTIONS.map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
+function pvBuildRows(){ readSecInputs(); return SECTIONS.filter(s=>aOf(s)==='우리도서관').map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
 function _pvOpen(){
   const p=el('livePv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
@@ -499,7 +515,8 @@ function _pvClose(){
   const f=el('pvLiveFrame'); if(f) f.src='about:blank';
   const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기';
 }
-function toggleLivePreview(){ const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
+function toggleLivePreview(){ if(curArea!=='우리도서관'){ toast('실시간 미리보기는 ‘우리도서관’ 영역만 지원돼요. 고전·International은 저장 후 학생 앱에서 확인하세요.'); return; }
+  const p=el('livePv'); if(p&&p.classList.contains('on')) _pvClose(); else _pvOpen(); }
 // 꾸미기 진입 시 넓은 화면이면 자동으로 열기(좁으면 토글 유지)
 function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); if(p&&!p.classList.contains('on')) _pvOpen(); } }
 // iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지) + 축소 적용
@@ -550,7 +567,7 @@ function pvSync(){
 }
 async function saveSections(){
   readSecInputs();
-  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
   try{
     const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -586,14 +603,32 @@ function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; const panel=
   if(target<0)target=0; if(target>SECTIONS.length)target=SECTIONS.length;
   SECTIONS.splice(target,0,moved); renderSettings(); }
 function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over,.sec-panel.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
+const AREA_HINTS={
+  '우리도서관':'학생 앱 ‘우리 도서관’ 첫 화면 — 칸 추가·이름·순서·책 담기.',
+  '고전 컬렉션':'학생 앱 ‘고전 클래식’ 화면 큐레이션 — 사서가 고전 선반을 직접 구성합니다.',
+  'International':'학생 앱 ‘International Students’ 화면 큐레이션 — 유학생용 다국어 선반을 구성합니다.'
+};
+function renderAreaTabs(){
+  const t=el('secAreaTabs'); if(t) t.innerHTML=AREAS.map(a=>{
+    const n=SECTIONS.filter(s=>aOf(s)===a).length;
+    return `<div class="atab ${a===curArea?'on':''}" onclick="setArea('${a}')">${esc(a)}<span class="cnt">${n}</span></div>`;
+  }).join('');
+  const h=el('secAreaHint'); if(h) h.textContent=AREA_HINTS[curArea]||'';
+}
+function setArea(a){ if(!AREAS.includes(a))return; readSecInputs(); curArea=a;
+  if(a!=='우리도서관'){ try{_pvClose();}catch(e){} }   // 실시간 미리보기는 우리도서관 전용
+  renderSettings(); }
 function renderSettings(){
-  el('secList').innerHTML=SECTIONS.map((s,i)=>{
-    const isRank=s.slot==='rank', books=s.books||[];
+  renderAreaTabs();
+  const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
+  el('secList').innerHTML=list.map((o,k)=>{
+    const s=o.s, i=o.i, isRank=s.slot==='rank', books=s.books||[];
+    const first=k===0, last=k===list.length-1;
     return `<div class="panel sec-panel" style="margin-bottom:12px" data-i="${i}" draggable="true" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-      <span class="sec-drag" title="카드 아무 곳이나 잡고 끌어서 순서 변경">⠿ 칸 ${i+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
-      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${i===0?'disabled':''}>↑</button>
-      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${i===SECTIONS.length-1?'disabled':''}>↓</button>
+      <span class="sec-drag" title="카드 아무 곳이나 잡고 끌어서 순서 변경">⠿ 칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
+      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${first?'disabled':''}>↑</button>
+      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${last?'disabled':''}>↓</button>
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
     </div>
@@ -909,7 +944,7 @@ function renderLib(){
 }
 // 위치 칩은 제목을 보여주되 slot(고정 ID)을 저장 → 카테고리 이름 바꿔도 연결 유지
 function locLabel(x){const s=SECTIONS.find(v=>v.slot===x);return s?s.title:x;}
-function buildLoc(){el('locChips').innerHTML=SECTIONS.map(s=>`<span class="locchip ${MK.loc.includes(s.slot)?'on':''}" onclick="toggleLoc('${s.slot}')">${esc(s.title)}</span>`).join('');}
+function buildLoc(){el('locChips').innerHTML=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>`<span class="locchip ${MK.loc.includes(s.slot)?'on':''}" onclick="toggleLoc('${s.slot}')">${esc(s.title)}</span>`).join('');}
 function toggleLoc(slot){const i=MK.loc.indexOf(slot);if(i<0)MK.loc.push(slot);else MK.loc.splice(i,1);buildLoc();syncPreview();}
 function setQuizN(n){MK.mission.quizN=n;el('quizN').innerHTML=[3,5,7,10].map(x=>`<span class="${x===n?'on':''}" onclick="setQuizN(${x})">${x}개</span>`).join('');syncPreview();}
 function toggleM(k){

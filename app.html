@@ -1119,6 +1119,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <section class="page" id="page-collection">
   <h1 class="page-title">고전 클래식</h1>
 
+  <!-- 사서 큐레이션 (관리자 꾸미기 · 고전 컬렉션 영역) — 있으면 상단에 노출 -->
+  <div id="collectionCuration"></div>
+
   <div class="section">
     <div class="subtabs" id="classicTabs">
       <div class="subtab active" data-ctab="modern" onclick="setClassicTab(this,'modern')">한국 고전 <span id="clCntK"></span></div>
@@ -1193,6 +1196,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
   <h1 class="page-title">International Students</h1>
   <p class="page-subtitle">한국 고전으로 한국어와 한국 문화를 배워요 · Learn Korean through Korean Classics</p>
+
+  <!-- 사서 큐레이션 (관리자 꾸미기 · International 영역) — 있으면 상단에 노출 -->
+  <div id="intlCuration"></div>
 
   <div class="curation-grid" id="curationIntl"></div>
 
@@ -1990,6 +1996,12 @@ function nav(page){
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
   }
+  if(page === 'collection') {
+    setTimeout(()=>renderAreaCuration('collectionCuration','고전 컬렉션'), 30);
+  }
+  if(page === 'international') {
+    setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
+  }
   if(page === 'mypage') {
     setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); }, 50);
   }
@@ -2149,7 +2161,8 @@ function booksForSlot(slot){
       const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn))||b; if(p&&(p.t||p.title))out.push(p); }); });
   return out;
 }
-function millieHTML(){
+function millieHTML(secs){
+  secs=secs||SECTIONS;
   const P=libTitled();
   if(!P.length) return '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:60px 0">불러오는 중…</div>';
   const cur=LC_PUB[0];
@@ -2157,7 +2170,7 @@ function millieHTML(){
   const note=life.note||(cur&&cur.intro)||'';
   const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
   let out='';
-  SECTIONS.forEach((s,i)=>{
+  secs.forEach((s,i)=>{
     const st=s.style||'row';
     if(st==='ai'||s.slot==='ai') return;   // 'AI와 함께 읽는 책' 섹션 삭제(2026-06-05 요청)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank); return; }   // 랭킹은 대출수 자동
@@ -2191,11 +2204,33 @@ let SECTIONS=[
 ];
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books&order=sort_order`,
+    // 우리도서관 페이지는 area='우리도서관' 칸만 (고전 컬렉션·International은 별도 영역)
+    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books&order=sort_order`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+    SECTIONS=rows.filter(x=>(x.area||'우리도서관')==='우리도서관')
+      .map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
   }catch(e){}
+}
+// 고전 컬렉션 / International 영역의 사서 큐레이션 칸 로드
+async function loadAreaSections(area){
+  try{
+    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books&area=eq.${encodeURIComponent(area)}&order=sort_order`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return []; const rows=await r.json();
+    return Array.isArray(rows)?rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]})):[];
+  }catch(e){ return []; }
+}
+// 영역 큐레이션을 컨테이너에 렌더(없으면 비워둠 → 기존 콘텐츠 폴백). 우리도서관과 동일한 millieHTML 사용
+async function renderAreaCuration(containerId, area){
+  const grid=document.getElementById(containerId); if(!grid) return;
+  const secs=await loadAreaSections(area);
+  if(!secs.length){ grid.innerHTML=''; return; }
+  // 담긴 책을 풀에 병합(표지·별점 보강)
+  secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
+  grid.innerHTML=millieHTML(secs);
+  try{ mlBindDrag(); }catch(e){}
+  try{ backfillPool(); }catch(e){}
 }
 function rebuildLibPool(){
   const seen=new Set(); LIB_POOL=[];
@@ -3236,6 +3271,8 @@ window.addEventListener('DOMContentLoaded', () => {
   renderClassicShelves();
   renderCurations('curationIntl', true);
   renderBookGrid('bookGridIntl', true);
+  renderAreaCuration('collectionCuration','고전 컬렉션');
+  renderAreaCuration('intlCuration','International');
   renderRecChips();
   loadLoanData();
   renderCommunity('program');
