@@ -603,6 +603,34 @@ body.dark .rec-go .icon{color:#0f172a;}
 .list-card-title{font-size:14px;font-weight:700;flex:1;}
 .list-card-meta{font-size:11px;color:var(--text-light);display:flex;gap:14px;}
 
+/* 검증 서평 카드 */
+.rv-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;}
+.rv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px;}
+.rv-who{font-size:13.5px;font-weight:700;color:var(--text);}
+.rv-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(46,125,87,.13);color:#1d6b48;}
+.rv-badge.rv-reading{background:var(--bg-input);color:var(--text-light);}
+.rv-lang{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--primary-bg);color:var(--primary);}
+.rv-stars{margin-left:auto;font-size:13px;letter-spacing:1px;}
+.rv-book{font-size:12px;color:var(--text-light);margin-bottom:4px;}
+.rv-body{font-size:13.5px;line-height:1.7;color:var(--text-sub);white-space:pre-wrap;}
+.rv-foot{margin-top:9px;}
+.rv-like{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-light);cursor:pointer;padding:3px 10px;border:1px solid var(--border);border-radius:20px;}
+.rv-like:hover{border-color:var(--primary);color:var(--primary);}
+.rv-empty{text-align:center;color:var(--text-light);font-size:13px;padding:28px 0;}
+.rv-writebtn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#fff;background:var(--primary);border:0;border-radius:10px;padding:10px 16px;cursor:pointer;}
+/* 서평 작성 모달 */
+#rvModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}
+#rvModal.on{display:flex;}
+.rvm{background:var(--bg-card);border-radius:16px;max-width:480px;width:100%;padding:22px 22px 18px;}
+.rvm h3{font-size:17px;margin:0 0 4px;}
+.rvm .sub{font-size:12.5px;color:var(--text-light);margin-bottom:14px;}
+.rvm-stars{font-size:30px;letter-spacing:6px;cursor:pointer;margin-bottom:12px;user-select:none;}
+.rvm-stars span{color:#d8d8d8;}
+.rvm-stars span.on{color:#f5a623;}
+.rvm textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px;font-family:inherit;font-size:14px;resize:vertical;min-height:110px;box-sizing:border-box;}
+.rvm-chk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);margin:12px 0;}
+.rvm-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+
 /* ═══════════════════════════════════════════════════════════
    10. 도서 상세 페이지
    ═══════════════════════════════════════════════════════════ */
@@ -1143,6 +1171,22 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <!-- 도서 상세 모달 (전역 — 모든 페이지에서 사용) -->
 <div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
 
+<!-- 서평 작성 모달 (전역) -->
+<div id="rvModal" onclick="if(event.target.id==='rvModal')closeReviewModal()">
+  <div class="rvm">
+    <h3>서평 쓰기</h3>
+    <div class="sub" id="rvmBook"></div>
+    <input id="rvmBookInput" placeholder="책 제목을 입력하세요" style="display:none;width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;box-sizing:border-box;margin-bottom:12px">
+    <div class="rvm-stars" id="rvmStars"></div>
+    <textarea id="rvmBody" placeholder="이 책을 읽고 느낀 점을 자유롭게 남겨주세요. (다른 학생들과 공유됩니다)"></textarea>
+    <label class="rvm-chk"><input type="checkbox" id="rvmVerified" checked> 완독했어요 — <b>✔ 완독 인증</b> 배지가 붙어요</label>
+    <div class="rvm-foot">
+      <button class="btn-outline" onclick="closeReviewModal()">취소</button>
+      <button class="rv-writebtn" onclick="submitReview()">등록</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════════
      2-1) 도서 큐레이션 (AI 추천)
      ═══════════════════════════════════════════════════════════ -->
@@ -1221,6 +1265,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="subtab active" onclick="setCommunityTab(this,'program')">독서 프로그램</div>
     <div class="subtab" onclick="setCommunityTab(this,'event')">도서관 행사</div>
     <div class="subtab" onclick="setCommunityTab(this,'free')">자유 게시판</div>
+    <div class="subtab" onclick="setCommunityTab(this,'review')">서평</div>
     <div class="subtab" onclick="setCommunityTab(this,'notice')">공지사항</div>
   </div>
 
@@ -1278,6 +1323,21 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       <button class="btn-outline" onclick="exportReport()" style="display:inline-flex;align-items:center;gap:6px;"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>대학교 독서 활동 리포트 출력</button>
     </div>
     <div class="book-grid" id="myBooks"></div>
+  </div>
+
+  <!-- 서평 광장 (검증 서평 — 커뮤니티 연동) -->
+  <div style="margin-top:48px;" class="mypage-bottom" >
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div>
+        <div class="section-head"><div class="section-title"><em>내 서평</em></div>
+          <button class="rv-writebtn" onclick="openReviewModal('','')">✍️ 서평 쓰기</button></div>
+        <div id="myReviews"></div>
+      </div>
+      <div>
+        <div class="section-head"><div class="section-title"><em>다른 학생 서평</em></div></div>
+        <div id="peerReviews"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -2003,7 +2063,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); }, 50);
+    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); }, 50);
   }
 }
 
@@ -2365,8 +2425,10 @@ function libDetail(isbn){
     <div class="lcd-acts">
       <div class="lcd-btn primary" onclick="lcAccess('도서관 소장')">📖 도서관에서 빌리기<span class="ar">›</span></div>
     </div>
-    <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>`;
+    <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>
+    <div id="lcdReviews"></div>`;
   ov.classList.add('on');
+  renderDetailReviews(b.isbn, cleanT(b.t));
 }
 function openLc(ci,bi){
   const c=LC_PUB[ci]; if(!c) return; const b=(c.books||[])[bi]; if(!b) return;
@@ -2685,8 +2747,10 @@ function openDetail(bookId){
       <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 책 읽기<span class="ar">›</span></div>
       <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 챌린지로 읽기<span class="ar">›</span></div>
     </div>
-    <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>`;
+    <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
+    <div id="lcdReviews"></div>`;
   ov.classList.add('on');
+  renderDetailReviews(b.id, b.title);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -3196,8 +3260,18 @@ function setCommunityTab(el, tab){
   renderCommunity(tab);
 }
 
+async function renderCommunityReviews(){
+  const host=document.getElementById('communityContent');
+  host.innerHTML='<div class="rv-empty">불러오는 중…</div>';
+  const list=await rvFetch('select=*&order=verified.desc,likes.desc,created_at.desc&limit=50');
+  host.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:12.5px;color:var(--text-light)">완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>입니다</span>
+      <button class="rv-writebtn" style="margin-left:auto" onclick="openReviewModal('','')">✍️ 서평 쓰기</button></div>
+    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 첫 서평을 남겨보세요!</div>'}`;
+}
 function renderCommunity(tab){
-  // 4개 탭 모두 community_posts(관리자 커뮤니티 관리)에서 로드 — 단일 소스
+  if(tab==='review'){ renderCommunityReviews(); return; }
+  // 나머지 탭은 community_posts(관리자 커뮤니티 관리)에서 로드 — 단일 소스
   let list = COMMUNITY_POSTS[tab] || [];
   document.getElementById('communityContent').innerHTML = list.map(p=>`
     <div class="list-card">
@@ -3235,6 +3309,84 @@ async function loadCommunityPosts(){
   }catch(e){}
 }
 loadCommunityPosts();
+
+/* ═══════════════════════════════════════════════════════════
+   검증 서평 (reviews) — 완독·인증 서평 공유 (마이페이지·커뮤니티·책 상세)
+   ═══════════════════════════════════════════════════════════ */
+const RV_FLAG={ko:'🇰🇷',en:'🇺🇸',vi:'🇻🇳',zh:'🇨🇳',ja:'🇯🇵'};
+function readerName(){ try{ return localStorage.getItem('bookstar_reader')||'김민서'; }catch(e){ return '김민서'; } }
+function rvStars(n){ n=n||0; let s=''; for(let i=1;i<=5;i++) s+=`<span style="color:${i<=n?'#f5a623':'#d8d8d8'}">★</span>`; return s; }
+function rvCard(r){
+  return `<div class="rv-card">
+    <div class="rv-head">
+      <span class="rv-who">${esc(r.reviewer)}</span>
+      ${r.verified?'<span class="rv-badge">✔ 완독 인증</span>':'<span class="rv-badge rv-reading">읽는 중</span>'}
+      ${r.lang&&r.lang!=='ko'?`<span class="rv-lang">${RV_FLAG[r.lang]||'🌐'} ${String(r.lang).toUpperCase()}</span>`:''}
+      <span class="rv-stars">${rvStars(r.rating)}</span>
+    </div>
+    ${r.book_title?`<div class="rv-book">『${esc(r.book_title)}』</div>`:''}
+    <div class="rv-body">${esc(r.body)}</div>
+    <div class="rv-foot"><span class="rv-like" onclick="likeReview(${r.id},this)">👍 <b>${r.likes||0}</b></span></div>
+  </div>`;
+}
+async function rvFetch(qs){
+  try{ const r=await fetch(`${SB_REST}/reviews?${qs}`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return []; const d=await r.json(); return Array.isArray(d)?d:[];
+  }catch(e){ return []; }
+}
+async function likeReview(id,elm){
+  const b=elm.querySelector('b'); const n=(parseInt(b.textContent)||0)+1; b.textContent=n;
+  try{ await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'PATCH',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({likes:n})}); }catch(e){}
+}
+// 책 상세 모달 안에 서평 영역
+async function renderDetailReviews(bookId,bookTitle){
+  const host=document.getElementById('lcdReviews'); if(!host) return;
+  const list=await rvFetch(`select=*&book_id=eq.${encodeURIComponent(bookId)}&order=verified.desc,likes.desc,created_at.desc`);
+  const avg=list.length?(list.reduce((a,b)=>a+(b.rating||0),0)/list.length).toFixed(1):null;
+  host.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px">
+      <b style="font-size:14px">독자 서평 ${list.length}</b>${avg?`<span class="rv-stars">${rvStars(Math.round(avg))}</span><span style="font-size:12px;color:var(--text-light)">${avg}</span>`:''}
+      <button class="rv-writebtn" style="margin-left:auto" onclick="openReviewModal('${esc(bookId)}','${esc((bookTitle||'').replace(/'/g,""))}')">✍️ 서평 쓰기</button></div>
+    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 첫 서평을 남겨보세요!</div>'}`;
+}
+// 서평 작성 모달
+let rvCtx={bookId:'',bookTitle:'',rating:5};
+function openReviewModal(bookId,bookTitle){
+  rvCtx={bookId:bookId||'',bookTitle:bookTitle||'',rating:5};
+  const hasBook=!!(bookId||bookTitle);
+  document.getElementById('rvmBook').textContent=hasBook&&bookTitle?`『${bookTitle}』`:'';
+  const inp=document.getElementById('rvmBookInput'); inp.style.display=hasBook?'none':'block'; inp.value='';
+  document.getElementById('rvmBody').value='';
+  document.getElementById('rvmVerified').checked=true;
+  rvSetStars(5);
+  document.getElementById('rvModal').classList.add('on');
+}
+function closeReviewModal(){ document.getElementById('rvModal').classList.remove('on'); }
+function rvSetStars(n){ rvCtx.rating=n;
+  document.getElementById('rvmStars').innerHTML=[1,2,3,4,5].map(i=>`<span class="${i<=n?'on':''}" onclick="rvSetStars(${i})">★</span>`).join('');
+}
+async function submitReview(){
+  const body=document.getElementById('rvmBody').value.trim();
+  if(!body){ alert('서평 내용을 입력해주세요.'); return; }
+  const inp=document.getElementById('rvmBookInput');
+  if(inp&&inp.style.display!=='none'){ rvCtx.bookTitle=inp.value.trim(); rvCtx.bookId=rvCtx.bookId||('t-'+(inp.value.trim()||'책')); }
+  if(!rvCtx.bookTitle){ alert('책 제목을 입력해주세요.'); return; }
+  const row={school:'한국대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,reviewer:readerName(),rating:rvCtx.rating,body:body,verified:document.getElementById('rvmVerified').checked,lang:'ko'};
+  try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+    if(!r.ok){ alert('등록 실패 ('+r.status+')'); return; }
+  }catch(e){ alert('등록 실패 — 연결 확인'); return; }
+  closeReviewModal();
+  if(document.getElementById('lcdReviews')) renderDetailReviews(rvCtx.bookId,rvCtx.bookTitle);
+  if(document.getElementById('page-mypage').classList.contains('active')) renderMyReviews();
+  if(document.getElementById('page-community').classList.contains('active')){ const on=document.querySelector('#page-community .subtab.active'); if(on&&on.textContent.includes('서평')) renderCommunity('review'); }
+}
+// 마이페이지 — 내 서평 + 친구 서평
+async function renderMyReviews(){
+  const me=readerName();
+  const all=await rvFetch('select=*&order=created_at.desc&limit=60');
+  const mine=all.filter(r=>r.reviewer===me), others=all.filter(r=>r.reviewer!==me).slice(0,8);
+  const mh=document.getElementById('myReviews'); if(mh) mh.innerHTML=mine.length?mine.map(rvCard).join(''):'<div class="rv-empty">아직 작성한 서평이 없어요. 책을 읽고 서평을 남겨보세요!</div>';
+  const oh=document.getElementById('peerReviews'); if(oh) oh.innerHTML=others.length?others.map(rvCard).join(''):'<div class="rv-empty">아직 다른 학생의 서평이 없어요.</div>';
+}
 
 /* ═══════════════════════════════════════════════════════════
    기타
