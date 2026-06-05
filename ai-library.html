@@ -83,33 +83,38 @@ body::before{content:'';position:fixed;inset:0 0 auto 0;height:340px;background:
 .sheet h2{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:-.5px;line-height:1.32}
 .sheet .au{color:var(--mut);font-size:12.5px;margin:8px 0 10px}
 .sheet .meta{font-size:12px;color:var(--soft)}.sheet .meta .star{color:var(--gold);font-weight:700}
+.sheet .meta .dot{color:#d2cdc2;margin:0 4px}
 .sheet .why{font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.6;color:#3a3942;background:linear-gradient(var(--ac-soft),var(--ac-soft)) no-repeat;background-size:3px 100%;padding:3px 0 3px 15px;margin:14px 0}
 .acts{display:flex;gap:9px;margin-top:6px}
-.cta{flex:1;background:var(--ac);color:#fff;border:0;border-radius:13px;padding:14px;font-size:13.5px;font-weight:600;cursor:pointer}
+.cta{flex:1;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:15px;font-size:14px;font-weight:600;letter-spacing:-.2px;cursor:pointer;transition:.15s}
 .cta:hover{background:var(--ac-dark)}
-.cta:disabled{opacity:.5}
-.cta2{background:#fff;color:var(--soft);border:1px solid var(--line);border-radius:13px;padding:14px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+.cta:disabled{opacity:.45}
+.cta2{background:transparent;color:var(--mut);border:1px solid #ecebe3;border-radius:12px;padding:15px 18px;font-size:13.5px;font-weight:500;cursor:pointer;transition:.15s}
+.cta2:hover{color:var(--soft);border-color:#dcd9cf}
 /* 도서관 결과 */
 .libwrap{margin-top:16px}
-.libhd{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.distlink{font-weight:600;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.libhd{font-size:11.5px;font-weight:600;color:var(--soft);margin-bottom:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;letter-spacing:-.1px}
+.distlink{font-weight:600;color:var(--mut);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .distlink:hover{color:var(--ac)}
-.shelfhint{font-size:12px;color:var(--soft);background:#f4f2ee;border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:10px;line-height:1.55}
-.shelfhint b{color:var(--ac)}
-.shelfhint .sub{display:block;font-size:10.5px;color:var(--mut);margin-top:4px}
+.shelfhint{font-size:12px;color:var(--soft);background:#faf9f6;border-left:2px solid var(--gold);border-radius:0 9px 9px 0;padding:10px 14px;margin-bottom:14px;line-height:1.55}
+.shelflbl{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-right:8px;vertical-align:1px}
+.shelfval{color:var(--ac);font-weight:600}
+.shelfhint .sub{display:block;font-size:10.5px;color:var(--mut);margin-top:5px}
 .libs{display:flex;flex-direction:column;gap:8px}
-.libitem{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#fafaf8}
+.libitem{border:1px solid #efece4;border-radius:13px;padding:13px 15px;background:#fff;transition:.15s}
+.libitem:hover{border-color:#e2ddd1;box-shadow:0 4px 14px rgba(40,35,80,.04)}
 .libtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.libname{font-size:13.5px;font-weight:700;color:var(--tx)}
-.libdist{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--ac)}
-.libaddr{font-size:11.5px;color:var(--mut);margin:4px 0 8px;line-height:1.5}
-.librow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px}
-.badge.ok{background:rgba(31,157,99,.12);color:var(--ok)}
-.badge.no{background:rgba(194,86,47,.12);color:var(--no)}
-.badge.unk{background:#eee;color:#888}
-.liblink{font-size:11.5px;color:var(--soft);text-decoration:none;border:1px solid var(--line);padding:3px 9px;border-radius:7px;background:#fff}
-.liblink:hover{border-color:var(--ac);color:var(--ac)}
+.libname{font-size:13.5px;font-weight:600;color:var(--tx);letter-spacing:-.2px}
+.libdist{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--ac)}
+.libaddr{font-size:11.5px;color:var(--mut);margin:4px 0 9px;line-height:1.5}
+.librow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.badge{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:6px;letter-spacing:.2px}
+.badge.ok{background:rgba(31,157,99,.1);color:var(--ok)}
+.badge.no{background:rgba(194,86,47,.1);color:var(--no)}
+.badge.unk{background:#f0efea;color:#9a958a}
+.liblink{font-size:12px;color:var(--mut);text-decoration:none;font-weight:500;transition:.14s}
+.liblink:hover{color:var(--ac)}
+.liblink.accent{color:var(--ac);font-weight:600}
 .ebookline{margin-top:14px;font-size:11.5px;color:var(--mut);line-height:1.6;border-top:1px dashed var(--line);padding-top:12px}
 .ebookline a{color:var(--ac);font-weight:600;text-decoration:none}
 .src{font-size:10.5px;color:#c4c0b8;margin-top:15px;line-height:1.5}
@@ -186,20 +191,20 @@ function render(d){
 
 /* ---- 상세 + 도서관 찾기 ---- */
 function openM(i){const b=LAST[i];if(!b)return; CURRENT=b;
-  const star=b.rating!=null?`<span class=star>★</span> ${f5(b.rating)} · ${b.rating_count||0}명`:'';
-  const loan=b.loan_count?`  |  대출 ${man(b.loan_count)}`:'';
-  const page=b.pages?`  |  ${b.pages}쪽`:'';
+  const star=b.rating!=null?`<span class=star>★</span> ${f5(b.rating)} <span class=dot>·</span> ${b.rating_count||0}명`:'';
+  const loan=b.loan_count?`<span class=dot>·</span> 대출 ${man(b.loan_count)}`:'';
+  const page=b.pages?`<span class=dot>·</span> ${b.pages}쪽`:'';
   const hasIsbn=!!b.isbn13;
   document.getElementById('sheet').innerHTML=`<div class=top><div class=cv><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
     <div style="flex:1"><h2>${esc(b.title)}</h2><div class=au>${esc(b.author)} · ${esc(b.publisher||'')} ${b.pub_year||''}</div>
     <div class=meta>${star}${loan}${page}</div></div></div>
     ${b.reason?`<div class=why>${esc(b.reason)}</div>`:''}
     <div class=acts>
-      <button class=cta id=findBtn ${hasIsbn?'':'disabled'} onclick=findLib()>📚 ${LOCK?LOCK.label:''} 도서관에서 찾기</button>
+      <button class=cta id=findBtn ${hasIsbn?'':'disabled'} onclick=findLib()>${LOCK?LOCK.label:''} 도서관에서 찾기</button>
       <button class=cta2 onclick=closeM()>닫기</button>
     </div>
     <div id=libResult></div>
-    <div class=ebookline>📱 전자책은 학교·지역 <b>전자도서관</b>에서 빌릴 수 있어요 (도서관마다 보유가 달라요) —
+    <div class=ebookline>전자책은 학교·지역 전자도서관에서 빌릴 수 있어요 (도서관마다 보유가 달라요)
       <a href="https://search.naver.com/search.naver?query=${encodeURIComponent((b.title||'')+' 전자책 도서관')}" target=_blank rel=noopener>전자책 검색 →</a></div>
     <div class=src>도서관 소장·대출 가능 여부 · 정보나루(국립중앙도서관) 실시간</div>`;
   document.getElementById('ov').classList.add('on');
@@ -234,7 +239,7 @@ function renderLibs(d){
             :'<span class="badge unk">소장</span>';
     const map=`https://map.kakao.com/?q=${encodeURIComponent(l.name||l.address||'')}`;
     const tel=l.tel&&l.tel!=='-'?`<a class=liblink href="tel:${esc(l.tel)}">전화</a>`:'';
-    const hp=l.homepage?`<a class=liblink href="${esc(l.homepage)}" target=_blank rel=noopener>소장위치 보기 →</a>`:'';
+    const hp=l.homepage?`<a class="liblink accent" href="${esc(l.homepage)}" target=_blank rel=noopener>소장위치 보기 →</a>`:'';
     return `<div class=libitem>
       <div class=libtop><span class=libname>${esc(l.name)}</span>${dist?`<span class=libdist>${dist}</span>`:''}</div>
       <div class=libaddr>${esc(l.address)}</div>
@@ -244,12 +249,12 @@ function renderLibs(d){
   // 서가 분류(KDC) 힌트 — 책마다 동일하므로 목록 위에 한 번
   const kdcInt=d.kdc?String(d.kdc).split('.')[0]:'';
   const shelf=(d.kdcName||kdcInt)
-    ? `<div class=shelfhint>📚 서가 위치 — <b>${esc(d.kdcName||'')}</b>${kdcInt?` · <b>${kdcInt}번 서가</b>`:''}
-        <span class=sub>도서관 책은 이 분류번호 순서로 꽂혀 있어요. 정확한 칸·청구기호는 각 도서관 ‘소장위치 보기’에서 확인하세요.</span></div>`
+    ? `<div class=shelfhint><span class=shelflbl>서가 위치</span><span class=shelfval>${esc(d.kdcName||'')}${kdcInt?` · ${kdcInt}번 서가`:''}</span>
+        <span class=sub>책은 이 분류번호 순서로 꽂혀 있어요. 정확한 칸은 각 도서관 ‘소장위치 보기’에서 확인.</span></div>`
     : '';
   const hd=useDist
-    ? `📍 내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
-    : `📚 ${area} ${d.total||0}곳 소장 · <a class=distlink onclick=getLoc()>📍 가까운 순 보기</a>`;
+    ? `내 위치에서 가까운 순 · ${area} ${d.total||0}곳 소장`
+    : `${area} ${d.total||0}곳 소장 · <a class=distlink onclick=getLoc()>가까운 순 보기</a>`;
   res.innerHTML=`<div class=libwrap><div class=libhd>${hd}</div>${shelf}<div class=libs>${items}</div></div>`;
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
