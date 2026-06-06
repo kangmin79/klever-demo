@@ -859,6 +859,8 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 .viewer-pane{font-size:var(--reader-fs);line-height:var(--reader-lh);font-family:var(--reader-ff);}
 .viewer-pane p{margin:0 0 1em 0;}
 .viewer-pane .chapter-anchor{scroll-margin-top:20px;}
+.viewer-pane .cv-chunk{content-visibility:auto;contain-intrinsic-size:auto 700px;}
+.viewer-loading{color:var(--text-light);text-align:center;padding:48px 0;font-size:14px;}
 .viewer-pane h3.ch-title{font-size:1.15em;font-weight:800;margin:1.6em 0 0.6em;padding-top:0.4em;border-top:1px solid var(--border);color:var(--primary);}
 
 /* ═══ 장르별 조판 (브런치: 템플릿은 예쁨보다 장르 적합성) — #viewerBody.gv-* ═══ */
@@ -868,7 +870,7 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 .gv-poem .viewer-pane.left{font-family:'Noto Serif KR',var(--reader-ff),serif;}
 /* 소설: 첫 줄 들여쓰기 + 양끝맞춤 + 단락 촘촘(이야기 흐름) */
 .gv-novel .viewer-pane p{text-align:justify;text-indent:1.1em;margin:0 0 .4em;}
-.gv-novel .viewer-pane p:first-of-type,.gv-novel .viewer-pane h3.ch-title + p{text-indent:0;}
+.gv-novel .viewer-pane .chapter-anchor > .cv-chunk:first-of-type > p:first-child{text-indent:0;}
 /* 희곡: 내어쓰기(화자·지문 줄바꿈 가독), 좌측 정렬 */
 .gv-drama .viewer-pane p{text-align:left;padding-left:1.5em;text-indent:-1.5em;margin:0 0 .55em;}
 /* 철학·사상: 양끝맞춤, 단락 또렷이 구분(논지 단위), 편안한 단 폭 */
@@ -1773,8 +1775,8 @@ function applyReaderPrefs(){
   const tBtn = document.getElementById('themeBtn');
   if(tBtn) tBtn.innerHTML = readerPrefs.theme==='dark' ? ic('sun','icon icon-sm') : ic('moon','icon icon-sm');
 }
-function readerFS(d){ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }
-function readerLH(d){ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }
+function readerFS(d){ _withAnchorKept(()=>{ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
+function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerTheme(t){ readerPrefs.theme = t; applyReaderPrefs(); saveReaderPrefs(); }
 
 /* TOC */
@@ -1807,17 +1809,42 @@ function toggleTOC(){ const d=document.getElementById('tocDrawer'); if(d) d.clas
 
 /* 위치 저장 · 진행률 (스크롤은 .viewer-pane.left에서 일어남) */
 function _scrollEl(){ return document.querySelector('.viewer-pane.left'); }
+// 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
+function _anchorBlocks(){ const el=_scrollEl(); return el?[...el.querySelectorAll('.cv-chunk, h3.ch-title')]:[]; }
+function _captureAnchor(){
+  const el=_scrollEl(); if(!el) return null;
+  const blocks=_anchorBlocks(); if(!blocks.length) return null;
+  const top=el.scrollTop, paneTop=el.getBoundingClientRect().top;
+  for(let i=0;i<blocks.length;i++){
+    const b=blocks[i];
+    const bTop=b.getBoundingClientRect().top - paneTop + top, bH=b.offsetHeight||1;
+    if(bTop+bH > top+1) return {i, frac: Math.min(0.999, Math.max(0,(top-bTop)/bH))};
+  }
+  return {i:blocks.length-1, frac:0};
+}
+function _applyAnchor(a){
+  if(!a||typeof a!=='object') return;
+  const el=_scrollEl(); if(!el) return;
+  const blocks=_anchorBlocks(); if(!blocks.length) return;
+  const b=blocks[Math.min(a.i, blocks.length-1)]; if(!b) return;
+  const bTop=b.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
+  el.scrollTop = Math.max(0, bTop + (a.frac||0)*(b.offsetHeight||0));
+  updateProgress();
+}
+// 글자크기·줄간격 변경 등 재배치 작업 전후로 읽던 자리를 보존
+function _withAnchorKept(fn){ const a=_captureAnchor(); fn(); requestAnimationFrame(()=>_applyAnchor(a)); }
 function saveScrollPos(){
   if(!currentBook) return;
-  const el = _scrollEl(); if(!el) return;
-  readerStats.positions[currentBook.id] = el.scrollTop;
+  const a=_captureAnchor(); if(!a) return;
+  readerStats.positions[currentBook.id] = a;
   saveReaderStats();
 }
 function restoreScrollPos(){
   if(!currentBook) return;
   const el = _scrollEl(); if(!el) return;
-  el.scrollTop = readerStats.positions[currentBook.id] || 0;
-  updateProgress();
+  const p = readerStats.positions[currentBook.id];
+  if(p && typeof p==='object') _applyAnchor(p);          // 신규: 앵커
+  else { el.scrollTop = p || 0; updateProgress(); }       // 구버전 호환: px 숫자
 }
 function updateProgress(){
   const el = _scrollEl();
@@ -1999,7 +2026,7 @@ function buildNotes(){
   if(bks.length){
     html += `<div style="padding:10px 18px 4px;font-size:11px;font-weight:800;color:var(--text-light);">🔖 책갈피 ${bks.length}</div>`;
     bks.forEach((b,i)=>{
-      html += `<div class="note-item" onclick="jumpToPos(${b.pos})">
+      html += `<div class="note-item" onclick="jumpToBookmark(${i})">
         <span class="note-bk">${esc(b.label)}</span>
       </div>`;
     });
@@ -2018,6 +2045,10 @@ function buildNotes(){
 function jumpToPos(pos){
   const el=_scrollEl(); if(el){ el.scrollTop=pos; updateProgress(); }
 }
+function jumpToBookmark(i){
+  const bks=readerStats.bookmarks?.[currentBook?.id]||[]; const b=bks[i]; if(!b) return;
+  if(b.anchor) _applyAnchor(b.anchor); else jumpToPos(b.pos);   // 앵커 우선, 없으면 구버전 px
+}
 
 /* ── 책갈피 ── */
 function addBookmark(){
@@ -2027,7 +2058,7 @@ function addBookmark(){
   if(!readerStats.bookmarks[currentBook.id]) readerStats.bookmarks[currentBook.id]=[];
   const max=el.scrollHeight-el.clientHeight;
   const pct=max>0?Math.round(el.scrollTop/max*100):0;
-  readerStats.bookmarks[currentBook.id].push({pos:el.scrollTop, label:`${pct}% 지점`, ts:Date.now()});
+  readerStats.bookmarks[currentBook.id].push({pos:el.scrollTop, anchor:_captureAnchor(), label:`${pct}% 지점`, ts:Date.now()});
   saveReaderStats();
   const b=event?.target; if(b){ const o=b.textContent; b.textContent='✓'; setTimeout(()=>b.textContent=o,900); }
 }
@@ -2068,9 +2099,9 @@ function toggleTTS(){
   if(!('speechSynthesis' in window)){ alert('이 브라우저는 음성 읽기를 지원하지 않습니다.'); return; }
   const btn=document.getElementById('ttsBtn');
   if(_ttsOn){ stopTTS(); return; }
-  const pane = (currentMode==='intl') ? document.querySelector('.viewer-pane.left')
-             : document.querySelector('.viewer-pane.left');
-  const text = (pane?.innerText||'').trim();
+  const pane = document.querySelector('.viewer-pane.left');
+  // content-visibility로 화면 밖 청크가 innerText에서 빠지는 문제 → DOM 기반 textContent로 전체 수집
+  const text = pane ? [...pane.querySelectorAll('p')].map(p=>p.textContent).join('\n').trim() : '';
   if(!text){ return; }
   const u=new SpeechSynthesisUtterance(text.slice(0,4000));
   // 해외책 원문(영어)이면 영어, 그 외 한국어
@@ -2984,10 +3015,14 @@ function bodyToHtml(text){
   const lines = text.split(/\n/);
   const headerIdx = [];
   for(let i = 0; i < lines.length; i++) if(chPat.test(lines[i]) || mdPat.test(lines[i])) headerIdx.push(i);
-  const paraHtml = body => body.split(/\n{2,}/).map(p => {
-    const t = p.trim(); if(!t) return '';
-    return `<p>${esc(t).replace(/\n/g,'<br>')}</p>`;
-  }).join('\n');
+  // 문단을 12개씩 .cv-chunk 로 묶음 → content-visibility 로 화면 밖 구간은 렌더 생략(대작 성능)
+  const paraHtml = body => {
+    const ps = body.split(/\n{2,}/).map(p=>p.trim()).filter(Boolean)
+      .map(p=>`<p>${esc(p).replace(/\n/g,'<br>')}</p>`);
+    if(!ps.length) return '';
+    let out=''; for(let i=0;i<ps.length;i+=12) out += `<div class="cv-chunk">${ps.slice(i,i+12).join('')}</div>`;
+    return out;
+  };
   if(headerIdx.length < 2){
     return `<section class="chapter-anchor" data-ch-title="전체">${paraHtml(text)}</section>`;
   }
@@ -3079,6 +3114,10 @@ function renderViewer(){
   const c = viewerBodies(currentBook);
   const body = document.getElementById('viewerBody');
   const info = document.getElementById('viewerFooterInfo');
+  // 고전 본문을 Supabase에서 받아오는 중이면 "준비 중" 대신 로딩 표시
+  const loading = !!classicFetchId(currentBook.id) && CLASSIC_BODIES[currentBook.id]===undefined;
+  const loadingHtml = '<div class="viewer-loading">📖 본문을 불러오는 중…</div>';
+  const ph = txt => loading ? loadingHtml : `<p style="color:var(--text-light);">${txt}</p>`;
   // 장르별 조판 클래스 (category 기반)
   body.classList.remove(...GENRE_CLASSES);
   body.classList.add('gv-' + genreOf(currentBook.category));
@@ -3087,7 +3126,7 @@ function renderViewer(){
     info.innerHTML = '제3장 핵심 페이지 (5/10) · <b>+50 점수</b>';
     // 챌린지 좌측: classic/foreign은 풀이/번역, modern은 원문
     const leftBody = (currentBook.locale === 'modern' ? c.orig : c.trans)
-                     || `<p style="color:var(--text-light);">${L.placeholderTrans}</p>`;
+                     || ph(L.placeholderTrans);
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">${L.challengeLeftLabel}</div>
@@ -3135,11 +3174,11 @@ function renderViewer(){
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">${L.leftLabel}</div>
-        ${c.orig || `<p style="color:var(--text-light);">${L.placeholderOrig}</p>`}
+        ${c.orig || ph(L.placeholderOrig)}
       </div>
       <div class="viewer-pane right">
         <div class="viewer-pane-label">${L.rightLabel}</div>
-        ${c.trans || `<p style="color:var(--text-light);">${L.placeholderTrans}</p>`}
+        ${c.trans || ph(L.placeholderTrans)}
       </div>
     `;
   } else if(currentMode === 'intl'){
@@ -3147,7 +3186,7 @@ function renderViewer(){
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">${L.intlLeftLabel}</div>
-        ${c.trans || c.orig || `<p style="color:var(--text-light);">${L.placeholderTrans}</p>`}
+        ${c.trans || c.orig || ph(L.placeholderTrans)}
       </div>
       <div class="viewer-pane right">
         <div class="viewer-pane-label">오른쪽 — Native Language (English)</div>
