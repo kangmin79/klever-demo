@@ -2270,9 +2270,9 @@ const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
 function cleanA(a){let s=(a||'').replace(/지은이\s*:?/g,'').replace(/\((지은이|그림|옮긴이|글)\)/g,'').replace(/\s(지음|글|옮김)\b/g,'');return (s.split(/[,·\/]/)[0]||'').trim();}
-// 풍부 저자줄: 빈 괄호 제거 + 출판사. (현재 채식주의자 1권 시범 적용 — 확인 후 authorLine에서 가드 제거하면 전체 적용)
+// 풍부 저자줄: 빈 괄호 제거 + 출판사. (전체 적용 — 출판사는 backfillPool이 ISBN으로 백필)
 function authorRich(b){let a=(cleanA(b.a)||'').replace(/\(\s*\)/g,'').trim();return b.publisher?`${a} · ${b.publisher}`:a;}
-function authorLine(b){return cleanT(b.t).includes('채식주의자')?authorRich(b):cleanA(b.a);}
+function authorLine(b){return authorRich(b);}
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
 function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div><div class="ml-h-x">›</div></div>`;}
