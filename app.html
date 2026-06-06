@@ -814,6 +814,11 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .viewer-action:hover{border-color:var(--primary);color:var(--primary);}
 .viewer-action.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-color:var(--gold);}
+/* 모바일 본문/번역(퀴즈) 탭 — PC에서는 숨김, 모바일에서만 flex */
+.pane-tabs{display:none;gap:6px;padding:8px 12px;background:var(--bg-input);border-top:1px solid var(--border);}
+.pane-tabs .pt-btn{flex:1;padding:11px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);font-size:13px;font-weight:800;color:var(--text-sub);cursor:pointer;}
+.pane-tabs .pt-btn.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-color:var(--gold);}
 
 /* ═══════════════════════════════════════════════════════════
    12. 검색
@@ -839,7 +844,12 @@ body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-col
 }
 @media (max-width:600px){
   .viewer-body{grid-template-columns:1fr;}
-  .viewer-pane.left{display:none;}
+  .viewer-pane{padding:22px 18px;}
+  .viewer-pane.right{display:none;}                          /* 기본: 본문(left)만 전체폭 */
+  .viewer-body.mob-second .viewer-pane.left{display:none;}    /* 탭으로 두번째 칸 보기 */
+  .viewer-body.mob-second .viewer-pane.right{display:block;}
+  .pane-tabs{display:flex;}
+  #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
 }
 
@@ -1554,6 +1564,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       </div>
       <div class="viewer-body" id="viewerBody"></div>
     </div>
+    <div class="pane-tabs" id="paneTabs">
+      <button class="pt-btn on" data-pane="main" onclick="switchMobilePane('main')" id="ptMain">📖 본문</button>
+      <button class="pt-btn" data-pane="second" onclick="switchMobilePane('second')" id="ptSecond">번역</button>
+    </div>
     <div class="viewer-progress-wrap"><div class="viewer-progress-bar" id="viewerProg"></div></div>
     <div class="hl-popup" id="hlPopup">
       <button onclick="addHighlight()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>하이라이트</button>
@@ -1808,7 +1822,38 @@ function buildTOC(){
 function toggleTOC(){ const d=document.getElementById('tocDrawer'); if(d) d.classList.toggle('open'); }
 
 /* 위치 저장 · 진행률 (스크롤은 .viewer-pane.left에서 일어남) */
-function _scrollEl(){ return document.querySelector('.viewer-pane.left'); }
+function _vis(el){ return !!el && (el.offsetWidth>0 || el.offsetHeight>0); }   // display:none이면 0
+function _scrollEl(){   // 현재 화면에 보이는(스크롤되는) 칸 — PC=본문(left), 모바일=선택된 칸
+  const left=document.querySelector('.viewer-pane.left');
+  const right=document.querySelector('.viewer-pane.right');
+  if(_vis(left)) return left;
+  if(_vis(right)) return right;
+  return left;
+}
+// ── 모바일 1단 + 본문/번역(퀴즈) 탭 전환 ──
+let _mobPane='main';
+function switchMobilePane(which){
+  _mobPane=which;
+  const body=document.getElementById('viewerBody');
+  if(body) body.classList.toggle('mob-second', which==='second');
+  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===which));
+  attachScrollListener(); updateProgress();
+}
+function updatePaneTabs(hasSecond,label){
+  const bar=document.getElementById('paneTabs'); if(!bar) return;
+  bar.style.display = hasSecond ? '' : 'none';   // 두번째 칸 없으면 탭 숨김 → 본문 전체폭
+  const s=document.getElementById('ptSecond'); if(s&&label) s.textContent=label;
+  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane==='main'));
+}
+function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본문부터, 탭 라벨/표시 갱신
+  _mobPane='main';
+  const body=document.getElementById('viewerBody'); if(body) body.classList.remove('mob-second');
+  let hasSecond,label;
+  if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
+  else if(currentMode==='intl'){ hasSecond=true; label='English'; }
+  else { hasSecond=!!c.trans; label='번역'; }
+  updatePaneTabs(hasSecond,label);
+}
 // 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
 function _anchorBlocks(){ const el=_scrollEl(); return el?[...el.querySelectorAll('.cv-chunk, h3.ch-title')]:[]; }
 function _captureAnchor(){
@@ -3195,6 +3240,7 @@ function renderViewer(){
       </div>
     `;
   }
+  _setupMobilePanes(c);
 }
 
 function checkQuiz(el, qi, oi){
