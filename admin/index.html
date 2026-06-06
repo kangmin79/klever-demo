@@ -585,7 +585,7 @@ function autoOpenPreview(){ if(window.innerWidth>=1180){ const p=el('livePv'); i
 // iframe 로드 완료 시 현재 편집 상태 한 번 더 전송(첫 상태 누락 방지) + 축소 적용
 function pvFrameLoaded(){ const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
   const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:pvBuildRows()},'*'); }catch(e){} }
-  pvFitScale(); }
+  pvFitScale(); pvBindFrameScroll(); }
 // 실제 웹을 PV_DEVICE_W 너비로 렌더한 뒤 패널 폭에 맞춰 축소 → "작은 실제 화면"
 let _pvScale=1;
 const PV_DEVICE_W=1024;   // 이 너비로 렌더 후 축소(작게 보고 싶으면 키우고, 크게 보려면 줄이기)
@@ -598,27 +598,54 @@ function pvFitScale(){
   f.style.transformOrigin='top left';
   f.style.transform='scale('+s+')';
 }
-// 관리자 화면 스크롤 → 미리보기(iframe) 내용을 픽셀 1:1로 따라 스크롤
+// 관리자 화면 ↔ 미리보기(iframe) 양방향 스크롤 동기 (픽셀 1:1)
 // (미리보기가 화면에 고정되는 지점부터, 그 이후 스크롤한 px만큼 동일하게 이동 → 손가락 따라 붙는 느낌)
-let _pvScrollRAF=0;
+let _pvScrollRAF=0, _pvFrameRAF=0;
 const PV_STICKY_TOP=78;   // .settings-pv 의 sticky top 값과 동일
+let _pvIgnoreWinUntil=0, _pvIgnoreFrameUntil=0;   // 되먹임(echo) 방지용 방향별 무시 창(ms)
+function _pvInner(doc){
+  const cands=[doc.querySelector('.main'),doc.scrollingElement,doc.documentElement,doc.body].filter(Boolean);
+  return cands.find(c=>(c.scrollHeight-c.clientHeight)>4)||cands[0]||null;
+}
+function _pvPin(){
+  const se=document.scrollingElement||document.documentElement;
+  const wrap=document.querySelector('.settings-wrap');
+  return wrap?Math.max(0,(wrap.getBoundingClientRect().top+se.scrollTop)-PV_STICKY_TOP):0;
+}
+// ① 관리자 창 스크롤 → 미리보기 따라가기
 function pvSyncScroll(){
   const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
   const f=el('pvLiveFrame'); if(!f||!f.contentWindow) return;
+  if(Date.now()<_pvIgnoreWinUntil) return;   // 이 창 스크롤은 iframe→창 동기가 만든 것 → 되돌리지 않음
   try{
     const doc=f.contentDocument||f.contentWindow.document; if(!doc) return;
-    const cands=[doc.querySelector('.main'),doc.scrollingElement,doc.documentElement,doc.body].filter(Boolean);
-    const inner=cands.find(c=>(c.scrollHeight-c.clientHeight)>4)||cands[0]; if(!inner) return;
+    const inner=_pvInner(doc); if(!inner) return;
     const se=document.scrollingElement||document.documentElement;
-    const wrap=document.querySelector('.settings-wrap');
-    const pin=wrap?Math.max(0,(wrap.getBoundingClientRect().top+se.scrollTop)-PV_STICKY_TOP):0;
-    // 축소(scale) 보정 → 화면에서 보이는 이동량이 왼쪽과 1:1로 일치
-    inner.scrollTop=Math.max(0,(se.scrollTop-pin)/(_pvScale||1));
+    _pvIgnoreFrameUntil=Date.now()+90;   // 이로 인해 발생할 iframe scroll 이벤트는 무시(echo 방지)
+    inner.scrollTop=Math.max(0,(se.scrollTop-_pvPin())/(_pvScale||1));   // 축소 보정
+  }catch(e){}
+}
+// ② 미리보기 스크롤 → 관리자 창 따라오기 (반대 방향)
+function pvFrameScroll(){
+  const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
+  const f=el('pvLiveFrame'); if(!f||!f.contentWindow) return;
+  if(Date.now()<_pvIgnoreFrameUntil) return;   // 이 iframe 스크롤은 창→iframe 동기가 만든 것 → 되돌리지 않음
+  try{
+    const doc=f.contentDocument||f.contentWindow.document; if(!doc) return;
+    const inner=_pvInner(doc); if(!inner) return;
+    _pvIgnoreWinUntil=Date.now()+90;   // 이로 인해 발생할 창 scroll 이벤트는 무시(echo 방지)
+    window.scrollTo(0,_pvPin()+inner.scrollTop*(_pvScale||1));
   }catch(e){}
 }
 function pvOnScroll(){ if(_pvScrollRAF) return; _pvScrollRAF=requestAnimationFrame(function(){ _pvScrollRAF=0; pvSyncScroll(); }); }
+function pvOnFrameScroll(){ if(_pvFrameRAF) return; _pvFrameRAF=requestAnimationFrame(function(){ _pvFrameRAF=0; pvFrameScroll(); }); }
 window.addEventListener('scroll',pvOnScroll,{passive:true});
 window.addEventListener('resize',function(){ const p=el('livePv'); if(p&&p.classList.contains('on')){ pvFitScale(); pvSyncScroll(); } });
+// iframe 내부 스크롤 리스너 부착(로드 후) — capture로 .main 같은 overflow 요소 스크롤도 포착
+function pvBindFrameScroll(){
+  const f=el('pvLiveFrame'); if(!f||!f.contentWindow) return;
+  try{ const cw=f.contentWindow; cw.removeEventListener('scroll',pvOnFrameScroll,true); cw.addEventListener('scroll',pvOnFrameScroll,true); }catch(e){}
+}
 let _pvTimer=null;
 function pvSync(){
   const p=el('livePv'); if(!p||!p.classList.contains('on')) return;
