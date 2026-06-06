@@ -2302,7 +2302,8 @@ const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e']
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
 function cleanA(a){let s=(a||'').replace(/지은이\s*:?/g,'').replace(/\((지은이|그림|옮긴이|글)\)/g,'').replace(/\s(지음|글|옮김)\b/g,'');return (s.split(/[,·\/]/)[0]||'').trim();}
 // 풍부 저자줄: 빈 괄호 제거 + 출판사. (전체 적용 — 출판사는 backfillPool이 ISBN으로 백필)
-function authorRich(b){let a=(cleanA(b.a)||'').replace(/\(\s*\)/g,'').trim();return b.publisher?`${a} · ${b.publisher}`:a;}
+function authName(b){return (cleanA(b.a||b.author||'')).replace(/\(\s*\)/g,'').trim();}   // 저자만(빈 괄호 제거)
+function authorRich(b){const a=authName(b);return b.publisher?`${a} · ${b.publisher}`:a;}      // 저자 · 출판사
 function authorLine(b){return authorRich(b);}
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
 function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
@@ -2346,9 +2347,9 @@ function mlShelf(b,note,cur,title){
   const cls=isCls(b);
   const face = cls ? bookCoverHTML(clOf(b))
     : (b.cover ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
-    : `<div class="book-cover" style="background:${spineColor(b.t||b.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||b.title||''))}</div><div class="book-cover-author">${esc(cleanA(b.a||b.author||''))}</div></div></div>`);
+    : `<div class="book-cover" style="background:${spineColor(b.t||b.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||b.title||''))}</div><div class="book-cover-author">${esc(authName(b))}</div></div></div>`);
   const bookT = esc(cls?clOf(b).title:cleanT(b.t||b.title||'추천 도서'));
-  const bookA = esc(cls?(clOf(b).author||''):cleanA(b.a||b.author||''));
+  const bookA = esc(cls?(clOf(b).author||''):authorRich(b));
   const checks=[];
   if(!cls && b.rating!=null) checks.push(`★ ${b.rating}`);
   if(!cls && b.loan) checks.push(`대출 ${Number(b.loan).toLocaleString()}회`);
@@ -2408,13 +2409,13 @@ function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml
 // 표지 그리드(서가)
 function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
 // 매거진
-function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`;}
+function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(authorRich(b))}</div></div></div>`).join('')}</div>`;}
 // 와이드 띠배너(대표 1권)
-function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-bn" onclick="libDetail('${b.isbn}')">${mlcv('ml-bn-cv',b)}<div class="ml-bn-x"><div class="ml-bn-k">BOOK OF THE MONTH</div><div class="ml-bn-h">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-bn-a">${esc(cleanT(b.t))} · ${esc(cleanA(b.a))}</div></div></div></div>`;}
+function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-bn" onclick="libDetail('${b.isbn}')">${mlcv('ml-bn-cv',b)}<div class="ml-bn-x"><div class="ml-bn-k">BOOK OF THE MONTH</div><div class="ml-bn-h">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-bn-a">${esc(cleanT(b.t))} · ${esc(authorRich(b))}</div></div></div></div>`;}
 // 신간 입고
 function mlNew(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-nw" onclick="libDetail('${b.isbn}')"><span class="ml-nw-b">NEW</span>${mlcv('ml-nw-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div></div>`).join('')}</div>`)}</div>`;}
 // 책 속 한 문장
-function mlQuote(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-qc"><div class="ml-qc-m">“</div><div class="ml-qc-q">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-qc-f" onclick="libDetail('${b.isbn}')">${mlcv('ml-qc-cv',b)}<div class="ml-qc-a">${esc(cleanT(b.t))} · ${esc(cleanA(b.a))}</div></div></div>`).join('')}</div>`)}</div>`;}
+function mlQuote(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-qc"><div class="ml-qc-m">“</div><div class="ml-qc-q">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-qc-f" onclick="libDetail('${b.isbn}')">${mlcv('ml-qc-cv',b)}<div class="ml-qc-a">${esc(cleanT(b.t))} · ${esc(authorRich(b))}</div></div></div>`).join('')}</div>`)}</div>`;}
 // 스와이프 카드(틴더형)
 function mlSwipe(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-sw-wrap"><div class="ml-sw" onclick="libDetail('${b.isbn}')"><div class="ml-sw-cv">${lcCvHTML(b)}<div class="ml-sw-ov"><div class="ml-sw-t">${esc(cleanT(b.t))}</div></div></div><div class="ml-sw-b"><div class="ml-sw-d">${esc(firstSent(b.description)||'')} ${esc(cleanA(b.a))}</div><div class="ml-sw-a"><div class="x">✕ 다음</div><div class="o">♥ 읽을래요</div></div></div></div><div class="ml-sw-hint">한 권씩 넘기며 빠르게 골라요</div></div></div>`;}
 // 테마 컬렉션(한 칸 = 한 묶음)
@@ -2635,7 +2636,7 @@ function openLc(ci,bi){
     <span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
       <div class="lcd-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
-      <div class="lcd-i"><h2>${esc(b.t)}</h2><div class="au">${esc(b.a)}</div>
+      <div class="lcd-i"><h2>${esc(b.t)}</h2><div class="au">${esc(authorRich(b))}</div>
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
     <div class="lcd-acts">
