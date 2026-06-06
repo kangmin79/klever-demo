@@ -153,6 +153,15 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .deco-bk .c img{width:100%;height:100%;object-fit:cover}
 .deco-bk .rm{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--bad);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid #fff;padding:0}
 .deco-add{align-self:center;font-size:12.5px;font-weight:700;color:var(--primary);background:var(--primary-bg);border:1px dashed var(--primary);border-radius:9px;padding:9px 13px;cursor:pointer;height:fit-content}
+/* 스타일 시각 선택기 — 글자 대신 미니 미리보기 그림으로 고르기 */
+.style-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:8px;margin:5px 0 2px}
+.sp-card{border:1.5px solid var(--border);border-radius:10px;padding:6px 5px 5px;cursor:pointer;background:var(--card);transition:.12s;text-align:center}
+.sp-card:hover{border-color:var(--primary)}
+.sp-card.on{border-color:var(--primary);background:var(--primary-bg);box-shadow:0 0 0 2px var(--primary-bg)}
+.sp-th{height:42px;border-radius:6px;background:var(--input);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 5px}
+.sp-nm{font-size:11px;font-weight:700;color:var(--text);margin-top:5px;line-height:1.25}
+.tcv{display:inline-block;width:8px;height:12px;background:#aeb7e6;border-radius:1px}
+.tln{display:block;height:2px;background:#c4ccdd;border-radius:1px;margin:1.5px 0}
 /* 칸별 책 담기 모달 */
 #secOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:80;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
 #secOv.on{display:flex}
@@ -479,6 +488,26 @@ const STYLES=[
   ['grid','표지 그리드 (서가)'],['mag','매거진'],['banner','와이드 띠배너'],
   ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션']
 ];
+// 스타일별 한 줄 설명(툴팁)
+const STYLE_DESC={hero:'대표 1권을 큰 카드로 강조',row:'표지를 가로로 죽 나열(가장 기본)',grad:'15분 요약 카드',ai:'AI 질문이 있는 다크 카드',grid:'표지를 격자(서가)처럼',mag:'잡지 스프레드형(큰 표지+소개)',banner:'와이드 띠배너 1권',new:'신간 NEW 표시 줄',quote:'책 속 문장 인용',swipe:'넘겨보는 스와이프 카드',coll:'테마별 표지 모음'};
+// 스타일별 미니 미리보기 그림(CSS 도형)
+function styleThumb(st){
+  switch(st){
+    case 'hero': return `<span style="display:flex;align-items:center;gap:5px"><span style="width:24px;height:32px;border-radius:4px;background:linear-gradient(160deg,#aeb7e6,#7e8ad0);display:flex;align-items:flex-end;justify-content:center;color:#fff;font-size:7px;font-weight:800;padding-bottom:2px">대표</span><span style="width:30px"><i class="tln" style="width:90%"></i><i class="tln" style="width:60%"></i></span></span>`;
+    case 'row': return `<span style="display:flex;gap:3px">${'<i class="tcv"></i>'.repeat(5)}</span>`;
+    case 'grad': return `<span style="display:flex;align-items:center;justify-content:center;width:52px;height:30px;border-radius:6px;background:linear-gradient(160deg,#f0a07a,#e07a9a);color:#fff;font-size:9px;font-weight:800">15분</span>`;
+    case 'ai': return `<span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:52px;height:32px;border-radius:6px;background:linear-gradient(160deg,#3a2b6e,#23194a);color:#ffd86b;font-size:9px;font-weight:800">✦ AI<span style="width:32px;height:6px;border-radius:3px;background:#6a5cc0"></span></span>`;
+    case 'grid': return `<span style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px">${'<i class="tcv" style="width:7px;height:9px"></i>'.repeat(8)}</span>`;
+    case 'mag': return `<span style="display:flex;align-items:center;gap:5px"><i class="tcv" style="width:20px;height:28px;border-radius:2px"></i><span style="width:30px"><i class="tln" style="width:100%"></i><i class="tln" style="width:80%"></i><i class="tln" style="width:55%"></i></span></span>`;
+    case 'banner': return `<span style="display:flex;align-items:center;gap:4px;width:60px;height:22px;border-radius:5px;background:linear-gradient(90deg,#5b6bd6,#8a7be0);padding:0 4px"><i class="tcv" style="width:11px;height:16px;background:#fff"></i><span style="flex:1"><i class="tln" style="width:90%;background:rgba(255,255,255,.85)"></i><i class="tln" style="width:60%;background:rgba(255,255,255,.6)"></i></span></span>`;
+    case 'new': return `<span style="display:flex;gap:3px;align-items:flex-start"><span style="position:relative"><i class="tcv"></i><b style="position:absolute;top:-3px;left:-2px;background:#e0466a;color:#fff;font-size:5px;padding:0 2px;border-radius:2px">N</b></span><i class="tcv"></i><i class="tcv"></i><i class="tcv"></i></span>`;
+    case 'quote': return `<span style="display:flex;align-items:center;gap:4px"><b style="font-size:24px;color:#aeb7e6;line-height:.7;font-family:Georgia,serif">“</b><span style="width:36px"><i class="tln" style="width:100%"></i><i class="tln" style="width:85%"></i><i class="tln" style="width:50%"></i></span></span>`;
+    case 'swipe': return `<span style="position:relative;width:40px;height:32px"><i class="tcv" style="position:absolute;left:8px;top:4px;width:20px;height:26px;transform:rotate(-8deg);background:#cdd4ee"></i><i class="tcv" style="position:absolute;left:13px;top:2px;width:20px;height:26px;transform:rotate(6deg);background:#aeb7e6"></i></span>`;
+    case 'coll': return `<span style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;border-radius:5px;background:#e7ebf6">${'<i class="tcv" style="width:11px;height:13px"></i>'.repeat(4)}</span>`;
+    default: return `<span style="display:flex;gap:3px">${'<i class="tcv"></i>'.repeat(4)}</span>`;
+  }
+}
+function setSecStyle(slot,val){const h=el('sec_style_'+slot);if(h)h.value=val;readSecInputs();renderSettings();}
 // 3영역: 우리도서관 / 고전 컬렉션 / International Students (학생앱 페이지와 1:1)
 const AREAS=['우리도서관','고전 컬렉션','International'];
 let curArea='우리도서관';
@@ -662,10 +691,10 @@ function renderSettings(){
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
     </div>
-    <div class="row2"><div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
-      <div><div class="flabel">스타일(앱 표시 형태)</div>${isRank
-        ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
-        :`<select class="cur-inp" id="sec_style_${s.slot}" onchange="readSecInputs();renderSettings()">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<option value="${o[0]}" ${s.style===o[0]?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`}</div></div>
+    <div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
+    <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지 — 그림 클릭)</div>${isRank
+      ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
+      :`<input type="hidden" id="sec_style_${s.slot}" value="${esc(s.style||'row')}"><div class="style-pick">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
     ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
