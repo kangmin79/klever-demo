@@ -202,6 +202,35 @@ a{color:inherit;text-decoration:none}
 .foot .links{margin-top:12px;font-size:12.5px}
 .foot .links a{color:var(--sub);font-weight:600;margin:0 8px}
 .foot .links a:hover{color:var(--navy)}
+/* ── 모바일 (≤600px) ── */
+@media(max-width:600px){
+  html,body{overflow-x:hidden}                 /* 가로 스크롤/잘림 방지 */
+  .wrap{padding:0 18px}
+  /* nav: 인앱 앵커 링크 숨기고 브랜드 + 도입문의 CTA만 (AI체험은 히어로 버튼으로) */
+  .nav .wrap{gap:8px;height:56px}
+  .nav a.lnk{display:none}
+  .brand{font-size:16px}
+  /* hero */
+  .hero{padding:46px 0 36px}
+  .hero h1{font-size:26px;line-height:1.3;letter-spacing:-.5px}
+  .hero .sub{font-size:14px;margin-top:16px}
+  .kicker{font-size:11px;letter-spacing:2px;margin-bottom:14px}
+  .cta-row{flex-direction:column;align-items:stretch;gap:9px;margin-top:24px}
+  .cta-row .btn{width:100%}
+  /* 섹션 */
+  .sec{padding:46px 0}
+  .sec h2{font-size:21px}
+  .sec .lead{font-size:13.5px}
+  .story{padding:66px 0}
+  /* 비교표 */
+  .cmp .crow{grid-template-columns:1.5fr .75fr .75fr}
+  .cmp .crow .feat{font-size:12px;padding:12px 10px}
+  .cmp .crow.head>div{font-size:11px;padding:12px 8px}
+  .cmp .crow .c{font-size:13px;padding:12px 4px}
+  /* 마무리 CTA */
+  .final{padding:40px 20px;border-radius:18px}
+  .final h2{font-size:22px}
+}
 </style></head>
 <body>
 
