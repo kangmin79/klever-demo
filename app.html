@@ -618,6 +618,23 @@ body.dark .rec-go .icon{color:#0f172a;}
 .list-card.open .acc-caret{transform:rotate(180deg);}
 .acc-body{display:none;font-size:14px;line-height:1.85;color:var(--text);white-space:pre-wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
 .list-card.open .acc-body{display:block;}
+/* 리치 본문 렌더(공지/커뮤니티 — 관리자 에디터로 작성한 HTML) */
+.rt-view{white-space:normal;word-break:break-word}
+.rt-view p{margin:0 0 9px}
+.rt-view h3{font-size:18px;font-weight:800;margin:14px 0 7px;color:var(--text)}
+.rt-view h4{font-size:15px;font-weight:700;margin:10px 0 5px;color:var(--text)}
+.rt-view ul,.rt-view ol{padding-left:22px;margin:7px 0}
+.rt-view li{margin:3px 0}
+.rt-view blockquote{border-left:3px solid var(--gold);margin:9px 0;padding:5px 14px;color:var(--text-sub);background:rgba(212,169,59,.08);border-radius:0 6px 6px 0}
+.rt-view a{color:var(--accent);text-decoration:underline;word-break:break-all}
+.rt-view img{max-width:100%;height:auto;border-radius:10px;margin:8px 0;display:block}
+.rt-view hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.rt-view table.rt-table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+.rt-view .rt-table th,.rt-view .rt-table td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;min-width:40px}
+.rt-view .rt-table th{background:var(--bg);font-weight:800;color:var(--text)}
+.rt-view .rt-embed{position:relative;padding-bottom:56.25%;height:0;margin:10px 0;border-radius:10px;overflow:hidden;background:#000}
+.rt-view .rt-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.rt-view a.rt-file{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:10px;padding:10px 14px 10px 36px;margin:6px 0;background:var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%233a6ea5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='7 10 12 15 17 10'/%3E%3Cline x1='12' y1='15' x2='12' y2='3'/%3E%3C/svg%3E") no-repeat 12px center;text-decoration:none;color:var(--text);font-size:13px;font-weight:700}
 /* 커뮤니티 상세 모달 (독서 프로그램) */
 #commModal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px;}
 #commModal.on{display:flex;}
@@ -1640,6 +1657,54 @@ const ic = (name, cls='icon') => `<svg class="${cls}" viewBox="0 0 24 24">${SVG[
    Mock 데이터
    ═══════════════════════════════════════════════════════════ */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ===== 리치 본문 sanitize (관리자 에디터와 동일 화이트리스트) — 공지/커뮤니티 본문 렌더용 ===== */
+const RT_ALLOW={B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,H4:1,P:1,BR:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,A:1,IMG:1,SPAN:1,DIV:1,HR:1,FONT:1,
+  TABLE:1,THEAD:1,TBODY:1,TR:1,TD:1,TH:1,CAPTION:1,COLGROUP:1,COL:1,FIGURE:1,IFRAME:1};
+const RT_EMBED_OK=/^https:\/\/(www\.youtube\.com\/embed\/|player\.vimeo\.com\/video\/)[\w\-?=&;%.]+$/;
+const RT_CLASS_OK={'rt-table':1,'rt-embed':1,'rt-file':1};
+const RT_STYLE_OK=/^(color|background-color|background|text-align|font-weight|font-style|font-size|text-decoration|text-decoration-line)$/;
+function safeStyle(v){
+  return String(v||'').split(';').map(s=>s.trim()).filter(Boolean).filter(d=>{
+    const i=d.indexOf(':'); if(i<0)return false;
+    const prop=d.slice(0,i).trim().toLowerCase(), val=d.slice(i+1).trim().toLowerCase();
+    if(!RT_STYLE_OK.test(prop))return false;
+    if(/url\(|expression|javascript:|@import|<|>/.test(val))return false;
+    return true;
+  }).join('; ');
+}
+function sanitizeHtml(html){
+  const box=document.createElement('div'); box.innerHTML=String(html||'');
+  (function clean(node){
+    [...node.childNodes].forEach(clean);
+    if(node.nodeType===8){node.remove();return;}
+    if(node.nodeType!==1)return;
+    const tag=node.tagName;
+    if(!RT_ALLOW[tag]){
+      if(/^(SCRIPT|STYLE|OBJECT|EMBED|LINK|META|FORM|INPUT|SVG)$/.test(tag)){node.remove();return;}
+      const p=node.parentNode; if(p){while(node.firstChild)p.insertBefore(node.firstChild,node);p.removeChild(node);} return;
+    }
+    if(tag==='IFRAME'){
+      const src=node.getAttribute('src')||'';
+      if(!RT_EMBED_OK.test(src)){node.remove();return;}
+      [...node.attributes].forEach(a=>{ if(!/^(src|allow|allowfullscreen|loading)$/.test(a.name.toLowerCase()))node.removeAttribute(a.name); });
+      return;
+    }
+    [...node.attributes].forEach(a=>{
+      const an=a.name.toLowerCase(), av=a.value||'';
+      if(tag==='A'&&an==='href'){ if(/^\s*(javascript|data):/i.test(av)){node.removeAttribute(a.name);} }
+      else if(tag==='IMG'&&an==='src'){ if(/^\s*javascript:/i.test(av)){node.removeAttribute(a.name);} }
+      else if(tag==='IMG'&&an==='alt'){ }
+      else if((tag==='TD'||tag==='TH')&&(an==='colspan'||an==='rowspan')){ if(!/^\d{1,2}$/.test(av))node.removeAttribute(a.name); }
+      else if(tag==='FONT'&&an==='color'){ if(/[<>"]|javascript:/i.test(av))node.removeAttribute(a.name); }
+      else if(an==='class'){ const ok=av.split(/\s+/).filter(c=>RT_CLASS_OK[c]); if(ok.length){node.setAttribute('class',ok.join(' '));}else{node.removeAttribute('class');} }
+      else if(an==='style'){ const s=safeStyle(av); if(s){node.setAttribute('style',s);}else{node.removeAttribute('style');} }
+      else { node.removeAttribute(a.name); }
+    });
+    if(tag==='A'){ node.setAttribute('target','_blank'); node.setAttribute('rel','noopener noreferrer'); }
+  })(box);
+  return box.innerHTML.trim();
+}
 
 const Student = {
   name:'김민서', school:'한국대학교', score:1842, streak:7,
@@ -3514,11 +3579,11 @@ function renderCommunity(tab){
       </div>
       <div class="list-card-meta">${(p.meta||[]).map(esc).join(' · ')}</div>`;
     if(isProgram) return `<div class="list-card" onclick="openCommModal('${tab}',${i})">${head}</div>`;
-    return `<div class="list-card acc" onclick="toggleAcc(this)">${head}
-      <div class="acc-body">${esc(p.body||'자세한 내용은 곧 업데이트됩니다.')}</div></div>`;
+    return `<div class="list-card acc" onclick="toggleAcc(event,this)">${head}
+      <div class="acc-body rt-view">${p.body?sanitizeHtml(p.body):'자세한 내용은 곧 업데이트됩니다.'}</div></div>`;
   }).join('');
 }
-function toggleAcc(el){ el.classList.toggle('open'); }
+function toggleAcc(e,el){ if(e&&e.target&&e.target.closest&&e.target.closest('.acc-body')) return; el.classList.toggle('open'); }
 function openCommModal(tab,i){
   const p=(COMMUNITY_POSTS[tab]||[])[i]; if(!p) return;
   document.getElementById('commModalBody').innerHTML=`
@@ -3526,7 +3591,7 @@ function openCommModal(tab,i){
       <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag||'')}</span>
       ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
     <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
-    <div style="font-size:14px;line-height:1.85;color:var(--text);white-space:pre-wrap">${esc(p.body||'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.')}</div>
+    <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.'}</div>
     <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n마이 페이지에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
   document.getElementById('commModal').classList.add('on');
 }

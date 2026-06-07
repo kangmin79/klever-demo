@@ -505,7 +505,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           <div class="flabel">제목</div><input class="cur-inp" id="cmTitle" placeholder="제목을 입력하세요">
           <div class="row2"><div><div class="flabel" id="cmM1L">기간</div><input class="cur-inp" id="cmM1"></div>
             <div><div class="flabel" id="cmM2L">장소</div><input class="cur-inp" id="cmM2"></div></div>
-          <div class="flabel">내용 (선택)</div><textarea class="cur-inp" id="cmBody" rows="4" placeholder="자세한 내용 (선택)"></textarea>
+          <div class="flabel">내용 (선택)</div><div id="cmBodyRich"></div>
           <div class="makefoot"><button class="btn-ghost" id="cmCancel" style="display:none;margin-right:8px" onclick="cancelCommEdit()">취소</button><button class="btn-primary" id="cmSubmit" onclick="saveCommPost()">게시 →</button></div>
         </div>
         <div class="panel"><h3 id="cmListTitle">게시된 글</h3><div class="ph-sub">최근 순</div><div id="commList"></div></div>
@@ -1765,7 +1765,7 @@ function renderComm(){
   el('commList').innerHTML=list.map(p=>`<div class="notice-i"><div class="nx">
     <h4><span class="gtag chal" style="margin-right:6px">${esc(p.tag||'')}</span>${esc(p.title)}</h4>
     <div class="nm">${esc(p.meta1||'')}${p.meta2?' · '+esc(p.meta2):''}</div>
-    ${p.body?`<p>${esc(p.body)}</p>`:''}</div>
+    ${p.body?`<div class="rt-view">${sanitizeHtml(p.body)}</div>`:''}</div>
     <div style="display:flex;flex-direction:column;gap:6px;align-self:flex-start">
       <button class="btn-ghost" onclick="editCommPost(${p.id})">수정</button>
       <button class="btn-ghost" style="color:var(--bad);border-color:#e7c9c4" onclick="delCommPost(${p.id})">삭제</button>
@@ -1797,18 +1797,18 @@ function editCommPost(id){
   const p=COMM_POSTS.find(x=>x.id===id); if(!p)return;
   _commEditId=id;
   if(el('cmTag')) el('cmTag').value=p.tag||'';   // 분류 옵션은 현재 탭 기준이라 일치
-  el('cmTitle').value=p.title||''; el('cmM1').value=p.meta1||''; el('cmM2').value=p.meta2||''; el('cmBody').value=p.body||'';
+  el('cmTitle').value=p.title||''; el('cmM1').value=p.meta1||''; el('cmM2').value=p.meta2||''; rtSet('cmBodyRich',p.body||'');
   el('cmSubmit').textContent='수정 저장 →'; el('cmCancel').style.display='';
   el('commForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cancelCommEdit(){
   _commEditId=null;
-  el('cmTitle').value='';el('cmM1').value='';el('cmM2').value='';el('cmBody').value='';
+  el('cmTitle').value='';el('cmM1').value='';el('cmM2').value='';rtSet('cmBodyRich','');
   if(el('cmSubmit'))el('cmSubmit').textContent='게시 →'; if(el('cmCancel'))el('cmCancel').style.display='none';
 }
 async function saveCommPost(){
   const title=el('cmTitle').value.trim(); if(!title){toast('제목을 입력해주세요');return;}
-  const row={kind:commKind,tag:el('cmTag').value,title,meta1:el('cmM1').value.trim(),meta2:el('cmM2').value.trim(),body:el('cmBody').value.trim()};
+  const row={kind:commKind,tag:el('cmTag').value,title,meta1:el('cmM1').value.trim(),meta2:el('cmM2').value.trim(),body:rtEmpty('cmBodyRich')?'':rtGet('cmBodyRich')};
   const editing=_commEditId;
   try{
     let r;
@@ -1854,6 +1854,7 @@ function renderHistory(){
 
 /* ====== 초기화 ====== */
 rtInit('ntBodyRich','공지 내용을 입력하세요. 위 도구로 굵게·소제목·목록·인용·링크·이미지를 넣을 수 있어요.');
+rtInit('cmBodyRich','내용을 입력하세요 (선택). 굵게·색·목록·표·링크·이미지·파일 등을 넣을 수 있어요.');
 buildNtLoc();
 renderDash();
 renderChallenges();
