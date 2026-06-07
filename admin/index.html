@@ -649,6 +649,9 @@ function sanitizeHtml(html){
   return box.innerHTML.trim();
 }
 let RT_CUR=null;                                          // 현재 포커스된 에디터
+let RT_RANGE=null;                                        // 마지막 커서 위치(파일창 열려 포커스 빠져도 복원)
+function rtSaveRange(){const s=window.getSelection();if(s&&s.rangeCount&&RT_CUR&&RT_CUR.contains(s.anchorNode))RT_RANGE=s.getRangeAt(0).cloneRange();}
+function rtFocusRange(ed){ if(ed)ed.focus(); if(RT_RANGE&&ed&&ed.contains(RT_RANGE.commonAncestorContainer)){const s=window.getSelection();s.removeAllRanges();s.addRange(RT_RANGE);} }
 // 에디터 초기화: host(<div id=...>)에 툴바+편집영역 주입. 반환=편집영역 element
 function rtInit(host, placeholder, initialHtml){
   if(typeof host==='string')host=el(host);
@@ -681,6 +684,7 @@ function rtInit(host, placeholder, initialHtml){
   ed.innerHTML = initialHtml ? sanitizeHtml(initialHtml) : '';
   ed.addEventListener('focus',()=>{RT_CUR=ed;host.classList.add('focus');try{document.execCommand('defaultParagraphSeparator',false,'p');document.execCommand('styleWithCSS',false,true);}catch(e){}});
   ed.addEventListener('blur',()=>host.classList.remove('focus'));
+  ['keyup','mouseup','input'].forEach(ev=>ed.addEventListener(ev,rtSaveRange)); // 커서 위치 추적
   // 붙여넣기: 이미지면 업로드, 텍스트면 plain 으로
   ed.addEventListener('paste',e=>{
     const items=[...(e.clipboardData?.items||[])];
@@ -748,7 +752,7 @@ function rtTableGrid(btn){
 }
 function rtTblHover(r,c){const pop=el('rtPalette');if(!pop)return;[...pop.querySelectorAll('.rt-tblgrid i')].forEach(i=>i.classList.toggle('on',(+i.dataset.r<=r&&+i.dataset.c<=c)));const l=el('rtTblLbl');if(l)l.textContent=c+' × '+r;}
 function rtTblInsert(r,c){
-  const ed=RT_CUR; if(ed)ed.focus();
+  const ed=RT_CUR; rtFocusRange(ed);
   let h='<table class="rt-table"><tbody>';
   for(let i=0;i<r;i++){h+='<tr>';for(let j=0;j<c;j++)h+=(i===0?'<th>제목</th>':'<td>내용</td>');h+='</tr>';}
   h+='</tbody></table><p><br></p>';
@@ -780,7 +784,7 @@ function rtVideo(){
   const u=prompt('유튜브 영상 주소를 붙여넣으세요\n예: https://youtu.be/...');
   if(!u)return; const id=ytId(u);
   if(!id){toast('유튜브 주소를 인식하지 못했어요');return;}
-  ed.focus();
+  rtFocusRange(ed);
   const h=`<div class="rt-embed"><iframe src="https://www.youtube.com/embed/${id}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><p><br></p>`;
   document.execCommand('insertHTML',false,h);
 }
@@ -804,7 +808,7 @@ async function rtUploadFile(ed, file){
     if(!r.ok)throw new Error('HTTP '+r.status);
     const url=`${SB_PROJ}/storage/v1/object/public/${RT_BUCKET}/${path}`;
     const kb=file.size<1048576?Math.max(1,Math.round(file.size/1024))+'KB':(file.size/1048576).toFixed(1)+'MB';
-    ed.focus();
+    rtFocusRange(ed);
     document.execCommand('insertHTML',false,`<a class="rt-file" href="${url}" target="_blank" rel="noopener noreferrer">${esc(file.name)} <span style="color:#94a3b8">(${kb})</span></a><p><br></p>`);
     toast('파일이 첨부됐어요');
   }catch(e){toast('파일 업로드 실패 — '+(e&&e.message||'연결 확인'));}
@@ -861,7 +865,7 @@ function rtPickImage(){
 async function rtUploadInsert(ed, file){
   if(!file.type.startsWith('image/')){toast('이미지 파일만 넣을 수 있어요');return;}
   if(file.size>5*1024*1024){toast('이미지는 5MB 이하만 가능해요');return;}
-  ed.focus();
+  rtFocusRange(ed);
   const ph='rtimg_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
   // 미리보기(로컬) 먼저 삽입 — 업로드 중 표시
   const local=URL.createObjectURL(file);
