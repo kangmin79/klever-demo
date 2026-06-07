@@ -25,9 +25,12 @@ body::before{content:'';position:fixed;top:-160px;left:50%;transform:translateX(
 .sidebar{position:sticky;top:0;align-self:flex-start;width:236px;flex:0 0 236px;height:100vh;overflow-y:auto;
   background:var(--card);border-right:1px solid var(--border);padding:18px 14px;z-index:5}
 .content{flex:1;min-width:0}
-.sb-brand{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-weight:700;font-size:20px;color:var(--text);padding:4px 8px 16px;cursor:pointer}
-.sb-brand span{color:#b8902f}
-.sb-brand .sp{color:var(--ai2);font-family:var(--sans)}
+.sb-brand{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:4px 8px 16px;cursor:pointer}
+.sb-brand .bw{font-family:var(--serif);font-weight:700;font-size:19px;color:var(--text);white-space:nowrap}
+.sb-brand .bw i{color:#b8902f;font-style:normal}
+.sb-brand .bw em{color:var(--ai2);font-style:normal;font-family:var(--sans)}
+.sb-tag{display:none}
+.sb-nav{display:block}
 .sb-group{font-size:11px;font-weight:800;color:var(--light);letter-spacing:.3px;text-transform:uppercase;margin:14px 8px 6px}
 .sb-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;cursor:pointer;color:var(--sub);font-size:13.5px;font-weight:600;transition:.13s;position:relative;margin-bottom:2px}
 .sb-item svg{width:19px;height:19px;flex:0 0 auto;stroke-width:1.9}
@@ -40,16 +43,24 @@ body::before{content:'';position:fixed;top:-160px;left:50%;transform:translateX(
 .sb-divider{height:1px;background:var(--border);margin:14px 8px}
 #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(12px);background:var(--primary);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:200}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-/* 모바일 — 사이드바를 상단 가로 스크롤 바로 */
+/* 모바일 — isgen식 2줄 헤더(위: 로고+태그 / 아래: 아이콘 위·글자 아래 탭) */
 @media(max-width:860px){
   .layout{display:block}
-  .sidebar{position:sticky;top:0;width:auto;height:auto;flex:none;display:flex;gap:4px;overflow-x:auto;
-    border-right:none;border-bottom:1px solid var(--border);padding:8px 10px;scrollbar-width:none;backdrop-filter:blur(10px);background:rgba(247,246,241,.92)}
-  .sidebar::-webkit-scrollbar{display:none}
-  .sb-brand,.sb-group,.sb-divider{display:none}
-  .sb-item{flex:0 0 auto;white-space:nowrap;padding:8px 12px;margin:0}
-  .sb-item.active::before{display:none}
-  .sb-item.active{border:1.5px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,var(--ai1),var(--ai2)) border-box}
+  .sidebar{position:sticky;top:0;width:auto;height:auto;flex:none;display:block;
+    border-right:none;border-bottom:1px solid var(--border);padding:0;z-index:20;
+    backdrop-filter:blur(10px);background:rgba(247,246,241,.95)}
+  .sb-brand{padding:10px 14px 8px}
+  .sb-brand .bw{font-size:17px}
+  .sb-tag{display:inline-block;font-size:10.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--ai1),var(--ai2));padding:4px 10px;border-radius:20px;box-shadow:0 3px 10px var(--ai-glow)}
+  .sb-group,.sb-divider{display:none}
+  .sb-nav{display:flex;gap:2px;overflow-x:auto;padding:0 8px 7px;scrollbar-width:none}
+  .sb-nav::-webkit-scrollbar{display:none}
+  .sb-item{flex:0 0 auto;flex-direction:column;align-items:center;gap:5px;min-width:62px;margin:0;
+    padding:7px 10px;font-size:10.5px;font-weight:700;text-align:center;white-space:nowrap;border-radius:12px}
+  .sb-item svg{width:22px;height:22px}
+  .sb-item:hover{background:transparent}
+  .sb-item.active{background:none;color:var(--ai2)}
+  .sb-item.active::before{left:50%;right:auto;top:auto;bottom:0;transform:translateX(-50%);width:26px;height:3px}
   .sb-soon{display:none}
 }
 .wrap{max-width:860px;margin:0 auto;padding:0 18px 80px}
@@ -147,11 +158,6 @@ textarea.inp{resize:vertical;min-height:230px;line-height:1.7}
 <aside class="sidebar" id="sidebar"></aside>
 <main class="content">
 <div class="wrap">
-  <div class="top">
-    <div class="brand" onclick="location.href='/app.html'">book<span>star</span></div>
-    <span class="tag">AI 평가 엔진</span>
-  </div>
-
   <div class="hero">
     <h1>AI <b>독후감 평가</b></h1>
     <p>독후감을 붙여넣으면 전문 심사 기준으로 항목별 점수·근거·등급을 매깁니다.<br>도서관 독서·비교과 프로그램의 객관적 평가를 도와드려요.</p>
@@ -275,15 +281,17 @@ const SB_NAV=[
 ];
 function svg(p){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;}
 function buildSidebar(){
-  let h=`<div class="sb-brand" onclick="location.href='/app.html'">✦ book<span>star</span> <span class="sp">평가</span></div>`;
+  let nav='';
   SB_NAV.forEach(n=>{
-    if(n.g){h+=`<div class="sb-group">${n.g}</div>`;return;}
-    if(n.divider){h+=`<div class="sb-divider"></div>`;return;}
+    if(n.g){nav+=`<div class="sb-group">${n.g}</div>`;return;}
+    if(n.divider){nav+=`<div class="sb-divider"></div>`;return;}
     const cls='sb-item'+(n.active?' active':'')+(n.soon?' soon':'');
     const click=n.soon?`onclick="sbSoon()"`:'';
-    h+=`<div class="${cls}" ${click}>${svg(SB_ICON[n.ic])}<span>${n.t}</span>${n.soon?'<span class="sb-soon">준비중</span>':''}</div>`;
+    nav+=`<div class="${cls}" ${click}>${svg(SB_ICON[n.ic])}<span>${n.t}</span>${n.soon?'<span class="sb-soon">준비중</span>':''}</div>`;
   });
-  el('sidebar').innerHTML=h;
+  el('sidebar').innerHTML=
+    `<div class="sb-brand" onclick="location.href='/app.html'"><span class="bw">✦ book<i>star</i> <em>평가</em></span><span class="sb-tag">AI 평가 엔진</span></div>`+
+    `<div class="sb-nav">${nav}</div>`;
 }
 let _toastT=null;
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('on'),2200);}
