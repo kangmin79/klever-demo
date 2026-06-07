@@ -392,7 +392,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           <div class="row2"><div><div class="flabel" id="cmM1L">기간</div><input class="cur-inp" id="cmM1"></div>
             <div><div class="flabel" id="cmM2L">장소</div><input class="cur-inp" id="cmM2"></div></div>
           <div class="flabel">내용 (선택)</div><textarea class="cur-inp" id="cmBody" rows="4" placeholder="자세한 내용 (선택)"></textarea>
-          <div class="makefoot"><button class="btn-primary" onclick="addCommPost()">게시 →</button></div>
+          <div class="makefoot"><button class="btn-ghost" id="cmCancel" style="display:none;margin-right:8px" onclick="cancelCommEdit()">취소</button><button class="btn-primary" id="cmSubmit" onclick="saveCommPost()">게시 →</button></div>
         </div>
         <div class="panel"><h3 id="cmListTitle">게시된 글</h3><div class="ph-sub">최근 순</div><div id="commList"></div></div>
       </div>
@@ -1311,7 +1311,7 @@ async function loadCommPosts(){
     if(el('pg-comm').style.display!=='none')renderComm();
   }catch(e){}
 }
-function setCommKind(k){commKind=k;renderComm();}
+function setCommKind(k){ if(_commEditId)cancelCommEdit(); commKind=k;renderComm();}
 function renderComm(){
   el('commTabs').innerHTML=COMM_TABS.map(t=>`<button class="tab ${t[0]===commKind?'on':''}" onclick="setCommKind('${t[0]}')">${t[1]}</button>`).join('');
   el('cmListTitle').textContent=(COMM_TABS.find(t=>t[0]===commKind)||[])[1]||'게시된 글';
@@ -1325,7 +1325,10 @@ function renderComm(){
     <h4><span class="gtag chal" style="margin-right:6px">${esc(p.tag||'')}</span>${esc(p.title)}</h4>
     <div class="nm">${esc(p.meta1||'')}${p.meta2?' · '+esc(p.meta2):''}</div>
     ${p.body?`<p>${esc(p.body)}</p>`:''}</div>
-    <button class="btn-ghost" style="color:var(--bad);border-color:#e7c9c4;align-self:flex-start" onclick="delCommPost(${p.id})">삭제</button></div>`).join('')
+    <div style="display:flex;flex-direction:column;gap:6px;align-self:flex-start">
+      <button class="btn-ghost" onclick="editCommPost(${p.id})">수정</button>
+      <button class="btn-ghost" style="color:var(--bad);border-color:#e7c9c4" onclick="delCommPost(${p.id})">삭제</button>
+    </div></div>`).join('')
     ||'<div class="pv-empty">아직 게시글이 없어요.</div>';
 }
 // 서평 모더레이션 — reviews 테이블 목록 + 삭제
@@ -1348,15 +1351,35 @@ async function delReview(id){
   try{ await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}}); }catch(e){}
   renderCommReviews(); toast('서평을 삭제했어요');
 }
-async function addCommPost(){
-  const title=el('cmTitle').value.trim(); if(!title){toast('제목을 입력해주세요');return;}
-  const row={school:'한국대학교',kind:commKind,tag:el('cmTag').value,title,meta1:el('cmM1').value.trim(),meta2:el('cmM2').value.trim(),body:el('cmBody').value.trim()};
-  try{
-    const r=await fetch(`${SB_REST}/community_posts`,{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
-    if(!r.ok){toast('게시 실패 ('+r.status+')');return;}
-  }catch(e){toast('게시 실패 — 연결 확인');return;}
+let _commEditId=null;
+function editCommPost(id){
+  const p=COMM_POSTS.find(x=>x.id===id); if(!p)return;
+  _commEditId=id;
+  if(el('cmTag')) el('cmTag').value=p.tag||'';   // 분류 옵션은 현재 탭 기준이라 일치
+  el('cmTitle').value=p.title||''; el('cmM1').value=p.meta1||''; el('cmM2').value=p.meta2||''; el('cmBody').value=p.body||'';
+  el('cmSubmit').textContent='수정 저장 →'; el('cmCancel').style.display='';
+  el('commForm').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelCommEdit(){
+  _commEditId=null;
   el('cmTitle').value='';el('cmM1').value='';el('cmM2').value='';el('cmBody').value='';
-  await loadCommPosts(); toast('게시됐어요 — 학생 앱 커뮤니티에 노출됩니다');
+  if(el('cmSubmit'))el('cmSubmit').textContent='게시 →'; if(el('cmCancel'))el('cmCancel').style.display='none';
+}
+async function saveCommPost(){
+  const title=el('cmTitle').value.trim(); if(!title){toast('제목을 입력해주세요');return;}
+  const row={kind:commKind,tag:el('cmTag').value,title,meta1:el('cmM1').value.trim(),meta2:el('cmM2').value.trim(),body:el('cmBody').value.trim()};
+  const editing=_commEditId;
+  try{
+    let r;
+    if(editing){
+      r=await fetch(`${SB_REST}/community_posts?id=eq.${editing}`,{method:'PATCH',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+    }else{
+      r=await fetch(`${SB_REST}/community_posts`,{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(Object.assign({school:'한국대학교'},row))});
+    }
+    if(!r.ok){toast((editing?'수정':'게시')+' 실패 ('+r.status+')');return;}
+  }catch(e){toast((editing?'수정':'게시')+' 실패 — 연결 확인');return;}
+  cancelCommEdit();
+  await loadCommPosts(); toast(editing?'수정됐어요 — 학생 앱에 반영됩니다':'게시됐어요 — 학생 앱 커뮤니티에 노출됩니다');
 }
 async function delCommPost(id){
   if(!confirm('이 글을 삭제할까요?'))return;
