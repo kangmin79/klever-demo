@@ -150,6 +150,34 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .rt-sw:hover{transform:scale(1.08);outline:2px solid var(--accent)}
 .rt-sw-x{background:var(--bg)}
 .rt-tb button svg{display:inline-block;vertical-align:-3px}
+/* ===== 공지글 작성 = 네이버 블로그식 넓은 글쓰기 캔버스 ===== */
+.nt-doc{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:920px;margin:0 auto;padding:24px 30px 30px;box-shadow:0 2px 16px rgba(0,0,0,.04)}
+.nt-title{width:100%;border:none;border-bottom:2px solid var(--border);background:transparent;font-family:inherit;font-size:27px;font-weight:800;letter-spacing:-.6px;color:var(--text);padding:8px 2px 14px;outline:none}
+.nt-title::placeholder{color:#c4c0b5;font-weight:700}
+.nt-title:focus{border-bottom-color:var(--primary)}
+.nt-doc .rt-wrap{margin-top:16px}
+.nt-doc .rt-ed{min-height:46vh}
+.nt-pub{max-width:920px;margin:24px auto 0}
+.nt-pub-h{font-size:15px;font-weight:800;margin-bottom:2px}
+.nt-pub-sub{font-size:11.5px;color:var(--light);margin-bottom:14px}
+@media(max-width:760px){.nt-doc{padding:18px 16px 22px}.nt-title{font-size:22px}}
+/* 발행 설정 슬라이드 패널 (네이버식) */
+.ntpub-ov{position:fixed;inset:0;background:rgba(15,26,46,.34);z-index:200;display:none;opacity:0;transition:opacity .2s}
+.ntpub-ov.on{display:block;opacity:1}
+.ntpub-panel{position:absolute;top:0;right:0;height:100%;width:440px;max-width:92vw;background:var(--card);box-shadow:-8px 0 30px rgba(0,0,0,.16);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.ntpub-ov.on .ntpub-panel{transform:translateX(0)}
+.ntpub-h{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+.ntpub-h h3{font-size:17px;font-weight:800}
+.ntpub-h .x{font-size:24px;color:var(--light);cursor:pointer;line-height:1}
+.ntpub-body{flex:1;overflow-y:auto;padding:22px 24px}
+.ntpub-row{padding:16px 0;border-bottom:1px solid var(--border)}
+.ntpub-row:last-child{border-bottom:none}
+.ntpub-lbl{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px}
+.ntpub-lbl small{display:block;font-size:11px;font-weight:600;color:var(--light);margin-top:3px}
+.ntpub-date{display:flex;align-items:center;gap:8px}
+.ntpub-date .cur-inp{flex:1;min-width:0}
+.ntpub-foot{display:flex;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+.ntpub-foot .btn-primary{flex:1}
 /* 읽기 전용 렌더 (발행된 공지 미리보기) */
 .rt-view{font-size:13.5px;line-height:1.7;color:var(--sub)}
 .rt-view p{margin:0 0 7px}
@@ -408,26 +436,48 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         ※ 책은 ‘도서관 내·국중 추천·ISBN 입력’ 3가지로 담을 수 있어요. <b>저장</b>해야 학생 앱에 반영됩니다.</div>
     </section>
 
-    <!-- ===== 공지글 작성 ===== -->
+    <!-- ===== 공지글 작성 (네이버 블로그식 글쓰기 + 발행 패널) ===== -->
     <section id="pg-notice" style="display:none">
-      <div class="phead"><div><h1>공지글 작성</h1><p>학생 앱에 노출되는 도서관 공지를 작성·관리합니다</p></div></div>
-      <div class="make-grid">
-        <div class="panel">
-          <div class="flabel">제목</div><input class="cur-inp" id="ntTitle" placeholder="예: 여름방학 도서관 운영시간 안내">
-          <div class="row2"><div><div class="flabel">대상</div><input class="cur-inp" id="ntTarget" placeholder="예: 전교생" value="전교생"></div>
-            <div><div class="flabel">게시 기간</div>
-              <div style="display:flex;align-items:center;gap:7px">
-                <input type="date" class="cur-inp" id="ntFrom" style="flex:1;min-width:0">
-                <span style="color:var(--light);font-weight:700;flex:0 0 auto">~</span>
-                <input type="date" class="cur-inp" id="ntTo" style="flex:1;min-width:0">
-              </div></div></div>
-          <div class="flabel">노출 위치 (복수 선택)</div><div class="locchips" id="ntLoc"></div>
-          <div class="flabel">내용</div><div id="ntBodyRich"></div>
-          <div class="makefoot"><button class="btn-primary" onclick="publishNotice()">공지 발행 →</button></div>
-        </div>
-        <div class="panel"><h3>게시된 공지</h3><div class="ph-sub">최근 발행 순</div><div id="noticeList"></div></div>
+      <div class="phead"><div><h1>공지글 작성</h1><p>제목과 내용을 쓰고, ‘공지 발행’에서 노출 위치·대상·기간을 정하세요</p></div>
+        <button class="btn-primary" onclick="openNtPublish()">공지 발행 →</button></div>
+      <div class="nt-doc">
+        <input class="nt-title" id="ntTitle" placeholder="제목을 입력하세요">
+        <div id="ntBodyRich"></div>
+      </div>
+      <div class="nt-pub">
+        <div class="nt-pub-h">게시된 공지</div><div class="nt-pub-sub">최근 발행 순</div>
+        <div id="noticeList"></div>
       </div>
     </section>
+
+    <!-- 공지 발행 설정 슬라이드 패널 -->
+    <div id="ntPubOv" class="ntpub-ov" onclick="if(event.target.id==='ntPubOv')closeNtPublish()">
+      <div class="ntpub-panel">
+        <div class="ntpub-h"><h3>공지 발행</h3><span class="x" onclick="closeNtPublish()">×</span></div>
+        <div class="ntpub-body">
+          <div class="ntpub-row">
+            <div class="ntpub-lbl">노출 위치 <small>학생 앱에서 이 공지가 보일 칸 (복수 선택)</small></div>
+            <div class="locchips" id="ntLoc"></div>
+          </div>
+          <div class="ntpub-row">
+            <div class="ntpub-lbl">대상</div>
+            <input class="cur-inp" id="ntTarget" placeholder="예: 전교생" value="전교생">
+          </div>
+          <div class="ntpub-row">
+            <div class="ntpub-lbl">게시 기간 <small>비워두면 상시 노출</small></div>
+            <div class="ntpub-date">
+              <input type="date" class="cur-inp" id="ntFrom">
+              <span style="color:var(--light);font-weight:700">~</span>
+              <input type="date" class="cur-inp" id="ntTo">
+            </div>
+          </div>
+        </div>
+        <div class="ntpub-foot">
+          <button class="btn-ghost" onclick="closeNtPublish()">취소</button>
+          <button class="btn-primary" onclick="publishNotice()">✓ 발행</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ===== 커뮤니티 관리 ===== -->
     <section id="pg-comm" style="display:none">
@@ -1520,6 +1570,13 @@ async function saveChallenges(){
 
 /* ====== 공지글 ====== */
 let ntLocSel=[];
+// 발행 설정 패널 열고/닫기 (네이버식) — 제목·내용은 먼저 채워야 열림
+function openNtPublish(){
+  if(!el('ntTitle').value.trim()){toast('제목을 입력해주세요');el('ntTitle').focus();return;}
+  if(rtEmpty('ntBodyRich')){toast('내용을 입력해주세요');return;}
+  buildNtLoc(); el('ntPubOv').classList.add('on');
+}
+function closeNtPublish(){el('ntPubOv').classList.remove('on');}
 // 게시 기간 = 시작·종료 날짜선택 → "YYYY.M.D ~ YYYY.M.D" 문자열
 function ntPeriodStr(){
   const fmt=s=>{if(!s)return '';const p=s.split('-');return p[0]+'.'+(+p[1])+'.'+(+p[2]);};
@@ -1547,6 +1604,7 @@ async function publishNotice(){
       body:JSON.stringify(row)});
     if(!r.ok){toast('발행 실패 ('+r.status+')');return;}
   }catch(e){toast('발행 실패 — 연결 확인');return;}
+  closeNtPublish();
   el('ntTitle').value='';rtSet('ntBodyRich','');el('ntFrom').value='';el('ntTo').value='';ntLocSel=[];buildNtLoc();
   await loadNotices();
   toast('공지가 발행됐어요 — 학생 앱에 노출됩니다');
