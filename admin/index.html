@@ -360,7 +360,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <p>우리도서관 꾸미기처럼 — 챌린지를 카테고리 단위로 만들고, 상세내용·미션·담을 책을 정합니다. 저장하면 학생 앱에 노출</p></div>
         <button class="btn-primary" onclick="saveChallenges()">저장 →</button></div>
       <div id="chalList"></div>
-      <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 클래식</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
+      <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 컬렉션</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
         ※ 책은 ‘도서관 내·국중 추천·ISBN 입력’ 3가지로 담을 수 있어요. <b>저장</b>해야 학생 앱에 반영됩니다.</div>
     </section>
 
@@ -696,7 +696,7 @@ function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.dr
 const AREA_LABELS={'우리도서관':'우리 도서관','고전 컬렉션':'고전 컬렉션','International':'International Students'};
 const AREA_HINTS={
   '우리도서관':'학생 앱 ‘우리 도서관’ 첫 화면 — 칸 추가·이름·순서·책 담기.',
-  '고전 컬렉션':'학생 앱 ‘고전 클래식’ 화면 큐레이션 — 사서가 고전 선반을 직접 구성합니다.',
+  '고전 컬렉션':'학생 앱 ‘고전 컬렉션’ 화면 큐레이션 — 사서가 고전 선반을 직접 구성합니다.',
   'International':'학생 앱 ‘International Students’ 화면 큐레이션 — 유학생용 다국어 선반을 구성합니다.'
 };
 // (탭 제거 — 영역은 좌측 사이드바에서 선택) 진입 영역에 맞춰 제목/부제만 갱신
@@ -733,15 +733,21 @@ function renderSettings(){
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
 let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
+let _clsOrigin='all';   // 북스타 고전 필터: all | kr(한국) | foreign(서양)
+function clsChips(){
+  return [['all','전체'],['kr','한국 고전'],['foreign','서양 고전']].map(o=>
+    `<span onclick="setClsOrigin('${o[0]}')" style="cursor:pointer;padding:4px 12px;border-radius:99px;margin-right:6px;font-size:12px;font-weight:700;border:1px solid var(--border);${_clsOrigin===o[0]?'background:var(--primary);color:#fff;border-color:var(--primary)':'background:var(--card);color:var(--text)'}">${o[1]}</span>`).join('');
+}
+function setClsOrigin(o){_clsOrigin=o;el('secEx').innerHTML=clsChips();secRenderClassics();}
 function pkObj(){return scMode==='chal'?CHALLENGES[scIdx]:SECTIONS[scIdx];}   // 책 담기 대상
 function secExample(t){el('secQ').value=t;secSearch();}
 function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInputs();else readSecInputs();
   scIdx=i;SCAND=[];
   // 고전 컬렉션 큐레이션은 '북스타 고전' 안에서만 (국중/ISBN/도서관내 숨김)
-  const clsArea = scMode==='sec' && aOf(SECTIONS[i])==='고전 컬렉션';
+  const clsArea = (scMode==='sec' && aOf(SECTIONS[i])==='고전 컬렉션') || (scMode==='chal' && (CHALLENGES[i]||{}).type==='고전챌린지');   // 고전 컬렉션 칸 + 고전 챌린지 = 북스타 고전에서 담기
   document.querySelectorAll('#secOv .btab').forEach(btn=>{ const sbt=btn.dataset.sbt;
     btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (sbt==='cls'?'none':''); });
-  scTab = clsArea ? 'cls' : 'nat';
+  scTab = clsArea ? 'cls' : 'nat'; _clsOrigin='all';
   el('secModalTitle').textContent=`‘${pkObj().title}’에 책 담기`;
   document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===scTab));
   el('secOv').classList.add('on');secApplyTab();loadInventory();}
@@ -749,7 +755,7 @@ function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')
 function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
 function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
-  if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderClassics();}
+  if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';el('secEx').innerHTML=clsChips();secRenderClassics();}
   else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
   else{q.placeholder='예: 6월 신입생에게 가볍게 읽을 문학';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='';}
@@ -758,10 +764,13 @@ function secApplyTab(){const q=el('secQ');
 function secRenderClassics(){
   if(!CLASSICS_POOL.length){el('secCandWrap').innerHTML='<div class="book-empty">고전 목록을 불러오는 중… 잠시 후 다시 시도해주세요.</div>';loadClassicsPool();return;}
   const q=(el('secQ').value||'').trim();
-  let list=q?CLASSICS_POOL.filter(b=>((b.title||'')+' '+(b.author||'')).includes(q)):CLASSICS_POOL;
-  SCAND=list.slice(0,80).map(b=>({id:b.id,t:b.title,a:(b.author||'')+(b.origin==='foreign'?' · 해외 고전':' · 한국 고전'),cls:true}));
+  let list=CLASSICS_POOL;
+  if(_clsOrigin==='kr') list=list.filter(b=>b.origin!=='foreign');        // 한국 고전
+  else if(_clsOrigin==='foreign') list=list.filter(b=>b.origin==='foreign'); // 서양(해외) 고전
+  if(q) list=list.filter(b=>((b.title||'')+' '+(b.author||'')).includes(q));
+  SCAND=list.map(b=>({id:b.id,t:b.title,a:(b.author||'')+(b.origin==='foreign'?' · 해외 고전':' · 한국 고전'),cls:true}));  // 전체 표시(80개 제한 제거)
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">검색 결과가 없어요.</div>';return;}
-  secRenderCands('북스타 고전 '+SCAND.length+'권');
+  secRenderCands('북스타 고전 '+SCAND.length+'권'+(q?(' · "'+q+'"'):''));
 }
 function secRenderLib(){const q=(el('secQ').value||'').trim();const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;SCAND=list.slice(0,40);
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 담으면 여기에 쌓입니다.</div>';return;}
@@ -919,7 +928,7 @@ function renderDash(){
     <td class="num">${nf(Math.round(p.visits*m))}</td><td class="num">${nf(Math.round(p.uses*m))}</td></tr>`).join('');
   el('dashBooks').innerHTML=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses).slice(0,5).map((b,i)=>`<div class="rk">
     <div class="no ${i<3?'top':''}">${i+1}</div><div class="info"><div class="t">${esc(b.t)}</div>
-    <div class="s">${b.minutes?'고전 클래식':'소장도서'}</div></div><div class="n2">${nf(b.uses)}건</div></div>`).join('');
+    <div class="s">${b.minutes?'고전 컬렉션':'소장도서'}</div></div><div class="n2">${nf(b.uses)}건</div></div>`).join('');
   el('dashUsers').innerHTML=USERS.slice().sort((a,b)=>b.uses-a.uses).slice(0,5).map((u,i)=>`<div class="rk">
     <div class="no ${i<3?'top':''}">${i+1}</div><div class="info"><div class="t">${esc(u.id)}</div>
     <div class="s">${u.total!=null?'합계 '+u.total+'점':'참여 중'}</div></div><div class="n2">${nf(u.uses)}건</div></div>`).join('');
@@ -947,7 +956,7 @@ function renderStats(){
       rows.map((p,i)=>`<tr><td class="ctr">${i+1}</td><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
         <td class="num">${nf(p.visits)}</td><td class="num">${nf(p.uses)}</td>
         <td class="num">${p.minutes!=null?nf(p.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
-    note='※ 이용시간은 <b>북스타 고전 클래식 도서</b>에만 집계됩니다. 소장도서 프로그램은 “—”.';
+    note='※ 이용시간은 <b>북스타 고전 컬렉션 도서</b>에만 집계됩니다. 소장도서 프로그램은 “—”.';
   }else if(statTab==='month'){
     const rows=MONTHLY.filter(r=>inRange(r.m));
     html=`<thead><tr><th>월</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead><tbody>`+
@@ -967,7 +976,7 @@ function renderStats(){
     html=`<thead><tr><th class="ctr">번호</th><th>도서명</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
       rows.map((b,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:600">${esc(b.t)}</td><td class="num">${nf(b.uses)}</td>
         <td class="num">${b.minutes!=null?nf(b.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
-    note='도서별 이용 현황입니다. 이용시간은 고전 클래식 도서만 집계됩니다.';
+    note='도서별 이용 현황입니다. 이용시간은 고전 컬렉션 도서만 집계됩니다.';
   }
   el('statTbl').innerHTML=html; el('statNote').innerHTML=note;
 }
@@ -1124,7 +1133,7 @@ function pickCand(i){
 function syncPreview(){
   MK.title=el('mkTitle').value.trim();MK.intro=el('mkIntro').value.trim();
   MK.from=el('mkFrom').value;MK.to=el('mkTo').value;
-  const t=MK.type;const typeLabel=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전 클래식 챌린지':'소장자료 챌린지';
+  const t=MK.type;const typeLabel=t==='큐레이션'?'큐레이션':t==='고전챌린지'?'고전 컬렉션 챌린지':'소장자료 챌린지';
   const isChal=t!=='큐레이션';
   if(isChal)el('scoreBox').innerHTML=scoreText();
   el('pvCard').innerHTML=`
@@ -1172,7 +1181,7 @@ async function loadChallenges(){
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',
       mission:x.mission||{quiz:x.type==='고전챌린지',quizN:5,review:false,question:false},
-      books:(x.books||[]).map(b=>({isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
+      books:(x.books||[]).map(b=>({id:b.id||'',isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
     ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
     if(el('pg-make').style.display!=='none')renderChallenges();
   }catch(e){renderChallenges();}
@@ -1209,7 +1218,7 @@ function renderChallenges(){
         <div><div class="flabel">제목</div><input class="cur-inp" id="ch_t_${i}" value="${esc(c.title)}"></div>
         <div><div class="flabel">종류</div><select class="cur-inp" id="ch_type_${i}" onchange="readChalInputs();renderChallenges()">
           <option value="소장챌린지" ${!isClassic?'selected':''}>소장자료 챌린지</option>
-          <option value="고전챌린지" ${isClassic?'selected':''}>고전 클래식 챌린지</option></select></div>
+          <option value="고전챌린지" ${isClassic?'selected':''}>고전 컬렉션 챌린지</option></select></div>
       </div>
       <div class="flabel">상세내용 — 학생에게 보일 설명</div>
       <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 심리학과 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
@@ -1249,7 +1258,7 @@ async function saveChallenges(){
     if(CHALLENGES.length){
       const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
-        books:(c.books||[]).map(b=>({isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
+        books:(c.books||[]).map(b=>({id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
       const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
         headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
         body:JSON.stringify(rows)});
