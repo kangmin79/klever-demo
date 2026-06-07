@@ -1700,30 +1700,8 @@ const LEADERBOARD = [
   {rank:14, name:'김민서 (나)', score:1842, me:true},
 ];
 
-const COMMUNITY_POSTS = {
-  program: [
-    {tag:'진행중', title:'고전 챔피언 프로그램 · 한 학기 누가 가장 많이 읽나', meta:['1,247명 참여','D-58']},
-    {tag:'필수',   title:'2026 신입생 필수 챌린지 (12주 12권)',              meta:['287명 참여','D-58'], urgent:true},
-    {tag:'진행중', title:'Learning Korean through Korean Classics',          meta:['124명 참여','D-58']},
-    {tag:'곧 시작', title:'여름방학 경제 고전 퀘스트',                       meta:['모집 중','D+5']},
-  ],
-  event: [
-    {tag:'행사', title:'5월 한국대학교 도서관 — 정약용 특별전',       meta:['5/15 ~ 6/30','중앙도서관 2층']},
-    {tag:'강연', title:'박지원과 18세기 조선 — 김명환 교수 초청 강연', meta:['5/22 19:00','대강당']},
-    {tag:'전시', title:'고전 책 표지 디자인 공모전 수상작 전시',       meta:['~ 6/15','로비']},
-  ],
-  free: [
-    {tag:'질문', title:'군주론 23장 해석이 좀 어려운데 도와주실 분?', meta:['댓글 12','오늘']},
-    {tag:'추천', title:'겨울방학에 읽은 카프카 — 의외로 재밌었다',     meta:['댓글 23','어제']},
-    {tag:'토론', title:'정약용이 지금 시대에 와서 본다면?',          meta:['댓글 47','2일 전']},
-  ],
-  notice: [
-    {tag:'공지', title:'시스템 점검 안내 (6/1 02:00~04:00)',         meta:['오늘']},
-    {tag:'업데이트', title:'International Students 모드 베트남어 추가', meta:['어제']},
-    {tag:'안내', title:'리포트 출력 기능 정식 오픈',                  meta:['1주 전']},
-  ],
-};
-let NOTICES_PUB=[];   // 서버 공지(library_notices) — 관리자 발행
+// 커뮤니티 글은 전적으로 관리자(community_posts)가 소스 — 가짜 mock 없이 빈 상태로 시작
+const COMMUNITY_POSTS = { program:[], event:[], free:[], notice:[] };
 
 // 군주론 본문 mock
 const BOOK_CONTENT = {
@@ -3527,6 +3505,7 @@ function renderCommunity(tab){
   if(tab==='review'){ renderCommunityReviews(); return; }
   let list = COMMUNITY_POSTS[tab] || [];
   const isProgram = tab==='program';   // 독서 프로그램=모달, 나머지=아코디언(펼침)
+  if(!list.length){ document.getElementById('communityContent').innerHTML='<div class="rv-empty">아직 등록된 글이 없어요.</div>'; return; }
   document.getElementById('communityContent').innerHTML = list.map((p,i)=>{
     const head=`<div class="list-card-head">
         <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag)}</span>
@@ -3552,24 +3531,13 @@ function openCommModal(tab,i){
   document.getElementById('commModal').classList.add('on');
 }
 function closeCommModal(){ document.getElementById('commModal').classList.remove('on'); }
-async function loadNoticesPub(){
-  try{
-    const r=await fetch(`${SB_REST}/library_notices?select=title,target,period,location,body,created_at&order=created_at.desc`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
-    NOTICES_PUB=rows.map(x=>({title:x.title,target:x.target||'',period:x.period||'',body:x.body||'',at:(x.created_at||'').slice(0,10)}));
-    const cp=document.getElementById('page-community');
-    const on=document.querySelector('#page-community .subtab.active');
-    if(cp&&cp.classList.contains('active')&&on&&on.textContent.includes('공지')) renderCommunity('notice');
-  }catch(e){}
-}
-loadNoticesPub();
-// 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리
+// 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리 (공지도 community_posts가 소스, 구 library_notices 미사용)
 async function loadCommunityPosts(){
   try{
     const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2,body&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean),body:x.body||''}));
-    ['program','event','free','notice'].forEach(k=>{ const arr=mk(k); if(arr.length) COMMUNITY_POSTS[k]=arr; });
+    ['program','event','free','notice'].forEach(k=>{ COMMUNITY_POSTS[k]=mk(k); });   // 항상 서버값으로 교체(삭제→빈탭 반영)
     const cp=document.getElementById('page-community');
     const on=document.querySelector('#page-community .subtab.active');
     if(cp&&cp.classList.contains('active')&&on){ const t=on.textContent;
