@@ -138,12 +138,19 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .rt-ed img{max-width:100%;height:auto;border-radius:9px;margin:6px 0;display:block}
 .rt-ed img.up{opacity:.45;filter:grayscale(.4)}
 .rt-ed hr{border:none;border-top:1px solid var(--border);margin:12px 0}
-/* 색/형광펜 팔레트 팝오버 */
-.rt-pop{display:none;position:absolute;z-index:120;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px;box-shadow:0 6px 22px rgba(0,0,0,.13);grid-template-columns:repeat(4,1fr);gap:6px;width:142px}
-.rt-pop.on{display:grid}
+/* 색/형광펜/글자크기 팝오버 */
+.rt-pop{display:none;position:absolute;z-index:120;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.13)}
+.rt-pop.on{display:block}
+.rt-pop.grid{padding:7px;gap:6px;width:142px;grid-template-columns:repeat(4,1fr)}
+.rt-pop.grid.on{display:grid}
+.rt-pop.list{padding:5px;width:118px}
+.rt-mi{padding:8px 11px;border-radius:7px;cursor:pointer;font-size:13.5px;color:var(--text)}
+.rt-mi:hover{background:var(--bg)}
 .rt-sw{width:26px;height:26px;border-radius:7px;cursor:pointer;border:1px solid rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--light)}
 .rt-sw:hover{transform:scale(1.08);outline:2px solid var(--accent)}
 .rt-sw-x{background:var(--bg)}
+/* 정렬 SVG 아이콘 버튼은 살짝 더 좁게 */
+.rt-tb button svg{display:block}
 /* 읽기 전용 렌더 (발행된 공지 미리보기) */
 .rt-view{font-size:13.5px;line-height:1.7;color:var(--sub)}
 .rt-view p{margin:0 0 7px}
@@ -530,7 +537,7 @@ const RT_BUCKET="notice-images";
 // 허용 태그 화이트리스트 (sanitize 기준) — 공지·커뮤니티 본문에서 쓰는 것만
 const RT_ALLOW={B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,H4:1,P:1,BR:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,A:1,IMG:1,SPAN:1,DIV:1,HR:1,FONT:1};
 // 허용 CSS 속성(색·정렬·강조만). url()/expression/javascript 차단
-const RT_STYLE_OK=/^(color|background-color|background|text-align|font-weight|font-style|text-decoration|text-decoration-line)$/;
+const RT_STYLE_OK=/^(color|background-color|background|text-align|font-weight|font-style|font-size|text-decoration|text-decoration-line)$/;
 function safeStyle(v){
   return String(v||'').split(';').map(s=>s.trim()).filter(Boolean).filter(d=>{
     const i=d.indexOf(':'); if(i<0)return false;
@@ -569,11 +576,17 @@ let RT_CUR=null;                                          // 현재 포커스된
 function rtInit(host, placeholder, initialHtml){
   if(typeof host==='string')host=el(host);
   host.classList.add('rt-wrap');
+  const SV=(p)=>`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${p}</svg>`;
+  const ICO={
+    left:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/>'),
+    center:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/>'),
+    right:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="18" x2="20" y2="18"/>'),
+  };
   const tools=[
     ['bold','<b>가</b>','굵게'],['italic','<i>가</i>','기울임'],['underline','<u>가</u>','밑줄'],['strike','<s>가</s>','취소선'],['|'],
-    ['color','<b style="color:#c0392b">가</b>','글자색'],['hilite','<b style="background:#fff3a3;padding:0 3px;border-radius:3px">가</b>','형광펜'],['|'],
+    ['color','<b style="color:#c0392b">가</b>','글자색'],['hilite','<b style="background:#fff3a3;padding:0 3px;border-radius:3px">가</b>','형광펜'],['size','글자 크기 ▾','글자 크기'],['|'],
     ['h3','제목','소제목'],['p','본문','본문'],['|'],
-    ['left','⮈','왼쪽 정렬'],['center','▣','가운데 정렬'],['right','⮊','오른쪽 정렬'],['|'],
+    ['left',ICO.left,'왼쪽 정렬'],['center',ICO.center,'가운데 정렬'],['right',ICO.right,'오른쪽 정렬'],['|'],
     ['ul','• 목록','글머리 목록'],['ol','1. 목록','번호 목록'],['quote','❝ 인용','인용'],['hr','─ 구분선','구분선'],['|'],
     ['link','🔗 링크','링크'],['image','🖼 이미지','이미지'],['|'],
     ['clear','⌫ 서식지우기','서식 지우기'],
@@ -629,20 +642,39 @@ function rtDo(cmd,btn){
   else if(cmd==='clear'){document.execCommand('removeFormat');document.execCommand('formatBlock',false,'p');}
   else if(cmd==='color')rtPalette('color',btn);
   else if(cmd==='hilite')rtPalette('hilite',btn);
+  else if(cmd==='size')rtSizeMenu(btn);
   else if(cmd==='link'){const u=prompt('링크 주소를 입력하세요 (https://...)');if(u){const url=/^https?:\/\//i.test(u)?u:'https://'+u;document.execCommand('createLink',false,url);}}
   else if(cmd==='image'){rtPickImage();}
 }
-// 색·형광펜 팔레트 팝오버 (단일 공용)
-function rtPalette(type,btn){
+// 공용 팝오버 노드(색/형광펜/글자크기) — 단일 #rtPalette 재사용
+function rtPop(){
   let pop=el('rtPalette');
   if(!pop){pop=document.createElement('div');pop.id='rtPalette';pop.className='rt-pop';document.body.appendChild(pop);
-    document.addEventListener('click',e=>{if(pop.classList.contains('on')&&!pop.contains(e.target)&&!(e.target.dataset&&(e.target.dataset.cmd==='color'||e.target.dataset.cmd==='hilite')))pop.classList.remove('on');});}
+    document.addEventListener('click',e=>{const d=e.target.dataset;
+      if(pop.classList.contains('on')&&!pop.contains(e.target)&&!(d&&(d.cmd==='color'||d.cmd==='hilite'||d.cmd==='size')))pop.classList.remove('on');});}
+  return pop;
+}
+function rtPopAt(pop,btn){const r=btn.getBoundingClientRect();pop.style.left=(window.scrollX+r.left)+'px';pop.style.top=(window.scrollY+r.bottom+4)+'px';pop.classList.add('on');}
+// 색·형광펜 팔레트
+function rtPalette(type,btn){
+  const pop=rtPop(); pop.className='rt-pop grid';
   const colors=type==='color'?RT_TEXT_COLORS:RT_HILITE_COLORS;
   pop.innerHTML=colors.map(c=>`<span class="rt-sw" style="background:${c}" title="${c}" onmousedown="event.preventDefault()" onclick="rtApplyColor('${type}','${c}')"></span>`).join('')
     +`<span class="rt-sw rt-sw-x" title="색 지우기" onmousedown="event.preventDefault()" onclick="rtApplyColor('${type}','none')">✕</span>`;
-  const r=btn.getBoundingClientRect();
-  pop.style.left=(window.scrollX+r.left)+'px'; pop.style.top=(window.scrollY+r.bottom+4)+'px';
-  pop.classList.add('on');
+  rtPopAt(pop,btn);
+}
+// 글자 크기 메뉴
+function rtSizeMenu(btn){
+  const pop=rtPop(); pop.className='rt-pop list';
+  pop.innerHTML=[['2','작게'],['3','보통'],['5','크게'],['6','아주 크게']].map(s=>
+    `<div class="rt-mi" onmousedown="event.preventDefault()" onclick="rtSize('${s[0]}')">${s[1]}</div>`).join('');
+  rtPopAt(pop,btn);
+}
+function rtSize(v){
+  const ed=RT_CUR; if(ed)ed.focus();
+  try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+  document.execCommand('fontSize',false,v);
+  const pop=el('rtPalette'); if(pop)pop.classList.remove('on');
 }
 function rtApplyColor(type,c){
   const ed=RT_CUR; if(ed)ed.focus();
