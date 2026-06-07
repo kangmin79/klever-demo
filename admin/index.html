@@ -239,6 +239,24 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .deco-bk .c img{width:100%;height:100%;object-fit:cover}
 .deco-bk .rm{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--bad);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid #fff;padding:0}
 .deco-add{align-self:center;font-size:12.5px;font-weight:700;color:var(--primary);background:var(--primary-bg);border:1px dashed var(--primary);border-radius:9px;padding:9px 13px;cursor:pointer;height:fit-content}
+/* 담긴 책 = 표지+제목 목록 */
+.deco-list{display:flex;flex-direction:column;gap:7px;margin:6px 0 2px}
+.deco-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:7px 10px;background:var(--card)}
+.deco-row .dr-cv{width:34px;height:46px;flex:0 0 auto;border-radius:4px;background:var(--input);display:flex;align-items:center;justify-content:center;font-size:15px;overflow:hidden}
+.deco-row .dr-cv img{width:100%;height:100%;object-fit:cover}
+.deco-row .dr-info{flex:1;min-width:0}
+.deco-row .dr-t{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deco-row .dr-a{font-size:11.5px;color:var(--light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.deco-row .dr-rm{flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--bad);font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.deco-row .dr-rm:hover{background:var(--bad);color:#fff;border-color:var(--bad)}
+.deco-empty{font-size:12px;color:var(--light);line-height:1.6;padding:4px 2px}
+.deco-empty b{color:var(--sub)}
+/* 순서 번호 입력 */
+.sec-no{font-size:11.5px;font-weight:800;color:var(--light)}
+.sec-order{display:inline-flex;align-items:center;gap:5px}
+.sec-order .so-l{font-size:11.5px;font-weight:700;color:var(--sub)}
+.sec-order .so-inp{width:46px;text-align:center;font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:8px;padding:5px 4px;color:var(--text);background:var(--card);outline:none}
+.sec-order .so-inp:focus{border-color:var(--primary)}
 /* 스타일 시각 선택기 — 글자 대신 미니 미리보기 그림으로 고르기 */
 .style-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;background:var(--card);cursor:pointer;margin:5px 0 2px}
 .style-bar:hover{border-color:var(--primary)}
@@ -266,7 +284,7 @@ body.pv-open .settings-pv{flex:1;width:auto;min-width:0;max-width:none}
 .settings-pv.on{display:block}
 body.pv-open .main{max-width:none}
 .sec-drag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--accent);user-select:none;padding:4px 10px;border-radius:8px;background:var(--primary-bg);letter-spacing:.2px}
-.sec-panel{transition:box-shadow .14s,transform .14s,opacity .14s;cursor:grab}
+.sec-panel{transition:box-shadow .14s,transform .14s,opacity .14s}
 .sec-panel:active{cursor:grabbing}
 .sec-panel input,.sec-panel select,.sec-panel textarea{cursor:auto}
 .sec-panel button,.sec-panel .deco-add,.sec-panel .deco-bk .rm{cursor:pointer}
@@ -979,11 +997,18 @@ function addSection(){readSecInputs();SECTIONS.push({area:curArea,slot:'c'+Date.
 function delSection(i){readSecInputs();
   if(SECTIONS[i].slot==='rank'){toast('대출 랭킹은 삭제할 수 없어요 (자동 집계 고정)');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
-function moveSection(i,d){readSecInputs();
-  // 같은 영역 안에서만 위/아래 이웃과 교환
-  let j=i+d; while(j>=0&&j<SECTIONS.length&&aOf(SECTIONS[j])!==aOf(SECTIONS[i]))j+=d;
-  if(j<0||j>=SECTIONS.length)return;
-  const t=SECTIONS[i];SECTIONS[i]=SECTIONS[j];SECTIONS[j]=t;renderSettings();}
+// 순서 번호 지정 — 같은 영역 안에서 이 칸을 N번째로 이동(드래그/↑↓ 대체)
+function setSecOrder(i,val){readSecInputs();
+  const area=aOf(SECTIONS[i]); const moved=SECTIONS[i];
+  const areaItems=SECTIONS.filter(s=>aOf(s)===area);
+  const cur=areaItems.indexOf(moved);
+  let target=Math.max(0,Math.min(areaItems.length-1,(parseInt(val,10)||1)-1));
+  if(target===cur){renderSettings();return;}
+  areaItems.splice(cur,1); areaItems.splice(target,0,moved);
+  // 영역 칸이 있던 전역 위치에 재배열된 순서를 그대로 써넣음(다른 영역 칸 위치는 보존)
+  let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===area){ SECTIONS[idx]=areaItems[k++]; } });
+  renderSettings();
+}
 function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
 // 미리보기 — 저장 전 SECTIONS를 localStorage로 넘겨 app.html?preview=1 을 iframe으로 띄움
 function previewSections(){
@@ -1159,13 +1184,14 @@ function renderSettings(){
   el('secList').innerHTML=list.map((o,k)=>{
     const s=o.s, i=o.i, isRank=s.slot==='rank', books=s.books||[];
     const first=k===0, last=k===list.length-1;
-    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px" data-i="${i}" data-slot="${esc(s.slot)}" draggable="true" onclick="pvFocusSec('${s.slot}')" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-      <span class="sec-drag" title="카드 아무 곳이나 잡고 끌어서 순서 변경">⠿ 칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
-      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${first?'disabled':''}>↑</button>
-      <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},1)" ${last?'disabled':''}>↓</button>
+    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="sec-no">칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
+      <span class="sec-order"><span class="so-l">순서</span>
+        <input type="number" class="so-inp" min="1" max="${list.length}" value="${k+1}" onclick="event.stopPropagation()" onchange="setSecOrder(${i},this.value)" title="이 칸을 몇 번째로 보낼지 입력">
+        <span class="so-l">번째</span></span>
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
-        :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
+        :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="event.stopPropagation();delSection(${i})">삭제</button>`}
     </div>
     <div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
     <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지)</div>${isRank
@@ -1179,8 +1205,13 @@ function renderSettings(){
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
     ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
-        <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="secRemoveBook(${i},${bi})">×</button></div>`).join('')}
-          <span class="deco-add" onclick="secOpenPicker(${i})">+ 책 담기</span></div>`}
+        <div class="deco-list">${books.map((b,bi)=>`<div class="deco-row">
+            <div class="dr-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
+            <div class="dr-info"><div class="dr-t">${esc(b.title||b.t||'제목 미상')}</div>${(b.author||b.a)?`<div class="dr-a">${esc(b.author||b.a)}</div>`:''}</div>
+            <button class="dr-rm" title="빼기" onclick="event.stopPropagation();secRemoveBook(${i},${bi})">×</button>
+          </div>`).join('')}
+          ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
+          <span class="deco-add" onclick="event.stopPropagation();secOpenPicker(${i})">+ 책 담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
   updatePvCap(); pvSync();
