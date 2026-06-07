@@ -733,7 +733,16 @@ function rtDo(cmd,btn){
   else if(cmd==='table')rtTable(btn);
   else if(cmd==='video')rtVideo();
   else if(cmd==='file')rtFile();
-  else if(cmd==='link'){const u=prompt('링크 주소를 입력하세요 (https://...)');if(u){const url=/^https?:\/\//i.test(u)?u:'https://'+u;document.execCommand('createLink',false,url);}}
+  else if(cmd==='link'){
+    const hadSel = RT_RANGE && !RT_RANGE.collapsed && String(RT_RANGE).trim();
+    const u=prompt(hadSel? '선택한 글자에 걸 링크 주소 (https://...)' : '링크 주소 (선택한 글자 없으면 주소가 그대로 글자로 들어가요)');
+    if(u){
+      const url=/^https?:\/\//i.test(u)?u:'https://'+u;
+      rtFocusRange(ed);
+      if(hadSel){ document.execCommand('createLink',false,url); }
+      else { document.execCommand('insertHTML',false,`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(url)}</a>`); }
+    }
+  }
   else if(cmd==='image'){rtPickImage();}
 }
 /* ── 표 ── */
