@@ -117,6 +117,37 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 .cur-inp{width:100%;font-family:inherit;font-size:13.5px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;outline:none;color:var(--text);background:var(--card)}
 .cur-inp:focus{border-color:var(--primary)}
 textarea.cur-inp{resize:vertical;line-height:1.5}
+/* ===== 리치 텍스트 에디터 (자체 contenteditable) ===== */
+.rt-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card)}
+.rt-wrap.focus{border-color:var(--primary)}
+.rt-tb{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:6px;background:var(--bg);border-bottom:1px solid var(--border)}
+.rt-tb button{font-family:inherit;font-size:13px;font-weight:700;color:var(--sub);background:transparent;border:1px solid transparent;border-radius:7px;min-width:30px;height:30px;padding:0 8px;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.rt-tb button:hover{background:var(--card);border-color:var(--border)}
+.rt-tb button.on{background:var(--primary);color:#fff}
+.rt-tb .rt-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.rt-ed{min-height:170px;max-height:440px;overflow-y:auto;padding:13px 15px;font-size:14px;line-height:1.75;color:var(--text);outline:none}
+.rt-ed:empty:before{content:attr(data-ph);color:var(--light)}
+.rt-ed.drag{background:rgba(58,110,165,.06);box-shadow:inset 0 0 0 2px var(--accent)}
+.rt-ed p{margin:0 0 8px}
+.rt-ed h3{font-size:18px;font-weight:800;margin:12px 0 6px;letter-spacing:-.02em}
+.rt-ed h4{font-size:15px;font-weight:700;margin:10px 0 5px}
+.rt-ed ul,.rt-ed ol{padding-left:22px;margin:6px 0}
+.rt-ed li{margin:2px 0}
+.rt-ed blockquote{border-left:3px solid var(--gold);margin:8px 0;padding:4px 14px;color:var(--sub);background:rgba(212,169,59,.07)}
+.rt-ed a{color:var(--blue);text-decoration:underline}
+.rt-ed img{max-width:100%;height:auto;border-radius:9px;margin:6px 0;display:block}
+.rt-ed img.up{opacity:.45;filter:grayscale(.4)}
+.rt-ed hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+/* 읽기 전용 렌더 (발행된 공지 미리보기) */
+.rt-view{font-size:13.5px;line-height:1.7;color:var(--sub)}
+.rt-view p{margin:0 0 7px}
+.rt-view h3{font-size:16px;font-weight:800;color:var(--text);margin:9px 0 5px}
+.rt-view h4{font-size:14px;font-weight:700;color:var(--text);margin:7px 0 4px}
+.rt-view ul,.rt-view ol{padding-left:20px;margin:5px 0}
+.rt-view blockquote{border-left:3px solid var(--gold);margin:6px 0;padding:3px 12px;background:rgba(212,169,59,.07)}
+.rt-view a{color:var(--blue);text-decoration:underline}
+.rt-view img{max-width:100%;height:auto;border-radius:8px;margin:5px 0;display:block}
+.rt-view hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .row2 .flabel{margin-top:0}
 .searchrow{display:flex;gap:8px}
@@ -374,7 +405,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           <div class="row2"><div><div class="flabel">대상</div><input class="cur-inp" id="ntTarget" placeholder="예: 전교생" value="전교생"></div>
             <div><div class="flabel">게시 기간</div><input class="cur-inp" id="ntPeriod" placeholder="예: 6.1 ~ 6.30" value="6.1 ~ 6.30"></div></div>
           <div class="flabel">노출 위치 (복수 선택)</div><div class="locchips" id="ntLoc"></div>
-          <div class="flabel">내용</div><textarea class="cur-inp" id="ntBody" rows="5" placeholder="공지 내용을 입력하세요"></textarea>
+          <div class="flabel">내용</div><div id="ntBodyRich"></div>
           <div class="makefoot"><button class="btn-primary" onclick="publishNotice()">공지 발행 →</button></div>
         </div>
         <div class="panel"><h3>게시된 공지</h3><div class="ph-sub">최근 발행 순</div><div id="noticeList"></div></div>
@@ -481,6 +512,124 @@ function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'
 // Supabase — 발행물(library_programs) + 우리도서관 카테고리(library_sections)
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+const SB_PROJ="https://gkujptyfrzqrjrvovbnc.supabase.co";
+const RT_BUCKET="notice-images";
+
+/* ===== 리치 텍스트 에디터 (자체 contenteditable, 의존성 0) — 공지/커뮤니티 공용 ===== */
+// 허용 태그 화이트리스트 (sanitize 기준) — 공지·커뮤니티 본문에서 쓰는 것만
+const RT_ALLOW={B:1,STRONG:1,I:1,EM:1,U:1,H3:1,H4:1,P:1,BR:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,A:1,IMG:1,SPAN:1,DIV:1,HR:1};
+function sanitizeHtml(html){
+  const box=document.createElement('div'); box.innerHTML=String(html||'');
+  (function clean(node){
+    [...node.childNodes].forEach(clean);              // 자식 먼저(후위 순회)
+    if(node.nodeType===8){node.remove();return;}      // 주석 제거
+    if(node.nodeType!==1)return;                        // 텍스트는 그대로
+    const tag=node.tagName;
+    if(!RT_ALLOW[tag]){
+      if(/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META|FORM|INPUT|SVG)$/.test(tag)){node.remove();return;}
+      const p=node.parentNode; if(p){while(node.firstChild)p.insertBefore(node.firstChild,node);p.removeChild(node);} return; // 그 외는 껍데기만 벗김
+    }
+    [...node.attributes].forEach(a=>{
+      const an=a.name.toLowerCase(), av=a.value||'';
+      if(tag==='A'&&an==='href'){ if(/^\s*(javascript|data):/i.test(av)){node.removeAttribute(a.name);} }
+      else if(tag==='IMG'&&an==='src'){ if(/^\s*javascript:/i.test(av)){node.removeAttribute(a.name);} }
+      else if(tag==='IMG'&&an==='alt'){ /* keep */ }
+      else { node.removeAttribute(a.name); }            // style·class·on* 등 전부 제거
+    });
+    if(tag==='A'){ node.setAttribute('target','_blank'); node.setAttribute('rel','noopener noreferrer'); }
+  })(box);
+  return box.innerHTML.trim();
+}
+let RT_CUR=null;                                          // 현재 포커스된 에디터
+// 에디터 초기화: host(<div id=...>)에 툴바+편집영역 주입. 반환=편집영역 element
+function rtInit(host, placeholder, initialHtml){
+  if(typeof host==='string')host=el(host);
+  host.classList.add('rt-wrap');
+  const tools=[
+    ['bold','<b>가</b>','굵게'],['italic','<i>가</i>','기울임'],['underline','<u>가</u>','밑줄'],['|'],
+    ['h3','제목','소제목'],['p','본문','본문'],['|'],
+    ['ul','• 목록','글머리 목록'],['ol','1. 목록','번호 목록'],['quote','❝ 인용','인용'],['|'],
+    ['link','🔗 링크','링크'],['image','🖼 이미지','이미지'],
+  ];
+  const tb=tools.map(t=>t[0]==='|'?'<span class="rt-sep"></span>'
+    :`<button type="button" data-cmd="${t[0]}" title="${t[2]}" onmousedown="event.preventDefault()" onclick="rtDo('${t[0]}')">${t[1]}</button>`).join('');
+  host.innerHTML=`<div class="rt-tb">${tb}</div><div class="rt-ed" contenteditable="true" data-ph="${esc(placeholder||'내용을 입력하세요')}"></div>`;
+  const ed=host.querySelector('.rt-ed');
+  ed.innerHTML = initialHtml ? sanitizeHtml(initialHtml) : '';
+  ed.addEventListener('focus',()=>{RT_CUR=ed;host.classList.add('focus');try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(e){}});
+  ed.addEventListener('blur',()=>host.classList.remove('focus'));
+  // 붙여넣기: 이미지면 업로드, 텍스트면 plain 으로
+  ed.addEventListener('paste',e=>{
+    const items=[...(e.clipboardData?.items||[])];
+    const img=items.find(it=>it.type&&it.type.startsWith('image/'));
+    if(img){e.preventDefault();const f=img.getAsFile();if(f)rtUploadInsert(ed,f);return;}
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData('text/plain');
+    document.execCommand('insertText',false,text);
+  });
+  // 드래그&드롭 이미지
+  ed.addEventListener('dragover',e=>{e.preventDefault();ed.classList.add('drag');});
+  ed.addEventListener('dragleave',()=>ed.classList.remove('drag'));
+  ed.addEventListener('drop',e=>{
+    e.preventDefault();ed.classList.remove('drag');RT_CUR=ed;
+    const f=[...(e.dataTransfer?.files||[])].find(x=>x.type.startsWith('image/'));
+    if(f)rtUploadInsert(ed,f);
+  });
+  return ed;
+}
+function rtGet(host){ if(typeof host==='string')host=el(host); const ed=host.querySelector('.rt-ed'); return ed?sanitizeHtml(ed.innerHTML):''; }
+function rtSet(host, html){ if(typeof host==='string')host=el(host); const ed=host.querySelector('.rt-ed'); if(ed)ed.innerHTML=sanitizeHtml(html||''); }
+// 본문이 사실상 비었는지(태그만 있고 글자·이미지 없음)
+function rtEmpty(host){ const h=rtGet(host); const t=document.createElement('div'); t.innerHTML=h; return !(t.textContent.trim()||t.querySelector('img')); }
+function rtDo(cmd){
+  const ed=RT_CUR; if(ed)ed.focus();
+  if(cmd==='bold')document.execCommand('bold');
+  else if(cmd==='italic')document.execCommand('italic');
+  else if(cmd==='underline')document.execCommand('underline');
+  else if(cmd==='h3')document.execCommand('formatBlock',false,'h3');
+  else if(cmd==='p')document.execCommand('formatBlock',false,'p');
+  else if(cmd==='ul')document.execCommand('insertUnorderedList');
+  else if(cmd==='ol')document.execCommand('insertOrderedList');
+  else if(cmd==='quote')document.execCommand('formatBlock',false,'blockquote');
+  else if(cmd==='link'){const u=prompt('링크 주소를 입력하세요 (https://...)');if(u){const url=/^https?:\/\//i.test(u)?u:'https://'+u;document.execCommand('createLink',false,url);}}
+  else if(cmd==='image'){rtPickImage();}
+}
+function rtPickImage(){
+  const ed=RT_CUR; if(!ed){toast('내용 칸을 먼저 클릭해주세요');return;}
+  let inp=el('rtFileInput');
+  if(!inp){inp=document.createElement('input');inp.type='file';inp.id='rtFileInput';inp.accept='image/*';inp.style.display='none';document.body.appendChild(inp);}
+  inp.value='';
+  inp.onchange=()=>{const f=inp.files&&inp.files[0];if(f)rtUploadInsert(ed,f);};
+  inp.click();
+}
+// 이미지 업로드 → 자리표시 → 완료되면 실제 URL 교체
+async function rtUploadInsert(ed, file){
+  if(!file.type.startsWith('image/')){toast('이미지 파일만 넣을 수 있어요');return;}
+  if(file.size>5*1024*1024){toast('이미지는 5MB 이하만 가능해요');return;}
+  ed.focus();
+  const ph='rtimg_'+Date.now()+'_'+Math.floor(Math.random()*1e6);
+  // 미리보기(로컬) 먼저 삽입 — 업로드 중 표시
+  const local=URL.createObjectURL(file);
+  document.execCommand('insertHTML',false,`<img class="up" id="${ph}" src="${local}" alt="">`);
+  try{
+    const url=await rtUpload(file);
+    const img=el(ph); if(img){img.src=url;img.classList.remove('up');img.removeAttribute('id');}
+    URL.revokeObjectURL(local);
+  }catch(e){
+    const img=el(ph); if(img)img.remove();
+    toast('이미지 업로드 실패 — '+(e&&e.message||'연결 확인'));
+  }
+}
+async function rtUpload(file){
+  const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
+  const path='notice/'+Date.now()+'-'+Math.random().toString(36).slice(2,9)+'.'+ext;
+  const r=await fetch(`${SB_PROJ}/storage/v1/object/${RT_BUCKET}/${path}`,{
+    method:'POST',
+    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':file.type,'x-upsert':'true'},
+    body:file});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return `${SB_PROJ}/storage/v1/object/public/${RT_BUCKET}/${path}`;
+}
 function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
 // 우리도서관 카테고리(app.html millieHTML와 동일) — 관리자가 추가·삭제·편집
 const STYLES=[
@@ -1288,9 +1437,9 @@ async function loadNotices(){
   }catch(e){}
 }
 async function publishNotice(){
-  const title=el('ntTitle').value.trim(),body=el('ntBody').value.trim();
+  const title=el('ntTitle').value.trim(),body=rtGet('ntBodyRich');
   if(!title){toast('공지 제목을 입력해주세요');return;}
-  if(!body){toast('공지 내용을 입력해주세요');return;}
+  if(rtEmpty('ntBodyRich')){toast('공지 내용을 입력해주세요');return;}
   const row={school:'한국대학교',title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),location:ntLocSel.join(','),body};
   try{
     const r=await fetch(`${SB_REST}/library_notices`,{method:'POST',
@@ -1298,14 +1447,14 @@ async function publishNotice(){
       body:JSON.stringify(row)});
     if(!r.ok){toast('발행 실패 ('+r.status+')');return;}
   }catch(e){toast('발행 실패 — 연결 확인');return;}
-  el('ntTitle').value='';el('ntBody').value='';ntLocSel=[];buildNtLoc();
+  el('ntTitle').value='';rtSet('ntBodyRich','');ntLocSel=[];buildNtLoc();
   await loadNotices();
   toast('공지가 발행됐어요 — 학생 앱에 노출됩니다');
 }
 function renderNotices(){
   el('noticeList').innerHTML=NOTICES.map(n=>`<div class="notice-i"><div class="nx">
     <h4>${esc(n.title)}</h4><div class="nm">${esc(n.target)} · ${esc(n.period||'')} · ${esc(n.at)}</div>
-    <p>${esc(n.body)}</p></div>${n.loc&&n.loc.length?`<span class="nloc">${esc(n.loc.join(' · '))}</span>`:''}</div>`).join('')
+    <div class="rt-view">${sanitizeHtml(n.body)}</div></div>${n.loc&&n.loc.length?`<span class="nloc">${esc(n.loc.join(' · '))}</span>`:''}</div>`).join('')
     ||'<div class="pv-empty">게시된 공지가 없어요.</div>';
 }
 
@@ -1422,6 +1571,7 @@ function renderHistory(){
 }
 
 /* ====== 초기화 ====== */
+rtInit('ntBodyRich','공지 내용을 입력하세요. 위 도구로 굵게·소제목·목록·인용·링크·이미지를 넣을 수 있어요.');
 buildNtLoc();
 renderDash();
 renderChallenges();
