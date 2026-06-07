@@ -403,7 +403,12 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <div class="panel">
           <div class="flabel">제목</div><input class="cur-inp" id="ntTitle" placeholder="예: 여름방학 도서관 운영시간 안내">
           <div class="row2"><div><div class="flabel">대상</div><input class="cur-inp" id="ntTarget" placeholder="예: 전교생" value="전교생"></div>
-            <div><div class="flabel">게시 기간</div><input class="cur-inp" id="ntPeriod" placeholder="예: 6.1 ~ 6.30" value="6.1 ~ 6.30"></div></div>
+            <div><div class="flabel">게시 기간</div>
+              <div style="display:flex;align-items:center;gap:7px">
+                <input type="date" class="cur-inp" id="ntFrom" style="flex:1;min-width:0">
+                <span style="color:var(--light);font-weight:700;flex:0 0 auto">~</span>
+                <input type="date" class="cur-inp" id="ntTo" style="flex:1;min-width:0">
+              </div></div></div>
           <div class="flabel">노출 위치 (복수 선택)</div><div class="locchips" id="ntLoc"></div>
           <div class="flabel">내용</div><div id="ntBodyRich"></div>
           <div class="makefoot"><button class="btn-primary" onclick="publishNotice()">공지 발행 →</button></div>
@@ -1426,6 +1431,12 @@ async function saveChallenges(){
 
 /* ====== 공지글 ====== */
 let ntLocSel=[];
+// 게시 기간 = 시작·종료 날짜선택 → "YYYY.M.D ~ YYYY.M.D" 문자열
+function ntPeriodStr(){
+  const fmt=s=>{if(!s)return '';const p=s.split('-');return p[0]+'.'+(+p[1])+'.'+(+p[2]);};
+  const f=fmt(el('ntFrom').value), t=fmt(el('ntTo').value);
+  if(f&&t)return f+' ~ '+t; return f||t||'';
+}
 function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLoc('${l}')">${l}</span>`).join('');}
 function toggleNtLoc(l){const i=ntLocSel.indexOf(l);if(i<0)ntLocSel.push(l);else ntLocSel.splice(i,1);buildNtLoc();}
 async function loadNotices(){
@@ -1440,14 +1451,14 @@ async function publishNotice(){
   const title=el('ntTitle').value.trim(),body=rtGet('ntBodyRich');
   if(!title){toast('공지 제목을 입력해주세요');return;}
   if(rtEmpty('ntBodyRich')){toast('공지 내용을 입력해주세요');return;}
-  const row={school:'한국대학교',title,target:el('ntTarget').value.trim()||'전교생',period:el('ntPeriod').value.trim(),location:ntLocSel.join(','),body};
+  const row={school:'한국대학교',title,target:el('ntTarget').value.trim()||'전교생',period:ntPeriodStr(),location:ntLocSel.join(','),body};
   try{
     const r=await fetch(`${SB_REST}/library_notices`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
       body:JSON.stringify(row)});
     if(!r.ok){toast('발행 실패 ('+r.status+')');return;}
   }catch(e){toast('발행 실패 — 연결 확인');return;}
-  el('ntTitle').value='';rtSet('ntBodyRich','');ntLocSel=[];buildNtLoc();
+  el('ntTitle').value='';rtSet('ntBodyRich','');el('ntFrom').value='';el('ntTo').value='';ntLocSel=[];buildNtLoc();
   await loadNotices();
   toast('공지가 발행됐어요 — 학생 앱에 노출됩니다');
 }
