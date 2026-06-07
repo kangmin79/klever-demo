@@ -240,6 +240,12 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .deco-bk .rm{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--bad);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid #fff;padding:0}
 .deco-add{align-self:center;font-size:12.5px;font-weight:700;color:var(--primary);background:var(--primary-bg);border:1px dashed var(--primary);border-radius:9px;padding:9px 13px;cursor:pointer;height:fit-content}
 /* 스타일 시각 선택기 — 글자 대신 미니 미리보기 그림으로 고르기 */
+.style-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;background:var(--card);cursor:pointer;margin:5px 0 2px}
+.style-bar:hover{border-color:var(--primary)}
+.style-cur{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text);min-width:0}
+.style-cur .sb-th{width:40px;height:26px;flex:0 0 auto;border-radius:5px;background:var(--input);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 4px}
+.style-cur .sb-th>div{transform:scale(.62)}
+.style-toggle{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;flex:0 0 auto}
 .style-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:8px;margin:5px 0 2px}
 .sp-card{border:1.5px solid var(--border);border-radius:10px;padding:6px 5px 5px;cursor:pointer;background:var(--card);transition:.12s;text-align:center}
 .sp-card:hover{border-color:var(--primary)}
@@ -265,6 +271,7 @@ body.pv-open .main{max-width:none}
 .sec-panel input,.sec-panel select,.sec-panel textarea{cursor:auto}
 .sec-panel button,.sec-panel .deco-add,.sec-panel .deco-bk .rm{cursor:pointer}
 .sec-panel.dragging{opacity:.5;box-shadow:0 18px 44px rgba(0,0,0,.24);transform:scale(.99)}
+.sec-panel.pv-focus{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 6px 20px rgba(26,41,66,.1)}
 .sec-panel.drag-over{outline:2.5px dashed var(--accent,#3a6ea5);outline-offset:3px;background:rgba(58,110,165,.07)}
 .sec-panel.drag-over .sec-drag::after{content:'여기로 이동';margin-left:4px;font-size:10.5px;color:var(--accent);font-weight:800}
 .pv-phone{border:1px solid var(--border);border-radius:14px;overflow:hidden;height:calc(100vh - 118px);min-height:540px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.10)}
@@ -926,6 +933,12 @@ function styleThumb(st){
   }
 }
 function setSecStyle(slot,val){const h=el('sec_style_'+slot);if(h)h.value=val;readSecInputs();renderSettings();}
+function styleLabel(key){const o=STYLES.find(x=>x[0]===key);return o?o[1]:'가로 표지 목록';}
+// 스타일 그리드 접기/펼치기 — 칸 높이 절약(평소엔 현재 스타일만 표시)
+function toggleStyleGrid(e,slot){ const g=el('stylegrid_'+slot); if(!g)return;
+  const open=g.style.display!=='none'; g.style.display=open?'none':'';
+  const t=el('styletoggle_'+slot); if(t)t.textContent=open?'바꾸기 ▾':'접기 ▴';
+}
 // 3영역: 우리도서관 / 고전 컬렉션 / International Students (학생앱 페이지와 1:1)
 const AREAS=['우리도서관','고전 컬렉션','International'];
 let curArea='우리도서관';
@@ -983,7 +996,25 @@ function previewSections(){
 function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='about:blank'; }
 async function applyFromPreview(){ closePreview(); await saveSections(); }
 // ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
-function pvBuildRows(){ readSecInputs(); return SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]})); }
+let _pvFocusSlot=null;   // 설정 시 미리보기에 그 칸만 보냄(좌측 편집 칸 = 우측 미리보기)
+function pvBuildRows(){ readSecInputs();
+  let rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  if(_pvFocusSlot){ const f=rows.filter(r=>r.slot===_pvFocusSlot); if(f.length) return f; _pvFocusSlot=null; }   // 칸 삭제 등으로 사라지면 전체로 복귀
+  return rows;
+}
+// 좌측에서 편집 중인 칸 → 우측 미리보기에 그 칸만 표시
+function pvFocusSec(slot){
+  if(_pvFocusSlot!==slot){_pvFocusSlot=slot; updatePvCap();
+    document.querySelectorAll('#secList .sec-panel').forEach(p=>p.classList.toggle('pv-focus',p.getAttribute('data-slot')===slot));
+  }
+  pvSync();
+}
+function pvShowAll(){ _pvFocusSlot=null; updatePvCap(); pvSync(); }
+function updatePvCap(){ const c=el('pvCap'); if(!c)return;
+  if(_pvFocusSlot){ const s=SECTIONS.find(x=>x.slot===_pvFocusSlot);
+    c.innerHTML=`<b style="color:var(--text)">${esc(s?s.title:'선택한 칸')}</b> 칸만 보는 중 · <a onclick="pvShowAll()" style="cursor:pointer;color:var(--accent);font-weight:700;text-decoration:underline">전체 보기</a>`; }
+  else { c.textContent='학생 앱 ‘'+curArea+'’ · 편집 즉시 반영'; }
+}
 function _pvOpen(){
   const p=el('livePv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
@@ -1128,7 +1159,7 @@ function renderSettings(){
   el('secList').innerHTML=list.map((o,k)=>{
     const s=o.s, i=o.i, isRank=s.slot==='rank', books=s.books||[];
     const first=k===0, last=k===list.length-1;
-    return `<div class="panel sec-panel" style="margin-bottom:12px" data-i="${i}" draggable="true" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
+    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px" data-i="${i}" data-slot="${esc(s.slot)}" draggable="true" onclick="pvFocusSec('${s.slot}')" ondragstart="secDragStart(event,${i})" ondragend="secDragEnd(event)" ondragover="secDragOver(event,${i})" ondragleave="secDragLeave(event)" ondrop="secDrop(event,${i})">
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
       <span class="sec-drag" title="카드 아무 곳이나 잡고 끌어서 순서 변경">⠿ 칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
       <button class="btn-ghost" style="padding:5px 10px" onclick="moveSection(${i},-1)" ${first?'disabled':''}>↑</button>
@@ -1137,9 +1168,14 @@ function renderSettings(){
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="delSection(${i})">삭제</button>`}
     </div>
     <div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
-    <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지 — 그림 클릭)</div>${isRank
+    <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지)</div>${isRank
       ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
-      :`<input type="hidden" id="sec_style_${s.slot}" value="${esc(s.style||'row')}"><div class="style-pick">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}
+      :`<input type="hidden" id="sec_style_${s.slot}" value="${esc(s.style||'row')}">
+        <div class="style-bar" onclick="toggleStyleGrid(event,'${s.slot}')">
+          <span class="style-cur"><span class="sb-th">${styleThumb(s.style||'row')}</span><b id="style_lbl_${s.slot}">${esc(styleLabel(s.style||'row'))}</b></span>
+          <span class="style-toggle" id="styletoggle_${s.slot}">바꾸기 ▾</span>
+        </div>
+        <div class="style-pick" id="stylegrid_${s.slot}" style="display:none">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
     ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
@@ -1147,7 +1183,7 @@ function renderSettings(){
           <span class="deco-add" onclick="secOpenPicker(${i})">+ 책 담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
-  pvSync();
+  updatePvCap(); pvSync();
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
 let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
@@ -1315,7 +1351,7 @@ function go(elm,page){
   window.scrollTo(0,0);
 }
 // 좌측 'bookstar Builder' — 영역별 꾸미기 진입
-function goArea(elm,area){ try{readSecInputs();}catch(e){} curArea=area; go(elm,'settings'); }
+function goArea(elm,area){ try{readSecInputs();}catch(e){} _pvFocusSlot=null; curArea=area; go(elm,'settings'); }
 // 학생 앱 화면 연결 — app.html?page=<id>를 iframe으로 표시
 function goSoon(elm,name,page){ go(elm,'soon');
   const t=el('soonName'); if(t) t.textContent=name;
