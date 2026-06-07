@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 독후감 평가 · bookstar</title>
+<style>
+:root{
+  --primary:#1a2942; --primary-dark:#0f1a2e; --accent:#3a6ea5;
+  --gold:#d4a93b; --bg:#f7f6f1; --card:#fff; --input:#f0efeb;
+  --text:#1a2942; --sub:#475569; --light:#64748b; --border:#e3dfd5;
+  --good:#2e7d57; --bad:#c0392b;
+  --sans:'Pretendard',-apple-system,'Apple SD Gothic Neo',sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;letter-spacing:-.02em;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:0 18px 80px}
+/* 헤더 */
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
+.brand{font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:-.4px;color:var(--text);cursor:pointer}
+.brand span{color:#b8902f}
+.top .tag{font-size:12px;font-weight:700;color:var(--gold);background:rgba(212,169,59,.14);padding:5px 11px;border-radius:20px}
+/* 히어로 */
+.hero{text-align:center;padding:26px 0 18px}
+.hero h1{font-family:var(--serif);font-size:34px;font-weight:700;letter-spacing:-.5px;line-height:1.2}
+.hero h1 b{color:var(--accent)}
+.hero p{color:var(--sub);font-size:14.5px;margin-top:10px;line-height:1.7}
+/* 루브릭 칩 */
+.rubric{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0 6px}
+.rubric span{font-size:12px;font-weight:700;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 12px}
+.rubric span b{color:var(--primary);margin-left:4px}
+.src{text-align:center;font-size:11.5px;color:var(--light);margin-top:8px}
+.src a{color:var(--accent)}
+/* 입력 카드 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:0 2px 16px rgba(0,0,0,.04);margin-top:18px}
+.flabel{font-size:12.5px;font-weight:800;color:var(--sub);margin:0 0 7px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:560px){.row2{grid-template-columns:1fr}}
+.inp{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);background:var(--card);outline:none}
+.inp:focus{border-color:var(--primary)}
+textarea.inp{resize:vertical;min-height:230px;line-height:1.7}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+.count{font-size:12px;color:var(--light)}
+.btn{font-family:inherit;font-size:15px;font-weight:800;color:#fff;background:var(--primary);border:none;border-radius:12px;padding:13px 26px;cursor:pointer;transition:.15s}
+.btn:hover{background:var(--primary-dark)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* 결과 */
+#result{margin-top:22px;display:none}
+.score-head{display:flex;align-items:center;gap:22px;padding:24px;background:linear-gradient(135deg,#1a2942,#2a3f5f);border-radius:18px;color:#fff;flex-wrap:wrap}
+.score-num{font-family:var(--serif);font-size:62px;font-weight:700;line-height:1}
+.score-num small{font-size:22px;opacity:.6;font-weight:400}
+.score-meta{flex:1;min-width:180px}
+.grade-badge{display:inline-block;font-size:15px;font-weight:800;background:var(--gold);color:#1a2942;padding:6px 16px;border-radius:20px}
+.score-summary{font-size:14px;line-height:1.6;margin-top:12px;opacity:.95}
+/* 항목 막대 */
+.crit{margin-top:14px}
+.crit-row{padding:15px 0;border-bottom:1px solid var(--border)}
+.crit-row:last-child{border-bottom:none}
+.crit-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.crit-name{font-size:14.5px;font-weight:800;color:var(--text)}
+.crit-score{font-size:14px;font-weight:800;color:var(--accent);white-space:nowrap}
+.crit-score small{color:var(--light);font-weight:600}
+.bar{height:9px;border-radius:6px;background:var(--input);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),#5b8fc7);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.crit-reason{font-size:13px;color:var(--sub);line-height:1.6;margin-top:8px}
+/* 강점/개선/AI */
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+@media(max-width:560px){.notes{grid-template-columns:1fr}}
+.note-box{border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.note-box h4{font-size:12.5px;font-weight:800;margin-bottom:6px}
+.note-box.good h4{color:var(--good)}
+.note-box.imp h4{color:#b87503}
+.note-box p{font-size:13px;color:var(--sub);line-height:1.6}
+.ai-flag{margin-top:14px;display:flex;align-items:center;gap:10px;font-size:13px;background:var(--input);border-radius:12px;padding:12px 15px;color:var(--sub)}
+.ai-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.ai-낮음{background:var(--good)} .ai-보통{background:#d4a93b} .ai-높음{background:var(--bad)}
+.ai-flag b{color:var(--text)}
+.disclaim{font-size:11.5px;color:var(--light);text-align:center;margin-top:18px;line-height:1.6}
+/* 로딩 */
+.loading{display:none;text-align:center;padding:40px 0;color:var(--sub)}
+.loading.on{display:block}
+.spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{display:none;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.3);color:var(--bad);border-radius:12px;padding:14px 16px;font-size:13.5px;margin-top:16px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand" onclick="location.href='/app.html'">book<span>star</span></div>
+    <span class="tag">AI 평가 엔진</span>
+  </div>
+
+  <div class="hero">
+    <h1>AI <b>독후감 평가</b></h1>
+    <p>독후감을 붙여넣으면 전문 심사 기준으로 항목별 점수·근거·등급을 매깁니다.<br>도서관 독서·비교과 프로그램의 객관적 평가를 도와드려요.</p>
+    <div class="rubric">
+      <span>책 이해·충실성<b>25</b></span>
+      <span>사고·해석의 깊이<b>25</b></span>
+      <span>논리·구성<b>20</b></span>
+      <span>근거·인용<b>15</b></span>
+      <span>표현·문장력<b>15</b></span>
+    </div>
+    <div class="src">평가 기준 출처: 경북독서친구(정부) 독후감 심사기준 + 학술 독후감 평가 통념 · 100점 만점</div>
+  </div>
+
+  <div class="card">
+    <div class="row2">
+      <div><div class="flabel">대상 도서 (선택)</div><input class="inp" id="book" placeholder="예: 아몬드 (손원평)"></div>
+      <div><div class="flabel">제목 (선택)</div><input class="inp" id="title" placeholder="예: 감정을 배우는 일"></div>
+    </div>
+    <div class="flabel">독후감 본문</div>
+    <textarea class="inp" id="text" placeholder="여기에 독후감을 붙여넣거나 작성하세요. (최소 50자)" oninput="updateCount()"></textarea>
+    <div class="foot">
+      <span class="count" id="count">0자</span>
+      <button class="btn" id="goBtn" onclick="evaluate()">평가하기 →</button>
+    </div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="loading" id="loading"><div class="spin"></div>AI가 꼼꼼히 채점하는 중이에요…</div>
+
+  <div id="result">
+    <div class="score-head">
+      <div class="score-num"><span id="rTotal">0</span><small>/100</small></div>
+      <div class="score-meta">
+        <span class="grade-badge" id="rGrade">—</span>
+        <div class="score-summary" id="rSummary"></div>
+      </div>
+    </div>
+    <div class="crit" id="rCrit"></div>
+    <div class="notes">
+      <div class="note-box good"><h4>잘한 점</h4><p id="rStrength"></p></div>
+      <div class="note-box imp"><h4>개선하면 좋을 점</h4><p id="rImprove"></p></div>
+    </div>
+    <div class="ai-flag" id="rAi"></div>
+    <div class="disclaim">※ AI 평가는 참고용 1차 채점입니다. 최종 등급은 사서·교수의 확인을 거쳐 확정하세요.<br>AI 작성 의심도는 보조 신호이며 단독 판단 근거로 쓰지 마세요.</div>
+  </div>
+</div>
+
+<script>
+const FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/evaluate";
+const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+const el=id=>document.getElementById(id);
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function updateCount(){el('count').textContent=el('text').value.trim().length+'자';}
+async function evaluate(){
+  const text=el('text').value.trim();
+  el('err').style.display='none';
+  if(text.length<50){el('err').textContent='독후감을 최소 50자 이상 입력해주세요.';el('err').style.display='block';return;}
+  el('goBtn').disabled=true; el('result').style.display='none'; el('loading').classList.add('on');
+  try{
+    const r=await fetch(FN,{method:'POST',headers:{Authorization:'Bearer '+ANON,apikey:ANON,'content-type':'application/json'},
+      body:JSON.stringify({text,book:el('book').value.trim(),title:el('title').value.trim()})});
+    const d=await r.json();
+    if(!r.ok||d.error){throw new Error(d.error||('오류 '+r.status));}
+    render(d);
+  }catch(e){
+    el('err').textContent='평가 실패 — '+(e&&e.message||'연결을 확인해주세요')+' (AI 사용량/잔액 문제일 수 있어요)';
+    el('err').style.display='block';
+  }finally{
+    el('goBtn').disabled=false; el('loading').classList.remove('on');
+  }
+}
+function render(d){
+  el('rTotal').textContent=d.total;
+  el('rGrade').textContent=d.grade||'—';
+  el('rSummary').textContent=d.summary||'';
+  el('rCrit').innerHTML=(d.criteria||[]).map(c=>`
+    <div class="crit-row">
+      <div class="crit-top"><span class="crit-name">${esc(c.label)}</span>
+        <span class="crit-score">${c.score}<small>/${c.max}</small></span></div>
+      <div class="bar"><i style="width:${Math.round(c.score/c.max*100)}%"></i></div>
+      <div class="crit-reason">${esc(c.reason)}</div>
+    </div>`).join('');
+  el('rStrength').textContent=d.strengths||'—';
+  el('rImprove').textContent=d.improvements||'—';
+  const ai=d.ai_suspicion||{level:'낮음',note:''};
+  el('rAi').innerHTML=`<span class="ai-dot ai-${esc(ai.level)}"></span><div>AI 작성 의심도 <b>${esc(ai.level)}</b> · <span>${esc(ai.note)}</span> <span style="color:var(--light)">(참고용)</span></div>`;
+  el('result').style.display='block';
+  el('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>
