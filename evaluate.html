@@ -20,10 +20,44 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font
 body::before{content:'';position:fixed;top:-160px;left:50%;transform:translateX(-50%);width:760px;height:420px;
   background:radial-gradient(closest-side,rgba(124,92,255,.16),rgba(58,110,165,.10),transparent 72%);pointer-events:none;z-index:0;filter:blur(6px)}
 .wrap{position:relative;z-index:1}
+/* ===== 좌측 사이드바 레이아웃 (평가 허브 공통 틀) ===== */
+.layout{display:flex;align-items:flex-start;min-height:100vh}
+.sidebar{position:sticky;top:0;align-self:flex-start;width:236px;flex:0 0 236px;height:100vh;overflow-y:auto;
+  background:var(--card);border-right:1px solid var(--border);padding:18px 14px;z-index:5}
+.content{flex:1;min-width:0}
+.sb-brand{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-weight:700;font-size:20px;color:var(--text);padding:4px 8px 16px;cursor:pointer}
+.sb-brand span{color:#b8902f}
+.sb-brand .sp{color:var(--ai2);font-family:var(--sans)}
+.sb-group{font-size:11px;font-weight:800;color:var(--light);letter-spacing:.3px;text-transform:uppercase;margin:14px 8px 6px}
+.sb-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:11px;cursor:pointer;color:var(--sub);font-size:13.5px;font-weight:600;transition:.13s;position:relative;margin-bottom:2px}
+.sb-item svg{width:19px;height:19px;flex:0 0 auto;stroke-width:1.9}
+.sb-item:hover{background:var(--input);color:var(--text)}
+.sb-item.active{background:linear-gradient(135deg,rgba(58,110,165,.12),rgba(124,92,255,.14));color:var(--ai2);font-weight:800}
+.sb-item.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(var(--ai1),var(--ai2))}
+.sb-item.soon{color:var(--light)}
+.sb-item.soon:hover{background:transparent;cursor:default}
+.sb-soon{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--light);background:var(--input);border-radius:20px;padding:2px 7px;white-space:nowrap}
+.sb-divider{height:1px;background:var(--border);margin:14px 8px}
+#toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(12px);background:var(--primary);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:200}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* 모바일 — 사이드바를 상단 가로 스크롤 바로 */
+@media(max-width:860px){
+  .layout{display:block}
+  .sidebar{position:sticky;top:0;width:auto;height:auto;flex:none;display:flex;gap:4px;overflow-x:auto;
+    border-right:none;border-bottom:1px solid var(--border);padding:8px 10px;scrollbar-width:none;backdrop-filter:blur(10px);background:rgba(247,246,241,.92)}
+  .sidebar::-webkit-scrollbar{display:none}
+  .sb-brand,.sb-group,.sb-divider{display:none}
+  .sb-item{flex:0 0 auto;white-space:nowrap;padding:8px 12px;margin:0}
+  .sb-item.active::before{display:none}
+  .sb-item.active{border:1.5px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,var(--ai1),var(--ai2)) border-box}
+  .sb-soon{display:none}
+}
 .wrap{max-width:860px;margin:0 auto;padding:0 18px 80px}
 /* 헤더 */
-.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px}
-.brand{font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:-.4px;color:var(--text);cursor:pointer}
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 6px;max-width:880px;margin:0 auto}
+.top .tag{margin-left:auto}
+.brand{display:none;font-family:var(--serif);font-weight:700;font-size:22px;letter-spacing:-.4px;color:var(--text);cursor:pointer}
+@media(max-width:860px){.brand{display:block}}
 .brand span{color:#b8902f}
 .top .tag{font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--ai1),var(--ai2));padding:6px 13px;border-radius:20px;box-shadow:0 4px 14px var(--ai-glow);letter-spacing:0}
 .top .tag::before{content:'✦ '}
@@ -97,6 +131,9 @@ textarea.inp{resize:vertical;min-height:230px;line-height:1.7}
 </style>
 </head>
 <body>
+<div class="layout">
+<aside class="sidebar" id="sidebar"></aside>
+<main class="content">
 <div class="wrap">
   <div class="top">
     <div class="brand" onclick="location.href='/app.html'">book<span>star</span></div>
@@ -149,6 +186,9 @@ textarea.inp{resize:vertical;min-height:230px;line-height:1.7}
     <div class="disclaim">※ AI 평가는 참고용 1차 채점입니다. 최종 등급은 사서·교수의 확인을 거쳐 확정하세요.<br>AI 작성 의심도는 보조 신호이며 단독 판단 근거로 쓰지 마세요.</div>
   </div>
 </div>
+</main>
+</div>
+<div id="toast"></div>
 
 <script>
 const FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/evaluate";
@@ -192,6 +232,51 @@ function render(d){
   el('result').style.display='block';
   el('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
+
+/* ===== 좌측 사이드바 (평가 허브 공통 틀) ===== */
+const SB_ICON={
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+  msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+  scan:'<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  layers:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  sliders:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  card:'<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+  help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+};
+const SB_NAV=[
+  {g:'평가 도구'},
+  {ic:'file',t:'독후감 평가',active:true},
+  {ic:'msg',t:'서평·소감 평가',soon:true},
+  {ic:'check',t:'완독 퀴즈 채점',soon:true},
+  {ic:'scan',t:'AI 작성 탐지',soon:true},
+  {ic:'copy',t:'표절·유사도 검사',soon:true},
+  {g:'운영'},
+  {ic:'layers',t:'대량 평가',soon:true},
+  {ic:'sliders',t:'평가 기준 설정',soon:true},
+  {ic:'chart',t:'결과 리포트·통계',soon:true},
+  {divider:true},
+  {ic:'card',t:'요금',soon:true},
+  {ic:'help',t:'도움말·자료',soon:true},
+];
+function svg(p){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;}
+function buildSidebar(){
+  let h=`<div class="sb-brand" onclick="location.href='/app.html'">✦ book<span>star</span> <span class="sp">평가</span></div>`;
+  SB_NAV.forEach(n=>{
+    if(n.g){h+=`<div class="sb-group">${n.g}</div>`;return;}
+    if(n.divider){h+=`<div class="sb-divider"></div>`;return;}
+    const cls='sb-item'+(n.active?' active':'')+(n.soon?' soon':'');
+    const click=n.soon?`onclick="sbSoon()"`:'';
+    h+=`<div class="${cls}" ${click}>${svg(SB_ICON[n.ic])}<span>${n.t}</span>${n.soon?'<span class="sb-soon">준비중</span>':''}</div>`;
+  });
+  el('sidebar').innerHTML=h;
+}
+let _toastT=null;
+function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('on'),2200);}
+function sbSoon(){toast('곧 제공될 기능이에요 (준비중)');}
+buildSidebar();
 </script>
 </body>
 </html>
