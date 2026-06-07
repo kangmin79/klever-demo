@@ -257,6 +257,21 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .sec-order .so-l{font-size:11.5px;font-weight:700;color:var(--sub)}
 .sec-order .so-inp{width:46px;text-align:center;font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:8px;padding:5px 4px;color:var(--text);background:var(--card);outline:none}
 .sec-order .so-inp:focus{border-color:var(--primary)}
+/* 순서 바꾸기 모드 — 칸 제목만 한 줄씩 컴팩트 목록 */
+.re-hint{font-size:12.5px;color:var(--sub);line-height:1.6;margin-bottom:14px;background:var(--input);border-radius:9px;padding:10px 12px}
+.re-list{display:flex;flex-direction:column;gap:8px}
+.re-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1.5px solid var(--border);border-radius:11px;background:var(--card);cursor:grab;transition:.12s}
+.re-row:hover{border-color:var(--primary)}
+.re-row.dragging{opacity:.45}
+.re-row.drag-over{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-bg)}
+.re-handle{color:var(--light);font-size:16px;line-height:1;cursor:grab;flex:0 0 auto}
+.re-no{flex:0 0 26px;height:26px;border-radius:8px;background:var(--primary-bg);color:var(--primary);font-weight:800;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+.re-t{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.re-lock{font-size:10.5px;font-weight:800;color:var(--light);background:var(--input);padding:2px 7px;border-radius:6px;margin-left:6px}
+.re-btns{flex:0 0 auto;display:flex;gap:4px}
+.re-arrow{width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:8px;color:var(--sub);font-size:12px;cursor:pointer;line-height:1}
+.re-arrow:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.re-arrow:disabled{opacity:.3;cursor:default}
 /* 스타일 시각 선택기 — 글자 대신 미니 미리보기 그림으로 고르기 */
 .style-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;background:var(--card);cursor:pointer;margin:5px 0 2px}
 .style-bar:hover{border-color:var(--primary)}
@@ -273,8 +288,8 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .tcv{display:inline-block;width:8px;height:12px;background:#aeb7e6;border-radius:1px}
 .tln{display:block;height:2px;background:#c4ccdd;border-radius:1px;margin:1.5px 0}
 /* 칸별 책 담기 모달 */
-#secOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:80;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
-#secOv.on{display:flex}
+#secOv,#reOv{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:80;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+#secOv.on,#reOv.on{display:flex}
 /* 우리 도서관 꾸미기 — 좌(편집)/우(실시간 폰 미리보기) 분할 */
 .settings-wrap{display:flex;gap:20px;align-items:flex-start}
 .settings-main{flex:1;min-width:0;max-width:860px}
@@ -548,14 +563,15 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <section id="pg-settings" style="display:none">
       <div class="phead"><div><h1><span id="setTitle">우리 도서관 꾸미기</span> <span class="tagpill">추천 도서 큐레이션</span></h1>
         <p id="setSub">학생 앱 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기.</p></div>
-        <div style="display:flex;gap:8px"><button id="pvToggleBtn" class="btn-ghost" onclick="toggleLivePreview()">👁 미리보기</button>
+        <div style="display:flex;gap:8px"><button class="btn-ghost" onclick="openReorder()">↕ 순서 바꾸기</button>
+        <button id="pvToggleBtn" class="btn-ghost" onclick="toggleLivePreview()">👁 미리보기</button>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div></div>
       <div class="settings-wrap">
         <div class="settings-main">
           <div id="secList"></div>
           <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
             <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
-            ※ ↑↓로 순서를 바꾸고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+            ※ 칸 순서는 상단 <b>↕ 순서 바꾸기</b>에서 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
         </div>
         <aside class="settings-pv" id="livePv">
           <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="pvFrameLoaded()"></iframe></div>
@@ -563,6 +579,18 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         </aside>
       </div>
     </section>
+
+    <!-- 칸 순서 바꾸기 모달 (제목만 컴팩트 목록 — 스크롤 없이 한눈에) -->
+    <div id="reOv" onclick="if(event.target.id==='reOv')closeReorder()">
+      <div class="sec-modal" style="max-width:480px">
+        <div class="sec-h"><h3>칸 순서 바꾸기</h3><span class="x" onclick="closeReorder()">×</span></div>
+        <div class="sec-b">
+          <div class="re-hint">위에서부터 학생 앱에 보이는 순서예요. <b>드래그</b>하거나 <b>▲▼</b> 버튼으로 옮기세요.</div>
+          <div class="re-list" id="reList"></div>
+        </div>
+        <div class="sec-f"><button class="btn-primary" onclick="closeReorder()">완료</button></div>
+      </div>
+    </div>
 
     <!-- 칸별 책 담기 모달 -->
     <div id="secOv" onclick="if(event.target.id==='secOv')secClosePicker()">
@@ -1010,6 +1038,39 @@ function setSecOrder(i,val){readSecInputs();
   renderSettings();
 }
 function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
+/* ── 순서 바꾸기 모드 (제목만 컴팩트 목록 — 스크롤 없이 한눈에 정렬) ── */
+function _areaSecs(){ return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
+function _applyAreaOrder(items){ let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=items[k++]; }); }   // 현재 영역 칸만 재배열, 다른 영역 위치 보존
+function openReorder(){ readSecInputs(); renderReorderList(); el('reOv').classList.add('on'); }
+function closeReorder(){ el('reOv').classList.remove('on'); renderSettings(); }
+function renderReorderList(){
+  const items=_areaSecs();
+  el('reList').innerHTML=items.map((o,k)=>{
+    const s=o.s, isRank=s.slot==='rank';
+    return `<div class="re-row" draggable="true" data-k="${k}"
+      ondragstart="reDragStart(event,${k})" ondragover="reDragOver(event,${k})" ondragleave="reDragLeave(event)" ondrop="reDrop(event,${k})" ondragend="reDragEnd()">
+      <span class="re-handle">⠿</span><span class="re-no">${k+1}</span>
+      <span class="re-t">${esc(s.title||'(제목 없음)')}${isRank?'<span class="re-lock">랭킹·자동</span>':''}</span>
+      <span class="re-btns">
+        <button class="re-arrow" ${k===0?'disabled':''} onclick="reMove(${k},-1)" title="위로">▲</button>
+        <button class="re-arrow" ${k===items.length-1?'disabled':''} onclick="reMove(${k},1)" title="아래로">▼</button>
+      </span></div>`;
+  }).join('');
+}
+function reMove(k,dir){ const items=_areaSecs().map(o=>o.s); const j=k+dir; if(j<0||j>=items.length) return;
+  const t=items[k]; items[k]=items[j]; items[j]=t; _applyAreaOrder(items); renderReorderList(); }
+let _reDrag=-1;
+function reDragStart(e,k){ _reDrag=k; e.currentTarget.classList.add('dragging'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(k)); }catch(_){}}
+function reDragOver(e,k){ if(_reDrag<0||_reDrag===k) return; e.preventDefault(); const p=e.currentTarget;
+  document.querySelectorAll('.re-row.drag-over').forEach(x=>{if(x!==p)x.classList.remove('drag-over')}); p.classList.add('drag-over'); }
+function reDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function reDrop(e,k){ e.preventDefault(); const from=_reDrag; _reDrag=-1; const p=e.currentTarget; p.classList.remove('drag-over');
+  if(from<0||from===k) return; const items=_areaSecs().map(o=>o.s);
+  const rect=p.getBoundingClientRect(); const after=e.clientY>rect.top+rect.height/2; let target=k+(after?1:0);
+  const moved=items.splice(from,1)[0]; if(from<target) target--;
+  if(target<0)target=0; if(target>items.length)target=items.length;
+  items.splice(target,0,moved); _applyAreaOrder(items); renderReorderList(); }
+function reDragEnd(){ _reDrag=-1; document.querySelectorAll('.re-row.drag-over,.re-row.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
 // 미리보기 — 저장 전 SECTIONS를 localStorage로 넘겨 app.html?preview=1 을 iframe으로 띄움
 function previewSections(){
   readSecInputs();
@@ -1187,9 +1248,6 @@ function renderSettings(){
     return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span class="sec-no">칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
-      <span class="sec-order"><span class="so-l">순서</span>
-        <input type="number" class="so-inp" min="1" max="${list.length}" value="${k+1}" onclick="event.stopPropagation()" onchange="setSecOrder(${i},this.value)" title="이 칸을 몇 번째로 보낼지 입력">
-        <span class="so-l">번째</span></span>
       ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="event.stopPropagation();delSection(${i})">삭제</button>`}
     </div>
