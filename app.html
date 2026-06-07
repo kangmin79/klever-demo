@@ -853,8 +853,10 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
 @media (max-width:900px){
   .program-grid{grid-template-columns:1fr;}
   .stat-row{grid-template-columns:repeat(2,1fr);}
-  .gnb{gap:0;flex:0;}
-  .gnb-item{padding:8px 10px;font-size:12px;}
+  .header{gap:12px;padding:0 14px;}
+  .gnb{gap:4px;flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .gnb::-webkit-scrollbar{display:none;}
+  .gnb-item{padding:8px 11px;font-size:12.5px;white-space:nowrap;flex:0 0 auto;}
   .school-tag{display:none;}
   .detail-layout{grid-template-columns:1fr;}
   .detail-cover{max-width:200px;margin:0 auto;}
@@ -1190,7 +1192,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      ═══════════════════════════════════════════════════════════ -->
 <header class="header">
   <div class="brand-logo" onclick="nav('ourlib')" title="우리 도서관">
-    <span class="bl-word">book<span>star</span></span><span class="bl-sub">Archive</span>
+    <span class="bl-word">book<span>star</span></span>
   </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
@@ -2300,7 +2302,7 @@ function nav(page){
   document.querySelectorAll('.gnb-item').forEach(i=>i.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   const gnb = document.querySelector(`.gnb-item[data-page="${page}"]`);
-  if(gnb) gnb.classList.add('active');
+  if(gnb){ gnb.classList.add('active'); try{ gnb.scrollIntoView({block:'nearest',inline:'center'}); }catch(e){} }
   document.querySelector('.main').scrollTop = 0;
 
   // 홈 제외하고 좌측 사이드바 표시
@@ -3729,14 +3731,14 @@ async function renderSummaryCard(){
   host.innerHTML=`
     <div class="ss-kicker">✦ 2026-1학기 독서 결산</div>
     <div class="ss-name">${esc(readerName())} 님</div>
-    <div class="ss-period">한국대학교 도서관 · bookstar Archive</div>
+    <div class="ss-period">한국대학교 도서관 · bookstar</div>
     <div class="ss-grid">
       <div class="ss-cell"><div class="ss-num">${books}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
       <div class="ss-cell"><div class="ss-num">${avg.toFixed(1)}</div><div class="ss-lbl">평균 별점</div></div>
       <div class="ss-cell"><div class="ss-num">86<span class="u">%</span></div><div class="ss-lbl">퀴즈 정답률</div></div>
       <div class="ss-cell"><div class="ss-num">${hours.toFixed(1)}<span class="u">h</span></div><div class="ss-lbl">독서 시간</div></div>
     </div>
-    <div class="ss-foot"><div class="ss-brand">book<span>star</span> Archive</div>
+    <div class="ss-foot"><div class="ss-brand">book<span>star</span></div>
       <button class="ss-share" onclick="shareSummary()">📤 결산 이미지 공유</button></div>`;
 }
 function roundRect(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
@@ -3747,14 +3749,14 @@ function shareSummary(){
   x.fillStyle=g; x.fillRect(0,0,W,H); x.textAlign='center';
   x.fillStyle='#c9b88a'; x.font='bold 34px Georgia'; x.fillText('✦ 2026-1학기 독서 결산', W/2, 175);
   x.fillStyle='#fff'; x.font='bold 76px sans-serif'; x.fillText(readerName()+' 님', W/2, 285);
-  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('한국대학교 도서관 · bookstar Archive', W/2, 345);
+  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('한국대학교 도서관 · bookstar', W/2, 345);
   const cells=[[(d.books||'0')+'권','완독'],[d.avg||'4.3','평균 별점'],['86%','퀴즈 정답률'],[(d.hours||'14.5')+'h','독서 시간']];
   const cw=480,ch=230,gap=40,sx=(W-cw*2-gap)/2,sy=455;
   cells.forEach((cell,i)=>{ const col=i%2,row=(i/2)|0,cx=sx+col*(cw+gap),cy=sy+row*(ch+gap);
     roundRect(x,cx,cy,cw,ch,24); x.fillStyle='rgba(255,255,255,.09)'; x.fill();
     x.fillStyle='#fff'; x.font='bold 88px Georgia'; x.fillText(cell[0], cx+cw/2, cy+125);
     x.fillStyle='#c4ccdd'; x.font='32px sans-serif'; x.fillText(cell[1], cx+cw/2, cy+185); });
-  x.fillStyle='#fff'; x.font='bold 46px Georgia'; x.fillText('bookstar Archive', W/2, H-115);
+  x.fillStyle='#fff'; x.font='bold 46px Georgia'; x.fillText('bookstar', W/2, H-115);
   x.fillStyle='#c9b88a'; x.font='28px sans-serif'; x.fillText('읽은 만큼 증명되는 독서 — 북스타', W/2, H-65);
   c.toBlob(async(blob)=>{
     try{ const file=new File([blob],'bookstar-결산.png',{type:'image/png'});
@@ -3827,7 +3829,7 @@ function shareSky(){
       x.globalAlpha=1; x.beginPath(); x.arc(p.x*S,p.y*S,p.r*S,0,6.3); x.fill(); });
   });
   x.globalAlpha=1; x.fillStyle='#ffd479'; x.font=`bold ${30*S}px Georgia`; x.textAlign='left'; x.fillText(L.count+'개의 별', 24*S, H-46*S);
-  x.fillStyle='#dbe4ff'; x.font=`${20*S}px sans-serif`; x.fillText(readerName()+'님의 독서 밤하늘 · bookstar Archive', 24*S, H-20*S);
+  x.fillStyle='#dbe4ff'; x.font=`${20*S}px sans-serif`; x.fillText(readerName()+'님의 독서 밤하늘 · bookstar', 24*S, H-20*S);
   c.toBlob(async(blob)=>{
     try{ const f=new File([blob],'bookstar-별자리.png',{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:'나의 독서 별자리'}); return; }
