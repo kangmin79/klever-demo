@@ -149,8 +149,7 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .rt-sw{width:26px;height:26px;border-radius:7px;cursor:pointer;border:1px solid rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--light)}
 .rt-sw:hover{transform:scale(1.08);outline:2px solid var(--accent)}
 .rt-sw-x{background:var(--bg)}
-/* 정렬 SVG 아이콘 버튼은 살짝 더 좁게 */
-.rt-tb button svg{display:block}
+.rt-tb button svg{display:inline-block;vertical-align:-3px}
 /* 읽기 전용 렌더 (발행된 공지 미리보기) */
 .rt-view{font-size:13.5px;line-height:1.7;color:var(--sub)}
 .rt-view p{margin:0 0 7px}
@@ -581,6 +580,9 @@ function rtInit(host, placeholder, initialHtml){
     left:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/>'),
     center:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/>'),
     right:SV('<line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="6" y1="18" x2="20" y2="18"/>'),
+    link:SV('<path d="M9 15l6-6"/><path d="M11 6l1-1a4 4 0 0 1 6 6l-2 2"/><path d="M13 18l-1 1a4 4 0 0 1-6-6l2-2"/>'),
+    image:SV('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5L5 20"/>'),
+    eraser:SV('<path d="M4 15l7-7 7 7-5 5H9z"/><line x1="4" y1="20" x2="20" y2="20"/>'),
   };
   const tools=[
     ['bold','<b>가</b>','굵게'],['italic','<i>가</i>','기울임'],['underline','<u>가</u>','밑줄'],['strike','<s>가</s>','취소선'],['|'],
@@ -588,8 +590,8 @@ function rtInit(host, placeholder, initialHtml){
     ['h3','제목','소제목'],['p','본문','본문'],['|'],
     ['left',ICO.left,'왼쪽 정렬'],['center',ICO.center,'가운데 정렬'],['right',ICO.right,'오른쪽 정렬'],['|'],
     ['ul','• 목록','글머리 목록'],['ol','1. 목록','번호 목록'],['quote','❝ 인용','인용'],['hr','─ 구분선','구분선'],['|'],
-    ['link','🔗 링크','링크'],['image','🖼 이미지','이미지'],['|'],
-    ['clear','⌫ 서식지우기','서식 지우기'],
+    ['link',ICO.link+' 링크','링크'],['image',ICO.image+' 이미지','이미지'],['|'],
+    ['clear',ICO.eraser+' 서식지우기','서식 지우기'],
   ];
   const tb=tools.map(t=>t[0]==='|'?'<span class="rt-sep"></span>'
     :`<button type="button" data-cmd="${t[0]}" title="${t[2]}" onmousedown="event.preventDefault()" onclick="rtDo('${t[0]}',this)">${t[1]}</button>`).join('');
