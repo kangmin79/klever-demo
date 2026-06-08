@@ -1612,6 +1612,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       </div>
       <span class="viewer-close" onclick="closeViewer()">✕</span>
       <div class="reader-settings-sheet" id="readerSettingsSheet">
+        <div class="rss-row"><span class="rss-label">읽기 방식</span><div class="rss-ctrl">
+          <button class="reader-btn rss-mode" data-page="0" onclick="setPageMode(false)">스크롤</button>
+          <button class="reader-btn rss-mode" data-page="1" onclick="setPageMode(true)">탭 넘김</button></div></div>
         <div class="rss-row"><span class="rss-label">글자 크기</span><div class="rss-ctrl">
           <button class="reader-btn" onclick="readerFS(-1)" style="font-weight:800;">A−</button>
           <button class="reader-btn" onclick="readerFS(1)" style="font-weight:800;">A+</button></div></div>
@@ -1680,12 +1683,12 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260608a"></script>
-<script src="books_extra.js?b=260608a"></script>
-<script src="classics_kr_data.js?b=260608a"></script>
-<script src="classics_foreign_data.js?b=260608a"></script>
-<script src="bodies_dq.js?b=260608a"></script>
-<script src="bodies_gatsby.js?b=260608a"></script>
+<script src="mvp35_data.js?b=260608b"></script>
+<script src="books_extra.js?b=260608b"></script>
+<script src="classics_kr_data.js?b=260608b"></script>
+<script src="classics_foreign_data.js?b=260608b"></script>
+<script src="bodies_dq.js?b=260608b"></script>
+<script src="bodies_gatsby.js?b=260608b"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -1876,7 +1879,7 @@ const READER_STATS_KEY = 'klever-reader-stats';
 const FONT_SIZES = [14,15,16,17,18,19,20,22,24];
 const LINE_HEIGHTS = [1.5,1.65,1.75,1.85,2.0,2.2];
 
-let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light'};
+let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false};
 let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
 let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
@@ -1908,7 +1911,7 @@ function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max
 function readerTheme(t){ readerPrefs.theme = t; applyReaderPrefs(); saveReaderPrefs(); }
 
 /* ── 모바일 읽기 설정 시트 (Aa) ── */
-function toggleReaderSettings(e){ if(e) e.stopPropagation(); const s=document.getElementById('readerSettingsSheet'); if(s) s.classList.toggle('open'); }
+function toggleReaderSettings(e){ if(e) e.stopPropagation(); const s=document.getElementById('readerSettingsSheet'); if(s){ s.classList.toggle('open'); if(s.classList.contains('open')) syncPageModeBtns(); } }
 function closeReaderSettings(){ const s=document.getElementById('readerSettingsSheet'); if(s) s.classList.remove('open'); }
 document.addEventListener('click',(e)=>{
   const s=document.getElementById('readerSettingsSheet');
@@ -3219,7 +3222,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260608a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260608b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -3236,7 +3239,17 @@ function showUpdateBanner(){
   document.body.appendChild(d);
 }
 
-/* ── 몰입 모드 (모바일: 본문 탭 → 상·하단바 토글) ── */
+/* ── 읽기 방식: 스크롤 / 탭 넘김 ── */
+function setPageMode(on){ readerPrefs.pageMode=!!on; saveReaderPrefs(); syncPageModeBtns();
+  readerToast(on ? '탭 넘김 · 좌/우 탭으로 페이지, 가운데 탭으로 바 켜기' : '스크롤 모드'); }
+function syncPageModeBtns(){ document.querySelectorAll('.rss-mode').forEach(b=>b.classList.toggle('on', (b.dataset.page==='1')===!!readerPrefs.pageMode)); }
+function readerPage(dir){
+  const pane=_scrollEl(); if(!pane) return;
+  const step=Math.max(120, pane.clientHeight*0.88);          // 한 화면(약간 겹쳐 연속감)
+  pane.scrollBy({top:dir*step, behavior:'smooth'});
+}
+
+/* ── 모바일 본문 탭: 스크롤모드=바 토글 / 탭넘김모드=좌(이전)·우(다음)·가운데(바 토글) ── */
 let _immersiveTapTimer=null;
 function setupImmersiveTap(){
   const vb=document.getElementById('viewerBody');
@@ -3248,6 +3261,13 @@ function setupImmersiveTap(){
     const sel=window.getSelection();
     if(sel && sel.toString().trim().length>0) return;       // 드래그 선택 중 제외
     if(e.target.closest('a,button,mark')) return;           // 링크·버튼·하이라이트 탭은 제외
+    if(readerPrefs.pageMode){                               // 탭 넘김 모드: 좌/우 구역은 즉시 페이지
+      const rect=vb.getBoundingClientRect();
+      const x=(e.clientX-rect.left)/rect.width;
+      if(x<0.30){ readerPage(-1); return; }
+      if(x>0.70){ readerPage(1);  return; }
+      // 가운데(0.30~0.70) → 아래로 떨어져 바 토글
+    }
     clearTimeout(_immersiveTapTimer);
     _immersiveTapTimer=setTimeout(()=>{                      // 더블클릭이면 아래서 취소
       document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');
