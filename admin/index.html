@@ -239,7 +239,7 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .deco-bk .c img{width:100%;height:100%;object-fit:cover}
 .deco-bk .rm{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:var(--bad);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid #fff;padding:0}
 /* 담긴 책 = 표지를 옆으로 늘어놓는 가로 스크롤(A안) — 우리도서관·고전·International 공통 */
-.deco-list{display:flex;gap:9px;overflow-x:auto;padding:6px 2px 10px;margin:6px 0 0;align-items:flex-start;scrollbar-width:thin}
+.deco-list{display:flex;gap:9px;overflow-x:auto;padding:6px 2px 10px;margin:6px 0 0;align-items:flex-start;scrollbar-width:thin;min-width:0;max-width:100%}
 .deco-bk{position:relative;flex:0 0 auto;width:62px}
 .deco-bk .db-cv{width:62px;height:84px;border-radius:6px;background:var(--input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
 .deco-bk .db-cv img{width:100%;height:100%;object-fit:cover}
@@ -291,13 +291,14 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 /* 우리 도서관 꾸미기 — 좌(편집)/우(실시간 폰 미리보기) 분할 */
 .settings-wrap{display:flex;gap:20px;align-items:flex-start}
 .settings-main{flex:1;min-width:0;max-width:860px}
-body.pv-open .settings-main{flex:1;max-width:none}
-body.pv-open .settings-pv{flex:1;width:auto;min-width:0;max-width:none}
+body.pv-open .settings-main{flex:1 1 0;width:0;min-width:0;max-width:none}   /* 좌우 50:50 고정 — 내용이 길어도 한쪽이 못 넓힘 */
+body.pv-open .settings-pv{flex:1 1 0;width:0;min-width:0;max-width:none}
 .settings-pv{display:none;width:46%;min-width:440px;max-width:780px;flex:none;position:sticky;top:78px}
 .settings-pv.on{display:block}
 body.pv-open .main{max-width:none}
 .sec-drag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--accent);user-select:none;padding:4px 10px;border-radius:8px;background:var(--primary-bg);letter-spacing:.2px}
-.sec-panel{transition:box-shadow .14s,transform .14s,opacity .14s}
+.sec-panel{transition:box-shadow .14s,transform .14s,opacity .14s;min-width:0}
+#secList{min-width:0}
 .sec-panel:active{cursor:grabbing}
 .sec-panel input,.sec-panel select,.sec-panel textarea{cursor:auto}
 .sec-panel button,.sec-panel .deco-add,.sec-panel .deco-bk .rm{cursor:pointer}
