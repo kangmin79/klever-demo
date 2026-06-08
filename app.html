@@ -833,6 +833,10 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .copy-warning{font-size:10px;color:var(--danger);margin-top:4px;font-weight:700;}
 
 .viewer-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-input);font-size:13px;color:var(--text-sub);}
+/* 몰입 모드 (모바일: 본문 탭 → 바 숨김) — 진행률 바는 유지 */
+.viewer-shell.chrome-hidden .viewer-header,
+.viewer-shell.chrome-hidden .viewer-footer,
+.viewer-shell.chrome-hidden .pane-tabs{display:none !important;}
 .viewer-actions{display:flex;gap:8px;}
 .viewer-action{padding:8px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
 .viewer-action:hover{border-color:var(--primary);color:var(--primary);}
@@ -3209,6 +3213,26 @@ function openDetail(bookId){
 /* ═══════════════════════════════════════════════════════════
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
+/* ── 몰입 모드 (모바일: 본문 탭 → 상·하단바 토글) ── */
+let _immersiveTapTimer=null;
+function setupImmersiveTap(){
+  const vb=document.getElementById('viewerBody');
+  if(!vb || vb._immBound) return;
+  vb._immBound=true;
+  vb.addEventListener('click',(e)=>{
+    if(window.innerWidth>600) return;                      // 모바일에서만
+    if(e.detail>1) return;                                  // 더블클릭(사전)은 제외
+    const sel=window.getSelection();
+    if(sel && sel.toString().trim().length>0) return;       // 드래그 선택 중 제외
+    if(e.target.closest('a,button,mark')) return;           // 링크·버튼·하이라이트 탭은 제외
+    clearTimeout(_immersiveTapTimer);
+    _immersiveTapTimer=setTimeout(()=>{                      // 더블클릭이면 아래서 취소
+      document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');
+    },230);
+  });
+  vb.addEventListener('dblclick',()=>{ clearTimeout(_immersiveTapTimer); });
+}
+
 async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
@@ -3218,6 +3242,7 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerTitle').textContent = b.title;
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
+  document.querySelector('.viewer-shell')?.classList.remove('chrome-hidden');   // 열 때는 항상 바 보이게
   renderViewer();
   // 고전(국내 kr-* / 해외 gb-*·옛 g{N}): 본문을 Supabase에서 받아와 다시 렌더
   if(classicFetchId(bookId)){ await ensureClassicBody(bookId); if(currentBook===b) renderViewer(); }
@@ -4123,6 +4148,7 @@ window.addEventListener('DOMContentLoaded', () => {
   applyReaderPrefs();
   setupHighlightHandlers();
   setupDictHandlers();
+  setupImmersiveTap();
   renderClassicShelves();
   renderCurations('curationIntl', true);
   renderBookGrid('bookGridIntl', true);
