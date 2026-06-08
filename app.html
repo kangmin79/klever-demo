@@ -942,6 +942,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
 .viewer-pane mark.hl{background:rgba(212,169,59,0.32);color:inherit;border-radius:2px;padding:0 1px;cursor:pointer;}
 body.dark .viewer-pane mark.hl{background:rgba(212,169,59,0.45);}
 body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
+/* 평행 하이라이트 — 한쪽 문단 클릭 시 원문·번역 같은 문단 강조 */
+.viewer-pane p[data-pi]{transition:background .15s,box-shadow .15s;border-radius:3px;}
+.viewer-pane p[data-pi]:hover{background:rgba(99,102,241,0.07);}
+.viewer-pane p.pp-on,.viewer-pane p.pp-on:hover{background:rgba(212,169,59,0.18);box-shadow:inset 3px 0 0 var(--gold,#d4a93b);padding-left:8px;margin-left:-11px;}
+body.dark .viewer-pane p.pp-on{background:rgba(212,169,59,0.26);}
 .hl-popup{
   position:fixed;z-index:120;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
   padding:6px;box-shadow:0 6px 24px rgba(0,0,0,0.15);display:none;gap:4px;
@@ -1978,12 +1983,52 @@ function attachScrollListener(){
   if(right) right.onscroll = null;
   // 양쪽 칸이 모두 보일 때만(PC 나란히) 비율 동기 스크롤
   if(_vis(left) && _vis(right)){
-    left.onscroll  = ()=>{ if(_activeScrollPane === right) return; _lockActiveScroll(left);  _mirrorScroll(left, right); readerOnScroll(); };
-    right.onscroll = ()=>{ if(_activeScrollPane === left)  return; _lockActiveScroll(right); _mirrorScroll(right, left); readerOnScroll(); };
+    left.onscroll  = ()=>{ if(_suppressSync || _activeScrollPane === right) return; _lockActiveScroll(left);  _mirrorScroll(left, right); readerOnScroll(); };
+    right.onscroll = ()=>{ if(_suppressSync || _activeScrollPane === left)  return; _lockActiveScroll(right); _mirrorScroll(right, left); readerOnScroll(); };
   } else {
     const el = _scrollEl();
     if(el) el.onscroll = readerOnScroll;
   }
+}
+
+/* ── 평행 하이라이트 (정렬 이중언어책: 원문↔번역 문단 1:1) ── */
+let _parallelOn=false, _suppressSync=false, _parallelBound=false, _suppressTimer=null;
+function setupParallel(){
+  _parallelOn=false;
+  const left=document.querySelector('.viewer-pane.left');
+  const right=document.querySelector('.viewer-pane.right');
+  if(!left||!right||!_vis(left)||!_vis(right)) return;
+  const lp=left.querySelectorAll('p'), rp=right.querySelectorAll('p');
+  if(!lp.length || lp.length!==rp.length) return;   // 문단 수 다르면 정렬책 아님
+  lp.forEach((p,i)=>p.dataset.pi=i);
+  rp.forEach((p,i)=>p.dataset.pi=i);
+  _parallelOn=true;
+  if(!_parallelBound){
+    const vb=document.getElementById('viewerBody');
+    if(vb){ vb.addEventListener('click', onParallelClick); _parallelBound=true; }
+  }
+}
+function _clearParallel(){ document.querySelectorAll('.viewer-pane p.pp-on').forEach(p=>p.classList.remove('pp-on')); }
+function onParallelClick(e){
+  if(!_parallelOn) return;
+  const p=e.target.closest('.viewer-pane p[data-pi]');
+  if(!p) return;
+  const sel=window.getSelection();
+  if(sel && sel.toString().trim().length>1) return;   // 드래그 선택 중이면 무시
+  const pi=p.dataset.pi;
+  _clearParallel();
+  const left=document.querySelector('.viewer-pane.left');
+  const right=document.querySelector('.viewer-pane.right');
+  const L=left.querySelector('p[data-pi="'+pi+'"]');
+  const R=right.querySelector('p[data-pi="'+pi+'"]');
+  if(L) L.classList.add('pp-on');
+  if(R) R.classList.add('pp-on');
+  // 양쪽 문단을 각 칸 중앙으로 (동기 스크롤 일시 정지 → 핑퐁 방지)
+  _suppressSync=true;
+  const center=(pane,el)=>{ if(pane&&el&&_vis(pane)) pane.scrollTo({top: el.offsetTop - pane.clientHeight/2 + el.clientHeight/2, behavior:'smooth'}); };
+  center(left,L); center(right,R);
+  clearTimeout(_suppressTimer);
+  _suppressTimer=setTimeout(()=>{ _suppressSync=false; updateProgress(); }, 650);
 }
 
 /* 읽기 세션 · streak */
@@ -2206,6 +2251,7 @@ function cyclePaneView(){
   else if(_paneView==='trans'){ body.classList.add('pane-trans'); if(lbl)lbl.textContent='번역만'; }
   else { if(lbl)lbl.textContent='나란히'; }
   attachScrollListener();
+  setupParallel();
 }
 function updatePaneToggleVisibility(){
   const btn=document.getElementById('paneToggleBtn');
@@ -3237,8 +3283,8 @@ function viewerBodies(book){
   const mock = BOOK_CONTENT[book.id] || {};
   const id = book.id;
   const orig = mock.origin
-    || (CLASSIC_BODIES[id] ? bodyToHtml(CLASSIC_BODIES[id]) : '')
-    || (typeof BODIES_ORIG !== 'undefined' && BODIES_ORIG[id] ? bodyToHtml(BODIES_ORIG[id]) : '');
+    || (typeof BODIES_ORIG !== 'undefined' && BODIES_ORIG[id] ? bodyToHtml(BODIES_ORIG[id]) : '')
+    || (CLASSIC_BODIES[id] ? bodyToHtml(CLASSIC_BODIES[id]) : '');
   let trans = mock.trans
     || (typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id] ? bodyToHtml(BODIES_TRANS[id]) : '');
   // modern: trans는 별도 없음 — 비워두고 placeholder가 노출되게 함
@@ -3332,6 +3378,7 @@ function renderViewer(){
     `;
   }
   _setupMobilePanes(c);
+  setupParallel();
 }
 
 function checkQuiz(el, qi, oi){
