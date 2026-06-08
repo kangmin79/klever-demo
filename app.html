@@ -891,8 +891,10 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-header > .mode-toggle{order:2;flex:0 0 auto;}
   .viewer-header > .reader-aa{order:3;margin-left:auto;display:inline-flex;}
   .viewer-header > .reader-toolbar{display:none !important;}   /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
-  .viewer-header .viewer-author{display:none;}
-  .vh-nav .reader-btn{padding:6px 8px;white-space:nowrap;}
+  .viewer-header .viewer-title,.viewer-header .viewer-author{display:none;}  /* 제목 제거 — 방금 연 책이라 중복, 전자책 리더 관행 */
+  .vh-nav{gap:2px;}
+  .vh-nav .reader-btn{font-size:0;padding:9px;}                              /* 아이콘 전용 (한글 라벨 숨김 — 킨들/애플북스/리디 결) */
+  .vh-nav .reader-btn .icon{width:19px;height:19px;}
   .reader-settings-sheet{right:10px;min-width:210px;}
 }
 
