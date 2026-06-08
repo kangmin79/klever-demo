@@ -2617,7 +2617,7 @@ function renderLibCuration(){
     try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]');
       if(Array.isArray(ps)&&ps.length) SECTIONS=ps.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
     }catch(e){}
-    LC_PUB=[]; rebuildLibPool(); grid.innerHTML=millieHTML(); mlBindDrag(); backfillPool();
+    rebuildLibPool(); grid.innerHTML=millieHTML(); mlBindDrag(); backfillPool();
     return;
   }
   // 즉시 표시(로컬 폴백) → 서버 발행물로 갱신
@@ -2632,10 +2632,22 @@ function renderLibCuration(){
 const PV_AREA = new URLSearchParams(location.search).get('area') || '우리도서관';
 const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'}};
 const PV_T = PV_MAP[PV_AREA] || PV_MAP['우리도서관'];
+let _pvLastSecs=null;
+// 미리보기도 실제 앱처럼 발행 프로그램(library_programs)을 불러와 LC_PUB 채움 → 빈 칸 폴백이 앱과 일치(WYSIWYG)
+async function _pvLoadPub(){
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
+      books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))})); }
+  }catch(e){}
+  try{ const ps=_pvLastSecs||JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){}
+}
 function _pvRender(rawSecs){
+  _pvLastSecs=rawSecs;
   const secs=(rawSecs||[]).map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
   if(PV_AREA==='우리도서관') SECTIONS=secs;
-  LC_PUB=[]; rebuildLibPool();
+  rebuildLibPool();
   // 담긴 책을 풀에 보강(표지·별점)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
   const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs, PV_AREA==='고전 컬렉션'); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
@@ -2643,6 +2655,7 @@ function _pvRender(rawSecs){
 if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
   const goPv=()=>{ try{ nav(PV_T.page); }catch(e){} try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
   window.addEventListener('DOMContentLoaded',goPv); setTimeout(goPv,60);
+  _pvLoadPub();   // 발행 프로그램 로드 → 로드 후 자동 재렌더(앱과 동일 화면)
   // 관리자 '꾸미기' 실시간 미리보기 — 부모창이 보낸 SECTIONS로 즉시 재렌더(새로고침 없음)
   window.addEventListener('message',function(e){
     var d=e.data; if(!d||d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
