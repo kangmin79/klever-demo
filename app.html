@@ -1923,9 +1923,15 @@ function buildTOC(){
     div.className = 'toc-item' + (completed.includes(i) ? ' done' : '');
     div.textContent = title;
     div.onclick = () => {
-      sec.scrollIntoView({behavior:'smooth', block:'start'});
+      // 현재 보이는 칸(PC=본문, 모바일=선택 탭)의 같은 장 인덱스로 이동 — scrollIntoView는 중첩 스크롤서 불안정
+      const pane = _scrollEl();
+      const secs = pane ? [...pane.querySelectorAll('.chapter-anchor')] : [];
+      const target = secs[i] || sec;
+      if(pane && target) pane.scrollTo({top: target.offsetTop, behavior:'smooth'});
+      else target.scrollIntoView({behavior:'smooth', block:'start'});
       document.querySelectorAll('.toc-item').forEach(x=>x.classList.remove('active'));
       div.classList.add('active');
+      if(window.innerWidth <= 600) toggleTOC();   // 모바일: 선택 후 목차 닫기
     };
     list.appendChild(div);
   });
