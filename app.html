@@ -1959,9 +1959,31 @@ function readerOnScroll(){
   if(_scrollSaveTimer) clearTimeout(_scrollSaveTimer);
   _scrollSaveTimer = setTimeout(saveScrollPos, 800);
 }
+/* ── 좌우 동기 스크롤 (PC 나란히: 원문↔번역 길이 달라 비율 기반) ── */
+let _activeScrollPane = null, _syncReleaseTimer = null;
+function _lockActiveScroll(p){
+  _activeScrollPane = p;
+  clearTimeout(_syncReleaseTimer);
+  _syncReleaseTimer = setTimeout(()=>{ _activeScrollPane = null; }, 150);
+}
+function _mirrorScroll(src, dst){
+  const sMax = src.scrollHeight - src.clientHeight;
+  const dMax = dst.scrollHeight - dst.clientHeight;
+  dst.scrollTop = sMax > 0 ? (src.scrollTop / sMax) * dMax : 0;
+}
 function attachScrollListener(){
-  const el = _scrollEl();
-  if(el) el.onscroll = readerOnScroll;
+  const left  = document.querySelector('.viewer-pane.left');
+  const right = document.querySelector('.viewer-pane.right');
+  if(left)  left.onscroll  = null;
+  if(right) right.onscroll = null;
+  // 양쪽 칸이 모두 보일 때만(PC 나란히) 비율 동기 스크롤
+  if(_vis(left) && _vis(right)){
+    left.onscroll  = ()=>{ if(_activeScrollPane === right) return; _lockActiveScroll(left);  _mirrorScroll(left, right); readerOnScroll(); };
+    right.onscroll = ()=>{ if(_activeScrollPane === left)  return; _lockActiveScroll(right); _mirrorScroll(right, left); readerOnScroll(); };
+  } else {
+    const el = _scrollEl();
+    if(el) el.onscroll = readerOnScroll;
+  }
 }
 
 /* 읽기 세션 · streak */
