@@ -237,6 +237,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "intl": false,
   "hasBody": true,
   "hasTrans": true,
+  "coverSrc": "./covers/gb-64317.webp",
   "src": "Gutenberg",
   "participants": 101,
   "reviews": 21,
