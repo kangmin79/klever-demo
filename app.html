@@ -834,7 +834,7 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 
 .viewer-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-input);font-size:13px;color:var(--text-sub);}
 .viewer-actions{display:flex;gap:8px;}
-.viewer-action{padding:8px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;color:var(--text);}
+.viewer-action{padding:8px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
 .viewer-action:hover{border-color:var(--primary);color:var(--primary);}
 .viewer-action.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 body.dark .viewer-action.primary{background:var(--gold);color:#0f172a;border-color:var(--gold);}
@@ -896,6 +896,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .vh-nav .reader-btn{font-size:0;padding:9px;}                              /* 아이콘 전용 (한글 라벨 숨김 — 킨들/애플북스/리디 결) */
   .vh-nav .reader-btn .icon{width:19px;height:19px;}
   .reader-settings-sheet{right:10px;min-width:210px;}
+  /* 바닥 바: 장황한 안내문 숨기고 버튼만 꽉 차게 — 글자 세로쪼개짐 방지 */
+  .viewer-footer{padding:10px 12px;gap:8px;}
+  .viewer-footer > #viewerFooterInfo{display:none;}
+  .viewer-footer > .viewer-actions{flex:1;justify-content:space-between;gap:6px;}
+  .viewer-action{padding:9px 10px;}
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1653,9 +1658,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     </div>
     <div class="viewer-footer">
       <div id="viewerFooterInfo">제3장 핵심 페이지 · <b>+50 점수</b></div>
-      <div class="viewer-actions">
-        <button class="viewer-action">⬅ 이전</button>
-        <button class="viewer-action">다음 ➡</button>
+      <div class="viewer-actions" id="viewerActions">
+        <button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>
+        <button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>
         <button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>
       </div>
     </div>
@@ -3424,6 +3429,26 @@ function renderViewer(){
   }
   _setupMobilePanes(c);
   setupParallel();
+  // 바닥 액션: 완독=장 이동만 / 챌린지·Intl=장 이동 + 수행완료
+  const acts = document.getElementById('viewerActions');
+  if(acts){
+    const nav = `<button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>`
+              + `<button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>`;
+    acts.innerHTML = (currentMode === 'full')
+      ? nav
+      : nav + `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
+  }
+}
+
+/* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
+function gotoChapter(dir){
+  const pane = _scrollEl(); if(!pane) return;
+  const secs = [...pane.querySelectorAll('.chapter-anchor')];
+  if(secs.length <= 1){ pane.scrollTo({top: dir>0 ? pane.scrollHeight : 0, behavior:'smooth'}); return; }
+  const top = pane.scrollTop + 10;
+  let idx = 0; for(let i=0;i<secs.length;i++){ if(secs[i].offsetTop <= top) idx = i; }
+  const t = Math.max(0, Math.min(secs.length-1, idx + dir));
+  secs[t].scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function checkQuiz(el, qi, oi){
