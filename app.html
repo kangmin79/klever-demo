@@ -837,6 +837,19 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .viewer-shell.chrome-hidden .viewer-header,
 .viewer-shell.chrome-hidden .viewer-footer,
 .viewer-shell.chrome-hidden .pane-tabs{display:none !important;}
+/* ── 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼 조판) ── */
+.paged-view{display:none;position:absolute;inset:0;background:var(--bg-card);z-index:1;}
+.viewer-body.pg-active{display:none !important;}
+.paged-clip{position:absolute;inset:0;overflow:hidden;}
+.paged-flow.viewer-pane{position:absolute;padding:0 !important;overflow:visible !important;border:0 !important;background:transparent !important;
+  column-fill:auto;-webkit-column-fill:auto;
+  transform:translateX(0);transition:transform .32s cubic-bezier(.33,0,.2,1);will-change:transform;}
+.paged-flow.no-anim{transition:none !important;}
+.paged-flow .cv-chunk{content-visibility:visible !important;contain:none !important;}
+.paged-flow h3.ch-title{margin:0 0 .6em !important;padding:0 !important;border:0 !important;break-after:avoid;}
+.paged-flow .chapter-anchor{display:block;}
+.paged-info{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-light);pointer-events:none;letter-spacing:.3px;transition:opacity .2s;}
+.viewer-shell.chrome-hidden .paged-info{opacity:0;}
 /* 자동 업데이트 배너 */
 .update-banner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:200;background:var(--primary);color:#fff;padding:9px 9px 9px 18px;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;max-width:92vw;}
 body.dark .update-banner{background:var(--gold);color:#0f172a;}
@@ -1653,6 +1666,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
         <div class="toc-list" id="notesList"></div>
       </div>
       <div class="viewer-body" id="viewerBody"></div>
+      <div class="paged-view" id="pagedView">
+        <div class="paged-clip" id="pagedClip"><div class="viewer-pane paged-flow" id="pagedFlow"></div></div>
+        <div class="paged-info" id="pagedInfo"></div>
+      </div>
     </div>
     <div class="pane-tabs" id="paneTabs">
       <button class="pt-btn on" data-pane="main" onclick="switchMobilePane('main')" id="ptMain">본문</button>
@@ -1683,12 +1700,12 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260608b"></script>
-<script src="books_extra.js?b=260608b"></script>
-<script src="classics_kr_data.js?b=260608b"></script>
-<script src="classics_foreign_data.js?b=260608b"></script>
-<script src="bodies_dq.js?b=260608b"></script>
-<script src="bodies_gatsby.js?b=260608b"></script>
+<script src="mvp35_data.js?b=260608c"></script>
+<script src="books_extra.js?b=260608c"></script>
+<script src="classics_kr_data.js?b=260608c"></script>
+<script src="classics_foreign_data.js?b=260608c"></script>
+<script src="bodies_dq.js?b=260608c"></script>
+<script src="bodies_gatsby.js?b=260608c"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -1905,6 +1922,7 @@ function applyReaderPrefs(){
   // 휴면 중인 dark 테마 토글 버튼과 동기화
   const tBtn = document.getElementById('themeBtn');
   if(tBtn) tBtn.innerHTML = readerPrefs.theme==='dark' ? ic('sun','icon icon-sm') : ic('moon','icon icon-sm');
+  if(typeof _pg!=='undefined' && _pg.on) pgRelayout();   // 페이지 모드: 글자크기·줄간격 바뀌면 페이지 재계산
 }
 function readerFS(d){ _withAnchorKept(()=>{ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
@@ -1939,6 +1957,13 @@ function buildTOC(){
     div.className = 'toc-item' + (completed.includes(i) ? ' done' : '');
     div.textContent = title;
     div.onclick = () => {
+      if(_pg.on){   // 페이지 모드: 해당 장 1페이지로
+        showChapter(i, 0);
+        document.querySelectorAll('.toc-item').forEach(x=>x.classList.remove('active'));
+        div.classList.add('active');
+        if(window.innerWidth <= 600) toggleTOC();
+        return;
+      }
       // 현재 보이는 칸(PC=본문, 모바일=선택 탭)의 같은 장 인덱스로 이동 — scrollIntoView는 중첩 스크롤서 불안정
       const pane = _scrollEl();
       const secs = pane ? [...pane.querySelectorAll('.chapter-anchor')] : [];
@@ -1971,6 +1996,7 @@ function switchMobilePane(which){
   if(body) body.classList.toggle('mob-second', which==='second');
   document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===which));
   attachScrollListener(); updateProgress();
+  if(pgEligible()){ _pg.on=false; _pg.chIdx=0; _pg.page=0; enterPageMode(); }   // 페이지 모드: 바뀐 칸으로 재조판
 }
 function updatePaneTabs(hasSecond,label){
   const bar=document.getElementById('paneTabs'); if(!bar) return;
@@ -2287,18 +2313,27 @@ function jumpToPos(pos){
 }
 function jumpToBookmark(i){
   const bks=readerStats.bookmarks?.[currentBook?.id]||[]; const b=bks[i]; if(!b) return;
+  if(b.pgPos){ if(_pg.on){ showChapter(b.pgPos.ch, b.pgPos.page); } return; }   // 페이지 모드 책갈피
   if(b.anchor) _applyAnchor(b.anchor); else jumpToPos(b.pos);   // 앵커 우선, 없으면 구버전 px
 }
 
 /* ── 책갈피 ── */
 function addBookmark(){
   if(!currentBook) return;
-  const el=_scrollEl(); if(!el) return;
   if(!readerStats.bookmarks) readerStats.bookmarks={};
   if(!readerStats.bookmarks[currentBook.id]) readerStats.bookmarks[currentBook.id]=[];
-  const max=el.scrollHeight-el.clientHeight;
-  const pct=max>0?Math.round(el.scrollTop/max*100):0;
-  readerStats.bookmarks[currentBook.id].push({pos:el.scrollTop, anchor:_captureAnchor(), label:`${pct}% 지점`, ts:Date.now()});
+  let pct, entry;
+  if(_pg.on){   // 페이지 모드: 장+페이지로 저장
+    const per=_pg.count?((_pg.page+1)/_pg.count):1;
+    pct=Math.round(((_pg.chIdx+per)/_pg.chapters.length)*100);
+    entry={pgPos:{ch:_pg.chIdx,page:_pg.page}, label:`${pct}% 지점`, ts:Date.now()};
+  } else {
+    const el=_scrollEl(); if(!el) return;
+    const max=el.scrollHeight-el.clientHeight;
+    pct=max>0?Math.round(el.scrollTop/max*100):0;
+    entry={pos:el.scrollTop, anchor:_captureAnchor(), label:`${pct}% 지점`, ts:Date.now()};
+  }
+  readerStats.bookmarks[currentBook.id].push(entry);
   saveReaderStats();
   // 피드백: 아이콘(SVG) 건드리지 말고 버튼 잠깐 강조 + 토스트
   const btn=(typeof event!=='undefined'&&event&&event.target)?event.target.closest('.reader-btn'):null;
@@ -3222,7 +3257,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260608b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260608c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -3241,7 +3276,8 @@ function showUpdateBanner(){
 
 /* ── 읽기 방식: 스크롤 / 탭 넘김 ── */
 function setPageMode(on){ readerPrefs.pageMode=!!on; saveReaderPrefs(); syncPageModeBtns();
-  readerToast(on ? '탭 넘김 · 좌/우 탭으로 페이지, 가운데 탭으로 바 켜기' : '스크롤 모드'); }
+  if(window.innerWidth<=600){ if(on) enterPageMode(); else exitPageMode(); }
+  readerToast(on ? '페이지 넘김 · 좌/우 탭·스와이프로 페이지, 가운데 탭으로 바' : '스크롤 모드'); }
 function syncPageModeBtns(){ document.querySelectorAll('.rss-mode').forEach(b=>b.classList.toggle('on', (b.dataset.page==='1')===!!readerPrefs.pageMode)); }
 function readerPage(dir){
   const pane=_scrollEl(); if(!pane) return;
@@ -3276,6 +3312,158 @@ function setupImmersiveTap(){
   vb.addEventListener('dblclick',()=>{ clearTimeout(_immersiveTapTimer); });
 }
 
+/* ═══════════ 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼) ═══════════ */
+let _pg={on:false, chapters:[], chIdx:0, page:0, count:1, colW:0, colH:0, gap:36, padX:20, padY:24};
+function pgEligible(){ return !!readerPrefs.pageMode && window.innerWidth<=600; }
+function _pgSourcePane(){   // 페이지로 조판할 원본 칸 (모바일 선택 탭 기준 — 숨겨져 있어도 outerHTML 읽음)
+  const left=document.querySelector('.viewer-pane.left');
+  const right=document.querySelector('.viewer-pane.right');
+  return (_mobPane==='second' && right) ? right : (left||right);
+}
+function buildPagedChapters(){
+  const src=_pgSourcePane(); if(!src) return [];
+  let secs=[...src.querySelectorAll('.chapter-anchor')];
+  if(!secs.length){                                   // 단일 장 책: 본문 전체를 한 장으로
+    const clone=src.cloneNode(true);
+    clone.querySelector('.viewer-pane-label')?.remove();
+    const wrap=document.createElement('section');
+    wrap.className='chapter-anchor'; wrap.dataset.chTitle='전체';
+    wrap.innerHTML=clone.innerHTML; secs=[wrap];
+  }
+  return secs.map(s=>({title:(s.dataset.chTitle||'').replace(/\s+/g,' ').trim(), html:s.outerHTML}));
+}
+function enterPageMode(){
+  if(!pgEligible()||!currentBook) return;
+  const wasOn=_pg.on, keepCh=_pg.chIdx, keepPg=_pg.page;
+  _pg.chapters=buildPagedChapters();
+  if(!_pg.chapters.length) return;
+  _pg.on=true;
+  document.getElementById('viewerBody')?.classList.add('pg-active');
+  const pv=document.getElementById('pagedView');
+  if(pv){ pv.className='paged-view gv-'+genreOf(currentBook.category); pv.style.display='block'; }
+  setupPagedGestures();
+  let ch,pg;
+  if(wasOn){ ch=keepCh; pg=keepPg; }
+  else { const sp=(readerStats.pagePos&&readerStats.pagePos[currentBook.id])||{}; ch=sp.ch||0; pg=sp.page||0; }
+  showChapter(ch, pg);
+}
+function exitPageMode(){
+  if(!_pg.on) return;
+  _pg.on=false;
+  const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none';
+  document.getElementById('viewerBody')?.classList.remove('pg-active');
+  requestAnimationFrame(()=>{   // 스크롤 모드로 돌아갈 때 보던 장으로 대략 복귀
+    const pane=_scrollEl(); if(!pane) return;
+    const secs=[...pane.querySelectorAll('.chapter-anchor')];
+    if(secs[_pg.chIdx]) pane.scrollTo({top:secs[_pg.chIdx].offsetTop});
+    updateProgress();
+  });
+}
+function applyPagedFont(){
+  const flow=document.getElementById('pagedFlow'); if(!flow) return;
+  flow.style.setProperty('--reader-fs', FONT_SIZES[readerPrefs.fontSizeIdx]+'px');
+  flow.style.setProperty('--reader-lh', LINE_HEIGHTS[readerPrefs.lineHeightIdx]);
+}
+function layoutPaged(){
+  const clip=document.getElementById('pagedClip'), flow=document.getElementById('pagedFlow');
+  if(!clip||!flow) return;
+  const W=clip.clientWidth, H=clip.clientHeight;
+  const colW=Math.max(140, W-_pg.padX*2), colH=Math.max(140, H-_pg.padY*2);
+  _pg.colW=colW; _pg.colH=colH;
+  flow.style.left=_pg.padX+'px'; flow.style.top=_pg.padY+'px';
+  flow.style.width=colW+'px'; flow.style.height=colH+'px';
+  flow.style.columnWidth=colW+'px'; flow.style.webkitColumnWidth=colW+'px';
+  flow.style.columnGap=_pg.gap+'px'; flow.style.webkitColumnGap=_pg.gap+'px';
+  _pg.count=Math.max(1, Math.round((flow.scrollWidth+_pg.gap)/(colW+_pg.gap)));
+}
+function applyPageTransform(){
+  const flow=document.getElementById('pagedFlow'); if(!flow) return;
+  flow.style.transform='translateX('+(-_pg.page*(_pg.colW+_pg.gap))+'px)';
+}
+function showChapter(chIdx, page){
+  if(!_pg.chapters.length) return;
+  _pg.chIdx=Math.max(0,Math.min(_pg.chapters.length-1, chIdx));
+  const flow=document.getElementById('pagedFlow'); if(!flow) return;
+  flow.classList.add('no-anim');
+  flow.innerHTML=_pg.chapters[_pg.chIdx].html;
+  applyPagedFont(); layoutPaged();
+  _pg.page=(page==='last')?_pg.count-1:Math.max(0,Math.min(_pg.count-1, page||0));
+  applyPageTransform();
+  void flow.offsetWidth;
+  requestAnimationFrame(()=>flow.classList.remove('no-anim'));
+  updatePagedInfo(); pgSave();
+}
+function pgGo(dir){
+  if(!_pg.on) return;
+  const np=_pg.page+dir;
+  if(np<0){ if(_pg.chIdx>0) showChapter(_pg.chIdx-1,'last'); return; }
+  if(np>=_pg.count){ if(_pg.chIdx<_pg.chapters.length-1) showChapter(_pg.chIdx+1,0); return; }
+  _pg.page=np; applyPageTransform(); updatePagedInfo(); pgSave();
+}
+function pgRelayout(){     // 글자크기·줄간격·회전 변경 시 페이지 비율 유지 재배치
+  if(!_pg.on) return;
+  const frac=_pg.count?(_pg.page/_pg.count):0;
+  const flow=document.getElementById('pagedFlow'); if(!flow) return;
+  flow.classList.add('no-anim');
+  applyPagedFont(); layoutPaged();
+  _pg.page=Math.max(0,Math.min(_pg.count-1, Math.round(frac*_pg.count)));
+  applyPageTransform();
+  void flow.offsetWidth;
+  requestAnimationFrame(()=>flow.classList.remove('no-anim'));
+  updatePagedInfo();
+}
+function updatePagedInfo(){
+  const info=document.getElementById('pagedInfo');
+  const ch=_pg.chapters[_pg.chIdx]||{};
+  const multi=_pg.chapters.length>1;
+  if(info) info.textContent=(multi&&ch.title?ch.title+' · ':'')+(_pg.page+1)+' / '+_pg.count;
+  const bar=document.getElementById('viewerProg');
+  if(bar){
+    const per=_pg.count?((_pg.page+1)/_pg.count):1;
+    bar.style.width=Math.min(100,((_pg.chIdx+per)/_pg.chapters.length)*100).toFixed(1)+'%';
+  }
+}
+function pgSave(){
+  if(!currentBook) return;
+  if(!readerStats.pagePos) readerStats.pagePos={};
+  readerStats.pagePos[currentBook.id]={ch:_pg.chIdx, page:_pg.page};
+  saveReaderStats();
+}
+let _pgBound=false, _pgTouchActive=false;
+function setupPagedGestures(){
+  const pv=document.getElementById('pagedView'); if(!pv||_pgBound) return; _pgBound=true;
+  let sx=0,sy=0,moved=false;
+  pv.addEventListener('touchstart',e=>{ _pgTouchActive=true; const t=e.touches[0]; sx=t.clientX; sy=t.clientY; moved=false; },{passive:true});
+  pv.addEventListener('touchmove',e=>{ const t=e.touches[0]; if(Math.abs(t.clientX-sx)>10||Math.abs(t.clientY-sy)>10) moved=true; },{passive:true});
+  pv.addEventListener('touchend',e=>{
+    if(_pgIgnore(e)) return;
+    const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4){ pgGo(dx<0?1:-1); return; }   // 스와이프
+    if(moved) return;
+    pgTap(t.clientX);                                                                   // 탭
+  },{passive:true});
+  pv.addEventListener('click',e=>{                  // 비터치(데스크톱 미리보기)용
+    if(_pgTouchActive) return;
+    if(_pgIgnore(e)) return;
+    pgTap(e.clientX);
+  });
+}
+function _pgIgnore(e){
+  if(e.target.closest('a,button,mark')) return true;        // 링크·버튼·하이라이트
+  if(e.detail>1) return true;                               // 더블클릭(사전)
+  const sel=window.getSelection();
+  if(sel && sel.toString().trim().length>0) return true;    // 드래그 선택 중
+  return false;
+}
+function pgTap(clientX){
+  const pv=document.getElementById('pagedView'); if(!pv) return;
+  const r=pv.getBoundingClientRect();
+  const fx=(clientX-r.left)/r.width;
+  if(fx<0.30){ pgGo(-1); return; }                          // 좌 30% = 이전
+  if(fx>0.70){ pgGo(1);  return; }                          // 우 30% = 다음
+  document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');  // 가운데 = 바 토글
+}
+
 async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
@@ -3298,6 +3486,7 @@ async function openViewer(bookId, mode){
     readerSessionStart();
     attachScrollListener();
     updatePaneToggleVisibility();
+    if(pgEligible()) enterPageMode();
   }, 0);
   loadGlossary(b.id);
 }
@@ -3315,7 +3504,7 @@ function setMode(mode){
   document.getElementById('viewerBody')?.classList.remove('pane-orig','pane-trans');
   const _pl=document.getElementById('paneToggleLabel'); if(_pl)_pl.textContent='나란히';
   renderViewer();
-  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); }, 0);
+  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } else exitPageMode(); }, 0);
 }
 
 // 장르 버킷 (category → 조판 템플릿). 시 먼저 검사(서사시의 '시' 우선).
@@ -3531,6 +3720,7 @@ function renderViewer(){
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
 function gotoChapter(dir){
+  if(_pg.on){ showChapter(_pg.chIdx+dir, 0); return; }
   const pane = _scrollEl(); if(!pane) return;
   const secs = [...pane.querySelectorAll('.chapter-anchor')];
   if(secs.length <= 1){ pane.scrollTo({top: dir>0 ? pane.scrollHeight : 0, behavior:'smooth'}); return; }
@@ -3558,6 +3748,7 @@ function checkQuiz(el, qi, oi){
 }
 
 function closeViewer(){
+  if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   saveScrollPos();
   readerSessionEnd();
   stopTTS();
@@ -4211,6 +4402,12 @@ window.addEventListener('resize', () => {
   const ph = document.getElementById('page-home');
   if(ph && ph.classList.contains('active')){
     renderHomeHub();
+  }
+  // 리더 페이지 모드: 데스크톱↔모바일 전환·회전 대응
+  if(document.getElementById('viewerOverlay')?.classList.contains('open')){
+    if(pgEligible() && !_pg.on) enterPageMode();
+    else if(!pgEligible() && _pg.on) exitPageMode();
+    else if(_pg.on) pgRelayout();
   }
 });
 
