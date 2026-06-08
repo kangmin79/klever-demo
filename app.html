@@ -1188,6 +1188,9 @@ body.dark .ml-sw-a .o{background:var(--gold);color:#0f172a;}
 .ml-cl-n{font-size:12px;font-weight:800;color:var(--accent);white-space:nowrap;}
 /* 관리자 미리보기 모드 — 앱 크롬 숨기고 우리 도서관만 */
 body.preview-mode .header,body.preview-mode .side-nav,body.preview-mode #hwcBubble,body.preview-mode #hwcPanel{display:none !important;}
+/* 미리보기는 '꾸미기 큐레이션'만 보이게 — 고전/International 페이지의 제목·공지·전체 서가 숨김(우리도서관 미리보기와 동일하게) */
+body.preview-mode #page-collection > *:not(#collectionCuration),
+body.preview-mode #page-international > *:not(#intlCuration){display:none !important;}
 body.preview-mode .main{padding-top:8px;}
 body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 </style>
