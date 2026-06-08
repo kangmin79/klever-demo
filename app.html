@@ -884,15 +884,15 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .pane-tabs{display:flex;}
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
-  /* 리더 헤더 2줄: 위=네비+닫기, 아래=모드토글+Aa. 읽기설정은 Aa 시트로 통합 */
-  .viewer-header{flex-wrap:wrap;gap:8px 10px;padding:10px 14px;}
-  .viewer-header > .vh-nav{order:1;flex:1 1 auto;min-width:0;}
-  .viewer-header > .viewer-close{order:2;flex:0 0 auto;padding:6px 4px;}
-  .viewer-header > .mode-toggle{order:3;flex:0 0 auto;}
-  .viewer-header > .reader-aa{order:4;margin-left:auto;display:inline-flex;}
-  .viewer-header > .reader-toolbar{display:none;}             /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
+  /* 리더 헤더 2줄: 위=네비(풀폭)+닫기(절대), 아래=모드토글+Aa. 읽기설정은 Aa 시트로 통합 */
+  .viewer-header{flex-wrap:wrap;gap:10px;padding:10px 14px 12px;align-items:center;}
+  .viewer-header > .vh-nav{order:1;flex:1 1 100% !important;min-width:0;padding-right:40px;}
+  .viewer-header > .viewer-close{order:0;position:absolute;top:8px;right:12px;padding:4px 6px;font-size:20px;}
+  .viewer-header > .mode-toggle{order:2;flex:0 0 auto;}
+  .viewer-header > .reader-aa{order:3;margin-left:auto;display:inline-flex;}
+  .viewer-header > .reader-toolbar{display:none !important;}   /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
   .viewer-header .viewer-author{display:none;}
-  .vh-nav .reader-btn{padding:6px 8px;}
+  .vh-nav .reader-btn{padding:6px 8px;white-space:nowrap;}
   .reader-settings-sheet{right:10px;min-width:210px;}
 }
 
