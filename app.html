@@ -837,6 +837,11 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .viewer-shell.chrome-hidden .viewer-header,
 .viewer-shell.chrome-hidden .viewer-footer,
 .viewer-shell.chrome-hidden .pane-tabs{display:none !important;}
+/* 자동 업데이트 배너 */
+.update-banner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:200;background:var(--primary);color:#fff;padding:9px 9px 9px 18px;border-radius:30px;font-size:13px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;max-width:92vw;}
+body.dark .update-banner{background:var(--gold);color:#0f172a;}
+.update-banner button{background:#fff;color:var(--primary);border:0;border-radius:20px;padding:6px 15px;font-weight:800;cursor:pointer;font-size:12.5px;}
+body.dark .update-banner button{background:#0f172a;color:var(--gold);}
 .viewer-actions{display:flex;gap:8px;}
 .viewer-action{padding:8px 14px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
 .viewer-action:hover{border-color:var(--primary);color:var(--primary);}
@@ -1675,12 +1680,12 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js"></script>
-<script src="books_extra.js"></script>
-<script src="classics_kr_data.js"></script>
-<script src="classics_foreign_data.js"></script>
-<script src="bodies_dq.js"></script>
-<script src="bodies_gatsby.js"></script>
+<script src="mvp35_data.js?b=260608a"></script>
+<script src="books_extra.js?b=260608a"></script>
+<script src="classics_kr_data.js?b=260608a"></script>
+<script src="classics_foreign_data.js?b=260608a"></script>
+<script src="bodies_dq.js?b=260608a"></script>
+<script src="bodies_gatsby.js?b=260608a"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -3213,6 +3218,24 @@ function openDetail(bookId){
 /* ═══════════════════════════════════════════════════════════
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
+/* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
+const APP_BUILD = '260608a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+async function checkForUpdate(){
+  try{
+    const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) return;
+    const live = (await r.text()).trim();
+    if(live && live !== APP_BUILD) showUpdateBanner();
+  }catch(e){}
+}
+function showUpdateBanner(){
+  if(document.getElementById('updateBanner')) return;
+  const d = document.createElement('div');
+  d.id = 'updateBanner'; d.className = 'update-banner';
+  d.innerHTML = '✨ 새 버전이 있어요 <button onclick="location.reload()">새로고침</button>';
+  document.body.appendChild(d);
+}
+
 /* ── 몰입 모드 (모바일: 본문 탭 → 상·하단바 토글) ── */
 let _immersiveTapTimer=null;
 function setupImmersiveTap(){
@@ -4149,6 +4172,8 @@ window.addEventListener('DOMContentLoaded', () => {
   setupHighlightHandlers();
   setupDictHandlers();
   setupImmersiveTap();
+  checkForUpdate();
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkForUpdate(); });
   renderClassicShelves();
   renderCurations('curationIntl', true);
   renderBookGrid('bookGridIntl', true);
