@@ -2590,8 +2590,7 @@ const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
 // 세명대 데모 계정(도서관 제공)이 이미 대출한 책 → '빌리기' 클릭 시 예스24 EPUB 뷰어가 바로 열림(원클릭 읽기 데모)
 const SEMYUNG_DEMO_USER='00003251';
 const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
-  relay:{user_id:SEMYUNG_DEMO_USER,goods_id:'101619655'},   // 서버 릴레이(배포 시 선택화면 건너뜀)
-  lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};  // 폴백(선택화면 경유)
+  lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
@@ -2958,26 +2957,13 @@ function openLc(ci,bi){
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
-// 도서관에서 빌리기/바로 읽기
-//  - b.relay 있으면: 북스타 서버(semyung-ebook)가 토큰 받아 예스24 리더 URL 조립 → 선택화면 건너뛰고 바로 책
-//  - 함수 미배포/실패 시: b.lib(전자도서관 페이지)로 폴백 → 데모 안 깨짐
-//  - 둘 다 없으면: 데모 안내
-const RELAY_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook";
-async function lcBorrow(isbn){
+// 도서관에서 빌리기 — 브라우저가 직접 전자도서관 뷰어 페이지를 연다.
+//  예스24 뷰어 토큰은 "여는 브라우저 세션"에 묶여 있어(DRM) 서버 릴레이로는 못 만든다.
+//  그래서 b.lib(yes24_ebook_open.asp)를 브라우저가 직접 열어야 토큰이 유효하다.
+//  → 새 탭에서 예스24 '보기 방법 선택' 후 책 리더 진입(같은 세션이라 정상 작동).
+function lcBorrow(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn);
-  if(!b){ alert('도서관 카탈로그 연동 시 바로 연결됩니다. (현재 데모)'); return; }
-  if(b.relay){
-    const w=window.open('about:blank','_blank');   // 팝업차단 회피: 제스처 내에서 먼저 창 확보
-    try{
-      const r=await fetch(RELAY_FN,{method:'POST',headers:{Authorization:'Bearer '+COVER_ANON,apikey:COVER_ANON,'content-type':'application/json'},body:JSON.stringify(b.relay)});
-      const d=await r.json();
-      if(d&&d.ok&&d.url){ if(w)w.location.href=d.url; else window.open(d.url,'_blank','noopener'); return; }
-      if(d&&d.fallback){ if(w)w.location.href=d.fallback; else window.open(d.fallback,'_blank','noopener'); return; }
-    }catch(e){}
-    if(w&&b.lib){ w.location.href=b.lib; return; }   // 함수 미배포 등 → asp 폴백
-    if(w)w.close();
-  }
-  if(b.lib){ window.open(b.lib,'_blank','noopener'); return; }
+  if(b&&b.lib){ window.open(b.lib,'_blank','noopener'); return; }
   alert('도서관 카탈로그 연동 시 바로 연결됩니다. (현재 데모)');
 }
 function renderSideNav(activePage){
