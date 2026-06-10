@@ -2587,7 +2587,10 @@ const LIB_SAMPLE=['9788936434267','9791161571188','9791165341909','9791188862290
 // [데모] 도서관 통합검색 딥링크 — 세명대 학술정보원. 책 상세의 "도서관에서 빌리기" 클릭 시 실제 lib.semyung.ac.kr 통합검색(소장자료+예스24+학술DB)으로 바로 이동
 const LIB_LINK_BASE='https://lib.semyung.ac.kr/searchTotal/result?st=KWRD&si=TOTAL&q=';
 const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
-const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 빌려보세요',lib:semyungLink('프로젝트 헤일메리')};
+// 세명대 데모 계정(도서관 제공)이 이미 대출한 책 → '빌리기' 클릭 시 예스24 EPUB 뷰어가 바로 열림(원클릭 읽기 데모)
+const SEMYUNG_DEMO_USER='00003251';
+const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
+  lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
