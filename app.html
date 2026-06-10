@@ -2591,6 +2591,22 @@ const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
 const SEMYUNG_DEMO_USER='00003251';
 const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
   lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
+// 세명대 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
+const SM_LBRY=20213;
+const smDetail=(brcd)=>`https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=${SM_LBRY}&brcd=${brcd}`;
+const smCover=(p)=>'https:'+p;
+const SEMYUNG_BEST=[
+  {brcd:'4808954682152',t:'작별하지 않는다',a:'한강',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954682152/L4808954682152.jpg',note:'노벨문학상 한강의 장편'},
+  {brcd:'4801190090019',t:'우리가 빛의 속도로 갈 수 없다면',a:'김초엽',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4801190090019/L4801190090019.jpg',note:'한국 SF의 새 얼굴'},
+  {brcd:'4808954622035',t:'살인자의 기억법',a:'김영하',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954622035/L4808954622035.jpg'},
+  {brcd:'4808954646079',t:'바깥은 여름',a:'김애란',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954646079/L4808954646079.jpg'},
+  {brcd:'4808954681179',t:'밝은 밤',a:'최은영',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954681179/L4808954681179.jpg'},
+  {brcd:'4808972753698',t:'용의자 X의 헌신',a:'히가시노 게이고',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808972753698/L4808972753698.jpg'},
+  {brcd:'4470894',t:'고래',a:'천명관',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/4289284.jpg'},
+  {brcd:'4808982814471',t:'연금술사',a:'파울로 코엘료',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808982814471/L4808982814471.jpg'},
+  {brcd:'11951396',t:'미 비포 유',a:'조조 모예스',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/M_201658.jpg'},
+  {brcd:'4808954640756',t:'너무 한낮의 연애',a:'김금희',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954640756/L4808954640756.jpg'},
+].map(b=>({isbn:'sm-'+b.brcd,t:b.t,a:b.a,cover:smCover(b.cv),note:b.note||'',lib:smDetail(b.brcd),_sm:true}));
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
@@ -2741,8 +2757,12 @@ function millieHTML(secs,classicMode){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
       out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
     }
-    let books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
-    if(s.slot==='row'&&!classicMode){ const hm=LIB_POOL.find(x=>x.isbn===HAILMARY.isbn); if(hm) books=[hm,...books.filter(x=>x.isbn!==HAILMARY.isbn)]; }  // [데모] 사서가 주목한 책 = 헤일메리(딥링크) 첫 카드 고정
+    // [데모] '사서가 주목한 책'(우리도서관 row) = 세명대 실소장 베스트 소설 + 헤일메리, 클릭 시 도서관 딥링크
+    if(s.slot==='row'&&!classicMode){
+      const pick=[LIB_POOL.find(x=>x.isbn===HAILMARY.isbn),...SEMYUNG_BEST.map(b=>LIB_POOL.find(x=>x.isbn===b.isbn)||b)].filter(Boolean);
+      out+=mlRow(s.title, s.subtitle||'세명대학교 학술정보원 인기 대출 소설', pick); return;
+    }
+    const books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
     else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
     else if(st==='grid') out+=mlGrid(s.title,s.subtitle,books);
@@ -2801,6 +2821,7 @@ function rebuildLibPool(){
   SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
   if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
+  SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
@@ -2895,7 +2916,7 @@ function _applyInfo(b,x){ if(!x) return;
   if(b.description===undefined&&x.description) b.description=x.description;
 }
 async function backfillPool(){
-  const need=[...new Set(LIB_POOL.filter(b=>b.isbn&&(!b.t||!b.cover||b.rating===undefined||b.description===undefined||!b.publisher)).map(b=>b.isbn))];
+  const need=[...new Set(LIB_POOL.filter(b=>b.isbn&&!b._sm&&(!b.t||!b.cover||b.rating===undefined||b.description===undefined||!b.publisher)).map(b=>b.isbn))];
   if(!need.length) return;
   // isbn → 해당 책 객체들(같은 isbn이 여러 칸에 있을 수 있음)
   const byIsbn={}; LIB_POOL.forEach(b=>{ if(b.isbn){ (byIsbn[b.isbn]||(byIsbn[b.isbn]=[])).push(b); } });
@@ -2933,7 +2954,7 @@ function libDetail(isbn){
     <div class="lcd-acts">
       <div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">📖 도서관에서 빌리기<span class="ar">›</span></div>
     </div>
-    <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>
+    <div class="lcd-src">${b._sm?'출처 · 세명대학교 학술정보원 전자도서관 소장':'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
   renderDetailReviews(b.isbn, cleanT(b.t));
