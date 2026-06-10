@@ -2584,6 +2584,10 @@ function lcCvHTML(b){
 }
 let LIB_POOL=[];
 const LIB_SAMPLE=['9788936434267','9791161571188','9791165341909','9791188862290','9788936434120','9788998441012','9788936434595','9788937473401'];
+// [데모] 도서관 통합검색 딥링크 — 세명대 학술정보원. 책 상세의 "도서관에서 빌리기" 클릭 시 실제 lib.semyung.ac.kr 통합검색(소장자료+예스24+학술DB)으로 바로 이동
+const LIB_LINK_BASE='https://lib.semyung.ac.kr/searchTotal/result?st=KWRD&si=TOTAL&q=';
+const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
+const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 빌려보세요',lib:semyungLink('프로젝트 헤일메리')};
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
@@ -2734,7 +2738,8 @@ function millieHTML(secs,classicMode){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
       out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
     }
-    const books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
+    let books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
+    if(s.slot==='row'&&!classicMode){ const hm=LIB_POOL.find(x=>x.isbn===HAILMARY.isbn); if(hm) books=[hm,...books.filter(x=>x.isbn!==HAILMARY.isbn)]; }  // [데모] 사서가 주목한 책 = 헤일메리(딥링크) 첫 카드 고정
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
     else if(st==='ai') out+=mlAI(s.title,s.subtitle,books);
     else if(st==='grid') out+=mlGrid(s.title,s.subtitle,books);
@@ -2792,6 +2797,7 @@ function rebuildLibPool(){
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
   SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
+  if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
@@ -2922,7 +2928,7 @@ function libDetail(isbn){
     </div>
     ${b.description?`<p class="lcd-desc">${esc(b.description)}</p>`:''}
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="lcAccess('도서관 소장')">📖 도서관에서 빌리기<span class="ar">›</span></div>
+      <div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">📖 도서관에서 빌리기<span class="ar">›</span></div>
     </div>
     <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)</div>
     <div id="lcdReviews"></div>`;
@@ -2948,6 +2954,13 @@ function openLc(ci,bi){
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
+// 도서관에서 빌리기 — 책에 도서관 딥링크(.lib)가 있으면 실제 통합검색으로 이동(새 탭), 없으면 데모 안내
+function lcBorrow(isbn){
+  const b=LIB_POOL.find(x=>x.isbn===isbn);
+  const url=b&&b.lib;
+  if(url){ window.open(url,'_blank','noopener'); return; }
+  alert('도서관 카탈로그 연동 시 바로 연결됩니다. (현재 데모)');
+}
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
   if(!el) return;
