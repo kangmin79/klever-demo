@@ -385,6 +385,7 @@ body.pv-open .main{max-width:none}
 .lg-demo{font-size:11.5px;color:var(--light);margin-top:8px}.lg-demo b{color:var(--primary)}
 </style></head>
 <body>
+<script src="../classics_ko_titles.js"></script>
 
 <!-- 데모 로그인 게이트 (정적 → 라이브 시 Supabase Auth+권한체크로 교체) -->
 <div id="loginGate">
@@ -1012,7 +1013,11 @@ async function loadSections(){
 let CLASSICS_POOL=[];
 async function loadClassicsPool(){
   try{ const r=await fetch(`${SB_REST}/classics?select=id,title,author,origin&order=origin,id`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
-    if(r.ok){ const d=await r.json(); if(Array.isArray(d)) CLASSICS_POOL=d; }
+    if(r.ok){ const d=await r.json(); if(Array.isArray(d)){
+      const KO=window.CLASSICS_KO||{};
+      CLASSICS_POOL=d.map(b=>({...b, title_ko:(b.origin==='foreign'?(KO[b.id]||''):'')}));  // 해외 고전에 한글 제목 부여
+      if(el('secOv')&&el('secOv').classList.contains('on')&&scTab==='cls') secRenderClassics();  // 로딩 끝나면 열린 책담기 갱신(레이스 방지)
+    } }
   }catch(e){}
 }
 loadClassicsPool();
@@ -1305,12 +1310,18 @@ function secApplyTab(){const q=el('secQ');
 }
 function secRenderClassics(){
   if(!CLASSICS_POOL.length){el('secCandWrap').innerHTML='<div class="book-empty">고전 목록을 불러오는 중… 잠시 후 다시 시도해주세요.</div>';loadClassicsPool();return;}
-  const q=(el('secQ').value||'').trim();
+  const q=(el('secQ').value||'').trim().toLowerCase();
   let list=CLASSICS_POOL;
   if(_clsOrigin==='kr') list=list.filter(b=>b.origin!=='foreign');        // 한국 고전
   else if(_clsOrigin==='foreign') list=list.filter(b=>b.origin==='foreign'); // 서양(해외) 고전
-  if(q) list=list.filter(b=>((b.title||'')+' '+(b.author||'')).includes(q));
-  SCAND=list.map(b=>({id:b.id,t:b.title,a:(b.author||'')+(b.origin==='foreign'?' · 해외 고전':' · 한국 고전'),cls:true}));  // 전체 표시(80개 제한 제거)
+  // 한글 제목 + 영어 제목 + 저자 모두로 검색 (한글 없는 책은 영어·저자로 폴백)
+  if(q) list=list.filter(b=>((b.title_ko||'')+' '+(b.title||'')+' '+(b.author||'')).toLowerCase().includes(q));
+  SCAND=list.map(b=>{
+    const ko=b.title_ko||'';                              // 표시: 한글(영어). 한글 없으면 영어만
+    const disp=ko||b.title;
+    const sub=(b.author||'')+(b.origin==='foreign'?' · 해외 고전'+(ko?(' · '+b.title):''):' · 한국 고전');
+    return {id:b.id,t:disp,a:sub,cls:true};
+  });
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">검색 결과가 없어요.</div>';return;}
   secRenderCands('북스타 고전 '+SCAND.length+'권'+(q?(' · "'+q+'"'):''));
 }
