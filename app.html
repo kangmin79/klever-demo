@@ -1495,6 +1495,13 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="stat-card"><div class="stat-num" id="statRank">#14</div><div class="stat-label">학교 순위</div></div>
   </div>
 
+  <!-- 📚 내가 빌린 책 (도서관 연동 → 완독 인증 루프) -->
+  <div style="margin-top:24px">
+    <div class="section-head"><div class="section-title"><em>내가 빌린 책</em></div>
+      <span style="font-size:11px;color:var(--text-light)">도서관에서 빌린 책 · 다 읽으면 완독을 인증하세요</span></div>
+    <div id="myShelf"></div>
+  </div>
+
   <!-- 학기 결산 공유 카드 (바이럴) -->
   <div class="summary-share" id="summaryCard" style="margin-top:24px"></div>
 
@@ -1906,6 +1913,64 @@ function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_
 function saveReaderPrefs(){ try{ localStorage.setItem(READER_PREFS_KEY, JSON.stringify(readerPrefs)); }catch(e){} }
 function loadReaderStats(){ try{ const s=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(s)Object.assign(readerStats,s);}catch(e){} }
 function saveReaderStats(){ try{ localStorage.setItem(READER_STATS_KEY, JSON.stringify(readerStats)); }catch(e){} }
+
+/* ── 내 서재(도서관에서 빌린 책) — '읽고 돌아오기' 루프의 그릇 ──
+   빌리기 클릭 → 읽는 중 기록 → 돌아와서 완독 인증(독후감) → 완독 이력 누적.
+   외부 뷰어 안은 못 보지만 '완독 증명'은 북스타가 소유 = 차별화 지점. */
+const SHELF_KEY='bookstar-myshelf';
+function shelfLoad(){ try{ return JSON.parse(localStorage.getItem(SHELF_KEY)||'[]'); }catch(e){ return []; } }
+function shelfSave(a){ try{ localStorage.setItem(SHELF_KEY, JSON.stringify(a)); }catch(e){} }
+function shelfAdd(b){
+  if(!b) return; const key=b.isbn||b.brcd; if(!key) return;
+  const a=shelfLoad();
+  if(!a.find(x=>x.key===key)){ a.unshift({key,t:b.t||b.title||'',a:b.a||b.author||'',cover:b.cover||'',lib:b.lib||'',status:'reading',ts:Date.now()}); shelfSave(a); }
+}
+function shelfCard(x){
+  const cv=x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:'📖';
+  const right = x.status==='done'
+    ? `<span style="font-size:12px;font-weight:800;color:#1d6b48;white-space:nowrap">✔ 완독</span>`
+    : `<button onclick="event.stopPropagation();shelfCertOpen('${esc(x.key)}')" style="background:var(--gold);color:#1a1208;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">완독 인증 →</button>`;
+  return `<div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)">
+    <div style="flex:0 0 42px;width:42px;height:60px;border-radius:6px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:20px">${cv}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13.5px;font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(cleanT(x.t))}</div>
+      <div style="font-size:11.5px;color:var(--text-light);margin-top:2px">${esc(x.a||'')}${x.status==='done'&&x.soclip?` · “${esc(x.soclip.slice(0,24))}”`:''}</div>
+    </div>${right}</div>`;
+}
+function renderMyShelf(){
+  const el=document.getElementById('myShelf'); if(!el) return;
+  const a=shelfLoad();
+  if(!a.length){ el.innerHTML=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;padding:26px 10px;background:var(--bg-input);border-radius:12px;line-height:1.7">아직 빌린 책이 없어요.<br><b style="color:var(--primary)">우리 도서관</b>에서 책을 빌리면 여기에 쌓이고, 다 읽으면 <b>완독 인증</b>으로 점수가 올라가요.</div>`; return; }
+  const reading=a.filter(x=>x.status!=='done'), done=a.filter(x=>x.status==='done');
+  const sub=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:14px 0 2px">${t}</div>`;
+  el.innerHTML=(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
+    +(done.length?sub(`✅ 완독 ${done.length}`)+done.map(shelfCard).join(''):'');
+}
+// 완독 인증 모달 (상세 오버레이 재사용) — 독후감 한 줄 = 완독 증명
+function shelfCertOpen(key){
+  const x=shelfLoad().find(i=>i.key===key); if(!x) return;
+  const ov=document.getElementById('lcDetail');
+  ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
+    <div style="padding:26px 24px 22px">
+      <div style="font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.05em">완독 인증</div>
+      <h2 style="font-size:18px;font-weight:800;margin:6px 0 4px;line-height:1.35">${esc(cleanT(x.t))}</h2>
+      <div style="font-size:12.5px;color:var(--text-light)">${esc(x.a||'')}</div>
+      <div style="font-size:12.5px;color:var(--text-sub);margin:16px 0 8px;line-height:1.6">다 읽으셨나요? <b>한 줄 소감</b>을 남기면 완독으로 인증되고, 독서 이력·점수에 반영돼요.</div>
+      <textarea id="certSoclip" placeholder="이 책에서 가장 기억에 남는 한 가지…" style="width:100%;min-height:88px;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13.5px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit"></textarea>
+      <button onclick="shelfCertSubmit('${esc(key)}')" style="width:100%;margin-top:12px;background:var(--gold);color:#1a1208;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">✔ 완독 인증하기</button>
+      <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:8px">AI 독후감 평가는 연동 시 자동 채점됩니다</div>
+    </div>`;
+  ov.classList.add('on');
+}
+function shelfCertSubmit(key){
+  const soclip=(document.getElementById('certSoclip')||{}).value||'';
+  if(!soclip.trim()){ alert('한 줄 소감을 적어주세요 — 완독 증명이 됩니다.'); return; }
+  const a=shelfLoad(); const it=a.find(x=>x.key===key); if(!it) return;
+  it.status='done'; it.doneTs=Date.now(); it.soclip=soclip.trim(); shelfSave(a);
+  closeLc(); renderMyShelf();
+  const done=shelfLoad().filter(x=>x.status==='done').length;
+  alert(`✔ 『${cleanT(it.t)}』 완독 인증 완료!\n독서 이력에 추가됐어요 (누적 완독 ${done}권).`);
+}
 
 function applyReaderPrefs(){
   const v = document.getElementById('viewerBody');
@@ -2519,7 +2584,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyShelf(); renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -3012,6 +3077,7 @@ function bridgeHTML(b){
 function lcBorrow(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn);
   if(!(b&&b.lib)){ alert('도서관 카탈로그 연동 시 바로 연결됩니다. (현재 데모)'); return; }
+  shelfAdd(b);   // '읽는 중'으로 내 서재에 기록 → 마이페이지에서 완독 인증 가능('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
   if(!w){ window.open(b.lib,'_blank','noopener'); return; }
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
