@@ -2997,6 +2997,23 @@ const BOOKS_CLASSICS_FOREIGN = [
   "progress": 0
  },
  {
+  "id": "gb-158",
+  "title": "Emma",
+  "author": "제인 오스틴",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "coverSrc": "./covers/gb-158.webp",
+  "src": "Gutenberg",
+  "participants": 124,
+  "reviews": 14,
+  "quizzes": 5,
+  "progress": 0
+ },
+ {
   "id": "gb-2817",
   "title": "Chamber Music",
   "author": "제임스 조이스",
