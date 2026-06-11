@@ -1538,7 +1538,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     </div>
     <div class="quest-map-bar"><div class="quest-map-bar-fill" id="questBar" style="width:33%"></div></div>
     <div class="quest-grid quest-grid-wide" id="questGrid"></div>
-    <div style="margin-top:18px;padding:14px 18px;background:var(--bg-input);border-radius:10px;font-size:13px;line-height:1.8;color:var(--text-sub);">
+    <div id="questNote" style="margin-top:18px;padding:14px 18px;background:var(--bg-input);border-radius:10px;font-size:13px;line-height:1.8;color:var(--text-sub);">
       <b style="color:var(--primary);">진행 중인 슬롯</b><br>
       · 5주차 <b>군주론</b> — 완독률 35% · 미션(퀴즈) 미완료 · 오늘 30분 집중 독서<br>
       · 내일 23:59까지 퀴즈 완료 시 <b style="color:var(--gold);">+500점 보너스</b>
@@ -1707,15 +1707,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260612b"></script>
-<script src="books_extra.js?b=260612b"></script>
-<script src="classics_kr_data.js?b=260612b"></script>
-<script src="classics_foreign_data.js?b=260612b"></script>
-<script src="bodies_dq.js?b=260612b"></script>
-<script src="bodies_gatsby.js?b=260612b"></script>
-<script src="bodies_demian.js?b=260612b"></script>
-<script src="bodies_emma.js?b=260612b"></script>
-<script src="challenge_scenes.js?b=260612b"></script>
+<script src="mvp35_data.js?b=260612c"></script>
+<script src="books_extra.js?b=260612c"></script>
+<script src="classics_kr_data.js?b=260612c"></script>
+<script src="classics_foreign_data.js?b=260612c"></script>
+<script src="bodies_dq.js?b=260612c"></script>
+<script src="bodies_gatsby.js?b=260612c"></script>
+<script src="bodies_demian.js?b=260612c"></script>
+<script src="bodies_emma.js?b=260612c"></script>
+<script src="challenge_scenes.js?b=260612c"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -2629,9 +2629,28 @@ function renderChalCards(){
     </div>`;
   }).join('');
 }
+function joinedChal(){
+  try{ return JSON.parse(localStorage.getItem('bookstar-joined-chal')||'null'); }catch(e){ return null; }
+}
 function chalJoin(id){
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
-  alert(`‘${c.title}’ 챌린지에 참여합니다!\n\n· 담긴 책 ${(c.books||[]).length}권\n· 미션: ${chalMissionPlain(c.mission)}\n\n(데모) 마이 페이지 → 챌린지에서 진행률을 확인하세요.`);
+  const cur=joinedChal();
+  if(cur && String(cur.id)===String(c.id)){
+    alert(`이미 참여 중인 챌린지예요.\n마이 페이지 Quest Map에서 진행하세요.`); nav('mypage'); return;
+  }
+  if(cur && !confirm(`이미 ‘${cur.title}’에 참여 중이에요.\n‘${c.title}’(으)로 바꿀까요? (기존 진행 기록은 책별로 보존됩니다)`)) return;
+  try{ localStorage.setItem('bookstar-joined-chal', JSON.stringify({
+    id:c.id, title:c.title, to:c.to||'', mission:c.mission||null,
+    books:(c.books||[]).map(b=>({t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now()
+  })); }catch(e){}
+  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 마이 페이지 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n책을 눌러 바로 시작해 보세요.`);
+  nav('mypage');
+}
+function chalQuit(){
+  const cur=joinedChal(); if(!cur) return;
+  if(!confirm(`‘${cur.title}’ 참여를 그만둘까요?\n(책별 퀴즈·소감 기록은 지워지지 않아요)`)) return;
+  try{ localStorage.removeItem('bookstar-joined-chal'); }catch(e){}
+  renderQuestMap();
 }
 
 let LC_PUB=[];
@@ -3395,7 +3414,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260612b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260612c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4012,6 +4031,7 @@ function submitSceneImpression(){
     alert('소감이 수정 저장되었습니다.');
   }
   renderViewer();
+  try{ renderQuestMap(); renderChalScore(); }catch(e){}
 }
 
 function closeViewer(){
@@ -4194,9 +4214,51 @@ function onHomeSearch(e){
 /* ═══════════════════════════════════════════════════════════
    Quest Map 12슬롯
    ═══════════════════════════════════════════════════════════ */
+function _chalBookState(bookId){
+  // 장면 챌린지 진행 상태: done(소감 제출) / progress(퀴즈 일부) / none
+  try{
+    const sv = JSON.parse(localStorage.getItem('bookstar-chal-'+bookId)||'null');
+    if(!sv) return 'none';
+    if(sv.submitted) return 'done';
+    if(sv.ans && Object.keys(sv.ans).length) return 'progress';
+  }catch(e){}
+  return 'none';
+}
+function _matchBookByTitle(t){
+  const norm = s => (s||'').replace(/\s+/g,'').toLowerCase();
+  return BOOKS.find(b => norm(b.title) === norm(t)) || null;
+}
 function renderQuestMap(){
   const el = document.getElementById('questGrid');
   if(!el) return;
+  const joined = joinedChal();
+  const prog = document.querySelector('.quest-map-progress');
+  const note = document.getElementById('questNote');
+  if(joined){
+    const items = (joined.books||[]).map(b=>{
+      const m = _matchBookByTitle(b.t);
+      const st = m ? _chalBookState(m.id) : 'none';
+      return {t:b.t, cover:b.cover, book:m, st};
+    });
+    const doneCnt = items.filter(x=>x.st==='done').length;
+    el.innerHTML = items.map((x,i)=>{
+      const cls = x.st==='done' ? 'completed' : 'available';
+      const icon = x.st==='done' ? '✓' : (x.st==='progress' ? '📖' : (x.book ? '📘' : '🏛️'));
+      const sub = x.st==='done' ? '완료' : x.st==='progress' ? '진행 중' : (x.book ? '시작하기' : '도서관 소장');
+      return `<div class="quest-slot ${cls}" onclick="onJoinedSlot(${i})">
+        <div class="quest-slot-icon">${x.cover?`<img src="${esc(x.cover)}" style="width:32px;height:46px;object-fit:cover;border-radius:4px;" onerror="this.outerHTML='${icon}'">`:icon}</div>
+        <div class="quest-slot-num">${sub}</div>
+        <div class="quest-slot-book">${esc(x.t)}</div>
+      </div>`;
+    }).join('');
+    if(prog) prog.innerHTML = `<b>${esc(joined.title)}</b> · ${items.length}권 중 <b id="questDone">${doneCnt}</b>권 완료${joined.to?` · <span style="color:var(--gold);">${ddayText(joined.to)}</span>`:''}`;
+    const bar = document.getElementById('questBar');
+    if(bar) bar.style.width = (items.length ? Math.round(doneCnt/items.length*100) : 0) + '%';
+    if(note) note.innerHTML = `<b style="color:var(--primary);">참여 중인 챌린지 — ${esc(joined.title)}</b><br>
+      · 미션: ${esc(chalMissionPlain(joined.mission))} · 책을 누르면 결정적 장면 챌린지로 이동해요<br>
+      · 전자책이 없는 소장자료(🏛️)는 도서관에서 대출 후 완독 인증으로 진행 <button onclick="chalQuit()" style="margin-left:8px;border:none;background:none;color:var(--text-light);text-decoration:underline;cursor:pointer;font-size:12px;">참여 그만두기</button>`;
+    return;
+  }
   el.innerHTML = QUEST.map(q=>{
     const cls = q.done ? 'completed' : (q.current ? 'available' : 'locked');
     const icon = q.done ? '✓' : (q.current ? '📖' : '🔒');
@@ -4206,6 +4268,16 @@ function renderQuestMap(){
       <div class="quest-slot-book">${esc(q.book)}</div>
     </div>`;
   }).join('');
+}
+function onJoinedSlot(i){
+  const joined = joinedChal(); if(!joined) return;
+  const b = (joined.books||[])[i]; if(!b) return;
+  const m = _matchBookByTitle(b.t);
+  if(!m){ alert(`‘${b.t}’은(는) 도서관 소장자료예요.\n도서관에서 대출해 읽고, 완독 인증으로 진행해 주세요. (데모)`); return; }
+  if(_chalBookState(m.id)==='done'){
+    if(!confirm(`‘${b.t}’은(는) 이미 완료했어요.\n다시 열어 볼까요?`)) return;
+  }
+  openViewer(m.id, 'challenge');
 }
 
 function onQuestSlot(week){
