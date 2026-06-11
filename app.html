@@ -1707,15 +1707,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260612e"></script>
-<script src="books_extra.js?b=260612e"></script>
-<script src="classics_kr_data.js?b=260612e"></script>
-<script src="classics_foreign_data.js?b=260612e"></script>
-<script src="bodies_dq.js?b=260612e"></script>
-<script src="bodies_gatsby.js?b=260612e"></script>
-<script src="bodies_demian.js?b=260612e"></script>
-<script src="bodies_emma.js?b=260612e"></script>
-<script src="challenge_scenes.js?b=260612e"></script>
+<script src="mvp35_data.js?b=260612f"></script>
+<script src="books_extra.js?b=260612f"></script>
+<script src="classics_kr_data.js?b=260612f"></script>
+<script src="classics_foreign_data.js?b=260612f"></script>
+<script src="bodies_dq.js?b=260612f"></script>
+<script src="bodies_gatsby.js?b=260612f"></script>
+<script src="bodies_demian.js?b=260612f"></script>
+<script src="bodies_emma.js?b=260612f"></script>
+<script src="challenge_scenes.js?b=260612f"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -3414,7 +3414,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260612e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260612f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4238,7 +4238,19 @@ function _chalBookScore(bookId){
 }
 function _matchBookByTitle(t){
   const norm = s => (s||'').replace(/\s+/g,'').toLowerCase();
-  return BOOKS.find(b => norm(b.title) === norm(t)) || null;
+  const n = norm(t);
+  const hit = BOOKS.find(b => norm(b.title) === n);
+  if(hit) return hit;
+  // 한글 제목 매핑(해외 고전): "데미안" → gb-74222 등
+  if(typeof CLASSICS_KO !== 'undefined'){
+    for(const [id, ko] of Object.entries(CLASSICS_KO)){
+      if(norm(ko) === n){
+        const b = BOOKS.find(x => x.id === id);
+        if(b) return b;
+      }
+    }
+  }
+  return null;
 }
 function renderQuestMap(){
   const el = document.getElementById('questGrid');
