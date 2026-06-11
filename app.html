@@ -1707,15 +1707,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260612a"></script>
-<script src="books_extra.js?b=260612a"></script>
-<script src="classics_kr_data.js?b=260612a"></script>
-<script src="classics_foreign_data.js?b=260612a"></script>
-<script src="bodies_dq.js?b=260612a"></script>
-<script src="bodies_gatsby.js?b=260612a"></script>
-<script src="bodies_demian.js?b=260612a"></script>
-<script src="bodies_emma.js?b=260612a"></script>
-<script src="challenge_scenes.js?b=260612a"></script>
+<script src="mvp35_data.js?b=260612b"></script>
+<script src="books_extra.js?b=260612b"></script>
+<script src="classics_kr_data.js?b=260612b"></script>
+<script src="classics_foreign_data.js?b=260612b"></script>
+<script src="bodies_dq.js?b=260612b"></script>
+<script src="bodies_gatsby.js?b=260612b"></script>
+<script src="bodies_demian.js?b=260612b"></script>
+<script src="bodies_emma.js?b=260612b"></script>
+<script src="challenge_scenes.js?b=260612b"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -2587,7 +2587,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyShelf(); renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderChalScore(); renderMyShelf(); renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -3395,7 +3395,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260612a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260612b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -3891,6 +3891,20 @@ function checkQuiz(el, qi, oi){
   }
 }
 
+/* ── 점수 원장 (실측 적립 — 데모 기본 1,842점 + 챌린지로 번 점수) ── */
+const SCORE_BASE = 1842;
+function _scoreLog(){ try{ return JSON.parse(localStorage.getItem('bookstar-score-log')||'[]'); }catch(e){ return []; } }
+function addScore(pts, type, note){
+  const log = _scoreLog();
+  log.push({ts:Date.now(), pts, type, note});
+  try{ localStorage.setItem('bookstar-score-log', JSON.stringify(log)); }catch(e){}
+}
+function chalEarned(){ return _scoreLog().reduce((s,x)=>s+(x.pts||0), 0); }
+function renderChalScore(){
+  const el = document.getElementById('statScore');
+  if(el) el.textContent = (SCORE_BASE + chalEarned()).toLocaleString();
+}
+
 /* ── 결정적 장면 챌린지 (CHALLENGE_SCENES 보유 도서 전용) ── */
 let _sc = {bookId:null, idx:0, ans:{}, impression:'', submitted:false};
 function _scSave(){
@@ -3933,7 +3947,7 @@ function renderSceneChallenge(sc, body, info){
             }).join('')}
           </div>`;
         }).join('')}
-        <p style="margin-top:14px;color:var(--text-light);font-size:.9em;">3문항을 풀고 아래 <b>다음 장면 ▶</b>을 눌러 주세요.</p>
+        <p style="margin-top:14px;color:var(--text-light);font-size:.9em;">${s.quiz.length}문항을 풀고 아래 <b>다음 장면 ▶</b>을 눌러 주세요. (정답 1문항 = +10점)</p>
       </div>`;
   } else {
     body.innerHTML = `
@@ -3962,8 +3976,9 @@ function checkSceneQuiz(el, si, qi, oi){
   _sc.ans[si+'-'+qi] = {pick:oi, ok:ok};
   _scSave();
   if(ok){
+    addScore(10, '장면 퀴즈', `${sc.bookTitle} 장면${si+1} Q${qi+1}`);
     el.classList.add('correct');
-    setTimeout(()=>alert('정답! +10점'), 150);
+    setTimeout(()=>alert(`정답! +10점 (누적 ${(SCORE_BASE+chalEarned()).toLocaleString()}점)`), 150);
   } else {
     el.classList.add('wrong');
     setTimeout(()=>{
@@ -3985,11 +4000,17 @@ function submitSceneImpression(){
   if(!t) return;
   const v = t.value.trim();
   if(v.length < 5){ alert('소감을 5자 이상 적어 주세요.'); return; }
+  const firstSubmit = !_sc.submitted;
   _sc.impression = v; _sc.submitted = true; _scSave();
   const sc = CHALLENGE_SCENES[currentBook.id];
   const total = sc.scenes.reduce((s,x)=>s+x.quiz.length, 0);
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
-  alert(`🎉 '${sc.bookTitle}' 결정적 장면 챌린지 완료!\n\n· 장면 퀴즈 정답 ${okCnt}/${total} (+${okCnt*10}점)\n· 한 줄 소감 +50점\n\n퀴즈 결과와 소감은 성장 리포트의 재료가 됩니다.`);
+  if(firstSubmit){
+    addScore(50, '한 줄 소감', sc.bookTitle);
+    alert(`🎉 '${sc.bookTitle}' 결정적 장면 챌린지 완료!\n\n· 장면 퀴즈 정답 ${okCnt}/${total} (+${okCnt*10}점)\n· 한 줄 소감 +50점\n\n누적 점수 ${(SCORE_BASE+chalEarned()).toLocaleString()}점 — 마이 페이지에서 확인하세요.\n퀴즈 결과와 소감은 성장 리포트의 재료가 됩니다.`);
+  } else {
+    alert('소감이 수정 저장되었습니다.');
+  }
   renderViewer();
 }
 
