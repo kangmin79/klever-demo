@@ -1120,6 +1120,23 @@ body.dark .viewer-pane p.pp-on{background:rgba(212,169,59,0.26);}
 .note-item .note-memo{color:var(--text-sub);font-size:12px;margin-top:5px;font-style:italic;}
 .note-item .note-bk{color:var(--primary);font-weight:700;}
 .note-empty{padding:16px 18px;color:var(--text-light);font-size:12px;line-height:1.7;}
+.note-item{position:relative;padding-right:36px;}
+.note-item .note-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:6px;font-size:11px;color:var(--text-light);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.note-item .note-del:hover{background:var(--bg-input);color:#c0392b;}
+.note-item .note-meta{font-size:10.5px;color:var(--text-light);margin-top:4px;}
+/* 메모 있는 형광펜: 점선 밑줄 표시 */
+.viewer-pane mark.hl.has-note,.paged-flow mark.hl.has-note{border-bottom:2px dotted #b8860b;}
+/* 독서노트에서 점프해 왔을 때 잠깐 깜빡임 */
+mark.hl.hl-flash{animation:hlFlash 1.4s ease;}
+@keyframes hlFlash{0%,55%{background:rgba(212,169,59,0.85);}100%{background:rgba(212,169,59,0.32);}}
+/* 메모 입력·형광펜 메뉴 (prompt 대체 인라인 박스) */
+.hl-note-box{position:fixed;z-index:130;width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 32px rgba(0,0,0,0.18);padding:10px;}
+.hl-note-box textarea{width:100%;min-height:64px;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;font-family:inherit;background:var(--bg-input);color:var(--text);}
+.hl-note-box .hnb-note{font-size:12.5px;color:var(--text);line-height:1.55;padding:2px 2px 8px;}
+.hl-note-box .hnb-row{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;}
+.hl-note-box .hnb-row button{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.hl-note-box .hnb-cancel{background:var(--bg-input);color:var(--text-sub);}
+.hl-note-box .hnb-save{background:var(--gold);color:#1a1208;}
 
 /* 페인 보기 모드 (해외책 원문만/번역만/나란히) */
 .viewer-body.pane-orig .viewer-pane.right{display:none;}
@@ -2308,11 +2325,12 @@ function readerSessionEnd(){
   _readerSessionStart = 0;
 }
 
-/* 하이라이트 (완독 모드에서만) */
+/* 하이라이트 (완독 모드에서만) — 위치 앵커(장+문단+글자위치) 저장 → 다시 열어도 복원 */
 function setupHighlightHandlers(){
   document.addEventListener('mouseup', (e) => {
     const popup = document.getElementById('hlPopup');
     if(!popup) return;
+    if(e.target.closest('#hlPopup') || e.target.closest('.hl-note-box')) return;   // 팝업·메모박스 조작 중엔 유지
     if(currentMode !== 'full'){ popup.style.display = 'none'; return; }
     const sel = window.getSelection();
     const text = sel ? sel.toString().trim() : '';
@@ -2327,30 +2345,178 @@ function setupHighlightHandlers(){
     popup.style.left = Math.max(8, rect.left + rect.width/2 - 80) + 'px';
     popup.style.top  = Math.max(8, rect.top - 44) + 'px';
   });
+  // 본문 형광펜 클릭 → 메모 보기·수정·지우기 / 박스 밖 클릭 → 닫기
+  document.addEventListener('click', (e) => {
+    const mk = e.target.closest('mark.hl');
+    if(mk && mk.dataset.hlts){ hlMarkMenu(mk, e.clientX, e.clientY); return; }
+    if(!e.target.closest('.hl-note-box')) closeNoteBox();
+  });
 }
-function addHighlight(){
-  if(!_lastSelectionRange || !currentBook) return;
-  try {
-    const span = document.createElement('mark');
-    span.className = 'hl';
-    _lastSelectionRange.surroundContents(span);
-    if(!readerStats.highlights[currentBook.id]) readerStats.highlights[currentBook.id] = [];
-    readerStats.highlights[currentBook.id].push({text: span.textContent, ts: Date.now()});
-    saveReaderStats();
-  } catch(e){
-    alert('한 단락 안의 텍스트만 하이라이트할 수 있어요.');
+function _elOf(n){ return n && (n.nodeType === 1 ? n : n.parentElement); }
+// 문단 안 [start,end) 글자 구간을 mark.hl로 감쌈 — 텍스트 노드 분할 방식이라 <br> 걸쳐도 안전
+function _hlWrap(p, start, end, ts, note){
+  const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+  let acc = 0, n, targets = [];
+  while((n = walker.nextNode())){
+    const len = n.nodeValue.length, s = acc, e2 = acc + len; acc = e2;
+    if(e2 <= start) continue;
+    if(s >= end) break;
+    targets.push({n, from: Math.max(0, start - s), to: Math.min(len, end - s)});
   }
+  let first = null;
+  targets.forEach(t => {
+    let node = t.n;
+    if(t.to < node.nodeValue.length) node.splitText(t.to);
+    if(t.from > 0) node = node.splitText(t.from);
+    if(!node.nodeValue) return;
+    const mk = document.createElement('mark');
+    mk.className = 'hl' + (note ? ' has-note' : '');
+    mk.dataset.hlts = ts;
+    node.parentNode.insertBefore(mk, node);
+    mk.appendChild(node);
+    if(!first) first = mk;
+  });
+  return first;
+}
+function addHighlight(fromNote){
+  if(!_lastSelectionRange || !currentBook) return null;
+  const r = _lastSelectionRange;
   document.getElementById('hlPopup').style.display = 'none';
-  window.getSelection().removeAllRanges();
+  const p  = _elOf(r.startContainer)?.closest('p');
+  const p2 = _elOf(r.endContainer)?.closest('p');
+  if(!p || p !== p2){
+    readerToast('한 단락 안의 텍스트만 하이라이트할 수 있어요');
+    window.getSelection().removeAllRanges(); _lastSelectionRange = null;
+    return null;
+  }
+  const pre = document.createRange(); pre.selectNodeContents(p); pre.setEnd(r.startContainer, r.startOffset);
+  const off = pre.toString().length;
+  const text = r.toString();
+  const ts = Date.now();
+  _hlWrap(p, off, off + text.length, ts);
+  // 위치 앵커: 몇 번째 장(ch)·문단(p)·글자(off)인지 — 다시 열 때 복원용
+  const pane = p.closest('.viewer-pane');
+  const sec = p.closest('.chapter-anchor');
+  const ch = (sec && pane) ? [...pane.querySelectorAll('.chapter-anchor')].indexOf(sec) : -1;
+  const pi = (ch >= 0 ? [...sec.querySelectorAll('p')] : [...(pane || document).querySelectorAll('p')]).indexOf(p);
+  if(!readerStats.highlights[currentBook.id]) readerStats.highlights[currentBook.id] = [];
+  const entry = {text, ts, anc: {ch, p: pi, off}};
+  readerStats.highlights[currentBook.id].push(entry);
+  saveReaderStats();
+  if(!fromNote) readerToast('✦ 하이라이트 저장 — 독서노트에서 확인');
+  window.getSelection().removeAllRanges(); _lastSelectionRange = null;
+  buildNotesIfOpen();
+  return entry;
 }
 function addNote(){
   if(!_lastSelectionRange || !currentBook) return;
-  const note = prompt('메모를 입력하세요:');
-  if(note === null || !note.trim()) return;
-  addHighlight();
-  const hl = readerStats.highlights[currentBook.id];
-  if(hl && hl.length) hl[hl.length-1].note = note.trim();
-  saveReaderStats();
+  const rect = _lastSelectionRange.getBoundingClientRect();
+  const entry = addHighlight(true);
+  if(!entry) return;
+  openNoteBox(entry.ts, rect.left + rect.width/2, rect.bottom);
+}
+/* 다시 열 때 형광펜 복원 (완독 모드 좌측 칸) */
+function restoreHighlights(){
+  if(!currentBook || currentMode !== 'full') return;
+  const hls = readerStats.highlights[currentBook.id] || [];
+  if(!hls.length) return;
+  const pane = document.querySelector('.viewer-pane.left');
+  if(!pane || pane.querySelector('mark.hl[data-hlts]')) return;   // 칸 없음·이미 복원됨
+  const secs = [...pane.querySelectorAll('.chapter-anchor')];
+  hls.forEach(h => {
+    if(!h.anc) return;   // 옛 기록(위치 정보 없음): 독서노트 목록에서만 보임
+    const scope = (h.anc.ch >= 0 && secs[h.anc.ch]) ? secs[h.anc.ch] : pane;
+    const ps = [...scope.querySelectorAll('p')];
+    const p = ps[h.anc.p];
+    if(!p) return;
+    let off = h.anc.off;
+    const tc = p.textContent;
+    if(tc.substr(off, h.text.length) !== h.text){ off = tc.indexOf(h.text); if(off < 0) return; }
+    _hlWrap(p, off, off + h.text.length, h.ts, h.note);
+  });
+}
+/* 메모 입력 박스 — prompt() 대체 인라인 */
+function openNoteBox(ts, x, y){
+  closeNoteBox();
+  const h = (readerStats.highlights[currentBook?.id] || []).find(v => v.ts === ts);
+  if(!h) return;
+  const box = document.createElement('div'); box.className = 'hl-note-box'; box.id = 'hlNoteBox';
+  box.innerHTML = `<textarea id="hlNoteText" placeholder="이 문장에 메모 남기기…">${h.note ? esc(h.note) : ''}</textarea>
+    <div class="hnb-row"><button class="hnb-cancel" onclick="closeNoteBox()">취소</button>
+    <button class="hnb-save" onclick="saveNoteBox(${ts})">저장</button></div>`;
+  document.body.appendChild(box);
+  const bw = 260;
+  box.style.left = Math.min(window.innerWidth - bw - 8, Math.max(8, (x || 80) - bw/2)) + 'px';
+  box.style.top  = Math.min(window.innerHeight - 170, Math.max(8, (y || 80) + 8)) + 'px';
+  setTimeout(() => document.getElementById('hlNoteText')?.focus(), 0);
+}
+function closeNoteBox(){ document.getElementById('hlNoteBox')?.remove(); }
+function saveNoteBox(ts){
+  const v = (document.getElementById('hlNoteText') || {}).value || '';
+  const h = (readerStats.highlights[currentBook?.id] || []).find(x => x.ts === ts);
+  if(!h){ closeNoteBox(); return; }
+  if(v.trim()) h.note = v.trim(); else delete h.note;
+  saveReaderStats(); closeNoteBox();
+  document.querySelectorAll(`mark.hl[data-hlts="${ts}"]`).forEach(m => m.classList.toggle('has-note', !!h.note));
+  buildNotesIfOpen();
+  readerToast(h.note ? '📝 메모 저장' : '메모 삭제됨');
+}
+function buildNotesIfOpen(){ const d = document.getElementById('notesDrawer'); if(d && d.classList.contains('open')) buildNotes(); }
+/* 본문 형광펜 클릭 메뉴 */
+function hlMarkMenu(mk, x, y){
+  const ts = +mk.dataset.hlts;
+  const h = (readerStats.highlights[currentBook?.id] || []).find(v => v.ts === ts);
+  if(!h) return;
+  closeNoteBox();
+  const box = document.createElement('div'); box.className = 'hl-note-box'; box.id = 'hlNoteBox';
+  box.innerHTML = `${h.note ? `<div class="hnb-note">📝 ${esc(h.note)}</div>` : ''}
+    <div class="hnb-row"><button class="hnb-cancel" onclick="hlDelete(${ts})">형광펜 지우기</button>
+    <button class="hnb-save" onclick="openNoteBox(${ts},${Math.round(x)},${Math.round(y)})">${h.note ? '메모 수정' : '메모 추가'}</button></div>`;
+  document.body.appendChild(box);
+  const bw = 260;
+  box.style.left = Math.min(window.innerWidth - bw - 8, Math.max(8, (x || 80) - bw/2)) + 'px';
+  box.style.top  = Math.min(window.innerHeight - 130, Math.max(8, (y || 80) + 10)) + 'px';
+}
+function hlDelete(ts){
+  if(!currentBook) return;
+  const arr = readerStats.highlights[currentBook.id] || [];
+  const i = arr.findIndex(h => h.ts === ts);
+  if(i < 0) return;
+  arr.splice(i, 1); saveReaderStats();
+  document.querySelectorAll(`mark.hl[data-hlts="${ts}"]`).forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
+  document.querySelectorAll('.viewer-pane, .paged-flow').forEach(p => p.normalize());
+  closeNoteBox(); buildNotesIfOpen();
+  readerToast('하이라이트 삭제됨');
+}
+/* 독서노트에서 형광펜 위치로 점프 */
+function _hlFlash(mk){ mk.classList.add('hl-flash'); setTimeout(() => mk.classList.remove('hl-flash'), 1500); }
+function hlJump(ts){
+  const h = (readerStats.highlights[currentBook?.id] || []).find(v => v.ts === ts);
+  if(!h) return;
+  if(!h.anc){ readerToast('옛 기록이라 위치 정보가 없어요'); return; }
+  const d = document.getElementById('notesDrawer');
+  if(window.innerWidth <= 600 && d?.classList.contains('open')) toggleNotes();
+  if(window.innerWidth <= 600 && _mobPane !== 'main') switchMobilePane('main');   // 형광펜은 본문(좌측) 칸에 있음
+  if(_pg.on){   // 페이지 모드: 해당 장으로 간 뒤 형광펜이 있는 페이지 계산
+    showChapter(Math.max(0, h.anc.ch), 0);
+    requestAnimationFrame(() => {
+      const mk = document.querySelector(`#pagedFlow mark.hl[data-hlts="${h.ts}"]`);
+      if(!mk) return;
+      const pg = Math.max(0, Math.min(_pg.count - 1, Math.floor((mk.offsetLeft + 2) / (_pg.colW + _pg.gap))));
+      _pg.page = pg; applyPageTransform(); updatePagedInfo(); pgSave();
+      _hlFlash(mk);
+    });
+    return;
+  }
+  const pane = document.querySelector('.viewer-pane.left');
+  const mk = pane ? pane.querySelector(`mark.hl[data-hlts="${h.ts}"]`) : null;
+  if(!mk){ readerToast('본문에서 위치를 찾지 못했어요'); return; }
+  const el = _scrollEl();
+  if(el){
+    const top = mk.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 90;
+    el.scrollTo({top: Math.max(0, top), behavior: 'smooth'});
+  }
+  _hlFlash(mk);
 }
 
 /* 모드 클래스 */
@@ -2443,25 +2609,40 @@ function buildNotes(){
   const el=document.getElementById('notesList'); if(!el||!currentBook) return;
   const hls=(readerStats.highlights[currentBook.id]||[]);
   const bks=(readerStats.bookmarks?.[currentBook.id]||[]);
+  const d8=ts=>{ const d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate(); };
   let html='';
   if(bks.length){
     html += `<div style="padding:10px 18px 4px;font-size:11px;font-weight:800;color:var(--text-light);">🔖 책갈피 ${bks.length}</div>`;
     bks.forEach((b,i)=>{
       html += `<div class="note-item" onclick="jumpToBookmark(${i})">
-        <span class="note-bk">${esc(b.label)}</span>
+        <span class="note-bk">${esc(b.label)}</span>${b.ts?`<span class="note-meta" style="margin-left:8px">${d8(b.ts)}</span>`:''}
+        <button class="note-del" onclick="event.stopPropagation();bmDelete(${i})" title="삭제">✕</button>
       </div>`;
     });
   }
   if(hls.length){
+    // 읽기 순서(장→문단→글자)대로 정렬, 위치 없는 옛 기록은 맨 뒤
+    const sorted=[...hls].sort((a,b)=>{
+      if(!a.anc&&!b.anc) return a.ts-b.ts;
+      if(!a.anc) return 1; if(!b.anc) return -1;
+      return (a.anc.ch-b.anc.ch)||(a.anc.p-b.anc.p)||(a.anc.off-b.anc.off);
+    });
     html += `<div style="padding:10px 18px 4px;font-size:11px;font-weight:800;color:var(--text-light);">✎ 하이라이트·메모 ${hls.length}</div>`;
-    hls.forEach(h=>{
-      html += `<div class="note-item">
+    sorted.forEach(h=>{
+      html += `<div class="note-item" onclick="hlJump(${h.ts})">
         <div class="note-quote">${esc(h.text.slice(0,140))}</div>
         ${h.note?`<div class="note-memo">📝 ${esc(h.note)}</div>`:''}
+        <div class="note-meta">${d8(h.ts)}${h.anc?'':' · 위치 정보 없음'}</div>
+        <button class="note-del" onclick="event.stopPropagation();hlDelete(${h.ts})" title="삭제">✕</button>
       </div>`;
     });
   }
   el.innerHTML = html || `<div class="note-empty">아직 하이라이트·책갈피가 없어요.<br><br>· <b>완독 모드</b>에서 문장을 드래그하면 하이라이트·메모를 남길 수 있어요.<br>· 상단 🔖 버튼으로 현재 위치를 책갈피할 수 있어요.</div>`;
+}
+function bmDelete(i){
+  const bks=readerStats.bookmarks?.[currentBook?.id]; if(!bks||!bks[i]) return;
+  bks.splice(i,1); saveReaderStats(); buildNotes();
+  readerToast('책갈피 삭제됨');
 }
 function jumpToPos(pos){
   const el=_scrollEl(); if(el){ el.scrollTop=pos; updateProgress(); }
@@ -3600,7 +3781,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260612g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260613a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -3824,6 +4005,7 @@ async function openViewer(bookId, mode){
   setTimeout(() => {
     applyReaderPrefs();
     buildTOC();
+    restoreHighlights();   // 페이지 모드 조판 전에 복원해야 형광펜이 페이지에도 실림
     restoreScrollPos();
     updateModeClass();
     readerSessionStart();
@@ -3847,7 +4029,7 @@ function setMode(mode){
   document.getElementById('viewerBody')?.classList.remove('pane-orig','pane-trans');
   const _pl=document.getElementById('paneToggleLabel'); if(_pl)_pl.textContent='나란히';
   renderViewer();
-  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } else exitPageMode(); }, 0);
+  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } else exitPageMode(); }, 0);
 }
 
 // 장르 버킷 (category → 조판 템플릿). 시 먼저 검사(서사시의 '시' 우선).
@@ -4495,6 +4677,8 @@ function closeViewer(){
   readerSessionEnd();
   stopTTS();
   closeSearch();
+  closeNoteBox();
+  const _hp=document.getElementById('hlPopup'); if(_hp) _hp.style.display='none';
   closeDict();
   document.getElementById('tocDrawer')?.classList.remove('open');
   document.getElementById('notesDrawer')?.classList.remove('open');
