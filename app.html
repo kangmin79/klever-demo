@@ -3905,7 +3905,10 @@ function renderViewer(){
     const nav = `<button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>`
               + `<button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>`;
     const isSceneChal = (currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && !!CHALLENGE_SCENES[currentBook.id]);
-    acts.innerHTML = isSceneChal
+    const isChatChal = isSceneChal && CHAT_QUIZ_BOOKS.has(currentBook.id);
+    acts.innerHTML = isChatChal
+      ? ''                                            // 별이 챗봇 = 연속 진행(장면 자동 전환), 버튼 없음
+      : isSceneChal
       ? `<button class="viewer-action" onclick="sceneGo(-1)">◀ 이전 장면</button>`
         + `<button class="viewer-action primary" onclick="sceneGo(1)">다음 장면 ▶</button>`
       : (currentMode === 'full')
@@ -3965,6 +3968,7 @@ function _scSave(){
 function renderSceneChallenge(sc, body, info){
   if(_sc.bookId !== currentBook.id){
     _sc = {bookId:currentBook.id, idx:0, ans:{}, impression:'', submitted:false};
+    _bxLastSi = -1;
     try{
       const sv = JSON.parse(localStorage.getItem('bookstar-chal-'+currentBook.id)||'null');
       if(sv){ _sc.ans = sv.ans||{}; _sc.impression = sv.impression||''; _sc.submitted = !!sv.submitted; }
@@ -3976,8 +3980,8 @@ function renderSceneChallenge(sc, body, info){
   const answered = Object.keys(_sc.ans).length;
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
   info.innerHTML = `결정적 장면 챌린지 · <b>${i<n ? `장면 ${i+1}/${n}` : '한 줄 소감'}</b> · 퀴즈 ${answered}/${total}`;
-  // 별이 챗봇 퀴즈 — 우선 '운수 좋은 날' 1권만 적용(확인 후 확대)
-  if(CHAT_QUIZ_BOOKS.has(currentBook.id)){ return renderSceneChat(sc, body, i, n, total, okCnt); }
+  // 별이 챗봇 퀴즈 — 우선 '운수 좋은 날' 1권만 적용(확인 후 확대). 연속형이라 info도 직접 설정.
+  if(CHAT_QUIZ_BOOKS.has(currentBook.id)){ return renderSceneChat(sc, body, info); }
   if(i < n){
     const s = sc.scenes[i];
     const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
@@ -4038,59 +4042,66 @@ function _bxQHtml(q){
   const tag = m ? `<span class="bx-tag">${esc(m[1])}</span>` : '';
   return tag + esc(m ? m[2] : q.q);
 }
-function renderSceneChat(sc, body, i, n, total, okCnt){
+let _bxLeftScroll = 0, _bxLastSi = -1;     // 좌측 원문 스크롤 보존(같은 장면) / 장면 바뀌면 맨 위로
+function renderSceneChat(sc, body, info){
+  const scenes = sc.scenes;
+  // 모든 장면의 문항을 하나로 펼침 → 연속 카톡 (장면 경계는 별이 멘트로만 구분)
+  const flat = [];
+  scenes.forEach((s,si)=> s.quiz.forEach((q,qi)=> flat.push({si,qi})));
+  const total = flat.length;
+  let cur = 0; while(cur < flat.length && _sc.ans[flat[cur].si+'-'+flat[cur].qi]) cur++;
+  const allDone = cur >= flat.length;
+  const answered = Object.keys(_sc.ans).length;
+  const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
+  const activeSi = allDone ? scenes.length-1 : flat[cur].si;
+  info.innerHTML = `결정적 장면 챌린지 · <b>${allDone ? '한 줄 소감' : `장면 ${activeSi+1}/${scenes.length}`}</b> · 퀴즈 ${answered}/${total}`;
+
   let chat = '';
-  if(i < n){
-    const s = sc.scenes[i];
-    const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
-    const opener = (i===0)
-      ? `안녕, 난 <b>별이</b>야 ⭐ 너랑 같이 『${esc(sc.bookTitle)}』의 결정적인 장면들을 읽어 볼 거야. 왼쪽 글을 먼저 읽고, 내 질문에 답해 줘!`
-      : `좋아, 다음 장면이야 — <b>${esc(s.title)}</b>. 왼쪽 글을 읽고 답해 줄래?`;
-    // 첫 미응답 문제 = 활성
-    let cur = 0; while(cur < s.quiz.length && _sc.ans[i+'-'+cur]) cur++;
-    // 봇 묶음을 누적: opener + (각 문제, 정답 반응) 순서로
-    let pending = [{html:opener}];          // 현재 쌓이는 봇 말풍선
-    const flush = ()=>{ if(pending.length){ chat += _bxBot(pending); pending = []; } };
-    for(let qi=0; qi<s.quiz.length; qi++){
-      const q = s.quiz[qi];
-      const got = _sc.ans[i+'-'+qi];
-      if(got){
-        pending.push({html:_bxQHtml(q)});    // 별이: 질문
-        flush();
-        chat += _bxMe(q.opts[got.pick]);     // 나: 선택
-        const react = got.ok
-          ? {cls:'react ok', html:`정답이에요! 🎉 <b>+10점</b>` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')}
-          : {cls:'react no', html:`앗, 아쉬워요. 정답은 <b>“${esc(q.opts[q.correct])}”</b>예요.` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')};
-        pending.push(react);                 // 별이: 반응+해설
-      } else if(qi === cur){
-        if(_bxTyping){                       // 타이핑 연출 — 반응만 보이고 다음 질문은 잠시 뒤
+  let pending = [];
+  const flush = ()=>{ if(pending && pending.length){ chat += _bxBot(pending); pending = []; } };
+
+  if(!allDone){
+    outer:
+    for(let si=0; si<=activeSi; si++){
+      const s = scenes[si];
+      pending.push({html: si===0
+        ? `안녕, 난 <b>별이</b>야 ⭐ 너랑 같이 『${esc(sc.bookTitle)}』의 결정적인 장면을 읽어 볼 거야. <b>왼쪽 글</b>을 먼저 읽고 답해 줘!`
+        : `좋아, 다음 장면으로 넘어왔어 — <b>${esc(s.title)}</b>. <b>왼쪽 글이 바뀌었지?</b> 읽고 이어서 답해 줘!`});
+      for(let qi=0; qi<s.quiz.length; qi++){
+        const q = s.quiz[qi];
+        const got = _sc.ans[si+'-'+qi];
+        if(got){
+          pending.push({html:_bxQHtml(q)});
           flush();
-          chat += _bxTypingRow();
-        } else {
-          pending.push({html:_bxQHtml(q)});  // 별이: 질문
-          flush();
-          chat += `<div class="bx-chips">${q.opts.map((opt,oi)=>`<button class="bx-chip" onclick="chatPick(${i},${qi},${oi})">${esc(opt)}</button>`).join('')}</div>`;
+          chat += _bxMe(q.opts[got.pick]);
+          pending.push(got.ok
+            ? {cls:'react ok', html:`정답이에요! 🎉 <b>+10점</b>` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')}
+            : {cls:'react no', html:`앗, 아쉬워요. 정답은 <b>“${esc(q.opts[q.correct])}”</b>예요.` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')});
+        } else {                              // 활성 문제(cur)
+          if(_bxTyping){ flush(); chat += _bxTypingRow(); }
+          else {
+            pending.push({html:_bxQHtml(q)});
+            flush();
+            chat += `<div class="bx-chips">${q.opts.map((opt,oi)=>`<button class="bx-chip" onclick="chatPick(${si},${qi},${oi})">${esc(opt)}</button>`).join('')}</div>`;
+          }
+          pending = null; break outer;        // 활성 이후·다음 장면은 아직 숨김
         }
-        pending = null; break;
       }
     }
-    if(pending){ // 전 문항 완료
-      if(_bxTyping){ flush(); chat += _bxTypingRow(); }
-      else { pending.push({html:`이 장면은 다 풀었어! 👏 아래 <b>다음 장면 ▶</b> 버튼을 눌러 줘.`}); flush(); }
-    }
+    flush();                                  // (방어) 남은 봇 묶음
+    const s = scenes[activeSi];
+    const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">${esc(s.label)} — ${esc(s.title)}</div>
         ${ex}
         <div style="margin-top:18px;padding:14px 16px;border-left:3px solid var(--gold,#b8860b);background:rgba(184,134,11,.07);border-radius:0 10px 10px 0;font-size:.93em;line-height:1.75;">${esc(s.why)}</div>
       </div>
-      <div class="viewer-pane right bx-pane">
-        <div class="bx-chat">${chat}</div>
-      </div>`;
+      <div class="viewer-pane right bx-pane"><div class="bx-chat">${chat}</div></div>`;
   } else {
     const done = _sc.submitted;
     chat += _bxBot([
-      {html:`여기까지 잘 따라왔어! 👏 장면 퀴즈는 <b>${okCnt}/${total}</b>문항 맞혔어.`},
+      {html:`마지막이야! 여기까지 잘 따라왔어 👏 장면 퀴즈는 <b>${okCnt}/${total}</b>문항 맞혔어.`},
       {html:esc(sc.finalPrompt)}
     ]);
     if(done){
@@ -4106,10 +4117,12 @@ function renderSceneChat(sc, body, i, n, total, okCnt){
           <b>장면 퀴즈 결과</b><br>정답 ${okCnt} / ${total}문항
         </div>
       </div>
-      <div class="viewer-pane right bx-pane">
-        <div class="bx-chat">${chat}</div>
-      </div>`;
+      <div class="viewer-pane right bx-pane"><div class="bx-chat">${chat}</div></div>`;
   }
+  // 좌측 원문: 같은 장면이면 스크롤 유지, 장면이 바뀌면 맨 위부터
+  const leftEl = body.querySelector('.viewer-pane.left');
+  if(leftEl) leftEl.scrollTop = (activeSi === _bxLastSi) ? _bxLeftScroll : 0;
+  _bxLastSi = activeSi;
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
 function chatPick(si, qi, oi){
@@ -4120,9 +4133,10 @@ function chatPick(si, qi, oi){
   _sc.ans[si+'-'+qi] = {pick:oi, ok}; _scSave();
   if(ok) addScore(10, '장면 퀴즈', `${sc.bookTitle} 장면${si+1} Q${qi+1}`);
   _bxTyping = true;                          // 정답 확인 후 "입력 중…" 연출
+  _bxLeftScroll = document.querySelector('.viewer-pane.left')?.scrollTop || 0;
   renderViewer(); _bxScrollBottom();
   try{ renderChalScore(); }catch(e){}
-  setTimeout(()=>{ _bxTyping = false; if(currentMode==='challenge'){ renderViewer(); _bxScrollBottom(); } }, 850);
+  setTimeout(()=>{ _bxTyping = false; if(currentMode==='challenge'){ _bxLeftScroll = document.querySelector('.viewer-pane.left')?.scrollTop || 0; renderViewer(); _bxScrollBottom(); } }, 850);
 }
 function chatSubmitImpression(){
   const t = document.getElementById('bxImpr'); if(!t) return;
