@@ -517,6 +517,15 @@ body.dark .hub-node-icon{color:var(--gold);}
 .quest-slot-icon{font-size:18px;margin-bottom:2px;}
 .quest-slot-num{font-size:10px;opacity:0.7;}
 .quest-slot-book{font-size:11px;line-height:1.2;margin-top:2px;}
+/* Quest 슬롯 하단 통계 — 이모지 없이 진행 막대로 (색은 슬롯 글자색 상속: 완료=흰색/진행=파랑) */
+.qs-stats{width:100%;margin-top:6px;font-size:10.5px;line-height:1.4;}
+.qs-bar-row{display:flex;align-items:center;gap:5px;}
+.qs-k{font-weight:700;opacity:.85;}
+.qs-bar{flex:1;height:5px;border-radius:3px;background:rgba(150,150,150,.45);overflow:hidden;}
+.qs-bar-fill{height:100%;background:currentColor;border-radius:3px;transition:width .4s;}
+.qs-v{font-weight:800;font-variant-numeric:tabular-nums;min-width:28px;text-align:right;}
+.qs-quiz{margin-top:5px;font-weight:600;opacity:.95;}
+.qs-empty{font-size:11px;opacity:.8;}
 
 /* ═══════════════════════════════════════════════════════════
    8. 점수 카드 / 통계
@@ -4683,11 +4692,15 @@ function renderQuestMap(){
       const coverHtml = x.cover
         ? `<img src="${esc(x.cover)}" loading="lazy" style="width:62px;height:90px;object-fit:cover;border-radius:6px;box-shadow:0 5px 14px rgba(0,0,0,.22);" onerror="this.outerHTML='<div style=&quot;width:62px;height:90px;border-radius:6px;background:rgba(120,120,140,.12);display:flex;align-items:center;justify-content:center;font-size:26px;&quot;>${icon}</div>'">`
         : `<div style="width:62px;height:90px;border-radius:6px;background:rgba(120,120,140,.12);display:flex;align-items:center;justify-content:center;font-size:26px;">${icon}</div>`;
+      const pct = x.pct||0;
       const scoreLine = !x.book
-        ? `<div style="font-size:11px;color:var(--text-light);">대출 후 완독 인증</div>`
-        : (!(x.pct>0) && !x.sco)
-        ? `<div style="font-size:11px;color:var(--text-light);">아직 시작 안 함</div>`
-        : `<div style="font-size:10.5px;color:var(--text-sub);line-height:1.6;">📖 ${x.pct||0}% 읽음${(x.pct||0)>=95?` · <b style="color:#1d6b48;">✔완독</b>`:''}<br>✏️ ${x.sco?`퀴즈 ${x.sco.ok}/${x.sco.total} · <b style="color:var(--gold,#b8860b);">${x.sco.pts}점</b>`:'퀴즈 전'}</div>`;
+        ? `<div class="qs-empty">대출 후 완독 인증</div>`
+        : (!(pct>0) && !x.sco)
+        ? `<div class="qs-empty">아직 시작 안 함</div>`
+        : `<div class="qs-stats">
+             <div class="qs-bar-row"><span class="qs-k">읽기</span><div class="qs-bar"><div class="qs-bar-fill" style="width:${pct}%"></div></div><span class="qs-v">${pct}%</span></div>
+             <div class="qs-quiz">${x.sco?`퀴즈 ${x.sco.ok}/${x.sco.total} · ${x.sco.pts}점`:'퀴즈 전'}</div>
+           </div>`;
       return `<div class="quest-slot ${cls}" onclick="onJoinedSlot(${i})" title="${esc(x.t)}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px 14px;${expired?'opacity:.75;':''}">
         ${coverHtml}
         <div class="quest-slot-book" style="font-weight:700;line-height:1.35;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${esc(shortT(x.t))}</div>
