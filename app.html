@@ -1029,6 +1029,23 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
 body.dark .reader-btn.bm-saved{background:var(--gold)!important;color:#0f172a!important;}
 .reader-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(8px);z-index:130;background:rgba(20,24,40,.94);color:#fff;padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;}
 .reader-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* 퀴즈 정답/오답 인라인 피드백 (alert 대체) */
+.quiz-fb{margin-top:8px;padding:9px 12px;border-radius:8px;font-size:12.5px;font-weight:700;line-height:1.5;animation:fbIn .25s ease;}
+.quiz-fb.ok{background:rgba(29,107,72,.12);color:#1d6b48;}
+.quiz-fb.no{background:rgba(192,57,43,.10);color:#c0392b;}
+body.dark .quiz-fb.ok{background:rgba(80,200,140,.16);color:#6fd9a6;}
+body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
+@keyframes fbIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+/* 축하 모달 (완료·인증 alert 대체) — 네이비/흰카드/골드 */
+.bs-cele{position:fixed;inset:0;z-index:140;background:rgba(12,18,38,.55);display:flex;align-items:center;justify-content:center;animation:fbIn .2s ease;}
+.bs-cele-card{width:min(330px,86vw);background:var(--bg-card);border-radius:18px;padding:28px 24px 20px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+.bs-cele-badge{width:54px;height:54px;border-radius:50%;background:var(--gold);color:#1a1208;font-size:26px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.bs-cele-title{font-size:17px;font-weight:800;line-height:1.4;color:var(--text);}
+.bs-cele-sub{font-size:12px;color:var(--text-light);margin-top:6px;line-height:1.6;}
+.bs-cele-rows{margin:14px 0 4px;text-align:left;background:var(--bg-input);border-radius:12px;padding:12px 14px;}
+.bs-cele-row{font-size:13px;color:var(--text-sub);line-height:1.5;padding:4px 0;}
+.bs-cele-row b{color:var(--text);}
+.bs-cele-btn{width:100%;margin-top:14px;background:var(--gold);color:#1a1208;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;}
 .reader-btn:hover{background:var(--primary-bg);}
 .reader-btn.on{background:var(--primary);color:#fff;border-color:var(--primary);}
 .reader-divider{width:1px;height:18px;background:var(--border);margin:0 4px;}
@@ -2063,12 +2080,15 @@ function shelfCertOpen(key){
 }
 function shelfCertSubmit(key){
   const soclip=(document.getElementById('certSoclip')||{}).value||'';
-  if(!soclip.trim()){ alert('한 줄 소감을 적어주세요 — 완독 증명이 됩니다.'); return; }
+  if(!soclip.trim()){ readerToast('한 줄 소감을 적어주세요 — 완독 증명이 됩니다'); return; }
   const a=shelfLoad(); const it=a.find(x=>x.key===key); if(!it) return;
   it.status='done'; it.doneTs=Date.now(); it.soclip=soclip.trim(); shelfSave(a);
   closeLc(); renderMyShelf();
   const done=shelfLoad().filter(x=>x.status==='done').length;
-  alert(`✔ 『${cleanT(it.t)}』 완독 인증 완료!\n독서 이력에 추가됐어요 (누적 완독 ${done}권).`);
+  bsCelebrate({
+    title:`『${esc(cleanT(it.t))}』<br>완독 인증 완료!`,
+    rows:[`독서 이력에 추가 — 누적 완독 <b>${done}권</b>`],
+  });
 }
 
 function applyReaderPrefs(){
@@ -2680,9 +2700,33 @@ function addBookmark(){
 let _readerToastTimer=null;
 function readerToast(msg){
   let t=document.getElementById('readerToast');
-  if(!t){ t=document.createElement('div'); t.id='readerToast'; t.className='reader-toast'; (document.querySelector('.viewer-shell')||document.body).appendChild(t); }
+  const host=document.fullscreenElement||document.body;   // 전체화면 중엔 그 안에, 평소엔 body — 뷰어 밖에서도 보임
+  if(!t){ t=document.createElement('div'); t.id='readerToast'; t.className='reader-toast'; }
+  if(t.parentElement!==host) host.appendChild(t);
   t.textContent=msg; t.classList.add('show');
   clearTimeout(_readerToastTimer); _readerToastTimer=setTimeout(()=>t.classList.remove('show'),1900);
+}
+/* ── 축하 모달 (완료·인증 alert 대체) ── */
+function bsCelebrate(o){
+  document.getElementById('bsCele')?.remove();
+  const d=document.createElement('div'); d.id='bsCele'; d.className='bs-cele';
+  d.innerHTML=`<div class="bs-cele-card">
+    <div class="bs-cele-badge">✓</div>
+    <div class="bs-cele-title">${o.title}</div>
+    ${o.sub?`<div class="bs-cele-sub">${o.sub}</div>`:''}
+    ${(o.rows&&o.rows.length)?`<div class="bs-cele-rows">${o.rows.map(r=>`<div class="bs-cele-row">${r}</div>`).join('')}</div>`:''}
+    <button class="bs-cele-btn" onclick="document.getElementById('bsCele')?.remove()">${o.btn||'확인'}</button>
+  </div>`;
+  d.addEventListener('click',e=>{ if(e.target===d) d.remove(); });
+  (document.fullscreenElement||document.body).appendChild(d);
+}
+/* ── 퀴즈 정답/오답 인라인 피드백 (alert 대체) ── */
+function quizFeedback(el, ok, msg){
+  const block=el.closest('.quiz-block')||el.parentElement;
+  let fb=block.querySelector('.quiz-fb');
+  if(!fb){ fb=document.createElement('div'); fb.className='quiz-fb'; block.appendChild(fb); }
+  fb.className='quiz-fb '+(ok?'ok':'no');
+  fb.innerHTML=msg;
 }
 
 /* ── 전체화면 ── */
@@ -2718,8 +2762,8 @@ function updatePaneToggleVisibility(){
 /* ── TTS (완독·Intl 모드 전용, 챌린지 모드 차단) ── */
 let _ttsOn=false;
 function toggleTTS(){
-  if(currentMode==='challenge'){ alert('챌린지 모드에서는 음성 읽기가 제공되지 않습니다.\n완독 모드에서 이용해주세요.'); return; }
-  if(!('speechSynthesis' in window)){ alert('이 브라우저는 음성 읽기를 지원하지 않습니다.'); return; }
+  if(currentMode==='challenge'){ readerToast('음성 읽기는 완독 모드에서 이용할 수 있어요'); return; }
+  if(!('speechSynthesis' in window)){ readerToast('이 브라우저는 음성 읽기를 지원하지 않아요'); return; }
   const btn=document.getElementById('ttsBtn');
   if(_ttsOn){ stopTTS(); return; }
   const pane = document.querySelector('.viewer-pane.left');
@@ -3781,7 +3825,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260613a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260613b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4018,7 +4062,7 @@ async function openViewer(bookId, mode){
 
 function setMode(mode){
   if(currentBook && !currentBook.intl && mode==='intl'){
-    alert('해외 도서는 International 모드가 제공되지 않습니다.');
+    readerToast('해외 도서는 International 모드가 제공되지 않아요');
     return;
   }
   currentMode = mode;
@@ -4270,13 +4314,13 @@ function checkQuiz(el, qi, oi){
   if(el.parentElement.querySelector('.correct, .wrong')) return; // 재응시 차단
   if(c.quiz[qi].correct === oi){
     el.classList.add('correct');
-    setTimeout(()=>alert('정답! +10점'), 200);
+    quizFeedback(el, true, '🎉 정답! <b>+10점</b>');
   } else {
     el.classList.add('wrong');
     setTimeout(()=>{
       const correctEl = el.parentElement.querySelectorAll('.quiz-opt')[c.quiz[qi].correct];
       correctEl.classList.add('correct');
-      alert('아쉽네요. 정답은 표시된 항목입니다. (재응시 불가)');
+      quizFeedback(el, false, '아쉽네요 — 정답은 표시된 항목이에요 (재응시 불가)');
     }, 200);
   }
 }
@@ -4567,7 +4611,7 @@ function chatRestart(){
 function chatSubmitImpression(){
   const t = document.getElementById('bxImpr'); if(!t) return;
   const v = t.value.trim();
-  if(v.length < 5){ alert('소감을 5자 이상 적어 줘!'); return; }
+  if(v.length < 5){ readerToast('소감을 5자 이상 적어 줘!'); return; }
   const first = !_sc.submitted;
   _sc.impression = v; _sc.submitted = true; _scSave();
   if(first) addScore(50, '한 줄 소감', CHALLENGE_SCENES[currentBook.id].bookTitle);
@@ -4634,12 +4678,12 @@ function checkSceneQuiz(el, si, qi, oi){
   if(ok){
     addScore(10, '장면 퀴즈', `${sc.bookTitle} 장면${si+1} Q${qi+1}`);
     el.classList.add('correct');
-    setTimeout(()=>alert(`정답! +10점 (누적 ${(SCORE_BASE+chalEarned()).toLocaleString()}점)`), 150);
+    quizFeedback(el, true, `🎉 정답! <b>+10점</b> · 누적 ${(SCORE_BASE+chalEarned()).toLocaleString()}점`);
   } else {
     el.classList.add('wrong');
     setTimeout(()=>{
       el.parentElement.querySelectorAll('.quiz-opt')[q.correct].classList.add('correct');
-      alert('아쉽네요. 정답은 표시된 항목입니다. (재응시 불가)');
+      quizFeedback(el, false, '아쉽네요 — 정답은 표시된 항목이에요 (재응시 불가)');
     }, 150);
   }
 }
@@ -4655,7 +4699,7 @@ function submitSceneImpression(){
   const t = document.getElementById('scImpression');
   if(!t) return;
   const v = t.value.trim();
-  if(v.length < 5){ alert('소감을 5자 이상 적어 주세요.'); return; }
+  if(v.length < 5){ readerToast('소감을 5자 이상 적어 주세요'); return; }
   const firstSubmit = !_sc.submitted;
   _sc.impression = v; _sc.submitted = true; _scSave();
   const sc = CHALLENGE_SCENES[currentBook.id];
@@ -4663,9 +4707,17 @@ function submitSceneImpression(){
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
   if(firstSubmit){
     addScore(50, '한 줄 소감', sc.bookTitle);
-    alert(`🎉 '${sc.bookTitle}' 결정적 장면 챌린지 완료!\n\n· 장면 퀴즈 정답 ${okCnt}/${total} (+${okCnt*10}점)\n· 한 줄 소감 +50점\n\n누적 점수 ${(SCORE_BASE+chalEarned()).toLocaleString()}점 — 마이 페이지에서 확인하세요.\n퀴즈 결과와 소감은 성장 리포트의 재료가 됩니다.`);
+    bsCelebrate({
+      title:`『${esc(sc.bookTitle)}』<br>결정적 장면 챌린지 완료!`,
+      sub:'퀴즈 결과와 소감은 성장 리포트의 재료가 됩니다',
+      rows:[
+        `장면 퀴즈 정답 ${okCnt}/${total} <b>+${okCnt*10}점</b>`,
+        `한 줄 소감 <b>+50점</b>`,
+        `누적 <b>${(SCORE_BASE+chalEarned()).toLocaleString()}점</b> — 마이 페이지에서 확인`,
+      ],
+    });
   } else {
-    alert('소감이 수정 저장되었습니다.');
+    readerToast('소감이 수정 저장되었어요');
   }
   renderViewer();
   try{ renderQuestMap(); renderChalScore(); renderMyImpressions(); }catch(e){}
@@ -4687,7 +4739,15 @@ function closeViewer(){
 }
 
 function finishChallenge(){
-  alert('🎉 챌린지 수행 완료!\n\n· 선택 문장 +50점\n· 퀴즈 만들기 +100점 (AI 표절 검사 통과)\n· 한 줄 소감 +50점\n\n총 +200점 획득!');
+  bsCelebrate({
+    title:'챌린지 수행 완료!',
+    rows:[
+      `선택 문장 <b>+50점</b>`,
+      `퀴즈 만들기 <b>+100점</b> (AI 표절 검사 통과)`,
+      `한 줄 소감 <b>+50점</b>`,
+      `총 <b>+200점</b> 획득!`,
+    ],
+  });
   closeViewer();
 }
 
