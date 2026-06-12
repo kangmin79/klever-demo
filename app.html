@@ -822,7 +822,8 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .quiz-opt.wrong{background:rgba(231,76,60,0.15);border-color:var(--danger);}
 
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
-.bx-chat{background:#b2c7d9;border-radius:14px;padding:14px 12px;}
+.viewer-pane.right.bx-pane{padding:0;}                 /* 채팅창이 패널 끝까지 꽉 차게 */
+.bx-chat{background:#b2c7d9;padding:16px 14px;min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;}
 body.dark .bx-chat{background:#26333f;}
 .bx-row{display:flex;margin-bottom:13px;align-items:flex-end;gap:8px;}
 .bx-row.me{flex-direction:row-reverse;}
@@ -843,7 +844,7 @@ body.dark .bx-name{color:#c5d2dd;}
 .bx-chip:hover{border-color:#6366f1;background:#f3f4ff;transform:translateY(-1px);}
 .bx-typing{margin:0 0 10px 46px;font-size:12px;color:#3a4a5a;}
 body.dark .bx-typing{color:#c5d2dd;}
-.bx-inputbar{display:flex;gap:8px;margin-top:4px;}
+.bx-inputbar{display:flex;gap:8px;margin-top:auto;padding-top:10px;}
 .bx-inputbar input{flex:1;padding:11px 14px;border-radius:20px;border:1.5px solid #cfd9e2;font:inherit;font-size:13.5px;background:#fff;color:#1c1c1c;}
 .bx-inputbar button{flex:0 0 auto;padding:0 18px;border-radius:20px;border:none;background:#fae100;color:#3a3000;font-weight:800;font-size:13px;cursor:pointer;}
 
@@ -1570,6 +1571,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       · 내일 23:59까지 퀴즈 완료 시 <b style="color:var(--gold);">+500점 보너스</b>
     </div>
   </div>
+
+  <!-- 내가 남긴 한 줄 소감 (별이 챌린지) -->
+  <div id="myImpressions"></div>
 
   <!-- 하단: 점수·뱃지 + 리더보드 + 내가 읽은 책 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px;" class="mypage-bottom">
@@ -2613,7 +2617,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderChalScore(); renderMyShelf(); renderQuestMap(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -4066,8 +4070,7 @@ function renderSceneChat(sc, body, i, n, total, okCnt){
         ${ex}
         <div style="margin-top:18px;padding:14px 16px;border-left:3px solid var(--gold,#b8860b);background:rgba(184,134,11,.07);border-radius:0 10px 10px 0;font-size:.93em;line-height:1.75;">${esc(s.why)}</div>
       </div>
-      <div class="viewer-pane right">
-        <div class="viewer-pane-label">별이와 함께 — 장면 ${i+1} 퀴즈</div>
+      <div class="viewer-pane right bx-pane">
         <div class="bx-chat">${chat}</div>
       </div>`;
   } else {
@@ -4089,8 +4092,7 @@ function renderSceneChat(sc, body, i, n, total, okCnt){
           <b>장면 퀴즈 결과</b><br>정답 ${okCnt} / ${total}문항
         </div>
       </div>
-      <div class="viewer-pane right">
-        <div class="viewer-pane-label">별이와 함께 — 한 줄 소감</div>
+      <div class="viewer-pane right bx-pane">
         <div class="bx-chat">${chat}</div>
       </div>`;
   }
@@ -4114,7 +4116,31 @@ function chatSubmitImpression(){
   _sc.impression = v; _sc.submitted = true; _scSave();
   if(first) addScore(50, '한 줄 소감', CHALLENGE_SCENES[currentBook.id].bookTitle);
   renderViewer(); _bxScrollBottom();
-  try{ renderQuestMap(); renderChalScore(); }catch(e){}
+  try{ renderQuestMap(); renderChalScore(); renderMyImpressions(); }catch(e){}
+}
+/* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
+function renderMyImpressions(){
+  const el = document.getElementById('myImpressions');
+  if(!el || typeof CHALLENGE_SCENES === 'undefined') return;
+  const rows = [];
+  for(const [id, sc] of Object.entries(CHALLENGE_SCENES)){
+    let sv = null; try{ sv = JSON.parse(localStorage.getItem('bookstar-chal-'+id)||'null'); }catch(e){}
+    if(!sv || !sv.impression) continue;
+    rows.push({title:sc.bookTitle, author:sc.author, impression:sv.impression, score:_chalBookScore(id)});
+  }
+  if(!rows.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="section-head" style="margin-top:48px;"><div class="section-title"><em>내가 남긴 한 줄 소감</em> · 별이 챌린지</div></div>
+    <div style="display:grid;gap:14px;">
+      ${rows.map(r=>`
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--gold,#b8860b);border-radius:14px;padding:18px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+            <div style="font-weight:800;font-size:15px;">${esc(r.title)} <span style="font-weight:500;color:var(--text-sub);font-size:13px;">· ${esc(r.author)}</span></div>
+            ${r.score?`<div style="font-size:12px;color:var(--text-sub);white-space:nowrap;">퀴즈 ${r.score.ok}/${r.score.total} · <b style="color:var(--gold,#b8860b);">${r.score.pts}점</b></div>`:''}
+          </div>
+          <div style="font-size:14px;line-height:1.7;color:var(--text);font-style:italic;">“${esc(r.impression)}”</div>
+        </div>`).join('')}
+    </div>`;
 }
 
 function checkSceneQuiz(el, si, qi, oi){
@@ -4162,7 +4188,7 @@ function submitSceneImpression(){
     alert('소감이 수정 저장되었습니다.');
   }
   renderViewer();
-  try{ renderQuestMap(); renderChalScore(); }catch(e){}
+  try{ renderQuestMap(); renderChalScore(); renderMyImpressions(); }catch(e){}
 }
 
 function closeViewer(){
