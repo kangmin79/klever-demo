@@ -4383,15 +4383,12 @@ function renderMyImpressions(){
   }
   if(!rows.length){ el.innerHTML = ''; return; }
   el.innerHTML = `
-    <div class="section-head" style="margin-top:48px;"><div class="section-title"><em>내가 남긴 한 줄 소감</em> · 별이 챌린지</div></div>
+    <div class="section-head" style="margin-top:48px;"><div class="section-title"><em>내가 남긴 생각</em> · 별이와 함께 읽으며</div></div>
     <div style="display:grid;gap:14px;">
       ${rows.map(r=>`
         <div style="background:var(--bg-card);border:1px solid var(--border);border-left:4px solid var(--gold,#b8860b);border-radius:14px;padding:18px 20px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-            <div style="font-weight:800;font-size:15px;">${esc(r.title)} <span style="font-weight:500;color:var(--text-sub);font-size:13px;">· ${esc(r.author)}</span></div>
-            ${r.score?`<div style="font-size:12px;color:var(--text-sub);white-space:nowrap;">퀴즈 ${r.score.ok}/${r.score.total} · <b style="color:var(--gold,#b8860b);">${r.score.pts}점</b></div>`:''}
-          </div>
-          <div style="font-size:14px;line-height:1.7;color:var(--text);font-style:italic;">“${esc(r.impression)}”</div>
+          <div style="font-weight:800;font-size:14px;margin-bottom:9px;">${esc(r.title)} <span style="font-weight:500;color:var(--text-sub);font-size:13px;">· ${esc(r.author)}</span></div>
+          <div style="font-size:15px;line-height:1.75;color:var(--text);">“${esc(r.impression)}”</div>
         </div>`).join('')}
     </div>`;
 }
