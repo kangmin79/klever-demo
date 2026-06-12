@@ -600,7 +600,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           <div class="booktabs">
             <button class="btab" data-sbt="cls" onclick="secTab('cls')" style="display:none">북스타 고전</button>
             <button class="btab" data-sbt="lib" onclick="secTab('lib')">도서관 내</button>
-            <button class="btab" data-sbt="sm" onclick="secTab('sm')">세명대 소장</button>
+            <button class="btab" data-sbt="sm" onclick="secTab('sm')">세명대 전자책</button>
             <button class="btab on" data-sbt="nat" onclick="secTab('nat')">국중 추천</button>
             <button class="btab" data-sbt="isbn" onclick="secTab('isbn')">ISBN 입력</button>
           </div>
@@ -1378,7 +1378,7 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
     return `<div class="cand ${added?'on':''}">
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
-        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?'<span class="sig-own">🟢 세명대 소장</span>':own?'<span class="sig-own">🟢 소장중</span>':''}</div></div>
+        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?'<span class="sig-own">🟢 세명대 전자책</span>':own?'<span class="sig-own">🟢 소장중</span>':''}</div></div>
       <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
 }
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
