@@ -4166,7 +4166,7 @@ function renderSceneChat(sc, body, info){
     setTimeout(()=>{
       _bxPendingReveal = false; _bxShownCur = reveal;
       if(currentMode==='challenge' && CHAT_QUIZ_BOOKS.has(currentBook.id)){ renderViewer(); _bxScrollBottom(); }
-    }, 850);
+    }, 1500);
   }
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
