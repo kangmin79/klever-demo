@@ -821,6 +821,32 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .quiz-opt.correct{background:rgba(46,184,114,0.15);border-color:var(--success);}
 .quiz-opt.wrong{background:rgba(231,76,60,0.15);border-color:var(--danger);}
 
+/* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
+.bx-chat{background:#b2c7d9;border-radius:14px;padding:14px 12px;}
+body.dark .bx-chat{background:#26333f;}
+.bx-row{display:flex;margin-bottom:13px;align-items:flex-end;gap:8px;}
+.bx-row.me{flex-direction:row-reverse;}
+.bx-ava{width:38px;height:38px;border-radius:13px;flex:0 0 38px;display:flex;align-items:center;justify-content:center;font-size:19px;background:linear-gradient(135deg,#fbbf24,#6366f1);box-shadow:0 2px 6px rgba(0,0,0,.18);}
+.bx-col{display:flex;flex-direction:column;max-width:82%;}
+.bx-name{font-size:11px;font-weight:700;color:#3a4a5a;margin:0 0 4px 2px;}
+body.dark .bx-name{color:#c5d2dd;}
+.bx-msg{padding:10px 13px;border-radius:15px;font-size:13.5px;line-height:1.62;word-break:break-word;box-shadow:0 1px 2px rgba(0,0,0,.08);margin-bottom:5px;}
+.bx-col .bx-msg:last-child{margin-bottom:0;}
+.bx-msg.bot{background:#fff;color:#1c1c1c;border-top-left-radius:5px;}
+.bx-msg.me{background:#fae100;color:#191400;border-top-right-radius:5px;}
+.bx-msg.react.ok{background:#e9f8ef;}
+.bx-msg.react.no{background:#fdeeec;}
+.bx-tag{display:inline-block;font-size:10px;font-weight:800;color:#6366f1;background:rgba(99,102,241,.13);padding:1px 7px;border-radius:6px;margin-right:6px;vertical-align:middle;}
+.bx-expl{margin-top:7px;padding-top:7px;border-top:1px dashed rgba(0,0,0,.13);font-size:12.5px;color:#414b40;line-height:1.55;}
+.bx-chips{display:flex;flex-direction:column;gap:7px;margin:0 0 14px 46px;}
+.bx-chip{text-align:left;padding:11px 14px;border-radius:13px;border:1.5px solid #d4dde6;background:#fff;color:#222;font:inherit;font-size:13px;cursor:pointer;transition:border-color .12s,background .12s,transform .12s;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.bx-chip:hover{border-color:#6366f1;background:#f3f4ff;transform:translateY(-1px);}
+.bx-typing{margin:0 0 10px 46px;font-size:12px;color:#3a4a5a;}
+body.dark .bx-typing{color:#c5d2dd;}
+.bx-inputbar{display:flex;gap:8px;margin-top:4px;}
+.bx-inputbar input{flex:1;padding:11px 14px;border-radius:20px;border:1.5px solid #cfd9e2;font:inherit;font-size:13.5px;background:#fff;color:#1c1c1c;}
+.bx-inputbar button{flex:0 0 auto;padding:0 18px;border-radius:20px;border:none;background:#fae100;color:#3a3000;font-weight:800;font-size:13px;cursor:pointer;}
+
 /* 챌린지 마무리 액션 (선택 문장 / 퀴즈 만들기 / 한 줄 소감) */
 .quest-actions{background:linear-gradient(135deg,var(--primary-bg),var(--bg-card));border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:20px;}
 .quest-actions h4{font-size:14px;font-weight:800;margin-bottom:12px;color:var(--primary);}
@@ -3943,6 +3969,8 @@ function renderSceneChallenge(sc, body, info){
   const answered = Object.keys(_sc.ans).length;
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
   info.innerHTML = `결정적 장면 챌린지 · <b>${i<n ? `장면 ${i+1}/${n}` : '한 줄 소감'}</b> · 퀴즈 ${answered}/${total}`;
+  // 별이 챗봇 퀴즈 — 우선 '운수 좋은 날' 1권만 적용(확인 후 확대)
+  if(CHAT_QUIZ_BOOKS.has(currentBook.id)){ return renderSceneChat(sc, body, i, n, total, okCnt); }
   if(i < n){
     const s = sc.scenes[i];
     const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
@@ -3986,6 +4014,109 @@ function renderSceneChallenge(sc, body, info){
       </div>`;
   }
 }
+/* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
+const CHAT_QUIZ_BOOKS = new Set(['kr-현진건-운수-좋은-날']);
+function _bxBot(msgs){ // 연속 봇 말풍선 한 묶음 (아바타·이름 1회)
+  return `<div class="bx-row bot"><div class="bx-ava">⭐</div><div class="bx-col"><div class="bx-name">별이</div>`
+    + msgs.map(m=>`<div class="bx-msg bot${m.cls?(' '+m.cls):''}">${m.html}</div>`).join('') + `</div></div>`;
+}
+function _bxMe(text){ return `<div class="bx-row me"><div class="bx-msg me">${esc(text)}</div></div>`; }
+function _bxQHtml(q){
+  const m = q.q.match(/^\[(.+?)\]\s*([\s\S]*)$/);
+  const tag = m ? `<span class="bx-tag">${esc(m[1])}</span>` : '';
+  return tag + esc(m ? m[2] : q.q);
+}
+function renderSceneChat(sc, body, i, n, total, okCnt){
+  let chat = '';
+  if(i < n){
+    const s = sc.scenes[i];
+    const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
+    const opener = (i===0)
+      ? `안녕, 난 <b>별이</b>야 ⭐ 너랑 같이 『${esc(sc.bookTitle)}』의 결정적인 장면들을 읽어 볼 거야. 왼쪽 글을 먼저 읽고, 내 질문에 답해 줘!`
+      : `좋아, 다음 장면이야 — <b>${esc(s.title)}</b>. 왼쪽 글을 읽고 답해 줄래?`;
+    // 첫 미응답 문제 = 활성
+    let cur = 0; while(cur < s.quiz.length && _sc.ans[i+'-'+cur]) cur++;
+    // 봇 묶음을 누적: opener + (각 문제, 정답 반응) 순서로
+    let pending = [{html:opener}];          // 현재 쌓이는 봇 말풍선
+    const flush = ()=>{ if(pending.length){ chat += _bxBot(pending); pending = []; } };
+    for(let qi=0; qi<s.quiz.length; qi++){
+      const q = s.quiz[qi];
+      pending.push({html:_bxQHtml(q)});      // 별이: 질문
+      const got = _sc.ans[i+'-'+qi];
+      if(got){
+        flush();
+        chat += _bxMe(q.opts[got.pick]);     // 나: 선택
+        const react = got.ok
+          ? {cls:'react ok', html:`정답이에요! 🎉 <b>+10점</b>` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')}
+          : {cls:'react no', html:`앗, 아쉬워요. 정답은 <b>“${esc(q.opts[q.correct])}”</b>예요.` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')};
+        pending.push(react);                 // 별이: 반응+해설 (다음 문제와 같은 묶음)
+      } else if(qi === cur){
+        flush();                             // 활성 문제까지만 노출
+        chat += `<div class="bx-chips">${q.opts.map((opt,oi)=>`<button class="bx-chip" onclick="chatPick(${i},${qi},${oi})">${esc(opt)}</button>`).join('')}</div>`;
+        pending = null; break;
+      }
+    }
+    if(pending){ // 전 문항 완료
+      pending.push({html:`이 장면은 다 풀었어! 👏 아래 <b>다음 장면 ▶</b> 버튼을 눌러 줘.`});
+      flush();
+    }
+    body.innerHTML = `
+      <div class="viewer-pane left">
+        <div class="viewer-pane-label">${esc(s.label)} — ${esc(s.title)}</div>
+        ${ex}
+        <div style="margin-top:18px;padding:14px 16px;border-left:3px solid var(--gold,#b8860b);background:rgba(184,134,11,.07);border-radius:0 10px 10px 0;font-size:.93em;line-height:1.75;">${esc(s.why)}</div>
+      </div>
+      <div class="viewer-pane right">
+        <div class="viewer-pane-label">별이와 함께 — 장면 ${i+1} 퀴즈</div>
+        <div class="bx-chat">${chat}</div>
+      </div>`;
+  } else {
+    const done = _sc.submitted;
+    chat += _bxBot([
+      {html:`여기까지 잘 따라왔어! 👏 장면 퀴즈는 <b>${okCnt}/${total}</b>문항 맞혔어.`},
+      {html:esc(sc.finalPrompt)}
+    ]);
+    if(done){
+      chat += _bxMe(_sc.impression);
+      chat += _bxBot([{cls:'react ok', html:`고마워, 잘 읽었어 ⭐ 네 소감은 AI 성장 리포트의 재료가 돼. <b>다른 책도 별이랑 같이 읽어 볼래?</b>`}]);
+    }
+    chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="여기에 한 줄 소감을 써 줘 (5자 이상)" value="${esc(_sc.impression)}" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">보내기</button></div>`;
+    body.innerHTML = `
+      <div class="viewer-pane left">
+        <div class="viewer-pane-label">챌린지 정리 — ${esc(sc.bookTitle)} · ${esc(sc.author)}</div>
+        <p style="line-height:1.8;">${esc(sc.intro)}</p>
+        <div style="margin-top:16px;padding:14px 16px;border-radius:10px;background:rgba(30,60,120,.06);line-height:1.8;">
+          <b>장면 퀴즈 결과</b><br>정답 ${okCnt} / ${total}문항
+        </div>
+      </div>
+      <div class="viewer-pane right">
+        <div class="viewer-pane-label">별이와 함께 — 한 줄 소감</div>
+        <div class="bx-chat">${chat}</div>
+      </div>`;
+  }
+}
+function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
+function chatPick(si, qi, oi){
+  const sc = (typeof CHALLENGE_SCENES!=='undefined') ? CHALLENGE_SCENES[currentBook.id] : null;
+  if(!sc || _sc.ans[si+'-'+qi]) return;
+  const q = sc.scenes[si].quiz[qi];
+  const ok = (q.correct === oi);
+  _sc.ans[si+'-'+qi] = {pick:oi, ok}; _scSave();
+  if(ok) addScore(10, '장면 퀴즈', `${sc.bookTitle} 장면${si+1} Q${qi+1}`);
+  renderViewer(); _bxScrollBottom();
+  try{ renderChalScore(); }catch(e){}
+}
+function chatSubmitImpression(){
+  const t = document.getElementById('bxImpr'); if(!t) return;
+  const v = t.value.trim();
+  if(v.length < 5){ alert('소감을 5자 이상 적어 줘!'); return; }
+  const first = !_sc.submitted;
+  _sc.impression = v; _sc.submitted = true; _scSave();
+  if(first) addScore(50, '한 줄 소감', CHALLENGE_SCENES[currentBook.id].bookTitle);
+  renderViewer(); _bxScrollBottom();
+  try{ renderQuestMap(); renderChalScore(); }catch(e){}
+}
+
 function checkSceneQuiz(el, si, qi, oi){
   const sc = (typeof CHALLENGE_SCENES !== 'undefined') ? CHALLENGE_SCENES[currentBook.id] : null;
   if(!sc) return;
