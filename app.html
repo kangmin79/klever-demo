@@ -822,6 +822,8 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .quiz-opt.wrong{background:rgba(231,76,60,0.15);border-color:var(--danger);}
 
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
+.bx-hl{background:linear-gradient(transparent 55%, #ffe96b 55%);border-radius:2px;padding:0 1px;transition:background .3s;}
+body.dark .bx-hl{background:linear-gradient(transparent 55%, rgba(212,169,59,.6) 55%);}
 .viewer-pane.right.bx-pane{padding:0;}                 /* 채팅창이 패널 끝까지 꽉 차게 */
 .bx-chat{background:#b2c7d9;padding:16px 14px;min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;}
 body.dark .bx-chat{background:#26333f;}
@@ -4028,6 +4030,33 @@ function renderSceneChallenge(sc, body, info){
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
 const CHAT_QUIZ_BOOKS = new Set(['kr-현진건-운수-좋은-날']);
 let _bxTyping = false;   // 답변 직후 "별이가 입력 중…" 잠깐 표시 후 다음 질문 노출
+/* 질문별 하이라이트 — 왼쪽 원문에서 형광펜 칠 문장(해당 장면 excerpt의 정확한 부분 문자열) */
+const BX_HL = {
+ 'kr-현진건-운수-좋은-날': [
+  ["설렁탕 국물이 마시고 싶다고 남편을 졸랐다",
+   "이상하게도 꼬리를 맞물고 덤비는 이 행운 앞에 조금 겁이 났음이다",
+   "오늘은 나가지 말아요. 제발 덕분에 집에 붙어 있어요. 내가 이렇게 아픈데",
+   "그 돈벌 용기가 병자에 대한 염려를 사르고 말았다",
+   "설마 오늘 내로 어떠랴 싶었다"],
+  ["이윽고 끄는 이의 다리는 무거워졌다. 자기 집 가까이 다다른 까닭이다",
+   "병자의 움쑥 들어간 눈이 원망하는 듯이 자기를 노리는 듯하였다",
+   "다리를 재게 놀려야만 쉴새없이 자기의 머리에 떠오르는 모든 근심과 걱정을 잊을 듯이",
+   "이 누그러움은 안심에서 오는 게 아니요 자기를 덮친 무서운 불행을 빈틈없이 알게 될 때가 박두한 것을 두리는 마음에서 오는 것이다",
+   "누구든지 나를 좀 잡아 다고, 구해 다고 하는 듯하였다"],
+  ["김첨지는 취중에도 설렁탕을 사가지고 집에 다다랐다",
+   "",
+   "죽기는 누가 죽어. 죽기는 왜 죽어, 생때같이 살아만 있단다",
+   "설렁탕을 사다 놓았는데 왜 먹지를 못하니, 왜 먹지를 못하니",
+   "괴상하게도 오늘은! 운수가, 좋더니만"]
+ ]
+};
+function _bxHlExcerpt(excerpt, hl){     // excerpt를 문단별 esc + hl 문장에 형광펜
+  return excerpt.split(/\n{2,}/).map(p=>{
+    let e = esc(p);
+    if(hl){ const eh = esc(hl); if(e.includes(eh)) e = e.split(eh).join('<mark class="bx-hl">'+eh+'</mark>'); }
+    return `<p>${e}</p>`;
+  }).join('');
+}
 function _bxTypingRow(){
   return `<div class="bx-row bot"><div class="bx-ava">⭐</div><div class="bx-col"><div class="bx-name">별이</div>`
     + `<div class="bx-msg bot bx-typing-bubble"><span class="bx-dot"></span><span class="bx-dot"></span><span class="bx-dot"></span></div></div></div>`;
@@ -4090,7 +4119,9 @@ function renderSceneChat(sc, body, info){
     }
     flush();                                  // (방어) 남은 봇 묶음
     const s = scenes[activeSi];
-    const ex = s.excerpt.split(/\n{2,}/).map(p=>`<p>${esc(p)}</p>`).join('');
+    const activeQi = allDone ? -1 : flat[cur].qi;
+    const hl = (BX_HL[currentBook.id] && BX_HL[currentBook.id][activeSi] && BX_HL[currentBook.id][activeSi][activeQi]) || '';
+    const ex = _bxHlExcerpt(s.excerpt, hl);
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">${esc(s.label)} — ${esc(s.title)}</div>
@@ -4119,9 +4150,13 @@ function renderSceneChat(sc, body, info){
       </div>
       <div class="viewer-pane right bx-pane"><div class="bx-chat">${chat}</div></div>`;
   }
-  // 좌측 원문: 같은 장면이면 스크롤 유지, 장면이 바뀌면 맨 위부터
+  // 좌측 원문: 형광펜 문장이 보이도록 스크롤. 없으면 같은 장면=유지 / 장면 바뀜=맨 위
   const leftEl = body.querySelector('.viewer-pane.left');
-  if(leftEl) leftEl.scrollTop = (activeSi === _bxLastSi) ? _bxLeftScroll : 0;
+  if(leftEl){
+    const mk = leftEl.querySelector('.bx-hl');
+    if(mk){ const r1 = mk.getBoundingClientRect(), r0 = leftEl.getBoundingClientRect(); leftEl.scrollTop += (r1.top - r0.top) - 90; }
+    else { leftEl.scrollTop = (activeSi === _bxLastSi) ? _bxLeftScroll : 0; }
+  }
   _bxLastSi = activeSi;
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
