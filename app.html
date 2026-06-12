@@ -857,6 +857,32 @@ body.dark .my-hero{background:linear-gradient(135deg,#0f172a,#1e293b);}
 .mh-n{font-size:30px;font-weight:800;color:#fff;line-height:1;letter-spacing:-.5px;}
 .mh-u{font-size:16px;font-weight:700;}
 .mh-l{font-size:12px;color:#cbd5e1;margin-top:8px;}
+/* ── 나의 독서 리듬 (실측 데이터만) ── */
+.rhythm-card{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:22px 24px;margin-top:16px;}
+.rhythm-title{font-size:13px;font-weight:800;color:var(--text-sub);letter-spacing:.02em;display:flex;align-items:center;gap:7px;}
+.rhythm-chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;}
+.rhythm-chip{background:var(--bg-input);border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--text-sub);}
+.rhythm-chip b{color:var(--text);}
+.rhythm-bars{display:flex;align-items:flex-end;gap:6px;margin:16px 2px 2px;}
+.rhythm-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;}
+.rhythm-bar .rb-fill{width:100%;max-width:34px;border-radius:6px 6px 2px 2px;background:var(--gold);opacity:.9;}
+.rhythm-bar.zero .rb-fill{background:var(--border);}
+.rhythm-bar .rb-day{font-size:10.5px;color:var(--text-light);font-weight:700;}
+.rhythm-bar.today .rb-day{color:var(--gold);}
+.rhythm-books{margin-top:14px;border-top:1px solid var(--border);padding-top:6px;}
+.rhythm-book{display:flex;align-items:center;gap:12px;padding:9px 0;}
+.rhythm-book .rbk-t{flex:0 0 auto;max-width:42%;font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rhythm-book .rbk-bar{flex:1;height:7px;border-radius:99px;background:var(--bg-input);overflow:hidden;}
+.rhythm-book .rbk-fill{height:100%;border-radius:99px;background:var(--gold);}
+.rhythm-book .rbk-pct{flex:0 0 38px;text-align:right;font-size:11.5px;font-weight:800;color:var(--text-sub);}
+.rhythm-book .rbk-go{flex:0 0 auto;background:var(--bg-input);color:var(--text);border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.rhythm-book .rbk-go:hover{background:var(--primary-bg);}
+.rhythm-book .rbk-done{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#1d6b48;white-space:nowrap;}
+body.dark .rhythm-book .rbk-done{color:#6fd9a6;}
+.rhythm-empty{font-size:12.5px;color:var(--text-light);padding:10px 0 2px;line-height:1.7;}
+/* 완독 인증 자동 제안 모달 */
+.bs-cert-ta{width:100%;min-height:76px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13.5px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;margin-top:12px;background:var(--bg-input);color:var(--text);}
+.bs-cele-btn.ghost{background:var(--bg-input);color:var(--text-sub);margin-top:8px;}
 
 /* ── 테스트 계정 칩 + 선택 모달 ── */
 .bx-acc-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
@@ -1637,6 +1663,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <!-- 상단 요약 히어로 (실측 3숫자) -->
   <div class="my-hero" id="myHero"></div>
 
+  <!-- 나의 독서 리듬 (실측: 읽기시간·연속일·책별 진행률) -->
+  <div id="readingRhythm"></div>
+
   <!-- (정돈 2026-06-12) 실측 데이터 연결 전까지 숨김 — 컨테이너 id는 유지(렌더 함수 안전) -->
   <div style="display:none">
     <span id="statScore"></span><span id="statBooks"></span><span id="statTime"></span><span id="statRank"></span>
@@ -2232,6 +2261,7 @@ function saveScrollPos(){
       const pct=max>0?Math.min(100,Math.round((el.scrollTop/max)*100)):0;
       const prev=(_chalRead(currentBook.id)||{}).read_pct||0;
       if(pct>prev){ _chalMerge(currentBook.id,{read_pct:pct}); bxUpsertRead(currentBook.id,pct); try{ renderQuestMap(); }catch(e){} }
+      if(pct>=90) maybeCertPrompt(currentBook.id);   // 90% 도달 → 완독 인증 제안(책당 1회)
     }
   }
 }
@@ -2720,6 +2750,38 @@ function bsCelebrate(o){
   d.addEventListener('click',e=>{ if(e.target===d) d.remove(); });
   (document.fullscreenElement||document.body).appendChild(d);
 }
+/* ── 완독 인증 자동 제안 (완독 모드 90% 도달 시, 책당 1회만) ── */
+function maybeCertPrompt(bookId){
+  const r=_chalRead(bookId)||{};
+  if(r.submitted || r.cert_prompted) return;            // 이미 인증·이미 물어봄
+  if(document.getElementById('bsCertPrompt')) return;
+  _chalMerge(bookId, {cert_prompted:true});             // 같은 책에 다시 묻지 않음
+  const b=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===bookId):null;
+  const d=document.createElement('div'); d.id='bsCertPrompt'; d.className='bs-cele';
+  d.innerHTML=`<div class="bs-cele-card">
+    <div class="bs-cele-badge">📖</div>
+    <div class="bs-cele-title">거의 다 읽었어요!</div>
+    <div class="bs-cele-sub">『${esc(cleanT(b?b.title:''))}』 ${Math.min(100,r.read_pct||90)}% 지점<br>한 줄 소감을 남기면 <b>완독 인증 +50점</b></div>
+    <textarea class="bs-cert-ta" id="certPromptText" placeholder="이 책에서 가장 기억에 남는 한 가지…"></textarea>
+    <button class="bs-cele-btn" onclick="certPromptSubmit('${esc(bookId)}')">✔ 완독 인증하기</button>
+    <button class="bs-cele-btn ghost" onclick="document.getElementById('bsCertPrompt')?.remove()">나중에 할게요</button>
+  </div>`;
+  d.addEventListener('click',e=>{ if(e.target===d) d.remove(); });
+  (document.fullscreenElement||document.body).appendChild(d);
+}
+function certPromptSubmit(bookId){
+  const v=((document.getElementById('certPromptText')||{}).value||'').trim();
+  if(v.length<5){ readerToast('소감을 5자 이상 적어 주세요'); return; }
+  const next=_chalMerge(bookId, {impression:v, submitted:true});
+  bxUpsertResult(bookId, next);
+  document.getElementById('bsCertPrompt')?.remove();
+  const b=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===bookId):null;
+  bsCelebrate({
+    title:`『${esc(cleanT(b?b.title:''))}』<br>완독 인증 완료!`,
+    rows:[`한 줄 소감 <b>+50점</b>`, `독서 이력에 추가 — 마이 페이지에서 확인`],
+  });
+  try{ renderQuestMap(); renderMyImpressions(); renderReadingRhythm(); }catch(e){}
+}
 /* ── 퀴즈 정답/오답 인라인 피드백 (alert 대체) ── */
 function quizFeedback(el, ok, msg){
   const block=el.closest('.quiz-block')||el.parentElement;
@@ -2899,7 +2961,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyHero(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -3825,7 +3887,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260613b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260613c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4644,6 +4706,54 @@ function renderMyHero(){
       <div><div class="mh-n">${st.rate}<span class="mh-u">%</span></div><div class="mh-l">퀴즈 정답률</div></div>
       <div><div class="mh-n">${st.score.toLocaleString()}</div><div class="mh-l">누적 점수</div></div>
     </div>`;
+}
+/* 나의 독서 리듬 — 뷰어가 측정한 실데이터(읽기시간·streak·책별 read_pct)만 표시, 가짜 없음 */
+function _fmtMins(m){ m=Math.max(0,Math.round(m||0)); return m>=60 ? Math.floor(m/60)+'시간'+(m%60?' '+(m%60)+'분':'') : m+'분'; }
+function renderReadingRhythm(){
+  const el=document.getElementById('readingRhythm'); if(!el) return;
+  const rt=readerStats.readingTime||{total:0,days:{}};
+  const today=rt.days[todayKey()]||0;
+  const streak=readerStats.streak?.count||0;
+  // 최근 7일 막대 (키 형식 = todayKey와 동일)
+  const names=['일','월','화','수','목','금','토'];
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    days.push({k, name:names[d.getDay()], v:rt.days[k]||0, today:i===0});
+  }
+  const max=Math.max(...days.map(d=>d.v), 1);
+  // 책별 진행률 (완독 모드 read_pct — 계정별 저장값)
+  const rows=[];
+  (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{
+    const r=_chalRead(b.id); const pct=r?.read_pct||0;
+    if(pct>0) rows.push({id:b.id, title:b.title, pct:Math.min(100,pct), ts:r.ts||0, done:pct>=95});
+  });
+  rows.sort((a,b)=>(a.done-b.done)||(b.ts-a.ts));   // 읽는 중 먼저, 최근 읽은 순
+  const shown=rows.slice(0,6);
+  const hasAny = (rt.total||0)>0 || rows.length>0;
+  el.innerHTML=`<div class="rhythm-card">
+    <div class="rhythm-title">📈 나의 독서 리듬</div>
+    ${hasAny?`
+    <div class="rhythm-chips">
+      <span class="rhythm-chip">오늘 <b>${_fmtMins(today)}</b></span>
+      <span class="rhythm-chip">🔥 연속 <b>${streak}일</b></span>
+      <span class="rhythm-chip">누적 <b>${_fmtMins(rt.total||0)}</b></span>
+    </div>
+    <div class="rhythm-bars">${days.map(d=>`
+      <div class="rhythm-bar${d.v?'':' zero'}${d.today?' today':''}" title="${d.k} · ${d.v}분">
+        <div class="rb-fill" style="height:${d.v?Math.max(8,Math.round(d.v/max*48)):3}px"></div>
+        <div class="rb-day">${d.today?'오늘':d.name}</div>
+      </div>`).join('')}</div>
+    ${shown.length?`<div class="rhythm-books">${shown.map(r=>`
+      <div class="rhythm-book">
+        <div class="rbk-t">${esc(cleanT(r.title))}</div>
+        <div class="rbk-bar"><div class="rbk-fill" style="width:${r.pct}%"></div></div>
+        <div class="rbk-pct">${r.pct}%</div>
+        ${r.done?`<span class="rbk-done">✔ 완독</span>`:`<button class="rbk-go" onclick="openViewer('${esc(r.id)}','full')">이어 읽기 →</button>`}
+      </div>`).join('')}${rows.length>shown.length?`<div class="rhythm-empty">외 ${rows.length-shown.length}권 진행 중</div>`:''}</div>`:''}
+    `:`<div class="rhythm-empty">아직 측정된 독서 기록이 없어요.<br>책을 열어 읽기 시작하면 <b>읽은 시간 · 연속 일수 · 책별 진행률</b>이 여기에 자동으로 기록됩니다.</div>`}
+  </div>`;
 }
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
 function renderMyImpressions(){
