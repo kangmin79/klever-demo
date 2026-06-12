@@ -5410,8 +5410,25 @@ window.addEventListener('keydown', (e) => {
     const wrap=document.createElement('div');wrap.className='hwc-row bot';
     wrap.innerHTML=`<div class="hwc-cards">${results.map((b,i)=>cardHtml(b,start+i)).join('')}</div>`;
     el('hwcBody').appendChild(wrap);
-    scroll();   // 별이는 대화창 안에서 완결 — 다른 페이지로 점프하지 않음
+    followRow();   // 마음에 드는 게 없을 때 — 한 번의 탭으로 재추천 (대화창 안에서 완결)
+    scroll();
   }
+  // 추천 직후 후속 칩 — 라벨은 짧게, 실제 메시지엔 이미 보여준 제목 제외 조건을 실어 보냄
+  const FOLLOWS=[
+    {label:'🔄 다른 책 보여주세요', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 같은 취향으로 다른 책을 추천해 주세요.`},
+    {label:'더 가볍게', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 더 가볍고 부담 없이 읽히는 책으로 추천해 주세요.`},
+    {label:'분야 바꿔서', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 전혀 다른 분야의 책으로 새로 추천해 주세요.`}];
+  function followRow(){
+    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());
+    const r=document.createElement('div');r.className='hwc-chips hwc-follow';
+    r.innerHTML=FOLLOWS.map((f,i)=>`<span class="hwc-chip" onclick="hwcFollow(${i})">${esc(f.label)}</span>`).join('');
+    el('hwcBody').appendChild(r);
+  }
+  window.hwcFollow=function(i){
+    const f=FOLLOWS[i]; if(!f)return;
+    const titles=books.slice(-15).map(b=>_core(b.title)).filter(Boolean).join(', ');
+    doSend(f.make(titles), f.label.replace('🔄 ',''));
+  };
   function chipsRow(){
     const r=document.createElement('div');r.className='hwc-chips';r.id='hwcChips';
     r.innerHTML=CHIPS.map(c=>`<span class="hwc-chip" onclick="hwcChip('${c.replace(/'/g,"\\'")}')">${esc(c)}</span>`).join('');
@@ -5435,9 +5452,10 @@ window.addEventListener('keydown', (e) => {
   window.hwcChip=function(t){ const c=el('hwcChips'); if(c)c.remove(); doSend(t); };
   window.hwcSend=function(){ const i=el('hwcInput'); const t=i.value.trim(); if(!t)return; i.value=''; hwcGrow(i); const c=el('hwcChips'); if(c)c.remove(); doSend(t); };
 
-  async function doSend(text){
+  async function doSend(text,shown){
     if(busy)return; busy=true; el('hwcSend').disabled=true; lastQ=text;
-    addUser(text); msgs.push({role:'user',content:text}); typing(true);
+    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());   // 직접 입력 시에도 후속 칩 정리
+    addUser(shown||text); msgs.push({role:'user',content:text}); typing(true);
     try{
       const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
       const d=await r.json(); typing(false);
