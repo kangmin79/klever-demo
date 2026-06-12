@@ -827,8 +827,8 @@ body.dark .bx-hl{background:linear-gradient(transparent 55%, rgba(212,169,59,.6)
 .viewer-pane.right.bx-pane{padding:0;}                 /* 채팅창이 패널 끝까지 꽉 차게 */
 .bx-chat{background:#b2c7d9;padding:16px 14px;min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;}
 body.dark .bx-chat{background:#26333f;}
-.bx-row{display:flex;margin-bottom:13px;align-items:flex-end;gap:8px;}
-.bx-row.me{flex-direction:row-reverse;}
+.bx-row{display:flex;margin-bottom:13px;align-items:flex-start;gap:8px;}  /* 아바타=묶음 맨 위(카톡식) */
+.bx-row.me{flex-direction:row-reverse;align-items:flex-end;}
 .bx-ava{width:38px;height:38px;border-radius:13px;flex:0 0 38px;display:flex;align-items:center;justify-content:center;font-size:19px;background:linear-gradient(135deg,#fbbf24,#6366f1);box-shadow:0 2px 6px rgba(0,0,0,.18);}
 .bx-col{display:flex;flex-direction:column;max-width:82%;}
 .bx-name{font-size:11px;font-weight:700;color:#3a4a5a;margin:0 0 4px 2px;}
