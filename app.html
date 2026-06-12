@@ -2380,7 +2380,8 @@ function setupHighlightHandlers(){
   document.addEventListener('mouseup', (e) => {
     const popup = document.getElementById('hlPopup');
     if(!popup) return;
-    if(e.target.closest('#hlPopup') || e.target.closest('.hl-note-box')) return;   // 팝업·메모박스 조작 중엔 유지
+    const tgt = (e.target && e.target.closest) ? e.target : null;   // target이 요소가 아닐 수 있음(document 등)
+    if(tgt && (tgt.closest('#hlPopup') || tgt.closest('.hl-note-box'))) return;   // 팝업·메모박스 조작 중엔 유지
     if(currentMode !== 'full'){ popup.style.display = 'none'; return; }
     const sel = window.getSelection();
     const text = sel ? sel.toString().trim() : '';
@@ -2397,9 +2398,10 @@ function setupHighlightHandlers(){
   });
   // 본문 형광펜 클릭 → 메모 보기·수정·지우기 / 박스 밖 클릭 → 닫기
   document.addEventListener('click', (e) => {
-    const mk = e.target.closest('mark.hl');
+    const tgt = (e.target && e.target.closest) ? e.target : null;
+    const mk = tgt && tgt.closest('mark.hl');
     if(mk && mk.dataset.hlts){ hlMarkMenu(mk, e.clientX, e.clientY); return; }
-    if(!e.target.closest('.hl-note-box')) closeNoteBox();
+    if(!(tgt && tgt.closest('.hl-note-box'))) closeNoteBox();
   });
 }
 function _elOf(n){ return n && (n.nodeType === 1 ? n : n.parentElement); }
@@ -3887,7 +3889,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260613c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260613d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
