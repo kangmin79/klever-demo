@@ -517,15 +517,16 @@ body.dark .hub-node-icon{color:var(--gold);}
 .quest-slot-icon{font-size:18px;margin-bottom:2px;}
 .quest-slot-num{font-size:10px;opacity:0.7;}
 .quest-slot-book{font-size:11px;line-height:1.2;margin-top:2px;}
-/* Quest 슬롯 하단 통계 — 이모지 없이 진행 막대로 (색은 슬롯 글자색 상속: 완료=흰색/진행=파랑) */
-.qs-stats{width:100%;margin-top:6px;font-size:10.5px;line-height:1.4;}
-.qs-bar-row{display:flex;align-items:center;gap:5px;}
-.qs-k{font-weight:700;opacity:.85;}
-.qs-bar{flex:1;height:5px;border-radius:3px;background:rgba(150,150,150,.45);overflow:hidden;}
-.qs-bar-fill{height:100%;background:currentColor;border-radius:3px;transition:width .4s;}
-.qs-v{font-weight:800;font-variant-numeric:tabular-nums;min-width:28px;text-align:right;}
-.qs-quiz{margin-top:5px;font-weight:600;opacity:.95;}
-.qs-empty{font-size:11px;opacity:.8;}
+/* Quest 슬롯 하단 통계 — 어두운 반투명 패널 + 흰 글씨(슬롯 색 무관 항상 또렷) + 진행 막대 */
+.qs-stats{width:100%;box-sizing:border-box;margin-top:7px;background:rgba(0,0,0,.24);border-radius:10px;padding:8px 11px;color:#fff;font-size:10.5px;line-height:1.4;}
+.qs-bar-row{display:flex;align-items:center;gap:6px;}
+.qs-k{font-weight:700;opacity:.9;}
+.qs-bar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.28);overflow:hidden;}
+.qs-bar-fill{height:100%;background:#fde68a;border-radius:3px;transition:width .4s;}
+.qs-v{font-weight:800;font-variant-numeric:tabular-nums;min-width:30px;text-align:right;}
+.qs-quiz{margin-top:6px;font-weight:700;}
+.qs-quiz b{color:#fde68a;}
+.qs-empty{font-size:11px;opacity:.85;}
 
 /* ═══════════════════════════════════════════════════════════
    8. 점수 카드 / 통계
