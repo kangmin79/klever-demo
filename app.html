@@ -821,6 +821,18 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .quiz-opt.correct{background:rgba(46,184,114,0.15);border-color:var(--success);}
 .quiz-opt.wrong{background:rgba(231,76,60,0.15);border-color:var(--danger);}
 
+/* ── 마이페이지 상단 요약 히어로 (실측 3숫자) ── */
+.my-hero{background:linear-gradient(135deg,#1e293b,#334155);border-radius:18px;padding:26px 28px;color:#fff;}
+body.dark .my-hero{background:linear-gradient(135deg,#0f172a,#1e293b);}
+.my-hero-name{font-size:15px;font-weight:800;color:#fff;opacity:.92;display:flex;align-items:center;gap:7px;}
+.my-hero-msg{font-size:14px;color:#cbd5e1;margin:5px 0 20px;line-height:1.5;}
+.my-hero-msg b{color:#fde68a;}
+.my-hero-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.my-hero-nums>div{background:rgba(255,255,255,.07);border-radius:13px;padding:18px 10px;text-align:center;}
+.mh-n{font-size:30px;font-weight:800;color:#fff;line-height:1;letter-spacing:-.5px;}
+.mh-u{font-size:16px;font-weight:700;}
+.mh-l{font-size:12px;color:#cbd5e1;margin-top:8px;}
+
 /* ── 테스트 계정 칩 + 선택 모달 ── */
 .bx-acc-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
 .bx-acc-chip:hover{border-color:var(--primary);}
@@ -1545,45 +1557,18 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <h1 class="page-title">마이 페이지</h1>
   <p class="page-subtitle">내 챌린지 진척 · 점수 · 뱃지 · 서평</p>
 
-  <div class="stat-row">
-    <div class="stat-card"><div class="stat-num" id="statScore">1,842</div><div class="stat-label">누적 점수</div></div>
-    <div class="stat-card"><div class="stat-num" id="statBooks">4</div><div class="stat-label">완독 (12권 중)</div></div>
-    <div class="stat-card"><div class="stat-num" id="statTime">14.5h</div><div class="stat-label">독서 시간</div></div>
-    <div class="stat-card"><div class="stat-num" id="statRank">#14</div><div class="stat-label">학교 순위</div></div>
-  </div>
+  <!-- 상단 요약 히어로 (실측 3숫자) -->
+  <div class="my-hero" id="myHero"></div>
 
-  <!-- 📚 내가 빌린 책 (도서관 연동 → 완독 인증 루프) -->
-  <div style="margin-top:24px">
-    <div class="section-head"><div class="section-title"><em>내가 빌린 책</em></div>
-      <span style="font-size:11px;color:var(--text-light)">도서관에서 빌린 책 · 다 읽으면 완독을 인증하세요</span></div>
+  <!-- (정돈 2026-06-12) 실측 데이터 연결 전까지 숨김 — 컨테이너 id는 유지(렌더 함수 안전) -->
+  <div style="display:none">
+    <span id="statScore"></span><span id="statBooks"></span><span id="statTime"></span><span id="statRank"></span>
     <div id="myShelf"></div>
-  </div>
-
-  <!-- 학기 결산 공유 카드 (바이럴) -->
-  <div class="summary-share" id="summaryCard" style="margin-top:24px"></div>
-
-  <!-- 올해의 ○○ (슈퍼래티브) -->
-  <div id="superlatives" style="margin-top:14px"></div>
-
-  <!-- ✨ 나의 독서 별자리 -->
-  <div style="margin-top:32px">
-    <div class="section-head"><div class="section-title"><em>나의 독서 별자리</em></div>
-      <button class="ss-share" onclick="shareSky()" style="background:var(--primary);color:#fff">✨ 별자리 공유</button></div>
+    <div class="summary-share" id="summaryCard"></div>
+    <div id="superlatives"></div>
+    <span id="streakNote"></span>
     <div id="readingSky" class="sky"></div>
-    <div style="font-size:11.5px;color:var(--text-light);margin-top:8px">읽은 책 한 권이 별 하나 — 같은 장르끼리 이어져 나만의 별자리가 됩니다. 별을 누르면 그 책으로.</div>
-  </div>
-
-  <!-- 🌱 독서 스트릭 캘린더 -->
-  <div style="margin-top:32px">
-    <div class="section-head"><div class="section-title"><em>독서 스트릭</em></div>
-      <span id="streakNote" style="font-size:11px;color:var(--text-light)"></span></div>
     <div id="streakCal"></div>
-  </div>
-
-  <!-- 독서 데이터 분포 (StoryGraph식) -->
-  <div style="margin-top:32px">
-    <div class="section-head"><div class="section-title"><em>내 독서 분포</em></div>
-      <span style="font-size:11px;color:var(--text-light)">읽은 책 기준</span></div>
     <div class="read-chart" id="readChart"></div>
   </div>
 
@@ -1606,7 +1591,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <div id="myImpressions"></div>
 
   <!-- 하단: 점수·뱃지 + 리더보드 + 내가 읽은 책 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px;" class="mypage-bottom">
+  <div style="display:none;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px;" class="mypage-bottom">
     <div>
       <div class="section-head">
         <div class="section-title"><em>획득 뱃지</em> (4/8)</div>
@@ -1621,7 +1606,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     </div>
   </div>
 
-  <div style="margin-top:48px;">
+  <div style="margin-top:48px;display:none;">
     <div class="section-head">
       <div class="section-title"><em>내가 읽은 책</em></div>
       <button class="btn-outline" onclick="exportReport()" style="display:inline-flex;align-items:center;gap:6px;"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>대학교 독서 활동 리포트 출력</button>
@@ -2655,7 +2640,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyHero(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
 }
 
@@ -2997,7 +2982,7 @@ async function bxPickStudent(id){
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
-  try{ renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
+  try{ renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
 }
 // 우리도서관 카테고리(관리자가 추가·삭제·편집) — 서버 library_sections에서 로드
@@ -4314,6 +4299,33 @@ function chatSubmitImpression(){
   if(first) addScore(50, '한 줄 소감', CHALLENGE_SCENES[currentBook.id].bookTitle);
   renderViewer(); _bxScrollBottom();
   try{ renderQuestMap(); renderChalScore(); renderMyImpressions(); }catch(e){}
+}
+/* 마이페이지 상단 히어로 — 실측 3숫자(완독·정답률·누적점수) */
+function _myStats(){
+  let done=0, ok=0, answered=0;
+  if(typeof CHALLENGE_SCENES!=='undefined'){
+    Object.keys(CHALLENGE_SCENES).forEach(id=>{
+      const r=_chalRead(id); if(!r) return;
+      if((r.read_pct||0)>=95) done++;
+      const a=Object.values(r.ans||{}); answered+=a.length; ok+=a.filter(x=>x.ok).length;
+    });
+  }
+  return {done, ok, answered, rate: answered?Math.round(ok/answered*100):0, score: SCORE_BASE+chalEarned()};
+}
+function renderMyHero(){
+  const el=document.getElementById('myHero'); if(!el) return;
+  const s=bxStudent(); const st=_myStats();
+  const empty = st.done===0 && st.answered===0 && st.score===0;
+  el.innerHTML = `
+    <div class="my-hero-name">${s?`<span style="font-size:18px;">${s.emoji||'🙂'}</span> ${esc(s.name)}`:'🙂 게스트'}</div>
+    <div class="my-hero-msg">${empty
+      ? '아직 시작 전이에요 — 첫 책을 골라 <b>별이</b>와 함께 읽어보세요!'
+      : `지금까지 <b>${st.done}권 완독</b>${st.answered?` · 퀴즈 정답률 <b>${st.rate}%</b>`:''}`}</div>
+    <div class="my-hero-nums">
+      <div><div class="mh-n">${st.done}</div><div class="mh-l">완독</div></div>
+      <div><div class="mh-n">${st.rate}<span class="mh-u">%</span></div><div class="mh-l">퀴즈 정답률</div></div>
+      <div><div class="mh-n">${st.score.toLocaleString()}</div><div class="mh-l">누적 점수</div></div>
+    </div>`;
 }
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
 function renderMyImpressions(){
