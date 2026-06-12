@@ -5414,13 +5414,8 @@ window.addEventListener('keydown', (e) => {
     const wrap=document.createElement('div');wrap.className='hwc-row bot';
     wrap.innerHTML=`<div class="hwc-cards">${results.map((b,i)=>cardHtml(b,start+i)).join('')}</div>`;
     el('hwcBody').appendChild(wrap);
-    const more=document.createElement('div');more.className='hwc-row bot';
-    more.innerHTML=`<button class="hwc-more" onclick="hwcSeeAll()">📚 추천 ${results.length}권 전체 보기 →</button>`;
-    el('hwcBody').appendChild(more);
-    scroll();
+    scroll();   // 별이는 대화창 안에서 완결 — 다른 페이지로 점프하지 않음
   }
-  // 별이 챗 → AI추천 풀페이지로(같은 검색어로 재실행) — 풍부한 카드·바로읽기 무대
-  window.hwcSeeAll=function(){ try{ if(opened) hwcToggle(); }catch(e){} try{ nav('airec'); if(window.airRun&&lastQ) airRun(lastQ); }catch(e){} };
   function chipsRow(){
     const r=document.createElement('div');r.className='hwc-chips';r.id='hwcChips';
     r.innerHTML=CHIPS.map(c=>`<span class="hwc-chip" onclick="hwcChip('${c.replace(/'/g,"\\'")}')">${esc(c)}</span>`).join('');
