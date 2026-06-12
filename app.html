@@ -4140,7 +4140,7 @@ function renderSceneChat(sc, body, info){
       chat += _bxMe(_sc.impression);
       chat += _bxBot([{cls:'react ok', html:`고마워, 잘 읽었어 ⭐ 네 소감은 AI 성장 리포트의 재료가 돼. <b>다른 책도 별이랑 같이 읽어 볼래?</b>`}]);
     }
-    chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="여기에 한 줄 소감을 써 줘 (5자 이상)" value="${esc(_sc.impression)}" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">보내기</button></div>`;
+    chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 줘':'여기에 한 줄 소감을 써 줘 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">챌린지 정리 — ${esc(sc.bookTitle)} · ${esc(sc.author)}</div>
