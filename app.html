@@ -503,8 +503,9 @@ body.dark .hub-node-icon{color:var(--gold);}
 .quest-map-bar{height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;margin-bottom:20px;}
 .quest-map-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:4px;transition:width 0.4s;}
 .quest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.quest-grid-wide{grid-template-columns:repeat(6,1fr);gap:14px;}
-@media (max-width:900px){ .quest-grid-wide{grid-template-columns:repeat(4,1fr);} }
+.quest-grid-wide{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:14px;}  /* 책 수만큼 칸 자동 맞춤(빈 칸 방지) */
+.quest-grid-wide .quest-slot{aspect-ratio:auto;}                                       /* 표지+통계는 내용 높이로 */
+@media (max-width:900px){ .quest-grid-wide{grid-template-columns:repeat(auto-fit, minmax(120px,1fr));} }
 .quest-slot{
   aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:8px;
