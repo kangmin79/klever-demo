@@ -3193,7 +3193,11 @@ function libDetail(isbn){
     </div>
     ${b.description?`<p class="lcd-desc">${esc(b.description)}</p>`:''}
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">📖 도서관에서 빌리기<span class="ar">›</span></div>
+      ${b.lib
+        ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">📖 전자책 바로 읽기<span class="ar">›</span></div>
+           <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
+        : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">🔍 우리 도서관에서 찾기<span class="ar">›</span></div>
+           <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`}
     </div>
     <div class="lcd-src">${b._sm?'출처 · 세명대학교 학술정보원 전자도서관 소장':'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
     <div id="lcdReviews"></div>`;
@@ -3246,18 +3250,34 @@ function bridgeHTML(b){
   <div class="cv">${cover}</div>
   <div class="ti">${esc(cleanT(b.t))}</div>
   <div class="au">${esc(authorLine(b))}</div>
-  <div class="msg"><span>세명대학교 학술정보원 전자책으로 이동합니다</span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="msg"><span>세명대학교 학술정보원으로 연결합니다</span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
   <div class="sub">잠시만 기다려 주세요…</div>
   </body></html>`;
 }
 function lcBorrow(isbn){
-  const b=LIB_POOL.find(x=>x.isbn===isbn);
-  if(!(b&&b.lib)){ alert('도서관 카탈로그 연동 시 바로 연결됩니다. (현재 데모)'); return; }
-  shelfAdd(b);   // '읽는 중'으로 내 서재에 기록 → 마이페이지에서 완독 인증 가능('읽고 돌아오기' 루프)
+  const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
+  // 소장 전자책=뷰어로 바로 읽기 / 그 외=세명대 통합검색으로 연결(이탈을 매끄러운 한 번의 브리지로)
+  const dest = b.lib || semyungLink(cleanT(b.t||b.title||''));
+  if(b.lib) shelfAdd(b);   // 전자책 열람만 '읽는 중' 기록 → 마이페이지 완독 인증('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
-  if(!w){ window.open(b.lib,'_blank','noopener'); return; }
+  if(!w){ window.open(dest,'_blank','noopener'); return; }
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
-  setTimeout(()=>{ try{ w.location.href=b.lib; }catch(e){} }, 1600);   // 북스타 브리지 → 실제 뷰어
+  setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);   // 북스타 브리지 → 실제 뷰어/통합검색
+}
+// 별이(플로팅 챗봇) 추천 책 → 도서관 연결: 제목이 세명대 소장 전자책과 같으면 '바로 읽기', 아니면 통합검색. 둘 다 북스타 브리지 경유.
+function libBridgeOpen(book){
+  if(!book) return;
+  const norm=t=>cleanT(t||'').replace(/\s+/g,'');
+  const pool=(typeof SEMYUNG_BEST!=='undefined'?SEMYUNG_BEST:[]).concat(
+    (typeof HAILMARY!=='undefined')?[Object.assign({},HAILMARY,{t:HAILMARY.t,cover:HAILMARY.cover})]:[]);
+  const hit=pool.find(x=>norm(x.t)===norm(book.title||book.t));
+  const b=hit||{t:book.title||book.t||'', cover:book.cover||'', a:book.author||book.a||'', lib:null};
+  const dest=b.lib||semyungLink(cleanT(b.t||''));
+  if(b.lib&&hit) shelfAdd(b);   // 소장 전자책 열람만 '읽는 중' 기록
+  const w=window.open('','_blank');
+  if(!w){ window.open(dest,'_blank','noopener'); return; }
+  try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
+  setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);
 }
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
@@ -5375,6 +5395,7 @@ window.addEventListener('keydown', (e) => {
 
   window.hwcBook=function(gi){
     const b=books[gi]; if(!b)return;
+    window.__hwcBook=b;   // 전역 보관 → '우리 도서관에서 읽기' 버튼이 참조
     const ov=document.getElementById('lcDetail'); if(!ov)return;
     const meta=[];
     if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${f5(b.rating)}${b.rating_count?` · ${b.rating_count}명`:''}`);
@@ -5388,7 +5409,10 @@ window.addEventListener('keydown', (e) => {
           ${b.reason?`<div class="lcd-note">“${esc(b.reason)}” — 북스타 사서</div>`:''}</div>
       </div>
       ${b.description?`<p class="lcd-desc">${esc(b.description)}</p>`:''}
-      <div class="lcd-acts"><div class="lcd-btn primary" onclick="lcAccess('도서관 소장')">📖 도서관에서 빌리기<span class="ar">›</span></div></div>
+      <div class="lcd-acts">
+        <div class="lcd-btn primary" onclick="libBridgeOpen(window.__hwcBook)">📖 우리 도서관에서 읽기<span class="ar">›</span></div>
+        <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">소장 전자책은 바로 읽기 · 그 외엔 세명대 통합검색으로 연결</div>
+      </div>
       <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관) / 추천 Bookstar AI</div>`;
     ov.classList.add('on');
   };
