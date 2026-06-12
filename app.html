@@ -879,6 +879,9 @@ body.dark .bx-name{color:#c5d2dd;}
 .bx-inputbar{display:flex;gap:8px;margin-top:auto;padding-top:10px;}
 .bx-inputbar input{flex:1;padding:11px 14px;border-radius:20px;border:1.5px solid #cfd9e2;font:inherit;font-size:13.5px;background:#fff;color:#1c1c1c;}
 .bx-inputbar button{flex:0 0 auto;padding:0 18px;border-radius:20px;border:none;background:#fae100;color:#3a3000;font-weight:800;font-size:13px;cursor:pointer;}
+.bx-next-row{margin-top:14px;text-align:center;}
+.bx-next-btn{padding:13px 22px;border-radius:14px;border:none;background:#6366f1;color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 14px rgba(99,102,241,.35);}
+.bx-next-btn:hover{background:#4f46e5;}
 
 /* 챌린지 마무리 액션 (선택 문장 / 퀴즈 만들기 / 한 줄 소감) */
 .quest-actions{background:linear-gradient(135deg,var(--primary-bg),var(--bg-card));border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:20px;}
@@ -4230,9 +4233,10 @@ function renderSceneChat(sc, body, info){
     ]);
     if(done){
       chat += _bxMe(_sc.impression);
-      chat += _bxBot([{cls:'react ok', html:`고마워, 잘 읽었어 ⭐ 네 소감은 AI 성장 리포트의 재료가 돼. <b>다른 책도 별이랑 같이 읽어 볼래?</b>`}]);
+      chat += _bxBot([{cls:'react ok', html:`고마워, 잘 읽었어 ⭐ 네 소감은 마이 페이지에 기록됐어. <b>다른 책도 별이랑 같이 읽어 볼래?</b>`}]);
     }
     chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 줘':'여기에 한 줄 소감을 써 줘 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;
+    if(done){ chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">📚 다른 책 고르러 가기 →</button></div>`; }
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">챌린지 정리 — ${esc(sc.bookTitle)} · ${esc(sc.author)}</div>
@@ -4262,6 +4266,7 @@ function renderSceneChat(sc, body, info){
   }
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
+function bxFinishGo(){ closeViewer(); nav('mypage'); }   // 완료 후 → 마이 페이지 Quest Map(다른 책 고르기)
 function chatPick(si, qi, oi){
   const sc = (typeof CHALLENGE_SCENES!=='undefined') ? CHALLENGE_SCENES[currentBook.id] : null;
   if(!sc || _sc.ans[si+'-'+qi]) return;
