@@ -3909,7 +3909,7 @@ function renderViewer(){
     const isSceneChal = (currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && !!CHALLENGE_SCENES[currentBook.id]);
     const isChatChal = isSceneChal && CHAT_QUIZ_BOOKS.has(currentBook.id);
     acts.innerHTML = isChatChal
-      ? ''                                            // 별이 챗봇 = 연속 진행(장면 자동 전환), 버튼 없음
+      ? `<button class="viewer-action" onclick="chatRestart()">↻ 처음부터 다시</button>`   // 연속 진행 — 재도전만
       : isSceneChal
       ? `<button class="viewer-action" onclick="sceneGo(-1)">◀ 이전 장면</button>`
         + `<button class="viewer-action primary" onclick="sceneGo(1)">다음 장면 ▶</button>`
@@ -4172,6 +4172,23 @@ function chatPick(si, qi, oi){
   renderViewer(); _bxScrollBottom();
   try{ renderChalScore(); }catch(e){}
   setTimeout(()=>{ _bxTyping = false; if(currentMode==='challenge'){ _bxLeftScroll = document.querySelector('.viewer-pane.left')?.scrollTop || 0; renderViewer(); _bxScrollBottom(); } }, 850);
+}
+function _clearBookScore(bookTitle){      // 점수 원장에서 이 책 항목 제거(다시 풀기 시 중복적립 방지)
+  try{
+    const log = _scoreLog().filter(e => !((e.note||'').startsWith(bookTitle)));
+    localStorage.setItem('bookstar-score-log', JSON.stringify(log));
+  }catch(e){}
+}
+function chatRestart(){
+  const sc = (typeof CHALLENGE_SCENES!=='undefined') ? CHALLENGE_SCENES[currentBook.id] : null;
+  if(!sc) return;
+  if(!confirm('지금까지 푼 답과 한 줄 소감을 지우고 처음부터 다시 풀까요?')) return;
+  _clearBookScore(sc.bookTitle);
+  _sc.ans = {}; _sc.impression = ''; _sc.submitted = false; _scSave();
+  _bxTyping = false; _bxLastSi = -1; _bxLeftScroll = 0;
+  renderViewer();
+  const r = document.querySelector('.viewer-pane.right'); if(r) r.scrollTop = 0;
+  try{ renderChalScore(); renderQuestMap(); renderMyImpressions(); }catch(e){}
 }
 function chatSubmitImpression(){
   const t = document.getElementById('bxImpr'); if(!t) return;
