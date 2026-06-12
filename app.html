@@ -1794,7 +1794,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="bodies_gatsby.js?b=260612g"></script>
 <script src="bodies_demian.js?b=260612g"></script>
 <script src="bodies_emma.js?b=260612g"></script>
-<script src="challenge_scenes.js?b=260612n"></script>
+<script src="challenge_scenes.js?b=260612p"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -4256,8 +4256,8 @@ function renderSceneChat(sc, body, info){
     for(let si=0; si<=activeSi; si++){
       const s = scenes[si];
       pending.push({html: si===0
-        ? `안녕, 난 <b>별이</b>야 ⭐ 너랑 같이 『${esc(sc.bookTitle)}』의 결정적인 장면을 읽어 볼 거야. <b>왼쪽 글</b>을 먼저 읽고 답해 줘!`
-        : `좋아, 다음 장면으로 넘어왔어 — <b>${esc(s.title)}</b>. <b>왼쪽 글이 바뀌었지?</b> 읽고 이어서 답해 줘!`});
+        ? `안녕하세요, <b>별이</b>예요 ⭐ 『${esc(sc.bookTitle)}』의 결정적인 장면을 함께 읽어 볼게요. <b>왼쪽 글</b>을 먼저 읽고 답해 주세요!`
+        : `다음 장면으로 넘어왔어요 — <b>${esc(s.title)}</b>. <b>왼쪽 글이 바뀌었죠?</b> 읽고 이어서 답해 주세요!`});
       for(let qi=0; qi<s.quiz.length; qi++){
         const q = s.quiz[qi];
         const got = _sc.ans[si+'-'+qi];
@@ -4294,22 +4294,22 @@ function renderSceneChat(sc, body, info){
   } else {
     const done = _sc.submitted;
     chat += _bxBot([
-      {html:`마지막이야! 여기까지 잘 따라왔어 👏 장면 퀴즈는 <b>${okCnt}/${total}</b>문항 맞혔어.`},
+      {html:`마지막이에요! 여기까지 잘 따라오셨어요 👏 장면 퀴즈는 <b>${okCnt}/${total}</b>문항 맞히셨어요.`},
       {html:esc(sc.finalPrompt)}
     ]);
     if(done){
       chat += _bxMe(_sc.impression);
-      chat += _bxBot([{cls:'react ok', html:`고마워, 잘 읽었어 ⭐ 네 소감은 마이 페이지에 기록됐어. <b>다른 책도 별이랑 같이 읽어 볼래?</b>`}]);
+      chat += _bxBot([{cls:'react ok', html:`고마워요, 잘 읽으셨어요 ⭐ 소감은 마이 페이지에 기록됐어요. <b>다른 책도 별이와 함께 읽어 보실래요?</b>`}]);
       const others = _bxOtherBooks();
       if(others.length){
-        chat += `<div class="bx-books-label">📚 아직 안 읽은 챌린지 책 — 표지를 눌러 별이랑 시작!</div><div class="bx-books">`
+        chat += `<div class="bx-books-label">📚 아직 안 읽은 챌린지 책 — 표지를 눌러 별이와 함께 시작해요!</div><div class="bx-books">`
           + others.map(b=>`<button class="bx-book" onclick="bxOpenBook('${b.id}')">${b.cover?`<img src="${esc(b.cover)}" alt="">`:'<div class="bx-book-ph">📖</div>'}<span>${esc(b.title)}</span></button>`).join('')
           + `</div>`;
       } else {
         chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">🏆 마이 페이지에서 내 기록 보기 →</button></div>`;
       }
     }
-    chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 줘':'여기에 한 줄 소감을 써 줘 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;
+    chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 주세요':'여기에 한 줄 소감을 써 주세요 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;
     body.innerHTML = `
       <div class="viewer-pane left">
         <div class="viewer-pane-label">챌린지 정리 — ${esc(sc.bookTitle)} · ${esc(sc.author)}</div>
