@@ -2167,9 +2167,17 @@ function _applyAnchor(a){
 function _withAnchorKept(fn){ const a=_captureAnchor(); fn(); requestAnimationFrame(()=>_applyAnchor(a)); }
 function saveScrollPos(){
   if(!currentBook) return;
-  const a=_captureAnchor(); if(!a) return;
-  readerStats.positions[currentBook.id] = a;
-  saveReaderStats();
+  const a=_captureAnchor(); if(a){ readerStats.positions[currentBook.id] = a; saveReaderStats(); }
+  // 완독 모드: 도달한 최대 읽기 % 를 계정 DB에 저장
+  if(currentMode==='full'){
+    const el=_scrollEl();
+    if(el){
+      const max=el.scrollHeight-el.clientHeight;
+      const pct=max>0?Math.min(100,Math.round((el.scrollTop/max)*100)):0;
+      const prev=(_chalRead(currentBook.id)||{}).read_pct||0;
+      if(pct>prev){ _chalMerge(currentBook.id,{read_pct:pct}); bxUpsertRead(currentBook.id,pct); try{ renderQuestMap(); }catch(e){} }
+    }
+  }
 }
 function restoreScrollPos(){
   if(!currentBook) return;
@@ -2938,6 +2946,17 @@ function _bxSid(){ const s=bxStudent(); return s?s.id:'guest'; }
 function _chalKey(bookId){ return 'bookstar-chal-'+_bxSid()+'-'+bookId; }   // 계정별 로컬 캐시 키
 function _chalRead(bookId){ try{ return JSON.parse(localStorage.getItem(_chalKey(bookId))||'null'); }catch(e){ return null; } }
 function _chalWriteLocal(bookId, obj){ try{ localStorage.setItem(_chalKey(bookId), JSON.stringify(obj)); }catch(e){} }
+function _chalMerge(bookId, patch){   // 기존 기록에 일부만 갱신(퀴즈↔읽기% 서로 안 덮어쓰게)
+  const cur = _chalRead(bookId) || {ans:{}, impression:'', submitted:false, read_pct:0};
+  const next = Object.assign(cur, patch, {ts:Date.now()});
+  _chalWriteLocal(bookId, next); return next;
+}
+async function bxUpsertRead(bookId, pct){   // 읽기 진행률만 서버 저장(퀴즈 컬럼 보존)
+  const s=bxStudent(); if(!s) return;
+  try{ await fetch(`${BX_SB}/bookstar_challenge_results?on_conflict=student_id,book_id`,
+    {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+     body:JSON.stringify({student_id:s.id,book_id:bookId,read_pct:pct,updated_at:new Date().toISOString()})}); }catch(e){}
+}
 async function bxUpsertResult(bookId, obj){          // 서버 저장(계정별·책별 upsert)
   const s=bxStudent(); if(!s) return;
   const sc=(typeof CHALLENGE_SCENES!=='undefined')?CHALLENGE_SCENES[bookId]:null;
@@ -2955,7 +2974,7 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
   try{
     const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(s.id)}&select=*`,{headers:BX_H});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
-    rows.forEach(x=>_chalWriteLocal(x.book_id,{ans:x.ans||{},impression:x.impression||'',submitted:!!x.submitted,ts:Date.now()}));
+    rows.forEach(x=>_chalWriteLocal(x.book_id,{ans:x.ans||{},impression:x.impression||'',submitted:!!x.submitted,read_pct:x.read_pct||0,ts:Date.now()}));
   }catch(e){}
 }
 function bxRenderAccountChip(){
@@ -4051,9 +4070,9 @@ function renderChalScore(){
 /* ── 결정적 장면 챌린지 (CHALLENGE_SCENES 보유 도서 전용) ── */
 let _sc = {bookId:null, idx:0, ans:{}, impression:'', submitted:false};
 function _scSave(){
-  const obj = {ans:_sc.ans, impression:_sc.impression, submitted:_sc.submitted, ts:Date.now()};
-  _chalWriteLocal(_sc.bookId, obj);   // 계정별 로컬 캐시
-  bxUpsertResult(_sc.bookId, obj);    // 서버 저장(비동기)
+  const patch = {ans:_sc.ans, impression:_sc.impression, submitted:_sc.submitted};
+  _chalMerge(_sc.bookId, patch);      // 계정별 로컬 캐시(읽기% 보존)
+  bxUpsertResult(_sc.bookId, patch);  // 서버 저장(비동기, 퀴즈 컬럼만)
 }
 function renderSceneChallenge(sc, body, info){
   if(_sc.bookId !== currentBook.id){
@@ -4600,7 +4619,8 @@ function renderQuestMap(){
       const m = _matchBookByTitle(b.t);
       const st = m ? _chalBookState(m.id) : 'none';
       const sco = m ? _chalBookScore(m.id) : null;
-      return {t:b.t, cover:b.cover, book:m, st, sco};
+      const pct = m ? ((_chalRead(m.id)||{}).read_pct||0) : 0;
+      return {t:b.t, cover:b.cover, book:m, st, sco, pct};
     });
     const doneCnt = items.filter(x=>x.st==='done').length;
     const sumPts = items.reduce((s,x)=>s+(x.sco?x.sco.pts:0), 0);
@@ -4619,9 +4639,9 @@ function renderQuestMap(){
         : `<div style="width:62px;height:90px;border-radius:6px;background:rgba(120,120,140,.12);display:flex;align-items:center;justify-content:center;font-size:26px;">${icon}</div>`;
       const scoreLine = !x.book
         ? `<div style="font-size:11px;color:var(--text-light);">대출 후 완독 인증</div>`
-        : x.sco
-        ? `<div style="font-size:11px;color:var(--text-sub);">퀴즈 ${x.sco.ok}/${x.sco.total||x.sco.answered} · <b style="color:var(--gold,#b8860b);">${x.sco.pts}점</b></div>`
-        : `<div style="font-size:11px;color:var(--text-light);">아직 안 읽음 · 0점</div>`;
+        : (!(x.pct>0) && !x.sco)
+        ? `<div style="font-size:11px;color:var(--text-light);">아직 시작 안 함</div>`
+        : `<div style="font-size:10.5px;color:var(--text-sub);line-height:1.6;">📖 ${x.pct||0}% 읽음${(x.pct||0)>=95?` · <b style="color:#1d6b48;">✔완독</b>`:''}<br>✏️ ${x.sco?`퀴즈 ${x.sco.ok}/${x.sco.total} · <b style="color:var(--gold,#b8860b);">${x.sco.pts}점</b>`:'퀴즈 전'}</div>`;
       return `<div class="quest-slot ${cls}" onclick="onJoinedSlot(${i})" title="${esc(x.t)}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px 14px;${expired?'opacity:.75;':''}">
         ${coverHtml}
         <div class="quest-slot-book" style="font-weight:700;line-height:1.35;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${esc(shortT(x.t))}</div>
