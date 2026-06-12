@@ -3970,7 +3970,7 @@ function _scSave(){
 function renderSceneChallenge(sc, body, info){
   if(_sc.bookId !== currentBook.id){
     _sc = {bookId:currentBook.id, idx:0, ans:{}, impression:'', submitted:false};
-    _bxLastSi = -1;
+    _bxLastSi = -1; _bxShownCur = -1; _bxPendingReveal = false;
     try{
       const sv = JSON.parse(localStorage.getItem('bookstar-chal-'+currentBook.id)||'null');
       if(sv){ _sc.ans = sv.ans||{}; _sc.impression = sv.impression||''; _sc.submitted = !!sv.submitted; }
@@ -4029,7 +4029,7 @@ function renderSceneChallenge(sc, body, info){
 }
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
 const CHAT_QUIZ_BOOKS = new Set(['kr-현진건-운수-좋은-날']);
-let _bxTyping = false;   // 답변 직후 "별이가 입력 중…" 잠깐 표시 후 다음 질문 노출
+let _bxShownCur = -1, _bxPendingReveal = false;   // 노출된 질문 index(글로벌) / 타이핑 예약중
 /* 질문별 하이라이트 — 왼쪽 원문에서 형광펜 칠 문장(해당 장면 excerpt의 정확한 부분 문자열) */
 const BX_HL = {
  'kr-현진건-운수-좋은-날': [
@@ -4083,6 +4083,7 @@ function renderSceneChat(sc, body, info){
   const answered = Object.keys(_sc.ans).length;
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
   const activeSi = allDone ? scenes.length-1 : flat[cur].si;
+  const typingNow = !allDone && (_bxShownCur !== cur);   // 활성 질문이 아직 노출 안 됨 → 입력 중…
   info.innerHTML = `결정적 장면 챌린지 · <b>${allDone ? '한 줄 소감' : `장면 ${activeSi+1}/${scenes.length}`}</b> · 퀴즈 ${answered}/${total}`;
 
   let chat = '';
@@ -4107,7 +4108,7 @@ function renderSceneChat(sc, body, info){
             ? {cls:'react ok', html:`정답이에요! 🎉 <b>+10점</b>` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')}
             : {cls:'react no', html:`앗, 아쉬워요. 정답은 <b>“${esc(q.opts[q.correct])}”</b>예요.` + (q.expl?`<div class="bx-expl">${esc(q.expl)}</div>`:'')});
         } else {                              // 활성 문제(cur)
-          if(_bxTyping){ flush(); chat += _bxTypingRow(); }
+          if(typingNow){ flush(); chat += _bxTypingRow(); }   // 별이가 입력 중… (질문은 잠시 뒤)
           else {
             pending.push({html:_bxQHtml(q)});
             flush();
@@ -4158,6 +4159,15 @@ function renderSceneChat(sc, body, info){
     else { leftEl.scrollTop = (activeSi === _bxLastSi) ? _bxLeftScroll : 0; }
   }
   _bxLastSi = activeSi;
+  // 활성 질문이 아직 안 떴으면 → 잠깐 "입력 중…" 후 자동 노출 (첫 질문 포함 매 질문)
+  if(typingNow && !_bxPendingReveal){
+    _bxPendingReveal = true;
+    const reveal = cur;
+    setTimeout(()=>{
+      _bxPendingReveal = false; _bxShownCur = reveal;
+      if(currentMode==='challenge' && CHAT_QUIZ_BOOKS.has(currentBook.id)){ renderViewer(); _bxScrollBottom(); }
+    }, 850);
+  }
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
 function chatPick(si, qi, oi){
@@ -4167,11 +4177,9 @@ function chatPick(si, qi, oi){
   const ok = (q.correct === oi);
   _sc.ans[si+'-'+qi] = {pick:oi, ok}; _scSave();
   if(ok) addScore(10, '장면 퀴즈', `${sc.bookTitle} 장면${si+1} Q${qi+1}`);
-  _bxTyping = true;                          // 정답 확인 후 "입력 중…" 연출
   _bxLeftScroll = document.querySelector('.viewer-pane.left')?.scrollTop || 0;
-  renderViewer(); _bxScrollBottom();
+  renderViewer(); _bxScrollBottom();         // 다음 질문은 renderSceneChat이 타이핑 후 자동 노출
   try{ renderChalScore(); }catch(e){}
-  setTimeout(()=>{ _bxTyping = false; if(currentMode==='challenge'){ _bxLeftScroll = document.querySelector('.viewer-pane.left')?.scrollTop || 0; renderViewer(); _bxScrollBottom(); } }, 850);
 }
 function _clearBookScore(bookTitle){      // 점수 원장에서 이 책 항목 제거(다시 풀기 시 중복적립 방지)
   try{
@@ -4185,7 +4193,7 @@ function chatRestart(){
   if(!confirm('지금까지 푼 답과 한 줄 소감을 지우고 처음부터 다시 풀까요?')) return;
   _clearBookScore(sc.bookTitle);
   _sc.ans = {}; _sc.impression = ''; _sc.submitted = false; _scSave();
-  _bxTyping = false; _bxLastSi = -1; _bxLeftScroll = 0;
+  _bxShownCur = -1; _bxPendingReveal = false; _bxLastSi = -1; _bxLeftScroll = 0;
   renderViewer();
   const r = document.querySelector('.viewer-pane.right'); if(r) r.scrollTop = 0;
   try{ renderChalScore(); renderQuestMap(); renderMyImpressions(); }catch(e){}
@@ -4248,7 +4256,6 @@ function checkSceneQuiz(el, si, qi, oi){
 function sceneGo(d){
   const sc = (typeof CHALLENGE_SCENES !== 'undefined') ? CHALLENGE_SCENES[currentBook.id] : null;
   if(!sc) return;
-  _bxTyping = false;
   _sc.idx = Math.max(0, Math.min(sc.scenes.length, _sc.idx + d));
   renderViewer();
   const vb = document.getElementById('viewerBody');
