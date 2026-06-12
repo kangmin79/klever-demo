@@ -1236,15 +1236,18 @@ body.dark #hwcBubble{color:#0f172a;}
 #hwcPanel{position:fixed;right:20px;bottom:24px;z-index:151;width:380px;max-width:calc(100vw - 32px);height:600px;max-height:calc(100vh - 110px);background:var(--bg-card);border:1px solid var(--border);border-radius:20px;box-shadow:0 24px 60px rgba(15,20,35,.32);display:none;flex-direction:column;overflow:hidden;}
 #hwcPanel.on{display:flex;animation:hwcOpen .26s cubic-bezier(.2,.8,.2,1);}
 @keyframes hwcOpen{from{opacity:0;transform:translateY(16px) scale(.96);}to{opacity:1;transform:none;}}
-.hwc-head{display:flex;align-items:center;gap:11px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--bg-card);}
-.hwc-ava{width:38px;height:38px;border-radius:50%;background:linear-gradient(150deg,var(--primary),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;}
-body.dark .hwc-ava{color:#0f172a;}
-.hwc-htxt{flex:1;min-width:0;}
-.hwc-htxt b{font-size:14.5px;color:var(--text);font-weight:800;letter-spacing:-.3px;}
-.hwc-htxt span{display:block;font-size:11px;color:var(--text-light);margin-top:1px;}
-.hwc-htxt span::before{content:'●';color:var(--success);font-size:8px;margin-right:4px;vertical-align:1px;}
-.hwc-x{background:none;border:none;color:var(--text-light);font-size:22px;cursor:pointer;width:30px;height:30px;border-radius:8px;line-height:1;flex:0 0 auto;}
-.hwc-x:hover{background:var(--bg-input);color:var(--text);}
+/* 별이 헤더 — 밤하늘(남색+별빛+골드) */
+.hwc-head{display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;
+  background:radial-gradient(150px 80px at 16% -20%,rgba(201,168,106,.30),transparent 70%),linear-gradient(135deg,#243056 0%,#1a2240 60%,#141a30 100%);}
+.hwc-head::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(1.2px 1.2px at 72% 34%,rgba(255,255,255,.85),transparent),radial-gradient(1.2px 1.2px at 86% 62%,rgba(255,255,255,.6),transparent),radial-gradient(1.4px 1.4px at 60% 70%,rgba(255,255,255,.5),transparent);}
+.hwc-ava{width:38px;height:38px;border-radius:50%;background:#1a2240;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;position:relative;z-index:1;box-shadow:0 0 0 1px rgba(201,168,106,.45),0 0 14px rgba(201,168,106,.40);}
+.hwc-htxt{flex:1;min-width:0;position:relative;z-index:1;}
+.hwc-htxt b{font-size:15px;color:#f4f1ea;font-weight:800;letter-spacing:-.3px;font-family:'Noto Serif KR',serif;}
+.hwc-htxt span{display:block;font-size:11px;color:#b9c0d4;margin-top:1px;}
+.hwc-htxt span::before{content:'●';color:var(--gold);font-size:8px;margin-right:4px;vertical-align:1px;}
+.hwc-x{background:none;border:none;color:#b9c0d4;font-size:22px;cursor:pointer;width:30px;height:30px;border-radius:8px;line-height:1;flex:0 0 auto;position:relative;z-index:1;}
+.hwc-x:hover{background:rgba(255,255,255,.14);color:#fff;}
 .hwc-body{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:11px;background:var(--bg);}
 .hwc-row{display:flex;max-width:100%;}
 .hwc-row.user{justify-content:flex-end;}
@@ -5348,8 +5351,8 @@ window.addEventListener('keydown', (e) => {
 <button id="hwcBubble" onclick="hwcToggle()" aria-label="AI 사서에게 물어보기"><span class="hwc-dot"></span>💬</button>
 <div id="hwcPanel" role="dialog" aria-label="AI 사서 챗봇">
   <div class="hwc-head">
-    <div class="hwc-ava">✦</div>
-    <div class="hwc-htxt"><b>AI 사서 북스타</b><span>지금 책 추천 도와드려요</span></div>
+    <div class="hwc-ava">⭐</div>
+    <div class="hwc-htxt"><b>별이</b><span>오늘 어떤 책이 당기세요?</span></div>
     <button class="hwc-x" onclick="hwcToggle()" aria-label="닫기">×</button>
   </div>
   <div class="hwc-body" id="hwcBody"></div>
@@ -5363,7 +5366,7 @@ window.addEventListener('keydown', (e) => {
 (function(){
   const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/chat";
   const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
-  const GREET="안녕하세요! 도서관 AI 사서 북스타예요. 📚\n요즘 어떤 책이 당기세요? 기분이나 상황만 편하게 말해주셔도 딱 맞는 책을 골라드릴게요.";
+  const GREET="안녕하세요, 별이예요. 🌙\n오늘은 어떤 책이 당기세요? 기분이나 상황만 편하게 말씀해 주시면 딱 맞는 책을 찾아드릴게요.";
   const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
   let msgs=[], books=[], busy=false, opened=false, lastQ='';
