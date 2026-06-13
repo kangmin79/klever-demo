@@ -88,16 +88,25 @@ body.dark .bl-word{color:#f1f5f9;}
 body.dark .bl-word span{color:var(--gold);}
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
-.gnb{display:flex;gap:4px;flex:1;}
-.gnb-item{padding:8px 16px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:all 0.15s;letter-spacing:-0.3px;}
-.gnb-item:hover{background:var(--primary-bg);color:var(--primary);}
-.gnb-item.active{background:var(--primary);color:#fff;font-weight:600;}
-body.dark .gnb-item.active{background:var(--gold);color:#0f172a;}
-.school-tag{padding:7px 14px;border-radius:20px;background:var(--bg-input);font-size:12px;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px;letter-spacing:-0.2px;}
-.school-tag .icon{width:14px;height:14px;}
-.lang-select{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;}
-.btn-theme{padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-sub);font-size:12px;cursor:pointer;}
-.btn-theme:hover{border-color:var(--primary);color:var(--primary);}
+/* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
+.gnb{display:flex;gap:2px;flex:1;height:100%;align-items:stretch;margin-left:6px;}
+.gnb-item{position:relative;display:flex;align-items:center;padding:0 15px;font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:color .18s;letter-spacing:-0.3px;}
+.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2.5px;border-radius:3px 3px 0 0;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
+.gnb-item:hover{color:var(--text);}
+.gnb-item:hover::after{transform:scaleX(.45);background:var(--border);}
+.gnb-item.active{color:var(--text);font-weight:700;}
+.gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);background:var(--gold);}
+body.dark .gnb-item.active{color:#f1f5f9;}
+/* 우측 컨트롤 — 동일 높이(32px)·동일 라운드·아웃라인으로 통일, 골드 악센트 */
+.hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:border-color .15s,color .15s;}
+.hdr-ctl:hover{border-color:var(--gold);color:var(--text);}
+.school-tag{height:32px;padding:0 13px;border-radius:9px;background:transparent;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;}
+.school-tag .icon{width:14px;height:14px;color:var(--gold);}
+.lang-select{height:32px;padding:0 10px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:border-color .15s;}
+.lang-select:hover{border-color:var(--gold);}
+.btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-sub);cursor:pointer;transition:border-color .15s,color .15s;}
+.btn-theme:hover{border-color:var(--gold);color:var(--gold);}
+.hdr-div{width:1px;height:20px;background:var(--border);margin:0 2px;}
 
 /* ═══════════════════════════════════════════════════════════
    3. 메인 컨테이너 + 좌측 사이드바
@@ -886,8 +895,8 @@ body.dark .rhythm-book .rbk-done{color:#6fd9a6;}
 .bs-cele-btn.ghost{background:var(--bg-input);color:var(--text-sub);margin-top:8px;}
 
 /* ── 테스트 계정 칩 + 선택 모달 ── */
-.bx-acc-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
-.bx-acc-chip:hover{border-color:var(--primary);}
+.bx-acc-chip{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;letter-spacing:-0.2px;transition:border-color .15s;}
+.bx-acc-chip:hover{border-color:var(--gold);}
 .bx-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1200;}
 .bx-acc-overlay.open{display:flex;}
 .bx-acc-modal{background:var(--bg-card);border-radius:18px;padding:26px;width:min(420px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.3);}
@@ -1011,11 +1020,12 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .hdr-actions{order:2;margin-left:auto;height:50px;display:flex;align-items:center;}
   .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:2px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
   .gnb::-webkit-scrollbar{display:none;}
-  .gnb-item{display:flex;align-items:center;padding:0 12px;font-size:13.5px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);border-bottom:2.5px solid transparent;}
+  .gnb-item{display:flex;align-items:center;padding:0 12px;font-size:13.5px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
   .gnb-item:hover{background:none;color:var(--text);}
-  .gnb-item.active{background:none;color:var(--text);font-weight:700;border-bottom-color:var(--primary);}
-  body.dark .gnb-item.active{background:none;color:#f1f5f9;border-bottom-color:var(--gold);}
+  .gnb-item.active{background:none;color:var(--text);font-weight:700;}
+  body.dark .gnb-item.active{background:none;color:#f1f5f9;}
   .school-tag{display:none;}
+  .hdr-div{display:none;}
   .detail-layout{grid-template-columns:1fr;}
   .detail-cover{max-width:200px;margin:0 auto;}
 }
@@ -1434,9 +1444,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
     <div class="gnb-item" data-page="mypage" onclick="nav('mypage')">마이 페이지</div>
   </nav>
-  <div class="hdr-actions" style="display:flex;align-items:center;gap:10px;">
+  <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()">🙂 로그인</button>
     <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>한국대학교 도서관</span>
+    <span class="hdr-div"></span>
     <select class="lang-select" onchange="changeLang(this.value)">
       <option value="ko">한국어</option>
       <option value="en">English</option>
@@ -3942,7 +3953,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260613g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
