@@ -821,7 +821,7 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 .reader-settings-sheet .rss-row + .rss-row{border-top:1px solid var(--border);}
 .reader-settings-sheet .rss-label{font-size:12.5px;font-weight:700;color:var(--text-sub);white-space:nowrap;}
 .reader-settings-sheet .rss-ctrl{display:flex;gap:6px;}
-@media(min-width:601px){ .rss-mobile-only{display:none;} }   /* 탭넘김(모바일 전용)·TTS/전체화면(PC 상단에 있음) 행 숨김 */
+@media(min-width:601px){ .reader-settings-sheet .rss-row.rss-mobile-only{display:none;} }   /* 탭넘김(모바일 전용)·TTS/전체화면(PC 상단에 있음) 행 숨김 */
 .viewer-title{font-weight:800;font-size:15px;}
 .viewer-author{font-size:12px;color:var(--text-sub);margin-left:6px;}
 .mode-toggle{display:inline-flex;background:var(--bg-card);border-radius:24px;padding:4px;gap:2px;border:1px solid var(--border);}
@@ -1136,6 +1136,9 @@ body.sepia .viewer-pane mark.hl{background:rgba(212,169,59,0.55);}
 .viewer-pane p[data-pi]:hover{background:rgba(99,102,241,0.07);}
 .viewer-pane p.pp-on,.viewer-pane p.pp-on:hover{background:rgba(212,169,59,0.18);box-shadow:inset 3px 0 0 var(--gold,#d4a93b);padding-left:8px;margin-left:-11px;}
 body.dark .viewer-pane p.pp-on{background:rgba(212,169,59,0.26);}
+/* 평행 하이라이트 — 원문에 형광펜 치면 번역쪽 같은 문단에 골드 마커 (은은하게, pp-on보다 약함) */
+.viewer-pane p.hl-pair{box-shadow:inset 3px 0 0 rgba(212,169,59,.65);background:rgba(212,169,59,.06);padding-left:8px;margin-left:-11px;border-radius:3px;}
+body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
 .hl-popup{
   position:fixed;z-index:120;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
   padding:6px;box-shadow:0 6px 24px rgba(0,0,0,0.15);display:none;gap:4px;
@@ -2317,6 +2320,23 @@ function setupParallel(){
     const vb=document.getElementById('viewerBody');
     if(vb){ vb.addEventListener('click', onParallelClick); _parallelBound=true; }
   }
+  syncPairMarks();
+}
+/* 형광펜 친 원문 문단의 번역 문단에 .hl-pair 마커 동기화 (정렬책 전용) */
+function syncPairMarks(){
+  document.querySelectorAll('.viewer-pane p.hl-pair').forEach(p=>p.classList.remove('hl-pair'));
+  if(!_parallelOn) return;
+  const left=document.querySelector('.viewer-pane.left');
+  const right=document.querySelector('.viewer-pane.right');
+  if(!left||!right) return;
+  const pis=new Set();
+  left.querySelectorAll('mark.hl[data-hlts]').forEach(mk=>{
+    const p=mk.closest('p[data-pi]'); if(p) pis.add(p.dataset.pi);
+  });
+  pis.forEach(pi=>{
+    const R=right.querySelector('p[data-pi="'+pi+'"]');
+    if(R) R.classList.add('hl-pair');
+  });
 }
 function _clearParallel(){ document.querySelectorAll('.viewer-pane p.pp-on').forEach(p=>p.classList.remove('pp-on')); }
 function onParallelClick(e){
@@ -2448,6 +2468,7 @@ function addHighlight(fromNote){
   if(!fromNote) readerToast('✦ 하이라이트 저장 — 독서노트에서 확인');
   window.getSelection().removeAllRanges(); _lastSelectionRange = null;
   buildNotesIfOpen();
+  syncPairMarks();   // 정렬책: 번역쪽 같은 문단에 골드 마커
   return entry;
 }
 function addNote(){
@@ -2476,6 +2497,7 @@ function restoreHighlights(){
     if(tc.substr(off, h.text.length) !== h.text){ off = tc.indexOf(h.text); if(off < 0) return; }
     _hlWrap(p, off, off + h.text.length, h.ts, h.note);
   });
+  syncPairMarks();
 }
 /* 메모 입력 박스 — prompt() 대체 인라인 */
 function openNoteBox(ts, x, y){
@@ -2537,6 +2559,7 @@ function hlDelete(ts){
   document.querySelectorAll(`mark.hl[data-hlts="${ts}"]`).forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
   document.querySelectorAll('.viewer-pane, .paged-flow').forEach(p => p.normalize());
   closeNoteBox(); buildNotesIfOpen();
+  syncPairMarks();
   readerToast('하이라이트 삭제됨');
 }
 /* 독서노트에서 형광펜 위치로 점프 */
@@ -2568,6 +2591,12 @@ function hlJump(ts){
     el.scrollTo({top: Math.max(0, top), behavior: 'smooth'});
   }
   _hlFlash(mk);
+  // 정렬책: 번역쪽 같은 문단도 잠깐 강조
+  if(_parallelOn){
+    const p = mk.closest('p[data-pi]');
+    const R = p ? document.querySelector('.viewer-pane.right p[data-pi="' + p.dataset.pi + '"]') : null;
+    if(R){ R.classList.add('pp-on'); setTimeout(() => R.classList.remove('pp-on'), 1600); }
+  }
 }
 
 /* 모드 클래스 */
@@ -3888,7 +3917,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260613e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260613f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
