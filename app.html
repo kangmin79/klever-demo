@@ -890,6 +890,52 @@ body.dark .my-hero{background:linear-gradient(135deg,#0f172a,#1e293b);}
 .rhythm-book .rbk-done{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#1d6b48;white-space:nowrap;}
 body.dark .rhythm-book .rbk-done{color:#6fd9a6;}
 .rhythm-empty{font-size:12.5px;color:var(--text-light);padding:10px 0 2px;line-height:1.7;}
+/* ── 독서 리듬 Bento 그리드 (모듈형 대시보드) ── */
+.bento{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px;}
+.b-tile{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:20px 22px;position:relative;overflow:hidden;}
+.b-streak{grid-column:span 2;display:flex;flex-direction:column;background:linear-gradient(150deg,rgba(212,169,59,.10),rgba(212,169,59,0) 60%);}
+.b-books{grid-column:span 2;}
+.b-heat{grid-column:span 2;}
+.b-num{display:flex;flex-direction:column;justify-content:center;}
+.b-streak-top{display:flex;align-items:center;gap:13px;}
+.b-flame{width:46px;height:46px;border-radius:14px;background:rgba(212,169,59,.16);display:flex;align-items:center;justify-content:center;font-size:24px;flex:0 0 auto;}
+.b-big{font-size:34px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-1px;}
+.b-unit{font-size:17px;font-weight:700;margin-left:2px;}
+.b-sub{font-size:12px;color:var(--text-light);font-weight:600;margin-top:4px;}
+.b-num-v{font-size:25px;font-weight:800;color:var(--text);line-height:1.05;letter-spacing:-.5px;}
+.b-num-l{font-size:11.5px;color:var(--text-light);font-weight:600;margin-top:6px;}
+.b-week{display:flex;align-items:flex-end;gap:7px;margin-top:auto;padding-top:18px;height:64px;}
+.b-wbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;}
+.b-wbar .wb-fill{width:100%;max-width:30px;min-height:3px;border-radius:5px 5px 2px 2px;background:var(--gold);opacity:.9;}
+.b-wbar.zero .wb-fill{background:var(--border);}
+.b-wbar .wb-d{font-size:10px;color:var(--text-light);font-weight:700;}
+.b-wbar.today .wb-d{color:var(--gold);}
+.b-head{font-size:12.5px;font-weight:800;color:var(--text-sub);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
+.b-head-sub{font-size:11px;color:var(--text-light);font-weight:600;margin-left:auto;}
+.b-book{display:flex;align-items:center;gap:11px;padding:7px 0;}
+.b-book .bb-t{flex:0 0 auto;max-width:38%;font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.b-book .bb-bar{flex:1;height:7px;border-radius:99px;background:var(--bg-input);overflow:hidden;}
+.b-book .bb-fill{height:100%;border-radius:99px;background:var(--gold);}
+.b-book .bb-pct{flex:0 0 36px;text-align:right;font-size:11.5px;font-weight:800;color:var(--text-sub);}
+.b-book .bb-go{flex:0 0 auto;background:var(--bg-input);color:var(--text);border:none;border-radius:8px;padding:6px 10px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.b-book .bb-go:hover{background:var(--primary-bg);}
+.b-book .bb-done{flex:0 0 auto;font-size:11.5px;font-weight:800;color:#1d6b48;white-space:nowrap;}
+body.dark .b-book .bb-done{color:#6fd9a6;}
+.b-heatgrid{display:flex;gap:4px;justify-content:flex-start;}
+.b-heatcol{display:flex;flex-direction:column;gap:4px;}
+.b-cell{width:13px;height:13px;border-radius:3px;background:var(--bg-input);}
+.b-cell.l1{background:rgba(212,169,59,.30);}
+.b-cell.l2{background:rgba(212,169,59,.52);}
+.b-cell.l3{background:rgba(212,169,59,.76);}
+.b-cell.l4{background:var(--gold);}
+.b-cell.future{background:transparent;}
+.b-heat-foot{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:11px;font-size:10.5px;color:var(--text-light);font-weight:600;}
+.b-heat-foot .b-cell{width:11px;height:11px;}
+.b-empty{font-size:12.5px;color:var(--text-light);padding:10px 2px 2px;line-height:1.7;}
+@media(max-width:760px){
+  .bento{grid-template-columns:1fr 1fr;}
+  .b-streak,.b-books,.b-heat{grid-column:span 2;}
+}
 /* 완독 인증 자동 제안 모달 */
 .bs-cert-ta{width:100%;min-height:76px;border:1px solid var(--border);border-radius:10px;padding:10px;font-size:13.5px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;margin-top:12px;background:var(--bg-input);color:var(--text);}
 .bs-cele-btn.ghost{background:var(--bg-input);color:var(--text-sub);margin-top:8px;}
@@ -2060,7 +2106,19 @@ let _lastSelectionRange = null;
 
 function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_PREFS_KEY)||'null'); if(s)Object.assign(readerPrefs,s);}catch(e){} }
 function saveReaderPrefs(){ try{ localStorage.setItem(READER_PREFS_KEY, JSON.stringify(readerPrefs)); }catch(e){} }
-function loadReaderStats(){ try{ const s=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(s)Object.assign(readerStats,s);}catch(e){} }
+function loadReaderStats(){
+  try{ const s=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(s)Object.assign(readerStats,s);}catch(e){}
+  // 방어: 탭 장시간 방치 등으로 하루가 과대 기록된 값 보정(하루 ≤ 8시간), 누적은 일별 합과 일치
+  try{
+    const rt=readerStats.readingTime;
+    if(rt&&rt.days){
+      let sum=0, fixed=false;
+      for(const k in rt.days){ const v=Math.min(Math.round(rt.days[k]||0), 480); if(v!==rt.days[k]) fixed=true; rt.days[k]=v; sum+=v; }
+      if((rt.total||0)>sum){ rt.total=sum; fixed=true; }
+      if(fixed) saveReaderStats();
+    }
+  }catch(e){}
+}
 function saveReaderStats(){ try{ localStorage.setItem(READER_STATS_KEY, JSON.stringify(readerStats)); }catch(e){} }
 
 /* ── 내 서재(도서관에서 빌린 책) — '읽고 돌아오기' 루프의 그릇 ──
@@ -2411,15 +2469,24 @@ function bumpStreak(){
 function readerSessionStart(){ _readerSessionStart = Date.now(); bumpStreak(); }
 function readerSessionEnd(){
   if(!_readerSessionStart) return;
-  const mins = Math.round((Date.now() - _readerSessionStart) / 60000);
+  // 한 번에 세는 시간은 최대 90분으로 상한 — 탭을 켜둔 채 자리를 비운 경우 과대 집계 방지
+  const mins = Math.min(Math.round((Date.now() - _readerSessionStart) / 60000), 90);
   if(mins > 0){
     const tk = todayKey();
-    readerStats.readingTime.total = (readerStats.readingTime.total||0) + mins;
-    readerStats.readingTime.days[tk] = (readerStats.readingTime.days[tk]||0) + mins;
+    const day = Math.min((readerStats.readingTime.days[tk]||0) + mins, 480);   // 하루 ≤ 8시간
+    const add = day - (readerStats.readingTime.days[tk]||0);
+    readerStats.readingTime.days[tk] = day;
+    readerStats.readingTime.total = (readerStats.readingTime.total||0) + add;
     saveReaderStats();
   }
   _readerSessionStart = 0;
 }
+// 탭이 가려지면(다른 창·잠금) 읽기 타이머 일시정지, 돌아오면 재개 — 백그라운드 누적 방지
+function _viewerOpen(){ return document.getElementById('viewerOverlay')?.classList.contains('open'); }
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ if(_viewerOpen()) readerSessionEnd(); }
+  else { if(_viewerOpen() && !_readerSessionStart) _readerSessionStart = Date.now(); }
+});
 
 /* 하이라이트 (완독 모드에서만) — 위치 앵커(장+문단+글자위치) 저장 → 다시 열어도 복원 */
 function setupHighlightHandlers(){
@@ -3953,7 +4020,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4774,52 +4841,78 @@ function renderMyHero(){
       <div><div class="mh-n">${st.score.toLocaleString()}</div><div class="mh-l">누적 점수</div></div>
     </div>`;
 }
-/* 나의 독서 리듬 — 뷰어가 측정한 실데이터(읽기시간·streak·책별 read_pct)만 표시, 가짜 없음 */
+/* 나의 독서 리듬 — Bento 그리드. 뷰어가 측정한 실데이터(읽기시간·streak·read_pct)만, 가짜 없음 */
 function _fmtMins(m){ m=Math.max(0,Math.round(m||0)); return m>=60 ? Math.floor(m/60)+'시간'+(m%60?' '+(m%60)+'분':'') : m+'분'; }
+function _dkey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _heatLevel(m){ if(!m) return 0; if(m<10) return 1; if(m<30) return 2; if(m<60) return 3; return 4; }
 function renderReadingRhythm(){
   const el=document.getElementById('readingRhythm'); if(!el) return;
   const rt=readerStats.readingTime||{total:0,days:{}};
   const today=rt.days[todayKey()]||0;
   const streak=readerStats.streak?.count||0;
-  // 최근 7일 막대 (키 형식 = todayKey와 동일)
+  // 이번 주(월~일) 막대
   const names=['일','월','화','수','목','금','토'];
-  const days=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    days.push({k, name:names[d.getDay()], v:rt.days[k]||0, today:i===0});
-  }
-  const max=Math.max(...days.map(d=>d.v), 1);
-  // 책별 진행률 (완독 모드 read_pct — 계정별 저장값)
+  const week=[];
+  for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); week.push({k:_dkey(d), name:names[d.getDay()], v:rt.days[_dkey(d)]||0, today:i===0}); }
+  const wmax=Math.max(...week.map(d=>d.v), 1);
+  // 책별 진행률
   const rows=[];
   (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{
     const r=_chalRead(b.id); const pct=r?.read_pct||0;
     if(pct>0) rows.push({id:b.id, title:b.title, pct:Math.min(100,pct), ts:r.ts||0, done:pct>=95});
   });
-  rows.sort((a,b)=>(a.done-b.done)||(b.ts-a.ts));   // 읽는 중 먼저, 최근 읽은 순
-  const shown=rows.slice(0,6);
-  const hasAny = (rt.total||0)>0 || rows.length>0;
-  el.innerHTML=`<div class="rhythm-card">
-    <div class="rhythm-title">📈 나의 독서 리듬</div>
-    ${hasAny?`
-    <div class="rhythm-chips">
-      <span class="rhythm-chip">오늘 <b>${_fmtMins(today)}</b></span>
-      <span class="rhythm-chip">🔥 연속 <b>${streak}일</b></span>
-      <span class="rhythm-chip">누적 <b>${_fmtMins(rt.total||0)}</b></span>
+  rows.sort((a,b)=>(a.done-b.done)||(b.ts-a.ts));
+  const shown=rows.slice(0,4);
+  // 독서 잔디 (최근 8주, 일요일 시작 7×8 그리드)
+  const t0=new Date(); t0.setHours(0,0,0,0);
+  const start=new Date(t0); start.setDate(start.getDate()-(t0.getDay()+7*7));
+  const cols=[];
+  for(let w=0; w<8; w++){
+    const col=[];
+    for(let dd=0; dd<7; dd++){
+      const d=new Date(start); d.setDate(start.getDate()+w*7+dd);
+      if(d>t0){ col.push({future:true}); continue; }
+      const m=rt.days[_dkey(d)]||0; col.push({lvl:_heatLevel(m), title:_dkey(d)+' · '+m+'분'});
+    }
+    cols.push(col);
+  }
+  const hasAny=(rt.total||0)>0 || rows.length>0;
+  if(!hasAny){
+    el.innerHTML=`<div class="bento"><div class="b-tile" style="grid-column:span 4"><div class="b-head">📈 나의 독서 리듬</div><div class="b-empty">아직 측정된 독서 기록이 없어요.<br>책을 열어 읽기 시작하면 <b>읽은 시간 · 연속 일수 · 책별 진행률 · 독서 잔디</b>가 여기에 자동으로 기록됩니다.</div></div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="bento">
+    <div class="b-tile b-streak">
+      <div class="b-streak-top">
+        <div class="b-flame">🔥</div>
+        <div><div class="b-big">${streak}<span class="b-unit">일</span></div><div class="b-sub">연속 독서 · 이번 주</div></div>
+      </div>
+      <div class="b-week">${week.map(d=>`
+        <div class="b-wbar${d.v?'':' zero'}${d.today?' today':''}" title="${d.k} · ${d.v}분">
+          <div class="wb-fill" style="height:${d.v?Math.max(4,Math.round(d.v/wmax*42)):3}px"></div>
+          <div class="wb-d">${d.today?'오늘':d.name}</div>
+        </div>`).join('')}</div>
     </div>
-    <div class="rhythm-bars">${days.map(d=>`
-      <div class="rhythm-bar${d.v?'':' zero'}${d.today?' today':''}" title="${d.k} · ${d.v}분">
-        <div class="rb-fill" style="height:${d.v?Math.max(8,Math.round(d.v/max*48)):3}px"></div>
-        <div class="rb-day">${d.today?'오늘':d.name}</div>
-      </div>`).join('')}</div>
-    ${shown.length?`<div class="rhythm-books">${shown.map(r=>`
-      <div class="rhythm-book">
-        <div class="rbk-t">${esc(cleanT(r.title))}</div>
-        <div class="rbk-bar"><div class="rbk-fill" style="width:${r.pct}%"></div></div>
-        <div class="rbk-pct">${r.pct}%</div>
-        ${r.done?`<span class="rbk-done">✔ 완독</span>`:`<button class="rbk-go" onclick="openViewer('${esc(r.id)}','full')">이어 읽기 →</button>`}
-      </div>`).join('')}${rows.length>shown.length?`<div class="rhythm-empty">외 ${rows.length-shown.length}권 진행 중</div>`:''}</div>`:''}
-    `:`<div class="rhythm-empty">아직 측정된 독서 기록이 없어요.<br>책을 열어 읽기 시작하면 <b>읽은 시간 · 연속 일수 · 책별 진행률</b>이 여기에 자동으로 기록됩니다.</div>`}
+    <div class="b-tile b-num"><div class="b-num-v">${_fmtMins(today)}</div><div class="b-num-l">오늘 읽음</div></div>
+    <div class="b-tile b-num"><div class="b-num-v">${_fmtMins(rt.total||0)}</div><div class="b-num-l">누적 독서</div></div>
+    <div class="b-tile b-books">
+      <div class="b-head">📖 읽고 있는 책</div>
+      ${shown.length?shown.map(r=>`
+        <div class="b-book">
+          <div class="bb-t">${esc(cleanT(r.title))}</div>
+          <div class="bb-bar"><div class="bb-fill" style="width:${r.pct}%"></div></div>
+          <div class="bb-pct">${r.pct}%</div>
+          ${r.done?`<span class="bb-done">✔ 완독</span>`:`<button class="bb-go" onclick="openViewer('${esc(r.id)}','full')">이어 읽기 →</button>`}
+        </div>`).join('')+(rows.length>shown.length?`<div class="b-empty" style="padding-bottom:0">외 ${rows.length-shown.length}권 진행 중</div>`:'')
+        :`<div class="b-empty">완독 모드로 책을 열면 진행률이 여기에 쌓여요.</div>`}
+    </div>
+    <div class="b-tile b-heat">
+      <div class="b-head">🟩 독서 잔디 <span class="b-head-sub">최근 8주</span></div>
+      <div class="b-heatgrid">${cols.map(col=>`<div class="b-heatcol">${col.map(c=>
+        c.future?`<div class="b-cell future"></div>`:`<div class="b-cell${c.lvl?' l'+c.lvl:''}" title="${c.title}"></div>`
+      ).join('')}</div>`).join('')}</div>
+      <div class="b-heat-foot">적게 <span class="b-cell"></span><span class="b-cell l1"></span><span class="b-cell l2"></span><span class="b-cell l3"></span><span class="b-cell l4"></span> 많이</div>
+    </div>
   </div>`;
 }
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
