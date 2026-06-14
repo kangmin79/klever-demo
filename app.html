@@ -911,8 +911,8 @@ body.dark .b-tile:hover{box-shadow:0 3px 12px rgba(0,0,0,.4), 0 22px 44px -12px 
 body.dark .b-identity{background:linear-gradient(150deg,#0f172a,#243049);}
 .b-id-top{display:flex;align-items:center;gap:9px;}
 .b-id-emoji{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.10);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto;}
-.b-id-name{font-size:15px;font-weight:800;color:#fff;}
-.b-id-head{font-size:21px;font-weight:800;color:#fff;margin-top:16px;letter-spacing:-.5px;line-height:1.3;}
+.b-id-name{font-size:13px;font-weight:700;color:rgba(219,228,255,.72);letter-spacing:.01em;}
+.b-id-head{font-size:22px;font-weight:800;color:#fff;margin-top:12px;letter-spacing:-.5px;line-height:1.3;}
 .b-id-head b{color:#ffd479;}
 .b-identity .b-week{margin-top:auto;padding-top:20px;}
 .b-identity .wb-d{color:rgba(219,228,255,.6);}
@@ -4055,7 +4055,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4915,10 +4915,10 @@ function renderReadingRhythm(){
   const s=(typeof bxStudent==='function')&&bxStudent();
   const name=(s&&s.name)||(typeof readerName==='function'?readerName():'게스트');
   const emoji=(s&&s.emoji)||'📘';
-  const headline=streak>0?`🔥 <b>${streak}일째</b> 읽는 중`:`오늘 <b>첫 페이지</b>를 펴보세요`;
+  const headline=streak>0?`<b>${streak}일째</b> 읽는 중`:`오늘 <b>첫 페이지</b>를 펴보세요`;
   el.innerHTML=`<div class="bento">
     <div class="b-tile b-identity">
-      <div class="b-id-top"><span class="b-id-emoji">${esc(emoji)}</span><span class="b-id-name">${esc(name)}</span></div>
+      <div class="b-id-name">${esc(name)}</div>
       <div class="b-id-head">${headline}</div>
       <div class="b-week">${week.map(d=>`
         <div class="b-wbar${d.v?'':' zero'}${d.today?' today':''}" title="${d.k} · ${d.v}분">
@@ -4931,7 +4931,7 @@ function renderReadingRhythm(){
     <div class="b-tile b-num"><div class="b-num-v">${(st.score||0).toLocaleString()}</div><div class="b-num-l">누적 점수</div></div>
     <div class="b-tile b-num"><div class="b-num-v">${_fmtMins(today)}</div><div class="b-num-l">오늘 읽음</div><div class="b-num-sub">누적 ${_fmtMins(rt.total||0)}</div></div>
     <div class="b-tile b-books">
-      <div class="b-head">📖 읽고 있는 책</div>
+      <div class="b-head">읽고 있는 책</div>
       ${shown.length?shown.map(r=>`
         <div class="b-book">
           <div class="bb-t">${esc(cleanT(r.title))}</div>
@@ -4942,7 +4942,7 @@ function renderReadingRhythm(){
         :`<div class="b-empty">완독 모드로 책을 열면 진행률이 여기에 쌓여요.</div>`}
     </div>
     <div class="b-tile b-heat">
-      <div class="b-head">🟩 독서 잔디 <span class="b-head-sub">최근 8주</span></div>
+      <div class="b-head">독서 잔디 <span class="b-head-sub">최근 8주</span></div>
       <div class="b-heatgrid">${cols.map(col=>`<div class="b-heatcol">${col.map(c=>
         c.future?`<div class="b-cell future"></div>`:`<div class="b-cell${c.lvl?' l'+c.lvl:''}" title="${c.title}"></div>`
       ).join('')}</div>`).join('')}</div>
