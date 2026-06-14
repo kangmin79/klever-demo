@@ -204,12 +204,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 101,
   "reviews": 21,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-64317.webp"
  },
  {
   "id": "gb-28054",
@@ -4860,12 +4861,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 178,
   "reviews": 14,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-158.webp"
  },
  {
   "id": "gb-74222",
@@ -4876,12 +4878,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 97,
   "reviews": 17,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-74222.webp"
  },
  {
   "id": "gb-82",
