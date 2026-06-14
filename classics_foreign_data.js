@@ -2148,22 +2148,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "progress": 0
  },
  {
-  "id": "gb-26564",
-  "title": "Ivanhoe",
-  "author": "월터 스콧",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 103,
-  "reviews": 23,
-  "quizzes": 5,
-  "progress": 0
- },
- {
   "id": "gb-27681",
   "title": "The Last of the Mohicans: A Narrative of 1757",
   "author": "제임스 페니모어 쿠퍼",
@@ -4896,6 +4880,22 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 97,
   "reviews": 17,
+  "quizzes": 5,
+  "progress": 0
+ },
+ {
+  "id": "gb-82",
+  "title": "Ivanhoe",
+  "author": "월터 스콧",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": false,
+  "src": "Gutenberg",
+  "participants": 126,
+  "reviews": 10,
   "quizzes": 5,
   "progress": 0
  }
