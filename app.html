@@ -747,6 +747,10 @@ body.dark .rec-go .icon{color:#0f172a;}
 .sky-lg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#c4ccdd;background:rgba(255,255,255,.07);padding:3px 9px;border-radius:20px;backdrop-filter:blur(2px);}
 .sky-lg i{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .sky-title{position:absolute;left:20px;top:14px;color:#ffd479;font-weight:800;font-size:15px;text-shadow:0 1px 5px rgba(0,0,0,.55);}
+.sky-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#dbe4ff;font-size:13.5px;line-height:1.8;text-shadow:0 1px 5px rgba(0,0,0,.5);padding:0 20px;}
+.sky-empty b{color:#ffd479;}
+.sky-empty button{margin-top:16px;background:rgba(255,212,121,.16);border:1px solid rgba(255,212,121,.5);color:#ffd479;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;backdrop-filter:blur(2px);transition:background .15s;}
+.sky-empty button:hover{background:rgba(255,212,121,.28);}
 /* 슈퍼래티브 결산 */
 .supl{display:flex;gap:12px;flex-wrap:wrap;}
 .supl-c{flex:1;min-width:150px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 15px;transition:transform .15s,box-shadow .15s;}
@@ -1727,6 +1731,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <!-- 나의 독서 리듬 (실측: 읽기시간·연속일·책별 진행률) -->
   <div id="readingRhythm"></div>
 
+  <!-- 나의 독서 밤하늘 (완독 = 별, 장르 = 별자리) -->
+  <div id="skySection" style="margin-top:32px;display:none;">
+    <div class="section-head">
+      <div class="section-title"><em>나의 독서 밤하늘</em></div>
+      <button class="btn-outline" id="skyShareBtn" onclick="shareSky()" style="display:inline-flex;align-items:center;gap:6px;"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>이미지로 공유</button>
+    </div>
+    <div id="readingSky" class="sky"></div>
+  </div>
+
   <!-- (정돈 2026-06-12) 실측 데이터 연결 전까지 숨김 — 컨테이너 id는 유지(렌더 함수 안전) -->
   <div style="display:none">
     <span id="statScore"></span><span id="statBooks"></span><span id="statTime"></span><span id="statRank"></span>
@@ -1734,7 +1747,6 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="summary-share" id="summaryCard"></div>
     <div id="superlatives"></div>
     <span id="streakNote"></span>
-    <div id="readingSky" class="sky"></div>
     <div id="streakCal"></div>
     <div class="read-chart" id="readChart"></div>
   </div>
@@ -4020,7 +4032,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5586,8 +5598,17 @@ const SKY_W=1000, SKY_H=400;
 const GENRE_COLORS={'소설':'#8ab4ff','시':'#ffd479','수필':'#7ef0c2','희곡':'#ff9ecb','사상':'#c9a3ff','평론':'#c9a3ff','역사':'#ffb38a','과학':'#7fe0ff','해외문학':'#f2b6ff'};
 function genreColor(g){return GENRE_COLORS[g]||'#aab6e8';}
 function _seed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return function(){h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+// 별자리 = 실제 완독한 책만(가짜 데모 없음). 완독 = 별이 챌린지 소감 제출 또는 read_pct≥95
+function _skyBooks(){
+  const out=[];
+  (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{
+    const r=_chalRead(b.id);
+    if(r && (r.submitted || (r.read_pct||0)>=95)) out.push(b);
+  });
+  return out;
+}
 function skyLayout(){
-  const set=myReadBooks(), W=SKY_W, H=SKY_H;
+  const set=_skyBooks(), W=SKY_W, H=SKY_H;
   const groups={}; set.forEach(b=>{(groups[b.category||'기타']=groups[b.category||'기타']||[]).push(b);});
   const gkeys=Object.keys(groups);
   const bgr=_seed('bgstars'), bg=[];
@@ -5603,7 +5624,19 @@ function skyLayout(){
 }
 function renderSky(){
   const host=document.getElementById('readingSky'); if(!host) return;
+  const sec=document.getElementById('skySection'); if(sec) sec.style.display='block';
   const L=skyLayout();
+  const shareBtn=document.getElementById('skyShareBtn');
+  if(!L.count){   // 빈 하늘 — 완독 전엔 배경별만 + 안내(가짜 별 없음)
+    if(shareBtn) shareBtn.style.display='none';
+    let bg2=''; L.bg.forEach(s=>bg2+=`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(2)}" fill="#fff" opacity="${(s.o*0.7).toFixed(2)}"/>`);
+    host.innerHTML=`<svg viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="xMidYMid slice" class="sky-svg">${bg2}</svg>
+      <div class="sky-title">⭐ 첫 별을 기다리는 밤하늘</div>
+      <div class="sky-empty">책을 <b>완독</b>하면 밤하늘에 별이 하나씩 떠요.<br>장르가 모이면 나만의 <b>별자리</b>가 됩니다.
+        <button onclick="nav('collection')">첫 책 고르러 가기 →</button></div>`;
+    return;
+  }
+  if(shareBtn) shareBtn.style.display='';
   let bg='', lines='', stars='';
   L.bg.forEach(s=>bg+=`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(2)}" fill="#fff" opacity="${s.o.toFixed(2)}"/>`);
   L.groups.forEach(gp=>{
