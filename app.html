@@ -1941,7 +1941,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="mvp35_data.js?b=260612g"></script>
 <script src="books_extra.js?b=260612g"></script>
 <script src="classics_kr_data.js?b=260612g"></script>
-<script src="classics_foreign_data.js?b=260612g"></script>
+<script src="classics_foreign_data.js?b=260614o"></script>
 <script src="bodies_dq.js?b=260612g"></script>
 <script src="bodies_gatsby.js?b=260612g"></script>
 <script src="bodies_demian.js?b=260612g"></script>
@@ -2049,9 +2049,8 @@ const DROP_IDS = new Set(["k13313590","k13313606","k13313608","k13313607","k9001
 // MINUMSA: 민음사 세계문학전집 선정작 (배지)
 const MINUMSA_IDS = new Set(["g31","g21765","g41537","g996","g1122","g1112","g1129","g1128","g1127","g1113","g1400","g98","g730","g46","g1342","g161","g158","g1260","g768","g145","g550","g110","g345","g120","g42","g174","g844","g1661","g2852","g135","g2610","g1184","g1257","g1237","g2413","g44747","g2554","g28054","g2638","g600","g2600","g1399","g1754","g30723","g1081","g76","g74","g205","g15","g33","g203","g209","g215","g910","g5200","g7849","g2814","g219","g5658","g541","g4517","g1998","g4363"]);
 // 국내(고전) = 한국 고전 110권(제목만 표지, 본문은 Supabase classics fetch)
-// 해외 = 기존 mvp35 foreign + books_extra
+// 해외 = 확정 목록(2026-06-14)만 진열 — 옛 mvp35 해외분 제외
 const BOOKS_RAW = (typeof BOOKS_CLASSICS_KR !== 'undefined' ? BOOKS_CLASSICS_KR : [])
-  .concat(typeof BOOKS_MVP35 !== 'undefined' ? BOOKS_MVP35.filter(b => b.locale === 'foreign') : [])
   .concat(typeof BOOKS_CLASSICS_FOREIGN !== 'undefined' ? BOOKS_CLASSICS_FOREIGN : []);
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
                        .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b)
@@ -4059,7 +4058,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
