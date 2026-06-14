@@ -31,6 +31,7 @@
   --gold:#d4a93b;
   --bg:#f7f6f1; --bg-card:#fff; --bg-input:#f0efeb;
   --text:#1a2942; --text-sub:#475569; --text-light:#64748b;
+  --ink:#4338ca;   /* 휙 단지 이름색(인디고) — 대시보드 핵심 숫자·제목 강조용 */
   --border:#e3dfd5;
   --success:#2eb872; --warning:#f5a623; --danger:#e74c3c;
   --locked:#cbd0d8; --available:#3a6ea5; --completed:#d4a93b;
@@ -927,7 +928,10 @@ body.dark .b-identity{background:linear-gradient(150deg,#0f172a,#243049);}
 .b-big{font-size:34px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-1px;}
 .b-unit{font-size:17px;font-weight:700;margin-left:2px;}
 .b-sub{font-size:12px;color:var(--text-light);font-weight:600;margin-top:4px;}
-.b-num-v{font-size:25px;font-weight:800;color:var(--text);line-height:1.05;letter-spacing:-.5px;}
+.b-num-v{font-size:25px;font-weight:800;color:var(--ink);line-height:1.05;letter-spacing:-.5px;}
+body.dark .b-num-v{color:#a5b4fc;}   /* 다크모드: 밝은 인디고 */
+#page-mypage .page-title{color:var(--ink);}
+body.dark #page-mypage .page-title{color:#a5b4fc;}
 .b-num-l{font-size:11.5px;color:var(--text-light);font-weight:600;margin-top:6px;}
 .b-week{display:flex;align-items:flex-end;gap:7px;margin-top:auto;padding-top:18px;height:64px;}
 .b-wbar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;}
@@ -4055,7 +4059,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
