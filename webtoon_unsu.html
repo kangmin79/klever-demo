@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운수 좋은 날 — 웹툰 · bookstar</title>
+<meta name="robots" content="noindex">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#08080c;color:#f4efe6;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;}
+  .serif{font-family:Georgia,'Noto Serif KR',serif;}
+  .wt-bar{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;background:rgba(8,8,12,.7);backdrop-filter:blur(8px);z-index:50;border-bottom:1px solid rgba(255,255,255,.08);}
+  .wt-bar a.back{color:#f4efe6;text-decoration:none;font-size:20px;line-height:1;padding:4px 6px;}
+  .wt-bar .ti{font-weight:800;font-size:15px;}
+  .wt-bar .au{font-size:12px;color:#b3aa98;}
+  .wt-bar .demo{margin-left:auto;font-size:10.5px;font-weight:800;color:#1a1f33;background:#e8c66a;padding:3px 9px;border-radius:20px;}
+  .wt-prog{position:fixed;top:52px;left:0;height:3px;background:#e8c66a;width:0;z-index:50;transition:width .1s;}
+  .wt-col{max-width:480px;margin:0 auto;padding-top:52px;}
+  .wt-cover{position:relative;min-height:100vh;}
+  .wt-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .wt-cover .scr{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,12,.35),rgba(8,8,12,0) 35%,rgba(8,8,12,.85));}
+  .wt-cover .tx{position:absolute;left:0;right:0;bottom:64px;text-align:center;padding:0 24px;z-index:2;}
+  .wt-cover h1{font-size:62px;letter-spacing:-1px;text-shadow:0 4px 30px rgba(0,0,0,.7);}
+  .wt-cover .sub{margin-top:12px;font-size:14px;color:#e6cfa0;letter-spacing:2px;}
+  .wt-cover .au2{margin-top:6px;font-size:13px;color:#cdbfa6;}
+  .wt-cover .scroll{position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:12px;color:#cfc6b6;z-index:2;animation:bob 1.6s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+  .wt-cut{position:relative;display:flex;justify-content:center;background:#08080c;}
+  .wt-cut img{display:block;width:auto;max-width:100%;max-height:calc(100vh - 56px);opacity:0;transform:scale(1.04);transition:opacity 1s ease,transform 1.4s ease;}
+  .wt-cut.in img{opacity:1;transform:none;}
+  .wt-cut .scr{position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(180deg,rgba(8,8,12,0),rgba(8,8,12,.55) 55%,rgba(8,8,12,.94));pointer-events:none;}
+  .wt-cap{position:absolute;left:0;right:0;bottom:0;padding:22px 22px 30px;z-index:3;font-size:17px;line-height:1.85;letter-spacing:-.2px;text-shadow:0 1px 8px rgba(0,0,0,.7);opacity:0;transform:translateY(20px);transition:opacity .8s .15s,transform .8s .15s;}
+  .wt-cut.in .wt-cap{opacity:1;transform:none;}
+  .wt-cap .dlg{color:#ffd87a;font-weight:700;}
+  .wt-cap .small{display:block;font-size:13.5px;color:#cabfae;margin-top:6px;}
+  .wt-end{text-align:center;padding:70px 24px 90px;background:radial-gradient(120% 80% at 50% 30%,#1a1430,#08080c 70%);}
+  .wt-end .fin{font-size:30px;letter-spacing:8px;color:#e6cfa0;margin-bottom:18px;}
+  .wt-end p{color:#c2b9a8;font-size:14px;line-height:1.85;max-width:420px;margin:0 auto 20px;}
+  .wt-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .wt-btn{display:inline-block;text-decoration:none;font-weight:800;font-size:14px;border-radius:12px;padding:13px 20px;}
+  .wt-btn.gold{background:#e8c66a;color:#1a1f33;}
+  .wt-btn.ghost{background:transparent;color:#f4efe6;border:1px solid rgba(255,255,255,.25);}
+  .wt-note{font-size:11.5px;color:#8a8377;max-width:440px;margin:26px auto 0;line-height:1.7;}
+  @media(max-width:520px){.wt-cover h1{font-size:48px;}.wt-cap{font-size:15.5px;}}
+</style>
+</head>
+<body>
+<div class="wt-bar">
+  <a class="back" href="/app.html?page=collection" title="북스타로">←</a>
+  <div class="ti">운수 좋은 날</div><div class="au">· 현진건</div>
+  <div class="demo">AI 웹툰</div>
+</div>
+<div class="wt-prog" id="prog"></div>
+
+<div class="wt-col">
+  <section class="wt-cover">
+    <img src="webtoon/unsu/00_cover.png?v=260614n" alt="운수 좋은 날">
+    <div class="scr"></div>
+    <div class="tx">
+      <h1 class="serif">운수 좋은 날</h1>
+      <div class="sub">— 어느 비 오는 날 —</div>
+      <div class="au2">원작 현진건 · bookstar AI 웹툰</div>
+    </div>
+    <div class="scroll">아래로 스크롤 ↓</div>
+  </section>
+  <div id="strip"></div>
+  <section class="wt-end">
+    <div class="fin serif">끝</div>
+    <p>그토록 운수가 좋던 날, 김첨지는 아내를 잃었다. 가난한 이의 행운이란, 늘 이렇게 잔인한 얼굴을 하고 찾아왔다.</p>
+    <div class="wt-row">
+      <a class="wt-btn gold" href="/app.html?page=collection">📖 원작 전문 읽기</a>
+      <a class="wt-btn ghost" href="/app.html">북스타 홈</a>
+    </div>
+    <div class="wt-note">원작은 저작권 만료(PD) 작품입니다. 그림은 bookstar AI(Nano Banana)로 제작한 데모 작화입니다.</div>
+  </section>
+</div>
+
+<script>
+const SLUG="unsu", VER="260614n";
+const CUTS=[{"img": "01", "c": "비가 추적추적 내리던 1920년대 경성. 인력거꾼 <b>김 첨지</b>에게 모처럼 손님이 들었다."}, {"img": "02", "c": "집에는 열흘째 앓아누운 아내가 있었다. <span class=\"dlg\">“설렁탕 한 그릇만… 먹었으면.”</span>"}, {"img": "03", "c": "아내는 오늘만은 나가지 말라 매달렸지만, 김첨지는 뿌리치고 빗속으로 나섰다."}, {"img": "04", "c": "웬일인지 손님이 줄을 이었다. 큰 돈이 손에 들어오는 — 더없이 <b>운수 좋은 날</b>."}, {"img": "05", "c": "그러나 가슴 한켠엔 까닭 모를 불안. 집이 가까워질수록, 어쩐지 발걸음이 무거워졌다."}, {"img": "06", "c": "김첨지는 친구 <b>치삼</b>을 만나 선술집에 들었다. 애써 불안을 술로 눌렀다."}, {"img": "07", "c": "취하여 돈을 내던지고, 울다 웃다 했다. <span class=\"dlg\">“오늘 운수가 좋더니만, 좋더니만…”</span>"}, {"img": "08", "c": "아내가 그토록 원하던 설렁탕을 사 들고, 그는 비틀비틀 집으로 향했다."}, {"img": "09", "c": "집은 이상하리만치 고요했다. 빈 젖을 빠는 아이의 울음소리만 새어 나왔다."}, {"img": "10", "c": "아내는 이미 — 싸늘하게 식어 있었다."}, {"img": "11", "c": "김첨지는 죽은 아내의 얼굴에 제 얼굴을 비비며 울부짖었다. <span class=\"dlg\">“설렁탕을 사 왔는데, 왜… 왜 먹지를 못하니…”</span>"}, {"img": "12", "c": "비는 그칠 줄 몰랐다. <span class=\"small\">— 오늘은, 참으로 운수가 좋은 날이더니만.</span>"}];
+document.getElementById('strip').innerHTML=CUTS.map(x=>`<section class="wt-cut"><img src="webtoon/${SLUG}/${x.img}.png?v=${VER}" alt="" loading="lazy"><div class="scr"></div><div class="wt-cap serif">${x.c}</div></section>`).join('');
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');}),{threshold:.18});
+document.querySelectorAll('.wt-cut').forEach(s=>io.observe(s));
+const prog=document.getElementById('prog');
+addEventListener('scroll',()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});
+</script>
+</body>
+</html>
