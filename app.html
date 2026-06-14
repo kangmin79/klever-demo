@@ -4048,6 +4048,7 @@ function openDetail(bookId){
       <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 책 읽기<span class="ar">›</span></div>
       <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 챌린지로 읽기<span class="ar">›</span></div>
       ${b.id==='kr-김동인-붉은-산'?`<a class="lcd-btn" style="text-decoration:none;background:linear-gradient(135deg,#7a2417,#c0341c);color:#fff;border:0" href="/webtoon.html">🎬 웹툰으로 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:''}
+      ${b.id==='gb-74222'?`<a class="lcd-btn" style="text-decoration:none;background:linear-gradient(135deg,#1a2452,#3a2a6a);color:#fff;border:0" href="/webtoon_demian.html">🎬 웹툰으로 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:''}
     </div>
     <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
@@ -4059,7 +4060,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260614i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260614j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
