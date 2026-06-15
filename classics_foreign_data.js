@@ -1,7 +1,7 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 306권 (번역 4 / 표지 4)
+// 총 306권 (번역 6 / 표지 6)
 const BOOKS_CLASSICS_FOREIGN = [
  {
   "id": "gb-2701",
@@ -990,12 +990,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 41,
   "reviews": 9,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-1080.webp"
  },
  {
   "id": "gb-766",
@@ -1502,12 +1503,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 104,
   "reviews": 0,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-14838.webp"
  },
  {
   "id": "gb-580",
