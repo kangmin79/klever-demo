@@ -1,7 +1,7 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
-// 확정 목록: 구텐베르크_고전문학_최종_2026.06.14.xlsx '원본' + Emma·데미안 유지
-// 표지=제목만(텍스트), 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 306권
+// hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
+// 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
+// 총 306권 (번역 4 / 표지 4)
 const BOOKS_CLASSICS_FOREIGN = [
  {
   "id": "gb-2701",
@@ -829,12 +829,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 39,
   "reviews": 7,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-5200.webp"
  },
  {
   "id": "gb-13951",
