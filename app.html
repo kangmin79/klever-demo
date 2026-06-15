@@ -1226,8 +1226,9 @@ body.dark .viewer-pane p.pp-on{background:rgba(212,169,59,0.26);}
 /* 문장 단위 상호 하이라이트 (PC 호버 / 모바일 탭) */
 .viewer-pane span.psent{border-radius:3px;transition:background .12s,box-shadow .12s;}
 @media (hover:hover){ .viewer-pane span.psent{cursor:pointer;} }
-.viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.24);box-shadow:0 1px 0 var(--gold,#d4a93b);}
+.viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.24);}
 body.dark .viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.32);}
+.viewer-body.sent-mode .viewer-pane p[data-pi]:hover{background:transparent;}   /* 문장 모드: 문단 전체 감싸는 배경 제거 */
 .viewer-pane .sent-reveal{display:block;margin:7px 0 4px;padding:8px 12px;border-left:3px solid var(--gold,#d4a93b);
   background:rgba(212,169,59,0.10);border-radius:0 6px 6px 0;font-size:14px;line-height:1.7;color:var(--text-sub);
   font-family:'Noto Serif KR',serif;}
@@ -2452,7 +2453,8 @@ function attachScrollListener(){
 let _sentBound=false;
 function setupSentenceParallel(){
   const vb=document.getElementById('viewerBody'); if(!vb) return false;
-  if(!vb.querySelector('span.psent')) return false;       // 문장정렬 책 아님
+  if(!vb.querySelector('span.psent')){ vb.classList.remove('sent-mode'); return false; }   // 문장정렬 책 아님
+  vb.classList.add('sent-mode');                          // 문단 전체 호버 배경 끄기용
   if(_sentBound) return true;                              // 위임 이벤트 1회 바인딩
   _sentBound=true;
   if(matchMedia('(hover:hover)').matches){                 // PC: 호버
@@ -4109,7 +4111,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260616c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260616d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
