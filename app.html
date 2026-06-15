@@ -850,6 +850,16 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 /* 마우스 숨기기 */
 .viewer-shell.mh-hidden{cursor:none;}
 .viewer-shell.mh-hidden .viewer-header{opacity:0;transition:opacity .4s;pointer-events:none;}
+/* 헤더 자동숨김 — 평소 숨김, 마우스를 상단에 올리면 노출 (PC 호버 전용·몰입형) */
+@media (hover:hover){
+  .viewer-shell.hdr-auto .viewer-header{
+    position:absolute;top:0;left:0;right:0;
+    transform:translateY(-100%);opacity:0;pointer-events:none;
+    transition:transform .3s ease,opacity .3s ease;
+    box-shadow:0 12px 30px -12px rgba(0,0,0,.4);border-radius:16px 16px 0 0;
+  }
+  .viewer-shell.hdr-auto.hdr-peek .viewer-header{transform:translateY(0);opacity:1;pointer-events:auto;}
+}
 /* 보기설정 추가 컨트롤 — 배경색 스와치 / 글꼴 칩 / 토글 */
 .rss-bg{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}
 .rss-bg.on{border-color:var(--gold,#d4a93b);box-shadow:0 0 0 2px var(--gold,#d4a93b);}
@@ -1913,6 +1923,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
           <button class="reader-btn" onclick="readerPadY(1)">⤓+</button></div></div>
         <div class="rss-row"><span class="rss-label">마우스 숨기기</span><div class="rss-ctrl">
           <button class="rss-toggle" id="mouseHideToggle" onclick="toggleMouseHide()" title="무동작 시 커서·헤더 숨김"></button></div></div>
+        <div class="rss-row"><span class="rss-label">헤더 자동숨김</span><div class="rss-ctrl">
+          <button class="rss-toggle" id="hdrAutoToggle" onclick="toggleHdrAuto()" title="평소 숨김 → 마우스를 상단에 올리면 노출"></button></div></div>
         <div class="rss-row"><span class="rss-label">테마</span><div class="rss-ctrl">
           <button class="reader-btn" data-theme="light" onclick="readerTheme('light')" title="밝게"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg></button>
           <button class="reader-btn" data-theme="sepia" onclick="readerTheme('sepia')" title="세피아"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12z"/></svg></button>
@@ -2195,7 +2207,7 @@ const READER_BGS = [                       // 배경색 6종 (빈 bg=테마 기�
 ];
 
 let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false,
-                   padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false};
+                   padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false, hdrAuto:true};
 let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
 let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
@@ -2295,6 +2307,8 @@ function applyReaderPrefs(){
   document.querySelectorAll('.rss-font[data-fi]').forEach(b=>b.classList.toggle('on', +b.dataset.fi===readerPrefs.fontIdx));
   const mh=document.getElementById('mouseHideToggle'); if(mh) mh.classList.toggle('on', !!readerPrefs.mouseHide);
   _mouseHideArm();
+  const ha=document.getElementById('hdrAutoToggle'); if(ha) ha.classList.toggle('on', !!readerPrefs.hdrAuto);
+  _hdrAutoApply();
   document.body.classList.remove('dark','sepia');
   if(readerPrefs.theme === 'dark') document.body.classList.add('dark');
   else if(readerPrefs.theme === 'sepia') document.body.classList.add('sepia');
@@ -2326,6 +2340,26 @@ function _mouseHideReset(){
   const sh=document.querySelector('.viewer-shell'); if(!sh) return;
   sh.classList.remove('mh-hidden'); clearTimeout(_mhTimer);
   if(readerPrefs.mouseHide) _mhTimer=setTimeout(()=>sh.classList.add('mh-hidden'), 2500);
+}
+/* 헤더 자동숨김: 켜져 있으면 평소 숨김, 마우스를 상단(64px)에 올리면 노출 */
+function toggleHdrAuto(){ readerPrefs.hdrAuto = !readerPrefs.hdrAuto; applyReaderPrefs(); saveReaderPrefs(); }
+let _hdrPeekBound=false;
+function _hdrAutoApply(){
+  const sh=document.querySelector('.viewer-shell'); if(!sh) return;
+  sh.classList.toggle('hdr-auto', !!readerPrefs.hdrAuto);
+  if(!readerPrefs.hdrAuto){ sh.classList.remove('hdr-peek'); return; }
+  if(!_hdrPeekBound){ const ov=document.getElementById('viewerOverlay');
+    if(ov){ ov.addEventListener('mousemove', _hdrPeekMove); _hdrPeekBound=true; } }
+  // 설정 시트가 열린 채로 켰으면 헤더 유지(시트가 헤더에 매달려 있음)
+  if(document.getElementById('readerSettingsSheet')?.classList.contains('open')) sh.classList.add('hdr-peek');
+}
+function _hdrPeekMove(e){
+  const sh=document.querySelector('.viewer-shell');
+  if(!sh || !sh.classList.contains('hdr-auto')) return;
+  // 설정 시트 열려 있으면 헤더 계속 노출 (시트가 헤더 아래로 펼쳐짐)
+  if(document.getElementById('readerSettingsSheet')?.classList.contains('open')){ sh.classList.add('hdr-peek'); return; }
+  const r=sh.getBoundingClientRect();
+  sh.classList.toggle('hdr-peek', (e.clientY - r.top) < 64);
 }
 
 /* ── 모바일 읽기 설정 시트 (Aa) ── */
