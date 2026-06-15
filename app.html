@@ -1946,7 +1946,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="bodies_gatsby.js?b=260612g"></script>
 <script src="bodies_demian.js?b=260612g"></script>
 <script src="bodies_emma.js?b=260612g"></script>
-<script src="bodies_gb5200.js?b=260615a"></script>
+<!-- bodies_gb{id}.js(변신 등 양산 산출물)는 ensureForeignBody()가 viewer 열 때 지연 로드 -->
 <script src="challenge_scenes.js?b=260612p"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -4059,7 +4059,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260615b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260615c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4277,8 +4277,11 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerOverlay').classList.add('open');
   document.querySelector('.viewer-shell')?.classList.remove('chrome-hidden');   // 열 때는 항상 바 보이게
   renderViewer();
-  // 고전(국내 kr-* / 해외 gb-*·옛 g{N}): 본문을 Supabase에서 받아와 다시 렌더
-  if(classicFetchId(bookId)){ await ensureClassicBody(bookId); if(currentBook===b) renderViewer(); }
+  // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
+  let _reload = false;
+  if(b.hasTrans && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
+  if(classicFetchId(bookId)){ await ensureClassicBody(bookId); _reload = true; }
+  if(_reload && currentBook===b) renderViewer();
   // 리더 모듈 초기화
   setTimeout(() => {
     applyReaderPrefs();
@@ -4408,6 +4411,24 @@ async function ensureClassicBody(id){
     const rows = await r.json();
     CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
   }catch(e){ CLASSIC_BODIES[id] = ''; }
+}
+
+// 해외 번역 bodies(bodies_gb{id}.js) 지연 로드 — 147권 수동 <script> include 대체.
+// 양산 드라이버(_drive.py build) 산출물을 자동 흡수. legacy(dq/gatsby/demian/emma)는 정적 include라
+// BODIES_TRANS가 이미 채워져 아래 가드에서 skip. 실패해도 원문 폴백으로 진행.
+const FOREIGN_BODY_P = {};
+function ensureForeignBody(id){
+  if(!id || !id.startsWith('gb-')) return Promise.resolve();
+  if((typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id]) ||
+     (typeof BODIES_ORIG  !== 'undefined' && BODIES_ORIG[id])) return Promise.resolve();
+  if(FOREIGN_BODY_P[id]) return FOREIGN_BODY_P[id];
+  FOREIGN_BODY_P[id] = new Promise(res=>{
+    const s = document.createElement('script');
+    s.src = 'bodies_' + id.replace(/-/g,'') + '.js' + (typeof APP_BUILD !== 'undefined' ? '?b='+APP_BUILD : '');
+    s.onload = res; s.onerror = res;
+    document.head.appendChild(s);
+  });
+  return FOREIGN_BODY_P[id];
 }
 
 function viewerBodies(book){
