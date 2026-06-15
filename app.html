@@ -827,6 +827,8 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 .viewer-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
 .viewer-overlay.open{display:flex;}
 .viewer-shell{width:96%;height:94%;max-width:1480px;background:var(--bg-card);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 80px rgba(0,0,0,0.4);}
+/* 화면 꽉 채우기 (의사 전체화면) — 진짜 Fullscreen API 대신 CSS. 캡쳐 정상 동작 */
+.viewer-shell.maxed{position:fixed;inset:0;width:100%;height:100%;max-width:none;border-radius:0;box-shadow:none;}
 .viewer-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-input);gap:16px;position:relative;z-index:20;}
 .reader-aa{display:inline-flex;}   /* PC·모바일 공통 — 보기 설정은 Aa 시트 하나로 */
 .reader-settings-sheet{display:none;position:absolute;top:100%;right:14px;z-index:60;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;box-shadow:0 18px 44px -16px rgba(20,20,40,.42);padding:8px 14px;min-width:232px;margin-top:6px;}
@@ -3063,7 +3065,7 @@ function addBookmark(){
 let _readerToastTimer=null;
 function readerToast(msg){
   let t=document.getElementById('readerToast');
-  const host=document.fullscreenElement||document.body;   // 전체화면 중엔 그 안에, 평소엔 body — 뷰어 밖에서도 보임
+  const host=_fsHost();   // 화면 꽉 채우기 중엔 그 안에, 평소엔 body — 뷰어 밖에서도 보임
   if(!t){ t=document.createElement('div'); t.id='readerToast'; t.className='reader-toast'; }
   if(t.parentElement!==host) host.appendChild(t);
   t.textContent=msg; t.classList.add('show');
@@ -3081,7 +3083,7 @@ function bsCelebrate(o){
     <button class="bs-cele-btn" onclick="document.getElementById('bsCele')?.remove()">${o.btn||'확인'}</button>
   </div>`;
   d.addEventListener('click',e=>{ if(e.target===d) d.remove(); });
-  (document.fullscreenElement||document.body).appendChild(d);
+  _fsHost().appendChild(d);
 }
 /* ── 완독 인증 자동 제안 (완독 모드 90% 도달 시, 책당 1회만) ── */
 function maybeCertPrompt(bookId){
@@ -3100,7 +3102,7 @@ function maybeCertPrompt(bookId){
     <button class="bs-cele-btn ghost" onclick="document.getElementById('bsCertPrompt')?.remove()">나중에 할게요</button>
   </div>`;
   d.addEventListener('click',e=>{ if(e.target===d) d.remove(); });
-  (document.fullscreenElement||document.body).appendChild(d);
+  _fsHost().appendChild(d);
 }
 function certPromptSubmit(bookId){
   const v=((document.getElementById('certPromptText')||{}).value||'').trim();
@@ -3126,9 +3128,16 @@ function quizFeedback(el, ok, msg){
 
 /* ── 전체화면 ── */
 function toggleFullscreen(){
-  const shell=document.querySelector('.viewer-shell');
-  if(!document.fullscreenElement){ shell.requestFullscreen?.(); }
-  else { document.exitFullscreen?.(); }
+  // 진짜 Fullscreen API는 윈도우에서 캡쳐가 막히는 현상 → CSS로 화면 꽉 채우기
+  const shell=document.querySelector('.viewer-shell'); if(!shell) return;
+  if(document.fullscreenElement) document.exitFullscreen?.();   // 과거 진짜 전체화면 잔재 정리
+  shell.classList.toggle('maxed');
+}
+/* 토스트·축하 모달이 화면 꽉 채우기 안에서도 보이도록 호스트 결정 */
+function _fsHost(){
+  return document.fullscreenElement
+      || document.querySelector('.viewer-shell.maxed')
+      || document.body;
 }
 
 /* ── 페인 보기 토글 (해외책: 나란히 → 원문만 → 번역만) ── */
@@ -5240,6 +5249,7 @@ function closeViewer(){
   document.getElementById('tocDrawer')?.classList.remove('open');
   document.getElementById('notesDrawer')?.classList.remove('open');
   if(document.fullscreenElement) document.exitFullscreen?.();
+  document.querySelector('.viewer-shell')?.classList.remove('maxed');
   document.getElementById('viewerOverlay').classList.remove('open');
 }
 
@@ -6034,6 +6044,8 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
+    const _mx=document.querySelector('.viewer-shell.maxed');
+    if(_mx){ _mx.classList.remove('maxed'); return; }   // 꽉채우기 먼저 해제
     if(document.getElementById('viewerOverlay').classList.contains('open')) closeViewer();
     else if(document.getElementById('programModal').classList.contains('open')) closeProgramModal();
   }
