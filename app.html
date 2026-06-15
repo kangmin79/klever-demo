@@ -844,9 +844,21 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .viewer-close{font-size:22px;color:var(--text-sub);cursor:pointer;padding:6px 10px;}
 .viewer-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
-.viewer-pane{padding:30px 36px;overflow-y:auto;font-size:15px;line-height:1.9;}
-.viewer-pane.left{border-right:1px solid var(--border);background:var(--bg-input);font-family:'Times New Roman','Noto Serif KR',serif;}
-.viewer-pane.right{background:var(--bg-card);}
+.viewer-pane{padding:var(--reader-pady,30px) var(--reader-padx,36px);overflow-y:auto;font-size:15px;line-height:1.9;color:var(--reader-fg,inherit);}
+.viewer-pane.left{border-right:1px solid var(--border);background:var(--reader-bg,var(--bg-input));font-family:'Times New Roman','Noto Serif KR',serif;}
+.viewer-pane.right{background:var(--reader-bg,var(--bg-card));}
+/* 마우스 숨기기 */
+.viewer-shell.mh-hidden{cursor:none;}
+.viewer-shell.mh-hidden .viewer-header{opacity:0;transition:opacity .4s;pointer-events:none;}
+/* 보기설정 추가 컨트롤 — 배경색 스와치 / 글꼴 칩 / 토글 */
+.rss-bg{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}
+.rss-bg.on{border-color:var(--gold,#d4a93b);box-shadow:0 0 0 2px var(--gold,#d4a93b);}
+.rss-font{padding:4px 10px;font-size:13px;}
+.rss-font.on,.reader-btn[data-theme].on{border-color:var(--gold,#d4a93b);color:var(--gold,#d4a93b);font-weight:700;}
+.rss-toggle{width:40px;height:22px;border-radius:11px;background:var(--border);position:relative;cursor:pointer;border:0;transition:background .2s;}
+.rss-toggle.on{background:var(--gold,#d4a93b);}
+.rss-toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}
+.rss-toggle.on::after{left:20px;}
 .viewer-pane h1{font-size:22px;margin-bottom:6px;}
 .viewer-pane h2{font-size:13px;font-style:italic;color:var(--text-sub);margin-bottom:24px;font-weight:500;}
 .viewer-pane p{margin-bottom:16px;text-align:justify;}
@@ -1882,6 +1894,25 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
         <div class="rss-row"><span class="rss-label">줄 간격</span><div class="rss-ctrl">
           <button class="reader-btn" onclick="readerLH(-1)">≡−</button>
           <button class="reader-btn" onclick="readerLH(1)">≡+</button></div></div>
+        <div class="rss-row"><span class="rss-label">배경색</span><div class="rss-ctrl" style="gap:6px;flex-wrap:wrap;">
+          <button class="rss-bg" data-bg="" style="background:#fff;" onclick="readerBg('')" title="기본"></button>
+          <button class="rss-bg" data-bg="cream" style="background:#f6efdd;" onclick="readerBg('cream')" title="크림"></button>
+          <button class="rss-bg" data-bg="mint" style="background:#e7efe6;" onclick="readerBg('mint')" title="민트"></button>
+          <button class="rss-bg" data-bg="forest" style="background:#1e3a32;" onclick="readerBg('forest')" title="포레스트"></button>
+          <button class="rss-bg" data-bg="gray" style="background:#4a4a4a;" onclick="readerBg('gray')" title="그레이"></button>
+          <button class="rss-bg" data-bg="black" style="background:#161616;" onclick="readerBg('black')" title="블랙"></button></div></div>
+        <div class="rss-row"><span class="rss-label">글꼴</span><div class="rss-ctrl" style="gap:6px;">
+          <button class="reader-btn rss-font" data-fi="0" onclick="readerFont(0)">책 원본</button>
+          <button class="reader-btn rss-font" data-fi="1" onclick="readerFont(1)">명조</button>
+          <button class="reader-btn rss-font" data-fi="2" onclick="readerFont(2)">고딕</button></div></div>
+        <div class="rss-row"><span class="rss-label">좌우 여백</span><div class="rss-ctrl">
+          <button class="reader-btn" onclick="readerPadX(-1)" title="여백 줄이기">⇤⇥</button>
+          <button class="reader-btn" onclick="readerPadX(1)" title="여백 늘리기">⇥⇤</button></div></div>
+        <div class="rss-row"><span class="rss-label">상하 여백</span><div class="rss-ctrl">
+          <button class="reader-btn" onclick="readerPadY(-1)">⤓−</button>
+          <button class="reader-btn" onclick="readerPadY(1)">⤓+</button></div></div>
+        <div class="rss-row"><span class="rss-label">마우스 숨기기</span><div class="rss-ctrl">
+          <button class="rss-toggle" id="mouseHideToggle" onclick="toggleMouseHide()" title="무동작 시 커서·헤더 숨김"></button></div></div>
         <div class="rss-row"><span class="rss-label">테마</span><div class="rss-ctrl">
           <button class="reader-btn" data-theme="light" onclick="readerTheme('light')" title="밝게"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg></button>
           <button class="reader-btn" data-theme="sepia" onclick="readerTheme('sepia')" title="세피아"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12z"/></svg></button>
@@ -2147,8 +2178,24 @@ const READER_PREFS_KEY = 'klever-reader-prefs';
 const READER_STATS_KEY = 'klever-reader-stats';
 const FONT_SIZES = [14,15,16,17,18,19,20,22,24];
 const LINE_HEIGHTS = [1.5,1.65,1.75,1.85,2.0,2.2];
+const PAD_X = [10,22,36,54,80];          // 좌우 여백 px
+const PAD_Y = [14,30,48,72];             // 상하 여백 px
+const READER_FONTS = [                    // 글꼴 선택
+  {name:'책 원본', ff:"'Pretendard Variable','Noto Serif KR',serif"},
+  {name:'명조',   ff:"'Noto Serif KR',serif"},
+  {name:'고딕',   ff:"'Pretendard Variable',sans-serif"},
+];
+const READER_BGS = [                       // 배경색 6종 (빈 bg=테마 기본)
+  {id:'',       label:'기본'},
+  {id:'cream',  label:'크림',   bg:'#f6efdd', fg:'#3b342a'},
+  {id:'mint',   label:'민트',   bg:'#e7efe6', fg:'#2c3a2e'},
+  {id:'forest', label:'포레스트', bg:'#1e3a32', fg:'#e7efe9'},
+  {id:'gray',   label:'그레이', bg:'#4a4a4a', fg:'#e9e9e9'},
+  {id:'black',  label:'블랙',   bg:'#161616', fg:'#d8d8d8'},
+];
 
-let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false};
+let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false,
+                   padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false};
 let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
 let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
@@ -2237,7 +2284,17 @@ function applyReaderPrefs(){
   if(v){
     v.style.setProperty('--reader-fs', FONT_SIZES[readerPrefs.fontSizeIdx] + 'px');
     v.style.setProperty('--reader-lh', LINE_HEIGHTS[readerPrefs.lineHeightIdx]);
+    v.style.setProperty('--reader-padx', PAD_X[readerPrefs.padXIdx] + 'px');
+    v.style.setProperty('--reader-pady', PAD_Y[readerPrefs.padYIdx] + 'px');
+    v.style.setProperty('--reader-ff', (READER_FONTS[readerPrefs.fontIdx]||READER_FONTS[0]).ff);
+    const bgc = READER_BGS.find(b=>b.id===readerPrefs.bg);
+    if(bgc && bgc.bg){ v.style.setProperty('--reader-bg', bgc.bg); v.style.setProperty('--reader-fg', bgc.fg); }
+    else { v.style.removeProperty('--reader-bg'); v.style.removeProperty('--reader-fg'); }
   }
+  document.querySelectorAll('.rss-bg[data-bg]').forEach(b=>b.classList.toggle('on', b.dataset.bg===readerPrefs.bg));
+  document.querySelectorAll('.rss-font[data-fi]').forEach(b=>b.classList.toggle('on', +b.dataset.fi===readerPrefs.fontIdx));
+  const mh=document.getElementById('mouseHideToggle'); if(mh) mh.classList.toggle('on', !!readerPrefs.mouseHide);
+  _mouseHideArm();
   document.body.classList.remove('dark','sepia');
   if(readerPrefs.theme === 'dark') document.body.classList.add('dark');
   else if(readerPrefs.theme === 'sepia') document.body.classList.add('sepia');
@@ -2252,6 +2309,24 @@ function applyReaderPrefs(){
 function readerFS(d){ _withAnchorKept(()=>{ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerTheme(t){ readerPrefs.theme = t; applyReaderPrefs(); saveReaderPrefs(); }
+function readerPadX(d){ _withAnchorKept(()=>{ readerPrefs.padXIdx = Math.max(0, Math.min(PAD_X.length-1, readerPrefs.padXIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
+function readerPadY(d){ _withAnchorKept(()=>{ readerPrefs.padYIdx = Math.max(0, Math.min(PAD_Y.length-1, readerPrefs.padYIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
+function readerFont(i){ readerPrefs.fontIdx = i; applyReaderPrefs(); saveReaderPrefs(); }
+function readerBg(id){ readerPrefs.bg = id; applyReaderPrefs(); saveReaderPrefs(); }
+function toggleMouseHide(){ readerPrefs.mouseHide = !readerPrefs.mouseHide; applyReaderPrefs(); saveReaderPrefs(); }
+/* 마우스 숨기기: 켜져 있으면 2.5초 무동작 시 커서·헤더 숨김, 움직이면 복귀 */
+let _mhTimer=null, _mhBound=false;
+function _mouseHideArm(){
+  const sh=document.querySelector('.viewer-shell'); if(!sh) return;
+  if(!_mhBound){ const ov=document.getElementById('viewerOverlay');
+    if(ov){ ov.addEventListener('mousemove', _mouseHideReset); ov.addEventListener('click', _mouseHideReset); _mhBound=true; } }
+  _mouseHideReset();
+}
+function _mouseHideReset(){
+  const sh=document.querySelector('.viewer-shell'); if(!sh) return;
+  sh.classList.remove('mh-hidden'); clearTimeout(_mhTimer);
+  if(readerPrefs.mouseHide) _mhTimer=setTimeout(()=>sh.classList.add('mh-hidden'), 2500);
+}
 
 /* ── 모바일 읽기 설정 시트 (Aa) ── */
 function toggleReaderSettings(e){ if(e) e.stopPropagation(); const s=document.getElementById('readerSettingsSheet'); if(s){ s.classList.toggle('open'); if(s.classList.contains('open')) syncPageModeBtns(); } }
@@ -4111,7 +4186,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260616d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260616e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
