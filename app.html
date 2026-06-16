@@ -1998,6 +1998,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="books_extra.js?b=260612g"></script>
 <script src="classics_kr_data.js?b=260616i"></script>
 <script src="classics_foreign_data.js?b=260616c"></script>
+<script src="classics_ko_titles.js?b=260616a"></script>
 <script src="bodies_dq.js?b=260612g"></script>
 <script src="bodies_gatsby.js?b=260612g"></script>
 <script src="bodies_demian.js?b=260612g"></script>
@@ -2110,8 +2111,14 @@ const MINUMSA_IDS = new Set(["g31","g21765","g41537","g996","g1122","g1112","g11
 // 해외 = 확정 목록(2026-06-14)만 진열 — 옛 mvp35 해외분 제외
 const BOOKS_RAW = (typeof BOOKS_CLASSICS_KR !== 'undefined' ? BOOKS_CLASSICS_KR : [])
   .concat(typeof BOOKS_CLASSICS_FOREIGN !== 'undefined' ? BOOKS_CLASSICS_FOREIGN : []);
+const _KOT = (typeof window !== 'undefined' && window.CLASSICS_KO) ? window.CLASSICS_KO : {};
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
-                       .map(b => MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b)
+                       .map(b => {
+                         let o = MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b;
+                         // 해외 고전: 카드/목록 라벨은 한글 제목, 영어 원제는 titleEn 보존 (표지 이미지는 영어 그대로)
+                         if (b.id && b.id.indexOf('gb-') === 0 && _KOT[b.id]) o = Object.assign({}, o, {titleEn: b.title, title: _KOT[b.id]});
+                         return o;
+                       })
                        .concat(typeof BOOKS_EXTRA !== 'undefined' ? BOOKS_EXTRA : []);
 
 const CURATIONS = [
