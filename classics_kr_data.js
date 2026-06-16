@@ -434,7 +434,8 @@ const BOOKS_CLASSICS_KR = [
   "participants": 175,
   "reviews": 18,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/kr-kimsowol-poems.webp"
  },
  {
   "id": "kr-김영랑-김영랑-시선",
@@ -914,7 +915,8 @@ const BOOKS_CLASSICS_KR = [
   "participants": 124,
   "reviews": 17,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/kr-nalgae.webp"
  },
  {
   "id": "kr-이상-동해",
