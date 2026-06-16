@@ -691,7 +691,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 9,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-135.webp"
+  "coverSrc": "./covers/gb-135.webp?v=2"
  },
  {
   "id": "gb-1514",
@@ -997,7 +997,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 9,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-1080.webp"
+  "coverSrc": "./covers/gb-1080.webp?v=2"
  },
  {
   "id": "gb-766",
@@ -1510,7 +1510,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 0,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-14838.webp"
+  "coverSrc": "./covers/gb-14838.webp?v=2"
  },
  {
   "id": "gb-580",
