@@ -321,7 +321,7 @@ const BOOKS_CLASSICS_KR = [
   "reviews": 14,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/kr-baettaragi.webp"
+  "coverSrc": "./covers/kr-baettaragi.webp?v=2"
  },
  {
   "id": "kr-김동인-붉은-산",
@@ -916,7 +916,7 @@ const BOOKS_CLASSICS_KR = [
   "reviews": 17,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/kr-nalgae.webp"
+  "coverSrc": "./covers/kr-nalgae.webp?v=2"
  },
  {
   "id": "kr-이상-동해",
