@@ -836,7 +836,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 7,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-5200.webp"
+  "coverSrc": "./covers/gb-5200.webp?v=2"
  },
  {
   "id": "gb-13951",
