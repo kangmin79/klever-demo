@@ -4,6 +4,7 @@
 const BOOKS_CLASSICS_KR = [
  {
   "id": "kr-강경애-소금",
+  "coverSrc": "./covers/kr-sogeum.webp",
   "title": "소금",
   "author": "강경애",
   "category": "소설",
@@ -20,6 +21,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-강경애-어머니와-딸",
+  "coverSrc": "./covers/kr-eomeoniwattal.webp",
   "title": "어머니와 딸",
   "author": "강경애",
   "category": "소설",
@@ -36,6 +38,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-강경애-원고료-이백-원",
+  "coverSrc": "./covers/kr-wongoryoibaekwon.webp",
   "title": "원고료 이백 원",
   "author": "강경애",
   "category": "소설",
@@ -52,6 +55,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-강경애-인간-문제",
+  "coverSrc": "./covers/kr-inganmunje.webp",
   "title": "인간 문제",
   "author": "강경애",
   "category": "소설",
@@ -68,6 +72,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-강경애-지하촌",
+  "coverSrc": "./covers/kr-jihachon.webp",
   "title": "지하촌",
   "author": "강경애",
   "category": "소설",
@@ -84,6 +89,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-강경애-파금",
+  "coverSrc": "./covers/kr-pageum.webp",
   "title": "파금",
   "author": "강경애",
   "category": "소설",
@@ -100,6 +106,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김남천-경영",
+  "coverSrc": "./covers/kr-gyeongyeong.webp",
   "title": "경영",
   "author": "김남천",
   "category": "소설",
@@ -116,6 +123,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김남천-대하",
+  "coverSrc": "./covers/kr-daeha.webp",
   "title": "대하",
   "author": "김남천",
   "category": "소설",
@@ -132,6 +140,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김남천-맥",
+  "coverSrc": "./covers/kr-maek.webp",
   "title": "맥",
   "author": "김남천",
   "category": "소설",
@@ -148,6 +157,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김남천-물",
+  "coverSrc": "./covers/kr-mul.webp",
   "title": "물",
   "author": "김남천",
   "category": "소설",
@@ -164,6 +174,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김남천-소년행",
+  "coverSrc": "./covers/kr-sonyeonhaeng.webp",
   "title": "소년행",
   "author": "김남천",
   "category": "소설",
@@ -180,6 +191,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-K박사의-연구",
+  "coverSrc": "./covers/kr-kbaksauiyeongu.webp",
   "title": "K박사의 연구",
   "author": "김동인",
   "category": "소설",
@@ -196,6 +208,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-감자",
+  "coverSrc": "./covers/kr-gamja.webp",
   "title": "감자",
   "author": "김동인",
   "category": "소설",
@@ -212,6 +225,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-광염소나타",
+  "coverSrc": "./covers/kr-gwangyeomsonata.webp",
   "title": "광염소나타",
   "author": "김동인",
   "category": "소설",
@@ -228,6 +242,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-광화사",
+  "coverSrc": "./covers/kr-gwanghwasa.webp",
   "title": "광화사",
   "author": "김동인",
   "category": "소설",
@@ -244,6 +259,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-마음이-옅은-자여",
+  "coverSrc": "./covers/kr-maeumiyeoteunjayeo.webp",
   "title": "마음이 옅은 자여",
   "author": "김동인",
   "category": "소설",
@@ -260,6 +276,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-명문",
+  "coverSrc": "./covers/kr-myeongmun.webp",
   "title": "명문",
   "author": "김동인",
   "category": "소설",
@@ -276,6 +293,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-무지개",
+  "coverSrc": "./covers/kr-mujigae.webp",
   "title": "무지개",
   "author": "김동인",
   "category": "소설",
@@ -292,6 +310,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-발가락이-닮았다",
+  "coverSrc": "./covers/kr-balgarakidalmassda.webp",
   "title": "발가락이 닮았다",
   "author": "김동인",
   "category": "소설",
@@ -342,6 +361,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-시골-황서방",
+  "coverSrc": "./covers/kr-sigolhwangseobang.webp",
   "title": "시골 황서방",
   "author": "김동인",
   "category": "소설",
@@ -358,6 +378,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-약한-자의-슬픔",
+  "coverSrc": "./covers/kr-yakhanjauiseulpeum.webp",
   "title": "약한 자의 슬픔",
   "author": "김동인",
   "category": "소설",
@@ -374,6 +395,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-젊은-그들",
+  "coverSrc": "./covers/kr-jeolmeungeudeul.webp",
   "title": "젊은 그들",
   "author": "김동인",
   "category": "소설",
@@ -390,6 +412,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-죽음",
+  "coverSrc": "./covers/kr-jukeum.webp",
   "title": "죽음",
   "author": "김동인",
   "category": "소설",
@@ -406,6 +429,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김동인-태형",
+  "coverSrc": "./covers/kr-taehyeong.webp",
   "title": "태형",
   "author": "김동인",
   "category": "소설",
@@ -439,6 +463,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-김영랑-김영랑-시선",
+  "coverSrc": "./covers/kr-gimyeongrangsiseon.webp",
   "title": "김영랑 시선",
   "author": "김영랑",
   "category": "시",
@@ -455,6 +480,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나도향-물레방아",
+  "coverSrc": "./covers/kr-mulrebanga.webp",
   "title": "물레방아",
   "author": "나도향",
   "category": "소설",
@@ -471,6 +497,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나도향-벙어리-삼룡이",
+  "coverSrc": "./covers/kr-beongeorisamryongi.webp",
   "title": "벙어리 삼룡이",
   "author": "나도향",
   "category": "소설",
@@ -487,6 +514,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나도향-별을-안거든",
+  "coverSrc": "./covers/kr-byeoleulangeodeun.webp",
   "title": "별을 안거든",
   "author": "나도향",
   "category": "소설",
@@ -503,6 +531,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나도향-뽕",
+  "coverSrc": "./covers/kr-ppong.webp",
   "title": "뽕",
   "author": "나도향",
   "category": "소설",
@@ -519,6 +548,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나도향-행랑-자식",
+  "coverSrc": "./covers/kr-haengrangjasik.webp",
   "title": "행랑 자식",
   "author": "나도향",
   "category": "소설",
@@ -535,6 +565,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나혜석-경희",
+  "coverSrc": "./covers/kr-gyeonghui.webp",
   "title": "경희",
   "author": "나혜석",
   "category": "소설",
@@ -551,6 +582,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-나혜석-규원",
+  "coverSrc": "./covers/kr-gyuwon.webp",
   "title": "규원",
   "author": "나혜석",
   "category": "소설",
@@ -567,6 +599,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-박용철-박용철-시선",
+  "coverSrc": "./covers/kr-bakyongcheolsiseon.webp",
   "title": "박용철 시선",
   "author": "박용철",
   "category": "시",
@@ -583,6 +616,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-신채호-꿈하늘",
+  "coverSrc": "./covers/kr-kkumhaneul.webp",
   "title": "꿈하늘",
   "author": "신채호",
   "category": "소설",
@@ -599,6 +633,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-신채호-백세-노승의-미인담",
+  "coverSrc": "./covers/kr-baeksenoseunguimiindam.webp",
   "title": "백세 노승의 미인담",
   "author": "신채호",
   "category": "소설",
@@ -615,6 +650,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-신채호-용과-용의-대격전",
+  "coverSrc": "./covers/kr-yonggwayonguidaegyeokjeon.webp",
   "title": "용과 용의 대격전",
   "author": "신채호",
   "category": "소설",
@@ -631,6 +667,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-신채호-을지문덕",
+  "coverSrc": "./covers/kr-euljimundeok.webp",
   "title": "을지문덕",
   "author": "신채호",
   "category": "소설",
@@ -647,6 +684,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-신채호-이순신",
+  "coverSrc": "./covers/kr-isunsin.webp",
   "title": "이순신",
   "author": "신채호",
   "category": "소설",
@@ -663,6 +701,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-오장환-오장환-시선",
+  "coverSrc": "./covers/kr-ojanghwansiseon.webp",
   "title": "오장환 시선",
   "author": "오장환",
   "category": "시",
@@ -679,6 +718,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-가실",
+  "coverSrc": "./covers/kr-gasil.webp",
   "title": "가실",
   "author": "이광수",
   "category": "소설",
@@ -695,6 +735,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-단종애사",
+  "coverSrc": "./covers/kr-danjongaesa.webp",
   "title": "단종애사",
   "author": "이광수",
   "category": "소설",
@@ -711,6 +752,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-마의태자",
+  "coverSrc": "./covers/kr-mauitaeja.webp",
   "title": "마의태자",
   "author": "이광수",
   "category": "소설",
@@ -727,6 +769,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-무정",
+  "coverSrc": "./covers/kr-mujeong.webp",
   "title": "무정",
   "author": "이광수",
   "category": "소설",
@@ -743,6 +786,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-사랑",
+  "coverSrc": "./covers/kr-sarang.webp",
   "title": "사랑",
   "author": "이광수",
   "category": "소설",
@@ -759,6 +803,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-원효대사",
+  "coverSrc": "./covers/kr-wonhyodaesa.webp",
   "title": "원효대사",
   "author": "이광수",
   "category": "소설",
@@ -775,6 +820,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-유정",
+  "coverSrc": "./covers/kr-yujeong.webp",
   "title": "유정",
   "author": "이광수",
   "category": "소설",
@@ -791,6 +837,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-이차돈의-사",
+  "coverSrc": "./covers/kr-ichadonuisa.webp",
   "title": "이차돈의 사",
   "author": "이광수",
   "category": "소설",
@@ -807,6 +854,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-재생",
+  "coverSrc": "./covers/kr-jaesaeng.webp",
   "title": "재생",
   "author": "이광수",
   "category": "소설",
@@ -823,6 +871,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이무영-산가",
+  "coverSrc": "./covers/kr-sanga.webp",
   "title": "산가",
   "author": "이무영",
   "category": "소설",
@@ -839,6 +888,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이무영-제1과-제1장",
+  "coverSrc": "./covers/kr-je1gwaje1jang.webp",
   "title": "제1과 제1장",
   "author": "이무영",
   "category": "소설",
@@ -855,6 +905,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이무영-흙의-노예",
+  "coverSrc": "./covers/kr-heulkuinoye.webp",
   "title": "흙의 노예",
   "author": "이무영",
   "category": "소설",
@@ -871,6 +922,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-12월-12일",
+  "coverSrc": "./covers/kr-12wol12il.webp",
   "title": "12월 12일",
   "author": "이상",
   "category": "소설",
@@ -887,6 +939,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-권태",
+  "coverSrc": "./covers/kr-gwontae.webp",
   "title": "권태",
   "author": "이상",
   "category": "수필",
@@ -920,6 +973,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-동해",
+  "coverSrc": "./covers/kr-donghae.webp",
   "title": "동해",
   "author": "이상",
   "category": "소설",
@@ -936,6 +990,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-봉별기",
+  "coverSrc": "./covers/kr-bongbyeolgi.webp",
   "title": "봉별기",
   "author": "이상",
   "category": "소설",
@@ -952,6 +1007,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-이상-시선(오감도·거울·역단·위독)",
+  "coverSrc": "./covers/kr-isangsiseonogamdogeoulyeokdanwidok.webp",
   "title": "이상 시선(오감도·거울·역단·위독)",
   "author": "이상",
   "category": "시",
@@ -968,6 +1024,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-종생기",
+  "coverSrc": "./covers/kr-jongsaenggi.webp",
   "title": "종생기",
   "author": "이상",
   "category": "소설",
@@ -984,6 +1041,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상-지주회시",
+  "coverSrc": "./covers/kr-jijuhoesi.webp",
   "title": "지주회시",
   "author": "이상",
   "category": "소설",
@@ -1000,6 +1058,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이상화-이상화-시선",
+  "coverSrc": "./covers/kr-isanghwasiseon.webp",
   "title": "이상화 시선",
   "author": "이상화",
   "category": "시",
@@ -1016,6 +1075,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이육사-이육사-시선",
+  "coverSrc": "./covers/kr-iyuksasiseon.webp",
   "title": "이육사 시선",
   "author": "이육사",
   "category": "시",
@@ -1032,6 +1092,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이익상-광란",
+  "coverSrc": "./covers/kr-gwangran.webp",
   "title": "광란",
   "author": "이익상",
   "category": "소설",
@@ -1048,6 +1109,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이익상-쫓기어-가는-이들",
+  "coverSrc": "./covers/kr-jjochgieoganeunideul.webp",
   "title": "쫓기어 가는 이들",
   "author": "이익상",
   "category": "소설",
@@ -1064,6 +1126,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이익상-흙의-세례",
+  "coverSrc": "./covers/kr-heulkuiserye.webp",
   "title": "흙의 세례",
   "author": "이익상",
   "category": "소설",
@@ -1080,6 +1143,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-개살구",
+  "coverSrc": "./covers/kr-gaesalgu.webp",
   "title": "개살구",
   "author": "이효석",
   "category": "소설",
@@ -1096,6 +1160,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-노령근해",
+  "coverSrc": "./covers/kr-noryeonggeunhae.webp",
   "title": "노령근해",
   "author": "이효석",
   "category": "소설",
@@ -1112,6 +1177,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-도시와-유령",
+  "coverSrc": "./covers/kr-dosiwayuryeong.webp",
   "title": "도시와 유령",
   "author": "이효석",
   "category": "소설",
@@ -1128,6 +1194,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-돈",
+  "coverSrc": "./covers/kr-don.webp",
   "title": "돈",
   "author": "이효석",
   "category": "소설",
@@ -1144,6 +1211,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-들",
+  "coverSrc": "./covers/kr-deul.webp",
   "title": "들",
   "author": "이효석",
   "category": "소설",
@@ -1177,6 +1245,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-분녀",
+  "coverSrc": "./covers/kr-bunnyeo.webp",
   "title": "분녀",
   "author": "이효석",
   "category": "소설",
@@ -1193,6 +1262,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-산",
+  "coverSrc": "./covers/kr-san.webp",
   "title": "산",
   "author": "이효석",
   "category": "소설",
@@ -1209,6 +1279,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-수탉",
+  "coverSrc": "./covers/kr-sutalk.webp",
   "title": "수탉",
   "author": "이효석",
   "category": "소설",
@@ -1225,6 +1296,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-장미-병들다",
+  "coverSrc": "./covers/kr-jangmibyeongdeulda.webp",
   "title": "장미 병들다",
   "author": "이효석",
   "category": "소설",
@@ -1241,6 +1313,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이효석-화분",
+  "coverSrc": "./covers/kr-hwabun.webp",
   "title": "화분",
   "author": "이효석",
   "category": "소설",
@@ -1257,6 +1330,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-임화-임화-시선",
+  "coverSrc": "./covers/kr-imhwasiseon.webp",
   "title": "임화 시선",
   "author": "임화",
   "category": "시",
@@ -1273,6 +1347,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-정지용-정지용-시선",
+  "coverSrc": "./covers/kr-jeongjiyongsiseon.webp",
   "title": "정지용 시선",
   "author": "정지용",
   "category": "시",
@@ -1289,6 +1364,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-논-이야기",
+  "coverSrc": "./covers/kr-noniyagi.webp",
   "title": "논 이야기",
   "author": "채만식",
   "category": "소설",
@@ -1305,6 +1381,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-동화",
+  "coverSrc": "./covers/kr-donghwa.webp",
   "title": "동화",
   "author": "채만식",
   "category": "소설",
@@ -1321,6 +1398,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-두-순정",
+  "coverSrc": "./covers/kr-dusunjeong.webp",
   "title": "두 순정",
   "author": "채만식",
   "category": "소설",
@@ -1337,6 +1415,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-레디메이드",
+  "coverSrc": "./covers/kr-redimeideu.webp",
   "title": "레디메이드",
   "author": "채만식",
   "category": "소설",
@@ -1353,6 +1432,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-명일",
+  "coverSrc": "./covers/kr-myeongil.webp",
   "title": "명일",
   "author": "채만식",
   "category": "소설",
@@ -1369,6 +1449,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-미스터-방",
+  "coverSrc": "./covers/kr-miseuteobang.webp",
   "title": "미스터 방",
   "author": "채만식",
   "category": "소설",
@@ -1385,6 +1466,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-소망",
+  "coverSrc": "./covers/kr-somang.webp",
   "title": "소망",
   "author": "채만식",
   "category": "소설",
@@ -1401,6 +1483,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-쑥국새",
+  "coverSrc": "./covers/kr-ssukguksae.webp",
   "title": "쑥국새",
   "author": "채만식",
   "category": "소설",
@@ -1417,6 +1500,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-이런-처지",
+  "coverSrc": "./covers/kr-ireoncheoji.webp",
   "title": "이런 처지",
   "author": "채만식",
   "category": "소설",
@@ -1433,6 +1517,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-정자나무-있는-삽화",
+  "coverSrc": "./covers/kr-jeongjanamuissneunsabhwa.webp",
   "title": "정자나무 있는 삽화",
   "author": "채만식",
   "category": "소설",
@@ -1449,6 +1534,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-치숙",
+  "coverSrc": "./covers/kr-chisuk.webp",
   "title": "치숙",
   "author": "채만식",
   "category": "소설",
@@ -1465,6 +1551,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-탁류",
+  "coverSrc": "./covers/kr-takryu.webp",
   "title": "탁류",
   "author": "채만식",
   "category": "소설",
@@ -1481,6 +1568,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-채만식-태평천하",
+  "coverSrc": "./covers/kr-taepyeongcheonha.webp",
   "title": "태평천하",
   "author": "채만식",
   "category": "소설",
@@ -1497,6 +1585,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-그믐밤",
+  "coverSrc": "./covers/kr-geumeumbam.webp",
   "title": "그믐밤",
   "author": "최서해",
   "category": "소설",
@@ -1513,6 +1602,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-기아와-살육",
+  "coverSrc": "./covers/kr-giawasalyuk.webp",
   "title": "기아와 살육",
   "author": "최서해",
   "category": "소설",
@@ -1529,6 +1619,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-박돌",
+  "coverSrc": "./covers/kr-bakdol.webp",
   "title": "박돌",
   "author": "최서해",
   "category": "소설",
@@ -1545,6 +1636,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-큰물-진-뒤",
+  "coverSrc": "./covers/kr-keunmuljindwi.webp",
   "title": "큰물 진 뒤",
   "author": "최서해",
   "category": "소설",
@@ -1561,6 +1653,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-탈출기",
+  "coverSrc": "./covers/kr-talchulgi.webp",
   "title": "탈출기",
   "author": "최서해",
   "category": "소설",
@@ -1577,6 +1670,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-최서해-홍염",
+  "coverSrc": "./covers/kr-hongyeom.webp",
   "title": "홍염",
   "author": "최서해",
   "category": "소설",
@@ -1593,6 +1687,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-한용운-한용운-시선",
+  "coverSrc": "./covers/kr-hanyongunsiseon.webp",
   "title": "한용운 시선",
   "author": "한용운",
   "category": "시",
@@ -1609,6 +1704,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-B사감",
+  "coverSrc": "./covers/kr-bsagam.webp",
   "title": "B사감",
   "author": "현진건",
   "category": "소설",
@@ -1625,6 +1721,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-고향",
+  "coverSrc": "./covers/kr-gohyang.webp",
   "title": "고향",
   "author": "현진건",
   "category": "소설",
@@ -1641,6 +1738,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-불",
+  "coverSrc": "./covers/kr-bul.webp",
   "title": "불",
   "author": "현진건",
   "category": "소설",
@@ -1657,6 +1755,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-빈처",
+  "coverSrc": "./covers/kr-bincheo.webp",
   "title": "빈처",
   "author": "현진건",
   "category": "소설",
@@ -1673,6 +1772,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-술-권하는-사회",
+  "coverSrc": "./covers/kr-sulgwonhaneunsahoe.webp",
   "title": "술 권하는 사회",
   "author": "현진건",
   "category": "소설",
@@ -1706,6 +1806,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-타락자",
+  "coverSrc": "./covers/kr-tarakja.webp",
   "title": "타락자",
   "author": "현진건",
   "category": "소설",
@@ -1722,6 +1823,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-피아노",
+  "coverSrc": "./covers/kr-piano.webp",
   "title": "피아노",
   "author": "현진건",
   "category": "소설",
@@ -1738,6 +1840,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-할머니의-죽음",
+  "coverSrc": "./covers/kr-halmeoniuijukeum.webp",
   "title": "할머니의 죽음",
   "author": "현진건",
   "category": "소설",
@@ -1754,6 +1857,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-현진건-희생화",
+  "coverSrc": "./covers/kr-huisaenghwa.webp",
   "title": "희생화",
   "author": "현진건",
   "category": "소설",
