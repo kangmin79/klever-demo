@@ -2,772 +2,7 @@
 // 한국 81 + 해외 100 = 181권 / 본문 181건 / 표지 181건
 
 const BOOKS_MVP35 = [
-  {
-    "id": "k13313590",
-    "title": "관동별곡",
-    "author": "정철",
-    "wrtSn": "13313590",
-    "coverSrc": "./covers/k13313590.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 30,
-    "reviews": 3,
-    "quizzes": 22,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313606",
-    "title": "사미인곡",
-    "author": "정철",
-    "wrtSn": "13313606",
-    "coverSrc": "./covers/k13313606.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 85,
-    "reviews": 18,
-    "quizzes": 27,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313608",
-    "title": "속미인곡",
-    "author": "정철",
-    "wrtSn": "13313608",
-    "coverSrc": "./covers/k13313608.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 110,
-    "reviews": 3,
-    "quizzes": 52,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313607",
-    "title": "성산별곡",
-    "author": "정철",
-    "wrtSn": "13313607",
-    "coverSrc": "./covers/k13313607.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 86,
-    "reviews": 29,
-    "quizzes": 28,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001211",
-    "title": "메밀꽃 필 무렵",
-    "author": "이효석",
-    "wrtSn": "9001211",
-    "coverSrc": "./covers/k9001211.webp",
-    "progress": 100,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 56,
-    "reviews": 9,
-    "quizzes": 48,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001204",
-    "title": "산",
-    "author": "이효석",
-    "wrtSn": "9001204",
-    "coverSrc": "./covers/k9001204.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 48,
-    "reviews": 11,
-    "quizzes": 40,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001205",
-    "title": "분녀",
-    "author": "이효석",
-    "wrtSn": "9001205",
-    "coverSrc": "./covers/k9001205.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 112,
-    "reviews": 25,
-    "quizzes": 54,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001181",
-    "title": "도시와 유령",
-    "author": "이효석",
-    "wrtSn": "9001181",
-    "coverSrc": "./covers/k9001181.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 45,
-    "reviews": 28,
-    "quizzes": 37,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001393",
-    "title": "탁류",
-    "author": "채만식",
-    "wrtSn": "9001393",
-    "coverSrc": "./covers/k9001393.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 109,
-    "reviews": 32,
-    "quizzes": 51,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9031268",
-    "title": "태평천하",
-    "author": "채만식",
-    "wrtSn": "9031268",
-    "coverSrc": "./covers/k9031268.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 101,
-    "reviews": 4,
-    "quizzes": 43,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001386",
-    "title": "레디메이드 인생",
-    "author": "채만식",
-    "wrtSn": "9001386",
-    "coverSrc": "./covers/k9001386.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 117,
-    "reviews": 30,
-    "quizzes": 59,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001402",
-    "title": "미스터 방",
-    "author": "채만식",
-    "wrtSn": "9001402",
-    "coverSrc": "./covers/k9001402.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 21,
-    "reviews": 24,
-    "quizzes": 13,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001439",
-    "title": "도야지",
-    "author": "채만식",
-    "wrtSn": "9001439",
-    "coverSrc": "./covers/k9001439.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 44,
-    "reviews": 27,
-    "quizzes": 36,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000397",
-    "title": "동백꽃",
-    "author": "김유정",
-    "wrtSn": "9000397",
-    "coverSrc": "./covers/k9000397.webp",
-    "progress": 100,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 105,
-    "reviews": 8,
-    "quizzes": 47,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000404",
-    "title": "봄봄",
-    "author": "김유정",
-    "wrtSn": "9000404",
-    "coverSrc": "./covers/k9000404.webp",
-    "progress": 100,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 96,
-    "reviews": 29,
-    "quizzes": 38,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000403",
-    "title": "만무방",
-    "author": "김유정",
-    "wrtSn": "9000403",
-    "coverSrc": "./covers/k9000403.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 77,
-    "reviews": 20,
-    "quizzes": 19,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000409",
-    "title": "소낙비",
-    "author": "김유정",
-    "wrtSn": "9000409",
-    "coverSrc": "./covers/k9000409.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 85,
-    "reviews": 8,
-    "quizzes": 27,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000395",
-    "title": "금따는 콩밭",
-    "author": "김유정",
-    "wrtSn": "9000395",
-    "coverSrc": "./covers/k9000395.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 74,
-    "reviews": 27,
-    "quizzes": 16,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9002094",
-    "title": "운수 좋은 날",
-    "author": "현진건",
-    "wrtSn": "9002094",
-    "coverSrc": "./covers/k9002094.webp",
-    "progress": 100,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 103,
-    "reviews": 26,
-    "quizzes": 45,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9002092",
-    "title": "빈처",
-    "author": "현진건",
-    "wrtSn": "9002092",
-    "coverSrc": "./covers/k9002092.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 108,
-    "reviews": 21,
-    "quizzes": 50,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9002100",
-    "title": "B사감과 러브레터",
-    "author": "현진건",
-    "wrtSn": "9002100",
-    "coverSrc": "./covers/k9002100.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 74,
-    "reviews": 17,
-    "quizzes": 16,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9002117",
-    "title": "고향",
-    "author": "현진건",
-    "wrtSn": "9002117",
-    "coverSrc": "./covers/k9002117.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 69,
-    "reviews": 12,
-    "quizzes": 61,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000075",
-    "title": "감자",
-    "author": "김동인",
-    "wrtSn": "9000075",
-    "coverSrc": "./covers/k9000075.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 56,
-    "reviews": 9,
-    "quizzes": 48,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000094",
-    "title": "배따라기",
-    "author": "김동인",
-    "wrtSn": "9000094",
-    "coverSrc": "./covers/k9000094.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 44,
-    "reviews": 7,
-    "quizzes": 36,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000078",
-    "title": "광염소나타",
-    "author": "김동인",
-    "wrtSn": "9000078",
-    "coverSrc": "./covers/k9000078.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 105,
-    "reviews": 8,
-    "quizzes": 47,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000113",
-    "title": "약한 자의 슬픔",
-    "author": "김동인",
-    "wrtSn": "9000113",
-    "coverSrc": "./covers/k9000113.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 65,
-    "reviews": 18,
-    "quizzes": 57,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000456",
-    "title": "벙어리 삼룡이",
-    "author": "나도향",
-    "wrtSn": "9000456",
-    "coverSrc": "./covers/k9000456.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 106,
-    "reviews": 9,
-    "quizzes": 48,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000455",
-    "title": "물레방아",
-    "author": "나도향",
-    "wrtSn": "9000455",
-    "coverSrc": "./covers/k9000455.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 33,
-    "reviews": 6,
-    "quizzes": 25,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9029363",
-    "title": "뽕",
-    "author": "나도향",
-    "wrtSn": "9029363",
-    "coverSrc": "./covers/k9029363.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 101,
-    "reviews": 24,
-    "quizzes": 43,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9031993",
-    "title": "단종애사",
-    "author": "이광수",
-    "wrtSn": "9031993",
-    "coverSrc": "./covers/k9031993.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 105,
-    "reviews": 8,
-    "quizzes": 47,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9031949",
-    "title": "꿈",
-    "author": "이광수",
-    "wrtSn": "9031949",
-    "coverSrc": "./covers/k9031949.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 20,
-    "reviews": 3,
-    "quizzes": 12,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000609",
-    "title": "상록수",
-    "author": "심훈",
-    "wrtSn": "9000609",
-    "coverSrc": "./covers/k9000609.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 50,
-    "reviews": 13,
-    "quizzes": 42,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313843",
-    "title": "영원의 미소",
-    "author": "심훈",
-    "wrtSn": "13313843",
-    "coverSrc": "./covers/k13313843.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 37,
-    "reviews": 30,
-    "quizzes": 29,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000320",
-    "title": "진달래꽃",
-    "author": "김소월",
-    "wrtSn": "9000320",
-    "coverSrc": "./covers/k9000320.webp",
-    "progress": 60,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 43,
-    "reviews": 26,
-    "quizzes": 35,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000276",
-    "title": "산유화",
-    "author": "김소월",
-    "wrtSn": "9000276",
-    "coverSrc": "./covers/k9000276.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 92,
-    "reviews": 15,
-    "quizzes": 34,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9029192",
-    "title": "초혼",
-    "author": "김소월",
-    "wrtSn": "9029192",
-    "coverSrc": "./covers/k9029192.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 52,
-    "reviews": 25,
-    "quizzes": 44,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000251",
-    "title": "먼 후일",
-    "author": "김소월",
-    "wrtSn": "9000251",
-    "coverSrc": "./covers/k9000251.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 76,
-    "reviews": 9,
-    "quizzes": 18,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9029200",
-    "title": "접동새",
-    "author": "김소월",
-    "wrtSn": "9029200",
-    "coverSrc": "./covers/k9029200.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 30,
-    "reviews": 3,
-    "quizzes": 22,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9029186",
-    "title": "바라건대는",
-    "author": "김소월",
-    "wrtSn": "9029186",
-    "coverSrc": "./covers/k9029186.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 28,
-    "reviews": 21,
-    "quizzes": 20,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001830",
-    "title": "님의 침묵",
-    "author": "한용운",
-    "wrtSn": "9001830",
-    "coverSrc": "./covers/k9001830.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 33,
-    "reviews": 6,
-    "quizzes": 25,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001836",
-    "title": "나룻배와 행인",
-    "author": "한용운",
-    "wrtSn": "9001836",
-    "coverSrc": "./covers/k9001836.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 72,
-    "reviews": 15,
-    "quizzes": 14,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001832",
-    "title": "알 수 없어요",
-    "author": "한용운",
-    "wrtSn": "9001832",
-    "coverSrc": "./covers/k9001832.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 58,
-    "reviews": 11,
-    "quizzes": 50,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001758",
-    "title": "복종",
-    "author": "한용운",
-    "wrtSn": "9001758",
-    "coverSrc": "./covers/k9001758.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 26,
-    "reviews": 19,
-    "quizzes": 18,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001756",
-    "title": "당신을 보았습니다",
-    "author": "한용운",
-    "wrtSn": "9001756",
-    "coverSrc": "./covers/k9001756.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 70,
-    "reviews": 23,
-    "quizzes": 12,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001761",
-    "title": "이별은 미의 창조",
-    "author": "한용운",
-    "wrtSn": "9001761",
-    "coverSrc": "./covers/k9001761.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 25,
-    "reviews": 18,
-    "quizzes": 17,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
+{
     "id": "k9000779",
     "title": "서시",
     "author": "윤동주",
@@ -784,7 +19,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
+{
     "id": "k9000761",
     "title": "별 헤는 밤",
     "author": "윤동주",
@@ -801,7 +36,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
+{
     "id": "k9000799",
     "title": "자화상",
     "author": "윤동주",
@@ -818,7 +53,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
+{
     "id": "k9000752",
     "title": "또 다른 고향",
     "author": "윤동주",
@@ -835,7 +70,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
+{
     "id": "k9000759",
     "title": "바람이 불어",
     "author": "윤동주",
@@ -852,7 +87,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
+{
     "id": "k13313883",
     "title": "쉽게 씌어진 시",
     "author": "윤동주",
@@ -869,517 +104,7 @@ const BOOKS_MVP35 = [
     "hasBody": true,
     "hasTrans": false
   },
-  {
-    "id": "k9001059",
-    "title": "광야",
-    "author": "이육사",
-    "wrtSn": "9001059",
-    "coverSrc": "./covers/k9001059.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 81,
-    "reviews": 4,
-    "quizzes": 23,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001047",
-    "title": "청포도",
-    "author": "이육사",
-    "wrtSn": "9001047",
-    "coverSrc": "./covers/k9001047.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 89,
-    "reviews": 32,
-    "quizzes": 31,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001048",
-    "title": "절정",
-    "author": "이육사",
-    "wrtSn": "9001048",
-    "coverSrc": "./covers/k9001048.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 49,
-    "reviews": 12,
-    "quizzes": 41,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001052",
-    "title": "교목",
-    "author": "이육사",
-    "wrtSn": "9001052",
-    "coverSrc": "./covers/k9001052.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 73,
-    "reviews": 26,
-    "quizzes": 15,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001060",
-    "title": "꽃",
-    "author": "이육사",
-    "wrtSn": "9001060",
-    "coverSrc": "./covers/k9001060.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 87,
-    "reviews": 20,
-    "quizzes": 29,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001035",
-    "title": "황혼",
-    "author": "이육사",
-    "wrtSn": "9001035",
-    "coverSrc": "./covers/k9001035.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 53,
-    "reviews": 26,
-    "quizzes": 45,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9001014",
-    "title": "빼앗긴 들에도 봄은 오는가",
-    "author": "이상화",
-    "wrtSn": "9001014",
-    "coverSrc": "./covers/k9001014.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 31,
-    "reviews": 14,
-    "quizzes": 23,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9020973",
-    "title": "조선상고사",
-    "author": "신채호",
-    "wrtSn": "9020973",
-    "coverSrc": "./covers/k9020973.webp",
-    "progress": 0,
-    "category": "근대 사상",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 97,
-    "reviews": 20,
-    "quizzes": 39,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9032975",
-    "title": "조선혁명선언",
-    "author": "신채호",
-    "wrtSn": "9032975",
-    "coverSrc": "./covers/k9032975.webp",
-    "progress": 0,
-    "category": "근대 사상",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 62,
-    "reviews": 15,
-    "quizzes": 54,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000607",
-    "title": "을지문덕전",
-    "author": "신채호",
-    "wrtSn": "9000607",
-    "coverSrc": "./covers/k9000607.webp",
-    "progress": 0,
-    "category": "근대 사상",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 21,
-    "reviews": 24,
-    "quizzes": 13,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313822",
-    "title": "청춘예찬",
-    "author": "민태원",
-    "wrtSn": "13313822",
-    "coverSrc": "./covers/k13313822.webp",
-    "progress": 0,
-    "category": "근대 수필",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 113,
-    "reviews": 6,
-    "quizzes": 55,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313776",
-    "title": "축구전 (1933년)",
-    "author": "강경애",
-    "wrtSn": "13313776",
-    "coverSrc": "./covers/k13313776.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 50,
-    "reviews": 13,
-    "quizzes": 42,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313775",
-    "title": "그 여자 (1932년)",
-    "author": "강경애",
-    "wrtSn": "13313775",
-    "coverSrc": "./covers/k13313775.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 44,
-    "reviews": 27,
-    "quizzes": 36,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9031527",
-    "title": "내가 좋아하는 솔",
-    "author": "강경애",
-    "wrtSn": "9031527",
-    "coverSrc": "./covers/k9031527.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 79,
-    "reviews": 22,
-    "quizzes": 21,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000036",
-    "title": "이역의 달밤",
-    "author": "강경애",
-    "wrtSn": "9000036",
-    "coverSrc": "./covers/k9000036.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 81,
-    "reviews": 14,
-    "quizzes": 23,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000035",
-    "title": "원고 첫 낭독",
-    "author": "강경애",
-    "wrtSn": "9000035",
-    "coverSrc": "./covers/k9000035.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 81,
-    "reviews": 4,
-    "quizzes": 23,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9000034",
-    "title": "여름 밤 노촌의 풍경점점",
-    "author": "강경애",
-    "wrtSn": "9000034",
-    "coverSrc": "./covers/k9000034.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 62,
-    "reviews": 5,
-    "quizzes": 54,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9031445",
-    "title": "급행열차(急行列車)",
-    "author": "권환",
-    "wrtSn": "9031445",
-    "coverSrc": "./covers/k9031445.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 118,
-    "reviews": 11,
-    "quizzes": 60,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9032996",
-    "title": "한역(寒驛)",
-    "author": "권환",
-    "wrtSn": "9032996",
-    "coverSrc": "./covers/k9032996.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 111,
-    "reviews": 4,
-    "quizzes": 53,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9032995",
-    "title": "희망(希望)",
-    "author": "권환",
-    "wrtSn": "9032995",
-    "coverSrc": "./covers/k9032995.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 101,
-    "reviews": 14,
-    "quizzes": 43,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9032994",
-    "title": "가등(街燈)",
-    "author": "권환",
-    "wrtSn": "9032994",
-    "coverSrc": "./covers/k9032994.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 85,
-    "reviews": 28,
-    "quizzes": 27,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k9032993",
-    "title": "봄",
-    "author": "권환",
-    "wrtSn": "9032993",
-    "coverSrc": "./covers/k9032993.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 108,
-    "reviews": 31,
-    "quizzes": 50,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313730",
-    "title": "화하난무(花下亂舞)",
-    "author": "김동인",
-    "wrtSn": "13313730",
-    "coverSrc": "./covers/k13313730.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 65,
-    "reviews": 8,
-    "quizzes": 57,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313683",
-    "title": "아리사 버들 (1930년)",
-    "author": "김동인",
-    "wrtSn": "13313683",
-    "coverSrc": "./covers/k13313683.webp",
-    "progress": 0,
-    "category": "근대 소설",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 74,
-    "reviews": 17,
-    "quizzes": 16,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313736",
-    "title": "희망의 봄",
-    "author": "김상용",
-    "wrtSn": "13313736",
-    "coverSrc": "./covers/k13313736.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 101,
-    "reviews": 14,
-    "quizzes": 43,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313731",
-    "title": "고구양약",
-    "author": "김상용",
-    "wrtSn": "13313731",
-    "coverSrc": "./covers/k13313731.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 106,
-    "reviews": 9,
-    "quizzes": 48,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313732",
-    "title": "님의 부르심을 받들고서",
-    "author": "김상용",
-    "wrtSn": "13313732",
-    "coverSrc": "./covers/k13313732.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 55,
-    "reviews": 18,
-    "quizzes": 47,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313735",
-    "title": "허식의 변",
-    "author": "김상용",
-    "wrtSn": "13313735",
-    "coverSrc": "./covers/k13313735.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 117,
-    "reviews": 30,
-    "quizzes": 59,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313734",
-    "title": "정원",
-    "author": "김상용",
-    "wrtSn": "13313734",
-    "coverSrc": "./covers/k13313734.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 37,
-    "reviews": 30,
-    "quizzes": 29,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
-    "id": "k13313733",
-    "title": "시",
-    "author": "김상용",
-    "wrtSn": "13313733",
-    "coverSrc": "./covers/k13313733.webp",
-    "progress": 0,
-    "category": "근대 시",
-    "period": "근대",
-    "locale": "modern",
-    "participants": 104,
-    "reviews": 27,
-    "quizzes": 46,
-    "intl": true,
-    "hasBody": true,
-    "hasTrans": false
-  },
-  {
+{
     "id": "g150",
     "title": "국가",
     "author": "플라톤",
@@ -1397,7 +122,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1600",
     "title": "향연",
     "author": "플라톤",
@@ -1415,7 +140,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1656",
     "title": "소크라테스의 변명",
     "author": "플라톤",
@@ -1433,7 +158,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g8438",
     "title": "니코마코스 윤리학",
     "author": "아리스토텔레스",
@@ -1451,7 +176,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g6762",
     "title": "정치학",
     "author": "아리스토텔레스",
@@ -1469,7 +194,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2680",
     "title": "명상록",
     "author": "마르쿠스 아우렐리우스",
@@ -1487,7 +212,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g45109",
     "title": "엥케이리디온",
     "author": "에픽테토스",
@@ -1505,7 +230,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2199",
     "title": "일리아스",
     "author": "호메로스",
@@ -1523,7 +248,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1727",
     "title": "오디세이아",
     "author": "호메로스",
@@ -1541,7 +266,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g31",
     "title": "오이디푸스 왕",
     "author": "소포클레스",
@@ -1559,7 +284,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g228",
     "title": "아이네이스",
     "author": "베르길리우스",
@@ -1577,7 +302,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g21765",
     "title": "변신 이야기",
     "author": "오비디우스",
@@ -1595,7 +320,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g41537",
     "title": "신곡 지옥편",
     "author": "단테",
@@ -1613,7 +338,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1232",
     "title": "군주론",
     "author": "마키아벨리",
@@ -1631,7 +356,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g996",
     "title": "돈키호테",
     "author": "세르반테스",
@@ -1649,7 +374,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g3600",
     "title": "수상록",
     "author": "몽테뉴",
@@ -1667,7 +392,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g20",
     "title": "실낙원",
     "author": "밀턴",
@@ -1685,7 +410,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1122",
     "title": "햄릿",
     "author": "셰익스피어",
@@ -1703,7 +428,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1112",
     "title": "로미오와 줄리엣",
     "author": "셰익스피어",
@@ -1721,7 +446,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1129",
     "title": "맥베스",
     "author": "셰익스피어",
@@ -1739,7 +464,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1128",
     "title": "리어왕",
     "author": "셰익스피어",
@@ -1757,7 +482,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1127",
     "title": "오셀로",
     "author": "셰익스피어",
@@ -1775,7 +500,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1113",
     "title": "한여름 밤의 꿈",
     "author": "셰익스피어",
@@ -1793,7 +518,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g59",
     "title": "방법서설",
     "author": "데카르트",
@@ -1811,7 +536,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g3207",
     "title": "리바이어던",
     "author": "홉스",
@@ -1829,7 +554,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g7370",
     "title": "통치론",
     "author": "로크",
@@ -1847,7 +572,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g46333",
     "title": "사회계약론",
     "author": "루소",
@@ -1865,7 +590,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g19942",
     "title": "캉디드",
     "author": "볼테르",
@@ -1883,7 +608,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g3300",
     "title": "국부론",
     "author": "애덤 스미스",
@@ -1901,7 +626,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g9662",
     "title": "인간 오성론",
     "author": "흄",
@@ -1919,7 +644,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g829",
     "title": "걸리버 여행기",
     "author": "스위프트",
@@ -1937,7 +662,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g521",
     "title": "로빈슨 크루소",
     "author": "디포",
@@ -1955,7 +680,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g147",
     "title": "상식",
     "author": "토머스 페인",
@@ -1973,7 +698,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1400",
     "title": "위대한 유산",
     "author": "디킨스",
@@ -1991,7 +716,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g98",
     "title": "두 도시 이야기",
     "author": "디킨스",
@@ -2009,7 +734,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g730",
     "title": "올리버 트위스트",
     "author": "디킨스",
@@ -2027,7 +752,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g46",
     "title": "크리스마스 캐럴",
     "author": "디킨스",
@@ -2045,7 +770,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1342",
     "title": "오만과 편견",
     "author": "오스틴",
@@ -2063,7 +788,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g161",
     "title": "이성과 감성",
     "author": "오스틴",
@@ -2081,7 +806,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g158",
     "title": "엠마",
     "author": "오스틴",
@@ -2099,7 +824,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1260",
     "title": "제인 에어",
     "author": "샬럿 브론테",
@@ -2117,7 +842,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g768",
     "title": "폭풍의 언덕",
     "author": "에밀리 브론테",
@@ -2135,7 +860,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g145",
     "title": "미들마치",
     "author": "조지 엘리엇",
@@ -2153,7 +878,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g550",
     "title": "사일러스 마너",
     "author": "조지 엘리엇",
@@ -2171,7 +896,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g110",
     "title": "테스",
     "author": "토머스 하디",
@@ -2189,7 +914,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g84",
     "title": "프랑켄슈타인",
     "author": "메리 셸리",
@@ -2207,7 +932,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g345",
     "title": "드라큘라",
     "author": "브램 스토커",
@@ -2225,7 +950,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g11",
     "title": "이상한 나라의 앨리스",
     "author": "루이스 캐럴",
@@ -2243,7 +968,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g120",
     "title": "보물섬",
     "author": "스티븐슨",
@@ -2261,7 +986,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g42",
     "title": "지킬 박사와 하이드",
     "author": "스티븐슨",
@@ -2279,7 +1004,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g174",
     "title": "도리언 그레이의 초상",
     "author": "오스카 와일드",
@@ -2297,7 +1022,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g844",
     "title": "진지함의 중요성",
     "author": "오스카 와일드",
@@ -2315,7 +1040,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1661",
     "title": "셜록 홈즈의 모험",
     "author": "코난 도일",
@@ -2333,7 +1058,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2852",
     "title": "바스커빌가의 개",
     "author": "코난 도일",
@@ -2351,7 +1076,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g135",
     "title": "레 미제라블",
     "author": "빅토르 위고",
@@ -2369,7 +1094,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2610",
     "title": "노트르담 드 파리",
     "author": "빅토르 위고",
@@ -2387,7 +1112,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1184",
     "title": "몬테크리스토 백작",
     "author": "뒤마",
@@ -2405,7 +1130,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1257",
     "title": "삼총사",
     "author": "뒤마",
@@ -2423,7 +1148,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1237",
     "title": "고리오 영감",
     "author": "발자크",
@@ -2441,7 +1166,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2413",
     "title": "마담 보바리",
     "author": "플로베르",
@@ -2459,7 +1184,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g44747",
     "title": "적과 흑",
     "author": "스탕달",
@@ -2477,7 +1202,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g164",
     "title": "해저 2만리",
     "author": "쥘 베른",
@@ -2495,7 +1220,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g103",
     "title": "80일간의 세계 일주",
     "author": "쥘 베른",
@@ -2513,7 +1238,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2554",
     "title": "죄와 벌",
     "author": "도스토옙스키",
@@ -2531,7 +1256,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g28054",
     "title": "카라마조프가의 형제들",
     "author": "도스토옙스키",
@@ -2549,7 +1274,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2638",
     "title": "백치",
     "author": "도스토옙스키",
@@ -2567,7 +1292,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g600",
     "title": "지하로부터의 수기",
     "author": "도스토옙스키",
@@ -2585,7 +1310,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2600",
     "title": "전쟁과 평화",
     "author": "톨스토이",
@@ -2603,7 +1328,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1399",
     "title": "안나 카레니나",
     "author": "톨스토이",
@@ -2621,7 +1346,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1754",
     "title": "갈매기",
     "author": "안톤 체호프",
@@ -2639,7 +1364,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g30723",
     "title": "아버지와 아들",
     "author": "투르게네프",
@@ -2657,7 +1382,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1081",
     "title": "죽은 혼",
     "author": "고골",
@@ -2675,7 +1400,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g76",
     "title": "허클베리 핀의 모험",
     "author": "마크 트웨인",
@@ -2693,7 +1418,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g74",
     "title": "톰 소여의 모험",
     "author": "마크 트웨인",
@@ -2711,7 +1436,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g205",
     "title": "월든",
     "author": "소로",
@@ -2729,7 +1454,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g15",
     "title": "모비 딕",
     "author": "허먼 멜빌",
@@ -2747,7 +1472,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g33",
     "title": "주홍 글자",
     "author": "호손",
@@ -2765,7 +1490,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g514",
     "title": "작은 아씨들",
     "author": "올컷",
@@ -2783,7 +1508,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g203",
     "title": "톰 아저씨의 오두막",
     "author": "스토",
@@ -2801,7 +1526,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g209",
     "title": "나사의 회전",
     "author": "헨리 제임스",
@@ -2819,7 +1544,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g160",
     "title": "각성",
     "author": "케이트 쇼팽",
@@ -2837,7 +1562,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g73",
     "title": "붉은 무공 훈장",
     "author": "스티븐 크레인",
@@ -2855,7 +1580,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g215",
     "title": "야성의 부름",
     "author": "잭 런던",
@@ -2873,7 +1598,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g910",
     "title": "화이트 팽",
     "author": "잭 런던",
@@ -2891,7 +1616,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1322",
     "title": "풀잎",
     "author": "휘트먼",
@@ -2909,7 +1634,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g5200",
     "title": "변신",
     "author": "카프카",
@@ -2927,7 +1652,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g7849",
     "title": "심판",
     "author": "카프카",
@@ -2945,7 +1670,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g2814",
     "title": "더블린 사람들",
     "author": "제임스 조이스",
@@ -2963,7 +1688,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g219",
     "title": "어둠의 심연",
     "author": "조셉 콘래드",
@@ -2981,7 +1706,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g5658",
     "title": "로드 짐",
     "author": "조셉 콘래드",
@@ -2999,7 +1724,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g35",
     "title": "타임머신",
     "author": "H.G. 웰스",
@@ -3017,7 +1742,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g36",
     "title": "우주 전쟁",
     "author": "H.G. 웰스",
@@ -3035,7 +1760,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g541",
     "title": "순수의 시대",
     "author": "이디스 워튼",
@@ -3053,7 +1778,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g4517",
     "title": "이선 프롬",
     "author": "이디스 워튼",
@@ -3071,7 +1796,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1998",
     "title": "차라투스트라는 이렇게 말했다",
     "author": "니체",
@@ -3089,7 +1814,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g4363",
     "title": "선악의 저편",
     "author": "니체",
@@ -3107,7 +1832,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g61",
     "title": "공산당 선언",
     "author": "마르크스·엥겔스",
@@ -3125,7 +1850,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g34901",
     "title": "자유론",
     "author": "존 스튜어트 밀",
@@ -3143,7 +1868,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g1228",
     "title": "종의 기원",
     "author": "다윈",
@@ -3161,7 +1886,7 @@ const BOOKS_MVP35 = [
     "hasTrans": false,
     "excerpt": true
   },
-  {
+{
     "id": "g15489",
     "title": "꿈의 심리학",
     "author": "프로이트",
