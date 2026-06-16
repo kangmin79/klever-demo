@@ -1,7 +1,7 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 306권 (번역 7 / 표지 7)
+// 총 306권 (번역 8 / 표지 8)
 const BOOKS_CLASSICS_FOREIGN = [
  {
   "id": "gb-2701",
@@ -691,7 +691,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 9,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-135.webp?v=2"
+  "coverSrc": "./covers/gb-135.webp"
  },
  {
   "id": "gb-1514",
@@ -836,7 +836,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 7,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-5200.webp?v=2"
+  "coverSrc": "./covers/gb-5200.webp"
  },
  {
   "id": "gb-13951",
@@ -997,7 +997,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 9,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-1080.webp?v=2"
+  "coverSrc": "./covers/gb-1080.webp"
  },
  {
   "id": "gb-766",
@@ -1510,7 +1510,7 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 0,
   "quizzes": 5,
   "progress": 0,
-  "coverSrc": "./covers/gb-14838.webp?v=2"
+  "coverSrc": "./covers/gb-14838.webp"
  },
  {
   "id": "gb-580",
@@ -4769,12 +4769,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 98,
   "reviews": 18,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-23058.webp"
  },
  {
   "id": "gb-50109",
