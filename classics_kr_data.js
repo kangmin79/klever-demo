@@ -320,7 +320,8 @@ const BOOKS_CLASSICS_KR = [
   "participants": 110,
   "reviews": 14,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/kr-baettaragi.webp"
  },
  {
   "id": "kr-김동인-붉은-산",
