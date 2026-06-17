@@ -1107,7 +1107,13 @@ body.dark .bx-books-label{color:#c5d2dd;}
 /* ── 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼 조판) ── */
 .paged-view{display:none;position:absolute;inset:0;background:var(--bg-card);z-index:1;}
 .viewer-body.pg-active{display:none !important;}
-.paged-clip{position:absolute;inset:0;overflow:hidden;}
+.paged-clip{position:absolute;inset:0;overflow:hidden;background:var(--reader-bg,var(--bg-card));}
+/* PC: 페이지를 종이 한 장처럼 — 주변은 옅은 책상 톤, 가운데 시트에 그림자 */
+@media(min-width:601px){
+  .paged-view{background:var(--bg-input);}
+  .paged-clip{box-shadow:0 8px 34px rgba(20,20,45,.16),0 1px 0 rgba(0,0,0,.04);border-radius:5px;}
+  body.dark .paged-clip{box-shadow:0 8px 34px rgba(0,0,0,.55);}
+}
 .paged-flow.viewer-pane{position:absolute;padding:0 !important;overflow:visible !important;border:0 !important;background:transparent !important;
   column-fill:auto;-webkit-column-fill:auto;
   transform:translateX(0);transition:transform .32s cubic-bezier(.33,0,.2,1);will-change:transform;}
@@ -3305,7 +3311,7 @@ function cyclePaneView(){
   body.classList.remove('pane-orig','pane-trans');
   const lbl=document.getElementById('paneToggleLabel');
   // 한국 고전 평행은 좌=번역·우=원문이라 토글 라벨도 반대
-  const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
+  const krSwap = currentUILang!=='ko' && currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
   if(_paneView==='orig'){ body.classList.add('pane-orig'); if(lbl)lbl.textContent= krSwap?'번역만':'원문만'; }
   else if(_paneView==='trans'){ body.classList.add('pane-trans'); if(lbl)lbl.textContent= krSwap?'원문만':'번역만'; }
   else { if(lbl)lbl.textContent='나란히'; }
@@ -4489,7 +4495,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260618d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260618e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4599,15 +4605,21 @@ function applyPagedFont(){
 }
 function layoutPaged(){
   const clip=document.getElementById('pagedClip'), flow=document.getElementById('pagedFlow');
-  if(!clip||!flow) return;
-  const W=clip.clientWidth, H=clip.clientHeight;
-  // PC: 한 줄이 너무 길지 않도록 책 너비(최대 660px)로 가운데 정렬, 위아래 여백도 키움
-  let padX=_pg.padX, padY=_pg.padY;
+  const pv=document.getElementById('pagedView');
+  if(!clip||!flow||!pv) return;
+  const PW=pv.clientWidth, PH=pv.clientHeight;
+  let padX=_pg.padX, padY=_pg.padY, boxW=PW, boxH=PH;
   if(window.innerWidth>600){
-    const usable=Math.min(W-96, 660);
-    padX=Math.max(48, Math.round((W-usable)/2));
-    padY=44;
+    // PC: 클립(보이는 영역)을 책 너비(최대 720px)로 가운데 — 다음 페이지 컬럼은 클립 밖이라 가려짐
+    boxW=Math.min(PW-80, 720);
+    padX=28; padY=44;
+    const off=Math.round((PW-boxW)/2);
+    clip.style.left=off+'px'; clip.style.right='auto'; clip.style.width=boxW+'px';
+    clip.style.top='0'; clip.style.bottom='0';
+  } else {
+    clip.style.left=''; clip.style.right=''; clip.style.width=''; clip.style.top=''; clip.style.bottom='';
   }
+  const W=clip.clientWidth, H=clip.clientHeight;
   const colW=Math.max(140, W-padX*2), colH=Math.max(140, H-padY*2);
   _pg.colW=colW; _pg.colH=colH; _pg.curPadX=padX; _pg.curPadY=padY;
   flow.style.left=padX+'px'; flow.style.top=padY+'px';
@@ -4997,8 +5009,8 @@ function renderViewer(){
     `;
   } else if(currentMode === 'full'){
     info.innerHTML = '완독 모드 · 전권 일반 전자책 · <b>장당 +30 점수</b>';
-    // 한국 고전 평행: 번역(모국어)을 왼쪽, 한국어 원문을 오른쪽
-    const krSwap = currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
+    // 한국 고전 평행: 외국어 선택(유학생) 시에만 번역(모국어) 왼쪽·한국어 원문 오른쪽. 한국어 사용자는 원문이 본문.
+    const krSwap = currentUILang!=='ko' && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
     const leftBody  = krSwap ? (c.trans || ph(L.placeholderTrans)) : (c.orig  || ph(L.placeholderOrig));
     const rightBody = krSwap ? (c.orig  || ph(L.placeholderOrig))  : (c.trans || ph(L.placeholderTrans));
     body.innerHTML = `
