@@ -4364,10 +4364,15 @@ function openDetail(bookId){
         <div class="lcd-chips">${chips}</div></div>
     </div>
     <p class="lcd-desc">${esc(intro)}</p>
+    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">3가지 방식으로 읽어요</div>
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 책 읽기<span class="ar">›</span></div>
-      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 챌린지로 읽기<span class="ar">›</span></div>
-      ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
+      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 전문 바로 읽기<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">· 북스타 표준 본문</span><span class="ar">›</span></div>
+      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 퀴즈로 깊이 읽기<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">· 챌린지 + 한 줄 소감</span><span class="ar">›</span></div>
+      ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
+    </div>
+    <div style="display:flex;gap:8px;padding:0 24px 14px;">
+      <a href="https://search.kyobobook.co.kr/search?keyword=${encodeURIComponent(b.title)}&target=total" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">교보문고에서 보기 ↗</a>
+      <a href="https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(b.title)}" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">알라딘에서 보기 ↗</a>
     </div>
     <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
