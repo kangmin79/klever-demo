@@ -404,6 +404,9 @@ body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
 body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
 body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
+/* 고전 컬렉션 — 한국/해외 권역 헤더 (탭 폐지, 나열식) */
+.cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
+.cl-locale-head span{font-size:13px;font-weight:700;color:var(--text-light);background:var(--bg-input);padding:3px 11px;border-radius:14px;}
 /* 피드 (다른 학생 한 줄 소감) */
 .feed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
 .feed-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
@@ -1673,10 +1676,6 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <div id="collectionCuration"></div>
 
   <div class="section">
-    <div class="subtabs" id="classicTabs">
-      <div class="subtab active" data-ctab="modern" onclick="setClassicTab(this,'modern')">한국 고전 <span id="clCntK"></span></div>
-      <div class="subtab" data-ctab="foreign" onclick="setClassicTab(this,'foreign')">해외 고전 <span id="clCntF"></span></div>
-    </div>
     <div id="classicShelves"></div>
   </div>
 </section>
@@ -4140,22 +4139,9 @@ function clShelf(title, books){
   return `<div class="cl-shelf">${mlHead(title, (CLASSIC_SUB[title]||'')+' · '+books.length+'권')}`
     + `${mlCarousel(`<div class="ml-hrow">${books.map(clCard).join('')}</div>`)}</div>`;
 }
-let currentClassicLocale = 'modern';   // 한국 고전이 기본
-function setClassicTab(el, loc){
-  document.querySelectorAll('#classicTabs .subtab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  currentClassicLocale = loc;
-  renderClassicShelves();
-}
-function renderClassicShelves(){
-  const host = document.getElementById('classicShelves');
-  if(!host || typeof BOOKS==='undefined') return;
-  // 탭별 권수 배지
-  const ck=document.getElementById('clCntK'), cf=document.getElementById('clCntF');
-  if(ck) ck.textContent = BOOKS.filter(b=>b.locale==='modern').length;
-  if(cf) cf.textContent = BOOKS.filter(b=>b.locale==='foreign').length;
-  // 현재 탭(국내/해외) 풀에서 카테고리별 선반
-  const pool = BOOKS.filter(b=> b.locale===currentClassicLocale);
+// Ver03: 탭 폐지 — 한국 고전 전체 + 그 아래 해외 고전 전체를 한 페이지에 나열
+function clShelvesHTML(loc){
+  const pool = BOOKS.filter(b=> b.locale===loc);
   const covered = new Set();
   let html = '';
   REC_GENRES.forEach(g=>{
@@ -4165,8 +4151,20 @@ function renderClassicShelves(){
     html += clShelf(g.label, books);
   });
   const rest = pool.filter(b=> !covered.has(b.id));
-  if(rest.length) html += clShelf('그 외 고전', rest);
-  host.innerHTML = html || '<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>';
+  if(rest.length) html += clShelf(loc==='foreign'?'해외 고전':'그 외 고전', rest);
+  return html;
+}
+function renderClassicShelves(){
+  const host = document.getElementById('classicShelves');
+  if(!host || typeof BOOKS==='undefined') return;
+  const kN = BOOKS.filter(b=>b.locale==='modern').length;
+  const fN = BOOKS.filter(b=>b.locale==='foreign').length;
+  const kHtml = clShelvesHTML('modern');
+  const fHtml = clShelvesHTML('foreign');
+  if(!kHtml && !fHtml){ host.innerHTML='<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>'; return; }
+  host.innerHTML =
+    `<div class="cl-locale-head">🇰🇷 북스타 한국고전 <span>${kN}권</span></div>${kHtml}`
+  + `<div class="cl-locale-head" style="margin-top:38px;">🌍 북스타 해외고전 <span>${fN}권</span></div>${fHtml}`;
   bindClassicDrag();
 }
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
