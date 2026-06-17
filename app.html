@@ -3300,6 +3300,7 @@ function nav(page){
 
   if(page === 'ourlib') {
     setTimeout(()=>renderLibCuration(), 30);
+    if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 세명대 대출 베스트 라이브 로드(최초 1회)
   }
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
@@ -3392,6 +3393,7 @@ function spineStyle(b,face){const h=face?156:spineHeight(b.t);return `height:${h
 function spineCls(bi,total){if(total>=3&&bi===total-1)return ' lc-lean';if(total>=5&&bi===total-2)return ' lc-lean2';return '';}
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
 const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
+const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
 function lcCvHTML(b){
@@ -3424,6 +3426,19 @@ const SEMYUNG_BEST=[
   {brcd:'11951396',t:'미 비포 유',a:'조조 모예스',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/M_201658.jpg'},
   {brcd:'4808954640756',t:'너무 한낮의 연애',a:'김금희',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954640756/L4808954640756.jpg'},
 ].map(b=>({isbn:'sm-'+b.brcd,t:b.t,a:b.a,cover:smCover(b.cv),note:b.note||'',lib:smDetail(b.brcd),_sm:true}));
+// 세명대 전자도서관 대출 베스트 — 라이브(semyung-best Edge Function이 bestContent.json 프록시·파싱). 로드 전엔 null.
+let SEMYUNG_BEST_LIVE=null;
+async function loadSemyungBest(){
+  try{
+    const r=await fetch(SMBEST_FN,{headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON}});
+    if(!r.ok) return;
+    const d=await r.json(); const list=(d&&d.books)||[];
+    if(!list.length) return;
+    SEMYUNG_BEST_LIVE=list.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:b.rank}));
+    rebuildLibPool();
+    const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); try{mlBindDrag();}catch(e){} }
+  }catch(e){}
+}
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
 function cleanT(t){const s=(t||'').split(/\s*[:\-(]/)[0].trim();return s||t||'';}
@@ -3525,12 +3540,18 @@ const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시',
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
 function mlChip(el){el.parentNode.querySelectorAll('.ml-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 function chgBadge(i){const v=ML_CHG[i%ML_CHG.length];const cls=v[0]==='▲'?'ml-up':v[0]==='▼'?'ml-down':v==='NEW'?'ml-new':'ml-flat';return `<div class="ml-rkc-chg ${cls}">${v}</div>`;}
-function mlRank(t,s,books){
+function mlRank(t,s,books,live){
   const today=new Date().toLocaleDateString('ko-KR').replace(/\s/g,'').replace(/\.$/,'');
-  return `<div>${mlHead(t,s)}
-    <div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>
-    <div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>
-    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div></div></div>`).join('')}</div></div>`;}
+  // live=세명대 전자도서관 실데이터: 카테고리칩·변동배지(가짜) 빼고 정직하게 표기
+  const sub=live?'세명대 전자도서관에서 많이 빌린 책':s;
+  const chips=live?'':`<div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>`;
+  const bar=live
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 전자도서관</span><span class="ml-rkbar-r">${today} 기준</span></div>`
+    : `<div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>`;
+  return `<div>${mlHead(t,sub)}
+    ${chips}
+    ${bar}
+    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${live?'':chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div></div></div>`).join('')}</div></div>`;}
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 // 표지 그리드(서가)
@@ -3562,12 +3583,13 @@ function millieHTML(secs,classicMode){
   const cur=LC_PUB[0];
   const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:(P[0]||{});
   const note=life.note||(cur&&cur.intro)||'';
-  const rank=[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
+  const liveRank=(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length)?SEMYUNG_BEST_LIVE.slice(0,12):null;
+  const rank=liveRank||[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
   let out='';
   secs.forEach((s,i)=>{
     const st=s.style||'row';
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
-    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank); return; }   // 랭킹은 대출수 자동
+    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 랭킹: 라이브(세명대 대출 베스트) 우선, 없으면 폴백
     const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
@@ -3706,7 +3728,8 @@ function rebuildLibPool(){
   SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); const sm=b._sm||(b.isbn||'').startsWith('sm-'); LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:sm||undefined}); } }));
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
   if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
-  SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설
+  SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설(폴백)
+  if(SEMYUNG_BEST_LIVE) SEMYUNG_BEST_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 대출 베스트 라이브
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
