@@ -393,6 +393,17 @@ body.dark .chal-join{background:var(--gold);color:#0f172a;}
 .book-info{padding:12px 14px;}
 .book-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .book-author{font-size:11px;color:var(--text-sub);}
+/* 도서 유형 배지 (통합 검색) */
+.bt-tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;margin-bottom:5px;letter-spacing:-0.2px;}
+.bt-tag.bt-kr{background:#e6f1fb;color:#0C447C;}
+.bt-tag.bt-fr{background:#EEEDFE;color:#3C3489;}
+.bt-tag.bt-eb{background:#E1F5EE;color:#0F6E56;}
+.bt-tag.bt-pp{background:#FAEEDA;color:#633806;}
+body.dark .bt-tag.bt-kr{background:#1e3a5f;color:#a5c8ef;}
+body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
+body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
+body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
+.us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
 .book-progress{margin-top:6px;height:3px;background:var(--bg-input);border-radius:2px;overflow:hidden;}
 .book-progress-fill{height:100%;background:var(--gold);}
 
@@ -1782,9 +1793,25 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      좌측 고정 메뉴 신규 페이지 (Ver03) — 검색 / 피드 / 리더보드
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-search">
-  <h1 class="page-title">검색</h1>
-  <p class="page-subtitle">전자책 + 종이책 통합 검색 · 키워드와 자연어 모두 가능</p>
-  <div id="searchBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+  <h1 class="page-title">도서 통합 검색</h1>
+  <p class="page-subtitle">전자책 · 종이책 · 북스타 고전을 한 번에 — 키워드 또는 자연어로 검색하세요</p>
+
+  <div class="subtabs" style="margin-top:18px;">
+    <div class="subtab active" data-smode="kw" onclick="setSearchMode('kw')">🔎 키워드 검색</div>
+    <div class="subtab" data-smode="nl" onclick="setSearchMode('nl')">⭐ 별이에게 물어보기</div>
+  </div>
+
+  <div style="display:flex;gap:8px;align-items:stretch;max-width:720px;">
+    <input id="usSearchInput" class="search-input" style="flex:1;"
+      placeholder="책 제목·저자·키워드를 입력하세요"
+      oninput="onUnifiedSearch(false)"
+      onkeydown="if(event.key==='Enter')onUnifiedSearch(true)">
+    <button onclick="onUnifiedSearch(true)"
+      style="padding:0 22px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-weight:800;cursor:pointer;white-space:nowrap;">검색</button>
+  </div>
+  <div id="usChips" style="margin-top:12px;display:none;flex-wrap:wrap;gap:7px;"></div>
+
+  <div id="usResults" style="margin-top:24px;"></div>
 </section>
 
 <section class="page" id="page-feed">
@@ -3366,6 +3393,9 @@ function nav(page){
   }
   if(page === 'mypage') {
     setTimeout(()=>{ renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+  }
+  if(page === 'search') {
+    setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
   }
 }
 
@@ -5561,10 +5591,10 @@ function onHomeSearch(e){
   if(e.key !== 'Enter') return;
   const q = e.target.value.trim();
   if(!q) return;
-  nav('collection');
+  nav('search');
   setTimeout(()=>{
-    document.querySelector('#page-collection .search-input').value = q;
-    document.querySelector('#page-collection .search-input').dispatchEvent(new KeyboardEvent('keyup', {key:'Enter'}));
+    const i=document.getElementById('usSearchInput');
+    if(i){ i.value=q; US_MODE='kw'; setSearchMode('kw'); i.value=q; onUnifiedSearch(true); }
   }, 100);
 }
 
@@ -6125,6 +6155,133 @@ function onSearch(e){
         </div>
       </div>`).join('')}</div>`;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   통합 검색 페이지 (Ver03) — 키워드(즉시) + 자연어(별이 추천)
+   ═══════════════════════════════════════════════════════════ */
+const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
+const US_NL_EX=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어"];
+let US_MODE='kw';
+let US_LAST_NL=[];
+
+// 도서 유형 배지: 북스타 한국고전 / 북스타 해외고전 / 전자책 / 종이책
+function bookTypeTag(b, kind){
+  const id=b.id||'';
+  if(id.indexOf('kr-')===0) return {label:'북스타 한국고전', cls:'bt-kr'};
+  if(id.indexOf('gb-')===0 || /^g\d/.test(id)) return {label:'북스타 해외고전', cls:'bt-fr'};
+  if(b._sm || (b.isbn||'').indexOf('sm-')===0 || b._smLib || b.lib) return {label:'전자책', cls:'bt-eb'};
+  return {label:'종이책', cls:'bt-pp'};
+}
+
+function setSearchMode(m){
+  US_MODE=m;
+  document.querySelectorAll('#page-search .subtab').forEach(t=>t.classList.toggle('active', t.dataset.smode===m));
+  const inp=document.getElementById('usSearchInput');
+  inp.placeholder = (m==='nl')
+    ? "별이에게 말하듯 물어보세요 — 예: 요즘 지쳐서 위로받고 싶어"
+    : "책 제목·저자·키워드를 입력하세요";
+  const chips=document.getElementById('usChips');
+  if(m==='nl'){
+    chips.style.display='flex';
+    chips.innerHTML=US_NL_EX.map(e=>`<span class="air-chip" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:16px;padding:5px 12px;font-size:12px;" onclick="document.getElementById('usSearchInput').value='${e}';onUnifiedSearch(true)">${esc(e)}</span>`).join('');
+  } else {
+    chips.style.display='none';
+  }
+  document.getElementById('usResults').innerHTML='';
+  if(inp.value.trim() && m==='kw') onUnifiedSearch(false);
+}
+
+// 검색 결과 카드 (고전 = openDetail / 도서관 = libDetail)
+function usCard(b, kind){
+  const tag=bookTypeTag(b, kind);
+  if(kind==='cls'){
+    return `<div class="book-card" onclick="openDetail('${b.id}')">
+      <div onclick="openDetail('${b.id}')">${bookCoverHTML(b)}</div>
+      <div class="book-info">
+        <span class="bt-tag ${tag.cls}">${tag.label}</span>
+        <div class="book-title">${esc(b.title)}</div>
+        <div class="book-author">${esc(b.author||'')}${b.category?' · '+esc(b.category):''}</div>
+      </div></div>`;
+  }
+  const t=b.t||b.title||'', a=b.a||b.author||'';
+  return `<div class="book-card" onclick="libDetail('${esc(b.isbn||'')}')">
+    <div class="book-cover has-img">${lcCvHTML(b)}</div>
+    <div class="book-info">
+      <span class="bt-tag ${tag.cls}">${tag.label}</span>
+      <div class="book-title">${esc(t)}</div>
+      <div class="book-author">${esc(a)}</div>
+    </div></div>`;
+}
+
+function onUnifiedSearch(submit){
+  const inp=document.getElementById('usSearchInput');
+  const box=document.getElementById('usResults');
+  const q=(inp.value||'').trim();
+  if(US_MODE==='nl'){
+    if(!submit) return;          // 자연어는 엔터/버튼/칩에서만 실행(타이핑마다 호출 X)
+    return usNaturalSearch(q);
+  }
+  // 키워드 모드 — 즉시 로컬 검색
+  if(!q){ box.innerHTML=''; return; }
+  const ql=q.toLowerCase();
+  const clsHits=BOOKS.filter(b=>
+    (b.title||'').toLowerCase().includes(ql) ||
+    (b.titleEn||'').toLowerCase().includes(ql) ||
+    (b.author||'').toLowerCase().includes(ql) ||
+    (b.category||'').toLowerCase().includes(ql)
+  );
+  const libHits=(typeof libTitled==='function'?libTitled():[]).filter(b=>
+    ((b.t||b.title||'')+' '+(b.a||b.author||'')).toLowerCase().includes(ql)
+  );
+  if(!clsHits.length && !libHits.length){
+    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">검색 결과가 없어요. 다른 키워드로 시도하거나 ⭐별이에게 물어보세요.</div>';
+    return;
+  }
+  let html='';
+  if(clsHits.length){
+    html+=`<div class="us-section-label">📚 북스타 고전 <span style="color:var(--text-light);font-weight:600;">${clsHits.length}</span></div>`;
+    html+=`<div class="book-grid" style="margin-bottom:28px;">${clsHits.map(b=>usCard(b,'cls')).join('')}</div>`;
+  }
+  if(libHits.length){
+    html+=`<div class="us-section-label">🏛 우리 도서관 소장 <span style="color:var(--text-light);font-weight:600;">${libHits.length}</span></div>`;
+    html+=`<div class="book-grid">${libHits.map(b=>usCard(b,'lib')).join('')}</div>`;
+  }
+  box.innerHTML=html;
+}
+
+async function usNaturalSearch(q){
+  const box=document.getElementById('usResults');
+  if(!q){ box.innerHTML=''; return; }
+  box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">⭐ 별이가 책을 고르는 중…</div>';
+  try{
+    const r=await fetch(US_RECOMMEND_FN,{method:'POST',
+      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({query:q})});
+    const d=await r.json();
+    const results=d.results||[]; US_LAST_NL=results;
+    if(!results.length){
+      box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">딱 맞는 책을 못 찾았어요. 조금 다르게 말해보세요.</div>';
+      return;
+    }
+    const intro=d.intro?`<div style="font-size:14px;color:var(--text);margin-bottom:6px;">${esc(d.intro)}</div>`:'';
+    const cards=results.map((b,i)=>{
+      const tag=bookTypeTag(b,'lib');
+      const reason=b.reason?`<div style="font-size:11px;color:var(--text-sub);line-height:1.5;margin-top:4px;">${esc(b.reason)}</div>`:'';
+      return `<div class="book-card" onclick="usOpenNL(${i})">
+        <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
+        <div class="book-info">
+          <span class="bt-tag ${tag.cls}">${tag.label}</span>
+          <div class="book-title">${esc(b.title)}</div>
+          <div class="book-author">${esc(b.author||'')}</div>
+          ${reason}
+        </div></div>`;
+    }).join('');
+    box.innerHTML=`${intro}<div class="us-section-label" style="margin-top:10px;">⭐ 별이의 추천 <span style="color:var(--text-light);font-weight:600;">${results.length}</span></div><div class="book-grid">${cards}</div>`;
+  }catch(e){
+    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">잠시 문제가 생겼어요. 다시 시도해 주세요.</div>';
+  }
+}
+function usOpenNL(i){ const b=US_LAST_NL[i]; if(b && typeof libBridgeOpen==='function') libBridgeOpen(b); }
 
 function toggleTheme(){
   // 라이트 → 세피아 → 다크 → 라이트 순환
