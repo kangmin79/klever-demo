@@ -118,20 +118,18 @@ body.dark .gnb-item.active{color:#f1f5f9;}
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
 body.with-sidenav .page#page-detail{padding-left:24px;}
 
-/* 좌측 고정 사이드바 (홈 제외 모든 페이지) */
+/* 좌측 고정 사이드바 (홈 제외 모든 페이지) — Ver03: 항상 노출(고정), 자동 숨김 제거 */
 .side-nav{
   position:fixed;top:calc(var(--header-h) + 24px);left:16px;z-index:80;
   display:none;flex-direction:column;gap:10px;width:80px;
-  transform:translateX(-118px);opacity:0;pointer-events:none;
-  transition:transform .26s cubic-bezier(.2,.7,.2,1),opacity .2s;
 }
 body.with-sidenav .side-nav{display:flex;}
-/* 왼쪽 가장자리 호버 트리거 + 손잡이 힌트 */
-.side-hot{position:fixed;left:0;top:var(--header-h);width:22px;height:calc(100vh - var(--header-h));z-index:79;display:none;}
-body.with-sidenav .side-hot{display:block;}
-.side-hot::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:4px;height:48px;border-radius:3px;background:var(--border);transition:opacity .2s;}
-.side-hot:hover::before{opacity:0;}
-.side-hot:hover ~ .side-nav, .side-nav:hover{transform:translateX(0);opacity:1;pointer-events:auto;}
+/* 자동 숨김 트리거 제거 (Ver03: 메뉴 고정) */
+.side-hot{display:none !important;}
+/* 본문이 고정 사이드바에 가리지 않도록 좌측 여백 확보 (PC) */
+@media (min-width:901px){
+  body.with-sidenav .main{padding-left:96px;}
+}
 .side-node{
   background:var(--bg-card);border:1px solid rgba(0,0,0,0.06);
   border-radius:16px;padding:12px 6px;text-align:center;cursor:pointer;
@@ -409,7 +407,7 @@ body.dark .chal-join{background:var(--gold);color:#0f172a;}
 .style-8{background:linear-gradient(160deg,#0f2a3a,#1a4a6e 60%,#0f2a3a);color:#fff;}
 
 /* ═══════════════════════════════════════════════════════════
-   7. 홈 풀화면 허브 + 마이 페이지 Quest Map
+   7. 홈 풀화면 허브 + 내서재 Quest Map
    ═══════════════════════════════════════════════════════════ */
 .home-hub-wrap{
   display:flex;flex-direction:column;align-items:center;gap:24px;
@@ -1549,12 +1547,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
-    <div class="gnb-item" data-page="collection" onclick="nav('collection')">고전 컬렉션</div>
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">독서 챌린지</div>
-    <div class="gnb-item" data-page="airec" onclick="nav('airec')">AI추천</div>
-    <div class="gnb-item" data-page="international" onclick="nav('international')">International Students</div>
+    <div class="gnb-item" data-page="collection" onclick="nav('collection')">고전 컬렉션</div>
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
-    <div class="gnb-item" data-page="mypage" onclick="nav('mypage')">마이 페이지</div>
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()">🙂 로그인</button>
@@ -1781,10 +1776,31 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
-     5) 마이 페이지 (휙 허브 패턴 + Quest Map)
+     5) 내서재 (휙 허브 패턴 + Quest Map)
      ═══════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════
+     좌측 고정 메뉴 신규 페이지 (Ver03) — 검색 / 피드 / 리더보드
+     ═══════════════════════════════════════════════════════════ -->
+<section class="page" id="page-search">
+  <h1 class="page-title">검색</h1>
+  <p class="page-subtitle">전자책 + 종이책 통합 검색 · 키워드와 자연어 모두 가능</p>
+  <div id="searchBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+</section>
+
+<section class="page" id="page-feed">
+  <h1 class="page-title">피드</h1>
+  <p class="page-subtitle">다른 학생들의 인생책 · 한 줄 소감 · 질문 · 문장</p>
+  <div id="feedBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+</section>
+
+<section class="page" id="page-leaderboard">
+  <h1 class="page-title">리더보드</h1>
+  <p class="page-subtitle">진행 중인 챌린지 참가 현황</p>
+  <div id="leaderboardBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+</section>
+
 <section class="page" id="page-mypage">
-  <h1 class="page-title">마이 페이지</h1>
+  <h1 class="page-title">내서재</h1>
   <p class="page-subtitle">내 챌린지 진척 · 점수 · 뱃지 · 서평</p>
 
   <!-- 상단 요약 히어로 (실측 3숫자) -->
@@ -3147,7 +3163,7 @@ function certPromptSubmit(bookId){
   const b=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===bookId):null;
   bsCelebrate({
     title:`『${esc(cleanT(b?b.title:''))}』<br>완독 인증 완료!`,
-    rows:[`한 줄 소감 <b>+50점</b>`, `독서 이력에 추가 — 마이 페이지에서 확인`],
+    rows:[`한 줄 소감 <b>+50점</b>`, `독서 이력에 추가 — 내서재에서 확인`],
   });
   try{ renderQuestMap(); renderMyImpressions(); renderReadingRhythm(); }catch(e){}
 }
@@ -3406,12 +3422,12 @@ function chalJoin(id){
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
   const arr=joinedChals();
   if(arr.some(x=>String(x.id)===String(c.id))){
-    alert(`이미 참여 중인 챌린지예요.\n마이 페이지 Quest Map에서 진행하세요.`); nav('mypage'); return;
+    alert(`이미 참여 중인 챌린지예요.\n내서재 Quest Map에서 진행하세요.`); nav('mypage'); return;
   }
   arr.push({ id:c.id, title:c.title, to:c.to||'', mission:c.mission||null,
     books:(c.books||[]).map(b=>({t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
   _saveJoinedChals(arr);
-  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 마이 페이지 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
+  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 내서재 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
   nav('mypage');
 }
 function chalQuit(cid){
@@ -4004,23 +4020,29 @@ function libBridgeOpen(book){
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
   setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);
 }
+/* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 리더보드 / 검색 / 피드 / 내서재 */
+const SIDE_MENU = [
+  {key:'mychal', icon:'target',   label:'마이 챌린지', page:'curation'},
+  {key:'leader', icon:'trophy',   label:'리더보드',    page:'leaderboard'},
+  {key:'search', icon:'search',   label:'검색',        page:'search'},
+  {key:'feed',   icon:'users',    label:'피드',        page:'feed'},
+  {key:'shelf',  icon:'bookOpen', label:'내서재',      page:'mypage'},
+];
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
   if(!el) return;
-  el.innerHTML = HUB_NODES.map(n=>{
-    const badgeCls = n.alert ? 'alert' : '';
-    const badge = n.badge ? `<span class="side-node-badge ${badgeCls}">${n.badge}</span>` : '';
-    return `<div class="side-node" data-key="${n.key}" onclick="onSideNode('${n.key}')">
+  el.innerHTML = SIDE_MENU.map(n=>{
+    const on = (activePage===n.page) ? ' active' : '';
+    return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
       ${ic(n.icon)}
       <div class="side-node-label">${esc(n.label)}</div>
-      ${badge}
     </div>`;
   }).join('');
 }
 
-function onSideNode(key){
-  // 사이드바 노드 클릭 = 허브 노드 클릭과 같은 라우팅
-  onHubNode(key);
+function onSideMenu(key){
+  const item = SIDE_MENU.find(n=>n.key===key);
+  if(item) nav(item.page);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -5086,14 +5108,14 @@ function renderSceneChat(sc, body, info){
     ]);
     if(done){
       chat += _bxMe(_sc.impression);
-      chat += _bxBot([{cls:'react ok', html:`고마워요, 잘 읽으셨어요 ⭐ 소감은 마이 페이지에 기록됐어요. <b>다른 책도 별이와 함께 읽어 보실래요?</b>`}]);
+      chat += _bxBot([{cls:'react ok', html:`고마워요, 잘 읽으셨어요 ⭐ 소감은 내서재에 기록됐어요. <b>다른 책도 별이와 함께 읽어 보실래요?</b>`}]);
       const others = _bxOtherBooks();
       if(others.length){
         chat += `<div class="bx-books-label">📚 아직 안 읽은 챌린지 책 — 표지를 눌러 별이와 함께 시작해요!</div><div class="bx-books">`
           + others.map(b=>`<button class="bx-book" onclick="bxOpenBook('${b.id}')">${b.cover?`<img src="${esc(b.cover)}" alt="">`:'<div class="bx-book-ph">📖</div>'}<span>${esc(b.title)}</span></button>`).join('')
           + `</div>`;
       } else {
-        chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">🏆 마이 페이지에서 내 기록 보기 →</button></div>`;
+        chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">🏆 내서재에서 내 기록 보기 →</button></div>`;
       }
     }
     chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 주세요':'여기에 한 줄 소감을 써 주세요 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;
@@ -5126,7 +5148,7 @@ function renderSceneChat(sc, body, info){
   }
 }
 function _bxScrollBottom(){ const r=document.querySelector('.viewer-pane.right'); if(r) r.scrollTop=r.scrollHeight; }
-function bxFinishGo(){ closeViewer(); nav('mypage'); }   // 완료 후 → 마이 페이지 Quest Map(다른 책 고르기)
+function bxFinishGo(){ closeViewer(); nav('mypage'); }   // 완료 후 → 내서재 Quest Map(다른 책 고르기)
 function bxOpenBook(id){ openViewer(id, 'challenge'); }  // 챌린지 책 표지 클릭 → 그 책 별이 챌린지로
 function _bxOtherBooks(){                                // 아직 소감까지 안 끝낸 다른 챌린지 책(표지+제목)
   const out = [], seen = new Set();
@@ -5348,7 +5370,7 @@ function submitSceneImpression(){
       rows:[
         `장면 퀴즈 정답 ${okCnt}/${total} <b>+${okCnt*10}점</b>`,
         `한 줄 소감 <b>+50점</b>`,
-        `누적 <b>${(SCORE_BASE+chalEarned()).toLocaleString()}점</b> — 마이 페이지에서 확인`,
+        `누적 <b>${(SCORE_BASE+chalEarned()).toLocaleString()}점</b> — 내서재에서 확인`,
       ],
     });
   } else {
@@ -5388,7 +5410,7 @@ function finishChallenge(){
 }
 
 /* ═══════════════════════════════════════════════════════════
-   휙 허브 (마이 페이지)
+   휙 허브 (내서재)
    ═══════════════════════════════════════════════════════════ */
 const HUB_NODES = [
   {key:'continue',    icon:'bookOpen', label:'이어 읽기',    angle:-90, badge:'1'},
@@ -5735,7 +5757,7 @@ async function renderCommunityReviews(){
   const list=await rvFetch('select=*&order=verified.desc,likes.desc,created_at.desc&limit=50');
   host.innerHTML=`<div style="font-size:12.5px;color:var(--text-light);margin-bottom:12px">
       완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>이 모이는 곳이에요.
-      서평은 <b>책 상세</b>나 <b>마이 페이지</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
+      서평은 <b>책 상세</b>나 <b>내서재</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
     ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 책을 읽고 첫 서평을 남겨보세요!</div>'}`;
 }
 function renderCommunity(tab){
@@ -5763,8 +5785,8 @@ function openCommModal(tab,i){
       <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag||'')}</span>
       ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
     <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
-    <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이 페이지에서 진행률과 점수를 확인할 수 있어요.'}</div>
-    <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n마이 페이지에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
+    <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 내서재에서 진행률과 점수를 확인할 수 있어요.'}</div>
+    <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n내서재에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
   document.getElementById('commModal').classList.add('on');
 }
 function closeCommModal(){ document.getElementById('commModal').classList.remove('on'); }
@@ -6068,7 +6090,7 @@ function renderStreakCal(){
    ═══════════════════════════════════════════════════════════ */
 function enrollProgram(key){
   const names = {champion:'고전 챔피언 프로그램', freshman:'2026 신입생 필수 챌린지', intl:'Learning Korean through Korean Classics'};
-  alert(`✅ ${names[key]} 참가 완료!\n\n마이 페이지 → 챌린지 메뉴에서 진행률을 확인하세요.`);
+  alert(`✅ ${names[key]} 참가 완료!\n\n내서재 → 챌린지 메뉴에서 진행률을 확인하세요.`);
   nav('mypage');
 }
 
