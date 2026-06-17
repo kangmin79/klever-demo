@@ -2294,7 +2294,7 @@ const READER_BGS = [                       // 배경색 6종 (빈 bg=테마 기�
   {id:'black',  label:'블랙',   bg:'#161616', fg:'#d8d8d8'},
 ];
 
-let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false,
+let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:true,
                    padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false, hdrAuto:true};
 let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
 let _readerSessionStart = 0;
@@ -2520,20 +2520,31 @@ function switchMobilePane(which){
   attachScrollListener(); updateProgress();
   if(pgEligible()){ _pg.on=false; _pg.chIdx=0; _pg.page=0; enterPageMode(); }   // 페이지 모드: 바뀐 칸으로 재조판
 }
-function updatePaneTabs(hasSecond,label){
+function updatePaneTabs(hasSecond,label,mainLabel){
   const bar=document.getElementById('paneTabs'); if(!bar) return;
-  bar.style.display = hasSecond ? '' : 'none';   // 두번째 칸 없으면 탭 숨김 → 본문 전체폭
+  // 탭 노출: 모바일이거나 PC 페이지 넘김(책읽기) 모드일 때 — 스크롤 모드 PC에서는 2단 동시노출이라 탭 불필요
+  const show = hasSecond && (window.innerWidth<=900 || (readerPrefs.pageMode && currentMode==='full'));
+  bar.style.display = show ? 'flex' : 'none';
   const s=document.getElementById('ptSecond'); if(s&&label) s.textContent=label;
-  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane==='main'));
+  const m=document.getElementById('ptMain'); if(m&&mainLabel) m.textContent=mainLabel;
+  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===_mobPane));
 }
-function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본문부터, 탭 라벨/표시 갱신
+function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨/표시 갱신
   _mobPane='main';
   const body=document.getElementById('viewerBody'); if(body) body.classList.remove('mob-second');
-  let hasSecond,label;
+  let hasSecond,label,mainLabel='본문';
   if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
-  else { hasSecond=!!c.trans; label='번역'; }
-  updatePaneTabs(hasSecond,label);
+  else {
+    hasSecond=!!c.trans; label='번역';
+    // 해외책 책읽기: 원문/번역 탭 — 번역본을 기본으로 보여줌
+    if(hasSecond && currentBook && currentBook.id.startsWith('gb-')){
+      mainLabel='원문';
+      _mobPane='second';
+      if(body) body.classList.add('mob-second');
+    }
+  }
+  updatePaneTabs(hasSecond,label,mainLabel);
 }
 // 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
 function _anchorBlocks(){ const el=_scrollEl(); return el?[...el.querySelectorAll('.cv-chunk, h3.ch-title')]:[]; }
@@ -4381,7 +4392,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260618a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260618b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4438,7 +4449,8 @@ function setupImmersiveTap(){
 
 /* ═══════════ 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼) ═══════════ */
 let _pg={on:false, chapters:[], chIdx:0, page:0, count:1, colW:0, colH:0, gap:36, padX:20, padY:24};
-function pgEligible(){ return !!readerPrefs.pageMode && window.innerWidth<=600; }
+// Ver03: PC·모바일 모두 페이지 넘김 (책읽기=full 모드 한정. 퀴즈 모드는 기존 레이아웃 유지)
+function pgEligible(){ return !!readerPrefs.pageMode && currentMode==='full'; }
 function _pgSourcePane(){   // 페이지로 조판할 원본 칸 (모바일 선택 탭 기준 — 숨겨져 있어도 outerHTML 읽음)
   const left=document.querySelector('.viewer-pane.left');
   const right=document.querySelector('.viewer-pane.right');
@@ -4492,9 +4504,16 @@ function layoutPaged(){
   const clip=document.getElementById('pagedClip'), flow=document.getElementById('pagedFlow');
   if(!clip||!flow) return;
   const W=clip.clientWidth, H=clip.clientHeight;
-  const colW=Math.max(140, W-_pg.padX*2), colH=Math.max(140, H-_pg.padY*2);
-  _pg.colW=colW; _pg.colH=colH;
-  flow.style.left=_pg.padX+'px'; flow.style.top=_pg.padY+'px';
+  // PC: 한 줄이 너무 길지 않도록 책 너비(최대 660px)로 가운데 정렬, 위아래 여백도 키움
+  let padX=_pg.padX, padY=_pg.padY;
+  if(window.innerWidth>600){
+    const usable=Math.min(W-96, 660);
+    padX=Math.max(48, Math.round((W-usable)/2));
+    padY=44;
+  }
+  const colW=Math.max(140, W-padX*2), colH=Math.max(140, H-padY*2);
+  _pg.colW=colW; _pg.colH=colH; _pg.curPadX=padX; _pg.curPadY=padY;
+  flow.style.left=padX+'px'; flow.style.top=padY+'px';
   flow.style.width=colW+'px'; flow.style.height=colH+'px';
   flow.style.columnWidth=colW+'px'; flow.style.webkitColumnWidth=colW+'px';
   flow.style.columnGap=_pg.gap+'px'; flow.style.webkitColumnGap=_pg.gap+'px';
@@ -6413,6 +6432,14 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('keydown', (e) => {
+  // 책읽기 페이지 넘김: ← 이전 / → · Space · PageDown 다음
+  if(typeof _pg!=='undefined' && _pg.on && document.getElementById('viewerOverlay')?.classList.contains('open')){
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(tag!=='input' && tag!=='textarea' && !e.target.isContentEditable){
+      if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='Spacebar'){ e.preventDefault(); pgGo(1); return; }
+      if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); pgGo(-1); return; }
+    }
+  }
   if(e.key === 'Escape'){
     const _mx=document.querySelector('.viewer-shell.maxed');
     if(_mx){ _mx.classList.remove('maxed'); return; }   // 꽉채우기 먼저 해제
