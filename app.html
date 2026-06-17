@@ -1892,6 +1892,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       </div>
       <button class="reader-btn reader-aa" id="readerAaBtn" onclick="toggleReaderSettings(event)" title="읽기 설정" style="font-weight:800;font-size:14px;">A<span style="font-size:11px;">a</span></button>
       <div class="reader-toolbar">
+        <select id="krLangSel" onchange="setKrLang(this.value)" title="번역 언어" style="display:none;font-size:12px;font-weight:700;border:1px solid var(--line,#ddd);border-radius:8px;padding:5px 8px;background:var(--card,#fff);color:inherit;"></select>
         <button class="reader-btn" id="paneToggleBtn" onclick="cyclePaneView()" title="원문/번역 보기" style="display:none;"><svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span id="paneToggleLabel">나란히</span></button>
         <button class="reader-btn" id="ttsBtn" onclick="toggleTTS()" title="음성 읽기 (완독·Intl 모드)"><svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>TTS</button>
         <button class="reader-btn" onclick="toggleFullscreen()" title="전체화면"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
@@ -1996,7 +1997,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <script src="mvp35_data.js?b=260616d"></script>
 <script src="books_extra.js?b=260612g"></script>
-<script src="classics_kr_data.js?b=260616i"></script>
+<script src="classics_kr_data.js?b=260617e"></script>
 <script src="classics_foreign_data.js?b=260616c"></script>
 <script src="classics_ko_titles.js?b=260616a"></script>
 <script src="bodies_dq.js?b=260612g"></script>
@@ -2010,6 +2011,31 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
    ═══════════════════════════════════════════════════════════ */
 const BODIES_SENT = {};   // 문장정렬 데이터(상호 하이라이트) — bodies_*.js가 채움. 없으면 문단 단위 폴백.
+// 한국 고전 평행 리더(한국어↔다국어). KR_SENT[id]={zh|vi|en|ja:[[ [ko,tr] ],...]} (bodies_{slug}.js가 채움)
+const KR_SENT = {};
+let KR_LANG = 'zh';                       // 현재 선택된 평행 번역 언어 (중→베→영→일 기본 중국어)
+const KR_LANG_NAMES = {zh:'中文', vi:'Tiếng Việt', en:'English', ja:'日本語'};
+const KR_BODY_P = {};
+function krSlug(b){ const m=((b&&b.coverSrc)||'').match(/([^/]+)\.webp/); return m?m[1]:null; }
+function ensureKrBody(b){                  // 평행 번역 bodies 지연 로드 (해외 ensureForeignBody의 한국 고전판)
+  const id=b&&b.id, slug=krSlug(b);
+  if(!id||!id.startsWith('kr-')||!slug) return Promise.resolve();
+  if(KR_SENT[id]) return Promise.resolve();
+  if(KR_BODY_P[id]) return KR_BODY_P[id];
+  KR_BODY_P[id]=new Promise(res=>{ const s=document.createElement('script');
+    s.src='bodies_'+slug+'.js'+(typeof APP_BUILD!=='undefined'?'?b='+APP_BUILD:'');
+    s.onload=res; s.onerror=res; document.head.appendChild(s); });
+  return KR_BODY_P[id];
+}
+function applyKrLang(id){                  // 선택 언어를 BODIES_SENT에 주입 → 기존 sentHtml 평행 렌더 재사용
+  const d=KR_SENT[id]; if(!d) return;
+  const lang=d[KR_LANG]?KR_LANG:(Object.keys(d)[0]); KR_LANG=lang;
+  if(d[lang]) BODIES_SENT[id]=d[lang];
+}
+function setKrLang(lang){                  // 뷰어 언어 칩 클릭 → 언어 전환 + 재렌더
+  KR_LANG=lang;
+  if(currentBook){ applyKrLang(currentBook.id); renderViewer(); setTimeout(()=>{applyReaderPrefs();updatePaneToggleVisibility();},0); }
+}
 const SVG = {
   user:        '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
   bookOpen:    '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
@@ -3166,9 +3192,18 @@ function cyclePaneView(){
 function updatePaneToggleVisibility(){
   const btn=document.getElementById('paneToggleBtn');
   if(!btn||!currentBook) return;
-  // 완독 모드 + 해외책(번역 존재)일 때만 의미 있음
-  const hasTrans = currentBook.locale==='foreign' || currentBook.locale==='classic';
+  // 완독 모드 + 번역 존재(해외책 또는 한국 고전 다국어)일 때만 의미 있음
+  const krParallel = currentBook.id.startsWith('kr-') && KR_SENT[currentBook.id];
+  const hasTrans = currentBook.locale==='foreign' || currentBook.locale==='classic' || krParallel;
   btn.style.display = (currentMode==='full' && hasTrans) ? '' : 'none';
+  // 한국 고전 평행 리더: 언어 셀렉터 표시
+  const sel=document.getElementById('krLangSel');
+  if(sel){
+    if(currentMode==='full' && krParallel){
+      sel.style.display='';
+      sel.innerHTML=Object.keys(KR_SENT[currentBook.id]).map(l=>`<option value="${l}"${l===KR_LANG?' selected':''}>${KR_LANG_NAMES[l]||l}</option>`).join('');
+    } else { sel.style.display='none'; }
+  }
 }
 
 /* ── TTS (완독·Intl 모드 전용, 챌린지 모드 차단) ── */
@@ -4276,7 +4311,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260617d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260617e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4497,6 +4532,7 @@ async function openViewer(bookId, mode){
   // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
   let _reload = false;
   if(b.hasTrans && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
+  if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
   if(classicFetchId(bookId)){ await ensureClassicBody(bookId); _reload = true; }
   if(_reload && currentBook===b) renderViewer();
   // 리더 모듈 초기화
