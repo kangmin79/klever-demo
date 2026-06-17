@@ -195,13 +195,18 @@ a{color:inherit;text-decoration:none}
 .final .btn-ghost:hover{border-color:#fff;color:#fff}
 .final .note{margin-top:18px;font-size:12px;color:#8493ab}
 /* footer */
-.foot{padding:40px 0 56px;text-align:center}
-.foot .b{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:15px;margin-bottom:12px}
-.foot .b .tilelogo{width:24px;height:24px;border-radius:7px;display:block}
-.foot p{font-size:11.5px;color:var(--light);line-height:1.7}
-.foot .links{margin-top:12px;font-size:12.5px}
-.foot .links a{color:var(--sub);font-weight:600;margin:0 8px}
+.foot{padding:60px 0 64px;text-align:center}
+.foot .b{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:16px;margin-bottom:14px}
+.foot .b .tilelogo{width:26px;height:26px;border-radius:7px;display:block}
+.foot .tag{font-size:13px;color:var(--sub);line-height:1.7;max-width:420px;margin:0 auto}
+.foot .links{margin-top:26px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 20px}
+.foot .links a{color:var(--sub);font-size:13px;font-weight:600}
 .foot .links a:hover{color:var(--navy)}
+.foot .links.legal{margin-top:12px;gap:8px 18px}
+.foot .links.legal a{font-size:12.5px;color:var(--light)}
+.foot .div{height:1px;background:var(--border);max-width:520px;margin:34px auto 26px}
+.foot .src{font-size:11.5px;color:var(--light);line-height:1.7}
+.foot .biz{font-size:11.5px;color:var(--light);line-height:1.95;margin-top:12px}
 /* ── 모바일 (≤600px) ── */
 @media(max-width:600px){
   html,body{overflow-x:hidden}                 /* 가로 스크롤/잘림 방지 */
@@ -379,16 +384,21 @@ a{color:inherit;text-decoration:none}
 
 <!-- FOOTER -->
 <footer class=foot><div class=wrap>
-  <div class=b><img class=tilelogo src="/apple-touch-icon.png" alt="bookstar 로고" width=24 height=24>bookstar</div>
-  <p>모든 책은 하늘의 별 — 학생에게 길을 비추는 한 권을 찾고, 끝까지 읽도록 함께합니다.</p>
+  <div class=b><img class=tilelogo src="/apple-touch-icon.png" alt="bookstar 로고" width=26 height=26>bookstar</div>
+  <p class=tag>모든 책은 하늘의 별 — 학생에게 길을 비추는 한 권을 찾고, 끝까지 읽도록 함께합니다.</p>
   <div class=links>
-    <a href="/ai.html">AI 추천 체험</a>·<a href="/app.html">학생 앱 미리보기</a>·<a href="#contact">도입 문의</a>
+    <a href="/ai.html">AI 추천 체험</a>
+    <a href="/app.html">학생 앱 미리보기</a>
+    <a href="#contact">도입 문의</a>
   </div>
-  <div class=links style="margin-top:6px">
-    <a href="/company.html">회사소개</a>·<a href="/terms.html">이용약관</a>·<a href="/privacy.html"><b>개인정보처리방침</b></a>
+  <div class="links legal">
+    <a href="/company.html">회사소개</a>
+    <a href="/terms.html">이용약관</a>
+    <a href="/privacy.html">개인정보처리방침</a>
   </div>
-  <p style="margin-top:14px">출처 · 대출 데이터 정보나루(국립중앙도서관) / 표지·별점 알라딘 / 추천 북스타 AI</p>
-  <p style="margin-top:14px;color:#9aa1ad">리버스 · 대표이사 김병삼 · 사업자등록번호 697-28-01224 · 경기도 통신판매업신고번호 제333호<br>경기도 하남시 미사대로 520 · 대표전화(발신자부담) 070-7802-0276 · bskim@liberse.co.kr</p>
+  <div class=div></div>
+  <p class=src>출처 · 대출 데이터 정보나루(국립중앙도서관) / 표지·별점 알라딘 / 추천 북스타 AI</p>
+  <p class=biz>리버스 · 대표이사 김병삼 · 사업자등록번호 697-28-01224 · 경기도 통신판매업신고번호 제333호<br>경기도 하남시 미사대로 520 · 대표전화(발신자부담) 070-7802-0276 · bskim@liberse.co.kr</p>
 </div></footer>
 
 </body></html>
