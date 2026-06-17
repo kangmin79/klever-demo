@@ -404,6 +404,19 @@ body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
 body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
 body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
+/* 피드 (다른 학생 한 줄 소감) */
+.feed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.feed-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
+.feed-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.feed-ava{width:34px;height:34px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.feed-name{font-size:13px;font-weight:800;color:var(--text);}
+.feed-sub{font-size:11px;color:var(--text-light);}
+.feed-quote{font-size:14px;line-height:1.7;color:var(--text);background:var(--bg-input);border-radius:10px;padding:12px 14px;position:relative;}
+.feed-book{display:flex;align-items:center;gap:9px;margin-top:12px;cursor:pointer;}
+.feed-book-cv{width:34px;height:46px;border-radius:5px;overflow:hidden;flex-shrink:0;background:var(--bg-input);}
+.feed-book-cv img{width:100%;height:100%;object-fit:cover;}
+.feed-book-t{font-size:12px;font-weight:700;color:var(--text);}
+.feed-book-a{font-size:11px;color:var(--text-sub);}
 .book-progress{margin-top:6px;height:3px;background:var(--bg-input);border-radius:2px;overflow:hidden;}
 .book-progress-fill{height:100%;background:var(--gold);}
 
@@ -1816,8 +1829,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <section class="page" id="page-feed">
   <h1 class="page-title">피드</h1>
-  <p class="page-subtitle">다른 학생들의 인생책 · 한 줄 소감 · 질문 · 문장</p>
-  <div id="feedBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+  <p class="page-subtitle">다른 학생들이 남긴 한 줄 소감 — 같은 책을 어떻게 읽었는지 살펴보세요</p>
+  <div id="feedBody" style="margin-top:20px;"></div>
 </section>
 
 <section class="page" id="page-leaderboard">
@@ -3396,6 +3409,9 @@ function nav(page){
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
+  }
+  if(page === 'feed') {
+    setTimeout(renderFeed, 30);
   }
 }
 
@@ -6282,6 +6298,58 @@ async function usNaturalSearch(q){
   }
 }
 function usOpenNL(i){ const b=US_LAST_NL[i]; if(b && typeof libBridgeOpen==='function') libBridgeOpen(b); }
+
+/* ═══════════════════════════════════════════════════════════
+   피드 (Ver03) — 모든 학생의 한 줄 소감 광장 (bookstar_challenge_results)
+   ═══════════════════════════════════════════════════════════ */
+function _bookById(id){ return (typeof BOOKS!=='undefined') ? BOOKS.find(b=>b.id===id) : null; }
+function _feedAgo(iso){
+  if(!iso) return '';
+  try{ const d=(Date.now()-new Date(iso).getTime())/1000;
+    if(d<3600) return Math.max(1,Math.floor(d/60))+'분 전';
+    if(d<86400) return Math.floor(d/3600)+'시간 전';
+    return Math.floor(d/86400)+'일 전';
+  }catch(e){ return ''; }
+}
+function feedCard(x){
+  const s=BX_STUDENTS.find(z=>z.id===x.student_id) || {name:'학생', emoji:'🙂'};
+  const b=_bookById(x.book_id);
+  const title=b?b.title:(x.book_id||'');
+  const author=b?(b.author||''):'';
+  const cv=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" loading="lazy" onerror="this.style.display='none'">`:'';
+  const meta=[];
+  if(x.quiz_total) meta.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`);
+  if(x.score) meta.push(`${x.score}점`);
+  const sub=[s.id==='guest'?'':'', _feedAgo(x.updated_at)].filter(Boolean).join(' · ');
+  const bookClick=b?` onclick="openDetail('${b.id}')"`:'';
+  return `<div class="feed-card">
+    <div class="feed-top">
+      <div class="feed-ava">${s.emoji||'🙂'}</div>
+      <div><div class="feed-name">${esc(s.name)}</div><div class="feed-sub">${esc(sub)}${meta.length?' · '+esc(meta.join(' · ')):''}</div></div>
+    </div>
+    <div class="feed-quote">“${esc(x.impression)}”</div>
+    <div class="feed-book"${bookClick}>
+      <div class="feed-book-cv">${cv}</div>
+      <div><div class="feed-book-t">${esc(title)}</div><div class="feed-book-a">${esc(author)}</div></div>
+    </div>
+  </div>`;
+}
+async function renderFeed(){
+  const box=document.getElementById('feedBody'); if(!box) return;
+  box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">피드를 불러오는 중…</div>';
+  try{
+    const r=await fetch(`${BX_SB}/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=80`,{headers:BX_H});
+    const rows=await r.json();
+    const list=(Array.isArray(rows)?rows:[]).filter(x=>(x.impression||'').trim().length>0);
+    if(!list.length){
+      box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">아직 올라온 한 줄 소감이 없어요.<br>챌린지에서 소감을 남기면 친구들과 여기서 공유돼요.</div>';
+      return;
+    }
+    box.innerHTML=`<div class="feed-list">${list.map(feedCard).join('')}</div>`;
+  }catch(e){
+    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">피드를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</div>';
+  }
+}
 
 function toggleTheme(){
   // 라이트 → 세피아 → 다크 → 라이트 순환
