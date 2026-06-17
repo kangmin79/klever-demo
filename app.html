@@ -4610,12 +4610,32 @@ function ensureForeignBody(id){
 }
 
 // 문장정렬 책: 각 문단을 문장 그룹 <span>으로 (data-pi/data-sg 같으면 원문↔번역 대응)
+// 모든 책 공통: 챕터헤더(#/CHAPTER)는 chapter-anchor 섹션+제목(TOC용), 산문은 문장 span,
+// 12문단씩 cv-chunk(content-visibility)로 묶어 대작(레미제라블 등) 성능 확보. bodyToHtml과 동일 구조.
 function sentHtml(sentArr, side){
-  return sentArr.map((groups, pi) =>
-    '<p data-pi="'+pi+'">' +
-    groups.map((g, sg) => '<span class="psent" data-pi="'+pi+'" data-sg="'+sg+'">'+esc(g[side]||'')+'</span>').join(' ') +
-    '</p>'
-  ).join('');
+  const chPat = /^\s*(CHAPTER|BOOK|PART|ACT|SCENE|CANTO)\s+[IVXLCDM\d]+[.:]?[^\n]*$/i;
+  const mdPat = /^\s*#{1,6}\s+\S/;
+  // 양측 모두 헤더로 보일 때만 챕터 섹션화(레거시 '# 제목'). 한쪽만 헤더면(원문만 긴 장제목 등) 본문 취급.
+  const looksHead = s => chPat.test(s) || mdPat.test(s);
+  const isHeadPara = g => g.length===1 && looksHead((g[0][0]||'').trim()) && looksHead((g[0][1]||'').trim());
+  const sentP = (groups, pi) => '<p data-pi="'+pi+'">' +
+    groups.map((g, sg) => '<span class="psent" data-pi="'+pi+'" data-sg="'+sg+'">'+esc(g[side]||'')+'</span>').join(' ') + '</p>';
+  const cvChunks = (from, to) => {
+    let out=''; for(let i=from;i<to;i+=12){ let inner='';
+      for(let j=i;j<Math.min(i+12,to);j++) inner += sentP(sentArr[j], j);
+      if(inner) out += '<div class="cv-chunk">'+inner+'</div>'; }
+    return out;
+  };
+  const headerIdx = []; sentArr.forEach((g,i)=>{ if(isHeadPara(g)) headerIdx.push(i); });
+  if(headerIdx.length < 2) return cvChunks(0, sentArr.length);   // 헤더 없는 책(변신·신규): cv-chunk만
+  let html = '';
+  if(headerIdx[0] > 0) html += '<section class="chapter-anchor" data-ch-title="서문 · 머리말">'+cvChunks(0, headerIdx[0])+'</section>';
+  for(let i=0;i<headerIdx.length;i++){
+    const s=headerIdx[i], e=i+1<headerIdx.length?headerIdx[i+1]:sentArr.length;
+    const title=((sentArr[s][0]||[])[side]||'').trim().replace(/^#{1,6}\s+/,'').replace(/\s+/g,' ');
+    html += '<section class="chapter-anchor" data-ch-title="'+esc(title)+'"><h3 class="ch-title">'+esc(title)+'</h3>'+cvChunks(s+1, e)+'</section>';
+  }
+  return html;
 }
 
 function viewerBodies(book){
