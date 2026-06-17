@@ -1958,8 +1958,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
         </div>
       </div>
       <div class="mode-toggle">
-        <button id="modeFull" class="active" onclick="setMode('full')">책읽기</button>
-        <button id="modeChallenge" onclick="setMode('challenge')">퀴즈</button>
+        <button id="modeFull" class="active" onclick="setMode('full')"><span data-uik="read">책읽기</span></button>
+        <button id="modeChallenge" onclick="setMode('challenge')"><span data-uik="quiz">퀴즈</span></button>
       </div>
       <button class="reader-btn reader-aa" id="readerAaBtn" onclick="toggleReaderSettings(event)" title="읽기 설정" style="font-weight:800;font-size:14px;">A<span style="font-size:11px;">a</span></button>
       <div class="reader-toolbar">
@@ -2043,10 +2043,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     </div>
     <div class="viewer-progress-wrap"><div class="viewer-progress-bar" id="viewerProg"></div></div>
     <div class="hl-popup" id="hlPopup">
-      <button onclick="addHighlight()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>하이라이트</button>
-      <button onclick="addNote()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>메모</button>
-      <button onclick="lookupSelection()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>사전</button>
-      <button onclick="addToWordbook()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>단어장</button>
+      <button onclick="addHighlight()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg><span data-uik="highlight">하이라이트</span></button>
+      <button onclick="addNote()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-uik="note">메모</span></button>
+      <button onclick="lookupSelection()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span data-uik="dict">사전</span></button>
+      <button onclick="addToWordbook()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span data-uik="wordbook">단어장</span></button>
     </div>
     <div class="dict-popup" id="dictPopup">
       <div class="dict-head">
@@ -2315,6 +2315,46 @@ const READER_BGS = [                       // 배경색 6종 (빈 bg=테마 기�
 let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:true,
                    padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false, hdrAuto:true};
 let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
+
+/* ── 메뉴 다국어 (Ver03 6-4) — 도서 안내·뷰어 메뉴 한정. 한국어 기본(ko면 원문 그대로) ── */
+let currentUILang = 'ko';
+const UI_T = {
+  ko:{read:'책읽기',quiz:'퀴즈',highlight:'하이라이트',note:'메모',dict:'사전',wordbook:'단어장',
+      paneMain:'본문',paneOrig:'원문',paneTrans:'번역',
+      read3:'3가지 방식으로 읽어요',readFull:'전문 바로 읽기',readFullSub:'· 북스타 표준 본문',
+      readQuiz:'퀴즈로 깊이 읽기',readQuizSub:'· 챌린지 + 한 줄 소감',webtoon:'웹툰으로 줄거리 보기',
+      kyobo:'교보문고에서 보기',aladin:'알라딘에서 보기'},
+  en:{read:'Read',quiz:'Quiz',highlight:'Highlight',note:'Note',dict:'Dictionary',wordbook:'Wordbook',
+      paneMain:'Text',paneOrig:'Original',paneTrans:'Translation',
+      read3:'3 ways to read',readFull:'Read full text',readFullSub:'· Bookstar edition',
+      readQuiz:'Read with quiz',readQuizSub:'· Challenge + one-line review',webtoon:'Webtoon summary',
+      kyobo:'View on Kyobo',aladin:'View on Aladin'},
+  zh:{read:'阅读',quiz:'测验',highlight:'高亮',note:'笔记',dict:'词典',wordbook:'生词本',
+      paneMain:'正文',paneOrig:'原文',paneTrans:'译文',
+      read3:'三种阅读方式',readFull:'阅读全文',readFullSub:'· Bookstar 标准正文',
+      readQuiz:'测验阅读',readQuizSub:'· 挑战 + 一句话感想',webtoon:'漫画概要',
+      kyobo:'在教保文库查看',aladin:'在阿拉丁查看'},
+  vi:{read:'Đọc',quiz:'Trắc nghiệm',highlight:'Tô sáng',note:'Ghi chú',dict:'Từ điển',wordbook:'Sổ từ',
+      paneMain:'Văn bản',paneOrig:'Nguyên văn',paneTrans:'Bản dịch',
+      read3:'3 cách đọc',readFull:'Đọc toàn văn',readFullSub:'· Bản Bookstar',
+      readQuiz:'Đọc kèm trắc nghiệm',readQuizSub:'· Thử thách + cảm nghĩ một dòng',webtoon:'Tóm tắt webtoon',
+      kyobo:'Xem trên Kyobo',aladin:'Xem trên Aladin'},
+};
+function t(key){ const L=UI_T[currentUILang]||UI_T.ko; return (L&&L[key]!=null)?L[key]:(UI_T.ko[key]!=null?UI_T.ko[key]:key); }
+let _paneTabState=null, _lcdBookId=null;
+function applyUILang(){
+  document.querySelectorAll('[data-uik]').forEach(el=>{ const v=t(el.getAttribute('data-uik')); if(v!=null) el.textContent=v; });
+  if(_paneTabState) _applyPaneTabLabels();
+  const ov=document.getElementById('lcDetail');
+  if(ov && ov.classList.contains('on') && _lcdBookId) openDetail(_lcdBookId);
+}
+function _applyPaneTabLabels(){
+  if(!_paneTabState) return;
+  const map=s=> s==='본문'?t('paneMain'):s==='원문'?t('paneOrig'):s==='번역'?t('paneTrans'):s;
+  const m=document.getElementById('ptMain'), s=document.getElementById('ptSecond');
+  if(m&&_paneTabState.mainLabel) m.textContent=map(_paneTabState.mainLabel);
+  if(s&&_paneTabState.label) s.textContent=map(_paneTabState.label);
+}
 let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
 let _lastSelectionRange = null;
@@ -2543,8 +2583,8 @@ function updatePaneTabs(hasSecond,label,mainLabel){
   // 탭 노출: 모바일이거나 PC 페이지 넘김(책읽기) 모드일 때 — 스크롤 모드 PC에서는 2단 동시노출이라 탭 불필요
   const show = hasSecond && (window.innerWidth<=900 || (readerPrefs.pageMode && currentMode==='full'));
   bar.style.display = show ? 'flex' : 'none';
-  const s=document.getElementById('ptSecond'); if(s&&label) s.textContent=label;
-  const m=document.getElementById('ptMain'); if(m&&mainLabel) m.textContent=mainLabel;
+  _paneTabState = {label, mainLabel};
+  _applyPaneTabLabels();   // 라벨 + 선택 언어 적용
   document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===_mobPane));
 }
 function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨/표시 갱신
@@ -4412,6 +4452,7 @@ function renderBookGrid(targetId, filterIntl){
 function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  _lcdBookId = bookId;
   const ov = document.getElementById('lcDetail');
   if(!ov){ nav('detail'); return; }
   const cover = b.coverSrc
@@ -4428,15 +4469,15 @@ function openDetail(bookId){
         <div class="lcd-chips">${chips}</div></div>
     </div>
     <p class="lcd-desc">${esc(intro)}</p>
-    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">3가지 방식으로 읽어요</div>
+    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">${esc(t('read3'))}</div>
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 전문 바로 읽기<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">· 북스타 표준 본문</span><span class="ar">›</span></div>
-      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 퀴즈로 깊이 읽기<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">· 챌린지 + 한 줄 소감</span><span class="ar">›</span></div>
-      ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
+      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 ${esc(t('readFull'))}<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">${esc(t('readFullSub'))}</span><span class="ar">›</span></div>
+      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 ${esc(t('readQuiz'))}<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">${esc(t('readQuizSub'))}</span><span class="ar">›</span></div>
+      ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 ${esc(t('webtoon'))} <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
     </div>
     <div style="display:flex;gap:8px;padding:0 24px 14px;">
-      <a href="https://search.kyobobook.co.kr/search?keyword=${encodeURIComponent(b.title)}&target=total" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">교보문고에서 보기 ↗</a>
-      <a href="https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(b.title)}" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">알라딘에서 보기 ↗</a>
+      <a href="https://search.kyobobook.co.kr/search?keyword=${encodeURIComponent(b.title)}&target=total" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">${esc(t('kyobo'))} ↗</a>
+      <a href="https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(b.title)}" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">${esc(t('aladin'))} ↗</a>
     </div>
     <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
@@ -4448,7 +4489,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260618c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260618d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5000,6 +5041,7 @@ function renderViewer(){
       ? ''                                                                                 // 책읽기 = 클릭/키보드로 넘김
       : `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
   }
+  try{ applyUILang(); }catch(e){}   // 선택 언어로 메뉴 라벨 적용
 }
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
@@ -6222,7 +6264,9 @@ function exportReport(){
 }
 
 function changeLang(lang){
-  if(lang !== 'ko') alert(`Language changed to: ${lang.toUpperCase()}\n뷰어를 열면 자동으로 ${lang} 모드로 표시됩니다.`);
+  // Ver03 6-4: 도서 안내·뷰어 메뉴를 선택 언어로 (한국어 기본)
+  currentUILang = lang || 'ko';
+  try{ applyUILang(); }catch(e){}
 }
 
 function onSearch(e){
