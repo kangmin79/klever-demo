@@ -3697,6 +3697,14 @@ let SECTIONS=[
   {slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'},
   {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
 ];
+// 서버 발행 섹션이 기본 SECTIONS를 덮어써도 '세명대 신착 자료'(라이브)는 항상 대출 랭킹 뒤에 끼운다(중복 방지)
+function injectNewArr(arr){
+  if(!Array.isArray(arr)||arr.some(s=>s.slot==='newarr'||s.style==='newlive')) return arr;
+  const sec={slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'};
+  const i=arr.findIndex(s=>s.slot==='rank'||s.style==='rank');
+  if(i>=0) arr.splice(i+1,0,sec); else arr.push(sec);
+  return arr;
+}
 async function loadSections(){
   try{
     // 우리도서관 페이지는 area='우리도서관' 칸만 (고전 컬렉션·International은 별도 영역)
@@ -3705,6 +3713,7 @@ async function loadSections(){
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
     SECTIONS=rows.filter(x=>(x.area||'우리도서관')==='우리도서관')
       .map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+    injectNewArr(SECTIONS);   // 서버 섹션에도 신착 라이브 보장
   }catch(e){}
 }
 // 고전 컬렉션 / International 영역의 사서 큐레이션 칸 로드
