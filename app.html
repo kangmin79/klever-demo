@@ -1941,9 +1941,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
         </div>
       </div>
       <div class="mode-toggle">
-        <button id="modeChallenge" class="active" onclick="setMode('challenge')">챌린지</button>
-        <button id="modeFull" onclick="setMode('full')">완독</button>
-        <button id="modeIntl" onclick="setMode('intl')">Intl</button>
+        <button id="modeFull" class="active" onclick="setMode('full')">책읽기</button>
+        <button id="modeChallenge" onclick="setMode('challenge')">퀴즈</button>
       </div>
       <button class="reader-btn reader-aa" id="readerAaBtn" onclick="toggleReaderSettings(event)" title="읽기 설정" style="font-weight:800;font-size:14px;">A<span style="font-size:11px;">a</span></button>
       <div class="reader-toolbar">
@@ -2042,8 +2041,6 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="viewer-footer">
       <div id="viewerFooterInfo">제3장 핵심 페이지 · <b>+50 점수</b></div>
       <div class="viewer-actions" id="viewerActions">
-        <button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>
-        <button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>
         <button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>
       </div>
     </div>
@@ -4631,7 +4628,7 @@ function setMode(mode){
   }
   currentMode = mode;
   document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  const _mb = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)); if(_mb) _mb.classList.add('active');
   stopTTS();
   _paneView='both';
   document.getElementById('viewerBody')?.classList.remove('pane-orig','pane-trans');
@@ -4818,6 +4815,9 @@ function viewerBodies(book){
 
 function renderViewer(){
   if(!currentBook) return;
+  // 모드 토글 활성 동기화 (책읽기/퀴즈) — 열 때/모드 변경 시
+  document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
+  const _mb0 = document.getElementById('mode' + (currentMode||'').charAt(0).toUpperCase() + (currentMode||'').slice(1)); if(_mb0) _mb0.classList.add('active');
   const L = viewerLabels(currentBook);
   const c = viewerBodies(currentBook);
   const body = document.getElementById('viewerBody');
@@ -4913,8 +4913,7 @@ function renderViewer(){
   // 바닥 액션: 완독=장 이동만 / 챌린지·Intl=장 이동 + 수행완료
   const acts = document.getElementById('viewerActions');
   if(acts){
-    const nav = `<button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>`
-              + `<button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>`;
+    // Ver03: 책읽기(full)는 페이지 넘김(클릭·키보드)으로 이동 — 이전/다음 버튼 삭제
     const isSceneChal = (currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && !!CHALLENGE_SCENES[currentBook.id]);
     const isChatChal = isSceneChal && CHAT_QUIZ_BOOKS.has(currentBook.id);
     acts.innerHTML = isChatChal
@@ -4923,8 +4922,8 @@ function renderViewer(){
       ? `<button class="viewer-action" onclick="sceneGo(-1)">◀ 이전 장면</button>`
         + `<button class="viewer-action primary" onclick="sceneGo(1)">다음 장면 ▶</button>`
       : (currentMode === 'full')
-      ? nav
-      : nav + `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
+      ? ''                                                                                 // 책읽기 = 클릭/키보드로 넘김
+      : `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
   }
 }
 
