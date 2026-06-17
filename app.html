@@ -3426,18 +3426,22 @@ const SEMYUNG_BEST=[
   {brcd:'11951396',t:'미 비포 유',a:'조조 모예스',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/M_201658.jpg'},
   {brcd:'4808954640756',t:'너무 한낮의 연애',a:'김금희',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954640756/L4808954640756.jpg'},
 ].map(b=>({isbn:'sm-'+b.brcd,t:b.t,a:b.a,cover:smCover(b.cv),note:b.note||'',lib:smDetail(b.brcd),_sm:true}));
-// 세명대 전자도서관 대출 베스트 — 라이브(semyung-best Edge Function이 bestContent.json 프록시·파싱). 로드 전엔 null.
-let SEMYUNG_BEST_LIVE=null;
-async function loadSemyungBest(){
+// 세명대 전자도서관 라이브 — semyung-best Edge Function(?kind=best|new)이 bestContent/newContent 프록시·파싱. 로드 전엔 null.
+let SEMYUNG_BEST_LIVE=null, SEMYUNG_NEW_LIVE=null;
+function _smMap(list){ return list.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:b.rank,pubDate:b.pubDate||''})); }
+async function _smFetch(kind){
   try{
-    const r=await fetch(SMBEST_FN,{headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON}});
-    if(!r.ok) return;
-    const d=await r.json(); const list=(d&&d.books)||[];
-    if(!list.length) return;
-    SEMYUNG_BEST_LIVE=list.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:b.rank}));
-    rebuildLibPool();
-    const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); try{mlBindDrag();}catch(e){} }
-  }catch(e){}
+    const r=await fetch(SMBEST_FN+'?kind='+kind,{headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON}});
+    if(!r.ok) return null;
+    const d=await r.json(); const l=(d&&d.books)||[];
+    return l.length?_smMap(l):null;
+  }catch(e){ return null; }
+}
+async function loadSemyungBest(){
+  const [best,nw]=await Promise.all([_smFetch('best'),_smFetch('new')]);
+  if(best) SEMYUNG_BEST_LIVE=best;
+  if(nw) SEMYUNG_NEW_LIVE=nw;
+  if(best||nw){ rebuildLibPool(); const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); try{mlBindDrag();}catch(e){} } }
 }
 const ML_GRADS=[['#1f9b8e','#15756b'],['#d99a1a','#b07c10'],['#1f8fb0','#15708c'],['#5b6bd6','#3f4db0'],['#4f9e57','#3a7d42']];
 const ML_DARK=[['#5a3b8c','#34215c'],['#9c2f63','#5e1c3c'],['#1f4f7a','#13314e'],['#1d6b5a','#103f34'],['#6b357a','#3f1f4a']];
@@ -3590,6 +3594,7 @@ function millieHTML(secs,classicMode){
     const st=s.style||'row';
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 랭킹: 라이브(세명대 대출 베스트) 우선, 없으면 폴백
+    if(st==='newlive'){ const nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb); return; }   // 신착: 세명대 newContent 라이브
     const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
@@ -3689,6 +3694,7 @@ let SECTIONS=[
   {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero'},
   {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row'},
   {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank'},
+  {slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'},
   {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
 ];
 async function loadSections(){
@@ -3730,6 +3736,7 @@ function rebuildLibPool(){
   if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
   SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설(폴백)
   if(SEMYUNG_BEST_LIVE) SEMYUNG_BEST_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 대출 베스트 라이브
+  if(SEMYUNG_NEW_LIVE) SEMYUNG_NEW_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 신착 자료 라이브
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
