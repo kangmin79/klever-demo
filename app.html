@@ -1095,10 +1095,6 @@ body.dark .bx-books-label{color:#c5d2dd;}
 .viewer-shell.chrome-hidden .viewer-header,
 .viewer-shell.chrome-hidden .viewer-footer,
 .viewer-shell.chrome-hidden .pane-tabs{display:none !important;}
-/* [Ver03 테스트 · 1권 한정] 상단 툴바를 하단으로 (CSS만 — 다른 책 영향 없음) */
-.viewer-shell.botbar .viewer-header{order:10;border-bottom:none;border-top:1px solid var(--border);transform:none !important;opacity:1 !important;pointer-events:auto !important;}
-.viewer-shell.botbar .viewer-footer{order:11;}
-.viewer-shell.botbar .reader-settings-sheet{top:auto;bottom:100%;margin-top:0;margin-bottom:6px;}
 /* ── 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼 조판) ── */
 .paged-view{display:none;position:absolute;inset:0;background:var(--bg-card);z-index:1;}
 .viewer-body.pg-active{display:none !important;}
@@ -4386,7 +4382,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260618g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260618h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4603,7 +4599,6 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
   document.querySelector('.viewer-shell')?.classList.remove('chrome-hidden');   // 열 때는 항상 바 보이게
-  document.querySelector('.viewer-shell')?.classList.toggle('botbar', b.id==='gb-120');   // [테스트] 보물섬 1권만 상단 툴바를 하단으로
   renderViewer();
   // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
   let _reload = false;
