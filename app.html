@@ -351,6 +351,7 @@ body.dark .chal-mission span{color:var(--gold);}
 .chal-join:hover{filter:brightness(1.08);}
 body.dark .chal-join{background:var(--gold);color:#0f172a;}
 .chal-empty{grid-column:1/-1;text-align:center;color:var(--text-light);font-size:13px;padding:40px 0;line-height:1.7;}
+.chal-row-desc{font-size:13px;line-height:1.65;color:var(--text-sub);margin:-6px 0 16px;max-width:760px;}
 .chal-ai-head{font-size:15px;font-weight:800;color:var(--text-sub);margin:6px 0 16px;letter-spacing:-0.3px;}
 
 /* ═══════════════════════════════════════════════════════════
@@ -3459,9 +3460,16 @@ function chalHero(c){
     </div>
   </div></div>`;
 }
-// 챌린지 행 헤더(좌: 제목·부제 / 우: 참여하기)
+// 종류 배지(고전 컬렉션 / 소장자료)
+function chalTypeBadge(c){
+  const isC=c.type==='고전챌린지';
+  return `<span class="chal-type${isC?' classic':''}">${isC?'고전 컬렉션':'소장자료'}</span>`;
+}
+// 챌린지 행 헤더(좌: 종류·제목·부제 / 우: 참여하기)
 function chalRowHead(c){
-  return `<div class="ml-head"><div><div class="ml-h-t">${esc(c.title)}</div><div class="ml-h-s">${esc(chalSub(c))}</div></div>`
+  return `<div class="ml-head"><div>`
+    + `<div style="margin-bottom:7px">${chalTypeBadge(c)}</div>`
+    + `<div class="ml-h-t">${esc(c.title)}</div><div class="ml-h-s">${esc(chalSub(c))}</div></div>`
     + `<button class="chal-join" onclick="chalJoin('${esc(String(c.id))}')">참여하기 →</button></div>`;
 }
 // 캐러셀용 책 카드(우리 도서관 ml-bk 재사용)
@@ -3474,12 +3482,14 @@ function renderChalCards(){
   if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
   let out=chalHero(CHAL_PUB[0]);
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
-    + CHAL_PUB.map(c=>{
+    + CHAL_PUB.map((c,idx)=>{
         const books=(c.books||[]);
         const row=books.length
           ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
           : '';
-        return `<div class="cl-shelf">${chalRowHead(c)}${row}</div>`;
+        // 상세내용: 첫 챌린지는 히어로 인용구에 이미 노출 → 두 번째 이후 행에만 표시
+        const desc=(idx>0&&c.intro)?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
+        return `<div class="cl-shelf">${chalRowHead(c)}${desc}${row}</div>`;
       }).join('')
     + `</div>`;
   g.innerHTML=`<div class="ml">${out}</div>`;
