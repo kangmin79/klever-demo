@@ -1720,11 +1720,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <h1 class="page-title">독서 챌린지</h1>
   <p class="page-subtitle">사서가 운영하는 챌린지에 참여하고, 퀴즈·소감으로 완독을 인증하세요</p>
 
-  <!-- 사서가 만든 챌린지 (library_programs · 진행중) -->
-  <div class="chal-live-wrap">
-    <div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>
-    <div class="chal-grid" id="chalLive"><div class="chal-empty">불러오는 중…</div></div>
-  </div>
+  <!-- 사서가 만든 챌린지 (library_programs · 진행중) — 우리 도서관 밀리식 레이아웃 -->
+  <div id="chalLive"><div class="chal-empty">불러오는 중…</div></div>
 
 </section>
 
@@ -3432,23 +3429,61 @@ function chalMissionBadges(m){ if(!m) return ''; const out=[];
   if(m.quiz) out.push('🎯 퀴즈 '+(m.quizN||5)+'문항'); if(m.review) out.push('✍️ 한 줄 소감'); if(m.question) out.push('❓ 질문 만들기');
   return out.map(t=>`<span>${esc(t)}</span>`).join(''); }
 function chalMissionPlain(m){ if(!m) return '-'; const o=[]; if(m.quiz)o.push('퀴즈 '+(m.quizN||5)+'문항'); if(m.review)o.push('한 줄 소감'); if(m.question)o.push('질문 만들기'); return o.join(' · ')||'-'; }
+// 챌린지 부제(권수 · 미션 · D-day)
+function chalSub(c){
+  const dd=ddayText(c.to); const m=chalMissionPlain(c.mission);
+  return `${(c.books||[]).length}권${m&&m!=='-'?' · '+m:''}${dd?' · '+dd:''}`;
+}
+// 히어로(우리 도서관 shelf-hero 재사용) — 대표 챌린지 1개를 크게
+function chalHero(c){
+  const b=(c.books||[])[0]||{t:c.title};
+  const face=b.cover
+    ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
+    : `<div class="book-cover" style="background:${spineColor(b.t||c.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||c.title||''))}</div></div></div>`;
+  const m=chalMissionPlain(c.mission);
+  const join=`chalJoin('${esc(String(c.id))}')`;
+  return `<div class="shelf-hero"><div class="sh-grid">
+    <div class="sh-left">
+      <div class="sh-kicker">✦ 이달의 챌린지</div>
+      <div class="sh-title">${esc(c.title)}</div>
+      <div class="sh-sub">${esc(chalSub(c))}</div>
+      <div class="sh-quote">“${esc(c.intro||'사서가 운영하는 독서 챌린지예요.')}”<span> — 우리 학교 사서</span></div>
+      ${m&&m!=='-'?`<div class="sh-meta"><span>${esc(m)}</span></div>`:''}
+      <button class="sh-btn" onclick="${join}">참여하기 →</button>
+    </div>
+    <div class="sh-stage">
+      <div class="sh-side">독서 챌린지</div>
+      <div class="sh-shadow"></div>
+      <div class="book3d" onclick="${join}">${face}</div>
+      <div class="shelf"></div>
+    </div>
+  </div></div>`;
+}
+// 챌린지 행 헤더(좌: 제목·부제 / 우: 참여하기)
+function chalRowHead(c){
+  return `<div class="ml-head"><div><div class="ml-h-t">${esc(c.title)}</div><div class="ml-h-s">${esc(chalSub(c))}</div></div>`
+    + `<button class="chal-join" onclick="chalJoin('${esc(String(c.id))}')">참여하기 →</button></div>`;
+}
+// 캐러셀용 책 카드(우리 도서관 ml-bk 재사용)
+function chalBookCard(b,c){
+  const click=b.isbn?`libDetail('${esc(b.isbn)}')`:`chalJoin('${esc(String(c.id))}')`;
+  return `<div class="ml-bk" onclick="${click}">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div></div>`;
+}
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
   if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
-  g.innerHTML=CHAL_PUB.map(c=>{
-    const isClassic=c.type==='고전챌린지';
-    const covers=(c.books||[]).slice(0,3).map(b=>`<div class="cv">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>`).join('')||'<div class="cv">📚</div>';
-    const dd=ddayText(c.to);
-    return `<div class="chal-card">
-      <div class="chal-c-top"><div class="chal-covers">${covers}</div>
-        <span class="chal-type${isClassic?' classic':''}">${isClassic?'고전 컬렉션':'소장자료'}</span></div>
-      <div class="chal-title">${esc(c.title)}</div>
-      ${c.intro?`<div class="chal-desc">${esc(c.intro)}</div>`:''}
-      <div class="chal-mission">${chalMissionBadges(c.mission)}</div>
-      <div class="chal-foot"><span class="chal-meta">${(c.books||[]).length}권${dd?' · <span class="chal-dday">'+dd+'</span>':''}</span>
-        <button class="chal-join" onclick="chalJoin('${esc(String(c.id))}')">참여하기 →</button></div>
-    </div>`;
-  }).join('');
+  let out=chalHero(CHAL_PUB[0]);
+  out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
+    + CHAL_PUB.map(c=>{
+        const books=(c.books||[]);
+        const row=books.length
+          ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
+          : '';
+        return `<div class="cl-shelf">${chalRowHead(c)}${row}</div>`;
+      }).join('')
+    + `</div>`;
+  g.innerHTML=`<div class="ml">${out}</div>`;
+  try{ bindDragScroll('#chalLive .ml-hrow'); }catch(e){}
 }
 function joinedChals(){            // 참여 중인 챌린지 배열 (구버전 단일키 자동 이전)
   try{
