@@ -769,7 +769,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-무정",
-  "coverSrc": "./covers/kr-mujeong.webp",
+  "coverSrc": "./covers/kr-mujeong-new.webp",
   "title": "무정",
   "author": "이광수",
   "category": "소설",
@@ -786,7 +786,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-사랑",
-  "coverSrc": "./covers/kr-sarang.webp",
+  "coverSrc": "./covers/kr-sarang-new.webp",
   "title": "사랑",
   "author": "이광수",
   "category": "소설",
@@ -803,7 +803,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-원효대사",
-  "coverSrc": "./covers/kr-wonhyodaesa.webp",
+  "coverSrc": "./covers/kr-wonhyodaesa-new.webp",
   "title": "원효대사",
   "author": "이광수",
   "category": "소설",
@@ -820,7 +820,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-유정",
-  "coverSrc": "./covers/kr-yujeong.webp",
+  "coverSrc": "./covers/kr-yujeong-new.webp",
   "title": "유정",
   "author": "이광수",
   "category": "소설",
@@ -837,7 +837,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-이차돈의-사",
-  "coverSrc": "./covers/kr-ichadonuisa.webp",
+  "coverSrc": "./covers/kr-ichadonuisa-new.webp",
   "title": "이차돈의 사",
   "author": "이광수",
   "category": "소설",
@@ -854,7 +854,7 @@ const BOOKS_CLASSICS_KR = [
  },
  {
   "id": "kr-이광수-재생",
-  "coverSrc": "./covers/kr-jaesaeng.webp",
+  "coverSrc": "./covers/kr-jaesaeng-new.webp",
   "title": "재생",
   "author": "이광수",
   "category": "소설",
