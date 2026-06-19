@@ -1,7 +1,7 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 150권 (번역 99 / 표지 98)
+// 총 150권 (번역 107 / 표지 107)
 const BOOKS_CLASSICS_FOREIGN = [
  {
   "id": "gb-2701",
@@ -733,12 +733,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 94,
   "reviews": 14,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-10148.webp"
  },
  {
   "id": "gb-164",
@@ -1095,12 +1096,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 46,
   "reviews": 14,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-4217.webp"
  },
  {
   "id": "gb-14838",
@@ -1194,12 +1196,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 107,
   "reviews": 3,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-71865.webp"
  },
  {
   "id": "gb-271",
@@ -1443,12 +1446,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 86,
   "reviews": 6,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-30201.webp"
  },
  {
   "id": "gb-83",
@@ -1665,7 +1669,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "participants": 105,
   "reviews": 1,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-67138.webp"
  },
  {
   "id": "gb-325",
@@ -1777,12 +1782,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 47,
   "reviews": 15,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-2085.webp"
  },
  {
   "id": "gb-2434",
@@ -1844,12 +1850,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 44,
   "reviews": 12,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-5160.webp"
  },
  {
   "id": "gb-45858",
@@ -2076,12 +2083,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-9611.webp"
  },
  {
   "id": "gb-66073",
@@ -2327,12 +2335,13 @@ const BOOKS_CLASSICS_FOREIGN = [
   "locale": "foreign",
   "intl": false,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "Gutenberg",
   "participants": 59,
   "reviews": 3,
   "quizzes": 5,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-9198.webp"
  },
  {
   "id": "gb-69768",
