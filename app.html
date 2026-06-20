@@ -3922,7 +3922,9 @@ function booksForSection(s){
   return (s.books||[]).map(b=>{
     if(isCls(b)) return {id:b.id,t:b.title||b.t||'',a:b.author||b.a||'',cls:true};   // 우리 고전 참조 보존
     const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note};
-  }).filter(b=>b.t||b.title||b.id);
+  }).filter(b=>b.t||b.title||b.id)
+    // 2026-06-21 사용자 지시: 큐레이션도 노출목록(BOOKS)에 있는 고전만 표시. 장르제외 희곡·시(셰익스피어 등)·미번역 해외고전은 사서 큐레이션에 담겨 있어도 숨김. 일반 도서관 책(isbn)은 영향 없음.
+    .filter(b=> !(b.cls && typeof BOOKS!=='undefined' && !BOOKS.some(x=>x.id===b.id)) );
 }
 const PREVIEW = new URLSearchParams(location.search).get('preview')==='1';
 function renderLibCuration(){
@@ -4456,7 +4458,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
