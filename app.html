@@ -2194,13 +2194,18 @@ const BOOKS_RAW = (typeof BOOKS_CLASSICS_KR !== 'undefined' ? BOOKS_CLASSICS_KR 
   .concat(typeof BOOKS_CLASSICS_FOREIGN !== 'undefined' ? BOOKS_CLASSICS_FOREIGN : []);
 const _KOT = (typeof window !== 'undefined' && window.CLASSICS_KO) ? window.CLASSICS_KO : {};
 const BOOKS = BOOKS_RAW.filter(b => !DROP_IDS.has(b.id))
+                       // 2026-06-21 사용자 지시: 해외 고전은 "번역된 것만" 노출/검색.
+                       // → 번역 없는 해외 항목(비영어판 7권 junk + 7차 번역중 5권) 제외. 번역 완료(wire 후)되면 자동 복귀.
+                       .filter(b => !(b.locale === 'foreign' && !b.hasTrans))
                        .map(b => {
                          let o = MINUMSA_IDS.has(b.id) ? Object.assign({}, b, {minumsa:true}) : b;
                          // 해외 고전: 카드/목록 라벨은 한글 제목, 영어 원제는 titleEn 보존 (표지 이미지는 영어 그대로)
                          if (b.id && b.id.indexOf('gb-') === 0 && _KOT[b.id]) o = Object.assign({}, o, {titleEn: b.title, title: _KOT[b.id]});
                          return o;
-                       })
-                       .concat(typeof BOOKS_EXTRA !== 'undefined' ? BOOKS_EXTRA : []);
+                       });
+// 2026-06-21 사용자 지시: 해외 고전은 확정·번역된 목록(classics_foreign_data.js)만 노출/검색.
+// 옛 해외고전 41권(BOOKS_EXTRA, 원문만·번역 없음)은 표시·검색 양쪽에서 제외. 데이터는 books_extra.js에 보존(되돌리기 가능).
+// (번역된 책이 아니므로 6/19 절대규칙 "번역분 숨김 금지"에 저촉되지 않음.)
 
 const CURATIONS = [
   {id:'c1', cls:'cur-1', eyebrow:'심리·자아',     title:'나를 바꾸는 심리 챌린지',       desc:'논어·맹자·니체로 떠나는 자기 탐구',         meta:'8권 · 423명 참여'},
@@ -4451,7 +4456,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
