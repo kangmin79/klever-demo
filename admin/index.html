@@ -544,6 +544,13 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <div><h1>이용통계</h1><p>프로그램·월·이용자·도서 단위로 보고, 엑셀로 내려받아 우수 이용자 선정·시상에 활용</p></div>
         <button class="btn-excel" onclick="downloadExcel()">⤓ 엑셀 다운로드</button>
       </div>
+
+      <!-- 그라데이션 배너 — 현재 보기 요약 -->
+      <div class="db-banner">
+        <div class="db-bh">한눈에 보기 <span id="statBannerCap">선택한 기간 합계</span></div>
+        <div class="db-chips" id="statBanner"></div>
+      </div>
+
       <div class="tabs" id="statTabs"></div>
       <div class="toolbar">
         <select id="stKind" onchange="renderStats()"><option value="">전체 구분</option><option>큐레이션</option><option>챌린지</option></select>
@@ -551,7 +558,17 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <span style="color:var(--light);font-size:13px">~</span>
         <select id="stTo" onchange="renderStats()"></select>
       </div>
-      <div class="tblwrap"><table class="tbl" id="statTbl"></table></div>
+
+      <!-- 차트 카드 -->
+      <div class="db-card" id="statChartCard" style="margin-bottom:16px">
+        <h3 id="statChartTit">추이</h3>
+        <div class="db-chartwrap"><canvas id="statChart"></canvas></div>
+      </div>
+
+      <!-- 표 카드 -->
+      <div class="db-card" style="padding:18px 20px">
+        <div class="tblwrap" style="border:0;box-shadow:none"><table class="tbl" id="statTbl"></table></div>
+      </div>
       <div class="note" id="statNote"></div>
     </section>
 
@@ -1725,6 +1742,68 @@ function renderStats(){
     note='도서별 이용 현황입니다. 이용시간은 고전 컬렉션 도서만 집계됩니다.';
   }
   el('statTbl').innerHTML=html; el('statNote').innerHTML=note;
+  drawStatChart();
+}
+/* ====== 이용통계 배너 칩 + 차트 (panze) ====== */
+let _statChart=null;
+function statChip(label,val,sub){return `<div class="db-chip${sub&&sub.hl?' hl':''}"><div class="v">${val}${sub&&sub.delta?` <small>${sub.delta}</small>`:''}</div><div class="l">${label}</div></div>`;}
+function drawStatChart(){
+  const kind=el('stKind').value;
+  const cap=el('statBannerCap'), banner=el('statBanner'), tit=el('statChartTit');
+  // 팔레트 (panze 톤)
+  const C={accent:'#3a6ea5',gold:'#d4a93b',blue:'#2563c9',good:'#2e7d57',grid:'#eef0f5',tick:'#aeb3cc'};
+  let chips='',chart=null;
+  if(statTab==='prog'){
+    const rows=PROGRAMS.filter(p=>!kind||(kind==='챌린지'?p.type.includes('챌린지'):p.type==='큐레이션'));
+    const tV=rows.reduce((a,p)=>a+(p.visits||0),0), tU=rows.reduce((a,p)=>a+(p.uses||0),0);
+    const active=rows.filter(p=>p.status==='진행중').length;
+    if(cap)cap.textContent='프로그램 전체';
+    chips=statChip('프로그램 수',nf(rows.length))+statChip('접속건수 합계',nf(tV))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('진행 중',nf(active));
+    if(tit)tit.textContent='프로그램별 이용·접속 건수';
+    const top=rows.slice().sort((a,b)=>(b.uses||0)-(a.uses||0)).slice(0,8);
+    chart={type:'bar',data:{labels:top.map(p=>p.title),datasets:[
+      {label:'이용건수',data:top.map(p=>p.uses||0),backgroundColor:C.accent,borderRadius:6,barPercentage:.7},
+      {label:'접속건수',data:top.map(p=>p.visits||0),backgroundColor:C.gold,borderRadius:6,barPercentage:.7}]},
+      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:11,boxHeight:11,font:{size:11},color:'#6b7088'}}},
+        scales:{y:{grid:{color:C.grid},ticks:{color:C.tick}},x:{grid:{display:false},ticks:{color:C.tick,font:{size:10},maxRotation:0,callback:function(v){const s=this.getLabelForValue(v);return s.length>6?s.slice(0,6)+'…':s;}}}},maintainAspectRatio:false}};
+  }else if(statTab==='month'){
+    const rows=MONTHLY.filter(r=>inRange(r.m));
+    const tV=rows.reduce((a,r)=>a+r.visits,0), tU=rows.reduce((a,r)=>a+r.uses,0);
+    const avgU=rows.length?Math.round(tU/rows.length):0;
+    const peak=rows.slice().sort((a,b)=>b.uses-a.uses)[0];
+    if(cap)cap.textContent='선택한 기간 합계';
+    chips=statChip('접속건수 합계',nf(tV))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('월 평균 이용',nf(avgU))+statChip('최다 이용 월',peak?peak.m.slice(5)+'월':'—');
+    if(tit)tit.textContent='월별 접속·이용 추이';
+    chart={type:'line',data:{labels:rows.map(r=>r.m.slice(5)+'월'),datasets:[
+      {label:'이용건수',data:rows.map(r=>r.uses),borderColor:C.accent,backgroundColor:'rgba(58,110,165,.12)',fill:true,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:C.accent},
+      {label:'접속건수',data:rows.map(r=>r.visits),borderColor:C.gold,backgroundColor:'transparent',fill:false,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:C.gold}]},
+      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:11,boxHeight:11,font:{size:11},color:'#6b7088'}}},
+        scales:{y:{grid:{color:C.grid},ticks:{color:C.tick}},x:{grid:{display:false},ticks:{color:C.tick}}},maintainAspectRatio:false}};
+  }else if(statTab==='user'){
+    const tU=USERS.reduce((a,u)=>a+(u.uses||0),0);
+    const scored=USERS.filter(u=>u.total!=null);
+    const avgT=scored.length?Math.round(scored.reduce((a,u)=>a+u.total,0)/scored.length):0;
+    const best=scored.slice().sort((a,b)=>b.total-a.total)[0];
+    if(cap)cap.textContent='이용자 현황';
+    chips=statChip('이용자 수',nf(USERS.length))+statChip('이용건수 합계',nf(tU))+statChip('평균 합계점수',nf(avgT),{hl:1})+statChip('최고점',best?nf(best.total)+'점':'—');
+    if(tit)tit.textContent='이용자별 합계점수 순위';
+    const top=scored.slice().sort((a,b)=>b.total-a.total).slice(0,8);
+    chart={type:'bar',data:{labels:top.map(u=>u.id),datasets:[{label:'합계점수',data:top.map(u=>u.total),backgroundColor:top.map((_,i)=>i<3?C.gold:C.accent),borderRadius:6,barPercentage:.65}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick}},y:{grid:{display:false},ticks:{color:C.tick,font:{size:11}}}},maintainAspectRatio:false}};
+  }else{
+    const rows=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses);
+    const tU=rows.reduce((a,b)=>a+b.uses,0);
+    if(cap)cap.textContent='도서 이용 현황';
+    chips=statChip('도서 수',nf(rows.length))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('최다 이용 도서',rows[0]?(rows[0].t.length>10?rows[0].t.slice(0,10)+'…':rows[0].t):'—')+statChip('최다 이용건수',rows[0]?nf(rows[0].uses):'—');
+    if(tit)tit.textContent='도서별 이용건수 순위';
+    const top=rows.slice(0,8);
+    chart={type:'bar',data:{labels:top.map(b=>b.t),datasets:[{label:'이용건수',data:top.map(b=>b.uses),backgroundColor:top.map((_,i)=>i<3?C.gold:C.accent),borderRadius:6,barPercentage:.65}]},
+      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick}},y:{grid:{display:false},ticks:{color:C.tick,font:{size:10.5},callback:function(v){const s=this.getLabelForValue(v);return s.length>14?s.slice(0,14)+'…':s;}}}},maintainAspectRatio:false}};
+  }
+  if(banner)banner.innerHTML=chips;
+  if(typeof Chart==='undefined'||!el('statChart'))return;
+  try{ if(_statChart)_statChart.destroy(); }catch(e){}
+  _statChart=new Chart(el('statChart'),chart);
 }
 function downloadExcel(){
   let rows=[],name='';
