@@ -2149,7 +2149,7 @@ function ensureKrBody(b){                  // 평행 번역 bodies 지연 로드
   if(KR_SENT[id]) return Promise.resolve();
   if(KR_BODY_P[id]) return KR_BODY_P[id];
   KR_BODY_P[id]=new Promise(res=>{ const s=document.createElement('script');
-    s.src='bodies_'+slug+'.js'+(typeof APP_BUILD!=='undefined'?'?b='+APP_BUILD:'');
+    s.src='bodies_'+slug+'.js'+(typeof BODIES_VER!=='undefined'?'?b='+BODIES_VER:'');
     s.onload=res; s.onerror=res; document.head.appendChild(s); });
   return KR_BODY_P[id];
 }
@@ -4581,6 +4581,12 @@ function renderBookGrid(targetId, filterIntl){
 function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  // 체감 속도↑: 상세 보는 동안 '전문 바로읽기' 본문을 백그라운드로 미리 당겨옴(await 안 함, 클릭 시 즉시 표시)
+  try{
+    if(b.hasTrans && bookId.startsWith('gb-')) ensureForeignBody(bookId);          // 번역 bodies(원문+번역 포함)
+    else if(b.hasTrans && bookId.startsWith('kr-')){ ensureKrBody(b); if(classicFetchId(bookId)) ensureClassicBody(bookId); }
+    else if(classicFetchId(bookId)) ensureClassicBody(bookId);
+  }catch(e){}
   const ov = document.getElementById('lcDetail');
   if(!ov){ nav('detail'); return; }
   const cover = b.coverSrc
@@ -4617,7 +4623,10 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+// 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
+// ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
+const BODIES_VER = '260622';
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4839,7 +4848,9 @@ async function openViewer(bookId, mode){
   let _reload = false;
   if(b.hasTrans && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
   if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
-  if(classicFetchId(bookId)){ await ensureClassicBody(bookId); _reload = true; }
+  // gb- 번역책은 bodies에 원문·번역이 모두 있어 Supabase 원문 fetch가 불필요(중복 네트워크 제거 → 더 빨리 표시)
+  const _haveForeignBody = bookId.startsWith('gb-') && (BODIES_SENT[bookId]||BODIES_ORIG[bookId]||BODIES_TRANS[bookId]);
+  if(classicFetchId(bookId) && !_haveForeignBody){ await ensureClassicBody(bookId); _reload = true; }
   if(_reload && currentBook===b) renderViewer();
   // 리더 모듈 초기화
   setTimeout(() => {
@@ -4995,7 +5006,7 @@ function ensureForeignBody(id){
   if(FOREIGN_BODY_P[id]) return FOREIGN_BODY_P[id];
   FOREIGN_BODY_P[id] = new Promise(res=>{
     const s = document.createElement('script');
-    s.src = 'bodies_' + id.replace(/-/g,'') + '.js' + (typeof APP_BUILD !== 'undefined' ? '?b='+APP_BUILD : '');
+    s.src = 'bodies_' + id.replace(/-/g,'') + '.js' + (typeof BODIES_VER !== 'undefined' ? '?b='+BODIES_VER : '');
     s.onload = res; s.onerror = res;
     document.head.appendChild(s);
   });
