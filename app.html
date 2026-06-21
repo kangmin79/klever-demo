@@ -1600,6 +1600,11 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-btn:disabled{opacity:.5;cursor:default}
 .mp-done{display:none;font-size:12.5px;font-weight:800;color:#2f9e6f}
 .mp-note{font-size:13px;color:var(--text-sub);background:var(--bg-input);border:1px dashed var(--border);border-radius:10px;padding:14px;line-height:1.6}
+.mp-prog{margin:0 0 12px}
+.mp-prog-top{display:flex;justify-content:space-between;font-size:12.5px;font-weight:800;color:var(--text);margin-bottom:5px}
+.mp-prog-top .mp-prog-full{color:var(--gold)}
+.mp-prog-bar{height:9px;border-radius:6px;background:var(--bg-input);overflow:hidden}
+.mp-prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .35s ease}
 </style>
 </head>
 <body>
@@ -4534,7 +4539,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5056,6 +5061,7 @@ function renderMissionPanel(body, info, leftBody, L){
     right = `<div class="mp-note">사서가 켠 미션이 아직 없어요.</div>`;
   } else {
     right = `<div class="mp-star">⭐ <b id="mpTotal">…</b> <small>모은 별</small></div>`
+          + `<div class="mp-prog" id="mpProg"></div>`
           + acts.map(mpMissionCard).join('');
   }
   body.innerHTML = `
@@ -5091,19 +5097,27 @@ function mpMissionCard(x){
       <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
 }
 async function mpHydrate(ch, m, stu){
-  _mpCtx={bookId:currentBook.id, school:CH_SCHOOL, student:stu.id, m};
-  let done=new Set();
+  _mpCtx={bookId:currentBook.id, school:CH_SCHOOL, student:stu.id, m, chId:ch.id,
+          done:new Set(), ans:{}, quizCount:0, complete:false};
+  // 별 적립(작성·인증 + 퀴즈 정답)
   try{
     const r=await fetch(`${SB_REST}/bookstar_stars?student_id=eq.${encodeURIComponent(stu.id)}&select=activity,ref`,{headers:BX_H});
-    if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>done.add(x.activity+'|'+x.ref)); }
+    if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>_mpCtx.done.add(x.activity+'|'+x.ref)); }
   }catch(e){}
-  _mpCtx.done=done;
+  // 퀴즈 시도(정답+오답) 복원
+  try{
+    const r=await fetch(`${SB_REST}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(currentBook.id)}&select=ans`,{headers:BX_H});
+    if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].ans&&typeof rows[0].ans==='object') _mpCtx.ans=rows[0].ans; }
+  }catch(e){}
   mpRefreshTotal(stu.id);
   chalActiveMissions(m).forEach(x=>{
     if(x.kind==='quiz') return;
-    if(done.has(x.k+'|book:'+currentBook.id)) mpMarkDone(x.k);
+    if(_mpCtx.done.has(x.k+'|book:'+currentBook.id)) mpMarkDone(x.k);
   });
-  if(m.quiz) mpLoadQuiz(m, done);
+  if(m.quiz) await mpLoadQuiz(m);
+  const p=mpProgress();
+  if(p.total>0 && p.done>=p.total) _mpCtx.complete=true;   // 이미 완료 — 재적립·모달 방지
+  mpRenderProgress();
 }
 async function mpRefreshTotal(sid, val){
   const el=document.getElementById('mpTotal'); if(!el) return;
@@ -5117,7 +5131,7 @@ function mpMarkDone(k){
   if(b) b.disabled=true; if(d) d.style.display='inline'; if(ta) ta.readOnly=true;
 }
 function _mpShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-async function mpLoadQuiz(m, done){
+async function mpLoadQuiz(m){
   const box=document.getElementById('mpQuizBox'); if(!box) return;
   const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
   if(!qt||!lv){ box.innerHTML='<div class="mp-load">퀴즈 유형·난이도가 설정되지 않았어요.</div>'; return; }
@@ -5128,6 +5142,7 @@ async function mpLoadQuiz(m, done){
     const r=await fetch(url,{headers:BX_H}); if(r.ok) items=await r.json();
   }catch(e){}
   if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
+  _mpCtx.quizCount=items.length;
   box.innerHTML='';
   items.forEach((it,qi)=>{
     const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
@@ -5136,7 +5151,8 @@ async function mpLoadQuiz(m, done){
       + shuffled.map((o,di)=>`<div class="mp-opt" data-orig="${o.orig}"><span class="mp-mk">${String.fromCharCode(65+di)}</span><span>${esc(o.t)}</span></div>`).join('')
       + `<div class="mp-expl"></div>`;
     box.appendChild(q);
-    if(done && done.has('quiz|item:'+it.id)){ mpRevealQuiz(q, it, it.correct, true, true); }
+    const prev=_mpCtx.ans[it.id];   // {ok, pick} | undefined  (이미 푼 문항 복원)
+    if(prev){ mpRevealQuiz(q, it, it.correct, !!prev.ok, true, prev.pick); }
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
 }
@@ -5147,19 +5163,24 @@ async function mpAnswer(el,q,it){
   const res=await mpRpc('award_quiz',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_item_id:it.id,p_choice:chosen});
   const right=!!(res&&res.right);
   const correct=(res&&typeof res.correct==='number')?res.correct:it.correct;
-  mpRevealQuiz(q,it,correct,right,false,el);
+  mpRevealQuiz(q,it,correct,right,false,chosen);
   if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
+  // 진행 기록(정답·오답 모두 = "풀었음") → 서버 저장 + 진행바 + 완료체크
+  _mpCtx.ans[it.id]={ok:right, pick:chosen};
+  mpSaveProgress();
+  mpRenderProgress();
+  mpCheckComplete();
 }
-function mpRevealQuiz(q,it,correct,right,restored,el){
+function mpRevealQuiz(q,it,correct,right,restored,pickOrig){
   q.querySelectorAll('.mp-opt').forEach(x=>{ x.classList.add('mp-lock');
     const oi=+x.dataset.orig;
     if(oi===correct){ x.classList.add('mp-right'); x.querySelector('.mp-mk').textContent='✓'; }
-    else if(x===el && !right){ x.classList.add('mp-wrong'); x.querySelector('.mp-mk').textContent='✕'; }
+    else if(oi===pickOrig && !right){ x.classList.add('mp-wrong'); x.querySelector('.mp-mk').textContent='✕'; }
     else x.classList.add('mp-dim');
   });
-  if(right||restored){ const qq=q.querySelector('.mp-qq');
+  if(right){ const qq=q.querySelector('.mp-qq');
     if(qq && !qq.querySelector('.mp-gain')){ const g=document.createElement('span'); g.className='mp-gain'; g.textContent=' +⭐1'; qq.appendChild(g); } }
-  const ex=q.querySelector('.mp-expl'); if(ex){ ex.innerHTML='<b>'+(restored?'완료':(right?'정답!':'아쉬워요'))+'</b> '+esc(it.expl||''); ex.classList.add('mp-show'); }
+  const ex=q.querySelector('.mp-expl'); if(ex){ ex.innerHTML='<b>'+(right?'정답!':'아쉬워요')+'</b> '+esc(it.expl||''); ex.classList.add('mp-show'); }
 }
 async function mpSubmitWrite(k,min){
   if(!_mpCtx) return;
@@ -5167,19 +5188,67 @@ async function mpSubmitWrite(k,min){
   if(v.length<min){ alert(min+'자 이상 적어 주세요.'); if(ta) ta.focus(); return; }
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
   const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
-  if(res&&res.ok){ mpMarkDone(k); if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); }
+  if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
+    if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
 }
 async function mpCert(k){
   if(!_mpCtx) return;
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
   const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
-  if(res&&res.ok){ mpMarkDone(k); if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); }
+  if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
+    if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
 }
 async function mpRpc(fn,bodyObj){
   try{ const r=await fetch(`${SB_REST}/rpc/${fn}`,{method:'POST',headers:BX_H,body:JSON.stringify(bodyObj)});
     return r.ok ? await r.json() : {ok:false}; }catch(e){ return {ok:false}; }
+}
+// 진행률 = 푼 퀴즈 문항 + 완료한 작성·인증 미션 / (퀴즈 문항수 + 켠 작성·인증 미션수)
+function mpProgress(){
+  if(!_mpCtx) return {done:0,total:0};
+  let total=0, done=0;
+  chalActiveMissions(_mpCtx.m).forEach(x=>{
+    if(x.kind==='quiz'){ total+=_mpCtx.quizCount||0; done+=Object.keys(_mpCtx.ans||{}).length; }
+    else { total+=1; if(_mpCtx.done.has(x.k+'|book:'+_mpCtx.bookId)) done+=1; }
+  });
+  if(done>total) done=total;
+  return {done,total};
+}
+function mpRenderProgress(){
+  const el=document.getElementById('mpProg'); if(!el) return;
+  const {done,total}=mpProgress();
+  const pct=total?Math.round(done/total*100):0;
+  const full=total>0 && done>=total;
+  el.innerHTML=`<div class="mp-prog-top"><span class="${full?'mp-prog-full':''}">${full?'🏅 챌린지 완주!':'미션 진행'}</span><span>${done}/${total}</span></div>`
+    + `<div class="mp-prog-bar"><div class="mp-prog-fill" style="width:${pct}%"></div></div>`;
+}
+// 퀴즈 시도(정답·오답) 진행을 서버에 저장 (이어하기/진행률 소스)
+async function mpSaveProgress(){
+  if(!_mpCtx) return;
+  try{
+    await fetch(`${SB_REST}/bookstar_challenge_results?on_conflict=student_id,book_id`,
+      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+       body:JSON.stringify({student_id:_mpCtx.student, book_id:_mpCtx.bookId, challenge_id:_mpCtx.chId,
+         ans:_mpCtx.ans, quiz_total:_mpCtx.quizCount, updated_at:new Date().toISOString()})});
+  }catch(e){}
+}
+// 모든 미션 수행 시: 완주 보너스(⭐30, 멱등) + enroll done + 축하
+async function mpCheckComplete(){
+  if(!_mpCtx || _mpCtx.complete) return;
+  const {done,total}=mpProgress();
+  if(!(total>0 && done>=total)) return;
+  _mpCtx.complete=true;
+  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:'challenge_done',p_ref:_mpCtx.chId});
+  if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
+  try{
+    await fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
+      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+       body:JSON.stringify({student_id:_mpCtx.student, challenge_id:_mpCtx.chId, status:'done', done_at:new Date().toISOString()})});
+  }catch(e){}
+  mpRenderProgress();
+  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 모든 미션 완료','완주 보너스 <b>+⭐30</b>','내서재에서 모은 별을 확인하세요']}); }
+  catch(e){ readerToast&&readerToast('🏅 챌린지 완주! +⭐30'); }
 }
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
