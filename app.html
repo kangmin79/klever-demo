@@ -4539,7 +4539,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5048,7 +5048,9 @@ let _mpCtx=null;
 function renderMissionPanel(body, info, leftBody, L){
   const ch = chalForBook(currentBook);
   const stu = bxStudent();
-  const m = ch ? appChalMission(ch) : null;
+  let m = ch ? appChalMission(ch) : null;
+  // 사서가 미션을 바꿨으면 최신본 우선(독서 챌린지 페이지에서 로드된 CHAL_PUB) — 참여 시점 스냅샷보다 최신
+  if(ch && typeof CHAL_PUB!=='undefined'){ const pub=CHAL_PUB.find(x=>String(x.id)===String(ch.id)); if(pub&&pub.mission) m=appChalMission(pub); }
   const acts = m ? chalActiveMissions(m) : [];
   info.innerHTML = ch ? `챌린지 · <b>${esc(ch.title)}</b> · 맞힌 퀴즈·제출 미션마다 ⭐ 적립`
                       : '챌린지 미션 · <b>참여 후 별 적립</b>';
