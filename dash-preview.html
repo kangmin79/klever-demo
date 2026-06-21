@@ -286,7 +286,7 @@ function build(t){
     new Chart(document.getElementById('cLine'),lineCfg('#7c3aed'));
   }
   if(t==='p'){
-    new Chart(document.getElementById('pDonut'),{type:'doughnut',data:{labels:pStud.map(s=>s[0]),datasets:[{data:pStud.map(s=>s[1]),backgroundColor:pPal,borderWidth:0,borderRadius:12,spacing:2,hoverOffset:8}]},options:{cutout:'66%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
+    new Chart(document.getElementById('pDonut'),{type:'doughnut',data:{labels:pStud.map(s=>s[0]),datasets:[{data:pStud.map(s=>s[1]),backgroundColor:pPal,borderColor:'#fff',borderWidth:3,borderRadius:6,spacing:0,hoverOffset:6}]},options:{cutout:'68%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
     const lows=[2,4,3,6,8,7,10];
     new Chart(document.getElementById('pBar'),{type:'bar',data:{labels:D.weeks,datasets:[{data:D.weekly.map((v,i)=>[lows[i],lows[i]+v]),backgroundColor:D.weeks.map((_,i)=>['#f9844a','#8b5cf6','#22c55e'][i%3]),borderRadius:20,barThickness:14}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f1f2f7'},ticks:{color:'#aeb3cc'}},x:{grid:{display:false},ticks:{color:'#aeb3cc'}}},maintainAspectRatio:false}});
     new Chart(document.getElementById('pCat'),{type:'doughnut',data:{labels:D.mix.map(m=>m[0]),datasets:[{data:D.mix.map(m=>m[1]),backgroundColor:D.mix.map(m=>m[2]),borderWidth:0,borderRadius:8,spacing:4,hoverOffset:6}]},options:{cutout:'72%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
