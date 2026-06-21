@@ -4547,7 +4547,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5199,6 +5199,10 @@ async function mpSubmitWrite(k,min){
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
   const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
   if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
+    // 글 내용도 서버 저장(사서 '학생 글' 화면용). 재제출 시 갱신.
+    fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
+      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v})}).catch(()=>{});
     if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
 }

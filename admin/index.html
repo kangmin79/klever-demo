@@ -76,6 +76,19 @@ a{color:inherit;text-decoration:none}
 .rk .info .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rk .info .s{font-size:11px;color:var(--light)}
 .rk .n2{font-size:12.5px;font-weight:800;color:var(--primary);white-space:nowrap}
+/* 학생 글 카드 */
+.wr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:14px}
+.wr-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;transition:.14s}
+.wr-card.feat{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 10px 24px rgba(212,169,59,.14)}
+.wr-top{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.wr-name{font-size:13.5px;font-weight:800;color:var(--text)}
+.wr-badge{font-size:11px;font-weight:700;color:var(--accent);background:var(--primary-bg);padding:2px 9px;border-radius:20px}
+.wr-date{font-size:11px;color:var(--light);margin-left:auto}
+.wr-text{font-size:13px;line-height:1.65;color:var(--sub);white-space:pre-wrap;word-break:break-word}
+.wr-act{display:flex;gap:8px;margin-top:13px}
+.wr-feat{flex:1;border:1px solid var(--border);background:var(--card);color:var(--sub);border-radius:9px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.12s}
+.wr-feat.on{background:var(--gold);color:#1a1208;border-color:var(--gold)}
+.wr-hide{border:1px solid var(--border);background:var(--card);color:var(--light);border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 /* 표 */
 .tblwrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:auto}
 table.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
@@ -424,6 +437,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="grp">측정·운영</div>
     <div class="navi on" onclick="go(this,'dash')"><span>대시보드</span></div>
     <div class="navi" onclick="go(this,'stats')"><span>이용통계</span></div>
+    <div class="navi" onclick="go(this,'writings')"><span>학생 글</span></div>
     <div class="navi" onclick="go(this,'history')"><span>히스토리 보기</span></div>
 
     <div class="grp builder">bookstar Builder<span class="sub">사서가 만드는 콘텐츠</span></div>
@@ -502,6 +516,21 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
       </div>
       <div class="tblwrap"><table class="tbl" id="statTbl"></table></div>
       <div class="note" id="statNote"></div>
+    </section>
+
+    <!-- ===== 학생 글 ===== -->
+    <section id="pg-writings" style="display:none">
+      <div class="phead">
+        <div><h1>학생 글 <span class="tagpill gold">실제 데이터</span></h1>
+          <p>학생들이 챌린지에서 작성한 소감·서평·독후감 — 우수작을 ★로 선정하고, 부적절한 글은 숨길 수 있어요</p></div>
+      </div>
+      <div class="toolbar">
+        <select id="wrCh" onchange="renderWritings()"><option value="">전체 챌린지</option></select>
+        <select id="wrTy" onchange="renderWritings()"><option value="">전체 미션</option></select>
+        <select id="wrSort" onchange="renderWritings()"><option value="new">최신순</option><option value="feat">우수작 먼저</option></select>
+        <span class="muted" id="wrCount" style="margin-left:auto;font-size:12.5px;align-self:center"></span>
+      </div>
+      <div id="wrBody"></div>
     </section>
 
     <!-- ===== 프로그램 만들기 ===== -->
@@ -1479,12 +1508,13 @@ const COMMUNITY=[
 /* ====== 네비게이션 ====== */
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['dash','stats','make','notice','history','settings','soon','comm'].forEach(id=>el('pg-'+id).style.display='none');
+  ['dash','stats','writings','make','notice','history','settings','soon','comm'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
   _pvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
   if(page==='dash')renderDash();
   else if(page==='make')renderChallenges();
   else if(page==='stats')renderStats();
+  else if(page==='writings')loadWritings();
   else if(page==='history')renderHistory();
   else if(page==='notice'){renderNotices();loadNotices();}
   else if(page==='comm'){renderComm();loadCommPosts();}
@@ -1569,6 +1599,51 @@ async function loadRealStats(){
       <div class="s">참여 ${part.length} · 완주 ${done}</div></div><div class="n2">${part.length}명</div></div>`;
   }).join('') : `<div class="ph-sub" style="padding:14px 2px">진행 중인 챌린지가 없어요.</div>`;
 }
+
+/* ====== 학생 글 ====== */
+let WRITINGS=[];
+const ACT_NAMES={oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',underline:'핵심 문장',recommend:'책 추천'};
+const ACT_STAR={oneline:5,question:5,review:10,essay:50,underline:5,recommend:5};
+async function loadWritings(){
+  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?order=created_at.desc&select=*`,{headers:H}); if(r.ok)WRITINGS=await r.json(); }catch(e){}
+  if(!Array.isArray(WRITINGS))WRITINGS=[];
+  const chSel=el('wrCh');
+  if(chSel){ const ids=[...new Set(WRITINGS.map(w=>w.challenge_id).filter(Boolean))];
+    const title=id=>{const p=PROGRAMS.find(x=>String(x.id)===String(id));return p?p.title:id;};
+    chSel.innerHTML='<option value="">전체 챌린지</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(title(id))}</option>`).join(''); }
+  const tySel=el('wrTy');
+  if(tySel){ const ts=[...new Set(WRITINGS.map(w=>w.activity))];
+    tySel.innerHTML='<option value="">전체 미션</option>'+ts.map(t=>`<option value="${t}">${ACT_NAMES[t]||t}</option>`).join(''); }
+  renderWritings();
+}
+function renderWritings(){
+  const fch=el('wrCh')?el('wrCh').value:'', fty=el('wrTy')?el('wrTy').value:'', sort=el('wrSort')?el('wrSort').value:'new';
+  let rows=WRITINGS.filter(w=>!w.hidden && (!fch||String(w.challenge_id)===fch) && (!fty||w.activity===fty));
+  if(sort==='feat') rows=rows.slice().sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
+  if(el('wrCount'))el('wrCount').textContent=`총 ${rows.length}건`;
+  el('wrBody').innerHTML = rows.length ? `<div class="wr-grid">`+rows.map(wrCard).join('')+`</div>`
+    : `<div class="note" style="text-align:center;padding:44px">아직 제출된 글이 없어요.<br>학생이 챌린지에서 소감·서평을 작성하면 여기에 모입니다.</div>`;
+}
+function wrCard(w){
+  const name=BX_NAMES[w.student_id]||w.student_id;
+  const act=ACT_NAMES[w.activity]||w.activity;
+  const date=(w.created_at||'').slice(0,10);
+  return `<div class="wr-card${w.featured?' feat':''}">
+    <div class="wr-top"><span class="wr-name">${esc(name)}</span>
+      <span class="wr-badge">${esc(act)} ⭐${ACT_STAR[w.activity]||''}</span>
+      <span class="wr-date">${esc(date)}</span></div>
+    <div class="wr-text">${esc(w.text)}</div>
+    <div class="wr-act">
+      <button class="wr-feat${w.featured?' on':''}" onclick="wrFeature(${w.id},${w.featured?'false':'true'})">${w.featured?'★ 우수작':'☆ 우수작 선정'}</button>
+      <button class="wr-hide" onclick="wrHide(${w.id})">숨기기</button></div></div>`;
+}
+async function wrPatch(id,body){
+  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'};
+  try{ await fetch(`${SB_REST}/bookstar_writings?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=minimal'},body:JSON.stringify(body)}); }catch(e){}
+}
+async function wrFeature(id,v){ await wrPatch(id,{featured:v}); const w=WRITINGS.find(x=>x.id===id); if(w)w.featured=v; renderWritings(); }
+async function wrHide(id){ if(!confirm('이 글을 숨길까요? (학생 화면엔 영향 없고, 사서 목록에서만 가려져요)'))return; await wrPatch(id,{hidden:true}); const w=WRITINGS.find(x=>x.id===id); if(w)w.hidden=true; renderWritings(); }
 
 /* ====== 이용통계 ====== */
 const STAT_TABS=[['프로그램별','prog'],['월별','month'],['이용자별','user'],['도서별','book']];
