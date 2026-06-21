@@ -1767,27 +1767,75 @@ async function loadChallenges(){
     if(el('pg-make').style.display!=='none')renderChallenges();
   }catch(e){renderChallenges();}
 }
-function chalScoreText(c){
-  const m=c.mission;if(!m.quiz&&!m.review&&!m.question)return '미션을 1개 이상 선택하세요.';
-  if(c.type==='고전챌린지'){const opt=(m.review?1:0)+(m.question?1:0);const q=opt===2?80:opt===1?90:100;
-    let s=`<b>퀴즈 ${q}점</b>`;if(m.review)s+=' + 한줄소감 10점';if(m.question)s+=' + 질문하기 10점';
-    return s+' = <b>100점 만점</b>';}
-  let parts=[];if(m.quiz)parts.push(`퀴즈 ${m.quizN}문항`);if(m.review)parts.push('한 줄 소감');if(m.question)parts.push('질문 만들기');
-  return '선택 미션: <b>'+parts.join(' · ')+'</b>';
+// ===== 챌린지 미션 (최종본 2026-06-21: 10미션·최대3·보상 순위형/추첨형·별 고정배점) =====
+const CH_MISSIONS=[
+  {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈를 풀고 별 획득',star:'문제당 ⭐1'},
+  {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄',star:'⭐5'},
+  {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기',star:'⭐5'},
+  {k:'review',t:'서평 쓰기',s:'책에 대한 평을 작성',star:'⭐10'},
+  {k:'essay',t:'독후감 쓰기',s:'읽고 느낀 점을 길게',star:'⭐50'},
+  {k:'underline',t:'핵심 문장 쓰기',s:'마음에 남은 구절 옮겨 적기',star:'⭐5'},
+  {k:'recommend',t:'책 추천하기',s:'함께 읽을 책 권하기',star:'⭐5'},
+  {k:'reading',t:'독서 인증',s:'사진·체크로 참여 흔적',star:'⭐3'},
+  {k:'photo',t:'인증샷',s:'책과 함께 / 장면 이미지',star:'⭐3'},
+  {k:'comment',t:'댓글 쓰기',s:'다른 참가자 글에 반응',star:'⭐2'},
+];
+const CH_MAX=3, CH_QTYPES=['고전 이해','작가 의도','인문학','나의 삶','사회(관계)'];
+function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
+  const m=c.mission||{};
+  const o={reward:m.reward||(c.type==='고전챌린지'?'rank':'draw'),
+    quiz:c.type==='고전챌린지'?true:!!m.quiz, quizN:m.quizN||10,
+    quizType:m.quizType||'', quizLevel:m.quizLevel||'',
+    drawCount:m.drawCount||10, drawCond:m.drawCond||'all'};
+  CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
+    o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
+  c.mission=o; return o;
 }
+function chalMissCount(c){ const m=c.mission; return CH_MISSIONS.filter(x=>m[x.k]).length; }
 function readChalInputs(){
   CHALLENGES.forEach((c,i)=>{
     const t=el('ch_t_'+i),d=el('ch_d_'+i),f=el('ch_f_'+i),to=el('ch_to_'+i),ty=el('ch_type_'+i);
     if(t)c.title=t.value.trim()||c.title; if(d)c.detail=d.value; if(f)c.from=f.value; if(to)c.to=to.value;
-    if(ty){c.type=ty.value; if(c.type==='고전챌린지')c.mission.quiz=true;}
-    if(!c.mission)c.mission={quiz:c.type==='고전챌린지',quizN:5,review:false,question:false};
+    if(ty)c.type=ty.value;
+    chalMission(c);
+    const qt=el('ch_qt_'+i),ql=el('ch_ql_'+i),dc=el('ch_dc_'+i),dcd=el('ch_dcd_'+i);
+    if(qt)c.mission.quizType=qt.value; if(ql)c.mission.quizLevel=ql.value;
+    if(dc)c.mission.drawCount=+dc.value||10; if(dcd)c.mission.drawCond=dcd.value;
     if(!Array.isArray(c.books))c.books=[];
   });
 }
+function chalRewardBox(c,i){
+  const m=c.mission;
+  if(m.reward==='draw'){
+    return `<div class="flabel">추첨 설정</div>
+      <div class="row2">
+        <div><div class="flabel" style="font-weight:500;color:var(--light)">추첨 인원</div><input type="number" min="1" class="cur-inp" id="ch_dc_${i}" value="${m.drawCount}" oninput="readChalInputs()"></div>
+        <div><div class="flabel" style="font-weight:500;color:var(--light)">응모 조건</div><select class="cur-inp" id="ch_dcd_${i}" onchange="readChalInputs()">
+          <option value="all" ${m.drawCond==='all'?'selected':''}>미션 전체 완료 시</option>
+          <option value="any" ${m.drawCond==='any'?'selected':''}>미션 1개 이상 완료 시</option></select></div>
+      </div>`;
+  }
+  const rows=CH_MISSIONS.filter(x=>m[x.k]).map(x=>`<div style="display:flex;justify-content:space-between;padding:5px 0"><span>${x.t}<span style="color:var(--light);font-size:11px;margin-left:6px">${x.k==='quiz'?'맞힌 문제당 적립':'제출 시 적립'}</span></span><b style="color:#b4690e">${x.star}</b></div>`).join('');
+  return `<div class="flabel">이 챌린지의 별 적립 <span style="font-weight:400;color:var(--light)">— 별 많은 순으로 시상</span></div>
+    <div class="scorebox">${rows||'미션을 켜면 적립 별이 표시됩니다.'}<div style="font-size:11px;color:var(--light);margin-top:8px;border-top:1px solid var(--border);padding-top:8px">별 배점은 모든 도서관 공통 고정값입니다. 순위를 더 잘 가르려면 별이 큰 활동(서평·독후감)을 켜세요.</div></div>`;
+}
 function renderChallenges(){
   el('chalList').innerHTML=CHALLENGES.map((c,i)=>{
-    if(!c.mission)c.mission={quiz:c.type==='고전챌린지',quizN:5,review:false,question:false};
-    const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[];
+    chalMission(c);
+    const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[], cnt=chalMissCount(c);
+    const missCells=CH_MISSIONS.map(x=>{
+      if(x.k==='quiz'&&!isClassic)return '';
+      const on=!!m[x.k], lock=(x.k==='quiz'&&isClassic);
+      return `<div class="mrow"><div class="mt"><b>${x.t}</b><span>${x.star}${lock?' · 필수':''}</span></div>
+        <div class="tg${on?' on':''}${lock?' lock':''}" onclick="chalToggleM(${i},'${x.k}')"></div></div>`;
+    }).join('');
+    const quizCfg=(isClassic&&m.quiz)?`<div style="margin:6px 0 2px">
+      <div class="row2">
+        <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div><div class="flabel" style="font-weight:500">난이도</div><select class="cur-inp" id="ch_ql_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${['상','중','하'].map(l=>`<option ${m.quizLevel===l?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>
+      <div class="flabel" style="font-weight:500;margin-top:8px">권당 문항 수</div>
+      <div class="qn">${[10,5].map(n=>`<span class="${n===m.quizN?'on':''}" onclick="chalSetQuizN(${i},${n})">${n}문제</span>`).join('')}</div></div>`:'';
     return `<div class="panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span><span style="flex:1"></span>
@@ -1802,19 +1850,15 @@ function renderChallenges(){
           <option value="고전챌린지" ${isClassic?'selected':''}>고전 컬렉션 챌린지</option></select></div>
       </div>
       <div class="flabel">상세내용 — 학생에게 보일 설명</div>
-      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 심리학과 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
+      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
       <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}"></div>
         <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}"></div></div>
-      <div class="flabel">미션 — 완독 측정</div>
-      <div class="mission">
-        <div class="mrow"><div class="mt"><b>퀴즈 풀기</b><span>${isClassic?'고전 챌린지 필수 미션':'도서 내용 기반 퀴즈'}</span></div>
-          <div class="tg${m.quiz?' on':''}${isClassic?' lock':''}" onclick="chalToggleM(${i},'quiz')"></div></div>
-        ${m.quiz?`<div style="padding:0 2px;margin-bottom:2px"><span style="font-size:11.5px;color:var(--light)">문항 수</span>
-          <div class="qn">${[3,5,7,10].map(n=>`<span class="${n===m.quizN?'on':''}" onclick="chalSetQuizN(${i},${n})">${n}개</span>`).join('')}</div></div>`:''}
-        <div class="mrow"><div class="mt"><b>한 줄 소감</b><span>작성 10점 · 미작성 0점</span></div><div class="tg${m.review?' on':''}" onclick="chalToggleM(${i},'review')"></div></div>
-        <div class="mrow"><div class="mt"><b>질문 만들기</b><span>작성 10점 · 미작성 0점</span></div><div class="tg${m.question?' on':''}" onclick="chalToggleM(${i},'question')"></div></div>
-      </div>
-      <div class="scorebox">${chalScoreText(c)}</div>
+      <div class="flabel">미션 — 완독 측정 <span style="font-weight:400;color:var(--light)">최대 ${CH_MAX}개 · 현재 ${cnt}개</span></div>
+      <div class="mission">${missCells}</div>
+      ${quizCfg}
+      <div class="flabel" style="margin-top:10px">보상 방식</div>
+      <div class="qn"><span class="${m.reward==='rank'?'on':''}" onclick="chalSetReward(${i},'rank')">순위형 · 별 많은 순</span><span class="${m.reward==='draw'?'on':''}" onclick="chalSetReward(${i},'draw')">추첨형 · 참여 응모</span></div>
+      ${chalRewardBox(c,i)}
       <div class="flabel">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
@@ -1822,18 +1866,22 @@ function renderChallenges(){
   }).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="chalAdd()">+ 새 챌린지 추가</button>`;
 }
-function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{quiz:false,quizN:5,review:false,question:false},books:[]});renderChallenges();}
+function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
-function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;c.mission[k]=!c.mission[k];renderChallenges();}
+function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
+  if(!c.mission[k]&&chalMissCount(c)>=CH_MAX){toast('미션은 최대 '+CH_MAX+'개까지 선택할 수 있어요');return;}
+  c.mission[k]=!c.mission[k];renderChallenges();}
 function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
+function chalSetReward(i,r){readChalInputs();CHALLENGES[i].mission.reward=r;renderChallenges();}
 function chalRemoveBook(i,bi){readChalInputs();CHALLENGES[i].books.splice(bi,1);renderChallenges();}
 async function saveChallenges(){
   readChalInputs();
   for(const c of CHALLENGES){
     if(!c.title||!c.title.trim()){toast('제목이 빈 챌린지가 있어요');return;}
     if(!c.books||!c.books.length){toast(`‘${c.title}’에 책을 1권 이상 담아주세요`);return;}
-    if(!c.mission.quiz&&!c.mission.review&&!c.mission.question){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
+    if(chalMissCount(c)===0){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
+    if(c.type==='고전챌린지'&&c.mission.quiz&&(!c.mission.quizType||!c.mission.quizLevel)){toast(`‘${c.title}’의 퀴즈 유형·난이도를 선택해주세요`);return;}
   }
   try{
     if(CHALLENGES.length){
