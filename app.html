@@ -3625,7 +3625,7 @@ function authorRich(b){const a=authName(b);return b.publisher?`${a} · ${b.publi
 function authorLine(b){return authorRich(b);}
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
 function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
-function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div><div class="ml-h-x">›</div></div>`;}
+function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
 // ── 캐러셀 드래그 스크롤 (클릭 안전 + 누수 없음) ──
@@ -4460,7 +4460,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
