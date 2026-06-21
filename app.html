@@ -3483,9 +3483,9 @@ const CH_MISSIONS=[
   {k:'essay',    t:'독후감 쓰기',   icon:'📜', star:50, kind:'write', min:100,ph:'읽고 느낀 점을 길게 적어 보세요.'},
   {k:'underline',t:'핵심 문장 쓰기',icon:'✏️', star:5,  kind:'write', min:2,  ph:'마음에 남은 구절을 옮겨 적어 보세요.'},
   {k:'recommend',t:'책 추천하기',   icon:'📚', star:5,  kind:'write', min:2,  ph:'함께 읽으면 좋을 책을 추천해 주세요.'},
-  {k:'reading',  t:'독서 인증',     icon:'✅', star:3,  kind:'cert',  btn:'독서 인증하기'},
-  {k:'photo',    t:'인증샷',        icon:'📷', star:3,  kind:'cert',  btn:'인증샷 올리기'},
-  {k:'comment',  t:'댓글 쓰기',     icon:'💬', star:2,  kind:'cert',  btn:'댓글 남기기'},
+  {k:'reading',  t:'독서 인증',     icon:'✅', star:3,  kind:'cert',  btn:'독서 인증하기', soon:true},
+  {k:'photo',    t:'인증샷',        icon:'📷', star:3,  kind:'cert',  btn:'인증샷 올리기', soon:true},
+  {k:'comment',  t:'댓글 쓰기',     icon:'💬', star:2,  kind:'cert',  btn:'댓글 남기기', soon:true},
 ];
 const CH_QMAP={'고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
 const CH_SCHOOL='hankuk';
@@ -3499,7 +3499,7 @@ function appChalMission(c){
     o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
   return o;
 }
-function chalActiveMissions(m){ if(!m) return []; return CH_MISSIONS.filter(x=> x.k==='quiz'?m.quiz:m[x.k]); }
+function chalActiveMissions(m){ if(!m) return []; return CH_MISSIONS.filter(x=> !x.soon && (x.k==='quiz'?m.quiz:m[x.k])); }
 function chalMissionBadges(m){ if(!m) return ''; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
   return chalActiveMissions(mm).map(x=>{ const t=x.k==='quiz'?(x.icon+' 퀴즈 '+(mm.quizN||10)+'문항'):(x.icon+' '+x.t);
     return `<span>${esc(t)}</span>`; }).join(''); }
@@ -4547,7 +4547,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});

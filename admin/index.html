@@ -1834,9 +1834,9 @@ const CH_MISSIONS=[
   {k:'essay',t:'독후감 쓰기',s:'읽고 느낀 점을 길게',star:'⭐50'},
   {k:'underline',t:'핵심 문장 쓰기',s:'마음에 남은 구절 옮겨 적기',star:'⭐5'},
   {k:'recommend',t:'책 추천하기',s:'함께 읽을 책 권하기',star:'⭐5'},
-  {k:'reading',t:'독서 인증',s:'사진·체크로 참여 흔적',star:'⭐3'},
-  {k:'photo',t:'인증샷',s:'책과 함께 / 장면 이미지',star:'⭐3'},
-  {k:'comment',t:'댓글 쓰기',s:'다른 참가자 글에 반응',star:'⭐2'},
+  {k:'reading',t:'독서 인증',s:'사진·체크로 참여 흔적',star:'⭐3',soon:true},
+  {k:'photo',t:'인증샷',s:'책과 함께 / 장면 이미지',star:'⭐3',soon:true},
+  {k:'comment',t:'댓글 쓰기',s:'다른 참가자 글에 반응',star:'⭐2',soon:true},
 ];
 const CH_MAX=3, CH_QTYPES=['고전 이해','작가 의도','인문학','나의 삶','사회(관계)'];
 function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
@@ -1883,6 +1883,8 @@ function renderChallenges(){
     const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[], cnt=chalMissCount(c);
     const missCells=CH_MISSIONS.map(x=>{
       if(x.k==='quiz'&&!isClassic)return '';
+      if(x.soon) return `<div class="mrow" style="opacity:.5"><div class="mt"><b>${x.t}</b><span>${x.star} · 준비 중</span></div>
+        <div class="tg lock" title="준비 중인 미션이에요"></div></div>`;
       const on=!!m[x.k], lock=(x.k==='quiz'&&isClassic);
       return `<div class="mrow"><div class="mt"><b>${x.t}</b><span>${x.star}${lock?' · 필수':''}</span></div>
         <div class="tg${on?' on':''}${lock?' lock':''}" onclick="chalToggleM(${i},'${x.k}')"></div></div>`;
@@ -1928,6 +1930,7 @@ function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린�
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
 function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
+  const def=CH_MISSIONS.find(x=>x.k===k); if(def&&def.soon)return;   // 준비 중 미션은 켤 수 없음
   c.mission[k]=!c.mission[k];renderChallenges();}
 function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
 function chalSetReward(i,r){readChalInputs();CHALLENGES[i].mission.reward=r;renderChallenges();}
