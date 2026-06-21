@@ -1568,6 +1568,38 @@ body.preview-mode #page-collection > *:not(#collectionCuration),
 body.preview-mode #page-international > *:not(#intlCuration){display:none !important;}
 body.preview-mode .main{padding-top:8px;}
 body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
+
+/* ── 챌린지 미션 패널 (리더 우측 · 별 적립) ── */
+.mp-star{display:flex;align-items:center;gap:6px;justify-content:flex-end;font-size:15px;font-weight:800;color:var(--gold);margin:0 0 10px}
+.mp-star small{font-size:11px;color:var(--text-light);font-weight:600}
+.mp-card{background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:11px}
+.mp-t{font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:3px;color:var(--text)}
+.mp-v{font-size:11.5px;font-weight:700;color:var(--gold);background:rgba(180,105,14,.14);padding:1px 8px;border-radius:20px}
+.mp-s{font-size:12px;color:var(--text-light);margin-bottom:10px;line-height:1.5}
+.mp-load{color:var(--text-light);font-size:12.5px;padding:14px 0;text-align:center}
+.mp-q{border-top:1px solid var(--border);padding:12px 0}
+.mp-q:first-child{border-top:0;padding-top:2px}
+.mp-qn{font-size:11px;font-weight:800;color:var(--accent)}
+.mp-qq{font-size:13.5px;font-weight:600;margin:3px 0 9px;line-height:1.5;color:var(--text)}
+.mp-gain{font-size:11.5px;font-weight:800;color:var(--gold)}
+.mp-opt{display:flex;align-items:center;gap:9px;border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px;cursor:pointer;font-size:13px;background:var(--bg-card);color:var(--text);transition:.12s}
+.mp-opt:hover{border-color:var(--accent)}
+.mp-mk{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+.mp-opt.mp-right{border-color:#2f9e6f;background:rgba(47,158,111,.14);color:#1f6b4a;font-weight:700}
+.mp-opt.mp-right .mp-mk{background:#2f9e6f;border-color:#2f9e6f}
+.mp-opt.mp-wrong{border-color:#c0392b;background:rgba(192,57,43,.12);color:#b3382b;font-weight:700}
+.mp-opt.mp-wrong .mp-mk{background:#c0392b;border-color:#c0392b}
+.mp-opt.mp-dim{opacity:.5}
+.mp-opt.mp-lock{pointer-events:none}
+.mp-expl{display:none;font-size:12px;color:var(--text-sub);background:rgba(127,127,127,.1);border-radius:8px;padding:9px 11px;margin-top:4px;line-height:1.5}
+.mp-expl.mp-show{display:block}
+.mp-ta{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px;font-size:13.5px;font-family:inherit;resize:vertical;min-height:60px;background:var(--bg-card);color:var(--text)}
+.mp-ta:focus{outline:none;border-color:var(--accent)}
+.mp-sub{display:flex;align-items:center;gap:9px;margin-top:9px}
+.mp-btn{border:0;background:var(--primary);color:var(--bg-card);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer}
+.mp-btn:disabled{opacity:.5;cursor:default}
+.mp-done{display:none;font-size:12.5px;font-weight:800;color:#2f9e6f}
+.mp-note{font-size:13px;color:var(--text-sub);background:var(--bg-input);border:1px dashed var(--border);border-radius:10px;padding:14px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -3433,14 +3465,56 @@ async function loadChalCards(){
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',
-      mission:x.mission||null,books:(x.books||[]).map(b=>({t:b.title,cover:b.cover,isbn:b.isbn}))}));
+      mission:x.mission||null,books:(x.books||[]).map(b=>({id:b.id||'',t:b.title,cover:b.cover,isbn:b.isbn}))}));
     renderChalCards();
   }catch(e){}
 }
-function chalMissionBadges(m){ if(!m) return ''; const out=[];
-  if(m.quiz) out.push('🎯 퀴즈 '+(m.quizN||5)+'문항'); if(m.review) out.push('✍️ 한 줄 소감'); if(m.question) out.push('❓ 질문 만들기');
-  return out.map(t=>`<span>${esc(t)}</span>`).join(''); }
-function chalMissionPlain(m){ if(!m) return '-'; const o=[]; if(m.quiz)o.push('퀴즈 '+(m.quizN||5)+'문항'); if(m.review)o.push('한 줄 소감'); if(m.question)o.push('질문 만들기'); return o.join(' · ')||'-'; }
+/* ── 챌린지 미션 정의 (admin CH_MISSIONS 미러 · docx 별 배점 고정) ── */
+const CH_MISSIONS=[
+  {k:'quiz',     t:'퀴즈 풀기',     icon:'🎯', star:1,  kind:'quiz'},
+  {k:'oneline',  t:'한 줄 소감',    icon:'✍️', star:5,  kind:'write', min:5,  ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
+  {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,  ph:'책에 대해 떠오른 질문을 적어 보세요.'},
+  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:20, ph:'주제·인상 깊은 장면·추천 이유 등을 적어 보세요.'},
+  {k:'essay',    t:'독후감 쓰기',   icon:'📜', star:50, kind:'write', min:100,ph:'읽고 느낀 점을 길게 적어 보세요.'},
+  {k:'underline',t:'핵심 문장 쓰기',icon:'✏️', star:5,  kind:'write', min:2,  ph:'마음에 남은 구절을 옮겨 적어 보세요.'},
+  {k:'recommend',t:'책 추천하기',   icon:'📚', star:5,  kind:'write', min:2,  ph:'함께 읽으면 좋을 책을 추천해 주세요.'},
+  {k:'reading',  t:'독서 인증',     icon:'✅', star:3,  kind:'cert',  btn:'독서 인증하기'},
+  {k:'photo',    t:'인증샷',        icon:'📷', star:3,  kind:'cert',  btn:'인증샷 올리기'},
+  {k:'comment',  t:'댓글 쓰기',     icon:'💬', star:2,  kind:'cert',  btn:'댓글 남기기'},
+];
+const CH_QMAP={'고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
+const CH_SCHOOL='hankuk';
+// 미션 객체 정규화(구버전 review→oneline / question 호환, 고전챌린지 quiz 강제)
+function appChalMission(c){
+  const m=(c&&c.mission)||{};
+  const o={reward:m.reward||(c&&c.type==='고전챌린지'?'rank':'draw'),
+    quiz:(c&&c.type==='고전챌린지')?true:!!m.quiz, quizN:m.quizN||10,
+    quizType:m.quizType||'', quizLevel:m.quizLevel||''};
+  CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
+    o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
+  return o;
+}
+function chalActiveMissions(m){ if(!m) return []; return CH_MISSIONS.filter(x=> x.k==='quiz'?m.quiz:m[x.k]); }
+function chalMissionBadges(m){ if(!m) return ''; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
+  return chalActiveMissions(mm).map(x=>{ const t=x.k==='quiz'?(x.icon+' 퀴즈 '+(mm.quizN||10)+'문항'):(x.icon+' '+x.t);
+    return `<span>${esc(t)}</span>`; }).join(''); }
+function chalMissionPlain(m){ if(!m) return '-'; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
+  const o=chalActiveMissions(mm).map(x=> x.k==='quiz'?('퀴즈 '+(mm.quizN||10)+'문항'):x.t);
+  return o.join(' · ')||'-'; }
+// 현재 책이 속한(참여 중) 챌린지 찾기 (id 우선, 없으면 isbn·제목 폴백)
+function _chalTitleKey(t){ return String(t||'').replace(/\s+/g,'').toLowerCase(); }
+function chalForBook(book){
+  const b = (typeof book==='object'&&book) ? book : (typeof BOOKS!=='undefined'&&BOOKS.find(x=>x.id===book)) || {id:book};
+  if(!b||(!b.id&&!b.isbn&&!b.title)) return null;
+  const tk=_chalTitleKey(b.title);
+  try{ for(const c of joinedChals()){
+    if((c.books||[]).some(x=>
+      (b.id && String(x.id)===String(b.id)) ||
+      (b.isbn && x.isbn && String(x.isbn)===String(b.isbn)) ||
+      (tk && _chalTitleKey(x.t||x.title)===tk)
+    )) return c;
+  } }catch(e){}
+  return null; }
 // 날짜 → "6/12" (월/일)
 function fmtMD(d){ if(!d) return ''; const p=String(d).split('-'); return p.length>=3?(+p[1])+'/'+(+p[2]):''; }
 // 챌린지 부제 텍스트(권수 · 미션 · 기간) — D-day 제외(플레인)
@@ -3543,8 +3617,8 @@ function chalJoin(id){
   if(arr.some(x=>String(x.id)===String(c.id))){
     alert(`이미 참여 중인 챌린지예요.\n내서재 Quest Map에서 진행하세요.`); nav('mypage'); return;
   }
-  arr.push({ id:c.id, title:c.title, to:c.to||'', mission:c.mission||null,
-    books:(c.books||[]).map(b=>({t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
+  arr.push({ id:c.id, type:c.type||'', title:c.title, to:c.to||'', mission:c.mission||null,
+    books:(c.books||[]).map(b=>({id:b.id||'', t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
   _saveJoinedChals(arr);
   alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 내서재 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
   nav('mypage');
@@ -4460,7 +4534,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -4909,52 +4983,10 @@ function renderViewer(){
   if(currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[currentBook.id]){
     renderSceneChallenge(CHALLENGE_SCENES[currentBook.id], body, info);
   } else if(currentMode === 'challenge'){
-    info.innerHTML = '제3장 핵심 페이지 (5/10) · <b>+50 점수</b>';
-    // 챌린지 좌측: classic/foreign은 풀이/번역, modern은 원문
+    // 챌린지 좌측: classic/foreign은 풀이/번역, modern은 원문 / 우측: 참여 챌린지 미션(별 적립)
     const leftBody = (currentBook.locale === 'modern' ? c.orig : c.trans)
                      || ph(L.placeholderTrans);
-    body.innerHTML = `
-      <div class="viewer-pane left">
-        <div class="viewer-pane-label">${L.challengeLeftLabel}</div>
-        ${leftBody}
-      </div>
-      <div class="viewer-pane right">
-        <div class="viewer-pane-label">오른쪽 — 핵심 페이지 퀴즈</div>
-        ${(c.quiz||[]).map((q,i)=>`
-          <div class="quiz-block">
-            <div class="quiz-q-num">Q ${i+1}</div>
-            <div class="quiz-q">${esc(q.q)}</div>
-            ${q.opts.map((opt,j)=>`<div class="quiz-opt" onclick="checkQuiz(this, ${i}, ${j})">${esc(opt)}</div>`).join('')}
-          </div>
-        `).join('')}
-
-        <div class="quest-actions">
-          <h4>챌린지 수행 3종</h4>
-          <div class="quest-action-item">
-            <div class="quest-action-icon">${ic('pen')}</div>
-            <div class="quest-action-text">
-              <b>선택한 문장</b>
-              본문에서 가장 인상 깊은 한 문장을 골라 인용해주세요.
-            </div>
-          </div>
-          <div class="quest-action-item">
-            <div class="quest-action-icon">${ic('target')}</div>
-            <div class="quest-action-text">
-              <b>퀴즈 만들기 (주관식)</b>
-              친구가 풀어볼 만한 주관식 문제 1개를 직접 만들어주세요.
-              <div class="copy-warning">AI가 카피·표절을 자동 검사합니다</div>
-            </div>
-          </div>
-          <div class="quest-action-item">
-            <div class="quest-action-icon">${ic('fileText')}</div>
-            <div class="quest-action-text">
-              <b>한 줄 소감</b>
-              이 챕터를 읽고 든 생각을 한 줄로 적어주세요.
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+    renderMissionPanel(body, info, leftBody, L);
   } else if(currentMode === 'full'){
     info.innerHTML = '완독 모드 · 전권 일반 전자책 · <b>장당 +30 점수</b>';
     // 한국 고전 평행: 번역(모국어)을 왼쪽, 한국어 원문을 오른쪽
@@ -5000,8 +5032,154 @@ function renderViewer(){
         + `<button class="viewer-action primary" onclick="sceneGo(1)">다음 장면 ▶</button>`
       : (currentMode === 'full')
       ? nav
+      : (currentMode === 'challenge')
+      ? nav + `<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`
       : nav + `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
   }
+}
+
+/* ═══ 챌린지 미션 패널 (참여 챌린지 mission → 별 적립 award_*) ═══ */
+let _mpCtx=null;
+function renderMissionPanel(body, info, leftBody, L){
+  const ch = chalForBook(currentBook);
+  const stu = bxStudent();
+  const m = ch ? appChalMission(ch) : null;
+  const acts = m ? chalActiveMissions(m) : [];
+  info.innerHTML = ch ? `챌린지 · <b>${esc(ch.title)}</b> · 맞힌 퀴즈·제출 미션마다 ⭐ 적립`
+                      : '챌린지 미션 · <b>참여 후 별 적립</b>';
+  let right;
+  if(!stu){
+    right = `<div class="mp-note">상단에서 <b>학생 계정</b>을 선택하면 미션을 수행하고 별을 모을 수 있어요.</div>`;
+  } else if(!ch){
+    right = `<div class="mp-note">이 책이 담긴 <b>챌린지에 먼저 참여</b>하면 미션이 열려요.<br>독서 챌린지 페이지에서 ‘참여하기’를 눌러 주세요.</div>`;
+  } else if(!acts.length){
+    right = `<div class="mp-note">사서가 켠 미션이 아직 없어요.</div>`;
+  } else {
+    right = `<div class="mp-star">⭐ <b id="mpTotal">…</b> <small>모은 별</small></div>`
+          + acts.map(mpMissionCard).join('');
+  }
+  body.innerHTML = `
+    <div class="viewer-pane left">
+      <div class="viewer-pane-label">${L.challengeLeftLabel}</div>
+      ${leftBody}
+    </div>
+    <div class="viewer-pane right">
+      <div class="viewer-pane-label">오른쪽 — 챌린지 미션${ch?' <span style="color:var(--text-light);font-weight:500">· 사서가 켠 것만</span>':''}</div>
+      ${right}
+    </div>`;
+  if(stu && ch && acts.length) setTimeout(()=>mpHydrate(ch, m, stu), 0);
+}
+function mpMissionCard(x){
+  if(x.kind==='quiz'){
+    return `<div class="mp-card">
+      <div class="mp-t">🎯 퀴즈 풀기 <span class="mp-v">맞힌 문제당 ⭐1</span></div>
+      <div class="mp-s">보기는 매번 섞여요 — 위치가 아니라 내용으로 채점됩니다.</div>
+      <div id="mpQuizBox"><div class="mp-load">문제 불러오는 중…</div></div></div>`;
+  }
+  if(x.kind==='write'){
+    return `<div class="mp-card">
+      <div class="mp-t">${x.icon} ${esc(x.t)} <span class="mp-v">제출 ⭐${x.star}</span></div>
+      <div class="mp-s">${esc(x.ph||'')} (${x.min}자 이상)</div>
+      <textarea class="mp-ta" id="mp_ta_${x.k}" placeholder="여기에 적어 주세요"></textarea>
+      <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpSubmitWrite('${x.k}',${x.min})">제출</button>
+        <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
+  }
+  return `<div class="mp-card">
+    <div class="mp-t">${x.icon} ${esc(x.t)} <span class="mp-v">⭐${x.star}</span></div>
+    <div class="mp-s">참여 흔적을 남기면 별을 받아요.</div>
+    <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpCert('${x.k}')">${esc(x.btn||'인증하기')}</button>
+      <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
+}
+async function mpHydrate(ch, m, stu){
+  _mpCtx={bookId:currentBook.id, school:CH_SCHOOL, student:stu.id, m};
+  let done=new Set();
+  try{
+    const r=await fetch(`${SB_REST}/bookstar_stars?student_id=eq.${encodeURIComponent(stu.id)}&select=activity,ref`,{headers:BX_H});
+    if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>done.add(x.activity+'|'+x.ref)); }
+  }catch(e){}
+  _mpCtx.done=done;
+  mpRefreshTotal(stu.id);
+  chalActiveMissions(m).forEach(x=>{
+    if(x.kind==='quiz') return;
+    if(done.has(x.k+'|book:'+currentBook.id)) mpMarkDone(x.k);
+  });
+  if(m.quiz) mpLoadQuiz(m, done);
+}
+async function mpRefreshTotal(sid, val){
+  const el=document.getElementById('mpTotal'); if(!el) return;
+  if(typeof val==='number'){ el.textContent=val; return; }
+  try{ const r=await fetch(`${SB_REST}/bookstar_student_totals?school_id=eq.${CH_SCHOOL}&student_id=eq.${encodeURIComponent(sid)}&select=total_stars`,{headers:BX_H});
+    if(r.ok){ const rows=await r.json(); el.textContent=(rows&&rows[0])?rows[0].total_stars:0; } else el.textContent='0';
+  }catch(e){ el.textContent='0'; }
+}
+function mpMarkDone(k){
+  const b=document.getElementById('mp_btn_'+k), d=document.getElementById('mp_done_'+k), ta=document.getElementById('mp_ta_'+k);
+  if(b) b.disabled=true; if(d) d.style.display='inline'; if(ta) ta.readOnly=true;
+}
+function _mpShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+async function mpLoadQuiz(m, done){
+  const box=document.getElementById('mpQuizBox'); if(!box) return;
+  const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
+  if(!qt||!lv){ box.innerHTML='<div class="mp-load">퀴즈 유형·난이도가 설정되지 않았어요.</div>'; return; }
+  const n=m.quizN||10;
+  let items=[];
+  try{
+    const url=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&level=eq.${encodeURIComponent(lv)}&order=scene_no&limit=${n}&select=id,scene_no,scene_title,question,opts,correct,expl`;
+    const r=await fetch(url,{headers:BX_H}); if(r.ok) items=await r.json();
+  }catch(e){}
+  if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
+  box.innerHTML='';
+  items.forEach((it,qi)=>{
+    const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
+    const q=document.createElement('div'); q.className='mp-q';
+    q.innerHTML=`<div class="mp-qn">문제 ${qi+1} · ${esc(it.scene_title||'')}</div><div class="mp-qq">${esc(it.question)}</div>`
+      + shuffled.map((o,di)=>`<div class="mp-opt" data-orig="${o.orig}"><span class="mp-mk">${String.fromCharCode(65+di)}</span><span>${esc(o.t)}</span></div>`).join('')
+      + `<div class="mp-expl"></div>`;
+    box.appendChild(q);
+    if(done && done.has('quiz|item:'+it.id)){ mpRevealQuiz(q, it, it.correct, true, true); }
+    else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
+  });
+}
+async function mpAnswer(el,q,it){
+  if(!_mpCtx) return;
+  q.querySelectorAll('.mp-opt').forEach(x=>x.classList.add('mp-lock'));
+  const chosen=+el.dataset.orig;
+  const res=await mpRpc('award_quiz',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_item_id:it.id,p_choice:chosen});
+  const right=!!(res&&res.right);
+  const correct=(res&&typeof res.correct==='number')?res.correct:it.correct;
+  mpRevealQuiz(q,it,correct,right,false,el);
+  if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
+}
+function mpRevealQuiz(q,it,correct,right,restored,el){
+  q.querySelectorAll('.mp-opt').forEach(x=>{ x.classList.add('mp-lock');
+    const oi=+x.dataset.orig;
+    if(oi===correct){ x.classList.add('mp-right'); x.querySelector('.mp-mk').textContent='✓'; }
+    else if(x===el && !right){ x.classList.add('mp-wrong'); x.querySelector('.mp-mk').textContent='✕'; }
+    else x.classList.add('mp-dim');
+  });
+  if(right||restored){ const qq=q.querySelector('.mp-qq');
+    if(qq && !qq.querySelector('.mp-gain')){ const g=document.createElement('span'); g.className='mp-gain'; g.textContent=' +⭐1'; qq.appendChild(g); } }
+  const ex=q.querySelector('.mp-expl'); if(ex){ ex.innerHTML='<b>'+(restored?'완료':(right?'정답!':'아쉬워요'))+'</b> '+esc(it.expl||''); ex.classList.add('mp-show'); }
+}
+async function mpSubmitWrite(k,min){
+  if(!_mpCtx) return;
+  const ta=document.getElementById('mp_ta_'+k); const v=((ta&&ta.value)||'').trim();
+  if(v.length<min){ alert(min+'자 이상 적어 주세요.'); if(ta) ta.focus(); return; }
+  const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
+  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
+  if(res&&res.ok){ mpMarkDone(k); if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); }
+  else if(btn) btn.disabled=false;
+}
+async function mpCert(k){
+  if(!_mpCtx) return;
+  const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
+  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
+  if(res&&res.ok){ mpMarkDone(k); if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); }
+  else if(btn) btn.disabled=false;
+}
+async function mpRpc(fn,bodyObj){
+  try{ const r=await fetch(`${SB_REST}/rpc/${fn}`,{method:'POST',headers:BX_H,body:JSON.stringify(bodyObj)});
+    return r.ok ? await r.json() : {ok:false}; }catch(e){ return {ok:false}; }
 }
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
