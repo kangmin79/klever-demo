@@ -559,9 +559,9 @@ body.dark .hub-node-icon{color:var(--gold);}
 .qg-note{margin-top:14px;padding:12px 16px;background:var(--bg-input);border-radius:10px;font-size:12.5px;line-height:1.7;color:var(--text-sub);}
 .qg-empty{text-align:center;color:var(--text-light);font-size:13px;line-height:1.9;padding:34px 12px;background:var(--bg-input);border-radius:12px;}
 .quest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.quest-grid-wide{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:14px;}  /* 책 수만큼 칸 자동 맞춤(빈 칸 방지) */
-.quest-grid-wide .quest-slot{aspect-ratio:auto;}                                       /* 표지+통계는 내용 높이로 */
-@media (max-width:900px){ .quest-grid-wide{grid-template-columns:repeat(auto-fit, minmax(120px,1fr));} }
+.quest-grid-wide{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;}            /* 책 칸 고정 크기 + 가운데(1권이어도 안 부풀게) */
+.quest-grid-wide .quest-slot{aspect-ratio:auto;flex:0 0 200px;max-width:200px;}          /* 표지+통계는 내용 높이로, 칸 폭 고정 */
+@media (max-width:480px){ .quest-grid-wide .quest-slot{flex:0 0 calc(50% - 7px);max-width:none;} }  /* 폰에선 2열 */
 .quest-slot{
   aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:8px;
@@ -4547,7 +4547,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
