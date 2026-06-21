@@ -106,13 +106,18 @@
   .pt-right{display:flex;align-items:center;gap:10px}
   .pt-ic{width:38px;height:38px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 6px 14px rgba(40,40,90,.07)}
   .pt-prof{display:flex;align-items:center;gap:7px;background:#fff;border-radius:12px;padding:7px 13px;font-size:12.5px;box-shadow:0 6px 14px rgba(40,40,90,.07)}
-  .pbanner{background:linear-gradient(120deg,#eceefe,#f0eafe 45%,#fdecf4);border-radius:22px;padding:20px 22px;margin-bottom:16px}
+  .pbanner{background:linear-gradient(120deg,#eceefe,#f0eafe 45%,#fdecf4);border-radius:22px;padding:20px 22px;margin-bottom:16px;position:relative;overflow:hidden}
+  .pbanner::after{content:'';position:absolute;right:-40px;top:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle at 32% 32%,rgba(255,255,255,.65),rgba(167,139,250,.14) 58%,transparent 70%);pointer-events:none}
+  .pbanner>*{position:relative;z-index:1}
   .pb-h{font-size:15px;font-weight:800;color:var(--pink)}
   .pb-h span{font-size:12px;font-weight:500;color:var(--psub);margin-left:6px}
-  .pb-grid{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
-  .pb-k{flex:1;min-width:118px;background:rgba(255,255,255,.72);border:1px solid #fff;border-radius:16px;padding:13px 16px;box-shadow:0 8px 18px rgba(120,100,200,.1)}
-  .pb-k .v{font-size:21px;font-weight:800;color:var(--pink)}
-  .pb-k .l{font-size:11px;color:var(--psub);margin-top:2px}
+  .pb-grid{display:flex;gap:10px;flex-wrap:nowrap;margin-top:14px}
+  .pb-k{flex:1;min-width:0;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);border-radius:16px;padding:13px 15px;box-shadow:0 6px 14px rgba(120,100,200,.08);transition:.15s}
+  .pb-k.hl{background:#fff;box-shadow:0 14px 28px rgba(120,100,200,.22)}
+  .pb-k .v{font-size:21px;font-weight:800;color:var(--pink);white-space:nowrap}
+  .pb-k .v small{font-size:11px;color:#9aa0c0;font-weight:600;margin-left:3px}
+  .pb-k .l{font-size:11px;color:var(--psub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:760px){.pb-grid{flex-wrap:wrap}.pb-k{min-width:118px}}
   .prow{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;margin-bottom:16px}
   .prow2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:900px){.pwrap{flex-direction:column}.pside{width:100%;display:flex;flex-wrap:wrap;gap:4px}.pmenu-h{display:none}.prow,.prow2{grid-template-columns:1fr}}
@@ -259,7 +264,9 @@ document.getElementById('cRank').innerHTML=D.rank.map((r,i)=>`<div class="crow">
 /* ---- P (panze 클론) ---- */
 const pStud=[['김민준',128],['이서연',92],['박도윤',76],['최지우',64],['정하준',45]];
 const pPal=['#6d5efc','#4cc9f0','#5fd6a6','#ffd166','#f78fb3'];
-document.getElementById('pBanner').innerHTML=[['참여 학생','48명'],['적립된 별','1,240'],['챌린지 완주','23회'],['미션 수행','312건'],['진행 챌린지','3개']].map(k=>`<div class="pb-k"><div class="v">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
+document.getElementById('pBanner').innerHTML=[
+  ['참여 학생','48','+6',0],['적립된 별','1,240','+312',1],['챌린지 완주','23','+5',0],['미션 수행','312','+48',0],['진행 챌린지','3','',0]
+].map(k=>`<div class="pb-k${k[3]?' hl':''}"><div class="v">${k[1]}${k[2]?` <small>(${k[2]})</small>`:''}</div><div class="l">${k[0]}</div></div>`).join('');
 document.getElementById('pKpi').innerHTML=[['총 적립 별','1,240','▲ +210','이번 달 누적'],['이번 주 별','312','▲ +18%','지난주 대비'],['챌린지 완주','23','▲ +5','이번 달'],['미션 수행','312','▲ +48','이번 달']].map(k=>`<div class="pkpi"><div class="v">${k[1]}<small>${k[2]}</small></div><div class="l">${k[0]}</div><div class="a">${k[3]}</div></div>`).join('');
 document.getElementById('pDonutLeg').innerHTML=pStud.map((s,i)=>`<span><i style="background:${pPal[i]}"></i>${s[0]} ${s[1]}</span>`).join('');
 document.getElementById('pCatLeg').innerHTML=D.mix.map(m=>`<span><i style="background:${m[2]}"></i>${m[0]}</span>`).join('');
