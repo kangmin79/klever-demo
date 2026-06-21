@@ -2482,6 +2482,7 @@ function applyReaderPrefs(){
   const tBtn = document.getElementById('themeBtn');
   if(tBtn) tBtn.innerHTML = readerPrefs.theme==='dark' ? ic('sun','icon icon-sm') : ic('moon','icon icon-sm');
   if(typeof _pg!=='undefined' && _pg.on) pgRelayout();   // 페이지 모드: 글자크기·줄간격 바뀌면 페이지 재계산
+  if(typeof scheduleAlign==='function') scheduleAlign();  // A안: 글자크기·폰트 바뀌면 좌우 문단 재정렬
 }
 function readerFS(d){ _withAnchorKept(()=>{ readerPrefs.fontSizeIdx = Math.max(0, Math.min(FONT_SIZES.length-1, readerPrefs.fontSizeIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max(0, Math.min(LINE_HEIGHTS.length-1, readerPrefs.lineHeightIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
@@ -2778,6 +2779,39 @@ function setupParallel(){
     if(vb){ vb.addEventListener('click', onParallelClick); _parallelBound=true; }
   }
   syncPairMarks();
+  scheduleAlign();   // A안: 문단 쌍 높이 맞춰 좌우 수평 정렬
+}
+/* ── A안: 정렬책(문단 1:1) 좌우 문단 쌍을 같은 높이로 → 항상 수평 정렬 (짧은 쪽 빈 공백 감수) ── */
+let _alignT=0, _alignResizeBound=false;
+function scheduleAlign(){
+  if(!_alignResizeBound){ window.addEventListener('resize', scheduleAlign); _alignResizeBound=true; }
+  clearTimeout(_alignT); _alignT=setTimeout(alignParallel, 60);
+}
+function alignParallel(){
+  const L=document.querySelector('.viewer-pane.left'), R=document.querySelector('.viewer-pane.right');
+  if(!L||!R) return;
+  if(!_vis(L)||!_vis(R)){   // 단일 페인(원문만/번역만)·모바일 탭 → 정렬용 min-height 제거(빈 공백 방지)
+    [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title').forEach(e=>{ e.style.minHeight=''; }));
+    return;
+  }
+  const lp=L.querySelectorAll('p[data-pi]'), rp=R.querySelectorAll('p[data-pi]');
+  if(!lp.length || lp.length!==rp.length) return;        // 정렬책(문단 1:1) 아니면 패스 — ko전용은 건너뜀
+  const lh=L.querySelectorAll('h3.ch-title'), rh=R.querySelectorAll('h3.ch-title');
+  // 1) 이전 min-height 초기화 + 측정 위해 cv-chunk 강제 렌더(화면 밖도)
+  lp.forEach(p=>p.style.minHeight=''); rp.forEach(p=>p.style.minHeight='');
+  lh.forEach(h=>h.style.minHeight=''); rh.forEach(h=>h.style.minHeight='');
+  const chunks=[...L.querySelectorAll('.cv-chunk'), ...R.querySelectorAll('.cv-chunk')];
+  chunks.forEach(c=>c.style.contentVisibility='visible');
+  // 2) 읽기(레이아웃 1회) → 쓰기 분리(thrash 방지). 문단 쌍은 data-pi로, 장 제목은 순서로 매칭
+  const rmap={}; rp.forEach(p=>{ rmap[p.dataset.pi]=p; });
+  const work=[];
+  lp.forEach(l=>{ const r=rmap[l.dataset.pi]; if(r) work.push([l,r,Math.max(l.offsetHeight,r.offsetHeight)]); });
+  const hwork=[];
+  for(let i=0;i<Math.min(lh.length,rh.length);i++) hwork.push([lh[i],rh[i],Math.max(lh[i].offsetHeight,rh[i].offsetHeight)]);
+  work.forEach(([l,r,h])=>{ l.style.minHeight=h+'px'; r.style.minHeight=h+'px'; });
+  hwork.forEach(([l,r,h])=>{ l.style.minHeight=h+'px'; r.style.minHeight=h+'px'; });
+  // 3) cv-chunk 복귀(auto가 실측 크기 기억 → 화면 밖에서도 정렬 유지, 대작 성능 보존)
+  chunks.forEach(c=>c.style.contentVisibility='');
 }
 /* 형광펜 친 원문 문단의 번역 문단에 .hl-pair 마커 동기화 (정렬책 전용) */
 function syncPairMarks(){
@@ -4579,7 +4613,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5063,6 +5097,7 @@ function renderViewer(){
   }
   _setupMobilePanes(c);
   if(!setupSentenceParallel()) setupParallel();   // 문장정렬 책=문장 단위, 아니면 기존 문단 단위
+  scheduleAlign(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(scheduleAlign);   // A안: 좌우 문단 수평 정렬(웹폰트 로드 후 재정렬)
   // 바닥 액션: 완독=장 이동만 / 챌린지·Intl=장 이동 + 수행완료
   const acts = document.getElementById('viewerActions');
   if(acts){
