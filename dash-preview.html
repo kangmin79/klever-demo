@@ -89,22 +89,101 @@
   .legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px}
   .legend span{font-size:12px;color:#475569;display:flex;align-items:center;gap:6px}
   .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* ============ P · panze 클론 (사이드바 셸 + 파스텔 배너 + 캔들/멀티도넛) ============ */
+  #vp{--pa:#6d5efc;--pink:#1f2440;--psub:#8a90b5}
+  .pwrap{display:flex;gap:18px;align-items:flex-start}
+  .pside{width:184px;flex:none;background:#fff;border-radius:20px;padding:18px 14px;box-shadow:0 14px 34px rgba(40,40,90,.07)}
+  .plogo{font-size:18px;font-weight:800;color:var(--pink);margin:4px 6px 16px;display:flex;align-items:center;gap:3px}
+  .plogo span{color:var(--pa)}
+  .pmenu-h{font-size:10px;font-weight:800;color:#aeb3cc;letter-spacing:.07em;margin:14px 8px 6px}
+  .pmi{display:block;padding:10px 12px;border-radius:11px;font-size:13px;font-weight:600;color:#6b7191;cursor:pointer;margin-bottom:2px}
+  .pmi.on{background:linear-gradient(100deg,var(--pa),#8b7cff);color:#fff;box-shadow:0 8px 18px rgba(109,94,252,.35)}
+  .pmain{flex:1;min-width:0}
+  .ptop{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+  .pt-hi{font-size:17px;font-weight:800;color:var(--pink)}
+  .pt-sub{font-size:12px;color:var(--psub)}
+  .pt-right{display:flex;align-items:center;gap:10px}
+  .pt-ic{width:38px;height:38px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 6px 14px rgba(40,40,90,.07)}
+  .pt-prof{display:flex;align-items:center;gap:7px;background:#fff;border-radius:12px;padding:7px 13px;font-size:12.5px;box-shadow:0 6px 14px rgba(40,40,90,.07)}
+  .pbanner{background:linear-gradient(120deg,#eceefe,#f0eafe 45%,#fdecf4);border-radius:22px;padding:20px 22px;margin-bottom:16px}
+  .pb-h{font-size:15px;font-weight:800;color:var(--pink)}
+  .pb-h span{font-size:12px;font-weight:500;color:var(--psub);margin-left:6px}
+  .pb-grid{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+  .pb-k{flex:1;min-width:118px;background:rgba(255,255,255,.72);border:1px solid #fff;border-radius:16px;padding:13px 16px;box-shadow:0 8px 18px rgba(120,100,200,.1)}
+  .pb-k .v{font-size:21px;font-weight:800;color:var(--pink)}
+  .pb-k .l{font-size:11px;color:var(--psub);margin-top:2px}
+  .prow{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;margin-bottom:16px}
+  .prow2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.pwrap{flex-direction:column}.pside{width:100%;display:flex;flex-wrap:wrap;gap:4px}.pmenu-h{display:none}.prow,.prow2{grid-template-columns:1fr}}
+  .pcard{background:#fff;border-radius:20px;padding:20px;box-shadow:0 14px 34px rgba(40,40,90,.07)}
+  .pcard h3{font-size:14.5px;font-weight:800;color:var(--pink);margin-bottom:14px}
+  .pdonutwrap{position:relative;height:210px}
+  .pkpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pkpi{background:#fff;border-radius:18px;padding:17px 18px;box-shadow:0 14px 30px rgba(40,40,90,.07)}
+  .pkpi .v{font-size:25px;font-weight:800;color:var(--pink)}
+  .pkpi .v small{font-size:12px;color:#16a34a;font-weight:800;margin-left:5px}
+  .pkpi .l{font-size:12px;color:var(--psub);margin-top:4px}
+  .pkpi .a{font-size:11px;color:#b3b8d4;margin-top:7px}
+  .pleg{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:12px}
+  .pleg span{font-size:11.5px;color:#5b6088;display:flex;align-items:center;gap:6px}
+  .pleg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .pcatwrap{position:relative;height:180px}
+  .pcatc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+  .pcatc b{font-size:26px;font-weight:800;color:var(--pink)}
+  .pcatc span{font-size:11px;color:var(--psub)}
 </style>
 </head>
 <body>
 
 <div class="toner">
   <b>북스타 대시보드 시안</b>
-  <button class="on" onclick="setTone('a',this)">A · 미니멀 모노톤</button>
-  <button onclick="setTone('b',this)">B · 소프트 카드</button>
-  <button onclick="setTone('c',this)">C · 데이터 비주얼</button>
-  <span class="hint">같은 데이터, 세 가지 톤 — 골라주세요</span>
+  <button class="on" onclick="setTone('p',this)">★ P · panze 스타일</button>
+  <button onclick="setTone('a',this)">A · 미니멀</button>
+  <button onclick="setTone('b',this)">B · 소프트</button>
+  <button onclick="setTone('c',this)">C · 데이터</button>
+  <span class="hint">P = panze 따라한 버전 — 골라주세요</span>
 </div>
 
 <div class="stage">
 
+  <!-- ============ P · panze 클론 (기본) ============ -->
+  <div class="view on" id="vp">
+    <div class="pwrap">
+      <aside class="pside">
+        <div class="plogo">b<span>★</span> bookstar</div>
+        <div class="pmenu-h">측정 · 운영</div>
+        <div class="pmi on">▦ 대시보드</div>
+        <div class="pmi">▤ 이용통계</div>
+        <div class="pmi">🕘 히스토리</div>
+        <div class="pmenu-h">콘텐츠</div>
+        <div class="pmi">🏺 독서 챌린지</div>
+        <div class="pmi">📚 고전 컬렉션</div>
+        <div class="pmi">💬 커뮤니티</div>
+      </aside>
+      <main class="pmain">
+        <div class="ptop">
+          <div><div class="pt-hi">안녕하세요, 한국대 사서님 👋</div><div class="pt-sub">이번 달 독서 현황을 한눈에</div></div>
+          <div class="pt-right"><span class="pt-ic">🔍</span><span class="pt-ic">🔔</span><div class="pt-prof">🧑‍🏫 <b>사서</b></div></div>
+        </div>
+        <div class="pbanner">
+          <div class="pb-h">한눈에 보기 <span>실시간 측정 데이터</span></div>
+          <div class="pb-grid" id="pBanner"></div>
+        </div>
+        <div class="prow">
+          <div class="pcard"><h3>학생별 별 적립</h3><div class="pdonutwrap"><canvas id="pDonut"></canvas></div><div class="pleg" id="pDonutLeg"></div></div>
+          <div class="pkpi-grid" id="pKpi"></div>
+        </div>
+        <div class="prow2">
+          <div class="pcard"><h3>주간 미션 수행</h3><div style="height:230px;position:relative"><canvas id="pBar"></canvas></div></div>
+          <div class="pcard"><h3>미션 종류별 수행</h3><div class="pcatwrap"><canvas id="pCat"></canvas><div class="pcatc"><b>312</b><span>총 미션</span></div></div><div class="pleg" id="pCatLeg"></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
   <!-- ============ A ============ -->
-  <div class="view on" id="va">
+  <div class="view" id="va">
     <h2 class="vt">A · 미니멀 모노톤 — 큰 숫자 + 절제된 선, 와우=별 순위</h2>
     <div class="grid4" id="aKpi"></div>
     <div class="acard">
@@ -177,8 +256,16 @@ document.getElementById('bLeg').innerHTML=D.mix.map(m=>`<span><i style="backgrou
 document.getElementById('cKpi').innerHTML=D.kpi.map(k=>`<div class="ckpi"><div class="v">${k[1]}<span style="font-size:13px;color:#7c7f99"> ${k[2]}</span></div><div class="l">${k[0]}</div><div class="d up">${k[3]}</div></div>`).join('');
 document.getElementById('cRank').innerHTML=D.rank.map((r,i)=>`<div class="crow"><div class="cno">${i+1}</div><div class="cname">${r[0]} <span style="color:#7c7f99;font-weight:500;font-size:12px">${r[2]}</span></div><div class="cval">⭐${r[1]}</div></div>`).join('');
 
+/* ---- P (panze 클론) ---- */
+const pStud=[['김민준',128],['이서연',92],['박도윤',76],['최지우',64],['정하준',45]];
+const pPal=['#6d5efc','#4cc9f0','#5fd6a6','#ffd166','#f78fb3'];
+document.getElementById('pBanner').innerHTML=[['참여 학생','48명'],['적립된 별','1,240'],['챌린지 완주','23회'],['미션 수행','312건'],['진행 챌린지','3개']].map(k=>`<div class="pb-k"><div class="v">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
+document.getElementById('pKpi').innerHTML=[['총 적립 별','1,240','▲ +210','이번 달 누적'],['이번 주 별','312','▲ +18%','지난주 대비'],['챌린지 완주','23','▲ +5','이번 달'],['미션 수행','312','▲ +48','이번 달']].map(k=>`<div class="pkpi"><div class="v">${k[1]}<small>${k[2]}</small></div><div class="l">${k[0]}</div><div class="a">${k[3]}</div></div>`).join('');
+document.getElementById('pDonutLeg').innerHTML=pStud.map((s,i)=>`<span><i style="background:${pPal[i]}"></i>${s[0]} ${s[1]}</span>`).join('');
+document.getElementById('pCatLeg').innerHTML=D.mix.map(m=>`<span><i style="background:${m[2]}"></i>${m[0]}</span>`).join('');
+
 /* ---- 차트 (톤 활성화 시 1회 생성) ---- */
-const built={a:false,b:false,c:false};
+const built={a:false,b:false,c:false,p:false};
 function lineCfg(color){return {type:'line',data:{labels:D.weeks,datasets:[{data:D.weekly,borderColor:color,
     backgroundColor:(c)=>{const a=c.chart.chartArea;if(!a)return color+'10';const g=c.chart.ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,color+'55');g.addColorStop(1,color+'00');return g;},
     fill:true,tension:.45,pointRadius:4,pointBackgroundColor:'#fff',pointBorderColor:color,pointBorderWidth:2,borderWidth:3}]},
@@ -191,12 +278,19 @@ function build(t){
     new Chart(document.getElementById('cDonut'),{type:'doughnut',data:{labels:['참여','미참여'],datasets:[{data:[62,38],backgroundColor:['#6366f1','#eceefb'],borderWidth:0,borderRadius:12,hoverOffset:6}]},options:{cutout:'74%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
     new Chart(document.getElementById('cLine'),lineCfg('#7c3aed'));
   }
+  if(t==='p'){
+    new Chart(document.getElementById('pDonut'),{type:'doughnut',data:{labels:pStud.map(s=>s[0]),datasets:[{data:pStud.map(s=>s[1]),backgroundColor:pPal,borderWidth:0,borderRadius:12,spacing:2,hoverOffset:8}]},options:{cutout:'66%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
+    const lows=[2,4,3,6,8,7,10];
+    new Chart(document.getElementById('pBar'),{type:'bar',data:{labels:D.weeks,datasets:[{data:D.weekly.map((v,i)=>[lows[i],lows[i]+v]),backgroundColor:D.weeks.map((_,i)=>['#f9844a','#8b5cf6','#22c55e'][i%3]),borderRadius:20,barThickness:14}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#f1f2f7'},ticks:{color:'#aeb3cc'}},x:{grid:{display:false},ticks:{color:'#aeb3cc'}}},maintainAspectRatio:false}});
+    new Chart(document.getElementById('pCat'),{type:'doughnut',data:{labels:D.mix.map(m=>m[0]),datasets:[{data:D.mix.map(m=>m[1]),backgroundColor:D.mix.map(m=>m[2]),borderWidth:0,borderRadius:8,spacing:4,hoverOffset:6}]},options:{cutout:'72%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
+  }
 }
-build('a');
+document.querySelector('.stage').style.maxWidth='1280px'; build('p');
 function setTone(t,btn){
   document.querySelectorAll('.toner button').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.getElementById('v'+t).classList.add('on');
+  document.querySelector('.stage').style.maxWidth=(t==='p')?'1280px':'1080px';
   build(t);
 }
 </script>
