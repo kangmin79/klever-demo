@@ -1031,6 +1031,19 @@ body.dark .b-book .bb-done{color:#6fd9a6;}
 .b-heat-foot{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:11px;font-size:10.5px;color:var(--text-light);font-weight:600;}
 .b-heat-foot .b-cell{width:11px;height:11px;}
 .b-empty{font-size:12.5px;color:var(--text-light);padding:10px 2px 2px;line-height:1.7;}
+/* 내가 제출한 글 (챌린지 미션 제출분) */
+.mw-grid{display:grid;gap:14px;}
+.mw-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;transition:transform .15s,box-shadow .15s,border-color .15s;}
+.mw-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(40,40,90,.10);}
+.mw-card.feat{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 10px 24px rgba(212,169,59,.14);}
+.mw-feat{font-size:11.5px;font-weight:800;color:#b4690e;margin-bottom:9px;}
+body.dark .mw-feat{color:#ffd479;}
+.mw-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;}
+.mw-badge{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--primary-bg);padding:3px 10px;border-radius:20px;white-space:nowrap;}
+body.dark .mw-badge{color:var(--gold);}
+.mw-book{font-size:12.5px;font-weight:800;color:var(--text);}
+.mw-date{font-size:11.5px;color:var(--text-light);margin-left:auto;}
+.mw-text{font-size:14.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -1926,6 +1939,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="quest-map-title" style="display:flex;align-items:center;gap:8px;margin-bottom:18px;"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="color:var(--primary);"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Quest Map</div>
     <div id="questMapBody"></div>
   </div>
+
+  <!-- 내가 제출한 글 (챌린지 미션 → bookstar_writings) -->
+  <div id="myWritings"></div>
 
   <!-- 내가 남긴 한 줄 소감 (별이 챌린지) -->
   <div id="myImpressions"></div>
@@ -3460,7 +3476,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -4559,7 +4575,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -5701,6 +5717,37 @@ function renderReadingRhythm(){
       <div class="b-heat-foot">적게 <span class="b-cell"></span><span class="b-cell l1"></span><span class="b-cell l2"></span><span class="b-cell l3"></span><span class="b-cell l4"></span> 많이</div>
     </div>
   </div>`;
+}
+/* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
+const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
+async function renderMyWritings(){
+  const el=document.getElementById('myWritings'); if(!el) return;
+  const stu=(typeof bxStudent==='function')&&bxStudent();
+  if(!stu){ el.innerHTML=''; return; }
+  let rows=[];
+  try{
+    const r=await fetch(`${SB_REST}/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&order=created_at.desc&select=*`,{headers:BX_H});
+    if(r.ok) rows=await r.json();
+  }catch(e){}
+  if(!Array.isArray(rows)||!rows.length){ el.innerHTML=''; return; }
+  const bookTitle=id=>{
+    const b=(typeof BOOKS!=='undefined')&&BOOKS.find(x=>x.id===id); if(b) return cleanT(b.title);
+    try{ if(typeof CHAL_PUB!=='undefined') for(const c of CHAL_PUB){ const bk=(c.books||[]).find(x=>String(x.id)===String(id)); if(bk) return cleanT(bk.t||bk.title); } }catch(e){}
+    return id;
+  };
+  const feat=rows.filter(w=>w.featured).length;
+  el.innerHTML=`
+    <div class="section-head" style="margin-top:40px"><div class="section-title"><em>내가 제출한 글</em> · 챌린지 미션 ${rows.length}건${feat?` · ★ 우수작 ${feat}`:''}</div></div>
+    <div class="mw-grid">${rows.map(w=>{
+      const a=WR_ACT[w.activity]||{t:w.activity,icon:'📝',star:''};
+      const date=(w.created_at||'').slice(0,10);
+      return `<div class="mw-card${w.featured?' feat':''}">
+        ${w.featured?'<div class="mw-feat">★ 사서가 우수작으로 선정했어요</div>':''}
+        <div class="mw-top"><span class="mw-badge">${a.icon} ${esc(a.t)}${a.star?` ⭐${a.star}`:''}</span>
+          <span class="mw-book">${esc(bookTitle(w.book_id))}</span>
+          <span class="mw-date">${esc(date)}</span></div>
+        <div class="mw-text">${esc(w.text||'')}</div></div>`;
+    }).join('')}</div>`;
 }
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
 function renderMyImpressions(){
