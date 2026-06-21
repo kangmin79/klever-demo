@@ -2122,6 +2122,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <script src="classics_kr_data.js?b=260620b"></script>
 <script src="classics_foreign_data.js?b=260621d"></script>
 <script src="classics_ko_titles.js?b=260616a"></script>
+<!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
+     예전엔 BODIES_SENT를 아래 인라인 스크립트에서 선언 → 초기 4권의 문장정렬 데이터가 통째로 누락되어
+     정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결. -->
+<script>var BODIES_SENT={}, KR_SENT={};</script>
 <script src="bodies_dq.js?b=260612g"></script>
 <script src="bodies_gatsby.js?b=260612g"></script>
 <script src="bodies_demian.js?b=260612g"></script>
@@ -2132,9 +2136,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
    ═══════════════════════════════════════════════════════════ */
-const BODIES_SENT = {};   // 문장정렬 데이터(상호 하이라이트) — bodies_*.js가 채움. 없으면 문단 단위 폴백.
-// 한국 고전 평행 리더(한국어↔다국어). KR_SENT[id]={zh|vi|en|ja:[[ [ko,tr] ],...]} (bodies_{slug}.js가 채움)
-const KR_SENT = {};
+// BODIES_SENT / KR_SENT 는 위(정적 bodies 로드 전)에서 var 전역으로 미리 선언함 — 선언 순서 버그 수정.
+//  · BODIES_SENT: 문장정렬 데이터(상호 하이라이트) — bodies_*.js가 채움. 없으면 문단 단위 폴백.
+//  · KR_SENT: 한국 고전 평행 리더(한국어↔다국어). KR_SENT[id]={zh|vi|en|ja:[[ [ko,tr] ],...]}
 let KR_LANG = 'zh';                       // 현재 선택된 평행 번역 언어 (중→베→영→일 기본 중국어)
 const KR_LANG_NAMES = {zh:'中文', vi:'Tiếng Việt', en:'English', ja:'日本語'};
 const KR_BODY_P = {};
@@ -4613,7 +4617,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
