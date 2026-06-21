@@ -454,6 +454,18 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         </div>
       </div>
       <div class="kpis" id="kpis"></div>
+
+      <!-- ===== 실시간 측정 (실제 데이터 — 챌린지·별·완주) ===== -->
+      <div class="panel" id="realPanel" style="margin-bottom:16px;border:1.5px solid var(--accent,#3b5bdb)">
+        <h3>✨ 실시간 측정 <span class="tagpill" style="background:#e8f6ef;color:#1f6b4a">실제 데이터</span></h3>
+        <div class="ph-sub">학생들이 챌린지에서 실제로 모은 별·참여·완주 — 계약 시 이 학교의 실데이터로 채워집니다</div>
+        <div class="kpis" id="realKpis" style="margin:12px 0 4px"></div>
+        <div class="row c2" style="margin-top:6px">
+          <div><h3 style="font-size:14px">⭐ 별 순위 (실제 적립)</h3><div class="ph-sub">측정의 핵심 — 학생별 누적 별·등급</div><div class="rank" id="realRank"></div></div>
+          <div><h3 style="font-size:14px">🏺 챌린지별 참여·완주</h3><div class="ph-sub">진행 중 챌린지의 실제 참여/완주 수</div><div class="rank" id="realChals"></div></div>
+        </div>
+      </div>
+
       <div class="row c2">
         <div class="panel">
           <h3>프로그램별 참여 현황</h3><div class="ph-sub">진행 중·종료 프로그램의 접속·이용 건수</div>
@@ -1519,6 +1531,41 @@ function renderDash(){
     ['🏺','‘AI가 고전에 질문을 던지다’ 신규 참여 12명','31분 전'],
     ['📚','‘6월 도서관 추천 도서’ 클릭 240회','1시간 전'],
   ].map(f=>`<div class="rk"><div class="no">${f[0]}</div><div class="info"><div class="t" style="font-weight:600">${f[1]}</div></div><div class="s" style="color:var(--light);font-size:11px">${f[2]}</div></div>`).join('');
+  loadRealStats();
+}
+
+/* ====== 실시간 측정 (실제 데이터 — bookstar_stars/totals/enroll) ====== */
+const BX_NAMES={s1:'김민준',s2:'이서연',s3:'박도윤',s4:'최지우',s5:'정하준'};
+const GRADE_EMOJI={'씨앗':'🌰','새싹':'🌱','나무':'🌳','숲':'🌲'};
+async function loadRealStats(){
+  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
+  let totals=[], enroll=[], chals=[], missionCnt=0;
+  const ids=Object.keys(BX_NAMES);   // 데모 학생(demo1 등) 제외 — 진짜 테스트 학생만
+  try{ const r=await fetch(`${SB_REST}/bookstar_student_totals?student_id=in.(${ids.join(',')})&order=total_stars.desc&select=student_id,total_stars,grade`,{headers:H}); if(r.ok) totals=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${SB_REST}/bookstar_challenge_enroll?student_id=in.(${ids.join(',')})&select=challenge_id,student_id,status`,{headers:H}); if(r.ok) enroll=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${SB_REST}/library_programs?type=ilike.*${encodeURIComponent('챌린지')}*&status=eq.${encodeURIComponent('진행중')}&select=id,title`,{headers:H}); if(r.ok) chals=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${SB_REST}/bookstar_stars?student_id=in.(${ids.join(',')})&select=id`,{headers:{...H,Prefer:'count=exact',Range:'0-0'}}); const cr=r.headers.get('content-range'); if(cr) missionCnt=+(cr.split('/')[1])||0; }catch(e){}
+  if(!Array.isArray(totals))totals=[]; if(!Array.isArray(enroll))enroll=[]; if(!Array.isArray(chals))chals=[];
+  const sumStars=totals.reduce((a,t)=>a+(t.total_stars||0),0);
+  const partStudents=new Set(enroll.map(e=>e.student_id));
+  const doneCount=enroll.filter(e=>e.status==='done').length;
+  const kpis=[
+    {lab:'참여 학생',val:partStudents.size,unit:'명'},
+    {lab:'적립된 별',val:sumStars,unit:'⭐'},
+    {lab:'챌린지 완주',val:doneCount,unit:'회'},
+    {lab:'미션 수행',val:missionCnt,unit:'건'},
+  ];
+  el('realKpis').innerHTML=kpis.map(k=>`<div class="kpi"><div class="lab">${k.lab}</div><div class="val">${nf(k.val)}<small> ${k.unit}</small></div></div>`).join('');
+  el('realRank').innerHTML = totals.length ? totals.slice(0,10).map((t,i)=>`<div class="rk">
+    <div class="no ${i<3?'top':''}">${i+1}</div><div class="info"><div class="t">${esc(BX_NAMES[t.student_id]||t.student_id)}</div>
+    <div class="s">${GRADE_EMOJI[t.grade]||''} ${esc(t.grade||'씨앗')}</div></div><div class="n2">⭐${nf(t.total_stars||0)}</div></div>`).join('')
+    : `<div class="ph-sub" style="padding:14px 2px">아직 적립된 별이 없어요. 학생이 챌린지 미션을 수행하면 여기에 순위가 쌓입니다.</div>`;
+  el('realChals').innerHTML = chals.length ? chals.map(c=>{
+    const part=enroll.filter(e=>String(e.challenge_id)===String(c.id));
+    const done=part.filter(e=>e.status==='done').length;
+    return `<div class="rk"><div class="no">🏺</div><div class="info"><div class="t" style="font-weight:600">${esc(c.title)}</div>
+      <div class="s">참여 ${part.length} · 완주 ${done}</div></div><div class="n2">${part.length}명</div></div>`;
+  }).join('') : `<div class="ph-sub" style="padding:14px 2px">진행 중인 챌린지가 없어요.</div>`;
 }
 
 /* ====== 이용통계 ====== */

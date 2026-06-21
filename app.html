@@ -3625,6 +3625,14 @@ function chalJoin(id){
   arr.push({ id:c.id, type:c.type||'', title:c.title, to:c.to||'', mission:c.mission||null,
     books:(c.books||[]).map(b=>({id:b.id||'', t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
   _saveJoinedChals(arr);
+  // 서버 참여 기록(로그인 시) — 관리자 대시보드 '참여' 집계 + 참가 별(+5, 멱등). 완주(done)는 덮지 않음.
+  const _stu=bxStudent();
+  if(_stu){
+    fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
+      {method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},
+       body:JSON.stringify({student_id:_stu.id, challenge_id:String(c.id), status:'joined'})}).catch(()=>{});
+    mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_stu.id,p_activity:'challenge_join',p_ref:String(c.id)}).catch(()=>{});
+  }
   alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 내서재 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
   nav('mypage');
 }
@@ -4539,7 +4547,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
