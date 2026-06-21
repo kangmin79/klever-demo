@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>북스타 대시보드 시안 — A/B/C 비교</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;background:#eef0f4;color:#1c2230;-webkit-font-smoothing:antialiased}
+  /* 상단 톤 토글 바 */
+  .toner{position:sticky;top:0;z-index:50;background:#0f172a;color:#fff;display:flex;align-items:center;gap:10px;padding:12px 20px;flex-wrap:wrap}
+  .toner b{font-size:14px;margin-right:8px}
+  .toner button{border:1px solid #334155;background:#1e293b;color:#cbd5e1;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+  .toner button.on{background:#fff;color:#0f172a;border-color:#fff}
+  .toner .hint{margin-left:auto;font-size:12px;color:#94a3b8}
+  .stage{padding:22px;max-width:1080px;margin:0 auto}
+  .view{display:none} .view.on{display:block}
+  h2.vt{font-size:13px;font-weight:800;color:#64748b;margin:0 0 14px;letter-spacing:.02em}
+  canvas{max-width:100%}
+
+  /* ===== 공통 그리드 ===== */
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  @media(max-width:860px){.grid4{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+
+  /* ============ A · 미니멀 모노톤 (Vercel/Linear) ============ */
+  #va{--ink:#0a0a0a;--sub:#737373;--line:#ededed;--accent:#2563eb}
+  #va .akpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px}
+  #va .akpi .l{font-size:12px;color:var(--sub);font-weight:600}
+  #va .akpi .v{font-size:34px;font-weight:800;letter-spacing:-1.5px;margin-top:8px;line-height:1}
+  #va .akpi .d{font-size:12px;color:#16a34a;font-weight:700;margin-top:6px}
+  #va .acard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:14px}
+  #va .acard h3{font-size:14px;font-weight:800;margin-bottom:2px}
+  #va .acard .s{font-size:12px;color:var(--sub);margin-bottom:16px}
+  #va .arow{display:flex;align-items:center;gap:14px;padding:11px 0;border-top:1px solid var(--line)}
+  #va .arow:first-of-type{border-top:0}
+  #va .arank{font-size:13px;font-weight:800;color:var(--sub);width:18px}
+  #va .arank.top{color:var(--ink)}
+  #va .aname{flex:1;font-size:14px;font-weight:600}
+  #va .abar{flex:2;height:6px;background:#f5f5f5;border-radius:4px;overflow:hidden}
+  #va .abar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+  #va .aval{font-size:13px;font-weight:800;width:54px;text-align:right}
+
+  /* ============ B · 소프트 카드 (토스/애플 + panze) ============ */
+  #vb{--ink:#1e1b3a;--sub:#8b8aa3}
+  #vb .hero{background:linear-gradient(115deg,#6366f1,#a855f7 55%,#ec4899);border-radius:22px;padding:22px 24px;color:#fff;box-shadow:0 14px 34px rgba(124,58,237,.28)}
+  #vb .hero .t{font-size:14px;font-weight:700;opacity:.92}
+  #vb .hero .sub{font-size:12px;opacity:.7;margin-bottom:16px}
+  #vb .hgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:860px){#vb .hgrid{grid-template-columns:repeat(2,1fr)}}
+  #vb .hk{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:14px 16px;backdrop-filter:blur(6px)}
+  #vb .hk .v{font-size:26px;font-weight:800;letter-spacing:-1px}
+  #vb .hk .l{font-size:11.5px;opacity:.85;margin-top:3px}
+  #vb .bcard{background:#fff;border-radius:20px;padding:20px;box-shadow:0 8px 24px rgba(30,27,58,.06)}
+  #vb .bcard h3{font-size:14.5px;font-weight:800;margin-bottom:2px}
+  #vb .bcard .s{font-size:12px;color:var(--sub);margin-bottom:14px}
+  #vb .brow{display:flex;align-items:center;gap:12px;padding:9px 8px;border-radius:12px;transition:.12s}
+  #vb .brow:hover{background:#faf7ff}
+  #vb .bmedal{font-size:18px;width:26px;text-align:center}
+  #vb .bname{flex:1;font-size:14px;font-weight:700}
+  #vb .bgrade{font-size:11.5px;color:var(--sub)}
+  #vb .bval{font-size:14px;font-weight:800;color:#7c3aed}
+  #vb .chip{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:#f7f6fb;margin-bottom:9px}
+  #vb .chip .ci{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:#ede9fe}
+  #vb .chip .ct{flex:1;font-size:13px;font-weight:700}
+  #vb .chip .cs{font-size:11.5px;color:var(--sub)}
+
+  /* ============ C · 데이터 비주얼 (panze 풍) ============ */
+  #vc{--ink:#10122b;--sub:#7c7f99}
+  #vc .ckpi{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 6px 18px rgba(16,18,43,.05)}
+  #vc .ckpi .v{font-size:24px;font-weight:800}
+  #vc .ckpi .l{font-size:11.5px;color:var(--sub);margin-top:3px}
+  #vc .ckpi .d{font-size:11px;font-weight:800;margin-top:6px}
+  #vc .up{color:#16a34a}
+  #vc .ccard{background:#fff;border-radius:18px;padding:20px;box-shadow:0 6px 18px rgba(16,18,43,.05)}
+  #vc .ccard h3{font-size:14px;font-weight:800;margin-bottom:2px}
+  #vc .ccard .s{font-size:11.5px;color:var(--sub);margin-bottom:14px}
+  #vc .donutwrap{position:relative;height:200px}
+  #vc .donutc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+  #vc .donutc b{font-size:30px;font-weight:800;line-height:1}
+  #vc .donutc span{font-size:11.5px;color:var(--sub)}
+  #vc .crow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f2f7}
+  #vc .crow:last-child{border-bottom:0}
+  #vc .cno{width:24px;height:24px;border-radius:8px;background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:800;display:grid;place-items:center}
+  #vc .cname{flex:1;font-size:13.5px;font-weight:700}
+  #vc .cval{font-size:13.5px;font-weight:800;color:#4f46e5}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px}
+  .legend span{font-size:12px;color:#475569;display:flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="toner">
+  <b>북스타 대시보드 시안</b>
+  <button class="on" onclick="setTone('a',this)">A · 미니멀 모노톤</button>
+  <button onclick="setTone('b',this)">B · 소프트 카드</button>
+  <button onclick="setTone('c',this)">C · 데이터 비주얼</button>
+  <span class="hint">같은 데이터, 세 가지 톤 — 골라주세요</span>
+</div>
+
+<div class="stage">
+
+  <!-- ============ A ============ -->
+  <div class="view on" id="va">
+    <h2 class="vt">A · 미니멀 모노톤 — 큰 숫자 + 절제된 선, 와우=별 순위</h2>
+    <div class="grid4" id="aKpi"></div>
+    <div class="acard">
+      <h3>⭐ 별 순위</h3><div class="s">측정의 핵심 — 학생별 누적 별</div>
+      <div id="aRank"></div>
+    </div>
+    <div class="grid2">
+      <div class="acard"><h3>주간 미션 수행</h3><div class="s">최근 7주 추세</div><canvas id="aLine" height="150"></canvas></div>
+      <div class="acard"><h3>챌린지별 참여·완주</h3><div class="s" id="aChalS"></div><div id="aChal"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ B ============ -->
+  <div class="view" id="vb">
+    <h2 class="vt">B · 소프트 카드 — 그라데이션 헤더 + 둥근 카드(panze 느낌)</h2>
+    <div class="hero">
+      <div class="t">실시간 측정</div>
+      <div class="sub">학생들이 챌린지에서 실제로 모은 별·참여·완주</div>
+      <div class="hgrid" id="bKpi"></div>
+    </div>
+    <div class="grid2">
+      <div class="bcard"><h3>⭐ 별 순위</h3><div class="s">우리 학교 독서왕</div><div id="bRank"></div></div>
+      <div class="bcard"><h3>미션 종류별 수행</h3><div class="s">무엇을 가장 많이 했나</div><canvas id="bDonut" height="200"></canvas><div class="legend" id="bLeg"></div></div>
+    </div>
+    <div class="bcard" style="margin-top:14px"><h3>🏺 챌린지별 참여·완주</h3><div class="s">진행 중 챌린지 현황</div><div id="bChal"></div></div>
+  </div>
+
+  <!-- ============ C ============ -->
+  <div class="view" id="vc">
+    <h2 class="vt">C · 데이터 비주얼 — 차트가 주인공(panze 풍)</h2>
+    <div class="grid4" id="cKpi"></div>
+    <div class="grid2">
+      <div class="ccard">
+        <h3>챌린지 참여율</h3><div class="s">참여 학생 / 전체</div>
+        <div class="donutwrap"><canvas id="cDonut"></canvas><div class="donutc"><b>62%</b><span>참여율</span></div></div>
+      </div>
+      <div class="ccard"><h3>주간 미션 수행 추세</h3><div class="s">최근 7주</div><canvas id="cLine" height="200"></canvas></div>
+    </div>
+    <div class="ccard" style="margin-top:14px"><h3>⭐ 별 순위 TOP 5</h3><div class="s">측정의 핵심</div><div id="cRank"></div></div>
+  </div>
+
+</div>
+
+<script>
+/* 공통 데모 데이터 (영업용 그럴듯 + 북스타 실제 데이터 종류) */
+const D={
+  kpi:[['참여 학생','48','명','▲ +6'],['적립된 별','1,240','⭐','▲ +210'],['챌린지 완주','23','회','▲ +5'],['미션 수행','312','건','▲ +48']],
+  rank:[['김민준',128,'🌳 숲'],['이서연',92,'🌳 나무'],['박도윤',76,'🌱 새싹'],['최지우',64,'🌱 새싹'],['정하준',45,'🌱 새싹']],
+  chals:[['모비딕 깊이 읽기',18,7],['고전 결정적 장면 챌린지',24,12],['6월 독서 챌린지',15,4]],
+  mix:[['퀴즈',140,'#6366f1'],['한 줄 소감',62,'#22c55e'],['질문',50,'#f59e0b'],['서평',38,'#ec4899'],['독후감',22,'#06b6d4']],
+  weekly:[12,19,9,24,31,28,40],
+  weeks:['1주','2주','3주','4주','5주','6주','7주'],
+};
+const maxRank=Math.max(...D.rank.map(r=>r[1]));
+const medal=['🥇','🥈','🥉','4','5'];
+
+/* ---- A ---- */
+document.getElementById('aKpi').innerHTML=D.kpi.map(k=>`<div class="akpi"><div class="l">${k[0]}</div><div class="v">${k[1]}<span style="font-size:14px;color:#737373"> ${k[2]}</span></div><div class="d">${k[3]}</div></div>`).join('');
+document.getElementById('aRank').innerHTML=D.rank.map((r,i)=>`<div class="arow"><div class="arank ${i<3?'top':''}">${i+1}</div><div class="aname">${r[0]}</div><div class="abar"><i style="width:${Math.round(r[1]/maxRank*100)}%"></i></div><div class="aval">⭐${r[1]}</div></div>`).join('');
+document.getElementById('aChalS').textContent='참여 / 완주';
+document.getElementById('aChal').innerHTML=D.chals.map(c=>`<div class="arow"><div class="aname">${c[0]}</div><div class="aval" style="width:auto;color:#737373;font-weight:600;font-size:12px">참여 ${c[1]} · 완주 ${c[2]}</div></div>`).join('');
+
+/* ---- B ---- */
+document.getElementById('bKpi').innerHTML=D.kpi.map(k=>`<div class="hk"><div class="v">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
+document.getElementById('bRank').innerHTML=D.rank.map((r,i)=>`<div class="brow"><div class="bmedal">${medal[i]}</div><div class="bname">${r[0]}<div class="bgrade">${r[2]}</div></div><div class="bval">⭐${r[1]}</div></div>`).join('');
+document.getElementById('bChal').innerHTML=D.chals.map(c=>`<div class="chip"><div class="ci">🏺</div><div class="ct">${c[0]}<div class="cs">참여 ${c[1]}명 · 완주 ${c[2]}명</div></div><div class="bval">${c[1]}명</div></div>`).join('');
+document.getElementById('bLeg').innerHTML=D.mix.map(m=>`<span><i style="background:${m[2]}"></i>${m[0]} ${m[1]}</span>`).join('');
+
+/* ---- C ---- */
+document.getElementById('cKpi').innerHTML=D.kpi.map(k=>`<div class="ckpi"><div class="v">${k[1]}<span style="font-size:13px;color:#7c7f99"> ${k[2]}</span></div><div class="l">${k[0]}</div><div class="d up">${k[3]}</div></div>`).join('');
+document.getElementById('cRank').innerHTML=D.rank.map((r,i)=>`<div class="crow"><div class="cno">${i+1}</div><div class="cname">${r[0]} <span style="color:#7c7f99;font-weight:500;font-size:12px">${r[2]}</span></div><div class="cval">⭐${r[1]}</div></div>`).join('');
+
+/* ---- 차트 (톤 활성화 시 1회 생성) ---- */
+const built={a:false,b:false,c:false};
+function lineCfg(color){return {type:'line',data:{labels:D.weeks,datasets:[{data:D.weekly,borderColor:color,backgroundColor:color+'22',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:color,borderWidth:2.5}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f2f7'},ticks:{color:'#94a3b8'}},x:{grid:{display:false},ticks:{color:'#94a3b8'}}},maintainAspectRatio:false}};}
+function build(t){
+  if(built[t])return; built[t]=true;
+  if(t==='a'){ new Chart(document.getElementById('aLine'),lineCfg('#2563eb')); }
+  if(t==='b'){ new Chart(document.getElementById('bDonut'),{type:'doughnut',data:{labels:D.mix.map(m=>m[0]),datasets:[{data:D.mix.map(m=>m[1]),backgroundColor:D.mix.map(m=>m[2]),borderWidth:0}]},options:{cutout:'62%',plugins:{legend:{display:false}},maintainAspectRatio:false}}); }
+  if(t==='c'){
+    new Chart(document.getElementById('cDonut'),{type:'doughnut',data:{labels:['참여','미참여'],datasets:[{data:[62,38],backgroundColor:['#6366f1','#eceefb'],borderWidth:0}]},options:{cutout:'72%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
+    new Chart(document.getElementById('cLine'),lineCfg('#7c3aed'));
+  }
+}
+build('a');
+function setTone(t,btn){
+  document.querySelectorAll('.toner button').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('v'+t).classList.add('on');
+  build(t);
+}
+</script>
+</body>
+</html>
