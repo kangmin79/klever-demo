@@ -115,6 +115,8 @@ body.dark .gnb-item.active{color:#f1f5f9;}
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
 .page{max-width:1280px;margin:0 auto;padding:32px 24px;display:none;}
 .page.active{display:block;}
+/* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
+#page-collection{padding-top:64px;}
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
 body.with-sidenav .page#page-detail{padding-left:24px;}
 
@@ -4458,7 +4460,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
