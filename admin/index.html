@@ -1853,7 +1853,7 @@ function renderChallenges(){
       <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
       <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}"></div>
         <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}"></div></div>
-      <div class="flabel">미션 — 완독 측정 <span style="font-weight:400;color:var(--light)">최대 ${CH_MAX}개 · 현재 ${cnt}개</span></div>
+      <div class="flabel">미션 — 완독 측정 <span style="font-weight:400;color:var(--light)">켠 미션 ${cnt}개 · 원하는 만큼 선택</span></div>
       <div class="mission">${missCells}</div>
       ${quizCfg}
       <div class="flabel" style="margin-top:10px">보상 방식</div>
@@ -1870,7 +1870,6 @@ function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린�
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
 function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
-  if(!c.mission[k]&&chalMissCount(c)>=CH_MAX){toast('미션은 최대 '+CH_MAX+'개까지 선택할 수 있어요');return;}
   c.mission[k]=!c.mission[k];renderChallenges();}
 function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
 function chalSetReward(i,r){readChalInputs();CHALLENGES[i].mission.reward=r;renderChallenges();}
