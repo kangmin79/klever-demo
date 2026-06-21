@@ -4547,7 +4547,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -6049,9 +6049,22 @@ function _questGroup(c, ci){
       : `<div class="qg-note">미션: ${esc(chalMissionPlain(c.mission))} · 책을 누르면 별이 챌린지로 이동해요 · 도서관 소장 책은 대출 후 완독 인증</div>`}
   </div>`;
 }
+// 사서가 삭제한(=DB에 더 없는) 챌린지를 학생 내서재에서 자동 정리
+async function pruneDeadChals(){
+  try{
+    const r=await fetch(`${SB_REST}/library_programs?select=id`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return false; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return false;
+    const live=new Set(rows.map(x=>String(x.id)));
+    const arr=joinedChals(); const kept=arr.filter(c=>live.has(String(c.id)));
+    if(kept.length!==arr.length){ _saveJoinedChals(kept); return true; }
+  }catch(e){}
+  return false;
+}
+let _qmPruned=false;
 function renderQuestMap(){
   const body = document.getElementById('questMapBody');
   if(!body) return;
+  if(!_qmPruned){ _qmPruned=true; pruneDeadChals().then(changed=>{ if(changed){ try{ renderQuestMap(); }catch(e){} } }); }
   const chals = joinedChals();
   if(!chals.length){
     body.innerHTML = `<div class="qg-empty">아직 참여 중인 챌린지가 없어요.<br><b style="color:var(--primary);">독서 챌린지</b> 메뉴에서 참여하면 여기에 책들이 들어와요.</div>`;
