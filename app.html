@@ -1044,6 +1044,14 @@ body.dark .mw-badge{color:var(--gold);}
 .mw-book{font-size:12.5px;font-weight:800;color:var(--text);}
 .mw-date{font-size:11.5px;color:var(--text-light);margin-left:auto;}
 .mw-text{font-size:14.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;}
+/* 내서재 순서: (위)히어로+읽고있는책 = 액션 / (아래)통계 타일+잔디 */
+.my-top{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;margin-top:16px;align-items:stretch;}
+.my-top .b-identity{grid-column:auto;grid-row:auto;}
+.my-top .b-books{grid-column:auto;}
+.my-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0;}
+.my-stats .b-num{grid-column:auto;}
+.my-stats .b-heat{grid-column:1/-1;}
+@media(max-width:760px){ .my-top{grid-template-columns:1fr;} .my-stats{grid-template-columns:1fr 1fr;} }
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -1939,6 +1947,9 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="quest-map-title" style="display:flex;align-items:center;gap:8px;margin-bottom:18px;"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="color:var(--primary);"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Quest Map</div>
     <div id="questMapBody"></div>
   </div>
+
+  <!-- 통계: 완독·퀴즈·점수·오늘읽음 + 독서 잔디 (액션 영역 아래로 이동) -->
+  <div id="readingStats"></div>
 
   <!-- 내가 제출한 글 (챌린지 미션 → bookstar_writings) -->
   <div id="myWritings"></div>
@@ -4623,7 +4634,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5736,7 +5747,8 @@ function renderReadingRhythm(){
   const name=(s&&s.name)||(typeof readerName==='function'?readerName():'게스트');
   const emoji=(s&&s.emoji)||'📘';
   const headline=streak>0?`<b>${streak}일째</b> 읽는 중`:`오늘 <b>첫 페이지</b>를 펴보세요`;
-  el.innerHTML=`<div class="bento">
+  // (위) 액션 블록 = 히어로 + 읽고 있는 책
+  const heroTile=`
     <div class="b-tile b-identity">
       <div class="b-id-name">${esc(name)}</div>
       <div class="b-id-head">${headline}</div>
@@ -5745,13 +5757,8 @@ function renderReadingRhythm(){
           <div class="wb-fill" style="height:${d.v?Math.max(4,Math.round(d.v/wmax*42)):3}px"></div>
           <div class="wb-d">${d.today?'오늘':d.name}</div>
         </div>`).join('')}</div>
-    </div>
-    <div class="b-tile b-num b-acc-gold"><div class="b-num-ic">📚</div><div class="b-num-v">${st.done}</div><div class="b-num-l">완독</div>${st.done?'<div class="b-num-sub">지금까지 모은 책</div>':'<div class="b-num-sub">첫 완독에 도전!</div>'}</div>
-    <div class="b-tile b-num b-acc-blue"><div class="b-num-ic">🎯</div>${st.answered
-      ? `<div class="b-num-v">${st.rate}<span class="b-num-u">%</span></div><div class="b-num-l">퀴즈 정답률</div><div class="b-num-sub">${st.ok}/${st.answered}문항 정답</div>`
-      : `<div class="b-num-v b-num-soft">—</div><div class="b-num-l">퀴즈 정답률</div><div class="b-num-sub">아직 퀴즈 전이에요</div>`}</div>
-    <div class="b-tile b-num b-acc-indigo"><div class="b-num-ic">⭐</div><div class="b-num-v">${(st.score||0).toLocaleString()}</div><div class="b-num-l">누적 점수</div>${st.score?'<div class="b-num-sub">미션으로 쌓은 점수</div>':'<div class="b-num-sub">미션 완료 시 적립</div>'}</div>
-    <div class="b-tile b-num b-acc-green"><div class="b-num-ic">⏱️</div><div class="b-num-v">${_fmtMins(today)}</div><div class="b-num-l">오늘 읽음</div><div class="b-num-sub">누적 ${_fmtMins(rt.total||0)}</div></div>
+    </div>`;
+  const booksTile=`
     <div class="b-tile b-books">
       <div class="b-head">읽고 있는 책</div>
       ${shown.length?shown.map(r=>`
@@ -5762,15 +5769,24 @@ function renderReadingRhythm(){
           ${r.done?`<span class="bb-done">✔ 완독</span>`:`<button class="bb-go" onclick="openViewer('${esc(r.id)}','full')">이어 읽기 →</button>`}
         </div>`).join('')+(rows.length>shown.length?`<div class="b-empty" style="padding-bottom:0">외 ${rows.length-shown.length}권 진행 중</div>`:'')
         :`<div class="b-empty">완독 모드로 책을 열면 진행률이 여기에 쌓여요.</div>`}
-    </div>
+    </div>`;
+  el.innerHTML=`<div class="my-top">${heroTile}${booksTile}</div>`;
+  // (아래) 통계 블록 = KPI 4 + 독서 잔디
+  const kpiTiles=`
+    <div class="b-tile b-num b-acc-gold"><div class="b-num-ic">📚</div><div class="b-num-v">${st.done}</div><div class="b-num-l">완독</div>${st.done?'<div class="b-num-sub">지금까지 모은 책</div>':'<div class="b-num-sub">첫 완독에 도전!</div>'}</div>
+    <div class="b-tile b-num b-acc-blue"><div class="b-num-ic">🎯</div>${st.answered
+      ? `<div class="b-num-v">${st.rate}<span class="b-num-u">%</span></div><div class="b-num-l">퀴즈 정답률</div><div class="b-num-sub">${st.ok}/${st.answered}문항 정답</div>`
+      : `<div class="b-num-v b-num-soft">—</div><div class="b-num-l">퀴즈 정답률</div><div class="b-num-sub">아직 퀴즈 전이에요</div>`}</div>
+    <div class="b-tile b-num b-acc-indigo"><div class="b-num-ic">⭐</div><div class="b-num-v">${(st.score||0).toLocaleString()}</div><div class="b-num-l">누적 점수</div>${st.score?'<div class="b-num-sub">미션으로 쌓은 점수</div>':'<div class="b-num-sub">미션 완료 시 적립</div>'}</div>
+    <div class="b-tile b-num b-acc-green"><div class="b-num-ic">⏱️</div><div class="b-num-v">${_fmtMins(today)}</div><div class="b-num-l">오늘 읽음</div><div class="b-num-sub">누적 ${_fmtMins(rt.total||0)}</div></div>
     <div class="b-tile b-heat">
       <div class="b-head">독서 잔디 <span class="b-head-sub">최근 8주</span></div>
       <div class="b-heatgrid">${cols.map(col=>`<div class="b-heatcol">${col.map(c=>
         c.future?`<div class="b-cell future"></div>`:`<div class="b-cell${c.lvl?' l'+c.lvl:''}" title="${c.title}"></div>`
       ).join('')}</div>`).join('')}</div>
       <div class="b-heat-foot">적게 <span class="b-cell"></span><span class="b-cell l1"></span><span class="b-cell l2"></span><span class="b-cell l3"></span><span class="b-cell l4"></span> 많이</div>
-    </div>
-  </div>`;
+    </div>`;
+  const sEl=document.getElementById('readingStats'); if(sEl) sEl.innerHTML=`<div class="my-stats">${kpiTiles}</div>`;
 }
 /* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
 const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
