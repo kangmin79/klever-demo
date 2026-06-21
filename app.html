@@ -1675,7 +1675,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      2) 북스타 컬렉션
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-collection">
-  <h1 class="page-title">고전 컬렉션</h1>
+  <!-- 2026-06-21 사용자 지시: 중복 페이지 제목 "고전 컬렉션" 헤딩 삭제 (상단 메뉴에 이미 있음) -->
 
   <!-- 사서 큐레이션 (관리자 꾸미기 · 고전 컬렉션 영역) — 있으면 상단에 노출 -->
   <div id="collectionCuration"></div>
@@ -4458,7 +4458,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260621d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260621e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
