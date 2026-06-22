@@ -1271,6 +1271,18 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-empty{padding:22px 2px;color:var(--text-light);font-size:14px;}
 .ag-empty .favset{color:var(--gold);cursor:pointer;font-weight:700;}
 @media(max-width:760px){.ag-pstats{grid-template-columns:repeat(3,1fr);}}
+/* ── ① 내 활동 호버 인터랙션 ── */
+.ag-card{transition:box-shadow .16s,border-color .16s;}
+.ag-card:hover{box-shadow:0 8px 26px -12px rgba(26,41,66,.22);}
+body.dark .ag-card:hover{box-shadow:0 8px 26px -12px rgba(0,0,0,.5);}
+.ag-pstat,.ag-tile,.ag-tier,.ag-note{transition:transform .14s,box-shadow .16s,border-color .16s,background .16s;}
+.ag-pstat:hover{transform:translateY(-2px);background:var(--primary-bg);}
+.ag-tile:hover{transform:translateY(-2px);box-shadow:0 8px 20px -12px rgba(26,41,66,.32);}
+.ag-tier:not(.on):hover{border-color:var(--gold);}
+.ag-note:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 8px 20px -12px rgba(26,41,66,.2);}
+.ag-tbl tr:hover td{background:var(--bg-input);}
+.ag-chip{transition:border-color .14s,color .14s,background .14s;}
+.ag-chip:hover{border-color:var(--gold);color:var(--text);background:var(--primary-bg);}
 /* ── ③ 내 책 모음 그룹 ── */
 .bm-life{display:flex;gap:22px;align-items:flex-start;}
 .bm-cover{width:118px;height:170px;flex:none;border-radius:12px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 24px -8px rgba(0,0,0,.4);}
@@ -4921,7 +4933,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
