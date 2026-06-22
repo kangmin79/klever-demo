@@ -1206,6 +1206,69 @@ body.dark .mw-badge{color:var(--gold);}
 /* 내 기록 더보기(측정존 접기) */
 .my-more-btn{display:block;width:100%;margin:30px 0 4px;border:1px solid var(--border);background:var(--bg-card);border-radius:14px;padding:14px;font-size:13.5px;font-weight:800;color:var(--text-sub);cursor:pointer;}
 .my-more-btn:hover{background:var(--bg-input);}
+/* ════ 내서재 3그룹 — 그룹 헤더 ════ */
+.lib-grp{display:flex;align-items:center;gap:13px;margin:48px 2px 18px;}
+.lib-grp.first{margin-top:8px;}
+.lib-grp-ic{width:40px;height:40px;border-radius:12px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;color:var(--primary);flex:none;}
+.lib-grp-ic .icon{width:21px;height:21px;}
+.lib-grp-t{font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-.4px;}
+.lib-grp-s{font-size:12.5px;color:var(--text-light);margin-top:3px;}
+/* ── ① 내 활동 그룹 ── */
+.ag-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;}
+.ag-sec-h{display:flex;align-items:center;justify-content:space-between;margin:26px 2px 13px;}
+.ag-sec-h h3{font-size:16px;font-weight:800;margin:0;}
+.ag-sec-h .more{font-size:13px;color:var(--primary);font-weight:700;cursor:pointer;}
+.ag-ptop{display:flex;align-items:center;gap:15px;}
+.ag-pav{width:62px;height:62px;border-radius:18px;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:30px;flex:none;}
+.ag-pname{font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.ag-grade{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:4px 11px;border-radius:99px;}
+.ag-pstatus{font-size:13px;color:var(--text-light);margin-top:4px;}
+.ag-pedit{margin-left:auto;align-self:flex-start;font-size:12.5px;color:var(--text-sub);border:1px solid var(--border);background:transparent;padding:6px 14px;border-radius:99px;cursor:pointer;}
+.ag-pedit:hover{border-color:var(--gold);color:var(--text);}
+.ag-pstats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:20px;}
+.ag-pstat{background:var(--bg-input);border-radius:12px;padding:13px 4px;text-align:center;}
+.ag-pstat b{display:block;font-size:20px;font-weight:800;}
+.ag-pstat span{font-size:11px;color:var(--text-light);}
+.ag-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.ag-tile{background:var(--bg-input);border-radius:12px;padding:15px 17px;position:relative;}
+.ag-tile .k{font-size:12px;color:var(--text-light);}
+.ag-tile .v{font-size:26px;font-weight:800;margin-top:4px;display:flex;align-items:center;gap:6px;color:var(--gold);}
+.ag-tile .gtag{position:absolute;top:14px;right:15px;}
+.ag-nextbar .lab{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:7px;}
+.ag-nextbar .lab b{color:var(--primary);font-weight:800;}
+.ag-bar{height:9px;border-radius:99px;background:var(--bg-input);overflow:hidden;}
+.ag-bar>span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--accent));}
+.ag-div{height:1px;background:var(--border);margin:20px 0;}
+.ag-subh{font-size:13px;font-weight:800;color:var(--text-sub);margin-bottom:13px;}
+.ag-tbl{width:100%;border-collapse:collapse;}
+.ag-tbl th{font-size:11.5px;color:var(--text-light);font-weight:600;text-align:right;padding:0 0 9px;}
+.ag-tbl th:first-child{text-align:left;}
+.ag-tbl td{padding:9px 0;font-size:13.5px;border-top:1px solid var(--border);text-align:right;}
+.ag-tbl td:first-child{text-align:left;color:var(--text-sub);}
+.ag-tbl td.cum{color:var(--text-light);}
+.ag-tbl td b{font-weight:800;}
+.ag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px;}
+.ag-tiers{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
+.ag-tier{flex:1;min-width:84px;text-align:center;background:var(--bg-input);border-radius:10px;padding:11px 4px;border:1.5px solid transparent;}
+.ag-tier.on{background:var(--primary-bg);border-color:var(--primary);}
+.ag-tier .tn{font-size:12px;font-weight:800;}
+.ag-tier.on .tn{color:var(--primary);}
+.ag-tier .tr{font-size:10.5px;color:var(--text-light);margin-top:3px;}
+.ag-earn{font-size:12.5px;color:var(--text-sub);background:var(--bg-input);border-radius:10px;padding:13px 15px;line-height:1.85;}
+.ag-earn b{color:var(--gold);font-weight:800;}
+.ag-chips{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+.ag-chip{font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-weight:700;}
+.ag-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
+.ag-note{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:15px 16px;}
+.ag-nmeta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-light);margin-bottom:9px;}
+.ag-kind{font-size:11px;padding:2px 9px;border-radius:6px;font-weight:700;}
+.ag-k-sg{background:#E7F7EE;color:#1B8F5A;}
+.ag-k-q{background:#FEF1DD;color:#B5781A;}
+.ag-k-rv{background:#FCEAF3;color:#C13B7E;}
+.ag-note p{margin:0;font-size:14px;color:var(--text);line-height:1.6;}
+.ag-empty{padding:22px 2px;color:var(--text-light);font-size:14px;}
+.ag-empty .favset{color:var(--gold);cursor:pointer;font-weight:700;}
+@media(max-width:760px){.ag-pstats{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -2070,10 +2133,13 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <h1 class="page-title">내서재</h1>
   <p class="page-subtitle">내가 읽은 책과 남긴 글을 모은 나만의 서가</p>
 
-  <!-- 내 서가: 완독/읽는 책 가로 서가 (프로필은 우측 상단 슬롯으로) -->
+  <!-- ① 내 활동 그룹 (프로필 6스탯 + 별 내역·등급 + 내 기록) — 실데이터 -->
+  <div id="actGroup"></div>
+
+  <!-- 내 서가: 완독/읽는 책 가로 서가 (→ 향후 ③ 내 책 모음 그룹으로 편입) -->
   <div id="myProfileTop"></div>
-  <!-- 내가 쓴 글 (공개) -->
-  <div id="myWritings"></div>
+  <!-- 내가 쓴 글 (공개) — ① 내 기록으로 대체, 숨김 -->
+  <div id="myWritings" style="display:none"></div>
 
   <!-- 측정존(나만): 접어두고 '더보기'로 펼침 -->
   <button class="my-more-btn" id="myMoreBtn" onclick="toggleMyMore()" style="display:none">내 기록 더보기 (퀴즈·잔디·서평) ▾</button>
@@ -3677,7 +3743,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderActivityGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -4172,7 +4238,7 @@ async function bxPickStudent(id){
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
-  try{ renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
+  try{ renderActivityGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
 }
 // 우리도서관 카테고리(관리자가 추가·삭제·편집) — 서버 library_sections에서 로드
@@ -4781,7 +4847,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5931,6 +5997,97 @@ let _peEmoji='', _peFav='';
 function _doneBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); if(r&&(r.read_pct||0)>=95) out.push(b); }); return out; }
 function _readingBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); const p=r?(r.read_pct||0):0; if(p>0&&p<95) out.push({b, pct:Math.max(1,Math.min(94,p)), ts:(r&&r.ts)||0}); }); out.sort((x,y)=>y.ts-x.ts); return out; }
 function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
+
+/* ════════ 내서재 ① 내 활동 그룹 (프로필·별 내역·기록) — 실데이터 ════════ */
+const AG_IC_USER='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>';
+const AG_ACTGRP={
+  quiz:['퀴즈','#3a6ea5'], quiz_done:['퀴즈','#3a6ea5'],
+  review:['서평·독후감','#b5462f'], essay:['서평·독후감','#b5462f'],
+  challenge_join:['챌린지','#7a5a2f'], challenge_done:['챌린지','#7a5a2f'],
+  question:['한 줄 질문','#d4a93b'],
+  oneline:['한 줄 소감','#1fa971'], impression:['한 줄 소감','#1fa971'],
+  attend:['출석·방문','#7c6f9c'], visit:['출석·방문','#7c6f9c'],
+  reading:['독서·기타','#64748b'], photo:['독서·기타','#64748b'], recommend:['독서·기타','#64748b'], underline:['독서·기타','#64748b'], comment:['독서·기타','#64748b']
+};
+const AG_EARN_ORDER=['quiz','oneline','question','review','essay','attend','challenge_join','challenge_done'];
+const AG_EARN_LABEL={quiz:'퀴즈 1문항',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
+const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
+async function _agFetch(path){ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; }
+function _agDate(iso){ try{ const d=new Date(iso); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; }catch(e){ return ''; } }
+async function renderActivityGroup(){
+  const el=document.getElementById('actGroup'); if(!el) return;
+  const grpHead='<div class="lib-grp first"><div class="lib-grp-ic">'+AG_IC_USER+'</div><div><div class="lib-grp-t">내 활동</div><div class="lib-grp-s">프로필 · 별 · 기록</div></div></div>';
+  const s=bxStudent();
+  if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 활동이 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
+  const enc=encodeURIComponent(s.id);
+  const [profA,writings,stars,totalsA,enroll,rates]=await Promise.all([
+    _agFetch(`bookstar_students?id=eq.${enc}&select=bio,favorite_book_id,emoji,name`),
+    _agFetch(`bookstar_writings?student_id=eq.${enc}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity,book_id,text,created_at&order=created_at.desc`),
+    _agFetch(`bookstar_stars?student_id=eq.${enc}&select=activity,stars,created_at`),
+    _agFetch(`bookstar_student_totals?student_id=eq.${enc}&select=total_stars,grade`),
+    _agFetch(`bookstar_challenge_enroll?student_id=eq.${enc}&select=status`),
+    _agFetch(`bookstar_star_rates?select=activity,stars`)
+  ]);
+  const prof=profA[0]||{}, totals=totalsA[0]||{};
+  const emoji=prof.emoji||s.emoji||'📘', name=prof.name||s.name||'', bio=prof.bio||s.bio||'';
+  const wCnt=a=>writings.filter(w=>w.activity===a).length;
+  const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review')+wCnt('essay');
+  const nDone=_doneBooks().length, nEnroll=enroll.length, nEnrollDone=enroll.filter(e=>e.status==='done').length;
+  const totalStars=totals.total_stars||0, grade=totals.grade||gradeOf(totalStars);
+  const yr=new Date().getFullYear();
+  const yearStars=stars.filter(x=>x.created_at&&(+String(x.created_at).slice(0,4))===yr).reduce((a,x)=>a+(x.stars||0),0);
+  const ng=nextGrade(totalStars), flr=gradeFloor(totalStars);
+  const pct= ng ? Math.round((totalStars-flr)/((ng.at-flr)||1)*100) : 100;
+  const gEmo=GRADE_EMO[grade]||'⭐';
+  // 활동별 별 그룹 집계
+  const grp={};
+  stars.forEach(x=>{ const m=AG_ACTGRP[x.activity]; if(!m) return; const g=grp[m[0]]||(grp[m[0]]={color:m[1],year:0,cum:0}); g.cum+=x.stars||0; if(x.created_at&&(+String(x.created_at).slice(0,4))===yr) g.year+=x.stars||0; });
+  const grpRows=Object.keys(grp).sort((a,b)=>grp[b].cum-grp[a].cum).map(lab=>{ const g=grp[lab]; return `<tr><td><span class="ag-dot" style="background:${g.color}"></span>${esc(lab)}</td><td><b>${g.year}</b></td><td class="cum">${g.cum.toLocaleString()}</td></tr>`; }).join('');
+  // 별 버는 법 (star_rates = 진짜 출처)
+  const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
+  const earn=AG_EARN_ORDER.filter(a=>rateMap[a]!=null).map(a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`).join(' · ');
+  // 등급 안내
+  const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; return `<div class="ag-tier${t[0]===grade?' on':''}"><div class="tn">${t[0]}</div><div class="tr">${rng}</div></div>`; }).join('');
+  // 내 기록 노트
+  const noteItems=writings.filter(w=>AG_NOTE_KIND[w.activity]).slice(0,6);
+  const notes= noteItems.length ? noteItems.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('') : '<div class="ag-empty">아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.</div>';
+  el.innerHTML = grpHead
+   +`<div class="ag-card">
+      <div class="ag-ptop">
+        <div class="ag-pav">${esc(emoji)}</div>
+        <div><div class="ag-pname">${esc(name)} <span class="ag-grade">${gEmo} ${esc(grade)}</span></div><div class="ag-pstatus">${esc(bio||'상태메시지를 남겨보세요')}</div></div>
+        <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
+      </div>
+      <div class="ag-pstats">
+        <div class="ag-pstat"><b>${nDone}</b><span>완독</span></div>
+        <div class="ag-pstat"><b>${nOne}</b><span>한 줄 소감</span></div>
+        <div class="ag-pstat"><b>${nQ}</b><span>한 줄 질문</span></div>
+        <div class="ag-pstat"><b>${nRev}</b><span>서평</span></div>
+        <div class="ag-pstat"><b>${nEnroll}</b><span>참여 챌린지</span></div>
+        <div class="ag-pstat"><b>${nEnrollDone}</b><span>완료 챌린지</span></div>
+      </div>
+    </div>
+    <div class="ag-sec-h"><h3>내 별 내역</h3></div>
+    <div class="ag-card">
+      <div class="ag-tiles">
+        <div class="ag-tile"><div class="k">올해 별</div><div class="v">⭐ ${yearStars.toLocaleString()}</div></div>
+        <div class="ag-tile"><span class="ag-grade gtag">${gEmo} ${esc(grade)}</span><div class="k">누적 별</div><div class="v">⭐ ${totalStars.toLocaleString()}</div></div>
+      </div>
+      ${ng?`<div class="ag-nextbar"><div class="lab"><span>다음 등급 <b>${ng.name}</b>까지</span><span><b>${ng.need.toLocaleString()}별</b></span></div><div class="ag-bar"><span style="width:${Math.max(2,Math.min(100,pct))}%"></span></div></div>`
+          :`<div class="ag-nextbar"><div class="lab"><span>최고 등급 <b>레전드</b> 달성! 🎉</span></div><div class="ag-bar"><span style="width:100%"></span></div></div>`}
+      <div class="ag-div"></div>
+      <div class="ag-subh">활동별 별 (올해 · 누적)</div>
+      ${grpRows?`<table class="ag-tbl"><tr><th>활동</th><th>올해</th><th>누적</th></tr>${grpRows}</table>`:'<div class="ag-empty">아직 모은 별이 없어요. 퀴즈·소감·챌린지로 별을 모아보세요.</div>'}
+      <div class="ag-div"></div>
+      <div class="ag-subh">등급 안내</div>
+      <div class="ag-tiers">${tiers}</div>
+      <div class="ag-earn">별 버는 법 — ${earn}<br>등급은 <b>누적 별</b> 기준이며 한 번 오르면 내려가지 않아요.</div>
+    </div>
+    <div class="ag-sec-h"><h3>내 기록</h3>${noteItems.length?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
+    <div class="ag-chips"><span class="ag-chip">한 줄 소감 ${nOne}</span><span class="ag-chip">한 줄 질문 ${nQ}</span><span class="ag-chip">서평 ${nRev}</span></div>
+    <div class="ag-notes">${notes}</div>`;
+}
+
 async function renderMyProfileTop(){
   const el=document.getElementById('myProfileTop'); if(!el) return;
   const s=bxStudent(); const moreBtn=document.getElementById('myMoreBtn');
@@ -6009,6 +6166,7 @@ async function saveProfile(){
   closeProfileEdit();
   try{ bxRenderAccountChip(); }catch(e){}
   renderMyProfileTop();
+  renderActivityGroup();
 }
 /* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
 const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
@@ -7023,7 +7181,11 @@ const FEED_PASTEL=['#eef2ff','#fdeef4','#eefaf1','#fff6e9','#eef7fb','#f3eefe','
 const FEED_ACT={ oneline:{t:'한 줄 소감',cat:'oneline'}, review:{t:'서평',cat:'review'}, essay:{t:'독후감',cat:'review'},
   underline:{t:'핵심 문장',cat:'highlight'}, recommend:{t:'책 추천',cat:'recommend'}, question:{t:'질문',cat:'question'},
   impression:{t:'한 줄 소감',cat:'oneline'} };
-const GRADE_EMO={씨앗:'🌰',새싹:'🌱',나무:'🌳',숲:'🌲'};
+const GRADE_EMO={라이징스타:'💫',스타:'⭐',빅스타:'🌟',슈퍼스타:'✨',레전드:'👑'};
+const GRADE_TIERS=[['라이징스타',0],['스타',500],['빅스타',1500],['슈퍼스타',3000],['레전드',5000]];
+function gradeOf(t){t=+t||0;let g=GRADE_TIERS[0][0];for(const[n,m]of GRADE_TIERS){if(t>=m)g=n;}return g;}
+function nextGrade(t){t=+t||0;for(const[n,m]of GRADE_TIERS){if(t<m)return{name:n,at:m,need:m-t};}return null;}
+function gradeFloor(t){t=+t||0;let f=0;for(const[,m]of GRADE_TIERS){if(t>=m)f=m;}return f;}
 let _feedTab='rec', _feedType='all', _feedItems=[];
 let _myFollows=new Set(), _likeCount={}, _myLikes=new Set();
 async function loadFeedSocial(){
