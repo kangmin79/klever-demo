@@ -1178,9 +1178,10 @@ body.dark .mw-badge{color:var(--gold);}
 .mypage-head{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;}
 .mypage-head-l{min-width:0;}
 .mypage-head-r{flex-shrink:0;}
-.mypage-head-r .pf-strip{margin:0;flex-direction:row-reverse;text-align:right;}
-.mypage-head-r .pf-nm{flex-direction:row-reverse;}
-@media(max-width:680px){ .mypage-head-r{width:100%;} .mypage-head-r .pf-strip{flex-direction:row;text-align:left;justify-content:flex-start;} .mypage-head-r .pf-nm{flex-direction:row;} }
+.pf-line{font-size:13.5px;color:var(--text-light);white-space:nowrap;}
+.pf-line .pf-nm2{font-size:16px;font-weight:800;color:var(--text);margin-right:10px;}
+.pf-line b{color:var(--text);font-weight:800;}
+@media(max-width:680px){ .mypage-head-r{width:100%;} .pf-line{white-space:normal;} }
 .pf-strip{display:flex;align-items:center;gap:13px;margin:16px 0 6px;}
 .pf-ava{width:46px;height:46px;border-radius:13px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;}
 .pf-id{min-width:0;}
@@ -4812,7 +4813,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622x';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622y';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5992,16 +5993,8 @@ async function renderMyProfileTop(){
   const readSec=reading.length
     ? `<div class="sg-sec sg-mini"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
     : '';
-  const favHint = favBook ? '' : (done.length?` · <span class="favset" onclick="event.stopPropagation();openProfileEdit()">인생책 고르기</span>`:'');
-  if(slot) slot.innerHTML=`
-    <div class="pf-strip">
-      <div class="pf-ava">${s.emoji||'🙂'}</div>
-      <div class="pf-id">
-        <div class="pf-nm">${esc(s.name)}<button class="pf-edit" onclick="openProfileEdit()">편집</button></div>
-        ${bio?`<div class="pf-bio">${esc(bio)}</div>`:''}
-        <div class="pf-stats">완독 <b>${st.done}</b> · 글 <b>${nWrite}</b> · 점수 <b>${(st.score||0).toLocaleString()}</b></div>
-      </div>
-    </div>`;
+  const favHint = done.length ? ` · <span class="favset" onclick="event.stopPropagation();openProfileEdit()">${favBook?'인생책 바꾸기':'인생책 고르기'}</span>` : '';
+  if(slot) slot.innerHTML=`<div class="pf-line"><span class="pf-nm2">${esc(s.name)}</span>완독 <b>${st.done}</b> · 글 <b>${nWrite}</b> · 점수 <b>${(st.score||0).toLocaleString()}</b></div>`;
   el.innerHTML=`
     <div class="sg-sec sg-hero"><div class="sg-h">내가 완독한 책<span class="cnt">${done.length||''}</span></div><div class="sg-sub">끝까지 읽어낸 책들이에요${favHint}</div>${doneRow}</div>
     ${readSec}`;
