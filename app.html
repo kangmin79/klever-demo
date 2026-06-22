@@ -1376,9 +1376,16 @@ body.dark .bm-toast{color:#0f172a;}
 .cg-done{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:border-color .15s,transform .15s;}
 .cg-done:hover{border-color:var(--gold);transform:translateY(-2px);}
 .cg-done-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.cg-badge{font-size:11.5px;padding:4px 11px;border-radius:99px;background:var(--primary-bg);color:var(--primary);font-weight:800;display:inline-flex;align-items:center;gap:4px;}
+.cg-badge{font-size:11.5px;padding:4px 11px;border-radius:99px;background:#E7F7EE;color:#1B8F5A;font-weight:800;display:inline-flex;align-items:center;gap:4px;}
+body.dark .cg-badge{background:rgba(31,169,113,.16);color:#46c98e;}
 .cg-done-top b{font-size:15.5px;}
-.cg-go{margin-left:auto;font-size:12.5px;color:var(--primary);font-weight:700;}
+.cg-go{margin-left:auto;font-size:12.5px;color:var(--primary);font-weight:700;background:var(--primary-bg);padding:5px 12px;border-radius:99px;transition:background .15s,color .15s;}
+.cg-done:hover .cg-go{background:var(--primary);color:#fff;}
+body.dark .cg-done:hover .cg-go{color:#0f172a;}
+.cg-v-score{color:var(--gold);}
+.cg-v-ok{color:#1f9d6b;}
+body.dark .cg-v-ok{color:#46c98e;}
+.cg-v-muted{color:var(--text-light);}
 .cg-done-stats{display:flex;gap:24px;margin-top:13px;flex-wrap:wrap;}
 .cg-done-stats>div{display:flex;flex-direction:column;gap:3px;}
 .cg-done-stats span{font-size:11.5px;color:var(--text-light);}
@@ -4947,7 +4954,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6367,7 +6374,7 @@ async function renderChalGroup(){
   const done=(results||[]).filter(r=> hasScenes && CHALLENGE_SCENES[r.book_id] && (r.submitted || (r.quiz_ok>0)) );
   const body=document.getElementById('chalDoneBody'); if(!body) return;
   if(!done.length){ body.innerHTML='<div class="cg-empty">아직 완료한 챌린지가 없어요. <b style="color:var(--primary)">독서 챌린지</b>에서 장면 챌린지를 끝내면 결과가 여기 쌓여요.</div>'; return; }
-  body.innerHTML=done.map(r=>{ const sc=CHALLENGE_SCENES[r.book_id]; const title=sc.bookTitle||cleanT((_bookById(r.book_id)||{}).title||r.book_id); const tot=r.quiz_total||_scQuizTotal(r.book_id); const d=r.updated_at?_agDate(r.updated_at):''; return `<div class="cg-done" onclick="openChalResult('${esc(r.book_id)}')"><div class="cg-done-top"><span class="cg-badge">${IC_CHK} 완료</span><b>${esc(title)}</b><span class="cg-go">결과 보기 ›</span></div><div class="cg-done-stats"><div><span>퀴즈 점수</span><b>${r.score||0}점</b></div><div><span>정답</span><b>${r.quiz_ok||0} / ${tot}</b></div><div><span>한 줄 소감</span><b>${r.impression?'작성':'—'}</b></div><div><span>완료일</span><b>${d||'-'}</b></div></div></div>`; }).join('');
+  body.innerHTML=done.map(r=>{ const sc=CHALLENGE_SCENES[r.book_id]; const title=sc.bookTitle||cleanT((_bookById(r.book_id)||{}).title||r.book_id); const tot=r.quiz_total||_scQuizTotal(r.book_id); const d=r.updated_at?_agDate(r.updated_at):''; return `<div class="cg-done" onclick="openChalResult('${esc(r.book_id)}')"><div class="cg-done-top"><span class="cg-badge">${IC_CHK} 완료</span><b>${esc(title)}</b><span class="cg-go">결과 보기 ›</span></div><div class="cg-done-stats"><div><span>퀴즈 점수</span><b class="cg-v-score">${r.score||0}점</b></div><div><span>정답</span><b class="cg-v-ok">${r.quiz_ok||0} / ${tot}</b></div><div><span>한 줄 소감</span><b class="${r.impression?'cg-v-ok':'cg-v-muted'}">${r.impression?'작성 완료':'미작성'}</b></div><div><span>완료일</span><b>${d||'-'}</b></div></div></div>`; }).join('');
 }
 async function openChalResult(bookId){
   const el=document.getElementById('chalGroup'); if(!el) return;
