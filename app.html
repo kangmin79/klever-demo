@@ -4700,7 +4700,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6896,6 +6896,16 @@ async function feedFollow(btn,sid){
 }
 function setFeedTab(t){ _feedTab=t; renderFeed(); }
 function setFeedType(t){ _feedType=t; renderFeed(); }
+// 정렬 우선순위(우수작→최신)는 지키되, 같은 학생이 연속으로 안 나오게 골고루 섞기
+function _feedSpread(sorted){
+  const pool=sorted.slice(), out=[]; let last=null;
+  while(pool.length){
+    let idx=pool.findIndex(x=>x.sid!==last);
+    if(idx<0) idx=0;            // 남은 게 전부 같은 학생이면 그냥 진행
+    out.push(pool[idx]); last=pool[idx].sid; pool.splice(idx,1);
+  }
+  return out;
+}
 function feedCard(it,i){
   const s=BX_STUDENTS.find(z=>z.id===it.sid) || {name:'학생', emoji:'🙂'};
   const b=_bookById(it.book_id);
@@ -6963,6 +6973,7 @@ async function renderFeed(){
   if(_feedTab==='follow') list=list.filter(x=>_myFollows.has(x.sid));
   if(_feedType!=='all') list=list.filter(x=>(FEED_ACT[x.act]||{}).cat===_feedType);
   list.sort((a,b)=>((b.featured?1:0)-(a.featured?1:0)) || String(b.time||'').localeCompare(String(a.time||'')));
+  list=_feedSpread(list);   // 같은 학생 연속 방지(여러 친구 골고루)
   if(!list.length){
     box.innerHTML=head+(_feedTab==='follow'
       ? `<div class="feed-empty">아직 팔로우한 친구의 글이 없어요.<br>추천 탭에서 친구 이름을 누르고 <b>팔로우</b> 해보세요.</div>`
