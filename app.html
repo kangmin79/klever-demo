@@ -1297,6 +1297,16 @@ body.dark .ag-grade{color:var(--gold);}
 .ag-tile{border:1px solid color-mix(in srgb,var(--border) 75%,transparent);}
 .ag-tiles .ag-tile:nth-child(2){background:linear-gradient(135deg,rgba(212,169,59,.13),rgba(212,169,59,.03));border-color:rgba(212,169,59,.34);}
 .ag-bar{height:8px;}
+/* 등급 안내 = 성장 사다리 */
+.ag-tier{padding:14px 6px 13px;position:relative;}
+.ag-tier .te{font-size:22px;line-height:1;margin-bottom:7px;}
+.ag-tier.future .te{filter:grayscale(.6);opacity:.45;}
+.ag-tier.future .tn{color:var(--text-light);}
+.ag-tier.done .te{opacity:.9;}
+.ag-tier.on{background:linear-gradient(135deg,rgba(212,169,59,.18),rgba(212,169,59,.04));border-color:rgba(212,169,59,.5);box-shadow:0 8px 18px -12px rgba(168,128,31,.55);}
+.ag-tier.on .tn{color:#a8801f;}
+body.dark .ag-tier.on .tn{color:var(--gold);}
+.ag-tier .tnow{font-size:9.5px;font-weight:800;color:#fff;background:var(--gold);border-radius:99px;padding:1px 8px;margin-top:7px;display:inline-block;letter-spacing:.3px;}
 /* ── ③ 내 책 모음 그룹 ── */
 .bm-life{display:flex;gap:22px;align-items:flex-start;}
 .bm-cover{width:118px;height:170px;flex:none;border-radius:12px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 24px -8px rgba(0,0,0,.4);}
@@ -4954,7 +4964,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6155,7 +6165,8 @@ async function renderActivityGroup(){
   const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
   const earn=AG_EARN_ORDER.filter(a=>rateMap[a]!=null).map(a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`).join(' · ');
   // 등급 안내
-  const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; return `<div class="ag-tier${t[0]===grade?' on':''}"><div class="tn">${t[0]}</div><div class="tr">${rng}</div></div>`; }).join('');
+  const curIdx=GRADE_TIERS.findIndex(t=>t[0]===grade);
+  const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; const on=t[0]===grade; const cls=on?' on':(i<curIdx?' done':' future'); return `<div class="ag-tier${cls}"><div class="te">${GRADE_EMO[t[0]]||'⭐'}</div><div class="tn">${t[0]}</div><div class="tr">${rng}</div>${on?'<div class="tnow">현재</div>':''}</div>`; }).join('');
   // 내 기록 노트
   const noteItems=writings.filter(w=>AG_NOTE_KIND[w.activity]).slice(0,6);
   const notes= noteItems.length ? noteItems.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('') : '<div class="ag-empty">아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.</div>';
