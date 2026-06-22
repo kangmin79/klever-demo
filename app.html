@@ -1344,6 +1344,59 @@ body.dark .bm-btn.fill{color:#0f172a;}
 body.dark .bm-toast{color:#0f172a;}
 .bm-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 @media(max-width:760px){.bm-life{flex-direction:column;}.bm-pickgrid{grid-template-columns:repeat(3,1fr);}}
+/* ── ② 내 챌린지: 완료 결과 + 문항별 복습 ── */
+.cg-done{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:border-color .15s,transform .15s;}
+.cg-done:hover{border-color:var(--gold);transform:translateY(-2px);}
+.cg-done-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.cg-badge{font-size:11.5px;padding:4px 11px;border-radius:99px;background:var(--primary-bg);color:var(--primary);font-weight:800;display:inline-flex;align-items:center;gap:4px;}
+.cg-done-top b{font-size:15.5px;}
+.cg-go{margin-left:auto;font-size:12.5px;color:var(--primary);font-weight:700;}
+.cg-done-stats{display:flex;gap:24px;margin-top:13px;flex-wrap:wrap;}
+.cg-done-stats>div{display:flex;flex-direction:column;gap:3px;}
+.cg-done-stats span{font-size:11.5px;color:var(--text-light);}
+.cg-done-stats b{font-size:15px;font-weight:800;}
+.cg-empty{padding:18px 2px;color:var(--text-light);font-size:13.5px;}
+.cg-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sub);background:none;border:1px solid var(--border);border-radius:9px;padding:7px 13px;cursor:pointer;font-family:inherit;font-weight:600;margin-bottom:16px;}
+.cg-back:hover{border-color:var(--gold);color:var(--text);}
+.cg-head{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-radius:16px;padding:20px 22px;margin-bottom:18px;}
+body.dark .cg-head{color:#0f172a;}
+.cg-head .rh-badge{font-size:11.5px;font-weight:800;background:rgba(255,255,255,.22);padding:4px 11px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+.cg-head h3{font-size:20px;font-weight:800;margin:11px 0 4px;}
+.cg-head .sub{font-size:13px;opacity:.85;}
+.cg-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;}
+.cg-t{background:rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;}
+.cg-t .k{font-size:11.5px;opacity:.85;}
+.cg-t .v{font-size:22px;font-weight:800;margin-top:3px;}
+.cg-gaugebox{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+.cg-gauge{width:104px;height:104px;border-radius:50%;flex:none;background:conic-gradient(var(--gold) calc(var(--p,0)*1%),var(--bg-input) 0);display:flex;align-items:center;justify-content:center;}
+.cg-gauge .in{width:78px;height:78px;border-radius:50%;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.cg-gauge .sc{font-size:23px;font-weight:800;line-height:1;}
+.cg-gauge .sl{font-size:11px;color:var(--text-light);margin-top:2px;}
+.cg-acc{border:1px solid var(--border);border-radius:12px;margin-bottom:9px;overflow:hidden;background:var(--bg-card);}
+.cg-acc-h{display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;}
+.cg-acc-h:hover{background:var(--bg-input);}
+.cg-acc-h .num{font-weight:800;color:var(--text-light);font-size:13px;width:24px;flex:none;}
+.cg-acc-h .at{font-weight:700;flex:1;font-size:14px;}
+.cg-ox{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;flex:none;}
+.cg-ox-o{background:#E7F7EE;color:#1B8F5A;}
+.cg-ox-x{background:#FCE9E9;color:#D14343;}
+.cg-acc .chev{transition:transform .2s;color:var(--text-light);width:16px;height:16px;flex:none;}
+.cg-acc.open .chev{transform:rotate(90deg);}
+.cg-acc-b{display:none;padding:0 15px 15px;}
+.cg-acc.open .cg-acc-b{display:block;}
+.cg-review{background:var(--bg-input);border:1px solid var(--border);border-radius:10px;padding:16px 17px;}
+.cg-quote{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14.5px;color:var(--text-sub);line-height:1.55;}
+.cg-q{font-weight:800;font-size:14px;margin:14px 0 11px;}
+.cg-opt{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:9px;font-size:13px;margin-bottom:7px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-sub);}
+.cg-opt .on{font-weight:800;flex:none;}
+.cg-opt.correct{background:#E7F7EE;border-color:#BFE6CF;color:#176844;}
+.cg-opt.wrong{background:#FCE9E9;border-color:#F2C9C9;color:#A53535;}
+.cg-opt .mk{margin-left:auto;font-size:11px;font-weight:800;flex:none;}
+.cg-bg{font-size:13px;color:var(--text-sub);line-height:1.7;margin-top:13px;padding-top:12px;border-top:1px solid var(--border);}
+.cg-bg b{color:var(--gold);}
+.cg-qq{display:flex;gap:13px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:11px;}
+.cg-qq-t{font-size:14.5px;color:var(--text);line-height:1.55;margin-top:3px;}
+@media(max-width:760px){.cg-tiles{grid-template-columns:1fr 1fr;}}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -2211,7 +2264,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <!-- ① 내 활동 그룹 (프로필 6스탯 + 별 내역·등급 + 내 기록) — 실데이터 -->
   <div id="actGroup"></div>
 
-  <!-- 내 서가: 완독/읽는 책 가로 서가 (→ 향후 ③ 내 책 모음 그룹으로 편입) -->
+  <!-- ② 내 챌린지 그룹 (참여 중 Quest Map + 완료한 챌린지 결과·복습) — 실데이터 -->
+  <div id="chalGroup"></div>
+
+  <!-- ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 -->
   <div id="myProfileTop"></div>
   <!-- 내가 쓴 글 (공개) — ① 내 기록으로 대체, 숨김 -->
   <div id="myWritings" style="display:none"></div>
@@ -2237,11 +2293,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
     <div class="read-chart" id="readChart"></div>
   </div>
 
-  <!-- Quest Map — 참여 중/지난 챌린지 (다중 그룹) -->
-  <div class="quest-map">
-    <div class="quest-map-title" style="display:flex;align-items:center;gap:8px;margin-bottom:18px;"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none" style="color:var(--primary);"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Quest Map</div>
-    <div id="questMapBody"></div>
-  </div>
+  <!-- Quest Map은 ② 내 챌린지 그룹(#chalGroup)으로 이동 -->
 
   <!-- 통계: 완독·퀴즈·점수·오늘읽음 + 독서 잔디 (액션 영역 아래로 이동) -->
   <div id="readingStats"></div>
@@ -3818,7 +3870,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderActivityGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -4313,7 +4365,7 @@ async function bxPickStudent(id){
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
-  try{ renderActivityGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
+  try{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
 }
 // 우리도서관 카테고리(관리자가 추가·삭제·편집) — 서버 library_sections에서 로드
@@ -4922,7 +4974,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6301,6 +6353,62 @@ function bmShare(kind,name){
   try{ const txt=`[북스타] ${kind} · ${name}`; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); } }catch(e){}
   bmToast('공유 내용을 복사했어요');
 }
+
+/* ════════ 내서재 ② 내 챌린지 그룹 (참여 중 / 완료 결과·복습) — 실데이터 ════════ */
+const CG_IC='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4"/><path d="M6 4h11l-2.5 4L17 12H6"/></svg>';
+const IC_CHK='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg>';
+function _scQuizTotal(bookId){ const sc=(typeof CHALLENGE_SCENES!=='undefined')?CHALLENGE_SCENES[bookId]:null; if(!sc) return 0; return (sc.scenes||[]).reduce((s,x)=>s+((x.quiz||[]).length),0); }
+async function renderChalGroup(){
+  const el=document.getElementById('chalGroup'); if(!el) return;
+  const head='<div class="lib-grp"><div class="lib-grp-ic">'+CG_IC+'</div><div><div class="lib-grp-t">내 챌린지</div><div class="lib-grp-s">참여 중 · 완료</div></div></div>';
+  const s=bxStudent();
+  if(!s){ el.innerHTML=head+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 챌린지가 보여요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
+  el.innerHTML = head
+    + '<div class="ag-sec-h"><h3>참여 중인 챌린지</h3></div>'
+    + '<div class="quest-map"><div id="questMapBody"></div></div>'
+    + '<div class="ag-sec-h"><h3>완료한 챌린지</h3></div>'
+    + '<div id="chalDoneBody"><div class="cg-empty">불러오는 중…</div></div>';
+  try{ renderQuestMap(); }catch(e){}
+  const enc=encodeURIComponent(s.id);
+  const results=await _agFetch(`bookstar_challenge_results?student_id=eq.${enc}&select=book_id,impression,quiz_ok,quiz_total,score,submitted,updated_at&order=updated_at.desc`);
+  const hasScenes=(typeof CHALLENGE_SCENES!=='undefined');
+  const done=(results||[]).filter(r=> hasScenes && CHALLENGE_SCENES[r.book_id] && (r.submitted || (r.quiz_ok>0)) );
+  const body=document.getElementById('chalDoneBody'); if(!body) return;
+  if(!done.length){ body.innerHTML='<div class="cg-empty">아직 완료한 챌린지가 없어요. <b style="color:var(--primary)">독서 챌린지</b>에서 장면 챌린지를 끝내면 결과가 여기 쌓여요.</div>'; return; }
+  body.innerHTML=done.map(r=>{ const sc=CHALLENGE_SCENES[r.book_id]; const title=sc.bookTitle||cleanT((_bookById(r.book_id)||{}).title||r.book_id); const tot=r.quiz_total||_scQuizTotal(r.book_id); const d=r.updated_at?_agDate(r.updated_at):''; return `<div class="cg-done" onclick="openChalResult('${esc(r.book_id)}')"><div class="cg-done-top"><span class="cg-badge">${IC_CHK} 완료</span><b>${esc(title)}</b><span class="cg-go">결과 보기 ›</span></div><div class="cg-done-stats"><div><span>퀴즈 점수</span><b>${r.score||0}점</b></div><div><span>정답</span><b>${r.quiz_ok||0} / ${tot}</b></div><div><span>한 줄 소감</span><b>${r.impression?'작성':'—'}</b></div><div><span>완료일</span><b>${d||'-'}</b></div></div></div>`; }).join('');
+}
+async function openChalResult(bookId){
+  const el=document.getElementById('chalGroup'); if(!el) return;
+  const sc=(typeof CHALLENGE_SCENES!=='undefined')?CHALLENGE_SCENES[bookId]:null; if(!sc) return;
+  const s=bxStudent(); if(!s) return; const enc=encodeURIComponent(s.id);
+  el.innerHTML='<div class="cg-empty" style="padding:30px 2px">결과 불러오는 중…</div>';
+  const [resA,qWrites]=await Promise.all([
+    _agFetch(`bookstar_challenge_results?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&select=ans,impression,quiz_ok,quiz_total,score,updated_at`),
+    _agFetch(`bookstar_writings?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&activity=eq.question&hidden=eq.false&select=text,created_at&order=created_at.desc`)
+  ]);
+  const res=(resA&&resA[0])||{}; const ans=res.ans||{};
+  const items=[]; (sc.scenes||[]).forEach((scene,si)=>{ (scene.quiz||[]).forEach((q,qi)=>{ items.push({si,qi,scene,q}); }); });
+  const tot=res.quiz_total||items.length;
+  const ok=(res.quiz_ok!=null)?res.quiz_ok:items.filter(it=>{ const a=ans[it.si+'-'+it.qi]; return a&&a.ok; }).length;
+  const pct=tot?Math.round(ok/tot*100):0;
+  const circ='①②③④⑤⑥⑦⑧⑨⑩';
+  const title=sc.bookTitle||bookId;
+  const accs=items.map((it,i)=>{ const key=it.si+'-'+it.qi; const a=ans[key]; const mine=a?a.pick:undefined; const isOk=a?!!a.ok:false;
+    const opts=(it.q.opts||[]).map((o,oi)=>{ let cls='',mk=''; if(oi===it.q.correct){ cls=' correct'; mk=(oi===mine?'내 답 · 정답':'정답'); } else if(oi===mine){ cls=' wrong'; mk='내 답'; } return `<div class="cg-opt${cls}"><span class="on">${circ[oi]||(oi+1)+'.'}</span><span>${esc(o)}</span>${mk?`<span class="mk">${mk}</span>`:''}</div>`; }).join('');
+    const st=it.scene.title||it.scene.label||('문항 '+(i+1));
+    return `<div class="cg-acc" id="cgacc${i}"><div class="cg-acc-h" onclick="cgAccToggle(${i})"><span class="num">${(i+1<10?'0':'')+(i+1)}</span><span class="at">${esc(st)}</span><span class="cg-ox ${a?(isOk?'cg-ox-o':'cg-ox-x'):'cg-ox-x'}">${a?(isOk?'정답':'오답'):'미응답'}</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div><div class="cg-acc-b"><div class="cg-review">${it.scene.excerpt?`<div class="cg-quote">“${esc(it.scene.excerpt)}”</div>`:''}<div class="cg-q">Q. ${esc(it.q.q)}</div>${opts}${it.q.expl?`<div class="cg-bg"><b>배경 설명</b> ${esc(it.q.expl)}</div>`:''}</div></div></div>`;
+  }).join('');
+  const qqList=[]; if(res.impression) qqList.push({lab:'한 줄 소감',t:res.impression}); (qWrites||[]).forEach(w=>qqList.push({lab:'한 줄 질문',t:w.text}));
+  const qq=qqList.length?qqList.map(x=>`<div class="cg-qq"><div><div style="font-size:12px;color:var(--text-light)">${x.lab}</div><div class="cg-qq-t">${esc(x.t)}</div></div></div>`).join(''):'<div class="cg-empty">이 책에 남긴 한 줄 글이 아직 없어요.</div>';
+  el.innerHTML=`
+    <button class="cg-back" onclick="renderChalGroup()"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg> 내 챌린지로</button>
+    <div class="cg-head"><span class="rh-badge">${IC_CHK} 완료</span><h3>${esc(title)}</h3><div class="sub">${esc(sc.author||'')} · 장면 챌린지${res.updated_at?` · ${_agDate(res.updated_at)} 완료`:''}</div>
+      <div class="cg-tiles"><div class="cg-t"><div class="k">퀴즈 점수</div><div class="v">${res.score||0}점</div></div><div class="cg-t"><div class="k">정답</div><div class="v">${ok} / ${tot}</div></div><div class="cg-t"><div class="k">정답률</div><div class="v">${pct}%</div></div></div></div>
+    <div class="ag-card"><div class="cg-gaugebox"><div class="cg-gauge" style="--p:${pct}"><div class="in"><div class="sc">${pct}</div><div class="sl">% 정답</div></div></div><div style="flex:1;min-width:180px"><div class="ag-subh" style="margin-bottom:6px">문항별 복습</div><div style="font-size:12.5px;color:var(--text-light)">제목을 누르면 정답·내 답·배경 설명이 열려요. 총 ${items.length}문항.</div></div></div><div class="ag-div"></div>${accs||'<div class="cg-empty">복습할 문항이 없어요.</div>'}</div>
+    <div class="ag-sec-h"><h3>내가 남긴 한 줄</h3></div>${qq}`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function cgAccToggle(i){ const a=document.getElementById('cgacc'+i); if(a) a.classList.toggle('open'); }
 function toggleMyMore(){
   const w=document.getElementById('myMoreWrap'); const b=document.getElementById('myMoreBtn'); if(!w) return;
   const open=(w.style.display==='none');
