@@ -1283,6 +1283,19 @@ body.dark .ag-card:hover{box-shadow:0 8px 26px -12px rgba(0,0,0,.5);}
 .ag-tbl tr:hover td{background:var(--bg-input);}
 .ag-chip{transition:border-color .14s,color .14s,background .14s;}
 .ag-chip:hover{border-color:var(--gold);color:var(--text);background:var(--primary-bg);}
+/* ── ① 내 활동 디테일 다듬기 (깔끔·입체·위계) ── */
+.ag-card{border-color:color-mix(in srgb,var(--border) 70%,transparent);box-shadow:0 1px 2px rgba(26,41,66,.035), 0 12px 32px -22px rgba(26,41,66,.28);}
+body.dark .ag-card{box-shadow:0 1px 2px rgba(0,0,0,.2), 0 12px 32px -22px rgba(0,0,0,.6);}
+.ag-sec-h h3{position:relative;padding-left:13px;}
+.ag-sec-h h3::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:15px;border-radius:3px;background:linear-gradient(180deg,var(--gold),var(--accent));}
+.ag-pav{background:linear-gradient(135deg,var(--primary-bg),var(--bg-input));box-shadow:inset 0 0 0 1px var(--border);}
+.ag-grade{background:linear-gradient(135deg,rgba(212,169,59,.18),rgba(212,169,59,.05));color:#a8801f;box-shadow:inset 0 0 0 1px rgba(212,169,59,.32);}
+body.dark .ag-grade{color:var(--gold);}
+.ag-pstat{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--border) 75%,transparent);box-shadow:0 1px 2px rgba(26,41,66,.03);}
+.ag-pstat b{color:var(--primary);letter-spacing:-.5px;}
+.ag-tile{border:1px solid color-mix(in srgb,var(--border) 75%,transparent);}
+.ag-tiles .ag-tile:nth-child(2){background:linear-gradient(135deg,rgba(212,169,59,.13),rgba(212,169,59,.03));border-color:rgba(212,169,59,.34);}
+.ag-bar{height:8px;}
 /* ── ③ 내 책 모음 그룹 ── */
 .bm-life{display:flex;gap:22px;align-items:flex-start;}
 .bm-cover{width:118px;height:170px;flex:none;border-radius:12px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 24px -8px rgba(0,0,0,.4);}
@@ -4933,7 +4946,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
