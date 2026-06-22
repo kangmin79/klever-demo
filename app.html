@@ -1212,6 +1212,22 @@ body.dark .mw-badge{color:var(--gold);}
 .sg-bar i{display:block;height:100%;background:var(--primary);border-radius:3px;}
 .sg-pct{font-size:11px;color:var(--primary);font-weight:800;margin-top:4px;}
 .sg-empty{font-size:13px;color:var(--text-light);padding:6px 2px;}
+/* 완독 = 주인공(크게), 읽는 책 = 작게, 인생책 = ⭐ 대표 카드 */
+.sg-hero .sg-h{font-size:20px;}
+.sg-hero .sg-card{width:138px;}
+.sg-hero .sg-cv{width:138px;height:198px;border-radius:12px;box-shadow:0 10px 24px -8px rgba(0,0,0,.4);}
+.sg-mini{margin-top:22px;}
+.sg-mini .sg-h{font-size:15px;}
+.sg-mini .sg-card{width:88px;}
+.sg-mini .sg-cv{width:88px;height:126px;border-radius:8px;}
+.sg-mini .sg-t{font-size:12px;margin-top:6px;}
+.sg-card.fav .sg-cv{box-shadow:0 10px 26px -6px rgba(212,169,59,.6);outline:2.5px solid var(--gold);outline-offset:-1px;}
+.sg-fav{position:absolute;top:6px;left:6px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:2px 7px;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.sg-h .cnt{color:var(--text-light);font-weight:700;font-size:15px;margin-left:4px;}
+.sg-h .favset{color:var(--gold);cursor:pointer;font-weight:700;}
+/* 내 기록 더보기(측정존 접기) */
+.my-more-btn{display:block;width:100%;margin:30px 0 4px;border:1px solid var(--border);background:var(--bg-card);border-radius:14px;padding:14px;font-size:13.5px;font-weight:800;color:var(--text-sub);cursor:pointer;}
+.my-more-btn:hover{background:var(--bg-input);}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -2080,7 +2096,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <div id="myProfileTop"></div>
   <!-- 내가 쓴 글 (공개) -->
   <div id="myWritings"></div>
-  <div class="my-priv-div" id="myPrivDiv" style="display:none">여기부터 나만 보여요</div>
+
+  <!-- 측정존(나만): 접어두고 '더보기'로 펼침 -->
+  <button class="my-more-btn" id="myMoreBtn" onclick="toggleMyMore()" style="display:none">📊 내 기록 더보기 (퀴즈·잔디·서평) ▾</button>
+  <div id="myMoreWrap" style="display:none">
 
   <!-- 상단 요약 히어로 (실측 3숫자) -->
   <div class="my-hero" id="myHero" style="display:none"></div>
@@ -2146,6 +2165,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       <span style="font-size:11px;color:var(--text-light)">완독 인증 우선</span></div>
     <div id="peerReviews" class="rv-grid"></div>
   </div>
+  </div><!-- /myMoreWrap -->
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -4783,7 +4803,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622t';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622u';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5935,12 +5955,12 @@ function _readingBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).fo
 function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
 async function renderMyProfileTop(){
   const el=document.getElementById('myProfileTop'); if(!el) return;
-  const s=bxStudent(); const priv=document.getElementById('myPrivDiv');
+  const s=bxStudent(); const moreBtn=document.getElementById('myMoreBtn');
   if(!s){
     el.innerHTML=`<div class="pf-strip" style="justify-content:center;gap:12px"><div class="pf-bio empty">계정을 선택하면 내 서가가 만들어져요.</div><button class="pf-edit" onclick="bxOpenPicker()">계정 선택</button></div>`;
-    if(priv) priv.style.display='none'; return;
+    if(moreBtn) moreBtn.style.display='none'; return;
   }
-  if(priv) priv.style.display='flex';
+  if(moreBtn) moreBtn.style.display='block';
   let prof=null;
   try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
   const bio=(prof&&prof.bio)||''; const favId=(prof&&prof.favorite_book_id)||'';
@@ -5948,29 +5968,39 @@ async function renderMyProfileTop(){
   try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
   writings=Array.isArray(writings)?writings:[];
   const nWrite=writings.length, nReview=writings.filter(w=>w.activity==='review').length;
-  const st=_myStats(); const done=_doneBooks(); const reading=_readingBooks(); const favBook=favId?_bookById(favId):null;
-  const favHtml=favBook
-    ? `<div class="pf-fav"><div class="cv">${_bkCover(favBook)}</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">${esc(cleanT(favBook.title))}</div></div></div>`
-    : `<div class="pf-fav empty" onclick="openProfileEdit()"><div class="cv">⭐</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">아직 안 골랐어요 — 골라보기 →</div></div></div>`;
+  const st=_myStats(); const reading=_readingBooks(); const favBook=favId?_bookById(favId):null;
+  // 완독 목록 — 인생책을 맨 앞으로
+  let done=_doneBooks();
+  if(favBook){ const i=done.findIndex(b=>b.id===favBook.id); if(i>0){ done=[done[i], ...done.slice(0,i), ...done.slice(i+1)]; } }
+  // 🏆 완독한 책 = 주인공 (큰 표지, 인생책은 ⭐ 대표 카드)
   const doneRow=done.length
-    ? `<div class="sg-row">${done.map(b=>`<div class="sg-card" onclick="openDetail('${esc(b.id)}')"><div class="sg-cv">${_bkCover(b)}<span class="sg-done">✔ 완독</span></div><div class="sg-t">${esc(cleanT(b.title))}</div><div class="sg-a">${esc(b.author||'')}</div></div>`).join('')}</div>`
+    ? `<div class="sg-row">${done.map(b=>{ const fav=favBook&&b.id===favBook.id;
+        return `<div class="sg-card${fav?' fav':''}" onclick="openDetail('${esc(b.id)}')"><div class="sg-cv">${_bkCover(b)}${fav?'<span class="sg-fav">⭐ 인생책</span>':'<span class="sg-done">✔ 완독</span>'}</div><div class="sg-t">${esc(cleanT(b.title))}</div><div class="sg-a">${esc(b.author||'')}</div></div>`;
+      }).join('')}</div>`
     : `<div class="sg-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>`;
-  const readRow=reading.length
-    ? `<div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div>`
-    : `<div class="sg-empty">완독 모드로 책을 열면 여기에 쌓여요.</div>`;
+  // 📖 읽던 책 = 작게
+  const readSec=reading.length
+    ? `<div class="sg-sec sg-mini"><div class="sg-h">📖 읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
+    : '';
+  const favHint = favBook ? '' : (done.length?` · <span class="favset" onclick="event.stopPropagation();openProfileEdit()">⭐ 인생책 고르기</span>`:'');
   el.innerHTML=`
     <div class="pf-strip">
       <div class="pf-ava">${s.emoji||'🙂'}</div>
       <div class="pf-id">
         <div class="pf-nm">${esc(s.name)}</div>
         <div class="pf-bio${bio?'':' empty'}">${bio?esc(bio):'상태메시지를 적어보세요'}</div>
-        <div class="pf-stats"><span class="pf-stat">🏆 완독 <b>${st.done}</b></span><span class="pf-stat">✍️ 글 <b>${nWrite}</b></span><span class="pf-stat">📝 서평 <b>${nReview}</b></span><span class="pf-stat">⭐ <b>${(st.score||0).toLocaleString()}</b></span></div>
+        <div class="pf-stats"><span class="pf-stat">🏆 완독 <b>${st.done}</b></span><span class="pf-stat">✍️ 글 <b>${nWrite}</b></span><span class="pf-stat">⭐ <b>${(st.score||0).toLocaleString()}</b></span></div>
       </div>
       <button class="pf-edit" onclick="openProfileEdit()">편집</button>
     </div>
-    ${favHtml}
-    <div class="sg-sec"><div class="sg-h">🏆 ${esc(s.name)}님이 완독한 책</div><div class="sg-sub">끝까지 읽어낸 책들이에요</div>${doneRow}</div>
-    <div class="sg-sec"><div class="sg-h">📖 지금 읽고 있는 책</div><div class="sg-sub">이어서 읽어볼까요?</div>${readRow}</div>`;
+    <div class="sg-sec sg-hero"><div class="sg-h">🏆 ${esc(s.name)}님이 완독한 책<span class="cnt">${done.length||''}</span></div><div class="sg-sub">끝까지 읽어낸 책들이에요${favHint}</div>${doneRow}</div>
+    ${readSec}`;
+}
+function toggleMyMore(){
+  const w=document.getElementById('myMoreWrap'); const b=document.getElementById('myMoreBtn'); if(!w) return;
+  const open=(w.style.display==='none');
+  w.style.display=open?'':'none';
+  if(b) b.innerHTML=open?'📊 내 기록 접기 ▴':'📊 내 기록 더보기 (퀴즈·잔디·서평) ▾';
 }
 async function openProfileEdit(){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
