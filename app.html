@@ -1234,7 +1234,8 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
 .ag-tile{background:var(--bg-input);border-radius:12px;padding:15px 17px;position:relative;}
 .ag-tile .k{font-size:12px;color:var(--text-light);}
-.ag-tile .v{font-size:26px;font-weight:800;margin-top:4px;display:flex;align-items:center;gap:6px;color:var(--gold);}
+.ag-tile .v{font-size:27px;font-weight:800;margin-top:5px;display:flex;align-items:center;gap:8px;color:var(--text);letter-spacing:-.5px;}
+.ag-star{width:23px;height:23px;flex:none;fill:var(--gold);filter:drop-shadow(0 1px 1px rgba(168,128,31,.25));}
 .ag-tile .gtag{position:absolute;top:14px;right:15px;}
 .ag-nextbar .lab{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:7px;}
 .ag-nextbar .lab b{color:var(--primary);font-weight:800;}
@@ -4946,7 +4947,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6111,6 +6112,7 @@ const AG_ACTGRP={
 const AG_EARN_ORDER=['quiz','oneline','question','review','essay','attend','challenge_join','challenge_done'];
 const AG_EARN_LABEL={quiz:'퀴즈 1문항',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
+const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
 async function _agFetch(path){ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; }
 function _agDate(iso){ try{ const d=new Date(iso); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; }catch(e){ return ''; } }
 async function renderActivityGroup(){
@@ -6169,8 +6171,8 @@ async function renderActivityGroup(){
     <div class="ag-sec-h"><h3>내 별 내역</h3></div>
     <div class="ag-card">
       <div class="ag-tiles">
-        <div class="ag-tile"><div class="k">올해 별</div><div class="v">⭐ ${yearStars.toLocaleString()}</div></div>
-        <div class="ag-tile"><span class="ag-grade gtag">${gEmo} ${esc(grade)}</span><div class="k">누적 별</div><div class="v">⭐ ${totalStars.toLocaleString()}</div></div>
+        <div class="ag-tile"><div class="k">올해 별</div><div class="v">${AG_STAR}${yearStars.toLocaleString()}</div></div>
+        <div class="ag-tile"><span class="ag-grade gtag">${gEmo} ${esc(grade)}</span><div class="k">누적 별</div><div class="v">${AG_STAR}${totalStars.toLocaleString()}</div></div>
       </div>
       ${ng?`<div class="ag-nextbar"><div class="lab"><span>다음 등급 <b>${ng.name}</b>까지</span><span><b>${ng.need.toLocaleString()}별</b></span></div><div class="ag-bar"><span style="width:${Math.max(2,Math.min(100,pct))}%"></span></div></div>`
           :`<div class="ag-nextbar"><div class="lab"><span>최고 등급 <b>레전드</b> 달성! 🎉</span></div><div class="ag-bar"><span style="width:100%"></span></div></div>`}
