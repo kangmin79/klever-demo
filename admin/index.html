@@ -32,7 +32,6 @@ a{color:inherit;text-decoration:none}
 .side{width:212px;flex:0 0 212px;background:var(--card);border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:60px;height:calc(100vh - 60px);overflow:auto}
 .side .grp{font-size:10.5px;font-weight:800;color:var(--light);letter-spacing:1px;margin:6px 10px 7px}
 .side .grp.builder{font-size:14px;font-weight:800;color:#6366f1;letter-spacing:.2px;margin-top:18px}
-.side .grp.archive{font-size:14px;font-weight:800;color:#1D9E75;letter-spacing:.2px;margin-top:18px}
 .side .grp .sub{display:block;font-size:10px;font-weight:600;color:var(--light);letter-spacing:0;margin-top:2px}
 .navi{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;transition:.13s;margin-bottom:3px}
 .navi:hover{background:var(--primary-bg);color:var(--primary)}
@@ -492,13 +491,6 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="navi" onclick="goArea(this,'International')"><span>International Students</span></div>
     <div class="navi" onclick="go(this,'comm')"><span>커뮤니티</span></div>
     <div class="navi" onclick="go(this,'notice')"><span>공지글 작성</span></div>
-
-    <div class="grp archive">bookstar Archive<span class="sub">학생 앱 화면 미리보기</span></div>
-    <div class="navi" onclick="goSoon(this,'우리 도서관','ourlib')"><span>우리 도서관</span></div>
-    <div class="navi" onclick="goSoon(this,'독서 챌린지','curation')"><span>독서 챌린지</span></div>
-    <div class="navi" onclick="goSoon(this,'검색','search')"><span>검색</span></div>
-    <div class="navi" onclick="goSoon(this,'피드','feed')"><span>피드</span></div>
-    <div class="navi" onclick="goSoon(this,'내서재','mypage')"><span>내서재</span></div>
   </aside>
 
   <main class="main">
@@ -733,16 +725,6 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           <button class="btn-primary" onclick="applyFromPreview()">이대로 우리 도서관에 적용 →</button></div>
       </div>
     </div>
-
-    <!-- ===== 학생 앱 화면 연결 (AI 추천 / 커뮤니티 / 마이 페이지) ===== -->
-    <section id="pg-soon" style="display:none">
-      <div class="phead"><div><h1><span id="soonName">AI 추천</span> <span class="tagpill">학생 앱 화면</span></h1>
-        <p>학생 앱(bookstar Archive)의 실제 화면입니다. 이 화면은 자동 동작해 사서가 따로 꾸미지 않아요.
-          <a id="soonOpen" href="#" target="_blank" rel="noopener" style="color:var(--accent,#6b4f1d);font-weight:600">새 탭에서 열기 ↗</a></p></div></div>
-      <div class="panel" style="padding:0;overflow:hidden">
-        <iframe id="soonFrame" title="학생 앱 화면" style="width:100%;height:74vh;border:0;display:block;background:#fff"></iframe>
-      </div>
-    </section>
 
   </main>
 </div>
@@ -1567,7 +1549,7 @@ const COMMUNITY=[
 /* ====== 네비게이션 ====== */
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['dash','stats','writings','make','notice','history','settings','soon','comm'].forEach(id=>el('pg-'+id).style.display='none');
+  ['dash','stats','writings','make','notice','history','settings','comm'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
   _pvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
   if(page==='dash')renderDash();
@@ -1582,13 +1564,6 @@ function go(elm,page){
 }
 // 좌측 'bookstar Builder' — 영역별 꾸미기 진입
 function goArea(elm,area){ try{readSecInputs();}catch(e){} _pvFocusSlot=null; curArea=area; go(elm,'settings'); }
-// 학생 앱 화면 연결 — app.html?page=<id>를 iframe으로 표시
-function goSoon(elm,name,page){ go(elm,'soon');
-  const t=el('soonName'); if(t) t.textContent=name;
-  const url='/app.html?page='+encodeURIComponent(page||'');
-  const f=el('soonFrame'); if(f) f.src=url;
-  const a=el('soonOpen'); if(a) a.href=url;
-}
 
 /* ====== 대시보드 ====== */
 let RANGE='month';
