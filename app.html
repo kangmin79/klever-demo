@@ -1292,8 +1292,18 @@ body.dark .ag-card{box-shadow:0 1px 2px rgba(0,0,0,.2), 0 12px 32px -22px rgba(0
 .ag-pav{background:linear-gradient(135deg,var(--primary-bg),var(--bg-input));box-shadow:inset 0 0 0 1px var(--border);}
 .ag-grade{background:linear-gradient(135deg,rgba(212,169,59,.18),rgba(212,169,59,.05));color:#a8801f;box-shadow:inset 0 0 0 1px rgba(212,169,59,.32);}
 body.dark .ag-grade{color:var(--gold);}
-.ag-pstat{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--border) 75%,transparent);box-shadow:0 1px 2px rgba(26,41,66,.03);}
+.ag-pstat{background:var(--bg-card);border:1px solid color-mix(in srgb,var(--border) 75%,transparent);box-shadow:0 1px 2px rgba(26,41,66,.03);padding-top:11px;position:relative;overflow:hidden;}
 .ag-pstat b{color:var(--primary);letter-spacing:-.5px;}
+.ag-pico{font-size:17px;line-height:1;margin-bottom:5px;}
+.ag-pstat::after{content:'';position:absolute;left:0;right:0;top:0;height:3px;opacity:.85;}
+.ag-pstat.s-done::after{background:#3a6ea5;}
+.ag-pstat.s-sg::after{background:#1f9d6b;}
+.ag-pstat.s-q::after{background:#d4a93b;}
+.ag-pstat.s-rv::after{background:#c13b7e;}
+.ag-pstat.s-ch::after{background:#7a5a2f;}
+.ag-pstat.s-cl::after{background:#1f9d6b;}
+/* 아바타 골드 링 */
+.ag-pav{box-shadow:inset 0 0 0 1px var(--border),0 0 0 3px rgba(212,169,59,.14);}
 .ag-tile{border:1px solid color-mix(in srgb,var(--border) 75%,transparent);}
 .ag-tiles .ag-tile:nth-child(2){background:linear-gradient(135deg,rgba(212,169,59,.13),rgba(212,169,59,.03));border-color:rgba(212,169,59,.34);}
 .ag-bar{height:8px;}
@@ -4964,7 +4974,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6178,12 +6188,7 @@ async function renderActivityGroup(){
         <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
       </div>
       <div class="ag-pstats">
-        <div class="ag-pstat"><b>${nDone}</b><span>완독</span></div>
-        <div class="ag-pstat"><b>${nOne}</b><span>한 줄 소감</span></div>
-        <div class="ag-pstat"><b>${nQ}</b><span>한 줄 질문</span></div>
-        <div class="ag-pstat"><b>${nRev}</b><span>서평</span></div>
-        <div class="ag-pstat"><b>${nEnroll}</b><span>참여 챌린지</span></div>
-        <div class="ag-pstat"><b>${nEnrollDone}</b><span>완료 챌린지</span></div>
+        ${[['📚',nDone,'완독','s-done'],['💬',nOne,'한 줄 소감','s-sg'],['❓',nQ,'한 줄 질문','s-q'],['📝',nRev,'서평','s-rv'],['🎯',nEnroll,'참여 챌린지','s-ch'],['🏆',nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[3]}"><div class="ag-pico">${s[0]}</div><b>${s[1]}</b><span>${s[2]}</span></div>`).join('')}
       </div>
     </div>
     <div class="ag-sec-h"><h3>내 별 내역</h3></div>
