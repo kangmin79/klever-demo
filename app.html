@@ -1250,7 +1250,19 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-tbl td:first-child{text-align:left;color:var(--text-sub);}
 .ag-tbl td.cum{color:var(--text-light);}
 .ag-tbl td b{font-weight:800;}
-.ag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px;}
+.ag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px;flex:none;}
+/* 활동별 별 = 미니 바 차트 */
+.ag-ahead{display:flex;align-items:center;font-size:11.5px;color:var(--text-light);font-weight:600;padding-bottom:10px;}
+.ag-ahead span:first-child{flex:1;}
+.ag-ahead span:not(:first-child){width:64px;text-align:right;}
+.ag-arow{padding:11px 0;border-top:1px solid var(--border);transition:background .14s;}
+.ag-arow:hover{background:color-mix(in srgb,var(--bg-input) 60%,transparent);}
+.ag-arow-top{display:flex;align-items:center;font-size:13.5px;}
+.ag-aname{flex:1;color:var(--text);font-weight:700;}
+.ag-ayear{width:64px;text-align:right;font-weight:800;color:var(--primary);}
+.ag-acum{width:64px;text-align:right;color:var(--text-light);}
+.ag-abar{height:5px;border-radius:99px;background:var(--bg-input);margin-top:9px;overflow:hidden;}
+.ag-abar i{display:block;height:100%;border-radius:99px;opacity:.82;transition:width .5s ease;}
 .ag-tiers{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
 .ag-tier{flex:1;min-width:84px;text-align:center;background:var(--bg-input);border-radius:10px;padding:11px 4px;border:1.5px solid transparent;}
 .ag-tier.on{background:var(--primary-bg);border-color:var(--primary);}
@@ -4978,7 +4990,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623r';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6174,7 +6186,9 @@ async function renderActivityGroup(){
   // 활동별 별 그룹 집계
   const grp={};
   stars.forEach(x=>{ const m=AG_ACTGRP[x.activity]; if(!m) return; const g=grp[m[0]]||(grp[m[0]]={color:m[1],year:0,cum:0}); g.cum+=x.stars||0; if(x.created_at&&(+String(x.created_at).slice(0,4))===yr) g.year+=x.stars||0; });
-  const grpRows=Object.keys(grp).sort((a,b)=>grp[b].cum-grp[a].cum).map(lab=>{ const g=grp[lab]; return `<tr><td><span class="ag-dot" style="background:${g.color}"></span>${esc(lab)}</td><td><b>${g.year}</b></td><td class="cum">${g.cum.toLocaleString()}</td></tr>`; }).join('');
+  const grpKeys=Object.keys(grp).sort((a,b)=>grp[b].cum-grp[a].cum);
+  const maxCum=Math.max(1,...grpKeys.map(k=>grp[k].cum));
+  const grpRows=grpKeys.map(lab=>{ const g=grp[lab]; const w=Math.max(4,Math.round(g.cum/maxCum*100)); return `<div class="ag-arow"><div class="ag-arow-top"><span class="ag-dot" style="background:${g.color}"></span><span class="ag-aname">${esc(lab)}</span><b class="ag-ayear">${g.year}</b><span class="ag-acum">${g.cum.toLocaleString()}</span></div><div class="ag-abar"><i style="width:${w}%;background:${g.color}"></i></div></div>`; }).join('');
   // 별 버는 법 (star_rates = 진짜 출처)
   const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
   const earn=AG_EARN_ORDER.filter(a=>rateMap[a]!=null).map(a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`).join(' · ');
@@ -6205,7 +6219,7 @@ async function renderActivityGroup(){
           :`<div class="ag-nextbar"><div class="lab"><span>최고 등급 <b>레전드</b> 달성! 🎉</span></div><div class="ag-bar"><span style="width:100%"></span></div></div>`}
       <div class="ag-div"></div>
       <div class="ag-subh">활동별 별 (올해 · 누적)</div>
-      ${grpRows?`<table class="ag-tbl"><tr><th>활동</th><th>올해</th><th>누적</th></tr>${grpRows}</table>`:'<div class="ag-empty">아직 모은 별이 없어요. 퀴즈·소감·챌린지로 별을 모아보세요.</div>'}
+      ${grpRows?`<div class="ag-atbl"><div class="ag-ahead"><span>활동</span><span>올해</span><span>누적</span></div>${grpRows}</div>`:'<div class="ag-empty">아직 모은 별이 없어요. 퀴즈·소감·챌린지로 별을 모아보세요.</div>'}
       <div class="ag-div"></div>
       <div class="ag-subh">등급 안내</div>
       <div class="ag-tiers">${tiers}</div>
