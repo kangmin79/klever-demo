@@ -429,6 +429,67 @@ body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 .feed-book-a{font-size:11px;color:var(--text-sub);}
 .book-progress{margin-top:6px;height:3px;background:var(--bg-input);border-radius:2px;overflow:hidden;}
 .book-progress-fill{height:100%;background:var(--gold);}
+/* === 밀리식 피드 (SNS) === */
+.feed-tabs{display:flex;gap:20px;border-bottom:1px solid var(--border);margin:4px 0 14px;}
+.feed-tab{font-size:15.5px;font-weight:800;color:var(--text-light);background:none;border:none;padding:9px 2px;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;}
+.feed-tab.on{color:var(--text);border-bottom-color:var(--ink);}
+.feed-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.feed-chip{font-size:13px;font-weight:700;color:var(--text-sub);background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:7px 15px;cursor:pointer;}
+.feed-chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.feed-grid{columns:4 280px;column-gap:16px;}
+@media(max-width:1100px){.feed-grid{columns:3 260px;}}
+@media(max-width:760px){.feed-grid{columns:1;}}
+.fc{break-inside:avoid;margin:0 0 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:box-shadow .15s,transform .15s;}
+.fc:hover{box-shadow:0 10px 26px rgba(40,40,90,.10);transform:translateY(-2px);}
+.fc-top{display:flex;align-items:center;gap:9px;padding:14px 16px 4px;}
+.fc-ava{width:36px;height:36px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer;}
+.fc-id{flex:1;min-width:0;cursor:pointer;}
+.fc-nm{font-size:13.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-mt{font-size:11px;color:var(--text-light);margin-top:1px;}
+.fc-follow{font-size:11.5px;font-weight:800;color:var(--ink);background:var(--primary-bg);border:none;border-radius:8px;padding:6px 11px;cursor:pointer;flex-shrink:0;}
+.fc-follow.on{color:var(--text-light);background:var(--bg-input);}
+.fc-quote{margin:12px 16px;border-radius:12px;padding:18px 16px;font-size:14.5px;line-height:1.65;color:#2b2b3a;text-align:center;font-weight:600;}
+.fc-quote.hl{text-align:left;}
+.fc-quote .qm{color:var(--gold);font-weight:800;}
+.fc-body{padding:2px 16px 8px;font-size:13.5px;line-height:1.7;color:var(--text-sub);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.fc-bookrow{display:flex;align-items:center;gap:10px;padding:8px 16px 14px;cursor:pointer;}
+.fc-cv{width:38px;height:54px;border-radius:5px;overflow:hidden;flex-shrink:0;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.fc-cv img{width:100%;height:100%;object-fit:cover;}
+.fc-bi{flex:1;min-width:0;}
+.fc-bt{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-ba{font-size:11.5px;color:var(--text-sub);}
+.fc-badge{display:inline-block;font-size:10.5px;font-weight:800;border-radius:6px;padding:3px 8px;color:var(--accent);background:var(--primary-bg);flex-shrink:0;}
+body.dark .fc-badge{color:var(--gold);}
+.fc-acts{display:flex;align-items:center;border-top:1px solid var(--border);padding:4px 6px;}
+.fc-act{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--text-sub);background:none;border:none;padding:9px;border-radius:8px;cursor:pointer;}
+.fc-act:hover{background:var(--bg-input);}
+.fc-act.liked{color:#e0457b;}
+.feed-empty{padding:56px 20px;text-align:center;color:var(--text-light);font-size:13.5px;line-height:1.8;}
+/* 학생 프로필(도서 이력) 모달 */
+.bxp-ov{position:fixed;inset:0;background:rgba(15,20,35,.5);display:none;z-index:120;align-items:flex-start;justify-content:center;padding:40px 18px;overflow:auto;backdrop-filter:blur(3px);}
+.bxp-ov.on{display:flex;}
+.bxp{background:var(--bg-card);width:100%;max-width:680px;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.34);}
+.bxp-hd{position:relative;background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:24px 24px 20px;}
+body.dark .bxp-hd{background:linear-gradient(135deg,#0f172a,#243049);}
+.bxp-x{position:absolute;top:14px;right:16px;font-size:24px;color:rgba(255,255,255,.8);cursor:pointer;line-height:1;}
+.bxp-av{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:28px;}
+.bxp-nm{font-size:20px;font-weight:800;margin-top:12px;}
+.bxp-gr{font-size:12.5px;color:rgba(219,228,255,.8);margin-top:3px;}
+.bxp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);}
+.bxp-st{background:var(--bg-card);padding:16px 8px;text-align:center;}
+.bxp-st .v{font-size:20px;font-weight:800;color:var(--ink);}
+body.dark .bxp-st .v{color:#a5b4fc;}
+.bxp-st .l{font-size:11px;color:var(--text-light);margin-top:4px;}
+.bxp-sec{font-size:13px;font-weight:800;color:var(--text-sub);padding:18px 22px 8px;}
+.bxp-body{max-height:46vh;overflow:auto;padding:0 22px 22px;}
+.bxp-row{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--border);}
+.bxp-row:last-child{border-bottom:none;}
+.bxp-cv{width:40px;height:56px;border-radius:5px;overflow:hidden;flex-shrink:0;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.bxp-cv img{width:100%;height:100%;object-fit:cover;}
+.bxp-ri{flex:1;min-width:0;}
+.bxp-rt{font-size:13px;font-weight:800;color:var(--text);}
+.bxp-rb{font-size:11.5px;color:var(--accent);font-weight:700;margin:2px 0 4px;}
+.bxp-rx{font-size:13px;line-height:1.6;color:var(--text-sub);}
 
 /* 책 표지 그라데이션 */
 .style-1{background:linear-gradient(160deg,#0d1b2a,#1b2838 60%,#0a1628);color:#fff;}
@@ -1902,8 +1963,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <section class="page" id="page-feed">
   <h1 class="page-title">피드</h1>
-  <p class="page-subtitle">다른 학생들이 남긴 한 줄 소감 — 같은 책을 어떻게 읽었는지 살펴보세요</p>
-  <div id="feedBody" style="margin-top:20px;"></div>
+  <p class="page-subtitle">친구들의 독서 활동 — 소감·서평·핵심 문장·추천을 둘러보고, 이름을 누르면 그 친구의 <b>독서 이력</b>을 볼 수 있어요</p>
+  <div id="feedBody" style="margin-top:16px;"></div>
 </section>
 
 <section class="page" id="page-leaderboard">
@@ -3531,6 +3592,7 @@ function nav(page){
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
   }
   if(page === 'feed') {
+    _feedItems=[];   // 방문할 때마다 최신 글 다시 로드
     setTimeout(renderFeed, 30);
   }
 }
@@ -4634,7 +4696,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6795,44 +6857,131 @@ function _feedAgo(iso){
     return Math.floor(d/86400)+'일 전';
   }catch(e){ return ''; }
 }
-function feedCard(x){
-  const s=BX_STUDENTS.find(z=>z.id===x.student_id) || {name:'학생', emoji:'🙂'};
-  const b=_bookById(x.book_id);
-  const title=b?b.title:(x.book_id||'');
+/* ── 밀리식 피드: 추천/팔로잉 탭 + 타입 필터 + 타입별 카드 + 학생 프로필 ── */
+const FEED_TYPES=[['all','전체'],['oneline','한 줄 소감'],['review','서평·독후감'],['highlight','핵심 문장'],['recommend','책 추천'],['question','질문']];
+const FEED_PASTEL=['#eef2ff','#fdeef4','#eefaf1','#fff6e9','#eef7fb','#f3eefe','#fef0ef','#eefbf6'];
+const FEED_ACT={ oneline:{t:'한 줄 소감',cat:'oneline'}, review:{t:'서평',cat:'review'}, essay:{t:'독후감',cat:'review'},
+  underline:{t:'핵심 문장',cat:'highlight'}, recommend:{t:'책 추천',cat:'recommend'}, question:{t:'질문',cat:'question'},
+  impression:{t:'한 줄 소감',cat:'oneline'} };
+const GRADE_EMO={씨앗:'🌰',새싹:'🌱',나무:'🌳',숲:'🌲'};
+let _feedTab='rec', _feedType='all', _feedItems=[];
+function _feedLikes(){ try{ return JSON.parse(localStorage.getItem('bookstar-feed-likes')||'{}'); }catch(e){ return {}; } }
+function feedLike(btn,key){ const o=_feedLikes(); o[key]=!o[key]; try{localStorage.setItem('bookstar-feed-likes',JSON.stringify(o));}catch(e){}
+  btn.classList.toggle('liked',!!o[key]); const c=btn.querySelector('.fl-c'); if(c) c.textContent=(o[key]?1:0); }
+function setFeedTab(t){ _feedTab=t; renderFeed(); }
+function setFeedType(t){ _feedType=t; renderFeed(); }
+function feedCard(it,i){
+  const s=BX_STUDENTS.find(z=>z.id===it.sid) || {name:'학생', emoji:'🙂'};
+  const b=_bookById(it.book_id);
+  const title=b?b.title:(it.book_id||'');
   const author=b?(b.author||''):'';
-  const cv=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" loading="lazy" onerror="this.style.display='none'">`:'';
-  const meta=[];
-  if(x.quiz_total) meta.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`);
-  if(x.score) meta.push(`${x.score}점`);
-  const sub=[s.id==='guest'?'':'', _feedAgo(x.updated_at)].filter(Boolean).join(' · ');
-  const bookClick=b?` onclick="openDetail('${b.id}')"`:'';
-  return `<div class="feed-card">
-    <div class="feed-top">
-      <div class="feed-ava">${s.emoji||'🙂'}</div>
-      <div><div class="feed-name">${esc(s.name)}</div><div class="feed-sub">${esc(sub)}${meta.length?' · '+esc(meta.join(' · ')):''}</div></div>
+  const cvImg=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" loading="lazy" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕';
+  const def=FEED_ACT[it.act]||{t:'기록',cat:'oneline'};
+  const meta=[_feedAgo(it.time), it.meta].filter(Boolean).join(' · ');
+  const likeKey=it.sid+'|'+it.book_id+'|'+it.act+'|'+String(it.time||'').slice(0,16);
+  const liked=!!_feedLikes()[likeKey];
+  const bk=b?` onclick="openDetail('${b.id}')"`:'';
+  const pastel=FEED_PASTEL[i%FEED_PASTEL.length];
+  const long=(it.act==='essay')||(it.text||'').length>120;
+  let content;
+  if(it.act==='underline') content=`<div class="fc-quote hl" style="background:${pastel}"><span class="qm">“</span>${esc(it.text)}<span class="qm">”</span></div>`;
+  else if(long) content=`<div class="fc-body">${esc(it.text)}</div>`;
+  else content=`<div class="fc-quote" style="background:${pastel}">${esc(it.text)}</div>`;
+  return `<div class="fc">
+    <div class="fc-top">
+      <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${s.emoji||'🙂'}</div>
+      <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(s.name)}${it.featured?' <span style="color:var(--gold)">★</span>':''}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
+      <span class="fc-badge">${esc(def.t)}</span>
     </div>
-    <div class="feed-quote">“${esc(x.impression)}”</div>
-    <div class="feed-book"${bookClick}>
-      <div class="feed-book-cv">${cv}</div>
-      <div><div class="feed-book-t">${esc(title)}</div><div class="feed-book-a">${esc(author)}</div></div>
+    ${content}
+    <div class="fc-bookrow"${bk}>
+      <div class="fc-cv">${cvImg}</div>
+      <div class="fc-bi"><div class="fc-bt">${esc(title)}</div><div class="fc-ba">${esc(author)}</div></div>
+    </div>
+    <div class="fc-acts">
+      <button class="fc-act${liked?' liked':''}" onclick="feedLike(this,'${likeKey}')">♥ <span class="fl-c">${liked?1:0}</span></button>
+      <button class="fc-act"${bk}>📖 담기</button>
     </div>
   </div>`;
 }
+async function loadFeedItems(){
+  const items=[];
+  try{
+    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,featured,hidden,created_at&order=created_at.desc&limit=200`,{headers:BX_H});
+    const rows=await r.json();
+    (Array.isArray(rows)?rows:[]).forEach(x=>{ if(x.hidden||!(x.text||'').trim())return;
+      items.push({sid:x.student_id,book_id:x.book_id,act:x.activity,text:x.text,featured:!!x.featured,time:x.created_at,meta:''}); });
+  }catch(e){}
+  try{
+    const r=await fetch(`${BX_SB}/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=120`,{headers:BX_H});
+    const rows=await r.json();
+    (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!(x.impression||'').trim())return;
+      const m=[]; if(x.quiz_total)m.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`); if(x.score)m.push(`${x.score}점`);
+      items.push({sid:x.student_id,book_id:x.book_id,act:'impression',text:x.impression,featured:false,time:x.updated_at,meta:m.join(' · ')}); });
+  }catch(e){}
+  _feedItems=items;
+}
 async function renderFeed(){
   const box=document.getElementById('feedBody'); if(!box) return;
-  box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">피드를 불러오는 중…</div>';
-  try{
-    const r=await fetch(`${BX_SB}/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=80`,{headers:BX_H});
-    const rows=await r.json();
-    const list=(Array.isArray(rows)?rows:[]).filter(x=>(x.impression||'').trim().length>0);
-    if(!list.length){
-      box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">아직 올라온 한 줄 소감이 없어요.<br>챌린지에서 소감을 남기면 친구들과 여기서 공유돼요.</div>';
-      return;
-    }
-    box.innerHTML=`<div class="feed-list">${list.map(feedCard).join('')}</div>`;
-  }catch(e){
-    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">피드를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</div>';
+  const head=`<div class="feed-tabs">
+      <button class="feed-tab ${_feedTab==='rec'?'on':''}" onclick="setFeedTab('rec')">추천</button>
+      <button class="feed-tab ${_feedTab==='follow'?'on':''}" onclick="setFeedTab('follow')">팔로잉</button>
+    </div>
+    <div class="feed-chips">${FEED_TYPES.map(t=>`<button class="feed-chip ${_feedType===t[0]?'on':''}" onclick="setFeedType('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
+  if(!_feedItems.length){ box.innerHTML=head+'<div class="feed-empty">피드를 불러오는 중…</div>'; await loadFeedItems(); }
+  if(_feedTab==='follow'){
+    box.innerHTML=head+`<div class="feed-empty">아직 팔로우한 친구가 없어요.<br>추천 탭에서 친구 이름을 누르고 <b>팔로우</b> 해보세요.<br><span style="font-size:12px;opacity:.75">(팔로우 연결은 다음 단계에서 작동합니다)</span></div>`;
+    return;
   }
+  let list=_feedItems.slice();
+  if(_feedType!=='all') list=list.filter(x=>(FEED_ACT[x.act]||{}).cat===_feedType);
+  list.sort((a,b)=>((b.featured?1:0)-(a.featured?1:0)) || String(b.time||'').localeCompare(String(a.time||'')));
+  box.innerHTML=head+(list.length
+    ? `<div class="feed-grid">${list.map((x,i)=>feedCard(x,i)).join('')}</div>`
+    : `<div class="feed-empty">아직 이 유형의 글이 없어요.<br>챌린지에서 글을 남기면 여기에 모여요.</div>`);
+}
+/* ── 학생 프로필(도서 이력) 모달 — 이름 클릭 시 ── */
+function closeStudentProfile(){ const ov=document.getElementById('bxProfileOv'); if(ov) ov.classList.remove('on'); document.body.style.overflow=''; }
+async function openStudentProfile(sid){
+  const s=BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
+  let ov=document.getElementById('bxProfileOv');
+  if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
+  ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
+  ov.classList.add('on'); document.body.style.overflow='hidden';
+  let writings=[], results=[], totals=null, enroll=[];
+  try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}&select=*&order=created_at.desc`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`,{headers:BX_H}); if(r.ok) results=await r.json(); }catch(e){}
+  try{ const r=await fetch(`${BX_SB}/bookstar_student_totals?student_id=eq.${encodeURIComponent(sid)}&select=total_stars,grade`,{headers:BX_H}); if(r.ok){ const a=await r.json(); totals=Array.isArray(a)&&a[0]; } }catch(e){}
+  try{ const r=await fetch(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`,{headers:BX_H}); if(r.ok) enroll=await r.json(); }catch(e){}
+  writings=Array.isArray(writings)?writings.filter(w=>!w.hidden):[];
+  results=Array.isArray(results)?results:[]; enroll=Array.isArray(enroll)?enroll:[];
+  const done=enroll.filter(e=>e.status==='done').length;
+  let qok=0,qt=0; results.forEach(r=>{ qok+=(r.quiz_ok||0); qt+=(r.quiz_total||0); });
+  const rate=qt?Math.round(qok/qt*100):0;
+  const stars=totals?(totals.total_stars||0):0;
+  const grade=totals?(totals.grade||''):'';
+  const byBook={};
+  results.forEach(r=>{ if(!r.book_id||!(r.impression||'').trim())return; (byBook[r.book_id]=byBook[r.book_id]||[]).push({act:'impression',text:r.impression}); });
+  writings.forEach(w=>{ if(!w.book_id)return; (byBook[w.book_id]=byBook[w.book_id]||[]).push({act:w.activity,text:w.text}); });
+  const books=Object.keys(byBook);
+  const rowsHtml=books.length ? books.map(bid=>{
+    const b=_bookById(bid); const acts=byBook[bid];
+    const cv=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕';
+    const tags=[...new Set(acts.map(a=>(FEED_ACT[a.act]||{t:''}).t).filter(Boolean))].join(' · ');
+    const txt=acts.map(a=>'“'+esc(a.text)+'”').join('<br>');
+    return `<div class="bxp-row"><div class="bxp-cv">${cv}</div><div class="bxp-ri"><div class="bxp-rt">${esc(b?b.title:bid)}</div><div class="bxp-rb">${esc(tags)}</div><div class="bxp-rx">${txt}</div></div></div>`;
+  }).join('') : `<div class="feed-empty">아직 남긴 글이 없어요.</div>`;
+  ov.querySelector('.bxp').innerHTML=`
+    <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
+      <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div>
+      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}한국대학교 도서관</div></div>
+    <div class="bxp-stats">
+      <div class="bxp-st"><div class="v">${done}</div><div class="l">챌린지 완주</div></div>
+      <div class="bxp-st"><div class="v">${qt?rate+'%':'—'}</div><div class="l">퀴즈 정답률</div></div>
+      <div class="bxp-st"><div class="v">${writings.length}</div><div class="l">남긴 글</div></div>
+      <div class="bxp-st"><div class="v">${stars.toLocaleString()}</div><div class="l">누적 별</div></div></div>
+    <div class="bxp-sec">📚 읽고 기록한 책 (${books.length})</div>
+    <div class="bxp-body">${rowsHtml}</div>`;
 }
 
 function toggleTheme(){
