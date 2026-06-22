@@ -4921,7 +4921,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6169,6 +6169,8 @@ const IC_EDIT='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke=
 const IC_SHARE='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>';
 const IC_PLUS='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 let _bmShelves=[], _curFav={id:'',reason:''}, _bmPendBook=null, _bmPickSet={};
+const BM_BOOK_LIMIT=10; let _bmBooksOpen=false;
+function bmToggleBooks(){ _bmBooksOpen=!_bmBooksOpen; renderMyProfileTop(); }
 function _bmCover(b,extra){ extra=extra||''; const inner=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.outerHTML='📕'">`:'📕'; return inner+extra; }
 function bmToast(m){ let t=document.getElementById('bmToast'); if(!t){ t=document.createElement('div'); t.id='bmToast'; t.className='bm-toast'; document.body.appendChild(t); } t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1900); }
 function bmCloseModal(){ const o=document.getElementById('bmOv'); if(o) o.classList.remove('on'); }
@@ -6216,9 +6218,12 @@ async function renderMyProfileTop(){
   const readSec=reading.length
     ? `<div class="sg-sec sg-mini" style="margin-top:24px"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
     : '';
-  // ── 내 도서 (완독)
+  // ── 내 도서 (완독) — 기본 BM_BOOK_LIMIT권만, 많으면 펼치기
+  const shownBooks = _bmBooksOpen ? done : done.slice(0, BM_BOOK_LIMIT);
+  const bkCard = b => { const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk"><div class="bm-bc" onclick="openDetail('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><div class="bm-bk-t">${esc(cleanT(b.title))}</div><div class="bm-bk-a">${esc(b.author||'')}</div><div class="bm-bk-acts"><button class="bm-mini${isFav?' on':''}" onclick="openLifeModal('${esc(b.id)}')">${IC_STAR_SM} 인생책</button><button class="bm-mini" onclick="openAddShelf('${esc(b.id)}')">+ 책장</button></div></div>`; };
+  const booksMore = done.length>BM_BOOK_LIMIT ? `<div style="text-align:center;margin-top:16px"><button class="bm-btn" onclick="bmToggleBooks()">${_bmBooksOpen?'접기 ▴':`완독 ${done.length}권 전체 보기 ▾`}</button></div>` : '';
   const booksGrid=done.length
-    ? `<div class="bm-bkgrid">${done.map(b=>{ const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk"><div class="bm-bc" onclick="openDetail('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><div class="bm-bk-t">${esc(cleanT(b.title))}</div><div class="bm-bk-a">${esc(b.author||'')}</div><div class="bm-bk-acts"><button class="bm-mini${isFav?' on':''}" onclick="openLifeModal('${esc(b.id)}')">${IC_STAR_SM} 인생책</button><button class="bm-mini" onclick="openAddShelf('${esc(b.id)}')">+ 책장</button></div></div>`; }).join('')}</div>`
+    ? `<div class="bm-bkgrid">${shownBooks.map(bkCard).join('')}</div>${booksMore}`
     : '<div class="ag-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>';
   // ── 내 책장 (큐레이션)
   const curCards=_bmShelves.map(c=>{ const ids=Array.isArray(c.book_ids)?c.book_ids:[]; const cb=ids.map(_bookById).filter(Boolean); const covers=cb.length?cb.slice(0,4).map(b=>`<div class="cv">${_bmCover(b)}</div>`).join(''):'<div class="bm-cur-empty">아직 담은 책이 없어요</div>'; return `<div class="bm-cur"><div class="bm-cur-h"><b>${esc(c.name||'제목 없음')}</b><span>${ids.length}권</span></div><div class="bm-cur-books">${covers}</div><div class="bm-cur-foot"><button class="bm-btn" onclick="bmShare('책장','${esc(c.name||'')}')">${IC_SHARE} 공유</button></div></div>`; }).join('');
