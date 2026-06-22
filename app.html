@@ -3681,15 +3681,9 @@ async function loadChalCards(){
 /* ── 챌린지 미션 정의 (admin CH_MISSIONS 미러 · docx 별 배점 고정) ── */
 const CH_MISSIONS=[
   {k:'quiz',     t:'퀴즈 풀기',     icon:'🎯', star:1,  kind:'quiz'},
-  {k:'oneline',  t:'한 줄 소감',    icon:'✍️', star:5,  kind:'write', min:5,  ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
-  {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,  ph:'책에 대해 떠오른 질문을 적어 보세요.'},
-  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:20, ph:'주제·인상 깊은 장면·추천 이유 등을 적어 보세요.'},
-  {k:'essay',    t:'독후감 쓰기',   icon:'📜', star:50, kind:'write', min:100,ph:'읽고 느낀 점을 길게 적어 보세요.'},
-  {k:'underline',t:'핵심 문장 쓰기',icon:'✏️', star:5,  kind:'write', min:2,  ph:'마음에 남은 구절을 옮겨 적어 보세요.'},
-  {k:'recommend',t:'책 추천하기',   icon:'📚', star:5,  kind:'write', min:2,  ph:'함께 읽으면 좋을 책을 추천해 주세요.'},
-  {k:'reading',  t:'독서 인증',     icon:'✅', star:3,  kind:'cert',  btn:'독서 인증하기', soon:true},
-  {k:'photo',    t:'인증샷',        icon:'📷', star:3,  kind:'cert',  btn:'인증샷 올리기', soon:true},
-  {k:'comment',  t:'댓글 쓰기',     icon:'💬', star:2,  kind:'cert',  btn:'댓글 남기기', soon:true},
+  {k:'oneline',  t:'한 줄 소감',    icon:'✍️', star:5,  kind:'write', min:5,   ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
+  {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,   ph:'책에 대해 떠오른 질문을 적어 보세요.'},
+  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:100, ph:'책에 대한 평을 100자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
 ];
 const CH_QMAP={'고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
 const CH_SCHOOL='hankuk';
@@ -4761,7 +4755,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5937,7 +5931,7 @@ async function renderMyProfileTop(){
   let writings=[];
   try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
   writings=Array.isArray(writings)?writings:[];
-  const nWrite=writings.length, nHi=writings.filter(w=>w.activity==='underline').length;
+  const nWrite=writings.length, nReview=writings.filter(w=>w.activity==='review').length;
   const st=_myStats(); const done=_doneBooks(); const favBook=favId?_bookById(favId):null;
   const favHtml=favBook
     ? `<div class="shelf-fav"><div class="cv">${_bkCover(favBook)}</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">${esc(cleanT(favBook.title))}</div></div></div>`
@@ -5959,7 +5953,7 @@ async function renderMyProfileTop(){
       <div class="mp-chips">
         <div class="mp-chip"><div class="v">${st.done}</div><div class="l">완독</div></div>
         <div class="mp-chip"><div class="v">${nWrite}</div><div class="l">남긴 글</div></div>
-        <div class="mp-chip"><div class="v">${nHi}</div><div class="l">핵심 문장</div></div>
+        <div class="mp-chip"><div class="v">${nReview}</div><div class="l">서평</div></div>
         <div class="mp-chip"><div class="v">${(st.score||0).toLocaleString()}</div><div class="l">⭐ 점수</div></div>
       </div>
       <div class="shelf">

@@ -2010,7 +2010,7 @@ async function loadChallenges(){
     const rows=await r.json(); if(!Array.isArray(rows)){renderChallenges();return;}
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',
-      mission:x.mission||{quiz:x.type==='고전챌린지',quizN:5,review:false,question:false},
+      mission:chalMissClean(x.mission,x.type),
       books:(x.books||[]).map(b=>({id:b.id||'',isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
     ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
     if(el('pg-make').style.display!=='none')renderChallenges();
@@ -2021,14 +2021,16 @@ const CH_MISSIONS=[
   {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈를 풀고 별 획득',star:'문제당 ⭐1'},
   {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄',star:'⭐5'},
   {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기',star:'⭐5'},
-  {k:'review',t:'서평 쓰기',s:'책에 대한 평을 작성',star:'⭐10'},
-  {k:'essay',t:'독후감 쓰기',s:'읽고 느낀 점을 길게',star:'⭐50'},
-  {k:'underline',t:'핵심 문장 쓰기',s:'마음에 남은 구절 옮겨 적기',star:'⭐5'},
-  {k:'recommend',t:'책 추천하기',s:'함께 읽을 책 권하기',star:'⭐5'},
-  {k:'reading',t:'독서 인증',s:'사진·체크로 참여 흔적',star:'⭐3',soon:true},
-  {k:'photo',t:'인증샷',s:'책과 함께 / 장면 이미지',star:'⭐3',soon:true},
-  {k:'comment',t:'댓글 쓰기',s:'다른 참가자 글에 반응',star:'⭐2',soon:true},
+  {k:'review',t:'서평 쓰기',s:'100자 이상으로 책에 대한 평을 작성',star:'⭐10'},
 ];
+const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
+function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(essay/underline/recommend/cert) — 4종만 유지
+  m=m||{};
+  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:m.quizN||5};
+  if(m.quizType)o.quizType=m.quizType; if(m.quizLevel)o.quizLevel=m.quizLevel;
+  _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
+  return o;
+}
 const CH_MAX=3, CH_QTYPES=['고전 이해','작가 의도','인문학','나의 삶','사회(관계)'];
 function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
   const m=c.mission||{};
