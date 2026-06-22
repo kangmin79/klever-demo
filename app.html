@@ -1269,6 +1269,81 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-empty{padding:22px 2px;color:var(--text-light);font-size:14px;}
 .ag-empty .favset{color:var(--gold);cursor:pointer;font-weight:700;}
 @media(max-width:760px){.ag-pstats{grid-template-columns:repeat(3,1fr);}}
+/* ── ③ 내 책 모음 그룹 ── */
+.bm-life{display:flex;gap:22px;align-items:flex-start;}
+.bm-cover{width:118px;height:170px;flex:none;border-radius:12px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 24px -8px rgba(0,0,0,.4);}
+.bm-cover img{width:100%;height:100%;object-fit:cover;}
+.bm-life-k{font-size:12.5px;color:var(--gold);font-weight:800;display:flex;align-items:center;gap:5px;}
+.bm-life-t{font-size:21px;font-weight:800;margin:6px 0 2px;}
+.bm-life-a{font-size:13.5px;color:var(--text-light);}
+.bm-reason{font-size:14.5px;color:var(--text-sub);line-height:1.65;margin:14px 0 16px;padding-left:13px;border-left:3px solid var(--gold);}
+.bm-acts{display:flex;gap:9px;flex-wrap:wrap;}
+.bm-btn{font-size:12.5px;font-family:inherit;padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;}
+.bm-btn:hover{border-color:var(--gold);color:var(--text);}
+.bm-btn.fill{background:var(--primary);color:#fff;border-color:var(--primary);}
+body.dark .bm-btn.fill{color:#0f172a;}
+.bm-life-empty{display:flex;align-items:center;gap:16px;color:var(--text-light);font-size:14px;}
+.bm-life-empty .ph{width:96px;height:138px;border-radius:12px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:34px;flex:none;}
+.bm-hist{margin-top:18px;border-top:1px solid var(--border);padding-top:2px;}
+.bm-hist-h{font-size:13px;font-weight:800;color:var(--text-sub);margin:14px 0 4px;}
+.bm-hist-row{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--border);}
+.bm-hc{width:34px;height:48px;flex:none;border-radius:5px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.bm-hc img{width:100%;height:100%;object-fit:cover;}
+.bm-hb{flex:1;min-width:0;}
+.bm-ht{font-size:13.5px;font-weight:700;}
+.bm-ht .ha{font-weight:400;color:var(--text-light);font-size:12px;margin-left:6px;}
+.bm-hr{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+.bm-hd{font-size:11.5px;color:var(--text-light);flex:none;}
+.bm-bkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+.bm-bk{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:13px;display:flex;flex-direction:column;}
+.bm-bc{width:100%;height:150px;border-radius:9px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;position:relative;}
+.bm-bc img{width:100%;height:100%;object-fit:cover;}
+.bm-bc .favtag{position:absolute;top:6px;left:6px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:2px 7px;}
+.bm-bk-t{font-size:13.5px;font-weight:700;margin-top:10px;line-height:1.3;}
+.bm-bk-a{font-size:12px;color:var(--text-light);}
+.bm-bk-acts{display:flex;gap:7px;margin-top:11px;}
+.bm-mini{flex:1;font-size:11.5px;font-family:inherit;padding:7px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
+.bm-mini:hover,.bm-mini.on{border-color:var(--gold);color:var(--text);background:var(--primary-bg);}
+.bm-curgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.bm-cur{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 17px;}
+.bm-cur-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:13px;}
+.bm-cur-h b{font-size:15px;font-weight:800;}
+.bm-cur-h span{font-size:12px;color:var(--text-light);}
+.bm-cur-books{display:flex;gap:7px;min-height:58px;}
+.bm-cur-books .cv{width:42px;height:58px;border-radius:5px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:16px;}
+.bm-cur-books .cv img{width:100%;height:100%;object-fit:cover;}
+.bm-cur-empty{font-size:12.5px;color:var(--text-light);padding:18px 0;}
+.bm-cur-foot{margin-top:13px;display:flex;justify-content:flex-end;gap:7px;}
+.bm-cur-new{border:1.5px dashed var(--border);background:var(--bg-input);display:flex;align-items:center;justify-content:center;gap:8px;color:var(--primary);font-weight:700;font-size:14px;cursor:pointer;min-height:130px;border-radius:14px;}
+.bm-cur-new:hover{border-color:var(--gold);}
+.bm-ov{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:1200;padding:20px;}
+.bm-ov.on{display:flex;}
+.bm-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:23px;width:100%;max-width:460px;max-height:88vh;overflow:auto;}
+.bm-modal h3{margin:0 0 4px;font-size:17px;font-weight:800;}
+.bm-modal .sub{font-size:13px;color:var(--text-light);margin-bottom:16px;}
+.bm-modal label{font-size:12.5px;font-weight:700;color:var(--text-sub);display:block;margin:0 0 6px;}
+.bm-modal textarea,.bm-modal input{width:100%;font-family:inherit;font-size:14px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;resize:vertical;color:var(--text);background:var(--bg-input);box-sizing:border-box;}
+.bm-modal textarea:focus,.bm-modal input:focus{outline:none;border-color:var(--gold);}
+.bm-mbook{display:flex;gap:12px;align-items:center;margin-bottom:16px;background:var(--bg-input);padding:11px;border-radius:10px;}
+.bm-mbook .cv{width:38px;height:52px;border-radius:5px;overflow:hidden;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;}
+.bm-mbook .cv img{width:100%;height:100%;object-fit:cover;}
+.bm-mbook b{font-size:14px;}
+.bm-mbook span{font-size:12px;color:var(--text-light);}
+.bm-cc{font-size:11.5px;color:var(--text-light);text-align:right;margin-top:5px;}
+.bm-opt{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:10px;padding:11px 13px;cursor:pointer;font-size:14px;margin-bottom:8px;color:var(--text);}
+.bm-opt.sel{border-color:var(--gold);background:var(--primary-bg);font-weight:700;}
+.bm-pickgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 4px;}
+.bm-pick{cursor:pointer;border:2px solid transparent;border-radius:9px;padding:4px;}
+.bm-pick.sel{border-color:var(--gold);background:var(--primary-bg);}
+.bm-pick .cv{width:100%;height:74px;border-radius:6px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.bm-pick .cv img{width:100%;height:100%;object-fit:cover;}
+.bm-pick .pt{font-size:10.5px;text-align:center;margin-top:4px;line-height:1.2;}
+.bm-mact{display:flex;gap:10px;margin-top:18px;}
+.bm-mact .bm-btn{flex:1;justify-content:center;padding:11px;}
+.bm-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--primary);color:#fff;font-size:13.5px;font-weight:600;padding:12px 20px;border-radius:99px;z-index:1300;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;}
+body.dark .bm-toast{color:#0f172a;}
+.bm-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+@media(max-width:760px){.bm-life{flex-direction:column;}.bm-pickgrid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -4847,7 +4922,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6088,39 +6163,143 @@ async function renderActivityGroup(){
     <div class="ag-notes">${notes}</div>`;
 }
 
+/* ════════ 내서재 ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 ════════ */
+const BM_IC_BOOK='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H18v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 1 6.5 18H18"/></svg>';
+const IC_STAR_SM='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
+const IC_EDIT='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>';
+const IC_SHARE='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>';
+const IC_PLUS='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+let _bmShelves=[], _curFav={id:'',reason:''}, _bmPendBook=null, _bmPickSet={};
+function _bmCover(b,extra){ extra=extra||''; const inner=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.outerHTML='📕'">`:'📕'; return inner+extra; }
+function bmToast(m){ let t=document.getElementById('bmToast'); if(!t){ t=document.createElement('div'); t.id='bmToast'; t.className='bm-toast'; document.body.appendChild(t); } t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1900); }
+function bmCloseModal(){ const o=document.getElementById('bmOv'); if(o) o.classList.remove('on'); }
+function _bmModal(html){
+  let o=document.getElementById('bmOv');
+  if(!o){ o=document.createElement('div'); o.id='bmOv'; o.className='bm-ov'; o.onclick=e=>{ if(e.target===o) bmCloseModal(); }; document.body.appendChild(o); }
+  o.innerHTML=`<div class="bm-modal">${html}</div>`; o.classList.add('on');
+}
+async function _bmWrite(method,path,bodyObj){
+  try{ const r=await fetch(`${BX_SB}/${path}`,{method,headers:{...BX_H,Prefer:'return=minimal'},body:bodyObj?JSON.stringify(bodyObj):undefined}); return r.ok; }catch(e){ return false; }
+}
+
 async function renderMyProfileTop(){
   const el=document.getElementById('myProfileTop'); if(!el) return;
+  const grpHead='<div class="lib-grp"><div class="lib-grp-ic">'+BM_IC_BOOK+'</div><div><div class="lib-grp-t">내 책 모음</div><div class="lib-grp-s">인생책 · 도서 · 책장</div></div></div>';
   const s=bxStudent(); const moreBtn=document.getElementById('myMoreBtn');
-  if(!s){
-    el.innerHTML=`<div class="sg-empty" style="padding:22px 2px">계정을 선택하면 내 서가가 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div>`;
-    if(moreBtn) moreBtn.style.display='none'; return;
-  }
+  if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 서가가 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; if(moreBtn) moreBtn.style.display='none'; return; }
   if(moreBtn) moreBtn.style.display='block';
-  let prof=null;
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
-  const bio=(prof&&prof.bio)||''; const favId=(prof&&prof.favorite_book_id)||'';
-  let writings=[];
-  try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
-  writings=Array.isArray(writings)?writings:[];
-  const nWrite=writings.length, nReview=writings.filter(w=>w.activity==='review').length;
-  const st=_myStats(); const reading=_readingBooks(); const favBook=favId?_bookById(favId):null;
-  // 완독 목록 — 인생책을 맨 앞으로
+  const enc=encodeURIComponent(s.id);
+  const [profA,hist,shelves]=await Promise.all([
+    _agFetch(`bookstar_students?id=eq.${enc}&select=favorite_book_id,favorite_reason`),
+    _agFetch(`bookstar_life_history?student_id=eq.${enc}&select=book_id,reason,replaced_at&order=replaced_at.desc`),
+    _agFetch(`bookstar_shelves?student_id=eq.${enc}&select=id,name,book_ids,created_at&order=created_at.desc`)
+  ]);
+  const prof=profA[0]||{}; const favId=prof.favorite_book_id||''; const favReason=prof.favorite_reason||'';
+  _curFav={id:favId,reason:favReason}; _bmShelves=Array.isArray(shelves)?shelves:[];
+  const favBook=favId?_bookById(favId):null;
+  const reading=_readingBooks();
   let done=_doneBooks();
   if(favBook){ const i=done.findIndex(b=>b.id===favBook.id); if(i>0){ done=[done[i], ...done.slice(0,i), ...done.slice(i+1)]; } }
-  // 🏆 완독한 책 = 주인공 (큰 표지, 인생책은 ⭐ 대표 카드)
-  const doneRow=done.length
-    ? `<div class="sg-row">${done.map(b=>{ const fav=favBook&&b.id===favBook.id;
-        return `<div class="sg-card${fav?' fav':''}" onclick="openDetail('${esc(b.id)}')"><div class="sg-cv">${_bkCover(b)}${fav?'<span class="sg-fav">인생책</span>':'<span class="sg-done">완독</span>'}</div><div class="sg-t">${esc(cleanT(b.title))}</div><div class="sg-a">${esc(b.author||'')}</div></div>`;
-      }).join('')}</div>`
-    : `<div class="sg-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>`;
-  // 📖 읽던 책 = 작게
-  const readSec=reading.length
-    ? `<div class="sg-sec sg-mini"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
+  // ── 내 인생책
+  const histRows=(Array.isArray(hist)&&hist.length)
+    ? `<div class="bm-hist"><div class="bm-hist-h">지난 인생책</div>${hist.map(h=>{ const b=_bookById(h.book_id); const t=b?cleanT(b.title):(h.book_id||''); const a=b?(b.author||''):''; const d=h.replaced_at?_agDate(h.replaced_at):''; return `<div class="bm-hist-row"><div class="bm-hc">${b?_bmCover(b):'📕'}</div><div class="bm-hb"><div class="bm-ht">${esc(t)}${a?`<span class="ha">${esc(a)}</span>`:''}</div>${h.reason?`<div class="bm-hr">${esc(h.reason)}</div>`:''}</div><div class="bm-hd">${d}</div></div>`; }).join('')}</div>`
     : '';
-  const favHint = done.length ? ` · <span class="favset" onclick="event.stopPropagation();openProfileEdit()">${favBook?'인생책 바꾸기':'인생책 고르기'}</span>` : '';
-  el.innerHTML=`
-    <div class="sg-sec sg-hero"><div class="sg-h">내가 완독한 책<span class="cnt">${done.length||''}</span></div><div class="sg-sub">끝까지 읽어낸 책들이에요${favHint}</div>${doneRow}</div>
-    ${readSec}`;
+  const lifeCard = favBook
+    ? `<div class="bm-life"><div class="bm-cover">${_bmCover(favBook)}</div><div style="flex:1;min-width:0">
+        <div class="bm-life-k">${IC_STAR_SM} 내 인생책</div>
+        <div class="bm-life-t">${esc(cleanT(favBook.title))}</div><div class="bm-life-a">${esc(favBook.author||'')}</div>
+        ${favReason?`<div class="bm-reason">${esc(favReason)}</div>`:'<div class="bm-reason" style="color:var(--text-light)">아직 이유를 안 적었어요. ‘인생책 바꾸기’로 한마디 남겨보세요.</div>'}
+        <div class="bm-acts"><button class="bm-btn" onclick="openLifeModal('${esc(favBook.id)}')">${IC_EDIT} 인생책 바꾸기</button><button class="bm-btn" onclick="bmShare('내 인생책','${esc(cleanT(favBook.title))}')">${IC_SHARE} 공유</button></div></div></div>${histRows}`
+    : (done.length
+        ? `<div class="bm-life-empty"><div class="ph">${IC_STAR_SM.replace('width="13" height="13"','width="34" height="34"')}</div><div><div style="font-weight:800;color:var(--text);font-size:16px">아직 인생책을 안 골랐어요</div><div style="margin-top:5px">아래 <b>내 도서</b>에서 ⭐ 인생책으로 등록해보세요.</div></div></div>${histRows}`
+        : `<div class="ag-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>${histRows}`);
+  // ── 읽던 책 이어가기
+  const readSec=reading.length
+    ? `<div class="sg-sec sg-mini" style="margin-top:24px"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
+    : '';
+  // ── 내 도서 (완독)
+  const booksGrid=done.length
+    ? `<div class="bm-bkgrid">${done.map(b=>{ const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk"><div class="bm-bc" onclick="openDetail('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><div class="bm-bk-t">${esc(cleanT(b.title))}</div><div class="bm-bk-a">${esc(b.author||'')}</div><div class="bm-bk-acts"><button class="bm-mini${isFav?' on':''}" onclick="openLifeModal('${esc(b.id)}')">${IC_STAR_SM} 인생책</button><button class="bm-mini" onclick="openAddShelf('${esc(b.id)}')">+ 책장</button></div></div>`; }).join('')}</div>`
+    : '<div class="ag-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>';
+  // ── 내 책장 (큐레이션)
+  const curCards=_bmShelves.map(c=>{ const ids=Array.isArray(c.book_ids)?c.book_ids:[]; const cb=ids.map(_bookById).filter(Boolean); const covers=cb.length?cb.slice(0,4).map(b=>`<div class="cv">${_bmCover(b)}</div>`).join(''):'<div class="bm-cur-empty">아직 담은 책이 없어요</div>'; return `<div class="bm-cur"><div class="bm-cur-h"><b>${esc(c.name||'제목 없음')}</b><span>${ids.length}권</span></div><div class="bm-cur-books">${covers}</div><div class="bm-cur-foot"><button class="bm-btn" onclick="bmShare('책장','${esc(c.name||'')}')">${IC_SHARE} 공유</button></div></div>`; }).join('');
+  const curGrid=`<div class="bm-curgrid">${curCards}<div class="bm-cur-new" onclick="openNewShelf()">${IC_PLUS} 책장 만들기</div></div>`;
+
+  el.innerHTML = grpHead
+   +`<div class="ag-sec-h"><h3>내 인생책</h3></div><div class="ag-card">${lifeCard}</div>${readSec}
+     <div class="ag-sec-h"><h3>내 도서<span class="more" style="cursor:default;color:var(--text-light);font-weight:600">완독 ${done.length}</span></h3></div>${booksGrid}
+     <div class="ag-sec-h"><h3>내 책장 <span style="font-size:12px;color:var(--text-light);font-weight:600">내가 만든 책 모음</span></h3></div>${curGrid}`;
+}
+/* ── 인생책 등록/바꾸기 ── */
+function openLifeModal(id){
+  _bmPendBook=id; const b=_bookById(id); if(!b) return;
+  const cur=(_curFav.id===id)?_curFav.reason:'';
+  _bmModal(`<h3>인생책 등록</h3><div class="sub">이 책을 인생책으로 고른 이유를 적어주세요. 바꾸면 이전 인생책은 ‘지난 인생책’에 남아요.</div>
+    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(cleanT(b.title))}</b><br><span>${esc(b.author||'')}</span></div></div>
+    <label>인생책으로 고른 이유</label><textarea id="bmReason" rows="4" maxlength="300" placeholder="예) 이 책이 나에게 남긴 한 가지…">${esc(cur)}</textarea><div class="bm-cc"><span id="bmRc">${cur.length}</span>/300</div>
+    <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="saveLifeBook()">인생책으로 등록</button></div>`);
+  const ta=document.getElementById('bmReason'); if(ta){ ta.addEventListener('input',function(){ const c=document.getElementById('bmRc'); if(c) c.textContent=this.value.length; }); ta.focus(); }
+}
+async function saveLifeBook(){
+  const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  const r=(document.getElementById('bmReason')?.value||'').trim();
+  if(!r){ bmToast('이유를 입력해주세요'); return; }
+  // 이전 인생책이 다른 책이면 히스토리에 보존
+  if(_curFav.id && _curFav.id!==_bmPendBook){
+    await _bmWrite('POST','bookstar_life_history',{school_id:CH_SCHOOL,student_id:s.id,book_id:_curFav.id,reason:_curFav.reason||''});
+  }
+  const ok=await _bmWrite('PATCH',`bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{favorite_book_id:_bmPendBook,favorite_reason:r});
+  bmCloseModal();
+  if(ok){ bmToast('인생책으로 등록했어요'); } else { bmToast('저장에 실패했어요'); }
+  renderMyProfileTop();
+}
+/* ── 책장(큐레이션) 담기 ── */
+function openAddShelf(bookId){
+  _bmPendBook=bookId; const b=_bookById(bookId); if(!b) return;
+  const opts=_bmShelves.map((c,i)=>`<div class="bm-opt${i===0?' sel':''}" data-sid="${c.id}" onclick="bmPickShelf(this)">${esc(c.name||'제목 없음')} <span style="margin-left:auto;color:var(--text-light);font-size:12px">${(Array.isArray(c.book_ids)?c.book_ids.length:0)}권</span></div>`).join('');
+  _bmModal(`<h3>책장에 담기</h3><div class="sub">담을 책장을 고르거나 새로 만드세요.</div>
+    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(cleanT(b.title))}</b><br><span>${esc(b.author||'')}</span></div></div>
+    ${opts||'<div class="ag-empty" style="padding:8px 2px">아직 만든 책장이 없어요. 아래에 이름을 적어 새로 만들어요.</div>'}
+    <label style="margin-top:6px">또는 새 책장 이름</label><input id="bmNewName" maxlength="30" placeholder="예) 밑줄 긋고 싶은 문장들">
+    <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="saveAddShelf()">담기</button></div>`);
+}
+function bmPickShelf(el){ document.querySelectorAll('#bmOv .bm-opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); }
+async function saveAddShelf(){
+  const s=bxStudent(); if(!s) return;
+  const nm=(document.getElementById('bmNewName')?.value||'').trim();
+  if(nm){
+    const ok=await _bmWrite('POST','bookstar_shelves',{school_id:CH_SCHOOL,student_id:s.id,name:nm,book_ids:[_bmPendBook]});
+    bmCloseModal(); bmToast(ok?`“${nm}”에 담았어요`:'저장 실패'); renderMyProfileTop(); return;
+  }
+  const sel=document.querySelector('#bmOv .bm-opt.sel'); if(!sel){ bmToast('책장을 고르거나 이름을 입력하세요'); return; }
+  const sid=sel.getAttribute('data-sid'); const c=_bmShelves.find(x=>String(x.id)===String(sid)); if(!c){ bmCloseModal(); return; }
+  const ids=Array.isArray(c.book_ids)?c.book_ids.slice():[]; if(ids.indexOf(_bmPendBook)<0) ids.push(_bmPendBook);
+  const ok=await _bmWrite('PATCH',`bookstar_shelves?id=eq.${encodeURIComponent(c.id)}`,{book_ids:ids,updated_at:new Date().toISOString()});
+  bmCloseModal(); bmToast(ok?`“${c.name}”에 담았어요`:'저장 실패'); renderMyProfileTop();
+}
+/* ── 새 책장 만들기 ── */
+function openNewShelf(){
+  const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  _bmPickSet={}; const done=_doneBooks();
+  const grid=done.length?done.map(b=>`<div class="bm-pick" data-bid="${esc(b.id)}" onclick="bmTogglePick(this)"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(cleanT(b.title))}</div></div>`).join('')
+    :'<div class="ag-empty" style="padding:8px 2px">완독한 책이 생기면 담을 수 있어요.</div>';
+  _bmModal(`<h3>책장 만들기</h3><div class="sub">이름을 정하고, 담을 책을 골라보세요.</div>
+    <label>책장 이름</label><input id="bmShelfName" maxlength="30" placeholder="예) 다시 읽고 싶은 책">
+    <label style="margin-top:14px">책 고르기 <span style="color:var(--text-light);font-weight:400">(여러 권 선택)</span></label><div class="bm-pickgrid">${grid}</div>
+    <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="makeShelf()">만들기</button></div>`);
+  setTimeout(()=>{ const i=document.getElementById('bmShelfName'); if(i) i.focus(); },30);
+}
+function bmTogglePick(el){ const id=el.getAttribute('data-bid'); if(_bmPickSet[id]){ delete _bmPickSet[id]; el.classList.remove('sel'); } else { _bmPickSet[id]=1; el.classList.add('sel'); } }
+async function makeShelf(){
+  const s=bxStudent(); if(!s) return;
+  const nm=(document.getElementById('bmShelfName')?.value||'').trim(); if(!nm){ bmToast('이름을 입력해주세요'); return; }
+  const ids=Object.keys(_bmPickSet);
+  const ok=await _bmWrite('POST','bookstar_shelves',{school_id:CH_SCHOOL,student_id:s.id,name:nm,book_ids:ids});
+  bmCloseModal(); bmToast(ok?`“${nm}” 책장을 만들었어요 (${ids.length}권)`:'저장 실패'); renderMyProfileTop();
+}
+function bmShare(kind,name){
+  try{ const txt=`[북스타] ${kind} · ${name}`; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); } }catch(e){}
+  bmToast('공유 내용을 복사했어요');
 }
 function toggleMyMore(){
   const w=document.getElementById('myMoreWrap'); const b=document.getElementById('myMoreBtn'); if(!w) return;
@@ -6134,19 +6313,14 @@ async function openProfileEdit(){
   if(!ov){ ov=document.createElement('div'); ov.id='peOv'; ov.className='pe-ov'; ov.onclick=e=>{ if(e.target===ov) closeProfileEdit(); }; document.body.appendChild(ov); }
   let prof=null;
   try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
-  _peEmoji=s.emoji||'📘'; _peFav=(prof&&prof.favorite_book_id)||''; const bio=(prof&&prof.bio)||'';
-  const done=_doneBooks();
-  const favGrid=done.length
-    ? done.map(b=>`<div class="pe-fav${_peFav===b.id?' on':''}" data-id="${esc(b.id)}" onclick="peSetFav('${esc(b.id)}')"><div class="cv">${_bkCover(b)}</div><div class="t">${esc(cleanT(b.title))}</div></div>`).join('')
-    : `<div class="sg-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>`;
+  _peEmoji=s.emoji||'📘'; const bio=(prof&&prof.bio)||'';
   ov.innerHTML=`<div class="pe">
-    <div class="pe-h">내 서가 편집</div>
+    <div class="pe-h">프로필 편집</div>
     <div class="pe-lb">아바타</div>
     <div class="pe-emoji" id="peEmoji">${PE_EMOJI.map(e=>`<button class="pe-em${_peEmoji===e?' on':''}" onclick="peSetEmoji('${e}')">${e}</button>`).join('')}</div>
     <div class="pe-lb">상태메시지</div>
     <input class="pe-in" id="peBio" maxlength="60" placeholder="예: 오늘도 한 챕터씩" value="${esc(bio)}">
-    <div class="pe-lb">인생책 (완독한 책 중에서)</div>
-    <div class="pe-favgrid" id="peFavGrid">${favGrid}</div>
+    <div class="pe-lb" style="color:var(--text-light);font-weight:500;margin-top:4px">인생책은 ‘내 책 모음 › 내 도서’에서 ⭐로 등록해요.</div>
     <div class="pe-btns">
       <button class="pe-btn cancel" onclick="closeProfileEdit()">취소</button>
       <button class="pe-btn save" onclick="saveProfile()">저장</button>
@@ -6160,7 +6334,7 @@ function peSetFav(id){ _peFav=(_peFav===id?'':id); document.querySelectorAll('#p
 async function saveProfile(){
   const s=bxStudent(); if(!s) return;
   const bio=(document.getElementById('peBio')?.value||'').trim();
-  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio,favorite_book_id:_peFav||null})}); }catch(e){}
+  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio})}); }catch(e){}
   s.emoji=_peEmoji; bxSetStudent(s);
   try{ const i=BX_STUDENTS.findIndex(x=>x.id===s.id); if(i>=0) BX_STUDENTS[i].emoji=_peEmoji; }catch(e){}
   closeProfileEdit();
