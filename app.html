@@ -1117,6 +1117,63 @@ body.dark .mw-badge{color:var(--gold);}
 .my-stats .b-num{grid-column:auto;}
 .my-stats .b-heat{grid-column:1/-1;}
 @media(max-width:760px){ .my-top{grid-template-columns:1fr;} .my-stats{grid-template-columns:1fr 1fr;} }
+/* ── 내서재 공개 프로필 (= 남도 보는 서재 프로필) + 책장 ── */
+.my-prof{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-top:18px;box-shadow:0 4px 18px rgba(0,0,0,.05);}
+.mp-top{display:flex;align-items:center;gap:16px;}
+.mp-ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-input);flex-shrink:0;}
+.mp-id{flex:1;min-width:0;}
+.mp-nm{font-size:20px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.mp-grade{font-size:12px;font-weight:700;color:var(--text-light);}
+.mp-bio{font-size:13px;color:var(--text-sub);margin-top:4px;line-height:1.4;}
+.mp-bio.empty{opacity:.6;font-style:italic;}
+.mp-foll{display:flex;gap:16px;margin-top:8px;font-size:13px;color:var(--text-light);}
+.mp-foll b{color:var(--text);font-weight:800;}
+.mp-edit{border:1px solid var(--border);background:transparent;border-radius:11px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
+.mp-edit:hover{background:var(--bg-input);}
+.mp-edit.follow{background:var(--primary);color:#fff;border-color:var(--primary);}
+.mp-edit.follow.on{background:transparent;color:var(--text-sub);}
+.mp-chips{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+.mp-chip{flex:1;min-width:68px;text-align:center;background:var(--bg-input);border-radius:14px;padding:11px 6px;}
+.mp-chip .v{font-size:19px;font-weight:800;color:var(--text);}
+.mp-chip .l{font-size:11px;color:var(--text-light);margin-top:2px;}
+.shelf{margin-top:16px;border-top:1px solid var(--border);padding-top:16px;}
+.shelf-h{font-size:13px;font-weight:800;color:var(--text-sub);margin-bottom:11px;}
+.shelf-fav{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,rgba(212,169,59,.14),rgba(212,169,59,.04));border:1px solid var(--gold);border-radius:16px;padding:14px;margin-bottom:14px;}
+.shelf-fav .cv{width:54px;height:78px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+.shelf-fav .cv img{width:100%;height:100%;object-fit:cover;}
+.shelf-fav .ft{flex:1;min-width:0;}
+.shelf-fav .ft .k{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.05em;}
+.shelf-fav .ft .t{font-size:16px;font-weight:800;color:var(--text);margin-top:3px;}
+.shelf-fav-empty{display:block;border:1.5px dashed var(--border);background:transparent;color:var(--text-light);border-radius:16px;padding:15px;width:100%;text-align:center;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px;}
+.shelf-fav-empty:hover{border-color:var(--gold);color:var(--gold);}
+.shelf-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+.shelf-bk{width:50px;flex-shrink:0;cursor:pointer;}
+.shelf-bk .cv{width:50px;height:72px;border-radius:6px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 7px rgba(0,0,0,.13);}
+.shelf-bk .cv img{width:100%;height:100%;object-fit:cover;}
+.shelf-empty{font-size:13px;color:var(--text-light);padding:4px 0;}
+.my-priv-div{display:flex;align-items:center;gap:10px;margin:28px 0 2px;color:var(--text-light);font-size:12px;font-weight:700;}
+.my-priv-div::before,.my-priv-div::after{content:'';flex:1;height:1px;background:var(--border);}
+/* 프로필 편집 모달 */
+.pe-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:none;align-items:flex-end;justify-content:center;}
+.pe-ov.on{display:flex;}
+.pe{background:var(--bg-card);width:100%;max-width:460px;border-radius:20px 20px 0 0;padding:22px;max-height:88vh;overflow-y:auto;}
+@media(min-width:560px){ .pe-ov{align-items:center;} .pe{border-radius:20px;} }
+.pe-h{font-size:17px;font-weight:800;color:var(--text);margin-bottom:16px;}
+.pe-lb{font-size:12px;font-weight:700;color:var(--text-sub);margin:14px 0 7px;}
+.pe-emoji{display:flex;gap:8px;flex-wrap:wrap;}
+.pe-em{width:42px;height:42px;border-radius:11px;border:1px solid var(--border);background:transparent;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.pe-em.on{border-color:var(--primary);border-width:2px;background:var(--bg-input);}
+.pe-in{width:100%;border:1px solid var(--border);border-radius:11px;padding:11px;font-size:14px;background:var(--bg-input);color:var(--text);box-sizing:border-box;font-family:inherit;}
+.pe-favgrid{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;}
+.pe-fav{width:54px;flex-shrink:0;cursor:pointer;text-align:center;}
+.pe-fav .cv{width:54px;height:78px;border-radius:7px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid transparent;}
+.pe-fav.on .cv{border-color:var(--gold);}
+.pe-fav .cv img{width:100%;height:100%;object-fit:cover;}
+.pe-fav .t{font-size:10px;color:var(--text-light);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pe-btns{display:flex;gap:10px;margin-top:22px;}
+.pe-btn{flex:1;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;border:none;}
+.pe-btn.save{background:var(--primary);color:#fff;}
+.pe-btn.cancel{background:var(--bg-input);color:var(--text-sub);}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -1980,6 +2037,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <section class="page" id="page-mypage">
   <h1 class="page-title">내서재</h1>
   <p class="page-subtitle">내 챌린지 진척 · 점수 · 뱃지 · 서평</p>
+
+  <!-- 공개 프로필 헤더 + 책장 (남도 보는 부분) -->
+  <div id="myProfileTop"></div>
+  <div class="my-priv-div" id="myPrivDiv" style="display:none">여기부터 나만 보여요</div>
 
   <!-- 상단 요약 히어로 (실측 3숫자) -->
   <div class="my-hero" id="myHero" style="display:none"></div>
@@ -3590,7 +3651,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -4091,7 +4152,7 @@ async function bxPickStudent(id){
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
-  try{ renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
+  try{ renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
 }
 // 우리도서관 카테고리(관리자가 추가·삭제·편집) — 서버 library_sections에서 로드
@@ -4700,7 +4761,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5853,6 +5914,99 @@ function renderReadingRhythm(){
       <div class="b-heat-foot">적게 <span class="b-cell"></span><span class="b-cell l1"></span><span class="b-cell l2"></span><span class="b-cell l3"></span><span class="b-cell l4"></span> 많이</div>
     </div>`;
   const sEl=document.getElementById('readingStats'); if(sEl) sEl.innerHTML=`<div class="my-stats">${kpiTiles}</div>`;
+}
+/* ── 내서재 공개 프로필 헤더 + 책장 (남도 보는 부분) ── */
+const PE_EMOJI=['📘','🌷','⚽','🎨','🚀','📚','🦊','🌙','🍀','🐳','🎧','🌻','🐧','☕','🎸','🧩'];
+let _peEmoji='', _peFav='';
+function _doneBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); if(r&&(r.read_pct||0)>=95) out.push(b); }); return out; }
+function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
+async function renderMyProfileTop(){
+  const el=document.getElementById('myProfileTop'); if(!el) return;
+  const s=bxStudent(); const priv=document.getElementById('myPrivDiv');
+  if(!s){
+    el.innerHTML=`<div class="my-prof" style="text-align:center"><div class="mp-bio empty" style="margin:4px 0 14px">계정을 선택하면 나만의 서재가 만들어져요.</div><button class="mp-edit" onclick="bxOpenPicker()">계정 선택</button></div>`;
+    if(priv) priv.style.display='none'; return;
+  }
+  if(priv) priv.style.display='flex';
+  let prof=null;
+  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
+  const bio=(prof&&prof.bio)||''; const favId=(prof&&prof.favorite_book_id)||'';
+  let followers=0, following=0;
+  try{ const r=await fetch(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(s.id)}&select=follower_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)) followers=a.length; } }catch(e){}
+  try{ const r=await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(s.id)}&select=following_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)) following=a.length; } }catch(e){}
+  let writings=[];
+  try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
+  writings=Array.isArray(writings)?writings:[];
+  const nWrite=writings.length, nHi=writings.filter(w=>w.activity==='underline').length;
+  const st=_myStats(); const done=_doneBooks(); const favBook=favId?_bookById(favId):null;
+  const favHtml=favBook
+    ? `<div class="shelf-fav"><div class="cv">${_bkCover(favBook)}</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">${esc(cleanT(favBook.title))}</div></div></div>`
+    : `<button class="shelf-fav-empty" onclick="openProfileEdit()">⭐ 인생책 고르기 →</button>`;
+  const shelfHtml=done.length
+    ? `<div class="shelf-row">${done.map(b=>`<div class="shelf-bk" onclick="openDetail('${esc(b.id)}')" title="${esc(cleanT(b.title))}"><div class="cv">${_bkCover(b)}</div></div>`).join('')}</div>`
+    : `<div class="shelf-empty">완독하면 여기에 책이 꽂혀요.</div>`;
+  el.innerHTML=`
+    <div class="my-prof">
+      <div class="mp-top">
+        <div class="mp-ava">${s.emoji||'🙂'}</div>
+        <div class="mp-id">
+          <div class="mp-nm">${esc(s.name)} <span class="mp-grade">한국대학교 도서관</span></div>
+          <div class="mp-bio${bio?'':' empty'}">${bio?esc(bio):'한 줄 소개를 적어보세요'}</div>
+          <div class="mp-foll"><span>팔로워 <b>${followers}</b></span><span>팔로잉 <b>${following}</b></span></div>
+        </div>
+        <button class="mp-edit" onclick="openProfileEdit()">프로필 편집</button>
+      </div>
+      <div class="mp-chips">
+        <div class="mp-chip"><div class="v">${st.done}</div><div class="l">완독</div></div>
+        <div class="mp-chip"><div class="v">${nWrite}</div><div class="l">남긴 글</div></div>
+        <div class="mp-chip"><div class="v">${nHi}</div><div class="l">핵심 문장</div></div>
+        <div class="mp-chip"><div class="v">${(st.score||0).toLocaleString()}</div><div class="l">⭐ 점수</div></div>
+      </div>
+      <div class="shelf">
+        <div class="shelf-h">📚 내 책장</div>
+        ${favHtml}
+        ${shelfHtml}
+      </div>
+    </div>`;
+}
+async function openProfileEdit(){
+  const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  let ov=document.getElementById('peOv');
+  if(!ov){ ov=document.createElement('div'); ov.id='peOv'; ov.className='pe-ov'; ov.onclick=e=>{ if(e.target===ov) closeProfileEdit(); }; document.body.appendChild(ov); }
+  let prof=null;
+  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
+  _peEmoji=s.emoji||'📘'; _peFav=(prof&&prof.favorite_book_id)||''; const bio=(prof&&prof.bio)||'';
+  const done=_doneBooks();
+  const favGrid=done.length
+    ? done.map(b=>`<div class="pe-fav${_peFav===b.id?' on':''}" data-id="${esc(b.id)}" onclick="peSetFav('${esc(b.id)}')"><div class="cv">${_bkCover(b)}</div><div class="t">${esc(cleanT(b.title))}</div></div>`).join('')
+    : `<div class="shelf-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>`;
+  ov.innerHTML=`<div class="pe">
+    <div class="pe-h">프로필 편집</div>
+    <div class="pe-lb">아바타</div>
+    <div class="pe-emoji" id="peEmoji">${PE_EMOJI.map(e=>`<button class="pe-em${_peEmoji===e?' on':''}" onclick="peSetEmoji('${e}')">${e}</button>`).join('')}</div>
+    <div class="pe-lb">한 줄 소개</div>
+    <input class="pe-in" id="peBio" maxlength="60" placeholder="예: 매일 한 챕터씩 읽는 중" value="${esc(bio)}">
+    <div class="pe-lb">인생책 (완독한 책 중에서)</div>
+    <div class="pe-favgrid" id="peFavGrid">${favGrid}</div>
+    <div class="pe-btns">
+      <button class="pe-btn cancel" onclick="closeProfileEdit()">취소</button>
+      <button class="pe-btn save" onclick="saveProfile()">저장</button>
+    </div>
+  </div>`;
+  ov.classList.add('on'); document.body.style.overflow='hidden';
+}
+function closeProfileEdit(){ const ov=document.getElementById('peOv'); if(ov) ov.classList.remove('on'); document.body.style.overflow=''; }
+function peSetEmoji(e){ _peEmoji=e; document.querySelectorAll('#peEmoji .pe-em').forEach(b=>b.classList.toggle('on', b.textContent===e)); }
+function peSetFav(id){ _peFav=(_peFav===id?'':id); document.querySelectorAll('#peFavGrid .pe-fav').forEach(d=>d.classList.toggle('on', d.dataset.id===_peFav)); }
+async function saveProfile(){
+  const s=bxStudent(); if(!s) return;
+  const bio=(document.getElementById('peBio')?.value||'').trim();
+  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio,favorite_book_id:_peFav||null})}); }catch(e){}
+  s.emoji=_peEmoji; bxSetStudent(s);
+  try{ const i=BX_STUDENTS.findIndex(x=>x.id===s.id); if(i>=0) BX_STUDENTS[i].emoji=_peEmoji; }catch(e){}
+  closeProfileEdit();
+  try{ bxRenderAccountChip(); }catch(e){}
+  renderMyProfileTop();
 }
 /* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
 const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
