@@ -1174,43 +1174,40 @@ body.dark .mw-badge{color:var(--gold);}
 .pe-btn{flex:1;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;border:none;}
 .pe-btn.save{background:var(--primary);color:#fff;}
 .pe-btn.cancel{background:var(--bg-input);color:var(--text-sub);}
-/* ── 미니홈피 대문(독서방) + 방명록 ── */
-.hp{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:18px;box-shadow:0 4px 18px rgba(0,0,0,.05);}
-.hp-cover{height:130px;position:relative;background:linear-gradient(135deg,#a18cd1,#fbc2eb);}
-.hp-deco{position:absolute;top:12px;right:12px;border:none;background:rgba(255,255,255,.85);color:#333;border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);}
-.hp-deco:hover{background:#fff;}
-.hp-head{display:flex;align-items:flex-end;gap:14px;padding:0 22px 16px;margin-top:-38px;position:relative;}
-.hp-ava{width:78px;height:78px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--bg-card);border:3px solid var(--bg-card);box-shadow:0 4px 14px rgba(0,0,0,.16);flex-shrink:0;}
-.hp-meta{flex:1;min-width:0;padding-bottom:2px;}
-.hp-room{font-size:19px;font-weight:800;color:var(--text);}
-.hp-status{font-size:13px;color:var(--text-sub);margin-top:3px;line-height:1.4;}
-.hp-status.empty{opacity:.6;font-style:italic;}
-.hp-sub{font-size:12px;color:var(--text-light);margin-top:7px;display:flex;gap:12px;flex-wrap:wrap;}
-.hp-sub b{color:var(--text);font-weight:800;}
-.hp-sub .tot{color:var(--primary);font-weight:800;}
-.hp-act{padding-bottom:4px;}
-.hp-act .mp-edit{border:1px solid var(--border);background:transparent;border-radius:11px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
-.hp-body{padding:4px 22px 22px;}
-/* 방명록 */
-.hp-gb{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:20px 22px;margin-top:16px;box-shadow:0 4px 18px rgba(0,0,0,.05);}
-.hp-gb-h{font-size:15px;font-weight:800;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
-.hp-gb-h .c{font-size:13px;color:var(--text-light);font-weight:700;}
-.hp-gb-form{display:flex;gap:9px;align-items:flex-end;margin-bottom:16px;}
-.hp-gb-form textarea{flex:1;border:1px solid var(--border);border-radius:12px;padding:11px;font-size:13.5px;background:var(--bg-input);color:var(--text);box-sizing:border-box;font-family:inherit;resize:none;height:46px;line-height:1.4;}
-.hp-gb-form button{border:none;background:var(--primary);color:#fff;border-radius:12px;padding:0 16px;height:46px;font-size:13.5px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.gb-item{display:flex;gap:11px;padding:12px 0;border-top:1px solid var(--border);}
-.gb-ava{width:38px;height:38px;border-radius:11px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.gb-c{flex:1;min-width:0;}
-.gb-top{display:flex;align-items:center;gap:8px;}
-.gb-nm{font-size:13.5px;font-weight:800;color:var(--text);}
-.gb-tm{font-size:11px;color:var(--text-light);}
-.gb-del{margin-left:auto;border:none;background:transparent;color:var(--text-light);font-size:15px;cursor:pointer;line-height:1;}
-.gb-body{font-size:13.5px;color:var(--text-sub);margin-top:3px;line-height:1.5;word-break:break-word;}
-.gb-empty{font-size:13px;color:var(--text-light);padding:8px 0;text-align:center;}
-/* 꾸미기 — 커버 테마 선택 */
-.pe-covers{display:flex;gap:9px;flex-wrap:wrap;}
-.pe-cov{width:54px;height:36px;border-radius:10px;cursor:pointer;border:2px solid transparent;}
-.pe-cov.on{border-color:var(--text);box-shadow:0 0 0 2px var(--bg-card),0 0 0 4px var(--primary);}
+/* ── 내서재 = 내 서가 (슬림 프로필 + 우리 도서관식 가로 표지 서가) ── */
+.pf-strip{display:flex;align-items:center;gap:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:16px 20px;margin-top:18px;box-shadow:0 4px 18px rgba(0,0,0,.05);}
+.pf-ava{width:56px;height:56px;border-radius:16px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.pf-id{flex:1;min-width:0;}
+.pf-nm{font-size:17px;font-weight:800;color:var(--text);}
+.pf-bio{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+.pf-bio.empty{opacity:.6;font-style:italic;}
+.pf-stats{display:flex;gap:14px;margin-top:7px;font-size:12px;color:var(--text-light);flex-wrap:wrap;}
+.pf-stats b{color:var(--text);font-weight:800;}
+.pf-edit{border:1px solid var(--border);background:transparent;border-radius:11px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);white-space:nowrap;}
+.pf-edit:hover{background:var(--bg-input);}
+/* 인생책 하이라이트 */
+.pf-fav{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,rgba(212,169,59,.14),rgba(212,169,59,.04));border:1px solid var(--gold);border-radius:16px;padding:14px;margin-top:16px;}
+.pf-fav .cv{width:54px;height:78px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+.pf-fav .cv img{width:100%;height:100%;object-fit:cover;}
+.pf-fav .ft .k{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.05em;}
+.pf-fav .ft .t{font-size:16px;font-weight:800;color:var(--text);margin-top:3px;}
+.pf-fav-empty{display:block;width:100%;border:1.5px dashed var(--border);background:transparent;color:var(--text-light);border-radius:16px;padding:15px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;margin-top:16px;}
+.pf-fav-empty:hover{border-color:var(--gold);color:var(--gold);}
+/* 가로 표지 서가 */
+.sg-sec{margin-top:26px;}
+.sg-h{font-size:18px;font-weight:800;color:var(--text);}
+.sg-sub{font-size:12.5px;color:var(--text-light);margin-top:3px;margin-bottom:13px;}
+.sg-row{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;}
+.sg-card{width:116px;flex-shrink:0;cursor:pointer;}
+.sg-cv{width:116px;height:166px;border-radius:10px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 6px 16px -6px rgba(0,0,0,.32);position:relative;}
+.sg-cv img{width:100%;height:100%;object-fit:cover;}
+.sg-done{position:absolute;top:6px;right:6px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.sg-t{font-size:13px;font-weight:700;color:var(--text);margin-top:8px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.sg-a{font-size:11.5px;color:var(--text-light);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sg-bar{height:5px;background:var(--bg-input);border-radius:3px;margin-top:7px;overflow:hidden;}
+.sg-bar i{display:block;height:100%;background:var(--primary);border-radius:3px;}
+.sg-pct{font-size:11px;color:var(--primary);font-weight:800;margin-top:4px;}
+.sg-empty{font-size:13px;color:var(--text-light);padding:6px 2px;}
 @media(max-width:760px){
   .bento{grid-template-columns:1fr 1fr;}
   .b-identity{grid-column:1/3;grid-row:auto;}
@@ -2075,12 +2072,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <h1 class="page-title">내서재</h1>
   <p class="page-subtitle">내 챌린지 진척 · 점수 · 뱃지 · 서평</p>
 
-  <!-- 미니홈피 대문(독서방) + 책장 (공개) -->
+  <!-- 내 서가: 슬림 프로필 + 인생책 + 완독/읽는 책 가로 서가 (공개) -->
   <div id="myProfileTop"></div>
-  <!-- 내가 쓴 글 (공개, 다이어리) -->
+  <!-- 내가 쓴 글 (공개) -->
   <div id="myWritings"></div>
-  <!-- 방명록 (공개) -->
-  <div id="myGuestbook"></div>
   <div class="my-priv-div" id="myPrivDiv" style="display:none">여기부터 나만 보여요</div>
 
   <!-- 상단 요약 히어로 (실측 3숫자) -->
@@ -4793,7 +4788,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622r';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5917,19 +5912,8 @@ function renderReadingRhythm(){
           <div class="wb-d">${d.today?'오늘':d.name}</div>
         </div>`).join('')}</div>
     </div>`;
-  const booksTile=`
-    <div class="b-tile b-books">
-      <div class="b-head">읽고 있는 책</div>
-      ${shown.length?shown.map(r=>`
-        <div class="b-book">
-          <div class="bb-t">${esc(cleanT(r.title))}</div>
-          <div class="bb-bar"><div class="bb-fill" style="width:${r.pct}%"></div></div>
-          <div class="bb-pct">${r.pct}%</div>
-          ${r.done?`<span class="bb-done">✔ 완독</span>`:`<button class="bb-go" onclick="openViewer('${esc(r.id)}','full')">이어 읽기 →</button>`}
-        </div>`).join('')+(rows.length>shown.length?`<div class="b-empty" style="padding-bottom:0">외 ${rows.length-shown.length}권 진행 중</div>`:'')
-        :`<div class="b-empty">완독 모드로 책을 열면 진행률이 여기에 쌓여요.</div>`}
-    </div>`;
-  el.innerHTML=`<div class="my-top">${heroTile}${booksTile}</div>`;
+  // 읽고 있는 책은 공개 서가(renderMyProfileTop)로 이동 → 여기선 히어로(주간 리듬)만
+  el.innerHTML=`<div class="my-top" style="grid-template-columns:1fr">${heroTile}</div>`;
   // (아래) 통계 블록 = KPI 4 + 독서 잔디
   const kpiTiles=`
     <div class="b-tile b-num b-acc-gold"><div class="b-num-ic">📚</div><div class="b-num-v">${st.done}</div><div class="b-num-l">완독</div>${st.done?'<div class="b-num-sub">지금까지 모은 책</div>':'<div class="b-num-sub">첫 완독에 도전!</div>'}</div>
@@ -5947,91 +5931,64 @@ function renderReadingRhythm(){
     </div>`;
   const sEl=document.getElementById('readingStats'); if(sEl) sEl.innerHTML=`<div class="my-stats">${kpiTiles}</div>`;
 }
-/* ── 미니홈피 대문(독서방) + 책장 + 방명록 ── */
+/* ── 내서재 = 내 서가 (슬림 프로필 + 우리 도서관식 가로 표지 서가) ── */
 const PE_EMOJI=['📘','🌷','⚽','🎨','🚀','📚','🦊','🌙','🍀','🐳','🎧','🌻','🐧','☕','🎸','🧩'];
-const COVER_THEMES=[
-  ['lavender','linear-gradient(135deg,#a18cd1,#fbc2eb)'],
-  ['sunset','linear-gradient(135deg,#ff9a56,#ff6a88)'],
-  ['ocean','linear-gradient(135deg,#4facfe,#3a7bd5)'],
-  ['forest','linear-gradient(135deg,#43cea2,#185a9d)'],
-  ['night','linear-gradient(135deg,#2c3e50,#536390)'],
-  ['cream','linear-gradient(135deg,#f6d365,#fda085)'],
-  ['sakura','linear-gradient(135deg,#ff9a9e,#fad0c4)'],
-  ['mint','linear-gradient(135deg,#84fab0,#8fd3f4)'],
-];
-function _coverBg(key){ const t=COVER_THEMES.find(c=>c[0]===key)||COVER_THEMES[0]; return t[1]; }
-let _peEmoji='', _peFav='', _peCover='';
+let _peEmoji='', _peFav='';
 function _doneBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); if(r&&(r.read_pct||0)>=95) out.push(b); }); return out; }
+function _readingBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); const p=r?(r.read_pct||0):0; if(p>0&&p<95) out.push({b, pct:Math.max(1,Math.min(94,p)), ts:(r&&r.ts)||0}); }); out.sort((x,y)=>y.ts-x.ts); return out; }
 function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
 async function renderMyProfileTop(){
   const el=document.getElementById('myProfileTop'); if(!el) return;
-  const s=bxStudent(); const priv=document.getElementById('myPrivDiv'); const gbEl=document.getElementById('myGuestbook');
+  const s=bxStudent(); const priv=document.getElementById('myPrivDiv');
   if(!s){
-    el.innerHTML=`<div class="hp" style="padding:28px;text-align:center"><div class="hp-status empty" style="margin:4px 0 14px">계정을 선택하면 나만의 독서방이 만들어져요.</div><button class="mp-edit" onclick="bxOpenPicker()">계정 선택</button></div>`;
-    if(priv) priv.style.display='none'; if(gbEl) gbEl.innerHTML=''; return;
+    el.innerHTML=`<div class="pf-strip" style="justify-content:center;gap:12px"><div class="pf-bio empty">계정을 선택하면 내 서가가 만들어져요.</div><button class="pf-edit" onclick="bxOpenPicker()">계정 선택</button></div>`;
+    if(priv) priv.style.display='none'; return;
   }
   if(priv) priv.style.display='flex';
   let prof=null;
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id,cover,visits`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
-  const bio=(prof&&prof.bio)||''; const favId=(prof&&prof.favorite_book_id)||''; const cover=(prof&&prof.cover)||'lavender'; const visits=(prof&&prof.visits)||0;
-  let followers=0, following=0;
-  try{ const r=await fetch(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(s.id)}&select=follower_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)) followers=a.length; } }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(s.id)}&select=following_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)) following=a.length; } }catch(e){}
+  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
+  const bio=(prof&&prof.bio)||''; const favId=(prof&&prof.favorite_book_id)||'';
   let writings=[];
   try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
   writings=Array.isArray(writings)?writings:[];
   const nWrite=writings.length, nReview=writings.filter(w=>w.activity==='review').length;
-  const st=_myStats(); const done=_doneBooks(); const favBook=favId?_bookById(favId):null;
+  const st=_myStats(); const done=_doneBooks(); const reading=_readingBooks(); const favBook=favId?_bookById(favId):null;
   const favHtml=favBook
-    ? `<div class="shelf-fav"><div class="cv">${_bkCover(favBook)}</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">${esc(cleanT(favBook.title))}</div></div></div>`
-    : `<button class="shelf-fav-empty" onclick="openProfileEdit()">⭐ 인생책 고르기 →</button>`;
-  const shelfHtml=done.length
-    ? `<div class="shelf-row">${done.map(b=>`<div class="shelf-bk" onclick="openDetail('${esc(b.id)}')" title="${esc(cleanT(b.title))}"><div class="cv">${_bkCover(b)}</div></div>`).join('')}</div>`
-    : `<div class="shelf-empty">완독하면 여기에 책이 꽂혀요.</div>`;
+    ? `<div class="pf-fav"><div class="cv">${_bkCover(favBook)}</div><div class="ft"><div class="k">⭐ 인생책</div><div class="t">${esc(cleanT(favBook.title))}</div></div></div>`
+    : `<button class="pf-fav-empty" onclick="openProfileEdit()">⭐ 인생책 고르기 →</button>`;
+  const doneRow=done.length
+    ? `<div class="sg-row">${done.map(b=>`<div class="sg-card" onclick="openDetail('${esc(b.id)}')"><div class="sg-cv">${_bkCover(b)}<span class="sg-done">✔ 완독</span></div><div class="sg-t">${esc(cleanT(b.title))}</div><div class="sg-a">${esc(b.author||'')}</div></div>`).join('')}</div>`
+    : `<div class="sg-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>`;
+  const readRow=reading.length
+    ? `<div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div>`
+    : `<div class="sg-empty">완독 모드로 책을 열면 여기에 쌓여요.</div>`;
   el.innerHTML=`
-    <div class="hp">
-      <div class="hp-cover" style="background:${_coverBg(cover)}">
-        <button class="hp-deco" onclick="openProfileEdit()">🎨 꾸미기</button>
+    <div class="pf-strip">
+      <div class="pf-ava">${s.emoji||'🙂'}</div>
+      <div class="pf-id">
+        <div class="pf-nm">${esc(s.name)}</div>
+        <div class="pf-bio${bio?'':' empty'}">${bio?esc(bio):'상태메시지를 적어보세요'}</div>
+        <div class="pf-stats"><span>🏆 완독 <b>${st.done}</b></span><span>✍️ 글 <b>${nWrite}</b></span><span>📝 서평 <b>${nReview}</b></span><span>⭐ <b>${(st.score||0).toLocaleString()}</b></span></div>
       </div>
-      <div class="hp-head">
-        <div class="hp-ava">${s.emoji||'🙂'}</div>
-        <div class="hp-meta">
-          <div class="hp-room">${esc(s.name)}의 독서방</div>
-          <div class="hp-status${bio?'':' empty'}">${bio?esc(bio):'상태메시지를 적어보세요'}</div>
-          <div class="hp-sub"><span class="tot">TOTAL 방문 ${visits.toLocaleString()}</span><span>팔로워 <b>${followers}</b></span><span>팔로잉 <b>${following}</b></span></div>
-        </div>
-      </div>
-      <div class="hp-body">
-        <div class="mp-chips">
-          <div class="mp-chip"><div class="v">${st.done}</div><div class="l">완독</div></div>
-          <div class="mp-chip"><div class="v">${nWrite}</div><div class="l">남긴 글</div></div>
-          <div class="mp-chip"><div class="v">${nReview}</div><div class="l">서평</div></div>
-          <div class="mp-chip"><div class="v">${(st.score||0).toLocaleString()}</div><div class="l">⭐ 점수</div></div>
-        </div>
-        <div class="shelf">
-          <div class="shelf-h">📚 내 책장</div>
-          ${favHtml}
-          ${shelfHtml}
-        </div>
-      </div>
-    </div>`;
-  renderGuestbook(s.id);
+      <button class="pf-edit" onclick="openProfileEdit()">편집</button>
+    </div>
+    ${favHtml}
+    <div class="sg-sec"><div class="sg-h">🏆 ${esc(s.name)}님이 완독한 책</div><div class="sg-sub">끝까지 읽어낸 책들이에요</div>${doneRow}</div>
+    <div class="sg-sec"><div class="sg-h">📖 지금 읽고 있는 책</div><div class="sg-sub">이어서 읽어볼까요?</div>${readRow}</div>`;
 }
 async function openProfileEdit(){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
   let ov=document.getElementById('peOv');
   if(!ov){ ov=document.createElement('div'); ov.id='peOv'; ov.className='pe-ov'; ov.onclick=e=>{ if(e.target===ov) closeProfileEdit(); }; document.body.appendChild(ov); }
   let prof=null;
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id,cover`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
-  _peEmoji=s.emoji||'📘'; _peFav=(prof&&prof.favorite_book_id)||''; _peCover=(prof&&prof.cover)||'lavender'; const bio=(prof&&prof.bio)||'';
+  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
+  _peEmoji=s.emoji||'📘'; _peFav=(prof&&prof.favorite_book_id)||''; const bio=(prof&&prof.bio)||'';
   const done=_doneBooks();
   const favGrid=done.length
     ? done.map(b=>`<div class="pe-fav${_peFav===b.id?' on':''}" data-id="${esc(b.id)}" onclick="peSetFav('${esc(b.id)}')"><div class="cv">${_bkCover(b)}</div><div class="t">${esc(cleanT(b.title))}</div></div>`).join('')
-    : `<div class="shelf-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>`;
+    : `<div class="sg-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>`;
   ov.innerHTML=`<div class="pe">
-    <div class="pe-h">독서방 꾸미기</div>
-    <div class="pe-lb">커버 배경</div>
-    <div class="pe-covers" id="peCovers">${COVER_THEMES.map(c=>`<div class="pe-cov${_peCover===c[0]?' on':''}" data-k="${c[0]}" style="background:${c[1]}" onclick="peSetCover('${c[0]}')"></div>`).join('')}</div>
+    <div class="pe-h">내 서가 편집</div>
     <div class="pe-lb">아바타</div>
     <div class="pe-emoji" id="peEmoji">${PE_EMOJI.map(e=>`<button class="pe-em${_peEmoji===e?' on':''}" onclick="peSetEmoji('${e}')">${e}</button>`).join('')}</div>
     <div class="pe-lb">상태메시지</div>
@@ -6048,49 +6005,15 @@ async function openProfileEdit(){
 function closeProfileEdit(){ const ov=document.getElementById('peOv'); if(ov) ov.classList.remove('on'); document.body.style.overflow=''; }
 function peSetEmoji(e){ _peEmoji=e; document.querySelectorAll('#peEmoji .pe-em').forEach(b=>b.classList.toggle('on', b.textContent===e)); }
 function peSetFav(id){ _peFav=(_peFav===id?'':id); document.querySelectorAll('#peFavGrid .pe-fav').forEach(d=>d.classList.toggle('on', d.dataset.id===_peFav)); }
-function peSetCover(k){ _peCover=k; document.querySelectorAll('#peCovers .pe-cov').forEach(d=>d.classList.toggle('on', d.dataset.k===k)); }
 async function saveProfile(){
   const s=bxStudent(); if(!s) return;
   const bio=(document.getElementById('peBio')?.value||'').trim();
-  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio,favorite_book_id:_peFav||null,cover:_peCover})}); }catch(e){}
+  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio,favorite_book_id:_peFav||null})}); }catch(e){}
   s.emoji=_peEmoji; bxSetStudent(s);
   try{ const i=BX_STUDENTS.findIndex(x=>x.id===s.id); if(i>=0) BX_STUDENTS[i].emoji=_peEmoji; }catch(e){}
   closeProfileEdit();
   try{ bxRenderAccountChip(); }catch(e){}
   renderMyProfileTop();
-}
-/* 방명록 (bookstar_guestbook) */
-async function renderGuestbook(hostId){
-  const el=document.getElementById('myGuestbook'); if(!el) return;
-  const me=bxStudent(); const meId=me?me.id:'guest';
-  let rows=[];
-  try{ const r=await fetch(`${BX_SB}/bookstar_guestbook?host_id=eq.${encodeURIComponent(hostId)}&order=created_at.desc&select=*`,{headers:BX_H}); if(r.ok) rows=await r.json(); }catch(e){}
-  rows=Array.isArray(rows)?rows:[];
-  const list=rows.length ? rows.map(g=>`
-    <div class="gb-item">
-      <div class="gb-ava">${g.writer_emoji||'🙂'}</div>
-      <div class="gb-c">
-        <div class="gb-top"><span class="gb-nm">${esc(g.writer_name||'익명')}</span><span class="gb-tm">${esc(_feedAgo(g.created_at))}</span>${(g.writer_id===meId||hostId===meId)?`<button class="gb-del" onclick="gbDel('${esc(g.id)}','${esc(hostId)}')" title="삭제">×</button>`:''}</div>
-        <div class="gb-body">${esc(g.body)}</div>
-      </div>
-    </div>`).join('') : `<div class="gb-empty">아직 방명록이 없어요. 첫 글을 남겨보세요!</div>`;
-  el.innerHTML=`<div class="hp-gb">
-    <div class="hp-gb-h">📝 방명록 <span class="c">${rows.length}</span></div>
-    ${me?`<div class="hp-gb-form"><textarea id="gbInput" maxlength="200" placeholder="방명록을 남겨보세요"></textarea><button onclick="gbPost('${esc(hostId)}')">남기기</button></div>`:''}
-    <div class="hp-gb-list">${list}</div>
-  </div>`;
-}
-async function gbPost(hostId){
-  const me=bxStudent(); if(!me){ bxOpenPicker(); return; }
-  const ta=document.getElementById('gbInput'); const body=((ta&&ta.value)||'').trim();
-  if(body.length<1){ if(ta) ta.focus(); return; }
-  try{ await fetch(`${BX_SB}/bookstar_guestbook`,{method:'POST',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({host_id:hostId,writer_id:me.id,writer_name:me.name,writer_emoji:me.emoji||'🙂',body})}); }catch(e){}
-  renderGuestbook(hostId);
-}
-async function gbDel(id,hostId){
-  if(!confirm('이 방명록을 삭제할까요?')) return;
-  try{ await fetch(`${BX_SB}/bookstar_guestbook?id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:BX_H}); }catch(e){}
-  renderGuestbook(hostId);
 }
 /* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
 const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
@@ -7231,15 +7154,8 @@ async function profileFollow(btn,sid){
   try{ if(on) await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H});
     else await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})}); }catch(e){}
 }
-async function bxBumpVisit(sid){   // 남의 독서방 방문 시 방문수 +1 (본인 제외)
-  const me=_bxSid(); if(!sid||sid===me) return;
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(sid)}&select=visits`,{headers:BX_H});
-    if(r.ok){ const a=await r.json(); const cur=(Array.isArray(a)&&a[0]&&a[0].visits)||0;
-      await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(sid)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({visits:cur+1})}); } }catch(e){}
-}
 async function openStudentProfile(sid){
   const s=BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
-  bxBumpVisit(sid);
   let ov=document.getElementById('bxProfileOv');
   if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
   ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
