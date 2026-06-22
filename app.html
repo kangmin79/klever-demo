@@ -4974,7 +4974,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6261,10 +6261,10 @@ async function renderMyProfileTop(){
         <div class="bm-life-k">${IC_STAR_SM} 내 인생책</div>
         <div class="bm-life-t">${esc(cleanT(favBook.title))}</div><div class="bm-life-a">${esc(favBook.author||'')}</div>
         ${favReason?`<div class="bm-reason">${esc(favReason)}</div>`:'<div class="bm-reason" style="color:var(--text-light)">아직 이유를 안 적었어요. ‘인생책 바꾸기’로 한마디 남겨보세요.</div>'}
-        <div class="bm-acts"><button class="bm-btn" onclick="openLifeModal('${esc(favBook.id)}')">${IC_EDIT} 인생책 바꾸기</button><button class="bm-btn" onclick="bmShare('내 인생책','${esc(cleanT(favBook.title))}')">${IC_SHARE} 공유</button></div></div></div>${histRows}`
-    : (done.length
-        ? `<div class="bm-life-empty"><div class="ph">${IC_STAR_SM.replace('width="13" height="13"','width="34" height="34"')}</div><div><div style="font-weight:800;color:var(--text);font-size:16px">아직 인생책을 안 골랐어요</div><div style="margin-top:5px">아래 <b>내 도서</b>에서 ⭐ 인생책으로 등록해보세요.</div></div></div>${histRows}`
-        : `<div class="ag-empty">완독한 책이 생기면 인생책을 고를 수 있어요.</div>${histRows}`);
+        <div class="bm-acts"><button class="bm-btn" onclick="openLifePicker()">${IC_EDIT} 인생책 바꾸기</button><button class="bm-btn" onclick="bmShare('내 인생책','${esc(cleanT(favBook.title))}')">${IC_SHARE} 공유</button></div></div></div>${histRows}`
+    : ((done.length||reading.length)
+        ? `<div class="bm-life-empty"><div class="ph">${IC_STAR_SM.replace('width="13" height="13"','width="34" height="34"')}</div><div><div style="font-weight:800;color:var(--text);font-size:16px">아직 인생책을 안 골랐어요</div><div style="margin-top:5px">내가 읽은·읽는 책 중 가장 인상 깊었던 한 권을 골라보세요.</div><div style="margin-top:12px"><button class="bm-btn fill" onclick="openLifePicker()">${IC_STAR_SM} 인생책 고르기</button></div></div></div>${histRows}`
+        : `<div class="ag-empty">책을 읽기 시작하면 인생책을 고를 수 있어요.</div>${histRows}`);
   // ── 읽던 책 이어가기
   const readSec=reading.length
     ? `<div class="sg-sec sg-mini" style="margin-top:24px"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
@@ -6283,6 +6283,19 @@ async function renderMyProfileTop(){
      <div class="ag-sec-h"><h3>내 책장 <span style="font-size:12px;color:var(--text-light);font-weight:600">내가 만든 책 모음</span></h3></div>${curGrid}`;
 }
 /* ── 인생책 등록/바꾸기 ── */
+function _lifeCandidates(){
+  const seen={}, out=[];
+  _doneBooks().forEach(b=>{ if(b&&!seen[b.id]){ seen[b.id]=1; out.push(b); } });
+  _readingBooks().forEach(x=>{ const b=x.b; if(b&&!seen[b.id]){ seen[b.id]=1; out.push(b); } });
+  return out;
+}
+function openLifePicker(){
+  const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  const cand=_lifeCandidates();
+  if(!cand.length){ bmToast('먼저 책을 읽어보세요'); return; }
+  const grid=cand.map(b=>`<div class="bm-pick${_curFav.id===b.id?' sel':''}" onclick="openLifeModal('${esc(b.id)}')"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(cleanT(b.title))}</div></div>`).join('');
+  _bmModal(`<h3>인생책 고르기</h3><div class="sub">내가 읽은·읽는 책 중에서 한 권을 고른 뒤, 이유를 적어요.</div><div class="bm-pickgrid">${grid}</div><div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>`);
+}
 function openLifeModal(id){
   _bmPendBook=id; const b=_bookById(id); if(!b) return;
   const cur=(_curFav.id===id)?_curFav.reason:'';
