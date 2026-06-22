@@ -1448,10 +1448,12 @@ body.dark .cg-head{color:#0f172a;}
 .cg-acc-h{display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;}
 .cg-acc-h:hover{background:var(--bg-input);}
 .cg-acc-h .num{font-weight:800;color:var(--text-light);font-size:13px;width:24px;flex:none;}
-.cg-acc-h .at{font-weight:700;flex:1;font-size:14px;}
+.cg-acc-h .at{font-weight:700;flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cg-ox{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;flex:none;}
 .cg-ox-o{background:#E7F7EE;color:#1B8F5A;}
 .cg-ox-x{background:#FCE9E9;color:#D14343;}
+.cg-ox-n{background:var(--bg-input);color:var(--text-light);}
+.cg-scene{font-size:11.5px;font-weight:700;color:var(--gold);margin-bottom:9px;}
 .cg-acc .chev{transition:transform .2s;color:var(--text-light);width:16px;height:16px;flex:none;}
 .cg-acc.open .chev{transform:rotate(90deg);}
 .cg-acc-b{display:none;padding:0 15px 15px;}
@@ -4991,7 +4993,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623s';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623t';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6428,7 +6430,7 @@ async function _chalResultHTML(bookId, ci){
     _agFetch(`bookstar_challenge_results?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&select=ans,impression,quiz_ok,quiz_total,score,updated_at`),
     _agFetch(`bookstar_writings?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&activity=eq.question&hidden=eq.false&select=text,created_at&order=created_at.desc`)
   ]);
-  const res=(resA&&resA[0])||{}; const ans=res.ans||{};
+  const res=(resA&&resA[0])||{}; const ans=res.ans||{}; const hasAns=Object.keys(ans).length>0;
   const items=[]; (sc.scenes||[]).forEach((scene,si)=>{ (scene.quiz||[]).forEach((q,qi)=>{ items.push({si,qi,scene,q}); }); });
   const tot=res.quiz_total||items.length;
   const ok=(res.quiz_ok!=null)?res.quiz_ok:items.filter(it=>{ const a=ans[it.si+'-'+it.qi]; return a&&a.ok; }).length;
@@ -6436,12 +6438,16 @@ async function _chalResultHTML(bookId, ci){
   const circ='①②③④⑤⑥⑦⑧⑨⑩';
   const accs=items.map((it,idx)=>{ const key=it.si+'-'+it.qi; const a=ans[key]; const mine=a?a.pick:undefined; const isOk=a?!!a.ok:false;
     const opts=(it.q.opts||[]).map((o,oi)=>{ let cls='',mk=''; if(oi===it.q.correct){ cls=' correct'; mk=(oi===mine?'내 답 · 정답':'정답'); } else if(oi===mine){ cls=' wrong'; mk='내 답'; } return `<div class="cg-opt${cls}"><span class="on">${circ[oi]||(oi+1)+'.'}</span><span>${esc(o)}</span>${mk?`<span class="mk">${mk}</span>`:''}</div>`; }).join('');
-    const st=it.scene.title||it.scene.label||('문항 '+(idx+1)); const k=ci+'-'+idx;
-    return `<div class="cg-acc" id="cgacc${k}"><div class="cg-acc-h" onclick="cgAccToggle('${k}')"><span class="num">${(idx+1<10?'0':'')+(idx+1)}</span><span class="at">${esc(st)}</span><span class="cg-ox ${a?(isOk?'cg-ox-o':'cg-ox-x'):'cg-ox-x'}">${a?(isOk?'정답':'오답'):'미응답'}</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div><div class="cg-acc-b"><div class="cg-review">${it.scene.excerpt?`<div class="cg-quote">“${esc(it.scene.excerpt)}”</div>`:''}<div class="cg-q">Q. ${esc(it.q.q)}</div>${opts}${it.q.expl?`<div class="cg-bg"><b>배경 설명</b> ${esc(it.q.expl)}</div>`:''}</div></div></div>`;
+    const st=esc(it.q.q); const k=ci+'-'+idx;
+    const badge = a ? `<span class="cg-ox ${isOk?'cg-ox-o':'cg-ox-x'}">${isOk?'정답':'오답'}</span>` : `<span class="cg-ox cg-ox-n">해설</span>`;
+    return `<div class="cg-acc" id="cgacc${k}"><div class="cg-acc-h" onclick="cgAccToggle('${k}')"><span class="num">${(idx+1<10?'0':'')+(idx+1)}</span><span class="at">${st}</span>${badge}<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></div><div class="cg-acc-b"><div class="cg-review"><div class="cg-scene">${esc(it.scene.title||'')}</div>${it.scene.excerpt?`<div class="cg-quote">“${esc(it.scene.excerpt)}”</div>`:''}<div class="cg-q">Q. ${esc(it.q.q)}</div>${opts}${it.q.expl?`<div class="cg-bg"><b>배경 설명</b> ${esc(it.q.expl)}</div>`:''}</div></div></div>`;
   }).join('');
   const qqList=[]; if(res.impression) qqList.push({lab:'한 줄 소감',t:res.impression}); (qWrites||[]).forEach(w=>qqList.push({lab:'한 줄 질문',t:w.text}));
   const qq=qqList.length?qqList.map(x=>`<div class="cg-qq"><div><div style="font-size:12px;color:var(--text-light)">${x.lab}</div><div class="cg-qq-t">${esc(x.t)}</div></div></div>`).join(''):'<div class="cg-empty">이 책에 남긴 한 줄 글이 아직 없어요.</div>';
-  return `<div class="cg-gaugebox"><div class="cg-gauge" style="--p:${pct}"><div class="in"><div class="sc">${pct}</div><div class="sl">% 정답</div></div></div><div style="flex:1;min-width:180px"><div class="ag-subh" style="margin-bottom:6px">문항별 복습</div><div style="font-size:12.5px;color:var(--text-light)">제목을 누르면 정답·내 답·배경 설명이 열려요. 총 ${items.length}문항.</div></div></div><div class="ag-div"></div>${accs||'<div class="cg-empty">복습할 문항이 없어요.</div>'}<div class="cg-qq-h">내가 남긴 한 줄</div>${qq}`;
+  const revLabel = hasAns
+    ? `제목을 누르면 정답·내 답·배경 설명이 열려요. 총 ${items.length}문항.`
+    : `이 회차는 문항별 채점 기록이 없어, 정답과 해설로 보여드려요. 총 ${items.length}문항.`;
+  return `<div class="cg-gaugebox"><div class="cg-gauge" style="--p:${pct}"><div class="in"><div class="sc">${pct}</div><div class="sl">% 정답</div></div></div><div style="flex:1;min-width:180px"><div class="ag-subh" style="margin-bottom:6px">${hasAns?'문항별 복습':'문항 해설'} <span style="font-weight:600;color:var(--text-light);font-size:12px">· 퀴즈 ${ok}/${tot}</span></div><div style="font-size:12.5px;color:var(--text-light)">${revLabel}</div></div></div><div class="ag-div"></div>${accs||'<div class="cg-empty">복습할 문항이 없어요.</div>'}<div class="cg-qq-h">내가 남긴 한 줄</div>${qq}`;
 }
 function cgAccToggle(k){ const a=document.getElementById('cgacc'+k); if(a) a.classList.toggle('open'); }
 function toggleMyMore(){
