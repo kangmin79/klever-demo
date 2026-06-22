@@ -1175,16 +1175,14 @@ body.dark .mw-badge{color:var(--gold);}
 .pe-btn.save{background:var(--primary);color:#fff;}
 .pe-btn.cancel{background:var(--bg-input);color:var(--text-sub);}
 /* ── 내서재 = 내 서가 (슬림 프로필 + 우리 도서관식 가로 표지 서가) ── */
-.pf-strip{display:flex;align-items:center;gap:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 22px;margin-top:18px;}
-.pf-ava{width:54px;height:54px;border-radius:14px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-.pf-id{flex:1;min-width:0;}
-.pf-nm{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
-.pf-bio{font-size:12.5px;color:var(--text-sub);margin-top:3px;}
-.pf-bio.empty{opacity:.55;}
-.pf-stats{margin-top:9px;font-size:13px;color:var(--text-light);}
-.pf-stats b{color:var(--text);font-weight:800;margin-left:2px;}
-.pf-stats .sep{margin:0 8px;opacity:.4;}
-.pf-edit{border:1px solid var(--border);background:transparent;border-radius:10px;padding:8px 15px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-sub);white-space:nowrap;align-self:flex-start;}
+.pf-strip{display:flex;align-items:center;gap:13px;margin:16px 0 6px;}
+.pf-ava{width:46px;height:46px;border-radius:13px;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;}
+.pf-id{min-width:0;}
+.pf-nm{font-size:17px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+.pf-bio{font-size:12.5px;color:var(--text-sub);margin-top:2px;}
+.pf-stats{margin-top:3px;font-size:13px;color:var(--text-light);}
+.pf-stats b{color:var(--text);font-weight:800;margin-left:1px;}
+.pf-edit{border:1px solid var(--border);background:transparent;border-radius:8px;padding:4px 11px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text-light);white-space:nowrap;}
 .pf-edit:hover{background:var(--bg-input);color:var(--text);}
 /* 인생책 하이라이트 */
 .pf-fav{display:flex;gap:14px;align-items:center;background:linear-gradient(135deg,rgba(212,169,59,.16),rgba(212,169,59,.05));border:1px solid var(--gold);border-radius:18px;padding:15px 16px;margin-top:13px;}
@@ -4803,7 +4801,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622v';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622w';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5987,13 +5985,12 @@ async function renderMyProfileTop(){
     <div class="pf-strip">
       <div class="pf-ava">${s.emoji||'🙂'}</div>
       <div class="pf-id">
-        <div class="pf-nm">${esc(s.name)}</div>
-        <div class="pf-bio${bio?'':' empty'}">${bio?esc(bio):'상태메시지를 적어보세요'}</div>
-        <div class="pf-stats">완독 <b>${st.done}</b><span class="sep">·</span>글 <b>${nWrite}</b><span class="sep">·</span>점수 <b>${(st.score||0).toLocaleString()}</b></div>
+        <div class="pf-nm">${esc(s.name)}<button class="pf-edit" onclick="openProfileEdit()">편집</button></div>
+        ${bio?`<div class="pf-bio">${esc(bio)}</div>`:''}
+        <div class="pf-stats">완독 <b>${st.done}</b> · 글 <b>${nWrite}</b> · 점수 <b>${(st.score||0).toLocaleString()}</b></div>
       </div>
-      <button class="pf-edit" onclick="openProfileEdit()">편집</button>
     </div>
-    <div class="sg-sec sg-hero"><div class="sg-h">${esc(s.name)}님이 완독한 책<span class="cnt">${done.length||''}</span></div><div class="sg-sub">끝까지 읽어낸 책들이에요${favHint}</div>${doneRow}</div>
+    <div class="sg-sec sg-hero"><div class="sg-h">내가 완독한 책<span class="cnt">${done.length||''}</span></div><div class="sg-sub">끝까지 읽어낸 책들이에요${favHint}</div>${doneRow}</div>
     ${readSec}`;
 }
 function toggleMyMore(){
