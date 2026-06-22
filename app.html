@@ -2085,17 +2085,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <!-- 상단 요약 히어로 (실측 3숫자) -->
   <div class="my-hero" id="myHero" style="display:none"></div>
 
-  <!-- 나의 독서 리듬 + 정체성·핵심지표 통합 Bento -->
+  <!-- 측정존(나만): KPI·잔디·Quest (히어로/밤하늘은 삭제) -->
   <div id="readingRhythm"></div>
-
-  <!-- 나의 독서 밤하늘 (완독 = 별, 장르 = 별자리) -->
-  <div id="skySection" style="margin-top:32px;display:none;">
-    <div class="section-head">
-      <div class="section-title"><em>나의 독서 밤하늘</em></div>
-      <button class="btn-outline" id="skyShareBtn" onclick="shareSky()" style="display:inline-flex;align-items:center;gap:6px;"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>이미지로 공유</button>
-    </div>
-    <div id="readingSky" class="sky"></div>
-  </div>
 
   <!-- (정돈 2026-06-12) 실측 데이터 연결 전까지 숨김 — 컨테이너 id는 유지(렌더 함수 안전) -->
   <div style="display:none">
@@ -3688,7 +3679,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderSky(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderQuestMap(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -4792,7 +4783,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260622s';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260622t';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5916,8 +5907,9 @@ function renderReadingRhythm(){
           <div class="wb-d">${d.today?'오늘':d.name}</div>
         </div>`).join('')}</div>
     </div>`;
-  // 읽고 있는 책은 공개 서가(renderMyProfileTop)로 이동 → 여기선 히어로(주간 리듬)만
-  el.innerHTML=`<div class="my-top" style="grid-template-columns:1fr">${heroTile}</div>`;
+  // 히어로(주간 리듬)·독서 밤하늘은 삭제 → 측정존은 KPI + 잔디만
+  void heroTile;
+  el.innerHTML='';
   // (아래) 통계 블록 = KPI 4 + 독서 잔디
   const kpiTiles=`
     <div class="b-tile b-num b-acc-gold"><div class="b-num-ic">📚</div><div class="b-num-v">${st.done}</div><div class="b-num-l">완독</div>${st.done?'<div class="b-num-sub">지금까지 모은 책</div>':'<div class="b-num-sub">첫 완독에 도전!</div>'}</div>
