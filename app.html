@@ -2225,7 +2225,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 <section class="page" id="page-collection">
   <!-- 2026-06-21 사용자 지시: 중복 페이지 제목 "고전 컬렉션" 헤딩 삭제 (상단 메뉴에 이미 있음) -->
 
-  <!-- 사서 큐레이션 (관리자 꾸미기 · 고전 컬렉션 영역) — 있으면 상단에 노출 -->
+  <!-- 고전 컬렉션 — 해외/국내 탭 헤더 + (국내)유학생 환영 배너·언어칩 : 페이지 최상단 -->
+  <div id="clHead"></div>
+
+  <!-- 사서 큐레이션 (관리자 꾸미기 · 고전 컬렉션 영역) — 있으면 탭 아래에 노출 -->
   <div id="collectionCuration"></div>
 
   <div class="section">
@@ -4821,6 +4824,7 @@ function clShelvesHTML(loc, opts){
 // 고전 컬렉션 — 해외/국내 탭 (국내 탭: 유학생 환영 배너 + 언어칩)
 let _clTab='foreign', _clLang='all';
 function renderClassicShelves(){
+  const head = document.getElementById('clHead');
   const host = document.getElementById('classicShelves');
   if(!host || typeof BOOKS==='undefined') return;
   const fN = BOOKS.filter(b=>b.locale==='foreign').length;
@@ -4831,12 +4835,12 @@ function renderClassicShelves(){
       <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">해외 고전 <span class="en">WORLD CLASSICS · ${fN}권</span></button>
       <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">국내 고전 <span class="en">KOREAN CLASSICS · 다국어 · ${kN}권</span></button>
     </div>`;
-  let head;
+  let headBody;
   if(foreign){
-    head = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
+    headBody = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
   } else {
     const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?'전체':KR_LANG_NAMES[l]}</span>`).join('');
-    head = `<div class="cl-welcome">
+    headBody = `<div class="cl-welcome">
         <div class="globe">🌐</div>
         <div style="flex:1;min-width:200px;">
           <h3>너의 언어로 읽는 한국 고전</h3>
@@ -4845,8 +4849,10 @@ function renderClassicShelves(){
         <div class="cl-langchips">${chips}</div>
       </div>`;
   }
+  // 탭 헤더 + (국내)배너 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래(classicShelves).
+  if(head) head.innerHTML = tabs + headBody;
   const rows = foreign ? clShelvesHTML('foreign') : clShelvesHTML('modern', {krLang:_clLang});
-  host.innerHTML = tabs + head + `<div style="margin-top:18px;">${rows}</div>`;
+  host.innerHTML = `<div style="margin-top:6px;">${rows}</div>`;
   bindClassicDrag();
 }
 function clSetTab(t){ _clTab=t; if(t!=='modern') _clLang='all'; renderClassicShelves(); }
