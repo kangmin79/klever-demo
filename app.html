@@ -691,7 +691,34 @@ body.dark .stat-num{color:var(--gold);}
 .leader-row.top2 .leader-rank{background:linear-gradient(135deg,#C0C0C0,#A8A8A8);color:#fff;}
 .leader-row.top3 .leader-rank{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff;}
 .leader-name{flex:1;font-weight:700;}
-.leader-score{font-weight:800;color:var(--primary);font-size:15px;}
+.leader-score{font-weight:800;color:var(--primary);font-size:15px;white-space:nowrap;}
+/* ── 리더보드 페이지: 별 종합 랭킹 ── */
+.lb-loading{color:var(--text-light);font-size:13px;padding:34px 0;text-align:center;}
+.lb-legend{font-size:11.5px;color:var(--text-light);margin:0 2px 14px;line-height:1.6;}
+.lb-wrap{display:flex;flex-direction:column;gap:8px;}
+/* 내 순위 카드 */
+.lb-me-card{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:16px;margin-bottom:18px;background:linear-gradient(135deg,var(--primary-bg),transparent);border:1.5px solid var(--primary);}
+.lb-me-av{width:46px;height:46px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.lb-me-main{flex:1;min-width:0;}
+.lb-me-top{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.lb-me-sub{font-size:12px;color:var(--text-sub);margin-top:4px;}
+.lb-me-rank{text-align:right;flex-shrink:0;}
+.lb-me-rk{font-size:22px;font-weight:900;color:var(--primary);line-height:1;}
+.lb-me-rkk{font-size:11px;color:var(--text-light);margin-top:5px;}
+/* 행 내부 (아바타 + 이름/등급 + 측정 보조) */
+.lb-av{width:38px;height:38px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.lb-id{flex:1;min-width:0;}
+.lb-name2{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-grade{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap;}
+body.dark .lb-grade{color:var(--gold);background:rgba(212,169,59,.14);}
+.lb-meas{font-size:11.5px;color:var(--text-light);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;}
+.lb-unit{font-size:11px;margin-left:1px;}
+/* 빈 상태 */
+.lb-empty{text-align:center;padding:48px 22px;background:var(--bg-input);border-radius:18px;}
+.lb-empty-emo{font-size:46px;margin-bottom:14px;}
+.lb-empty-t{font-size:16px;font-weight:800;margin-bottom:8px;}
+.lb-empty-s{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:20px;}
+.lb-empty-btn{display:inline-block;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:800;cursor:pointer;}
 
 /* ═══════════════════════════════════════════════════════════
    9. 커뮤니티 서브탭
@@ -2331,8 +2358,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
 <section class="page" id="page-leaderboard">
   <h1 class="page-title">리더보드</h1>
-  <p class="page-subtitle">진행 중인 챌린지 참가 현황</p>
-  <div id="leaderboardBody" style="margin-top:20px;color:var(--text-sub);">곧 제공됩니다.</div>
+  <p class="page-subtitle">별(⭐)을 가장 많이 모은 친구들 — 우리 학교 종합 랭킹</p>
+  <div id="leaderboardBody" style="margin-top:20px;"></div>
 </section>
 
 <section class="page" id="page-mypage">
@@ -3891,7 +3918,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderLeaderList(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -3899,6 +3926,9 @@ function nav(page){
   if(page === 'feed') {
     _feedItems=[];   // 방문할 때마다 최신 글 다시 로드
     setTimeout(renderFeed, 30);
+  }
+  if(page === 'leaderboard') {
+    setTimeout(renderLeaderList, 30);
   }
 }
 
@@ -4947,7 +4977,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z5';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z6';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6893,18 +6923,92 @@ function renderBadges(){
   `).join('');
 }
 
-function renderLeaderList(){
-  const el = document.getElementById('leaderList');
+/* ── 리더보드: 별 종합 랭킹 (관리자 리더보드와 동일 데이터: totals + students) ── */
+function _lbWeekKeys(){                 // 이번 주(월~일) 날짜 키 배열 — todayKey()와 동일 포맷
+  const out=[], d=new Date(), day=(d.getDay()+6)%7;   // 월=0
+  const mon=new Date(d); mon.setDate(d.getDate()-day);
+  for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i);
+    out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')); }
+  return out;
+}
+function _lbMin(m){ m=Math.round(m||0); if(m<=0) return '0분'; if(m<60) return m+'분'; const h=Math.floor(m/60), r=m%60; return r?`${h}시간 ${r}분`:`${h}시간`; }
+function _lbEmpty(){
+  return `<div class="lb-empty">
+    <div class="lb-empty-emo">🏆</div>
+    <div class="lb-empty-t">아직 랭킹이 비어 있어요</div>
+    <div class="lb-empty-s">책을 읽고 <b>퀴즈·소감</b>으로 별(⭐)을 모으면<br>이곳 리더보드에 이름이 올라가요.</div>
+    <button class="lb-empty-btn" onclick="nav('curation')">챌린지 둘러보기 →</button>
+  </div>`;
+}
+function _lbMeCard(me, meId, ranked, meIdx, nameMap, emoMap, doneMap, weekMap){
+  if(!me){
+    return `<div class="lb-me-card" style="border-style:dashed;cursor:pointer" onclick="bxOpenPicker()">
+      <div class="lb-me-av">👤</div>
+      <div class="lb-me-main"><div class="lb-me-top">내 순위 보기</div>
+        <div class="lb-me-sub">계정을 선택하면 내 순위가 여기에 표시돼요.</div></div>
+      <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:14px">선택 →</div></div></div>`;
+  }
+  const emo=emoMap[meId]||me.emoji||'📘';
+  const nm=nameMap[meId]||me.name||'나';
+  const done=doneMap[meId]||0, week=weekMap[meId]||0;
+  if(meIdx<0){     // 계정은 있으나 아직 별 0 → 랭킹 미진입
+    const g=gradeOf(0), gE=GRADE_EMO[g]||'⭐';
+    return `<div class="lb-me-card">
+      <div class="lb-me-av">${emo}</div>
+      <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${gE} ${esc(g)}</span></div>
+        <div class="lb-me-sub">아직 별을 모으는 중 · 📖 완독 ${done}권 · ⏱ 이번 주 ${_lbMin(week)}</div></div>
+      <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:15px">— 위</div><div class="lb-me-rkk">별을 모으면 등장!</div></div></div>`;
+  }
+  const t=ranked[meIdx], grade=t.grade||gradeOf(t.total_stars), gE=GRADE_EMO[grade]||'⭐';
+  return `<div class="lb-me-card">
+    <div class="lb-me-av">${emo}</div>
+    <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${gE} ${esc(grade)}</span></div>
+      <div class="lb-me-sub">📖 완독 ${done}권 · ⏱ 이번 주 ${_lbMin(week)}</div></div>
+    <div class="lb-me-rank"><div class="lb-me-rk">${meIdx+1}위</div><div class="lb-me-rkk">/ ${ranked.length}명 · ⭐${(t.total_stars||0).toLocaleString()}</div></div></div>`;
+}
+async function renderLeaderList(){
+  const el = document.getElementById('leaderboardBody');
   if(!el) return;
-  el.innerHTML = LEADERBOARD.map(s=>{
-    const topCls = s.rank<=3 ? `top${s.rank}` : '';
-    const meCls = s.me ? 'me' : '';
+  el.innerHTML = '<div class="lb-loading">리더보드를 불러오는 중…</div>';
+  const me = (typeof bxStudent==='function')?bxStudent():null;
+  const meId = me && me.id;
+  const [totals, students, results, rstats] = await Promise.all([
+    _agFetch(`bookstar_student_totals?school_id=eq.${CH_SCHOOL}&order=total_stars.desc&select=student_id,total_stars,grade`),
+    _agFetch(`bookstar_students?select=id,name,emoji`),
+    _agFetch(`bookstar_challenge_results?select=student_id,read_pct`),
+    _agFetch(`bookstar_reader_stats?select=student_id,data`)
+  ]);
+  const nameMap={}, emoMap={};
+  (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; emoMap[s.id]=s.emoji||''; });
+  const doneMap={};       // 완독 = read_pct ≥ 95 인 책 수
+  (results||[]).forEach(r=>{ if((r.read_pct||0)>=95) doneMap[r.student_id]=(doneMap[r.student_id]||0)+1; });
+  const wk=_lbWeekKeys(), weekMap={};     // 이번 주 읽은시간(분)
+  (rstats||[]).forEach(r=>{ const days=(r.data&&r.data.readingTime&&r.data.readingTime.days)||{}; let m=0; wk.forEach(k=>m+=(days[k]||0)); weekMap[r.student_id]=m; });
+
+  const ranked=(totals||[]).filter(t=>(t.total_stars||0)>0);   // 별 1개 이상만 랭킹
+  if(!ranked.length){ el.innerHTML=_lbEmpty(); return; }
+
+  const meIdx = meId ? ranked.findIndex(t=>t.student_id===meId) : -1;
+  const meCard = _lbMeCard(me, meId, ranked, meIdx, nameMap, emoMap, doneMap, weekMap);
+
+  const rows = ranked.map((t,i)=>{
+    const rank=i+1, sid=t.student_id;
+    const nm=nameMap[sid]||'이름 없는 친구', emo=emoMap[sid]||'📘';
+    const grade=t.grade||gradeOf(t.total_stars), gEmo=GRADE_EMO[grade]||'⭐';
+    const done=doneMap[sid]||0, week=weekMap[sid]||0;
+    const topCls = rank<=3 ? `top${rank}` : '', meCls = sid===meId ? 'me' : '';
     return `<div class="leader-row ${topCls} ${meCls}">
-      <div class="leader-rank">${s.rank}</div>
-      <div class="leader-name">${esc(s.name)}</div>
-      <div class="leader-score">${s.score.toLocaleString()}</div>
+      <div class="leader-rank">${rank}</div>
+      <div class="lb-av">${emo}</div>
+      <div class="lb-id">
+        <div class="lb-name2">${esc(nm)} <span class="lb-grade">${gEmo} ${esc(grade)}</span></div>
+        <div class="lb-meas"><span>📖 완독 ${done}권</span><span>⏱ 이번 주 ${_lbMin(week)}</span></div>
+      </div>
+      <div class="leader-score">${(t.total_stars||0).toLocaleString()}<span class="lb-unit">⭐</span></div>
     </div>`;
   }).join('');
+
+  el.innerHTML = `${meCard}<div class="lb-legend">⭐ 누적 별 종합 랭킹 · 측정 보조 — 📖 완독 권수 · ⏱ 이번 주 읽은 시간</div><div class="lb-wrap">${rows}</div>`;
 }
 
 function renderMyBooks(){
