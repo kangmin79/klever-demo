@@ -98,6 +98,13 @@ body.dark .bl-sub{color:var(--gold);}
 .gnb-item.active{color:var(--text);font-weight:700;}
 .gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);background:var(--gold);}
 body.dark .gnb-item.active{color:#f1f5f9;}
+/* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
+.gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
+.gnb-menu::before{content:'';position:absolute;top:-9px;left:0;right:0;height:9px;}
+.gnb-drop:hover .gnb-menu{display:block;}
+.gnb-mi{padding:9px 12px;border-radius:9px;font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;letter-spacing:-0.3px;}
+.gnb-mi small{display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-top:2px;letter-spacing:.04em;}
+.gnb-mi:hover{background:var(--bg-input);}
 /* 우측 컨트롤 — 동일 높이(32px)·동일 라운드·아웃라인으로 통일, 골드 악센트 */
 .hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:border-color .15s,color .15s;}
 .hdr-ctl:hover{border-color:var(--gold);color:var(--text);}
@@ -413,11 +420,12 @@ body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
 body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
 body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
-/* 고전 컬렉션 — 한국/해외 권역 헤더 (탭 폐지, 나열식) */
+/* 고전 컬렉션 — 한국/해외 권역 헤더 (데스크톱: 상단 네비 드롭다운으로 선택, 여기엔 현재 권역 표시) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
 .cl-locale-head span{font-size:13px;font-weight:700;color:var(--text-light);background:var(--bg-input);padding:3px 11px;border-radius:14px;}
 /* 고전 컬렉션 — 해외/국내 탭 + 유학생 배너 + 언어칩 (디자인 적용 2026-06-24) */
-.cl-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+/* 데스크톱: 탭 숨김(상단 네비 호버 드롭다운으로 전환) · 모바일(≤900px): 탭 노출 */
+.cl-tabs{display:none;gap:4px;border-bottom:1px solid var(--border);margin-bottom:2px;}
 .cl-tab{appearance:none;border:0;background:transparent;font-family:inherit;cursor:pointer;font-weight:800;font-size:19px;color:var(--text-light);padding:12px 18px;position:relative;letter-spacing:-0.5px;text-align:left;}
 .cl-tab .en{display:block;font-size:11px;font-weight:700;color:var(--text-light);margin-top:2px;letter-spacing:.03em;}
 .cl-tab.on{color:var(--text);}
@@ -1663,6 +1671,10 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .hdr-actions{order:2;margin-left:auto;height:50px;display:flex;align-items:center;}
   .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:2px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
   .gnb::-webkit-scrollbar{display:none;}
+  /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
+  .gnb-drop:hover .gnb-menu{display:none;}
+  .cl-tabs{display:flex;}
+  .cl-locale-head{display:none;}
   .gnb-item{display:flex;align-items:center;padding:0 12px;font-size:13.5px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
@@ -2128,7 +2140,10 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   <nav class="gnb">
     <div class="gnb-item active" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">독서 챌린지</div>
-    <div class="gnb-item" data-page="collection" onclick="nav('collection')">고전 컬렉션</div>
+    <div class="gnb-item gnb-drop" data-page="collection" onclick="nav('collection')">고전 컬렉션<div class="gnb-menu">
+      <div class="gnb-mi" onclick="event.stopPropagation();navCl('foreign')">해외 고전<small>WORLD CLASSICS</small></div>
+      <div class="gnb-mi" onclick="event.stopPropagation();navCl('modern')">국내 고전<small>KOREAN · 다국어</small></div>
+    </div></div>
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
@@ -4852,8 +4867,12 @@ function renderClassicShelves(){
         <div class="cl-langchips">${chips}</div>
       </div>`;
   }
-  // 탭 헤더 + (국내)배너 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래(classicShelves).
-  if(head) head.innerHTML = tabs + headBody;
+  // 데스크톱용 권역 헤더(탭 대신 현재 선택 표시) — 모바일에선 숨고 탭이 보임
+  const localeHead = foreign
+    ? `<div class="cl-locale-head">해외 고전 <span>WORLD CLASSICS · ${fN}권</span></div>`
+    : `<div class="cl-locale-head">국내 고전 <span>KOREAN CLASSICS · 다국어 · ${kN}권</span></div>`;
+  // 권역 헤더 + 탭 + (국내)배너 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래(classicShelves).
+  if(head) head.innerHTML = localeHead + tabs + headBody;
   const rows = foreign ? clShelvesHTML('foreign') : clShelvesHTML('modern', {krLang:_clLang});
   host.innerHTML = `<div style="margin-top:6px;">${rows}</div>`;
   bindClassicDrag();
@@ -4861,6 +4880,8 @@ function renderClassicShelves(){
   renderAreaCuration('collectionCuration', CL_AREA[_clTab]);
 }
 function clSetTab(t){ _clTab=t; if(t!=='modern') _clLang='all'; renderClassicShelves(); }
+// 상단 네비 드롭다운(해외/국내) → 권역 설정 후 고전 컬렉션 페이지로
+function navCl(t){ _clTab=t; if(t!=='modern') _clLang='all'; nav('collection'); }
 function clSetLang(l){ _clLang=l; renderClassicShelves(); }
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
@@ -5045,7 +5066,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
