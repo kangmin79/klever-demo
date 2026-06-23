@@ -2324,9 +2324,8 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 </section>
 
 <section class="page" id="page-feed">
-  <h1 class="page-title">피드</h1>
-  <p class="page-subtitle">친구들의 독서 활동 — 소감·서평·핵심 문장·추천을 둘러보고, 이름을 누르면 그 친구의 <b>독서 이력</b>을 볼 수 있어요</p>
-  <div id="feedBody" style="margin-top:16px;"></div>
+  <!-- 제목/설명 제거(2026-06-23): 좌측 네비 '피드'와 중복 -->
+  <div id="feedBody"></div>
 </section>
 
 <section class="page" id="page-leaderboard">
@@ -4997,7 +4996,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623u';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623w';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
