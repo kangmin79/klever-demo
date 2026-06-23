@@ -1530,7 +1530,9 @@ body.dark .cg-head{color:#0f172a;}
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
 .bx-hl{background:linear-gradient(transparent 55%, #ffe96b 55%);border-radius:2px;padding:0 1px;transition:background .3s;}
 body.dark .bx-hl{background:linear-gradient(transparent 55%, rgba(212,169,59,.6) 55%);}
-/* DB 퀴즈 장면 동기화 — 문단 형광펜(문장 매칭 실패 시 폴백) */
+/* DB 퀴즈 장면 동기화 — 문장스팬 형광펜(scn-hl) + 문단 폴백(scn-flash) */
+.viewer-pane.left span.psent.scn-hl{background:linear-gradient(transparent 55%, #ffe96b 55%);border-radius:2px;}
+body.dark .viewer-pane.left span.psent.scn-hl{background:linear-gradient(transparent 55%, rgba(212,169,59,.6) 55%);}
 .viewer-pane.left p.scn-flash{background:rgba(255,233,107,.35);border-radius:3px;box-shadow:inset 3px 0 0 var(--gold,#d4a93b);padding-left:8px;margin-left:-11px;transition:background .3s;}
 body.dark .viewer-pane.left p.scn-flash{background:rgba(212,169,59,.22);}
 .viewer-pane.right.bx-pane{padding:0;}                 /* 채팅창이 패널 끝까지 꽉 차게 */
@@ -4983,7 +4985,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z12';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
@@ -5678,12 +5680,12 @@ const SCENE_ANCHORS = {
 let _scnIO=null, _scnCur=-1, _scnMarkP=null;
 function _scnAnchors(){ return (currentBook && SCENE_ANCHORS[currentBook.id]) || null; }
 function _scnClearMark(){
-  if(_scnMarkP){
-    if(_scnMarkP.classList){ _scnMarkP.classList.remove('scn-flash'); }
-    const m=_scnMarkP.querySelector && _scnMarkP.querySelector('mark.bx-hl');
-    if(m){ m.replaceWith(document.createTextNode(m.textContent)); _scnMarkP.normalize&&_scnMarkP.normalize(); }
-    _scnMarkP=null;
-  }
+  if(!_scnMarkP) return;
+  const p=_scnMarkP; _scnMarkP=null;
+  if(p.classList) p.classList.remove('scn-flash');
+  const m=p.querySelector && p.querySelector('mark.bx-hl');
+  if(m){ m.replaceWith(document.createTextNode(m.textContent)); p.normalize&&p.normalize(); }
+  if(p.querySelectorAll) p.querySelectorAll('span.psent.scn-hl').forEach(s=>s.classList.remove('scn-hl'));
 }
 function _scnSyncTo(sceneNo){
   const anchors=_scnAnchors(); if(!anchors) return;
@@ -5695,10 +5697,19 @@ function _scnSyncTo(sceneNo){
   for(const p of ps){ if((p.textContent||'').includes(phrase)){ target=p; break; } }
   if(!target) return;
   _scnCur=sceneNo; _scnClearMark();
-  const eh=esc(phrase);
-  if(target.innerHTML.includes(eh)){ target.innerHTML=target.innerHTML.replace(eh, '<mark class="bx-hl">'+eh+'</mark>'); _scnMarkP=target; }
-  else { target.classList.add('scn-flash'); _scnMarkP=target; }   // 문장 매칭 실패 시 문단 강조
-  const doScroll=()=>{ const mk=target.querySelector('mark.bx-hl')||target;
+  const eh=esc(phrase); let marked=false;
+  if(target.innerHTML.includes(eh)){   // 단일 문장(또는 스팬) 내부 → 정확한 부분만 형광펜
+    target.innerHTML=target.innerHTML.replace(eh, '<mark class="bx-hl">'+eh+'</mark>'); marked=true;
+  } else {   // 문장정렬 책: 앵커가 여러 psent 문장스팬에 걸침 → 겹치는 문장 스팬들에 형광펜
+    const full=target.textContent||''; const start=full.indexOf(phrase);
+    if(start>=0){ const end=start+phrase.length; let off=0;
+      target.childNodes.forEach(node=>{ const len=(node.textContent||'').length, s=off, e=off+len; off=e;
+        if(node.nodeType===1 && node.classList && node.classList.contains('psent') && s<end && e>start){ node.classList.add('scn-hl'); marked=true; } });
+    }
+  }
+  if(!marked) target.classList.add('scn-flash');   // 최후 폴백: 문단 강조
+  _scnMarkP=target;
+  const doScroll=()=>{ const mk=target.querySelector('mark.bx-hl')||target.querySelector('span.psent.scn-hl')||target;
     const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect(); left.scrollTop += (r1.top-r0.top)-100; };
   doScroll(); requestAnimationFrame(doScroll);
 }
