@@ -1377,6 +1377,7 @@ function renderSettings(){
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
 let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
 let _clsOrigin='all';   // 북스타 고전 필터: all | kr(한국) | foreign(서양)
+let _clsLock=null;      // 탭 영역에 묶인 강제 필터(해외 칸='foreign' / 국내 칸='kr'). 설정 시 변경 칩 숨김
 function clsChips(){
   return [['all','전체'],['kr','한국 고전'],['foreign','서양 고전']].map(o=>
     `<span onclick="setClsOrigin('${o[0]}')" style="cursor:pointer;padding:4px 12px;border-radius:99px;margin-right:6px;font-size:12px;font-weight:700;border:1px solid var(--border);${_clsOrigin===o[0]?'background:var(--primary);color:#fff;border-color:var(--primary)':'background:var(--card);color:var(--text)'}">${o[1]}</span>`).join('');
@@ -1391,8 +1392,9 @@ function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInp
   const clsArea = (scMode==='sec' && secArea.indexOf('고전 컬렉션')===0) || (scMode==='chal' && (CHALLENGES[i]||{}).type==='고전챌린지');   // 고전 컬렉션 칸 + 고전 챌린지 = 북스타 고전에서 담기
   document.querySelectorAll('#secOv .btab').forEach(btn=>{ const sbt=btn.dataset.sbt;
     btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (sbt==='cls'?'none':''); });
-  // 영역에 맞춰 고전 풀 기본 필터: 해외 탭→해외 고전, 국내 탭→한국 고전
-  _clsOrigin = secArea==='고전 컬렉션 해외' ? 'foreign' : (secArea==='고전 컬렉션 국내' ? 'kr' : 'all');
+  // 영역에 맞춰 고전 풀 강제 잠금: 해외 칸→해외 고전만, 국내 칸→한국 고전만 (사서가 못 바꿈)
+  _clsLock = secArea==='고전 컬렉션 해외' ? 'foreign' : (secArea==='고전 컬렉션 국내' ? 'kr' : null);
+  _clsOrigin = _clsLock || 'all';
   scTab = clsArea ? 'cls' : 'nat';
   el('secModalTitle').textContent=`‘${pkObj().title}’에 책 담기`;
   document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===scTab));
@@ -1401,7 +1403,9 @@ function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')
 function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
 function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
-  if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';el('secEx').innerHTML=clsChips();secRenderClassics();}
+  if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';
+    el('secEx').innerHTML = _clsLock ? `<span style="font-size:12px;color:var(--text-light);font-weight:700">${_clsLock==='foreign'?'🌍 해외 고전':'🇰🇷 한국 고전'}만 담을 수 있어요 (이 탭 전용)</span>` : clsChips();
+    secRenderClassics();}
   else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='sm'){q.placeholder='세명대 전자도서관 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">세명대 학술정보원 전자책에서 검색해 담아요.<br>담은 책은 학생 앱에서 ‘전자책 바로 읽기’로 연결됩니다.</div>';}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
