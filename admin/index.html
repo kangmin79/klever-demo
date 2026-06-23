@@ -2001,7 +2001,7 @@ const CH_MISSIONS=[
 const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
 function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(essay/underline/recommend/cert) — 4종만 유지
   m=m||{};
-  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:m.quizN||5};
+  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:10};   /* 퀴즈 문항 수 = 10개 고정 */
   if(m.quizType)o.quizType=m.quizType; if(m.quizLevel)o.quizLevel=m.quizLevel;
   _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
   return o;
@@ -2010,7 +2010,7 @@ const CH_MAX=3, CH_QTYPES=['고전 이해','작가 의도','인문학','나의 �
 function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
   const m=c.mission||{};
   const o={reward:m.reward||(c.type==='고전챌린지'?'rank':'draw'),
-    quiz:c.type==='고전챌린지'?true:!!m.quiz, quizN:m.quizN||10,
+    quiz:c.type==='고전챌린지'?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
     quizType:m.quizType||'', quizLevel:m.quizLevel||'',
     drawCount:m.drawCount||10, drawCond:m.drawCond||'all'};
   CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
@@ -2063,7 +2063,7 @@ function renderChallenges(){
         <div><div class="flabel" style="font-weight:500">난이도</div><select class="cur-inp" id="ch_ql_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${['상','중','하'].map(l=>`<option ${m.quizLevel===l?'selected':''}>${l}</option>`).join('')}</select></div>
       </div>
       <div class="flabel" style="font-weight:500;margin-top:8px">권당 문항 수</div>
-      <div class="qn">${[10,5].map(n=>`<span class="${n===m.quizN?'on':''}" onclick="chalSetQuizN(${i},${n})">${n}문제</span>`).join('')}</div></div>`:'';
+      <div class="qn"><span class="on">10문제 고정</span></div></div>`:'';
     return `<div class="panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span>

@@ -3964,7 +3964,7 @@ const CH_SCHOOL='hankuk';
 function appChalMission(c){
   const m=(c&&c.mission)||{};
   const o={reward:m.reward||(c&&c.type==='고전챌린지'?'rank':'draw'),
-    quiz:(c&&c.type==='고전챌린지')?true:!!m.quiz, quizN:m.quizN||10,
+    quiz:(c&&c.type==='고전챌린지')?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
     quizType:m.quizType||'', quizLevel:m.quizLevel||''};
   CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
     o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
@@ -3972,7 +3972,7 @@ function appChalMission(c){
 }
 function chalActiveMissions(m){ if(!m) return []; return CH_MISSIONS.filter(x=> !x.soon && (x.k==='quiz'?m.quiz:m[x.k])); }
 function chalMissionPlain(m){ if(!m) return '-'; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
-  const o=chalActiveMissions(mm).map(x=> x.k==='quiz'?('퀴즈 '+(mm.quizN||10)+'문항'):x.t);
+  const o=chalActiveMissions(mm).map(x=> x.k==='quiz'?'퀴즈 10문항':x.t);
   return o.join(' · ')||'-'; }
 // 현재 책이 속한(참여 중) 챌린지 찾기 (id 우선, 없으면 isbn·제목 폴백)
 function _chalTitleKey(t){ return String(t||'').replace(/\s+/g,'').toLowerCase(); }
@@ -4980,7 +4980,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z7';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z8';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5586,7 +5586,7 @@ async function mpLoadQuiz(m){
   const box=document.getElementById('mpQuizBox'); if(!box) return;
   const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
   if(!qt||!lv){ box.innerHTML='<div class="mp-load">퀴즈 유형·난이도가 설정되지 않았어요.</div>'; return; }
-  const n=m.quizN||10;
+  const n=10;   /* 퀴즈 문항 수 = 10개 고정 (유형/난이도별 10장면 전부) */
   let items=[];
   try{
     const url=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&level=eq.${encodeURIComponent(lv)}&order=scene_no&limit=${n}&select=id,scene_no,scene_title,question,opts,correct,expl`;
