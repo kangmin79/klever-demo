@@ -2915,7 +2915,6 @@ function _hdrPeekMove(e){
 
 /* ── 모바일 읽기 설정 시트 (Aa) ── */
 function toggleReaderSettings(e){ if(e) e.stopPropagation(); const s=document.getElementById('readerSettingsSheet'); if(s){ s.classList.toggle('open'); if(s.classList.contains('open')) syncPageModeBtns(); } }
-function closeReaderSettings(){ const s=document.getElementById('readerSettingsSheet'); if(s) s.classList.remove('open'); }
 document.addEventListener('click',(e)=>{
   const s=document.getElementById('readerSettingsSheet');
   if(!s || !s.classList.contains('open')) return;
@@ -3492,10 +3491,6 @@ function updateModeClass(){
   if(shell) shell.classList.toggle('mode-challenge', currentMode === 'challenge');
 }
 
-function readerStatsText(){
-  const today = readerStats.readingTime.days[todayKey()] || 0;
-  return `오늘 <b>${today}분</b> · 연속 <b>${readerStats.streak.count}일</b> · 누적 <b>${readerStats.readingTime.total}분</b>`;
-}
 
 /* ── 본문 검색 ── */
 let _searchHits = [], _searchIdx = -1;
@@ -3944,9 +3939,6 @@ function appChalMission(c){
   return o;
 }
 function chalActiveMissions(m){ if(!m) return []; return CH_MISSIONS.filter(x=> !x.soon && (x.k==='quiz'?m.quiz:m[x.k])); }
-function chalMissionBadges(m){ if(!m) return ''; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
-  return chalActiveMissions(mm).map(x=>{ const t=x.k==='quiz'?(x.icon+' 퀴즈 '+(mm.quizN||10)+'문항'):(x.icon+' '+x.t);
-    return `<span>${esc(t)}</span>`; }).join(''); }
 function chalMissionPlain(m){ if(!m) return '-'; const mm=(m.reward!==undefined)?m:appChalMission({mission:m});
   const o=chalActiveMissions(mm).map(x=> x.k==='quiz'?('퀴즈 '+(mm.quizN||10)+'문항'):x.t);
   return o.join(' · ')||'-'; }
@@ -4059,7 +4051,6 @@ function joinedChals(){            // 참여 중인 챌린지 배열 (구버전 
   return [];
 }
 function _saveJoinedChals(a){ try{ localStorage.setItem('bookstar-joined-chals', JSON.stringify(a)); }catch(e){} }
-function joinedChal(){ const a=joinedChals(); return a[0]||null; }   // 호환용(첫 챌린지)
 function chalJoin(id){
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
   const arr=joinedChals();
@@ -4089,11 +4080,8 @@ function chalQuit(cid){
 
 let LC_PUB=[];
 let LC_SEL={};  // ci → 펼친 책으로 보여줄 책 인덱스(기본 0)
-function lcSelect(ci,gi){ LC_SEL[ci]=gi; const g=document.getElementById('libCurationGrid'); if(g) g.innerHTML=lcGridHTML(); }
 function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
 function spineHeight(s){const hs=[150,174,186,158,178,146,190,164,154,182];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i)*(i+1);return hs[h%hs.length];}
-function spineStyle(b,face){const h=face?156:spineHeight(b.t);return `height:${h}px;${b.cover?'':`background:${spineColor(b.t)}`}`;}
-function spineCls(bi,total){if(total>=3&&bi===total-1)return ' lc-lean';if(total>=5&&bi===total-2)return ' lc-lean2';return '';}
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
 const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
@@ -4190,7 +4178,6 @@ function libPick(n,off){const p=libTitled();if(!p.length)return [];const r=[];fo
 function isCls(b){ return !!(b&&b.id&&(b.id.indexOf('kr-')===0||b.id.indexOf('gb-')===0)); }
 function clOf(b){ return (typeof BOOKS!=='undefined'&&BOOKS.find(x=>x.id===b.id))||{id:b.id,title:b.t||b.title||'',author:b.a||b.author||''}; }
 function classicPick(n,off){ if(typeof BOOKS==='undefined')return []; const p=BOOKS.filter(b=>b.locale==='modern'); if(!p.length)return []; const r=[]; for(let i=0;i<n;i++){const b=p[((off||0)+i)%p.length]; r.push({id:b.id,t:b.title,a:b.author,cls:true});} return r; }
-function mlIcons(){const it=[['📚','추천 챌린지'],['🆕','새로 들어온 책'],['🏆','서점 베스트'],['✨','숨은 명작'],['🎧','오디오북'],['🗂️','카테고리']];return `<div class="ml-icons">${it.map(([e,l])=>`<div class="ml-ic"><div class="ml-ic-c">${e}</div><div class="ml-ic-l">${esc(l)}</div></div>`).join('')}</div>`;}
 // 책장 히어로 (3D 세워진 책 + 선반) — 공용
 function mlShelf(b,note,cur,title){
   const cls=isCls(b);
@@ -4220,28 +4207,6 @@ function mlShelf(b,note,cur,title){
     </div>
   </div></div>`;
 }
-function mlLife(b,note,cur,title){
-  const d=new Date();const wd=['일','월','화','수','목','금','토'][d.getDay()];
-  const dateStr=`${d.getMonth()+1}월 ${d.getDate()}일 ${wd}요일 업데이트`;
-  const ym=`${d.getFullYear()}년 ${d.getMonth()+1}월`;
-  const cls=isCls(b);
-  const glow=(!cls&&b.cover)?`<div class="ml-life-glow" style="background-image:url('${esc(hiCover(b.cover))}')"></div>`:'';
-  const stage=cls
-    ? `<div class="ml-life-stage" onclick="openDetail('${b.id}')">${bookCoverHTML(clOf(b),' style="width:100%;max-width:240px;margin:0 auto"')}</div>`
-    : `<div class="ml-life-stage" onclick="libDetail('${b.isbn}')">${glow}${mlcv('ml-life-cv',b)}</div>`;
-  const checks=[];
-  if(!cls&&b.rating!=null) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${ym} 평균 별점 <b>${b.rating}</b></div>`);
-  if(cur&&cur.title) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> ${esc(cur.title)}</div>`);
-  else if(!cls&&b.loan) checks.push(`<div class="ml-life-chk"><span class="ck">✓</span> 누적 대출 <b>${Number(b.loan).toLocaleString()}회</b></div>`);
-  return `<div>${mlHead(title||'오늘의 사서 추천',dateStr)}
-    <div class="ml-life">
-      ${stage}
-      <div class="ml-life-card">
-        <div class="ml-life-who"><div class="ml-life-av">📖</div><div><div class="ml-life-who-t">우리 학교 사서의 추천</div><div class="ml-life-who-s">${esc((cur&&cur.library)||'우리 도서관')} · 사서</div></div></div>
-        <div class="ml-life-quote"><span class="ml-q-open">“</span><p>${esc(note||'이 달의 추천 도서예요.')}</p><span class="ml-q-close">”</span></div>
-        ${checks.length?`<div class="ml-life-checks">${checks.join('')}</div>`:''}
-      </div>
-    </div></div>`;}
 function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
 const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시','인문/교양','취미/실용','어린이/청소년','매거진'];
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
@@ -4634,23 +4599,6 @@ function libDetail(isbn){
   ov.classList.add('on');
   renderDetailReviews(b.isbn, cleanT(b.t));
 }
-function openLc(ci,bi){
-  const c=LC_PUB[ci]; if(!c) return; const b=(c.books||[])[bi]; if(!b) return;
-  const ov=document.getElementById('lcDetail');
-  ov.querySelector('.lcd').innerHTML=`
-    <span class="lcd-x" onclick="closeLc()">×</span>
-    <div class="lcd-top">
-      <div class="lcd-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
-      <div class="lcd-i"><h2>${esc(b.t)}</h2><div class="au">${esc(authorRich(b))}</div>
-        ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
-    </div>
-    <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="lcAccess('도서관 소장')">📖 도서관 소장에서 보기<span class="ar">›</span></div>
-      <div class="lcd-btn" onclick="lcAccess('전자책')">💻 전자책으로 읽기<span class="ar">›</span></div>
-      <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:4px">도서관 카탈로그 연동 시 바로 연결됩니다</div>
-    </div>`;
-  ov.classList.add('on');
-}
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
 // 도서관에서 빌리기 — 브라우저가 직접 전자도서관 뷰어 페이지를 연다.
@@ -4846,46 +4794,12 @@ function renderRecChips(){
   m.innerHTML = REC_MOODS.map(x=>`<span class="rec-chip ${recSel.mood===x.key?'on':''}" onclick="setRecMood('${x.key}')">${x.label}</span>`).join('');
   r.innerHTML = REC_REGIONS.map(x=>`<span class="rec-seg-item ${recSel.region===x.key?'on':''}" onclick="setRecRegion('${x.key}')">${x.label}</span>`).join('');
 }
-function setCurationTab(el, tab){
-  document.querySelectorAll('#curationTabs .subtab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('ctab-match').style.display   = (tab==='match')   ? '' : 'none';
-  document.getElementById('ctab-persona').style.display = (tab==='persona') ? '' : 'none';
-}
 function toggleRecGenre(k){ recSel.genres.has(k)?recSel.genres.delete(k):recSel.genres.add(k); renderRecChips(); }
 function setRecMood(k){ recSel.mood = (recSel.mood===k)?null:k; renderRecChips(); }
 function setRecRegion(k){ recSel.region = k; renderRecChips(); }
 
 function genreOfBook(b){
   return REC_GENRES.find(g=>g.cats.includes(b.category));
-}
-function runRecommend(){
-  const moodObj = REC_MOODS.find(m=>m.key===recSel.mood);
-  const regionLocale = REC_REGIONS.find(r=>r.key===recSel.region).locale;
-  const anySel = recSel.genres.size>0 || recSel.mood;
-
-  // ── 1층: 북스타 PD 고전 (읽기·챌린지) ──
-  let pool = BOOKS.filter(b=> regionLocale ? b.locale===regionLocale : true);
-  const scored = pool.map(b=>{
-    const g = genreOfBook(b); let score = 0;
-    if(g && recSel.genres.has(g.key)) score += 10;
-    if(g && moodObj && moodObj.boost.includes(g.key)) score += 5;
-    score += (b.participants||0)/100;
-    score += (Math.abs((b.id||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0))%7)*0.01;
-    return {b, score};
-  });
-  scored.sort((a,b)=> b.score-a.score);
-  const pdTop = (anySel ? scored.filter(x=>x.score>=5) : scored).slice(0,6);
-
-  // ── 2층: 정보나루 도서관 인기대출 (대출 연결) ──
-  // 선택 장르 → KDC 매핑 (없으면 문학8 기본)
-  let kdcs = [...new Set([...recSel.genres].map(k=>REC_GENRES.find(g=>g.key===k)?.kdc).filter(Boolean))];
-  if(!kdcs.length) kdcs = ['8','1','9'];
-  let loanBooks = [];
-  kdcs.forEach(k=> loanBooks.push(...(LOAN_DATA[k]||[])));
-  loanBooks = loanBooks.sort((a,b)=> (parseInt(b.loan)||0)-(parseInt(a.loan)||0)).slice(0,6);
-
-  renderRecResults(pdTop.length?pdTop:scored.slice(0,6), loanBooks, anySel, moodObj);
 }
 
 function loanCardHTML(b){
@@ -4958,12 +4872,6 @@ function bookCoverHTML(b, extra=''){
 
 let currentLibTab = 'modern';  // 한국 고전이 기본 (해외는 표지 결이 달라 시각적으로 강조)
 
-function setLibTab(el, tab){
-  document.querySelectorAll('#libTabs .subtab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  currentLibTab = tab;
-  renderBookGrid('bookGridAll', false);
-}
 
 function renderBookGrid(targetId, filterIntl){
   const el = document.getElementById(targetId);
@@ -5039,7 +4947,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z2';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z3';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5775,22 +5683,6 @@ function gotoChapter(dir){
   secs[t].scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function checkQuiz(el, qi, oi){
-  const c = BOOK_CONTENT[currentBook.id];
-  if(!c || !c.quiz) return;
-  if(el.parentElement.querySelector('.correct, .wrong')) return; // 재응시 차단
-  if(c.quiz[qi].correct === oi){
-    el.classList.add('correct');
-    quizFeedback(el, true, '🎉 정답! <b>+10점</b>');
-  } else {
-    el.classList.add('wrong');
-    setTimeout(()=>{
-      const correctEl = el.parentElement.querySelectorAll('.quiz-opt')[c.quiz[qi].correct];
-      correctEl.classList.add('correct');
-      quizFeedback(el, false, '아쉽네요 — 정답은 표시된 항목이에요 (재응시 불가)');
-    }, 200);
-  }
-}
 
 /* ── 점수 원장 (실측 적립 — 데모 기본 1,842점 + 챌린지로 번 점수) ── */
 const SCORE_BASE = 0;   // 테스트 계정은 0점에서 시작(점수는 책별 결과에서 파생)
@@ -6520,12 +6412,6 @@ async function _chalResultHTML(bookId, ci){
   return `<div class="cg-gaugebox"><div class="cg-gauge" style="--p:${pct}"><div class="in"><div class="sc">${pct}</div><div class="sl">% 정답</div></div></div><div style="flex:1;min-width:180px"><div class="ag-subh" style="margin-bottom:6px">${hasAns?'문항별 복습':'문항 해설'} <span style="font-weight:600;color:var(--text-light);font-size:12px">· 퀴즈 ${ok}/${tot}</span></div><div style="font-size:12.5px;color:var(--text-light)">${revLabel}</div></div></div><div class="ag-div"></div>${accs||'<div class="cg-empty">복습할 문항이 없어요.</div>'}<div class="cg-qq-h">내가 남긴 한 줄</div>${qq}`;
 }
 function cgAccToggle(k){ const a=document.getElementById('cgacc'+k); if(a) a.classList.toggle('open'); }
-function toggleMyMore(){
-  const w=document.getElementById('myMoreWrap'); const b=document.getElementById('myMoreBtn'); if(!w) return;
-  const open=(w.style.display==='none');
-  w.style.display=open?'':'none';
-  if(b) b.innerHTML=open?'내 기록 접기 ▴':'내 기록 더보기 (퀴즈·잔디·서평) ▾';
-}
 async function openProfileEdit(){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
   let ov=document.getElementById('peOv');
@@ -6549,7 +6435,6 @@ async function openProfileEdit(){
 }
 function closeProfileEdit(){ const ov=document.getElementById('peOv'); if(ov) ov.classList.remove('on'); document.body.style.overflow=''; }
 function peSetEmoji(e){ _peEmoji=e; document.querySelectorAll('#peEmoji .pe-em').forEach(b=>b.classList.toggle('on', b.textContent===e)); }
-function peSetFav(id){ _peFav=(_peFav===id?'':id); document.querySelectorAll('#peFavGrid .pe-fav').forEach(d=>d.classList.toggle('on', d.dataset.id===_peFav)); }
 async function saveProfile(){
   const s=bxStudent(); if(!s) return;
   const bio=(document.getElementById('peBio')?.value||'').trim();
@@ -6847,16 +6732,6 @@ function triggerIdle(){
   idleTimer = setTimeout(triggerIdle, 1600);
 }
 
-function onHomeSearch(e){
-  if(e.key !== 'Enter') return;
-  const q = e.target.value.trim();
-  if(!q) return;
-  nav('search');
-  setTimeout(()=>{
-    const i=document.getElementById('usSearchInput');
-    if(i){ i.value=q; US_MODE='kw'; setSearchMode('kw'); i.value=q; onUnifiedSearch(true); }
-  }, 100);
-}
 
 /* ═══════════════════════════════════════════════════════════
    Quest Map 12슬롯
@@ -6993,13 +6868,6 @@ function onJoinedSlot(ci, bi){
   openViewer(m.id, 'challenge');
 }
 
-function onQuestSlot(week){
-  const q = QUEST.find(x=>x.week===week);
-  if(!q) return;
-  if(q.done){ alert(`${q.book} — 완료\n+150점 획득 / 서평 작성됨`); }
-  else if(q.current){ openViewer('gunju','challenge'); }
-  else { alert(`${q.week}주차는 아직 잠겨 있어요. 이전 주차를 먼저 완료해주세요.`); }
-}
 
 /* ═══════════════════════════════════════════════════════════
    뱃지 / 리더보드 / 내가 읽은 책
@@ -7272,88 +7140,7 @@ function renderReadChart(){
     <div class="rc-col"><div class="rc-h">언어</div>${bars(langs,'#b8902f')}</div>`;
 }
 
-/* ── ✨ 나의 독서 별자리 ── */
-const SKY_W=1000, SKY_H=400;
-const GENRE_COLORS={'소설':'#8ab4ff','시':'#ffd479','수필':'#7ef0c2','희곡':'#ff9ecb','사상':'#c9a3ff','평론':'#c9a3ff','역사':'#ffb38a','과학':'#7fe0ff','해외문학':'#f2b6ff'};
-function genreColor(g){return GENRE_COLORS[g]||'#aab6e8';}
 function _seed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return function(){h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
-// 별자리 = 실제 완독한 책만(가짜 데모 없음). 완독 = 별이 챌린지 소감 제출 또는 read_pct≥95
-function _skyBooks(){
-  const out=[];
-  (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{
-    const r=_chalRead(b.id);
-    if(r && (r.submitted || (r.read_pct||0)>=95)) out.push(b);
-  });
-  return out;
-}
-function skyLayout(){
-  const set=_skyBooks(), W=SKY_W, H=SKY_H;
-  const groups={}; set.forEach(b=>{(groups[b.category||'기타']=groups[b.category||'기타']||[]).push(b);});
-  const gkeys=Object.keys(groups);
-  const bgr=_seed('bgstars'), bg=[];
-  for(let i=0;i<80;i++) bg.push({x:bgr()*W,y:bgr()*H,r:bgr()*1.2+0.3,o:bgr()*0.5+0.12});
-  const out=gkeys.map((g,gi)=>{
-    const rnd=_seed(g), cx=W*((gi+0.5)/gkeys.length), cy=H*(0.42+ (gi%2?0.16:0));
-    const pts=groups[g].map((b,i)=>{ const ang=rnd()*6.283, rad=38+rnd()*95;
-      return {x:Math.max(34,Math.min(W-34,cx+Math.cos(ang)*rad)), y:Math.max(46,Math.min(H-50,cy+Math.sin(ang)*rad*0.72)), b, r:3+(i%3)*0.9};
-    });
-    return {g, color:genreColor(g), pts};
-  });
-  return {W,H,bg,groups:out,count:set.length};
-}
-function renderSky(){
-  const host=document.getElementById('readingSky'); if(!host) return;
-  const sec=document.getElementById('skySection'); if(sec) sec.style.display='block';
-  const L=skyLayout();
-  const shareBtn=document.getElementById('skyShareBtn');
-  if(!L.count){   // 빈 하늘 — 완독 전엔 배경별만 + 안내(가짜 별 없음)
-    if(shareBtn) shareBtn.style.display='none';
-    let bg2=''; L.bg.forEach(s=>bg2+=`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(2)}" fill="#fff" opacity="${(s.o*0.7).toFixed(2)}"/>`);
-    host.innerHTML=`<svg viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="xMidYMid slice" class="sky-svg">${bg2}</svg>
-      <div class="sky-title">⭐ 첫 별을 기다리는 밤하늘</div>
-      <div class="sky-empty">책을 <b>완독</b>하면 밤하늘에 별이 하나씩 떠요.<br>장르가 모이면 나만의 <b>별자리</b>가 됩니다.
-        <button onclick="nav('collection')">첫 책 고르러 가기 →</button></div>`;
-    return;
-  }
-  if(shareBtn) shareBtn.style.display='';
-  let bg='', lines='', stars='';
-  L.bg.forEach(s=>bg+=`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(2)}" fill="#fff" opacity="${s.o.toFixed(2)}"/>`);
-  L.groups.forEach(gp=>{
-    for(let i=0;i<gp.pts.length-1;i++) lines+=`<line x1="${gp.pts[i].x.toFixed(1)}" y1="${gp.pts[i].y.toFixed(1)}" x2="${gp.pts[i+1].x.toFixed(1)}" y2="${gp.pts[i+1].y.toFixed(1)}" stroke="${gp.color}" stroke-width="1" opacity="0.34"/>`;
-    gp.pts.forEach((p,i)=>{ stars+=`<g class="sky-star" onclick="openDetail('${p.b.id}')" style="--d:${(i*0.35).toFixed(2)}s">
-      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(p.r*2.4).toFixed(1)}" fill="${gp.color}" opacity="0.13"/>
-      <circle class="st-core" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}" fill="${gp.color}"><title>${esc(p.b.title)} · ${esc(p.b.author||'')}</title></circle></g>`;
-    });
-  });
-  const legend=L.groups.map(gp=>`<span class="sky-lg"><i style="background:${gp.color}"></i>${esc(gp.g)}</span>`).join('');
-  host.innerHTML=`<svg viewBox="0 0 ${L.W} ${L.H}" preserveAspectRatio="xMidYMid slice" class="sky-svg">${bg}${lines}${stars}</svg>
-    <div class="sky-title">⭐ ${esc(skyTitle(L.count))}</div>
-    <div class="sky-cap"><b>${L.count}</b>개의 별 · ${esc(readerName())}님의 독서 밤하늘</div>
-    <div class="sky-legend">${legend}</div>`;
-}
-function shareSky(){
-  const L=skyLayout(), S=2, W=L.W*S, H=L.H*S;
-  const c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
-  const g=x.createRadialGradient(W/2,-H*0.1,0,W/2,-H*0.1,H*1.3); g.addColorStop(0,'#2a3766');g.addColorStop(.5,'#1a2240');g.addColorStop(1,'#0d1120');
-  x.fillStyle=g; x.fillRect(0,0,W,H);
-  L.bg.forEach(s=>{ x.globalAlpha=s.o; x.fillStyle='#fff'; x.beginPath(); x.arc(s.x*S,s.y*S,s.r*S,0,6.3); x.fill(); }); x.globalAlpha=1;
-  L.groups.forEach(gp=>{
-    x.strokeStyle=gp.color; x.globalAlpha=.34; x.lineWidth=1*S;
-    for(let i=0;i<gp.pts.length-1;i++){ x.beginPath(); x.moveTo(gp.pts[i].x*S,gp.pts[i].y*S); x.lineTo(gp.pts[i+1].x*S,gp.pts[i+1].y*S); x.stroke(); }
-    x.globalAlpha=1; x.fillStyle=gp.color;
-    gp.pts.forEach(p=>{ x.globalAlpha=.14; x.beginPath(); x.arc(p.x*S,p.y*S,p.r*2.4*S,0,6.3); x.fill();
-      x.globalAlpha=1; x.beginPath(); x.arc(p.x*S,p.y*S,p.r*S,0,6.3); x.fill(); });
-  });
-  x.globalAlpha=1; x.fillStyle='#ffd479'; x.font=`bold ${30*S}px Georgia`; x.textAlign='left'; x.fillText(L.count+'개의 별', 24*S, H-46*S);
-  x.fillStyle='#dbe4ff'; x.font=`${20*S}px sans-serif`; x.fillText(readerName()+'님의 독서 밤하늘 · bookstar', 24*S, H-20*S);
-  c.toBlob(async(blob)=>{
-    try{ const f=new File([blob],'bookstar-별자리.png',{type:'image/png'});
-      if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:'나의 독서 별자리'}); return; }
-    }catch(e){}
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='bookstar-별자리.png'; document.body.appendChild(a); a.click(); a.remove();
-  },'image/png');
-}
-function skyTitle(n){ return n>=40?'은하의 사서':n>=20?'밤하늘의 항해사':n>=10?'별자리 수집가':n>=5?'새벽 독서가':'첫 별을 띄운 독서가'; }
 /* ── 올해의 ○○ (슈퍼래티브) ── */
 async function renderSuperlatives(){
   const host=document.getElementById('superlatives'); if(!host) return;
@@ -7397,37 +7184,11 @@ function enrollProgram(key){
   nav('mypage');
 }
 
-function exportReport(){
-  alert('📄 대학교 독서 활동 리포트 생성 중...\n\n[리포트 내용]\n· 김민서 / 한국대학교\n· 누적 점수 1,842점 / 학교 14위\n· 12주 챌린지: 4권 완독 / 8권 진행 중\n· 평균 독서 시간: 주 3.6시간\n· 작성 서평: 3편 (평균 A등급)\n· 챌린지 퀴즈 정답률: 86%\n\nPDF로 저장됩니다. (담당 교수님 / 도서관 발송 가능)');
-}
 
 function changeLang(lang){
   if(lang !== 'ko') alert(`Language changed to: ${lang.toUpperCase()}\n뷰어를 열면 자동으로 ${lang} 모드로 표시됩니다.`);
 }
 
-function onSearch(e){
-  if(e.key !== 'Enter') return;
-  const host = document.getElementById('classicShelves');
-  if(!host) return;
-  const q = e.target.value.trim().toLowerCase();
-  if(!q){ renderClassicShelves(); return; }   // 빈 검색어 → 카테고리 캐러셀 복원
-  const filtered = BOOKS.filter(b =>
-    b.title.toLowerCase().includes(q) ||
-    b.author.toLowerCase().includes(q) ||
-    b.category.toLowerCase().includes(q) ||
-    b.period.toLowerCase().includes(q)
-  );
-  host.innerHTML = filtered.length===0
-    ? '<div style="padding:40px;text-align:center;color:var(--text-light);">검색 결과 없음</div>'
-    : `<div class="book-grid">${filtered.map(b=>`
-      <div class="book-card" onclick="openDetail('${b.id}')">
-        ${bookCoverHTML(b)}
-        <div class="book-info">
-          <div class="book-title">${esc(b.title)}</div>
-          <div class="book-author">${esc(b.author)} · ${esc(b.category)}</div>
-        </div>
-      </div>`).join('')}</div>`;
-}
 
 /* ═══════════════════════════════════════════════════════════
    통합 검색 페이지 (Ver03) — 키워드(즉시) + 자연어(별이 추천)
