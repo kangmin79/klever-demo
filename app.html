@@ -416,6 +416,26 @@ body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 /* 고전 컬렉션 — 한국/해외 권역 헤더 (탭 폐지, 나열식) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
 .cl-locale-head span{font-size:13px;font-weight:700;color:var(--text-light);background:var(--bg-input);padding:3px 11px;border-radius:14px;}
+/* 고전 컬렉션 — 해외/국내 탭 + 유학생 배너 + 언어칩 (디자인 적용 2026-06-24) */
+.cl-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:2px;}
+.cl-tab{appearance:none;border:0;background:transparent;font-family:inherit;cursor:pointer;font-weight:800;font-size:19px;color:var(--text-light);padding:12px 18px;position:relative;letter-spacing:-0.5px;text-align:left;}
+.cl-tab .en{display:block;font-size:11px;font-weight:700;color:var(--text-light);margin-top:2px;letter-spacing:.03em;}
+.cl-tab.on{color:var(--text);}
+.cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
+.cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
+.cl-welcome{display:flex;align-items:center;gap:16px;background:linear-gradient(120deg,rgba(212,169,59,.16),rgba(212,169,59,.05));border:1px solid rgba(212,169,59,.32);border-radius:18px;padding:18px 22px;margin:18px 2px 6px;flex-wrap:wrap;}
+.cl-welcome .globe{width:50px;height:50px;border-radius:15px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:25px;flex:none;}
+.cl-welcome h3{font-size:19px;font-weight:900;margin-bottom:3px;color:var(--text);letter-spacing:-0.5px;}
+.cl-welcome p{font-size:13px;color:var(--text-sub);line-height:1.6;}
+.cl-welcome p b{color:var(--gold);}
+.cl-langchips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+@media(max-width:760px){.cl-langchips{margin-left:0;width:100%;}}
+.cl-lchip{background:var(--bg-card);border:1px solid var(--border);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--text-light);cursor:pointer;}
+.cl-lchip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);}
+.cl-card .cl-langbadge{position:absolute;top:8px;left:8px;z-index:2;background:rgba(20,16,12,.62);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;}
+.cl-card .cl-cardlangs{margin:6px 0 1px;display:flex;gap:4px;flex-wrap:wrap;}
+.cl-card .cl-lg{font-size:9.5px;font-weight:700;color:var(--gold);background:rgba(212,169,59,.15);border-radius:5px;padding:2px 6px;}
+.cl-card .cl-lg.hl{background:var(--gold);color:#1a1208;}
 /* 피드 (다른 학생 한 줄 소감) */
 .feed-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
 .feed-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
@@ -4764,18 +4784,27 @@ const CLASSIC_SUB = {
   '서사시·고전':'문명의 뿌리가 된 위대한 서사', '수필·에세이':'삶을 들여다보는 작가의 시선',
   '과학·심리':'세계와 마음을 탐구하다',
 };
-function clCard(b){
+const CL_LANG_ORDER = ['zh','vi','en','ja'];
+function clCard(b, opts){
+  opts = opts || {};
+  const showLang = opts.krLang && b.locale==='modern' && b.hasTrans;   // 번역된 한국 고전만 4개언어 표시
+  const badge = showLang ? '<span class="cl-langbadge">🌐 4개 언어</span>' : '';
+  let chips = '';
+  if(showLang){
+    chips = (opts.krLang==='all')
+      ? `<div class="cl-cardlangs">${CL_LANG_ORDER.map(l=>`<span class="cl-lg">${KR_LANG_NAMES[l]}</span>`).join('')}</div>`
+      : `<div class="cl-cardlangs"><span class="cl-lg hl">${KR_LANG_NAMES[opts.krLang]}</span><span class="cl-lg">+한국어</span></div>`;
+  }
   return `<div class="book-card cl-card${b.minumsa?' has-mns':''}" onclick="openDetail('${b.id}')">`
-    + `${b.minumsa?'<span class="mns-badge">★ 민음사</span>':''}${bookCoverHTML(b)}`
+    + `${b.minumsa?'<span class="mns-badge">★ 민음사</span>':''}${badge}${bookCoverHTML(b)}`
     + `<div class="book-info"><div class="book-title">${esc(b.title)}</div>`
-    + `<div class="book-author">${esc(b.author)}</div></div></div>`;
+    + `<div class="book-author">${esc(b.author)}</div>${chips}</div></div>`;
 }
-function clShelf(title, books){
+function clShelf(title, books, opts){
   return `<div class="cl-shelf">${mlHead(title, (CLASSIC_SUB[title]||'')+' · '+books.length+'권')}`
-    + `${mlCarousel(`<div class="ml-hrow">${books.map(clCard).join('')}</div>`)}</div>`;
+    + `${mlCarousel(`<div class="ml-hrow">${books.map(b=>clCard(b,opts)).join('')}</div>`)}</div>`;
 }
-// Ver03: 탭 폐지 — 한국 고전 전체 + 그 아래 해외 고전 전체를 한 페이지에 나열
-function clShelvesHTML(loc){
+function clShelvesHTML(loc, opts){
   const pool = BOOKS.filter(b=> b.locale===loc);
   const covered = new Set();
   let html = '';
@@ -4783,25 +4812,45 @@ function clShelvesHTML(loc){
     const books = pool.filter(b=> g.cats.includes(b.category));
     if(!books.length) return;
     books.forEach(b=>covered.add(b.id));
-    html += clShelf(g.label, books);
+    html += clShelf(g.label, books, opts);
   });
   const rest = pool.filter(b=> !covered.has(b.id));
-  if(rest.length) html += clShelf(loc==='foreign'?'해외 고전':'그 외 고전', rest);
+  if(rest.length) html += clShelf(loc==='foreign'?'해외 고전':'그 외 고전', rest, opts);
   return html;
 }
+// 고전 컬렉션 — 해외/국내 탭 (국내 탭: 유학생 환영 배너 + 언어칩)
+let _clTab='foreign', _clLang='all';
 function renderClassicShelves(){
   const host = document.getElementById('classicShelves');
   if(!host || typeof BOOKS==='undefined') return;
-  const kN = BOOKS.filter(b=>b.locale==='modern').length;
   const fN = BOOKS.filter(b=>b.locale==='foreign').length;
-  const kHtml = clShelvesHTML('modern');
-  const fHtml = clShelvesHTML('foreign');
-  if(!kHtml && !fHtml){ host.innerHTML='<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>'; return; }
-  host.innerHTML =
-    `<div class="cl-locale-head">🇰🇷 북스타 한국고전 <span>${kN}권</span></div>${kHtml}`
-  + `<div class="cl-locale-head" style="margin-top:38px;">🌍 북스타 해외고전 <span>${fN}권</span></div>${fHtml}`;
+  const kN = BOOKS.filter(b=>b.locale==='modern').length;
+  if(!fN && !kN){ host.innerHTML='<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>'; return; }
+  const foreign = _clTab==='foreign';
+  const tabs = `<div class="cl-tabs">
+      <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">해외 고전 <span class="en">WORLD CLASSICS · ${fN}권</span></button>
+      <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">국내 고전 <span class="en">KOREAN CLASSICS · 다국어 · ${kN}권</span></button>
+    </div>`;
+  let head;
+  if(foreign){
+    head = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
+  } else {
+    const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?'전체':KR_LANG_NAMES[l]}</span>`).join('');
+    head = `<div class="cl-welcome">
+        <div class="globe">🌐</div>
+        <div style="flex:1;min-width:200px;">
+          <h3>너의 언어로 읽는 한국 고전</h3>
+          <p>한국어가 아직 익숙하지 않아도 괜찮아요. 번역된 한국 고전을 <b>中文·Tiếng Việt·English·日本語</b>로 원문과 나란히 읽을 수 있어요.</p>
+        </div>
+        <div class="cl-langchips">${chips}</div>
+      </div>`;
+  }
+  const rows = foreign ? clShelvesHTML('foreign') : clShelvesHTML('modern', {krLang:_clLang});
+  host.innerHTML = tabs + head + `<div style="margin-top:18px;">${rows}</div>`;
   bindClassicDrag();
 }
+function clSetTab(t){ _clTab=t; if(t!=='modern') _clLang='all'; renderClassicShelves(); }
+function clSetLang(l){ _clLang=l; renderClassicShelves(); }
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
 let LOAN_DATA = {};
@@ -4985,7 +5034,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
