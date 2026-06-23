@@ -3940,7 +3940,7 @@ function nav(page){
     setTimeout(()=>loadChalCards(), 30);
   }
   if(page === 'collection') {
-    setTimeout(()=>renderAreaCuration('collectionCuration','고전 컬렉션'), 30);
+    setTimeout(()=>renderClassicShelves(), 30);   // 탭+책줄+탭별 사서큐레이션 일괄 렌더
   }
   if(page === 'international') {
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
@@ -4503,7 +4503,7 @@ async function renderAreaCuration(containerId, area){
   if(!secs.length){ grid.innerHTML=''; return; }
   // 담긴 책을 풀에 병합(표지·별점 보강)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
-  grid.innerHTML=millieHTML(secs, area==='고전 컬렉션');
+  grid.innerHTML=millieHTML(secs, isClassicsArea(area));
   try{ mlBindDrag(); }catch(e){}
   try{ backfillPool(); }catch(e){}
 }
@@ -4547,7 +4547,7 @@ function renderLibCuration(){
 }
 // 미리보기 대상 영역 (관리자 꾸미기 탭과 1:1) — 우리도서관/고전 컬렉션/International
 const PV_AREA = new URLSearchParams(location.search).get('area') || '우리도서관';
-const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'}};
+const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 해외':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 국내':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'}};
 const PV_T = PV_MAP[PV_AREA] || PV_MAP['우리도서관'];
 let _pvLastSecs=null;
 // 미리보기도 실제 앱처럼 발행 프로그램(library_programs)을 불러와 LC_PUB 채움 → 빈 칸 폴백이 앱과 일치(WYSIWYG)
@@ -4567,7 +4567,7 @@ function _pvRender(rawSecs){
   rebuildLibPool();
   // 담긴 책을 풀에 보강(표지·별점)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
-  const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs, PV_AREA==='고전 컬렉션'); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
+  const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs, isClassicsArea(PV_AREA)); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
 }
 if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
   const goPv=()=>{ try{ nav(PV_T.page); }catch(e){} try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
@@ -4822,6 +4822,9 @@ function clShelvesHTML(loc, opts){
   return html;
 }
 // 고전 컬렉션 — 해외/국내 탭 (국내 탭: 유학생 환영 배너 + 언어칩)
+// 탭별 사서 큐레이션 영역 (library_sections.area) — 관리자에서 해외/국내 분리 큐레이션
+const CL_AREA = {foreign:'고전 컬렉션 해외', modern:'고전 컬렉션 국내'};
+function isClassicsArea(a){ return String(a||'').indexOf('고전 컬렉션')===0; }
 let _clTab='foreign', _clLang='all';
 function renderClassicShelves(){
   const head = document.getElementById('clHead');
@@ -4854,6 +4857,8 @@ function renderClassicShelves(){
   const rows = foreign ? clShelvesHTML('foreign') : clShelvesHTML('modern', {krLang:_clLang});
   host.innerHTML = `<div style="margin-top:6px;">${rows}</div>`;
   bindClassicDrag();
+  // 탭별 사서 큐레이션(해외/국내 각각) 렌더
+  renderAreaCuration('collectionCuration', CL_AREA[_clTab]);
 }
 function clSetTab(t){ _clTab=t; if(t!=='modern') _clLang='all'; renderClassicShelves(); }
 function clSetLang(l){ _clLang=l; renderClassicShelves(); }
@@ -5040,7 +5045,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
@@ -7845,10 +7850,9 @@ window.addEventListener('DOMContentLoaded', () => {
   setupImmersiveTap();
   checkForUpdate();
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkForUpdate(); });
-  renderClassicShelves();
+  renderClassicShelves();   // 내부에서 탭별 collectionCuration 렌더
   renderCurations('curationIntl', true);
   renderBookGrid('bookGridIntl', true);
-  renderAreaCuration('collectionCuration','고전 컬렉션');
   renderAreaCuration('intlCuration','International');
   renderRecChips();
   loadLoanData();

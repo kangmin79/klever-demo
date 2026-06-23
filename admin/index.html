@@ -487,7 +487,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="grp builder">bookstar Builder<span class="sub">사서가 만드는 콘텐츠</span></div>
     <div class="navi" onclick="goArea(this,'우리도서관')"><span>한국대학교 도서관</span></div>
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
-    <div class="navi" onclick="goArea(this,'고전 컬렉션')"><span>고전 컬렉션</span></div>
+    <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>고전 컬렉션 (해외)</span></div>
+    <div class="navi" onclick="goArea(this,'고전 컬렉션 국내')"><span>고전 컬렉션 (국내)</span></div>
     <div class="navi" onclick="goArea(this,'International')"><span>International Students</span></div>
     <div class="navi" onclick="go(this,'comm')"><span>커뮤니티</span></div>
     <div class="navi" onclick="go(this,'notice')"><span>공지글 작성</span></div>
@@ -1079,8 +1080,8 @@ function toggleStyleGrid(e,slot){ const g=el('stylegrid_'+slot); if(!g)return;
   const open=g.style.display!=='none'; g.style.display=open?'none':'';
   const t=el('styletoggle_'+slot); if(t)t.textContent=open?'바꾸기 ▾':'접기 ▴';
 }
-// 3영역: 우리도서관 / 고전 컬렉션 / International Students (학생앱 페이지와 1:1)
-const AREAS=['우리도서관','고전 컬렉션','International'];
+// 영역: 우리도서관 / 고전 컬렉션(해외·국내) / International Students (학생앱 페이지와 1:1)
+const AREAS=['우리도서관','고전 컬렉션 해외','고전 컬렉션 국내','International'];
 let curArea='우리도서관';
 const aOf=s=>s.area||'우리도서관';
 let SECTIONS=[
@@ -1326,10 +1327,11 @@ function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; const panel=
   if(target<0)target=0; if(target>SECTIONS.length)target=SECTIONS.length;
   SECTIONS.splice(target,0,moved); renderSettings(); }
 function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over,.sec-panel.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
-const AREA_LABELS={'우리도서관':'우리 도서관','고전 컬렉션':'고전 컬렉션','International':'International Students'};
+const AREA_LABELS={'우리도서관':'우리 도서관','고전 컬렉션':'고전 컬렉션','고전 컬렉션 해외':'고전 컬렉션 · 해외','고전 컬렉션 국내':'고전 컬렉션 · 국내','International':'International Students'};
 const AREA_HINTS={
   '우리도서관':'학생 앱 ‘우리 도서관’ 첫 화면 — 칸 추가·이름·순서·책 담기.',
-  '고전 컬렉션':'학생 앱 ‘고전 컬렉션’ 화면 큐레이션 — 사서가 고전 선반을 직접 구성합니다.',
+  '고전 컬렉션 해외':'학생 앱 ‘고전 컬렉션 > 해외 고전’ 탭 큐레이션 — 해외 고전 선반을 직접 구성합니다.',
+  '고전 컬렉션 국내':'학생 앱 ‘고전 컬렉션 > 국내 고전’ 탭 큐레이션 — 한국 고전(유학생 다국어) 선반을 구성합니다.',
   'International':'학생 앱 ‘International Students’ 화면 큐레이션 — 유학생용 다국어 선반을 구성합니다.'
 };
 // (탭 제거 — 영역은 좌측 사이드바에서 선택) 진입 영역에 맞춰 제목/부제만 갱신
@@ -1385,10 +1387,13 @@ function secExample(t){el('secQ').value=t;secSearch();}
 function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInputs();else readSecInputs();
   scIdx=i;SCAND=[];
   // 고전 컬렉션 큐레이션은 '북스타 고전' 안에서만 (국중/ISBN/도서관내 숨김)
-  const clsArea = (scMode==='sec' && aOf(SECTIONS[i])==='고전 컬렉션') || (scMode==='chal' && (CHALLENGES[i]||{}).type==='고전챌린지');   // 고전 컬렉션 칸 + 고전 챌린지 = 북스타 고전에서 담기
+  const secArea = scMode==='sec' ? aOf(SECTIONS[i]) : '';
+  const clsArea = (scMode==='sec' && secArea.indexOf('고전 컬렉션')===0) || (scMode==='chal' && (CHALLENGES[i]||{}).type==='고전챌린지');   // 고전 컬렉션 칸 + 고전 챌린지 = 북스타 고전에서 담기
   document.querySelectorAll('#secOv .btab').forEach(btn=>{ const sbt=btn.dataset.sbt;
     btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (sbt==='cls'?'none':''); });
-  scTab = clsArea ? 'cls' : 'nat'; _clsOrigin='all';
+  // 영역에 맞춰 고전 풀 기본 필터: 해외 탭→해외 고전, 국내 탭→한국 고전
+  _clsOrigin = secArea==='고전 컬렉션 해외' ? 'foreign' : (secArea==='고전 컬렉션 국내' ? 'kr' : 'all');
+  scTab = clsArea ? 'cls' : 'nat';
   el('secModalTitle').textContent=`‘${pkObj().title}’에 책 담기`;
   document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===scTab));
   el('secOv').classList.add('on');secApplyTab();loadInventory();}
