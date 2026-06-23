@@ -2506,9 +2506,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결. -->
 <script>var BODIES_SENT={}, KR_SENT={};</script>
 <script src="bodies_dq.js?b=260612g"></script>
-<script src="bodies_gatsby.js?b=260612g"></script>
-<script src="bodies_demian.js?b=260612g"></script>
-<script src="bodies_emma.js?b=260612g"></script>
+<!-- bodies_gatsby/demian/emma(≈7MB)는 정적 include 제거 → 책 열 때만 ensureForeignBody가 지연 로드(LEGACY_BODY_FILES) -->
 <!-- bodies_gb{id}.js(변신 등 양산 산출물)는 ensureForeignBody()가 viewer 열 때 지연 로드 -->
 <script src="challenge_scenes.js?b=260612p"></script>
 <script>
@@ -3050,8 +3048,9 @@ function updateProgress(){
   const max = el.scrollHeight - el.clientHeight;
   bar.style.width = (max > 0 ? Math.min(100,(el.scrollTop/max)*100) : 0).toFixed(1) + '%';
 }
+let _progRAF=0;
 function readerOnScroll(){
-  updateProgress();
+  if(!_progRAF) _progRAF=requestAnimationFrame(()=>{ _progRAF=0; updateProgress(); });   // 스크롤 이벤트마다 reflow 강제 → 1프레임당 1회로 코얼레스
   if(_scrollSaveTimer) clearTimeout(_scrollSaveTimer);
   _scrollSaveTimer = setTimeout(saveScrollPos, 800);
 }
@@ -4907,7 +4906,7 @@ function openDetail(bookId){
   if(!b) return;
   // 체감 속도↑: 상세 보는 동안 '전문 바로읽기' 본문을 백그라운드로 미리 당겨옴(await 안 함, 클릭 시 즉시 표시)
   try{
-    if(b.hasTrans && bookId.startsWith('gb-')) ensureForeignBody(bookId);          // 번역 bodies(원문+번역 포함)
+    if((b.hasTrans||LEGACY_BODY_FILES[bookId]) && bookId.startsWith('gb-')) ensureForeignBody(bookId);          // 번역 bodies(원문+번역 포함)
     else if(b.hasTrans && bookId.startsWith('kr-')){ ensureKrBody(b); if(classicFetchId(bookId)) ensureClassicBody(bookId); }
     else if(classicFetchId(bookId)) ensureClassicBody(bookId);
   }catch(e){}
@@ -4947,7 +4946,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z3';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z4';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -5170,7 +5169,7 @@ async function openViewer(bookId, mode){
   renderViewer();
   // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
   let _reload = false;
-  if(b.hasTrans && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
+  if((b.hasTrans||LEGACY_BODY_FILES[bookId]) && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
   if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
   // gb- 번역책은 bodies에 원문·번역이 모두 있어 Supabase 원문 fetch가 불필요(중복 네트워크 제거 → 더 빨리 표시)
   const _haveForeignBody = bookId.startsWith('gb-') && (BODIES_SENT[bookId]||BODIES_ORIG[bookId]||BODIES_TRANS[bookId]);
@@ -5323,6 +5322,8 @@ async function ensureClassicBody(id){
 // 양산 드라이버(_drive.py build) 산출물을 자동 흡수. legacy(dq/gatsby/demian/emma)는 정적 include라
 // BODIES_TRANS가 이미 채워져 아래 가드에서 skip. 실패해도 원문 폴백으로 진행.
 const FOREIGN_BODY_P = {};
+// 레거시 평행리더 본문(파일명이 bodies_gb{id}.js 규칙과 다름) — 정적 include 대신 지연 로드
+const LEGACY_BODY_FILES = {'gb-64317':'bodies_gatsby.js','gb-74222':'bodies_demian.js','gb-158':'bodies_emma.js'};
 function ensureForeignBody(id){
   if(!id || !id.startsWith('gb-')) return Promise.resolve();
   if((typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id]) ||
@@ -5330,7 +5331,7 @@ function ensureForeignBody(id){
   if(FOREIGN_BODY_P[id]) return FOREIGN_BODY_P[id];
   FOREIGN_BODY_P[id] = new Promise(res=>{
     const s = document.createElement('script');
-    s.src = 'bodies_' + id.replace(/-/g,'') + '.js' + (typeof BODIES_VER !== 'undefined' ? '?b='+BODIES_VER : '');
+    s.src = (LEGACY_BODY_FILES[id] || ('bodies_' + id.replace(/-/g,'') + '.js')) + (typeof BODIES_VER !== 'undefined' ? '?b='+BODIES_VER : '');
     s.onload = res; s.onerror = res;
     document.head.appendChild(s);
   });
@@ -6098,7 +6099,14 @@ const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'�
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
 const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
 let _agWritings=[], _agNoteFilter='all';
-async function _agFetch(path){ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; }
+const _AGF_TTL=2000; const _agfCache=new Map();   // 마이페이지 진입 시 같은 path 중복 fetch 폭주 방지(2초 TTL + in-flight dedupe). path에 계정 id 포함되어 계정 간 오염 없음
+async function _agFetch(path){
+  const c=_agfCache.get(path);
+  if(c && (Date.now()-c.t)<_AGF_TTL) return c.p;   // 캐시된 Promise 공유 → 동시/연속 동일요청 1회로
+  const p=(async()=>{ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; })();
+  _agfCache.set(path,{t:Date.now(),p});
+  return p;
+}
 function _agDate(iso){ try{ const d=new Date(iso); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; }catch(e){ return ''; } }
 async function renderActivityGroup(){
   const el=document.getElementById('actGroup'); if(!el) return;
