@@ -630,7 +630,7 @@ body.dark .hub-node-icon{color:var(--gold);}
 .qg-note{margin-top:14px;padding:12px 16px;background:var(--bg-input);border-radius:10px;font-size:12.5px;line-height:1.7;color:var(--text-sub);}
 .qg-empty{text-align:center;color:var(--text-light);font-size:13px;line-height:1.9;padding:34px 12px;background:var(--bg-input);border-radius:12px;}
 .quest-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.quest-grid-wide{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;}            /* 책 칸 고정 크기 + 가운데(1권이어도 안 부풀게) */
+.quest-grid-wide{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:14px;}          /* 책 칸 고정 크기 + 왼쪽 정렬(1권이어도 휑하지 않게) */
 .quest-grid-wide .quest-slot{aspect-ratio:auto;flex:0 0 200px;max-width:200px;}          /* 표지+통계는 내용 높이로, 칸 폭 고정 */
 @media (max-width:480px){ .quest-grid-wide .quest-slot{flex:0 0 calc(50% - 7px);max-width:none;} }  /* 폰에선 2열 */
 .quest-slot{
@@ -4997,7 +4997,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623x';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623y';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
