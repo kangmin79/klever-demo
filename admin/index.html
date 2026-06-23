@@ -1984,7 +1984,7 @@ async function loadChallenges(){
     if(!r.ok){renderChallenges();return;}
     const rows=await r.json(); if(!Array.isArray(rows)){renderChallenges();return;}
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
-      id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',
+      id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
       mission:chalMissClean(x.mission,x.type),
       books:(x.books||[]).map(b=>({id:b.id||'',isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
     ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
@@ -2066,7 +2066,9 @@ function renderChallenges(){
       <div class="qn">${[10,5].map(n=>`<span class="${n===m.quizN?'on':''}" onclick="chalSetQuizN(${i},${n})">${n}문제</span>`).join('')}</div></div>`:'';
     return `<div class="panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-        <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span><span style="flex:1"></span>
+        <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span>
+        <button class="btn-ghost" style="padding:5px 10px;${c.featured?'background:#fff7e6;border-color:#f0c674;color:#b8860b;font-weight:800':''}" onclick="chalSetFeatured(${i})" title="학생 앱 '독서 챌린지' 상단 '이달의 챌린지'로 크게 노출됩니다 (하나만 지정)">${c.featured?'⭐ 이달의 챌린지':'☆ 이달의로 지정'}</button>
+        <span style="flex:1"></span>
         <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},-1)" ${i===0?'disabled':''}>↑</button>
         <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},1)" ${i===CHALLENGES.length-1?'disabled':''}>↓</button>
         <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="chalDel(${i})">삭제</button>
@@ -2097,6 +2099,7 @@ function renderChallenges(){
 function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
+function chalSetFeatured(i){readChalInputs();const on=!CHALLENGES[i].featured;CHALLENGES.forEach(c=>c.featured=false);CHALLENGES[i].featured=on;renderChallenges();}   // 라디오식: 하나만 '이달의 챌린지'(다시 누르면 해제)
 function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
   const def=CH_MISSIONS.find(x=>x.k===k); if(def&&def.soon)return;   // 준비 중 미션은 켤 수 없음
   c.mission[k]=!c.mission[k];renderChallenges();}
@@ -2113,7 +2116,7 @@ async function saveChallenges(){
   }
   try{
     if(CHALLENGES.length){
-      const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',
+      const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(b=>({id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
       const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
