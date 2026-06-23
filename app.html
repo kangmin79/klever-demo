@@ -1277,7 +1277,8 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-earn{font-size:12.5px;color:var(--text-sub);background:var(--bg-input);border-radius:10px;padding:13px 15px;line-height:1.85;}
 .ag-earn b{color:var(--gold);font-weight:800;}
 .ag-chips{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
-.ag-chip{font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-weight:700;}
+.ag-chip{font-size:12.5px;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-weight:700;cursor:pointer;user-select:none;}
+.ag-chip.on{border-color:var(--gold);background:var(--primary-bg);color:var(--text);}
 .ag-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;}
 .ag-note{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:15px 16px;}
 .ag-nmeta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-light);margin-bottom:9px;}
@@ -4996,7 +4997,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623w';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623x';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6162,6 +6163,7 @@ const AG_EARN_ORDER=['quiz','oneline','question','review','essay','attend','chal
 const AG_EARN_LABEL={quiz:'퀴즈 1문항',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
 const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
+let _agWritings=[], _agNoteFilter='all';
 async function _agFetch(path){ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; }
 function _agDate(iso){ try{ const d=new Date(iso); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; }catch(e){ return ''; } }
 async function renderActivityGroup(){
@@ -6201,9 +6203,9 @@ async function renderActivityGroup(){
   // 등급 안내
   const curIdx=GRADE_TIERS.findIndex(t=>t[0]===grade);
   const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; const on=t[0]===grade; const cls=on?' on':(i<curIdx?' done':' future'); return `<div class="ag-tier${cls}"><div class="te">${GRADE_EMO[t[0]]||'⭐'}</div><div class="tn">${t[0]}</div><div class="tr">${rng}</div>${on?'<div class="tnow">현재</div>':''}</div>`; }).join('');
-  // 내 기록 노트
-  const noteItems=writings.filter(w=>AG_NOTE_KIND[w.activity]).slice(0,6);
-  const notes= noteItems.length ? noteItems.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('') : '<div class="ag-empty">아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.</div>';
+  // 내 기록 노트 (칩으로 필터)
+  _agWritings=writings; _agNoteFilter='all';
+  const hasNotes=writings.some(w=>AG_NOTE_KIND[w.activity]);
   el.innerHTML = grpHead
    +`<div class="ag-card">
       <div class="ag-ptop">
@@ -6231,9 +6233,22 @@ async function renderActivityGroup(){
       <div class="ag-tiers">${tiers}</div>
       <div class="ag-earn">별 버는 법 — ${earn}<br>등급은 <b>누적 별</b> 기준이며 한 번 오르면 내려가지 않아요.</div>
     </div>
-    <div class="ag-sec-h"><h3>내 기록</h3>${noteItems.length?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
-    <div class="ag-chips"><span class="ag-chip">한 줄 소감 ${nOne}</span><span class="ag-chip">한 줄 질문 ${nQ}</span><span class="ag-chip">서평 ${nRev}</span></div>
-    <div class="ag-notes">${notes}</div>`;
+    <div class="ag-sec-h"><h3>내 기록</h3>${hasNotes?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
+    <div class="ag-chips" id="agChips"><span class="ag-chip" data-f="soup" onclick="agSetNoteFilter('soup')">한 줄 소감 ${nOne}</span><span class="ag-chip" data-f="q" onclick="agSetNoteFilter('q')">한 줄 질문 ${nQ}</span><span class="ag-chip" data-f="rv" onclick="agSetNoteFilter('rv')">서평 ${nRev}</span></div>
+    <div class="ag-notes" id="agNotes">${_agNotesHTML()}</div>`;
+}
+const AG_NOTE_FILTERS={soup:['oneline','impression'],q:['question'],rv:['review','essay']};
+function _agNotesHTML(){
+  let list=(_agWritings||[]).filter(w=>AG_NOTE_KIND[w.activity]);
+  if(_agNoteFilter!=='all'){ const acts=AG_NOTE_FILTERS[_agNoteFilter]||[]; list=list.filter(w=>acts.indexOf(w.activity)>=0); }
+  list=list.slice(0,12);
+  if(!list.length) return `<div class="ag-empty">${_agNoteFilter==='all'?'아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.':'해당하는 기록이 아직 없어요.'}</div>`;
+  return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('');
+}
+function agSetNoteFilter(f){
+  _agNoteFilter=(_agNoteFilter===f?'all':f);
+  const wrap=document.getElementById('agNotes'); if(wrap) wrap.innerHTML=_agNotesHTML();
+  document.querySelectorAll('#agChips .ag-chip').forEach(c=>c.classList.toggle('on', c.dataset.f===_agNoteFilter));
 }
 
 /* ════════ 내서재 ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 ════════ */
