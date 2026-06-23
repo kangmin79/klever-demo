@@ -4867,12 +4867,9 @@ function renderClassicShelves(){
         <div class="cl-langchips">${chips}</div>
       </div>`;
   }
-  // 데스크톱용 권역 헤더(탭 대신 현재 선택 표시) — 모바일에선 숨고 탭이 보임
-  const localeHead = foreign
-    ? `<div class="cl-locale-head">해외 고전 <span>WORLD CLASSICS · ${fN}권</span></div>`
-    : `<div class="cl-locale-head">국내 고전 <span>KOREAN CLASSICS · 다국어 · ${kN}권</span></div>`;
-  // 권역 헤더 + 탭 + (국내)배너 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래(classicShelves).
-  if(head) head.innerHTML = localeHead + tabs + headBody;
+  // 탭(모바일만 노출) + (국내)배너/인트로 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래.
+  // 데스크톱은 큰 권역 제목 없이 인트로/배너만 — 상단 네비 드롭다운이 권역을 알려줌(중복 제거)
+  if(head) head.innerHTML = tabs + headBody;
   const rows = foreign ? clShelvesHTML('foreign') : clShelvesHTML('modern', {krLang:_clLang});
   host.innerHTML = `<div style="margin-top:6px;">${rows}</div>`;
   bindClassicDrag();
@@ -5066,7 +5063,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
