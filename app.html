@@ -1530,6 +1530,9 @@ body.dark .cg-head{color:#0f172a;}
 /* ── 별이 챗봇 퀴즈 (카톡 스타일) ── */
 .bx-hl{background:linear-gradient(transparent 55%, #ffe96b 55%);border-radius:2px;padding:0 1px;transition:background .3s;}
 body.dark .bx-hl{background:linear-gradient(transparent 55%, rgba(212,169,59,.6) 55%);}
+/* DB 퀴즈 장면 동기화 — 문단 형광펜(문장 매칭 실패 시 폴백) */
+.viewer-pane.left p.scn-flash{background:rgba(255,233,107,.35);border-radius:3px;box-shadow:inset 3px 0 0 var(--gold,#d4a93b);padding-left:8px;margin-left:-11px;transition:background .3s;}
+body.dark .viewer-pane.left p.scn-flash{background:rgba(212,169,59,.22);}
 .viewer-pane.right.bx-pane{padding:0;}                 /* 채팅창이 패널 끝까지 꽉 차게 */
 .bx-chat{background:#b2c7d9;padding:16px 14px;min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;}
 body.dark .bx-chat{background:#26333f;}
@@ -4980,7 +4983,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z10';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z11';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
@@ -5598,6 +5601,7 @@ async function mpLoadQuiz(m){
   items.forEach((it,qi)=>{
     const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
     const q=document.createElement('div'); q.className='mp-q';
+    if(it.scene_no) q.dataset.scene=it.scene_no;   // 왼쪽 본문 동기화용(장면 번호)
     q.innerHTML=`<div class="mp-qn">문제 ${qi+1} · ${esc(it.scene_title||'')}</div><div class="mp-qq">${esc(it.question)}</div>`
       + shuffled.map((o,di)=>`<div class="mp-opt" data-orig="${o.orig}"><span class="mp-mk">${String.fromCharCode(65+di)}</span><span>${esc(o.t)}</span></div>`).join('')
       + `<div class="mp-expl"></div>`;
@@ -5606,6 +5610,70 @@ async function mpLoadQuiz(m){
     if(prev){ mpRevealQuiz(q, it, it.correct, !!prev.ok, true, prev.pick); }
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
+  _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
+}
+/* ═══ DB 퀴즈 ↔ 왼쪽 본문 동기화 — 장면별 자동 점프·형광펜 (앵커: 본문 정확 일치 문장) ═══ */
+const SCENE_ANCHORS = {
+ "gb-74222": [   // 데미안 — 10장면(scene_no 1~10) 시작 문장(BODIES_TRANS 정확 일치)
+  "내 누이들 또한 밝은 세계에 속했다.",
+  "나는 프랑크 크로머를 잘 알았고",
+  "얼마 전 우리 라틴어 학교에 새 아이가 하나 들어왔다.",
+  "이마에 표를 지니고 다닌 카인 이야기, 그렇지?",
+  "데미안은 같은 학년 아이들과 함께 견진성사를 받지 않았고",
+  "나는 그녀에게 베아트리체라는 이름을 붙였으니",
+  "새는 알을 깨고 나오려 싸운다. 알은 세계다.",
+  "피스토리우스, 부목사",
+  "나를 에바 부인이라 부르는",
+  "아직 프랑크 크로머를 기억하나?"
+ ]
+};
+let _scnIO=null, _scnCur=-1, _scnMarkP=null;
+function _scnAnchors(){ return (currentBook && SCENE_ANCHORS[currentBook.id]) || null; }
+function _scnClearMark(){
+  if(_scnMarkP){
+    if(_scnMarkP.classList){ _scnMarkP.classList.remove('scn-flash'); }
+    const m=_scnMarkP.querySelector && _scnMarkP.querySelector('mark.bx-hl');
+    if(m){ m.replaceWith(document.createTextNode(m.textContent)); _scnMarkP.normalize&&_scnMarkP.normalize(); }
+    _scnMarkP=null;
+  }
+}
+function _scnSyncTo(sceneNo){
+  const anchors=_scnAnchors(); if(!anchors) return;
+  const phrase=anchors[sceneNo-1]; if(!phrase) return;
+  if(sceneNo===_scnCur && _scnMarkP) return;
+  const left=document.querySelector('.viewer-pane.left'); if(!left) return;
+  const ps=left.querySelectorAll('p'); if(!ps.length) return;   // 본문 아직 로딩 중
+  let target=null;
+  for(const p of ps){ if((p.textContent||'').includes(phrase)){ target=p; break; } }
+  if(!target) return;
+  _scnCur=sceneNo; _scnClearMark();
+  const eh=esc(phrase);
+  if(target.innerHTML.includes(eh)){ target.innerHTML=target.innerHTML.replace(eh, '<mark class="bx-hl">'+eh+'</mark>'); _scnMarkP=target; }
+  else { target.classList.add('scn-flash'); _scnMarkP=target; }   // 문장 매칭 실패 시 문단 강조
+  const doScroll=()=>{ const mk=target.querySelector('mark.bx-hl')||target;
+    const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect(); left.scrollTop += (r1.top-r0.top)-100; };
+  doScroll(); requestAnimationFrame(doScroll);
+}
+function _scnSetupSync(retries){
+  if(_scnIO){ _scnIO.disconnect(); _scnIO=null; }
+  _scnCur=-1; _scnMarkP=null;
+  if(!_scnAnchors()) return;
+  const right=document.querySelector('.viewer-pane.right');
+  const box=document.getElementById('mpQuizBox');
+  if(!right || !box) return;
+  const qs=box.querySelectorAll('.mp-q[data-scene]'); if(!qs.length) return;
+  // 본문(왼쪽)이 아직 안 떴으면 잠시 후 재시도(고전 본문 지연 로드 대비)
+  const left=document.querySelector('.viewer-pane.left');
+  if(left && !left.querySelector('p') && (retries||0)<6){ setTimeout(()=>_scnSetupSync((retries||0)+1), 500); return; }
+  _scnSyncTo(+qs[0].dataset.scene||1);   // 첫 장면 즉시 표시
+  const visible=new Set();
+  _scnIO=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting) visible.add(e.target); else visible.delete(e.target); });
+    let best=null, bestTop=Infinity;
+    visible.forEach(el=>{ const top=el.getBoundingClientRect().top; if(top<bestTop){ bestTop=top; best=el; } });
+    if(best){ const sn=+best.dataset.scene; if(sn) _scnSyncTo(sn); }
+  }, {root:right, rootMargin:'0px 0px -55% 0px', threshold:0});   // 오른쪽 칸 상단 45%에 걸린 문항=활성
+  qs.forEach(q=>_scnIO.observe(q));
 }
 async function mpAnswer(el,q,it){
   if(!_mpCtx) return;
@@ -6598,6 +6666,7 @@ function submitSceneImpression(){
 }
 
 function closeViewer(){
+  if(_scnIO){ _scnIO.disconnect(); _scnIO=null; } _scnCur=-1; _scnMarkP=null;   // 장면 동기화 옵저버 정리
   if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   saveScrollPos();
   readerSessionEnd();
