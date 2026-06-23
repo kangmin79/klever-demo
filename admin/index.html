@@ -678,7 +678,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
             ※ 칸 순서는 상단 <b>↕ 순서 바꾸기</b>에서 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
         </div>
         <aside class="settings-pv" id="livePv">
-          <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="pvFrameLoaded()"></iframe></div>
+          <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="window.pvFrameLoaded&&pvFrameLoaded()"></iframe></div>
           <div class="pv-phone-cap" id="pvCap">학생 앱 ‘우리 도서관’ · 편집 즉시 반영</div>
         </aside>
       </div>
