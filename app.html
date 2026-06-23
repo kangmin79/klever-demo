@@ -3936,6 +3936,8 @@ function nav(page){
 let CHAL_PUB=[];
 function ddayText(to){ if(!to) return ''; const end=new Date(to+'T23:59:59'); const now=new Date();
   const d=Math.ceil((end-now)/86400000); if(isNaN(d)) return ''; return d<0?'종료':d===0?'D-day':'D-'+d; }
+// 사서가 챌린지 발행 시 표지 URL을 빠뜨려도, 책 id가 gb-*면 표지 파일에서 자동 보강
+function _gbCover(b){ if(b&&b.cover) return b.cover; const id=(b&&b.id)||''; return /^gb-/.test(id)?('https://bookstar.co.kr/covers/'+id+'.webp'):''; }
 async function loadChalCards(){
   renderChalCards();
   try{
@@ -3944,7 +3946,7 @@ async function loadChalCards(){
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
-      mission:x.mission||null,books:(x.books||[]).map(b=>({id:b.id||'',t:b.title,cover:b.cover,isbn:b.isbn}))}));
+      mission:x.mission||null,books:(x.books||[]).map(b=>({id:b.id||'',t:b.title,cover:_gbCover(b),isbn:b.isbn}))}));
     const _fi=CHAL_PUB.findIndex(c=>c.featured); if(_fi>0) CHAL_PUB.unshift(CHAL_PUB.splice(_fi,1)[0]);   // 사서가 지정한 '이달의 챌린지'(featured)를 맨 앞으로 → 히어로. 미지정이면 최신순 그대로
     renderChalCards();
   }catch(e){}
@@ -4118,8 +4120,9 @@ const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-b
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
 function lcCvHTML(b){
-  if(!b.cover) return `<div class="lc-fb">${esc(b.t)}</div>`;
-  const hi=esc(hiCover(b.cover)), orig=esc(b.cover);
+  const cv=_gbCover(b);
+  if(!cv) return `<div class="lc-fb">${esc(b.t)}</div>`;
+  const hi=esc(hiCover(cv)), orig=esc(cv);
   return `<img src="${hi}" loading="lazy" onerror="if(this.dataset.o){this.remove()}else{this.dataset.o=1;this.src='${orig}'}">`;
 }
 let LIB_POOL=[];
@@ -4173,7 +4176,7 @@ function authName(b){return (cleanA(b.a||b.author||'')).replace(/\(\s*\)/g,'').t
 function authorRich(b){const a=authName(b);return b.publisher?`${a} · ${b.publisher}`:a;}      // 저자 · 출판사
 function authorLine(b){return authorRich(b);}
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
-function mlcv(cls,b){return `<div class="${cls}"${b.cover?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
+function mlcv(cls,b){return `<div class="${cls}"${_gbCover(b)?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
@@ -4977,7 +4980,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z6';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z7';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
