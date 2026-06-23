@@ -2754,15 +2754,19 @@ const READER_BGS = [                       // 배경색 6종 (빈 bg=테마 기�
 
 let readerPrefs = {fontSizeIdx:3, lineHeightIdx:3, theme:'light', pageMode:false,
                    padXIdx:2, padYIdx:1, fontIdx:0, bg:'', mouseHide:false, hdrAuto:true};
-let readerStats = {positions:{}, completedChapters:{}, highlights:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
+let readerStats = {positions:{}, completedChapters:{}, highlights:{}, bookmarks:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}};
 let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
 let _lastSelectionRange = null;
 
 function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_PREFS_KEY)||'null'); if(s)Object.assign(readerPrefs,s);}catch(e){} }
 function saveReaderPrefs(){ try{ localStorage.setItem(READER_PREFS_KEY, JSON.stringify(readerPrefs)); }catch(e){} }
+// 리더 통계는 계정별로 분리(전역 키 공유 시 다계정 테스트가 서로 오염) — 로그인 시 klever-reader-stats-{sid}
+function _rsKey(){ try{ const s=(typeof bxStudent==='function')?bxStudent():null; return (s&&s.id)?READER_STATS_KEY+'-'+s.id:READER_STATS_KEY; }catch(e){ return READER_STATS_KEY; } }
+function _rsDefault(){ return {positions:{}, completedChapters:{}, highlights:{}, bookmarks:{}, readingTime:{total:0,days:{}}, streak:{last:'',count:0}}; }
 function loadReaderStats(){
-  try{ const s=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(s)Object.assign(readerStats,s);}catch(e){}
+  readerStats = _rsDefault();                          // 계정 전환 시 이전 계정 잔여 제거
+  try{ const s=JSON.parse(localStorage.getItem(_rsKey())||'null'); if(s)Object.assign(readerStats,s);}catch(e){}
   // 방어: 탭 장시간 방치 등으로 하루가 과대 기록된 값 보정(하루 ≤ 8시간), 누적은 일별 합과 일치
   try{
     const rt=readerStats.readingTime;
@@ -2774,7 +2778,7 @@ function loadReaderStats(){
     }
   }catch(e){}
 }
-function saveReaderStats(){ try{ localStorage.setItem(READER_STATS_KEY, JSON.stringify(readerStats)); }catch(e){} }
+function saveReaderStats(){ try{ localStorage.setItem(_rsKey(), JSON.stringify(readerStats)); }catch(e){} bxUpsertReaderStats(); }
 
 /* ── 내 서재(도서관에서 빌린 책) — '읽고 돌아오기' 루프의 그릇 ──
    빌리기 클릭 → 읽는 중 기록 → 돌아와서 완독 인증(독후감) → 완독 이력 누적.
@@ -4368,6 +4372,42 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
     rows.forEach(x=>_chalWriteLocal(x.book_id,{ans:x.ans||{},impression:x.impression||'',submitted:!!x.submitted,read_pct:x.read_pct||0,ts:Date.now()}));
   }catch(e){}
 }
+let _rsServerTimer=null;
+function bxUpsertReaderStats(){            // 리더 통계(읽은시간·streak·하이라이트·책갈피·위치) 서버 동기화 — 계정별 1행, 디바운스
+  const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
+  clearTimeout(_rsServerTimer);
+  _rsServerTimer=setTimeout(()=>{
+    try{ fetch(`${BX_SB}/bookstar_reader_stats?on_conflict=student_id`,
+      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+       body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
+  }, 1500);
+}
+function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다기기 안전: 맵 합집합, 읽은시간·streak 최댓값)
+  if(!sv||typeof sv!=='object') return;
+  const L=readerStats;
+  ['positions','completedChapters','highlights','bookmarks'].forEach(k=>{ L[k]=Object.assign({}, sv[k]||{}, L[k]||{}); });
+  const days={}, sd=(sv.readingTime&&sv.readingTime.days)||{}, ld=(L.readingTime&&L.readingTime.days)||{};
+  for(const k in sd) days[k]=Math.max(days[k]||0, Math.round(sd[k]||0));
+  for(const k in ld) days[k]=Math.max(days[k]||0, Math.round(ld[k]||0));
+  let tot=0; for(const k in days) tot+=days[k];
+  L.readingTime={total:tot, days:days};
+  const ss=sv.streak||{}, ls=L.streak||{};
+  L.streak = ((ss.last||'')>(ls.last||'')) ? {last:ss.last||'',count:ss.count||0} : {last:ls.last||'',count:ls.count||0};
+  if((ss.count||0)>(L.streak.count||0)) L.streak.count=ss.count||0;
+}
+async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더통계 → 로컬 병합 후 재렌더
+  const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
+  try{
+    const r=await fetch(`${BX_SB}/bookstar_reader_stats?student_id=eq.${encodeURIComponent(s.id)}&select=data`,{headers:BX_H});
+    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)||!rows[0]||!rows[0].data) return;
+    _rsMergeServer(rows[0].data);
+    try{ localStorage.setItem(_rsKey(), JSON.stringify(readerStats)); }catch(e){}   // 로컬 갱신(서버 재upsert 루프 방지 위해 saveReaderStats 미사용)
+    try{ renderReadingRhythm(); }catch(e){}
+    try{ renderStreakCal(); }catch(e){}
+    try{ renderReadChart(); }catch(e){}
+    try{ renderSummaryCard(); }catch(e){}
+  }catch(e){}
+}
 function bxRenderAccountChip(){
   const el=document.getElementById('bxAccChip'); if(!el) return;
   const s=bxStudent();
@@ -4388,6 +4428,8 @@ async function bxPickStudent(id){
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
+  loadReaderStats();            // 새 계정의 로컬 키로 리셋(이전 계정 잔여 제거)
+  await bxLoadReaderStats();    // 서버 리더통계 → 로컬 병합 + 리듬/streak 재렌더
   try{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
 }
@@ -4997,7 +5039,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623z';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623z2';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -6159,8 +6201,8 @@ const AG_ACTGRP={
   attend:['출석·방문','#7c6f9c'], visit:['출석·방문','#7c6f9c'],
   reading:['독서·기타','#64748b'], photo:['독서·기타','#64748b'], recommend:['독서·기타','#64748b'], underline:['독서·기타','#64748b'], comment:['독서·기타','#64748b']
 };
-const AG_EARN_ORDER=['quiz','oneline','question','review','essay','attend','challenge_join','challenge_done'];
-const AG_EARN_LABEL={quiz:'퀴즈 1문항',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
+const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','attend','challenge_join','challenge_done'];
+const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
 const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
 let _agWritings=[], _agNoteFilter='all';
@@ -7732,7 +7774,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if(bxStudent()){ bxLoadResultsFromDB().then(()=>{ try{ renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){} }); }
   else { setTimeout(bxOpenPicker, 400); }
   // 리더 prefs / stats 복원
-  loadReaderPrefs(); loadReaderStats();
+  loadReaderPrefs(); loadReaderStats(); if(bxStudent()) bxLoadReaderStats();
   // 레거시 klever-theme(다크 토글) → 새 prefs로 흡수
   if(!localStorage.getItem(READER_PREFS_KEY) && localStorage.getItem('klever-theme') === 'dark'){
     readerPrefs.theme = 'dark'; saveReaderPrefs();
