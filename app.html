@@ -442,6 +442,10 @@ body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 @media(max-width:1100px){.feed-grid{columns:3 260px;}}
 @media(max-width:760px){.feed-grid{columns:1;}}
 .fc{break-inside:avoid;margin:0 0 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:box-shadow .15s,transform .15s;}
+/* 내 글 = 골드로 도드라지게 */
+.fc.mine{border-color:rgba(212,169,59,.55);box-shadow:0 0 0 1.5px rgba(212,169,59,.32),0 12px 28px -16px rgba(168,128,31,.5);background:linear-gradient(180deg,rgba(212,169,59,.07),var(--bg-card) 42%);}
+.fc-mine{font-size:11px;font-weight:800;color:#a8801f;background:linear-gradient(135deg,rgba(212,169,59,.20),rgba(212,169,59,.06));border:1px solid rgba(212,169,59,.42);padding:3px 11px;border-radius:99px;white-space:nowrap;}
+body.dark .fc-mine{color:var(--gold);}
 .fc:hover{box-shadow:0 10px 26px rgba(40,40,90,.10);transform:translateY(-2px);}
 .fc-top{display:flex;align-items:center;gap:9px;padding:14px 16px 4px;}
 .fc-ava{width:36px;height:36px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer;}
@@ -4993,7 +4997,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260623t';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260623u';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260622';
@@ -7563,12 +7567,12 @@ function feedCard(it,i){
   const long=(it.act==='essay')||(it.text||'').length>120;
   const isMe=(it.sid===_bxSid());
   const following=_myFollows.has(it.sid);
-  const followBtn = isMe ? '' : `<button class="fc-follow${following?' on':''}" data-sid="${esc(it.sid)}" onclick="event.stopPropagation();feedFollow(this,'${esc(it.sid)}')">${following?'팔로잉':'팔로우'}</button>`;
+  const followBtn = isMe ? '<span class="fc-mine">내 글</span>' : `<button class="fc-follow${following?' on':''}" data-sid="${esc(it.sid)}" onclick="event.stopPropagation();feedFollow(this,'${esc(it.sid)}')">${following?'팔로잉':'팔로우'}</button>`;
   let content;
   if(it.act==='underline') content=`<div class="fc-quote hl" style="background:${pastel}"><span class="qm">“</span>${esc(it.text)}<span class="qm">”</span></div>`;
   else if(long) content=`<div class="fc-body">${esc(it.text)}</div>`;
   else content=`<div class="fc-quote" style="background:${pastel}">${esc(it.text)}</div>`;
-  return `<div class="fc">
+  return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
       <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${s.emoji||'🙂'}</div>
       <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(s.name)}${it.featured?' <span style="color:var(--gold)">★</span>':''}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
