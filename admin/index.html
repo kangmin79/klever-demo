@@ -109,6 +109,7 @@ a{color:inherit;text-decoration:none}
 .db-card:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(40,40,90,.12);border-color:var(--accent)}
 .db-card h3{font-size:14.5px;font-weight:800;color:var(--primary);margin-bottom:14px}
 .db-sub2{font-size:12px;font-weight:500;color:var(--light)}
+.db-demo{font-size:11px;font-weight:700;color:#c2710c;background:#fff4e5;padding:3px 9px;border-radius:999px;vertical-align:middle}
 .db-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .db-kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 12px 28px rgba(40,40,90,.06);transition:transform .15s,box-shadow .15s,border-color .15s}
 .db-kpi:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(40,40,90,.13);border-color:var(--accent)}
@@ -508,27 +509,27 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         </div>
       </div>
 
-      <!-- 그라데이션 배너 -->
+      <!-- 그라데이션 배너 — 실측정 중심 -->
       <div class="db-banner">
-        <div class="db-bh">한눈에 보기 <span>이번 달 운영 현황</span></div>
+        <div class="db-bh">한눈에 보기 <span>실시간 측정 현황</span></div>
         <div class="db-chips" id="dbBanner"></div>
       </div>
 
-      <!-- 별 순위 리더보드 + KPI -->
+      <!-- 별 순위 리더보드 + 이용 현황(예시) -->
       <div class="db-row">
         <div class="db-card"><h3>⭐ 별 순위 <span class="db-sub2">TOP 10 · 실제 적립</span></h3><div id="dbRank"></div></div>
-        <div class="db-kpi-grid" id="dbKpi"></div>
+        <div class="db-card"><h3>이용 현황 <span class="db-demo">예시 · 도입 시 실제 집계</span></h3><div class="db-kpi-grid" id="dbKpi"></div></div>
       </div>
 
-      <!-- 차트: 주간 미션 + 미션 종류별 -->
+      <!-- 차트: 일자별 미션 + 미션 종류별 (실데이터) -->
       <div class="db-row">
-        <div class="db-card"><h3>주간 미션 수행</h3><div class="db-chartwrap"><canvas id="dbBar"></canvas></div></div>
-        <div class="db-card"><h3>미션 종류별 수행 <span class="db-sub2">데모</span></h3><div class="db-catwrap"><canvas id="dbCat"></canvas><div class="db-catc"><b id="dbCatTot">0</b><span>총 미션</span></div></div><div class="db-leg" id="dbCatLeg"></div></div>
+        <div class="db-card"><h3>일자별 미션 수행 <span class="db-sub2">실데이터</span></h3><div class="db-chartwrap"><canvas id="dbBar"></canvas></div></div>
+        <div class="db-card"><h3>미션 종류별 수행 <span class="db-sub2">실데이터</span></h3><div class="db-catwrap"><canvas id="dbCat"></canvas><div class="db-catc"><b id="dbCatTot">0</b><span>총 미션</span></div></div><div class="db-leg" id="dbCatLeg"></div></div>
       </div>
 
       <!-- 프로그램별 참여 현황 -->
       <div class="db-card">
-        <h3>프로그램별 참여 현황 <span class="db-sub2">접속·이용 건수</span></h3>
+        <h3>프로그램별 참여 현황 <span class="db-demo">예시 · 접속·이용 건수</span></h3>
         <div class="tblwrap" style="border:0;box-shadow:none">
           <table class="tbl" style="min-width:0"><thead><tr><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead>
           <tbody id="dashProg"></tbody></table>
@@ -1579,63 +1580,81 @@ let RANGE='month';
 const RANGE_MULT={week:0.25,month:1,term:4.1};
 function setRange(b,r){RANGE=r;document.querySelectorAll('#pg-dash .seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderDash();}
 function renderDash(){
+  const active=PROGRAMS.filter(p=>p.status==='진행중').length;
+  // 배너: 실측정 중심 (별·참여·완주·미션은 loadRealStats에서 채움, 진행 프로그램은 즉시)
+  el('dbBanner').innerHTML=[
+    ['적립된 별','…','star',1],
+    ['참여 학생','…','part',0],
+    ['챌린지 완주','…','done',0],
+    ['미션 수행','…','mission',0],
+    ['진행 중 프로그램',active,'',0],
+  ].map(k=>`<div class="db-chip${k[3]?' hl':''}"><div class="v" data-k="${k[2]}">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
+  renderTrafficDemo();   // 별 순위 옆 '이용 현황 · 예시' 블록 (접속·이용·클릭)
+  loadRealStats();       // 배너 실측정 칩 + 리더보드 + 차트 (실데이터)
+}
+
+/* 이용 현황 (예시 데이터 — 도입 시 실제 집계로 대체) */
+function renderTrafficDemo(){
   const m=RANGE_MULT[RANGE];
   const totV=PROGRAMS.reduce((a,p)=>a+(p.visits||0),0), totU=PROGRAMS.reduce((a,p)=>a+(p.uses||0),0);
-  const active=PROGRAMS.filter(p=>p.status==='진행중').length;
-  // 그라데이션 배너 칩 (접속·이용·클릭은 데모 영업용, 진행 프로그램은 실제, 적립별은 실데이터로 갱신)
-  el('dbBanner').innerHTML=[
-    ['접속자수',nf(Math.round(totV*m)),'+8.2%',0],
-    ['이용건수',nf(Math.round(totU*m)),'+12.4%',0],
-    ['클릭수',nf(Math.round(totU*m*2.3)),'+9.1%',0],
-    ['진행 중 프로그램',active,'',0],
-    ['적립된 별','…','',1],
-  ].map(k=>`<div class="db-chip${k[3]?' hl':''}"><div class="v">${k[1]}${k[2]?` <small>(${k[2]})</small>`:''}</div><div class="l">${k[0]}</div></div>`).join('');
-  // 프로그램별 표
+  el('dbKpi').innerHTML=[
+    ['접속자수',Math.round(totV*m)],['이용건수',Math.round(totU*m)],
+    ['클릭수',Math.round(totU*m*2.3)],['이용시간(분)',Math.round(totU*m*0.6)]
+  ].map(k=>`<div class="db-kpi"><div class="v">${nf(k[1])}</div><div class="l">${k[0]}</div><div class="a">예시</div></div>`).join('');
+  // 프로그램별 표 (접속·이용은 예시)
   el('dashProg').innerHTML=PROGRAMS.slice().sort((a,b)=>(b.uses||0)-(a.uses||0)).map(p=>`<tr>
     <td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
     <td class="num">${nf(Math.round((p.visits||0)*m))}</td><td class="num">${nf(Math.round((p.uses||0)*m))}</td></tr>`).join('');
-  loadRealStats();   // 리더보드·KPI·적립별 칩 (실데이터)
-  drawDashCharts();  // 주간 미션 + 미션 종류별 차트
 }
 
 /* ====== 실시간 측정 (실제 데이터 — bookstar_stars/totals/enroll) ====== */
 const BX_NAMES={s1:'김민준',s2:'이서연',s3:'박도윤',s4:'최지우',s5:'정하준'};
+const MISSION_ACTS=new Set(['quiz','oneline','question','review','essay','underline','recommend']);
 const GRADE_EMOJI={'라이징스타':'💫','스타':'⭐','빅스타':'🌟','슈퍼스타':'✨','레전드':'👑'};
 async function loadRealStats(){
   const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
-  let totals=[], enroll=[], missionCnt=0;
+  let totals=[], enroll=[], stars=[];
   const ids=Object.keys(BX_NAMES);   // 데모 학생(demo1 등) 제외 — 진짜 테스트 학생만
   try{ const r=await fetch(`${SB_REST}/bookstar_student_totals?student_id=in.(${ids.join(',')})&order=total_stars.desc&select=student_id,total_stars,grade`,{headers:H}); if(r.ok) totals=await r.json(); }catch(e){}
   try{ const r=await fetch(`${SB_REST}/bookstar_challenge_enroll?student_id=in.(${ids.join(',')})&select=challenge_id,student_id,status`,{headers:H}); if(r.ok) enroll=await r.json(); }catch(e){}
-  try{ const r=await fetch(`${SB_REST}/bookstar_stars?student_id=in.(${ids.join(',')})&select=id`,{headers:{...H,Prefer:'count=exact',Range:'0-0'}}); const cr=r.headers.get('content-range'); if(cr) missionCnt=+(cr.split('/')[1])||0; }catch(e){}
-  if(!Array.isArray(totals))totals=[]; if(!Array.isArray(enroll))enroll=[];
+  try{ const r=await fetch(`${SB_REST}/bookstar_stars?student_id=in.(${ids.join(',')})&select=activity,created_at`,{headers:H}); if(r.ok) stars=await r.json(); }catch(e){}
+  if(!Array.isArray(totals))totals=[]; if(!Array.isArray(enroll))enroll=[]; if(!Array.isArray(stars))stars=[];
+  // bookstar_stars엔 challenge_join/done 같은 라이프사이클 이벤트도 섞임 → 진짜 미션만
+  const missions=stars.filter(s=>MISSION_ACTS.has(s.activity));
   const sumStars=totals.reduce((a,t)=>a+(t.total_stars||0),0);
   const partStudents=new Set(enroll.map(e=>e.student_id));
   const doneCount=enroll.filter(e=>e.status==='done').length;
-  // 배너 '적립된 별' 칩 실데이터 갱신
-  const starChip=document.querySelector('#dbBanner .db-chip.hl .v'); if(starChip) starChip.textContent=nf(sumStars);
-  // KPI 2x2 (실데이터)
-  el('dbKpi').innerHTML=[
-    ['참여 학생',partStudents.size,'+6'],['적립된 별',sumStars,'+210'],['챌린지 완주',doneCount,'+5'],['미션 수행',missionCnt,'+48']
-  ].map(k=>`<div class="db-kpi"><div class="v">${nf(k[1])}<small>▲${k[2]}</small></div><div class="l">${k[0]}</div><div class="a">이번 달</div></div>`).join('');
+  // 배너 실측정 칩 갱신
+  const setChip=(k,v)=>{const n=document.querySelector(`#dbBanner .db-chip .v[data-k="${k}"]`); if(n)n.textContent=nf(v);};
+  setChip('star',sumStars); setChip('part',partStudents.size); setChip('done',doneCount); setChip('mission',missions.length);
   // 별 순위 리더보드 (실데이터)
   const mx=Math.max(1,...totals.map(t=>t.total_stars||0));
   el('dbRank').innerHTML = totals.length ? totals.slice(0,10).map((t,i)=>`<div class="db-rbar">
     <div class="rno ${i<3?'t':''}">${i+1}</div><div class="rnm">${esc(BX_NAMES[t.student_id]||t.student_id)}</div>
     <div class="rtk"><i style="width:${Math.round((t.total_stars||0)/mx*100)}%"></i></div><div class="rvl">⭐${nf(t.total_stars||0)}</div></div>`).join('')
     : `<div class="ph-sub" style="padding:18px 2px">아직 적립된 별이 없어요.<br>학생이 챌린지 미션을 수행하면 여기에 순위가 쌓입니다.</div>`;
+  drawDashCharts(missions);  // 일자별 미션 + 미션 종류별 (실데이터, 라이프사이클 제외)
 }
-/* ====== 대시보드 차트 (Chart.js) ====== */
+/* ====== 대시보드 차트 (Chart.js · 실데이터) ====== */
 let _dashCharts={bar:null,cat:null};
-function drawDashCharts(){
+function drawDashCharts(stars){
   if(typeof Chart==='undefined') return;
+  stars=Array.isArray(stars)?stars:[];
   try{ if(_dashCharts.bar)_dashCharts.bar.destroy(); if(_dashCharts.cat)_dashCharts.cat.destroy(); }catch(e){}
-  const weeks=['1주','2주','3주','4주','5주','6주','7주'], weekly=[12,19,9,24,31,28,40], lows=[2,4,3,6,8,7,10];
-  if(el('dbBar')) _dashCharts.bar=new Chart(el('dbBar'),{type:'bar',data:{labels:weeks,datasets:[{data:weekly.map((v,i)=>[lows[i],lows[i]+v]),backgroundColor:weeks.map((_,i)=>['#f9844a','#8b5cf6','#22c55e'][i%3]),borderRadius:20,barThickness:14}]},options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:'#eef0f5'},ticks:{color:'#aeb3cc'}},x:{grid:{display:false},ticks:{color:'#aeb3cc'}}},maintainAspectRatio:false}});
-  const mix=[['퀴즈',140,'#6366f1'],['한 줄 소감',62,'#22c55e'],['질문',50,'#f59e0b'],['서평',38,'#ec4899'],['독후감',22,'#06b6d4']];
+  // 미션 종류별 (activity 집계)
+  const LBL={quiz:'퀴즈',oneline:'한 줄 소감',question:'질문',review:'서평',essay:'독후감',underline:'핵심 문장',recommend:'책 추천'};
+  const COL={quiz:'#6366f1',oneline:'#22c55e',question:'#f59e0b',review:'#ec4899',essay:'#06b6d4',underline:'#8b5cf6',recommend:'#f9844a'};
+  const byAct={}; stars.forEach(s=>{const a=s.activity||'기타'; byAct[a]=(byAct[a]||0)+1;});
+  const mix=Object.keys(byAct).sort((a,b)=>byAct[b]-byAct[a]).map(k=>[LBL[k]||k,byAct[k],COL[k]||'#94a3b8']);
   if(el('dbCatTot')) el('dbCatTot').textContent=mix.reduce((a,x)=>a+x[1],0);
   if(el('dbCat')) _dashCharts.cat=new Chart(el('dbCat'),{type:'doughnut',data:{labels:mix.map(x=>x[0]),datasets:[{data:mix.map(x=>x[1]),backgroundColor:mix.map(x=>x[2]),borderWidth:0,borderRadius:8,spacing:4,hoverOffset:6}]},options:{cutout:'72%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
-  if(el('dbCatLeg')) el('dbCatLeg').innerHTML=mix.map(x=>`<span><i style="background:${x[2]}"></i>${x[0]}</span>`).join('');
+  if(el('dbCatLeg')) el('dbCatLeg').innerHTML=mix.length?mix.map(x=>`<span><i style="background:${x[2]}"></i>${x[0]} ${x[1]}</span>`).join(''):'<span class="muted">아직 미션 기록이 없어요</span>';
+  // 일자별 미션 수행 (created_at 집계, 최근 14일)
+  const byDay={}; stars.forEach(s=>{const d=(s.created_at||'').slice(0,10); if(d)byDay[d]=(byDay[d]||0)+1;});
+  const days=Object.keys(byDay).sort().slice(-14);
+  const labels=days.map(d=>{const p=d.split('-');return (+p[1])+'/'+(+p[2]);});
+  const counts=days.map(d=>byDay[d]);
+  if(el('dbBar')) _dashCharts.bar=new Chart(el('dbBar'),{type:'bar',data:{labels:labels,datasets:[{data:counts,backgroundColor:'#6366f1',borderRadius:8,barThickness:18,maxBarThickness:22}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#eef0f5'},ticks:{precision:0,color:'#aeb3cc'}},x:{grid:{display:false},ticks:{color:'#aeb3cc'}}},maintainAspectRatio:false}});
 }
 
 /* ====== 학생 글 ====== */
