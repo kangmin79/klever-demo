@@ -4231,7 +4231,7 @@ const SEMYUNG_BEST=[
   {brcd:'4808954640756',t:'너무 한낮의 연애',a:'김금희',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954640756/L4808954640756.jpg'},
 ].map(b=>({isbn:'sm-'+b.brcd,t:b.t,a:b.a,cover:smCover(b.cv),note:b.note||'',lib:smDetail(b.brcd),_sm:true}));
 // 세명대 전자도서관 라이브 — semyung-best Edge Function(?kind=best|new)이 bestContent/newContent 프록시·파싱. 로드 전엔 null.
-let SEMYUNG_BEST_LIVE=null, SEMYUNG_NEW_LIVE=null, SEMYUNG_LOANRANK=null;
+let SEMYUNG_BEST_LIVE=null, SEMYUNG_NEW_LIVE=null, SEMYUNG_LOANRANK=null, SEMYUNG_NEW_E=null, SEMYUNG_NEW_P=null;
 function _smMap(list){ return list.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:b.rank,pubDate:b.pubDate||''})); }
 async function _smFetch(kind){
   try{
@@ -4242,31 +4242,23 @@ async function _smFetch(kind){
   }catch(e){ return null; }
 }
 // 신착 = semyung_new 테이블(세명대 전자책 6개월치 + 종이책 신착 OPAC, build_semyung_new*.py가 매일 갱신).
-// 전자책(pub_date순)·종이책(입고순=reckey) 각각 정렬 후 교차배치, 같은 책은 제목으로 합쳐 전자/종이 태그 둘 다.
-function _normT(s){ return (s||'').split(/[:(]/)[0].replace(/[\s:·,()\[\]'"]+/g,'').toLowerCase(); }
+// 전자책·종이책을 각각 별도 줄로 표시(SEMYUNG_NEW_E / SEMYUNG_NEW_P). 각자 진짜 최신순.
+function _smMapNew(b,tag){
+  const o={isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
+    _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],lib:b.detail||''};
+  if(tag==='ebook') o._eb=b.detail; else o._pp=b.detail;
+  return o;
+}
 async function _smNewTable(){
   try{
     const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date,pub_year,kind&limit=400`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return null;
     const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
-    const ebs=rows.filter(b=>b.kind!=='종이책').sort((a,b)=>(b.pub_date||'').localeCompare(a.pub_date||''));
-    const pps=rows.filter(b=>b.kind==='종이책').sort((a,b)=>(b.brcd||'').localeCompare(a.brcd||''));  // reckey 내림 = 입고 최신순
-    const out=[], seen={};
-    const add=(b,tag)=>{
-      const k=_normT(b.title);
-      if(seen[k]!==undefined){ const e=out[seen[k]]; if(!e.tags.includes(tag))e.tags.push(tag);
-        if(tag==='ebook')e._eb=b.detail; else e._pp=b.detail;
-        if(!e.cover)e.cover=b.cover||''; return; }
-      seen[k]=out.length;
-      out.push({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
-        _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],
-        _eb:tag==='ebook'?b.detail:'', _pp:tag==='paper'?b.detail:''});
-    };
-    let i=0,j=0;
-    while(i<ebs.length||j<pps.length){ if(i<ebs.length)add(ebs[i++],'ebook'); if(j<pps.length)add(pps[j++],'paper'); }
-    out.forEach((e,idx)=>{ e.lib=e._eb||e._pp||smDetail(e.isbn.replace(/^sm-/,'')); e.rank=idx+1; });
-    return out;
+    // 전자책=발행일순 / 종이책=입고순(reckey 내림)
+    SEMYUNG_NEW_E=rows.filter(b=>b.kind!=='종이책').sort((a,b)=>(b.pub_date||'').localeCompare(a.pub_date||'')).map(b=>_smMapNew(b,'ebook'));
+    SEMYUNG_NEW_P=rows.filter(b=>b.kind==='종이책').sort((a,b)=>(b.brcd||'').localeCompare(a.brcd||'')).map(b=>_smMapNew(b,'paper'));
+    return SEMYUNG_NEW_P.concat(SEMYUNG_NEW_E);   // 통합(검색풀 병합용)
   }catch(e){ return null; }
 }
 // 우리 학교 대출 랭킹 = 종이책 실대출(OPAC popularloanList, 최근1년, 대출횟수 있음). scripts/build_semyung_loan_rank.py 갱신.
@@ -4455,7 +4447,9 @@ function millieHTML(secs,classicMode){
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
     if(st==='ebookrank'){ if(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length) out+=mlRank(s.title,s.subtitle,SEMYUNG_BEST_LIVE.slice(0,12),true); return; }   // 전자책 인기(순위만, 전자도서관)
-    if(st==='newlive'){ let nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 신착: semyung_new(전자+종이), 줄엔 최신 80권만 표시(전체는 검색풀에)
+    if(st==='newlive_p'){ const nb=(SEMYUNG_NEW_P&&SEMYUNG_NEW_P.length)?SEMYUNG_NEW_P:(SEMYUNG_NEW_LIVE||[]).filter(b=>b.tags&&b.tags.includes('paper')); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 종이책 신착(입고순)
+    if(st==='newlive_e'){ const nb=(SEMYUNG_NEW_E&&SEMYUNG_NEW_E.length)?SEMYUNG_NEW_E:(SEMYUNG_NEW_LIVE||[]).filter(b=>b.tags&&b.tags.includes('ebook')); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 전자책 신착(발행일순)
+    if(st==='newlive'){ let nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // (구) 통합 신착 — 폴백
     const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
@@ -4597,7 +4591,8 @@ let SECTIONS=[
   {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row'},
   {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank'},
   {slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank'},
-  {slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'},
+  {slot:'newarr_p',title:'세명대 종이책 신착',subtitle:'새로 들어온 종이책',style:'newlive_p'},
+  {slot:'newarr_e',title:'세명대 전자책 신착',subtitle:'새로 들어온 전자책',style:'newlive_e'},
   {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
 ];
 // 서버 발행 섹션이 기본 SECTIONS를 덮어써도 라이브 줄(전자책 인기·신착)은 항상 대출 랭킹 뒤에 끼운다(중복 방지)
@@ -4609,12 +4604,13 @@ function injectNewArr(arr){
     const eb={slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank'};
     if(i>=0) arr.splice(i+1,0,eb); else arr.push(eb);
   }
-  // 신착 = 전자책 인기 바로 아래
-  if(!arr.some(s=>s.slot==='newarr'||s.style==='newlive')){
+  // 신착 = 전자책 인기 바로 아래 (종이책 신착 → 전자책 신착 순서)
+  if(!arr.some(s=>s.style==='newlive_p'||s.style==='newlive_e'||s.slot==='newarr')){
     const j=arr.findIndex(s=>s.slot==='ebookrank'||s.style==='ebookrank');
-    const sec={slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'};
     const at=(j>=0?j:i);
-    if(at>=0) arr.splice(at+1,0,sec); else arr.push(sec);
+    const pp={slot:'newarr_p',title:'세명대 종이책 신착',subtitle:'새로 들어온 종이책',style:'newlive_p'};
+    const ee={slot:'newarr_e',title:'세명대 전자책 신착',subtitle:'새로 들어온 전자책',style:'newlive_e'};
+    if(at>=0) arr.splice(at+1,0,pp,ee); else arr.push(pp,ee);
   }
   return arr;
 }
