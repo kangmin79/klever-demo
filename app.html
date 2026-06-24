@@ -288,6 +288,16 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
 .lcd-chip{font-size:11px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:3px 9px;}
 .lcd-desc{font-size:12.5px;color:var(--text-sub);line-height:1.7;padding:0 24px;margin:2px 0 18px;max-height:9.5em;overflow:hidden;}
+.lcd-ways{margin-top:14px;border-top:1px solid var(--border);padding-top:12px;}
+.lcd-ways-h{font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:-0.2px;margin:0 2px 8px;}
+.lcd-way{display:flex;align-items:center;gap:8px;text-decoration:none;font-size:13px;font-weight:700;color:var(--text);background:var(--bg-input);border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:7px;transition:border-color .15s,background .15s;}
+.lcd-way:hover{border-color:var(--gold);}
+.lcd-way b{font-weight:800;}
+.lcd-way.ok{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08);}
+.lcd-way .wtag{font-size:11px;font-weight:800;color:#15803d;background:rgba(34,197,94,.16);border-radius:999px;padding:2px 9px;}
+body.dark .lcd-way.ok .wtag{color:#86efac;}
+.lcd-way .wsub{font-size:11px;font-weight:600;color:var(--text-light);}
+.lcd-way .ar{margin-left:auto;color:var(--text-light);font-weight:700;}
 .lcd-src{font-size:10px;color:var(--text-light);padding:0 24px 18px;}
 #lcdReviews{padding:16px 24px 22px;border-top:1px solid var(--border);margin-top:2px;}
 #lcdReviews .rv-card{margin-bottom:8px;}
@@ -4663,6 +4673,8 @@ function libDetail(isbn){
   const pubYear = b.pubYear || (en&&en.year) || '';
   const publisher = b.publisher || (en&&en.publisher) || '';
   const genre = (en&&en.genre) || '';
+  // 세명대 통합검색 딥링크(제목) — 종이책 소장·구독 전자책 확인용
+  const opacUrl = 'https://lib.semyung.ac.kr/search/tot/result?st=KWRD&si=TOTAL&q='+encodeURIComponent(cleanT(b.t||''));
   const meta=[];
   if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${b.rating}${b.ratingCount?` · ${b.ratingCount}명`:''}`);
   if(b.loan) meta.push(`대출 ${Number(b.loan).toLocaleString()}`);
@@ -4683,6 +4695,13 @@ function libDetail(isbn){
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
         : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">🔍 우리 도서관에서 찾기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`}
+      ${b._sm ? `<div class="lcd-ways">
+        <div class="lcd-ways-h">이 책 이용 방법</div>
+        ${en&&en.paper
+          ? `<a class="lcd-way ok" href="${opacUrl}" target="_blank" rel="noopener">📖 <b>종이책 소장</b><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>`
+          : `<a class="lcd-way" href="${opacUrl}" target="_blank" rel="noopener">📖 종이책 소장 검색<span class="wsub">통합검색에서 확인</span><span class="ar">›</span></a>`}
+        <a class="lcd-way" href="${opacUrl}" target="_blank" rel="noopener">🔄 구독 전자책<span class="wsub">크레마클럽·교보</span><span class="ar">›</span></a>
+      </div>` : ''}
     </div>
     <div class="lcd-src">${b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
     <div id="lcdReviews"></div>`;
@@ -5077,7 +5096,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
