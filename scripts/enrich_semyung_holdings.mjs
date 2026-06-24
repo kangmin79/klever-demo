@@ -29,7 +29,14 @@ function authorMatch(mine, ctx){
   if(!toks.length) return true;            // 저자 모르면 통과
   return toks.some(t=>ctx.includes(t));
 }
-const titleCore=s=>(s||"").split(/\s*[:\-(\[]/)[0].replace(/\s+/g,"").trim();
+// 제목 정규화: [전자책] 제거 → 부제(:) 앞 본제목 → 괄호 문자만 제거(내용 유지) → 공백·구두점 제거
+// "(개발자를 위한)쉬운 도커" == "개발자를 위한 쉬운 도커", "혼모노 : 성해나 소설집" == "혼모노"
+const titleCore=s=>(s||"")
+  .replace(/\[[^\]]*\]/g,"")
+  .split(/[:：]/)[0]
+  .replace(/[()（）\[\]]/g,"")
+  .replace(/[\s\-·,.'"’“”]/g,"")
+  .toLowerCase().trim();
 
 let nPaper=0, nNo=0;
 for(const it of all){
