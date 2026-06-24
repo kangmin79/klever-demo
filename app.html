@@ -305,6 +305,15 @@ body.dark .lcd-way .wtag{color:#86efac;}
 body.dark .lcd-way .wtag.sub{color:#c4b5fd;}
 .lcd-way .wsub{font-size:12px;color:var(--text-light);}
 .lcd-way .ar{margin-left:auto;color:var(--text-light);font-size:15px;}
+/* 목록 카드 보유형태 태그 */
+.fmt-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.fmt-tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;line-height:1.45;white-space:nowrap;}
+.fmt-ebook{color:#1d4ed8;background:rgba(37,99,235,.1);}
+.fmt-paper{color:#15803d;background:rgba(34,197,94,.12);}
+.fmt-sub{color:#7c3aed;background:rgba(124,58,237,.12);}
+body.dark .fmt-ebook{color:#93c5fd;}
+body.dark .fmt-paper{color:#86efac;}
+body.dark .fmt-sub{color:#c4b5fd;}
 .lcd-rank .ricon{display:inline-flex;vertical-align:-2px;margin-right:5px;}
 .lcd-rank .ricon svg{width:13px;height:13px;}
 .lcd-btn.primary .bic{display:inline-flex;vertical-align:-3px;margin-right:8px;}
@@ -4230,6 +4239,8 @@ async function _smFetch(kind){
 let SM_ENRICH={};
 async function loadSemyungEnrich(){
   try{ const r=await fetch('./books/semyung_enrich.json?t='+Date.now()); if(r.ok) SM_ENRICH=await r.json(); }catch(e){ SM_ENRICH={}; }
+  // 보강 로드 후 목록 재렌더 → 형태 태그 반영
+  try{ const g=document.getElementById('libCurationGrid'); if(g&&g.innerHTML.trim()){ rebuildLibPool(); g.innerHTML=millieHTML(); mlBindDrag(); } }catch(e){}
 }
 async function loadSemyungBest(){
   loadSemyungEnrich();   // 보강 캐시 병행 로드(모달용)
@@ -4246,6 +4257,16 @@ function cleanA(a){let s=(a||'').replace(/지은이\s*:?/g,'').replace(/\((지�
 function authName(b){return (cleanA(b.a||b.author||'')).replace(/\(\s*\)/g,'').trim();}   // 저자만(빈 괄호 제거)
 function authorRich(b){const a=authName(b);return b.publisher?`${a} · ${b.publisher}`:a;}      // 저자 · 출판사
 function authorLine(b){return authorRich(b);}
+// 보유 형태 태그(전자책/종이책/구독) — SM_ENRICH(brcd 키)로 조회. 목록 카드에 노출.
+function fmtTags(b){
+  if(!b||!b._sm||!b.isbn) return '';
+  const en=(typeof SM_ENRICH!=='undefined')?SM_ENRICH[b.isbn.replace(/^sm-/,'')]:null;
+  const t=[];
+  if(b.lib) t.push(['전자책','ebook']);
+  if(en&&en.paper) t.push(['종이책','paper']);
+  if(en&&en.crema) t.push(['구독','sub']);
+  return t.length?`<div class="fmt-tags">${t.map(x=>`<span class="fmt-tag fmt-${x[1]}">${x[0]}</span>`).join('')}</div>`:'';
+}
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
 function mlcv(cls,b){return `<div class="${cls}"${_gbCover(b)?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
@@ -4311,7 +4332,7 @@ function mlShelf(b,note,cur,title){
     </div>
   </div></div>`;
 }
-function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
+function mlRow(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>isCls(b)?clCard(clOf(b)):`<div class="ml-bk" onclick="libDetail('${b.isbn}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${fmtTags(b)}${b.rating!=null?`<div class="ml-bk-r"><span class="lc-star">★</span> ${b.rating}</div>`:''}</div>`).join('')}</div>`)}</div>`;}
 const ML_CATS=['종합','소설','경제/경영','자기계발','에세이/시','인문/교양','취미/실용','어린이/청소년','매거진'];
 const ML_CHG=['▲ 3','▲ 9','NEW','▼ 2','▲ 5','—','▲ 14','▼ 1','▲ 4','▼ 8','▲ 2','NEW'];
 function mlChip(el){el.parentNode.querySelectorAll('.ml-chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
@@ -4327,7 +4348,7 @@ function mlRank(t,s,books,live){
   return `<div>${mlHead(t,sub)}
     ${chips}
     ${bar}
-    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${live?'':chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div></div></div>`).join('')}</div></div>`;}
+    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${live?'':chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div>${fmtTags(b)}</div></div>`).join('')}</div></div>`;}
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 // 표지 그리드(서가)
@@ -4339,7 +4360,7 @@ function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<di
 // 신간 입고
 function mlNew(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>{
     const click=b.cls?`openDetail('${esc(b.id)}')`:`libDetail('${b.isbn}')`;   // 고전(cls)은 isbn 없음 → openDetail(id)로
-    return `<div class="ml-nw" onclick="${click}"><span class="ml-nw-b">NEW</span>${mlcv('ml-nw-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div></div>`;
+    return `<div class="ml-nw" onclick="${click}"><span class="ml-nw-b">NEW</span>${mlcv('ml-nw-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t))}</div><div class="ml-bk-a">${esc(authorLine(b))}</div>${fmtTags(b)}</div>`;
   }).join('')}</div>`)}</div>`;}
 // 책 속 한 문장
 function mlQuote(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-qc"><div class="ml-qc-m">“</div><div class="ml-qc-q">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-qc-f" onclick="libDetail('${b.isbn}')">${mlcv('ml-qc-cv',b)}<div class="ml-qc-a">${esc(cleanT(b.t))} · ${esc(authorRich(b))}</div></div></div>`).join('')}</div>`)}</div>`;}
@@ -5110,7 +5131,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624p';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
