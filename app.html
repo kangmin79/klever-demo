@@ -29,6 +29,7 @@
   --primary:#1a2942; --primary-dark:#0f1a2e; --accent:#3a6ea5;
   --primary-bg:rgba(26,41,66,0.06);
   --gold:#d4a93b;
+  --brand-grad:linear-gradient(135deg,#6366f1 0%,#22a7e0 55%,#06b6d4 100%);   /* 산뜻 인디고→시안(네비게이션 아이덴티티) */
   --bg:#f7f6f1; --bg-card:#fff; --bg-input:#f0efeb;
   --text:#1a2942; --text-sub:#475569; --text-light:#64748b;
   --ink:#4338ca;   /* 휙 단지 이름색(인디고) — 대시보드 핵심 숫자·제목 강조용 */
@@ -83,15 +84,12 @@ body.dark .header{background:rgba(15,23,42,0.95);}
 body.dark .logo{background:var(--gold);color:#0f172a;}
 /* 북스타 헤더 로고 (세리프 워드마크) */
 .brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
-.bl-mark{width:30px;height:30px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 3px 8px -2px rgba(26,41,66,.4);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
+.bl-mark{width:30px;height:30px;border-radius:9px;background:var(--brand-grad);display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 4px 11px -2px rgba(56,98,220,.5);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
 .brand-logo:hover .bl-mark{transform:rotate(-8deg) scale(1.06);}
-.bl-mark svg{width:17px;height:17px;color:var(--gold);}
-body.dark .bl-mark{background:var(--gold);box-shadow:0 3px 8px -2px rgba(250,204,21,.35);}
-body.dark .bl-mark svg{color:var(--primary);}
+.bl-mark svg{width:17px;height:17px;color:#fff;}
 .bl-word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:-.4px;color:var(--text);line-height:1;}
-.bl-word span{color:#b8902f;}
+.bl-word span{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
 body.dark .bl-word{color:#f1f5f9;}
-body.dark .bl-word span{color:var(--gold);}
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
@@ -99,8 +97,7 @@ body.dark .bl-sub{color:var(--gold);}
 .gnb-item{position:relative;display:flex;align-items:center;padding:8px 15px;border-radius:11px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .16s,color .16s;letter-spacing:-0.3px;}
 .gnb-item:hover{color:var(--text);background:rgba(20,28,50,.05);}
 body.dark .gnb-item:hover{background:rgba(255,255,255,.06);}
-.gnb-item.active{color:#fff;background:var(--primary);font-weight:700;}
-body.dark .gnb-item.active{color:var(--primary);background:var(--gold);}
+.gnb-item.active{color:#fff;background:var(--brand-grad);font-weight:700;box-shadow:0 4px 12px -3px rgba(56,98,220,.45);}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
 .gnb-menu::before{content:'';position:absolute;top:-9px;left:0;right:0;height:9px;}
@@ -153,10 +150,8 @@ body.with-sidenav .side-nav{display:flex;}
 body.dark .side-node{box-shadow:0 2px 5px rgba(0,0,0,.28),0 10px 24px -8px rgba(0,0,0,.45);}
 .side-node:hover{transform:translateY(-3px);box-shadow:0 6px 14px rgba(20,28,50,.10),0 18px 34px -10px rgba(20,28,50,.22);}
 body.dark .side-node:hover{box-shadow:0 6px 14px rgba(0,0,0,.35),0 18px 34px -10px rgba(0,0,0,.55);}
-.side-node.active{background:var(--primary);box-shadow:0 8px 22px -6px rgba(26,41,66,.45);}
+.side-node.active{background:var(--brand-grad);box-shadow:0 8px 22px -6px rgba(56,98,220,.45);}
 .side-node.active .icon,.side-node.active .side-node-label{color:#fff;}
-body.dark .side-node.active{background:var(--gold);box-shadow:0 8px 22px -6px rgba(250,204,21,.35);}
-body.dark .side-node.active .icon,body.dark .side-node.active .side-node-label{color:var(--primary);}
 .side-node .icon{width:20px;height:20px;color:var(--primary);}
 body.dark .side-node .icon{color:var(--gold);}
 .side-node-label{font-size:10.5px;font-weight:600;color:var(--text);margin-top:4px;letter-spacing:-0.3px;}
