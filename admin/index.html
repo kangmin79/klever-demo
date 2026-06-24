@@ -1458,7 +1458,7 @@ async function secSearch(){
   const [sm,nat]=await Promise.all([smP,natP]);
   const smCand=sm.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true,prov:b.provider||''}));
   const heldT=new Set(smCand.map(b=>normT(b.t)));
-  const natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||''}));
+  const natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||'',smEbook:b.smEbook,smEbookProvider:b.smEbookProvider||'',smEbookUrl:b.smEbookUrl||''}));
   SCAND=[...smCand,...natCand];   // 세명대 소장 먼저, 미소장(국중) 뒤
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다른 말로 검색해보세요.</div>';return;}
   secRenderCands(`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 국중 ${natCand.length}`);
@@ -1496,7 +1496,7 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
     return `<div class="cand ${added?'on':''}">
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
-        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?`<span class="sig-own">세명대 전자책${b.prov?' · '+esc(b.prov):''}</span>`:(b.held===false?(b.smPaper?`<span class="sig-own">세명대 종이책 · ${esc(b.smPaperStatus||'소장')}</span>`:'<span class="sig-no">미소장 · 희망도서</span>'):own?'<span class="sig-own">소장중</span>':'')}</div></div>
+        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?`<span class="sig-own">세명대 전자책${b.prov?' · '+esc(b.prov):''}</span>`:(b.held===false?(()=>{const t=[];if(b.smEbook)t.push(`<span class="sig-own">세명대 전자책${b.smEbookProvider?' · '+esc(b.smEbookProvider):''}</span>`);if(b.smPaper)t.push(`<span class="sig-own">세명대 종이책 · ${esc(b.smPaperStatus||'소장')}</span>`);return t.length?t.join(''):'<span class="sig-no">미소장 · 희망도서</span>';})():own?'<span class="sig-own">소장중</span>':'')}</div></div>
       <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
 }
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
