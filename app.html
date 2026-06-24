@@ -284,6 +284,7 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-i .au{font-size:12.5px;color:var(--text-light);margin-top:6px;}
 .lcd-note{font-size:12.5px;color:var(--primary);margin-top:11px;font-style:italic;line-height:1.55;}
 .lcd-meta{font-size:12px;color:var(--text-sub);margin-top:9px;}
+.lcd-rank{display:inline-block;font-size:11.5px;font-weight:800;color:#1a1208;background:var(--gold);border-radius:999px;padding:4px 11px;margin-bottom:8px;letter-spacing:-0.2px;}
 .lcd-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
 .lcd-chip{font-size:11px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:3px 9px;}
 .lcd-desc{font-size:12.5px;color:var(--text-sub);line-height:1.7;padding:0 24px;margin:2px 0 18px;max-height:9.5em;overflow:hidden;}
@@ -4204,7 +4205,13 @@ async function _smFetch(kind){
     return l.length?_smMap(l):null;
   }catch(e){ return null; }
 }
+// 세명대 책 보강 캐시(줄거리·출판사·연도·장르) — scripts/enrich_semyung.mjs가 빌드. 모달에서 brcd로 조회.
+let SM_ENRICH={};
+async function loadSemyungEnrich(){
+  try{ const r=await fetch('./books/semyung_enrich.json'); if(r.ok) SM_ENRICH=await r.json(); }catch(e){ SM_ENRICH={}; }
+}
 async function loadSemyungBest(){
+  loadSemyungEnrich();   // 보강 캐시 병행 로드(모달용)
   const [best,nw]=await Promise.all([_smFetch('best'),_smFetch('new')]);
   if(best) SEMYUNG_BEST_LIVE=best;
   if(nw) SEMYUNG_NEW_LIVE=nw;
@@ -4650,19 +4657,26 @@ async function backfillPool(){
 }
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
+  // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
+  const en = (b._sm && b.isbn) ? SM_ENRICH[b.isbn.replace(/^sm-/,'')] : null;
+  const desc = b.description || (en&&en.desc) || '';
+  const pubYear = b.pubYear || (en&&en.year) || '';
+  const publisher = b.publisher || (en&&en.publisher) || '';
+  const genre = (en&&en.genre) || '';
   const meta=[];
   if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${b.rating}${b.ratingCount?` · ${b.ratingCount}명`:''}`);
   if(b.loan) meta.push(`대출 ${Number(b.loan).toLocaleString()}`);
   if(b.pages) meta.push(`${b.pages}쪽`);
+  if(genre) meta.push(esc(genre));
   const ov=document.getElementById('lcDetail');
   ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
       <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
-      <div class="lcd-i"><h2>${esc(cleanT(b.t))}</h2><div class="au">${esc(authorLine(b))}${b.pubYear?` · ${esc(b.pubYear)}`:''}</div>
+      <div class="lcd-i">${b.rank?`<div class="lcd-rank">📚 우리 학교 대출 ${b.rank}위</div>`:''}<h2>${esc(cleanT(b.t))}</h2><div class="au">${esc(authorLine(b))}${publisher?` · ${esc(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
-    ${b.description?`<p class="lcd-desc">${esc(b.description)}</p>`:''}
+    ${desc?`<p class="lcd-desc">${esc(desc)}</p>`:''}
     <div class="lcd-acts">
       ${b.lib
         ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">📖 전자책 바로 읽기<span class="ar">›</span></div>
@@ -4670,7 +4684,7 @@ function libDetail(isbn){
         : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">🔍 우리 도서관에서 찾기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`}
     </div>
-    <div class="lcd-src">${b._sm?'출처 · 세명대학교 학술정보원 전자도서관 소장':'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
+    <div class="lcd-src">${b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
   renderDetailReviews(b.isbn, cleanT(b.t));
@@ -5063,7 +5077,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
