@@ -293,6 +293,7 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .sig-r{color:#9a5b12;background:rgba(212,140,40,.14)}
 .sig-l{color:var(--accent);background:rgba(58,110,165,.1)}
 .sig-own{color:#1d6b48;background:rgba(46,125,87,.13)}
+.sig-no{color:#8a6d3b;background:rgba(180,140,60,.12)}
 .book-empty{text-align:center;color:var(--light);font-size:12.5px;padding:24px 0;line-height:1.7}
 /* 우리도서관 꾸미기 — 칸별 책 strip */
 .deco-books{display:flex;flex-wrap:wrap;gap:9px;align-items:flex-start;margin:6px 0 2px}
@@ -706,7 +707,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
             <button class="btab" data-sbt="cls" onclick="secTab('cls')" style="display:none">북스타 고전</button>
             <button class="btab" data-sbt="lib" onclick="secTab('lib')">도서관 내</button>
             <button class="btab" data-sbt="sm" onclick="secTab('sm')">세명대 전자책</button>
-            <button class="btab on" data-sbt="nat" onclick="secTab('nat')">국중 추천</button>
+            <button class="btab on" data-sbt="nat" onclick="secTab('nat')">통합검색</button>
             <button class="btab" data-sbt="isbn" onclick="secTab('isbn')">ISBN 입력</button>
           </div>
           <div class="searchrow"><input class="cur-inp" id="secQ" onkeydown="if(event.key==='Enter')secSearch()"><button class="btn-primary" id="secBtn" onclick="secSearch()">찾기</button></div>
@@ -1392,7 +1393,8 @@ function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInp
   const secArea = scMode==='sec' ? aOf(SECTIONS[i]) : '';
   const clsArea = (scMode==='sec' && secArea.indexOf('고전 컬렉션')===0) || (scMode==='chal' && (CHALLENGES[i]||{}).type==='고전챌린지');   // 고전 컬렉션 칸 + 고전 챌린지 = 북스타 고전에서 담기
   document.querySelectorAll('#secOv .btab').forEach(btn=>{ const sbt=btn.dataset.sbt;
-    btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (sbt==='cls'?'none':''); });
+    // 고전 영역=북스타 고전만 / 그 외=통합검색+ISBN만(도서관내·세명대 탭은 통합검색으로 흡수)
+    btn.style.display = clsArea ? (sbt==='cls'?'':'none') : (['nat','isbn'].includes(sbt)?'':'none'); });
   // 영역에 맞춰 고전 풀 강제 잠금: 해외 칸→해외 고전만, 국내 칸→한국 고전만 (사서가 못 바꿈)
   _clsLock = secArea==='고전 컬렉션 해외' ? 'foreign' : (secArea==='고전 컬렉션 국내' ? 'kr' : null);
   _clsOrigin = _clsLock || 'all';
@@ -1410,7 +1412,7 @@ function secApplyTab(){const q=el('secQ');
   else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='sm'){q.placeholder='세명대 전자도서관 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">세명대 학술정보원 전자책에서 검색해 담아요.<br>담은 책은 학생 앱에서 ‘전자책 바로 읽기’로 연결됩니다.</div>';}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
-  else{q.placeholder='예: 6월 신입생에게 가볍게 읽을 문학';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='';}
+  else{q.placeholder='제목·저자 또는 자연어 (예: 시험 끝 머리 식히는 책)';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='<div class="book-empty">말하듯 적거나 제목을 넣으면, <b>세명대 소장</b>과 <b>국중 전체</b>에서 한 번에 찾아드려요.<br>세명대 소장 책이 위에, 미소장 책은 아래에 표시됩니다.</div>';}
   q.value='';secNote();
 }
 function secRenderClassics(){
@@ -1438,15 +1440,28 @@ async function secSearch(){
   if(scTab==='lib'){secRenderLib();return;}
   if(scTab==='sm'){return secSearchSemyung();}
   if(scTab==='isbn'){return secLookupISBN();}
+  // ── 통합검색: 자연어/제목 → 세명대 소장 + 국중 전체 병렬 → 병합(소장 우선, 미소장 표시) ──
   const q=el('secQ').value.trim();if(!q)return;
-  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 국중에서 후보 도서를 가져오는 중…</div>';
-  try{
+  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 도서관 + 국중에서 찾는 중…</div>';
+  const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
+  // 1) 세명대 소장 전자책(제목·저자 키워드)
+  const smP=(async()=>{ try{
+    const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
+    const r=await fetch(SB_REST+'/semyung_books?or=(title.ilike.'+p+',author.ilike.'+p+')&select=brcd,title,author,cover,detail_url&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const d=await r.json(); return Array.isArray(d)?d:[];
+  }catch(e){ return []; } })();
+  // 2) 국중 전체(자연어 OK — curate+Haiku)
+  const natP=(async()=>{ try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
-    const d=await r.json();
-    SCAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating}));
-    if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요.</div>';return;}
-    secRenderCands('국중 추천 '+SCAND.length+'권 · 정보나루 실시간');
-  }catch(e){SCAND=DEMO_CAND.slice();secRenderCands('대체 후보 '+SCAND.length+'권');}
+    const d=await r.json(); return d.candidates||[];
+  }catch(e){ return []; } })();
+  const [sm,nat]=await Promise.all([smP,natP]);
+  const smCand=sm.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true}));
+  const heldT=new Set(smCand.map(b=>normT(b.t)));
+  const natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false}));
+  SCAND=[...smCand,...natCand];   // 세명대 소장 먼저, 미소장(국중) 뒤
+  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다른 말로 검색해보세요.</div>';return;}
+  secRenderCands(`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 국중 ${natCand.length}`);
 }
 async function secSearchSemyung(){
   const raw=(el('secQ').value||'').trim();
@@ -1481,7 +1496,7 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
     return `<div class="cand ${added?'on':''}">
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
-        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?'<span class="sig-own">🟢 세명대 전자책</span>':own?'<span class="sig-own">🟢 소장중</span>':''}</div></div>
+        <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?'<span class="sig-own">세명대 소장 · 전자책</span>':(b.held===false?'<span class="sig-no">미소장 · 희망도서</span>':own?'<span class="sig-own">소장중</span>':'')}</div></div>
       <div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div></div>`;}).join('');
 }
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
@@ -1489,7 +1504,7 @@ function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   if(idx>=0)arr.splice(idx,1);
   else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''});}   // 북스타 고전 참조
   else if(b._sm){arr.push({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''});}   // 세명대 전자책(lib=상세 딥링크)
-  else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:''});if(b.isbn){LIB_INV.add(b.isbn);upsertInventory([b]);}}
+  else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held});if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);}}   // 미소장(국중)은 소장목록에 넣지 않음
   secRenderCands(scHead);secNote();
 }
 
