@@ -38,7 +38,8 @@ def parse(h):
 
 
 def aladin(title):
-    q = urllib.parse.quote(re.split(r"[:\[(]", title)[0].strip())
+    t = re.sub(r"^\s*\([^)]*\)\s*", "", title)            # 앞 괄호 접두 제거(빈 검색어 방지)
+    q = urllib.parse.quote(re.split(r"[:\[(]", t)[0].strip() or title.strip())
     u = ("https://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=%s&Query=%s&QueryType=Title"
          "&MaxResults=1&output=js&Version=20131101" % (AL, q))
     try:
