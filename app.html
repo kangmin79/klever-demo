@@ -83,6 +83,11 @@ body.dark .header{background:rgba(15,23,42,0.95);}
 body.dark .logo{background:var(--gold);color:#0f172a;}
 /* 북스타 헤더 로고 (세리프 워드마크) */
 .brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
+.bl-mark{width:30px;height:30px;border-radius:9px;background:var(--primary);display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 3px 8px -2px rgba(26,41,66,.4);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
+.brand-logo:hover .bl-mark{transform:rotate(-8deg) scale(1.06);}
+.bl-mark svg{width:17px;height:17px;color:var(--gold);}
+body.dark .bl-mark{background:var(--gold);box-shadow:0 3px 8px -2px rgba(250,204,21,.35);}
+body.dark .bl-mark svg{color:var(--primary);}
 .bl-word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:-.4px;color:var(--text);line-height:1;}
 .bl-word span{color:#b8902f;}
 body.dark .bl-word{color:#f1f5f9;}
@@ -90,14 +95,12 @@ body.dark .bl-word span{color:var(--gold);}
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
-.gnb{display:flex;gap:2px;flex:1;height:100%;align-items:stretch;margin-left:6px;}
-.gnb-item{position:relative;display:flex;align-items:center;padding:0 15px;font-size:14px;font-weight:500;color:var(--text-sub);cursor:pointer;transition:color .18s;letter-spacing:-0.3px;}
-.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2.5px;border-radius:3px 3px 0 0;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
-.gnb-item:hover{color:var(--text);}
-.gnb-item:hover::after{transform:scaleX(.45);background:var(--border);}
-.gnb-item.active{color:var(--text);font-weight:700;}
-.gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);background:var(--gold);}
-body.dark .gnb-item.active{color:#f1f5f9;}
+.gnb{display:flex;gap:4px;flex:1;align-items:center;margin-left:16px;}
+.gnb-item{position:relative;display:flex;align-items:center;padding:8px 15px;border-radius:11px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .16s,color .16s;letter-spacing:-0.3px;}
+.gnb-item:hover{color:var(--text);background:rgba(20,28,50,.05);}
+body.dark .gnb-item:hover{background:rgba(255,255,255,.06);}
+.gnb-item.active{color:#fff;background:var(--primary);font-weight:700;}
+body.dark .gnb-item.active{color:var(--primary);background:var(--gold);}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
 .gnb-menu::before{content:'';position:absolute;top:-9px;left:0;right:0;height:9px;}
@@ -2179,6 +2182,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
      ═══════════════════════════════════════════════════════════ -->
 <header class="header">
   <div class="brand-logo" onclick="nav('ourlib')" title="우리 도서관">
+    <span class="bl-mark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.6c.6 5.2 2.9 7.5 8 8.1-5.1.6-7.4 2.9-8 8.1-.6-5.2-2.9-7.5-8-8.1 5.1-.6 7.4-2.9 8-8.1z"/></svg></span>
     <span class="bl-word">book<span>star</span></span>
   </div>
   <nav class="gnb">
