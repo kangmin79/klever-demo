@@ -8,7 +8,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553624"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553624",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801170801604": {
   "isbn": "9791170801603",
@@ -19,7 +21,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/185324678"
  },
  "480D250401050": {
   "isbn": "",
@@ -30,7 +34,9 @@
   "src": "sm",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000543629"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000543629",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4808954682152": {
   "isbn": "9788954682152",
@@ -41,7 +47,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000479496"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000479496",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/190387579"
  },
  "4801158395934": {
   "isbn": "9791158395933",
@@ -52,7 +60,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553486"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553486",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4808976047984": {
   "isbn": "9788976047984",
@@ -63,7 +73,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/188192187"
  },
  "4801124086163": {
   "isbn": "9791124086162",
@@ -74,7 +86,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/188601196"
  },
  "4801194508749": {
   "isbn": "9791194508748",
@@ -85,7 +99,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/184404591"
  },
  "4801138441255": {
   "isbn": "9791138441254",
@@ -96,7 +112,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000548593"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000548593",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/163220443"
  },
  "4801194627181": {
   "isbn": "9791194627180",
@@ -107,7 +125,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/181927103"
  },
  "4801175771841": {
   "isbn": "9791175771840",
@@ -118,7 +138,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/183794038"
  },
  "4808976048066": {
   "isbn": "9788976048066",
@@ -129,7 +151,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/188956389"
  },
  "4801124137100": {
   "isbn": "9791124137109",
@@ -140,7 +164,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출중",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553614"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553614",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4808925569970": {
   "isbn": "9788925569970",
@@ -151,7 +177,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4808931508222": {
   "isbn": "9788931508222",
@@ -162,7 +190,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801194543597": {
   "isbn": "9791194543596",
@@ -173,7 +203,9 @@
   "src": "nl",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801172133826": {
   "isbn": "9791172133825",
@@ -184,7 +216,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출중",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000552057"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000552057",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801175772473": {
   "isbn": "",
@@ -195,7 +229,9 @@
   "src": "sm",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/188851022"
  },
  "4801139729710": {
   "isbn": "9791139729719",
@@ -206,7 +242,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553663"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553663",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801199111265": {
   "isbn": "",
@@ -217,7 +255,9 @@
   "src": "sm",
   "paper": false,
   "paperStatus": "",
-  "paperUrl": ""
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801172540891": {
   "isbn": "9791172540890",
@@ -249,7 +289,9 @@
   "publisher": "나비의활주로",
   "year": "2025",
   "genre": "",
-  "src": "nl"
+  "src": "nl",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/173733024"
  },
  "4801170801482": {
   "isbn": "9791170801481",
@@ -301,13 +343,14 @@
  },
  "_meta": {
   "builtFrom": "semyung-best(best+new)",
-  "total": 30,
-  "nl": 27,
+  "total": 28,
+  "nl": 25,
   "sm": 3,
   "fail": 0,
   "holdingsBuilt": true,
   "paper": 9,
-  "paperNone": 17
+  "paperNone": 17,
+  "crema": 11
  },
  "4801175780041": {
   "isbn": "9791175780040",
@@ -552,7 +595,9 @@
   "publisher": "Able Book(에이블북)",
   "year": "2025",
   "genre": "역사 > 지리 > 북아메리카지리",
-  "src": "nl"
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4808964947586": {
   "isbn": "9788964947586",
@@ -577,5 +622,65 @@
   "year": "2026",
   "genre": "철학 > 심리학 > 응용심리학 일반",
   "src": "nl"
+ },
+ "4801193229409": {
+  "isbn": "9791193229408",
+  "desc": "AI 서비스 관련 개발자와 AI를 적극 어플리케이션 개발에 활용해온 개발자의 커리어 전환과 생존 전략에 관한 이야기다. AI 시대, 개발자는 모두 다시 자신을 재정의해야 하는 시점에 와 있다. 그런 혼란 속에서 먼저 AI 속으로 뛰어든 여섯 명의 개발자들이 AI를 배우고, 실험하고, 협업하며 겪은 진짜 경험과 통찰을 담았다.",
+  "publisher": "로드북",
+  "year": "2025",
+  "genre": "총류 > 총류 > 전산학",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801192742572": {
+  "isbn": "9791192742571",
+  "desc": "여행지에서 만나는 미술관은 그 도시의 과거와 현재, 미래까지도 모두 품고 있는 거대한 아카이브와 같다. 그곳에 놓인 작품들에는 한 도시가 지나온 역사와 나라의 운명을 뒤흔든 사회적 이슈, 지금 우리가 살아가는 동시대의 문화 트렌드가 고스란히 담겨 있다. 《세계 일주 미술 여행》은 이러한 보이는 것 너머의 이야기를 짚어내며 각 공간의 의미를 생생하게 풀어내는 책이다.",
+  "publisher": "Creta(크레타)",
+  "year": "2025",
+  "genre": "예술 > 예술 > 미술이론, 미학",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801194267622": {
+  "isbn": "9791194267621",
+  "desc": "오늘날 한국 사회에서 뜨거운 논쟁의 대상이 된 ‘영포티’ 현상을 단순한 세대 조롱이나 인터넷 밈의 차원에 가두지 않는다. 대신 그 이면에 놓인 구조적 원인과 감정의 메커니즘을 깊이 있게 파헤친다. 한때는 ‘젊은 감각을 지닌 40대’라는 긍정적 의미로 쓰이던 영포티는 어느 순간 ‘젊어 보이려는 안간힘’, ‘내로남불’, ‘꼰대’의 상징으로 호출되기 시작했다.",
+  "publisher": "다반",
+  "year": "2026",
+  "genre": "사회과학 > 사회학, 사회문제 > 사회학",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801192603644": {
+  "isbn": "9791192603643",
+  "desc": "‘정리’ 분야에서 굳건히 미국 아마존 1위를 차지하고 있는 Messie Condo 작가의 이 책은 유머와 독설로 ‘죽음의 정리’에 대한 새로운 개념을 부여한다. 우리가 살아가면서 반드시 알아야 할, 유용하면서도 게을리할 수 없는 동기 부여를 간직하는 팁을 알려준다. 동시에 우리에게는 늘 먼 이야기로만 느껴지는 ‘죽음’에 대한 가치관에 대해 새로운 시각을 갖게 해준다.",
+  "publisher": "토마토출판사",
+  "year": "2026",
+  "genre": "기술과학 > 가정학 및 가정생활 > 가정관리 및 가정생활",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801175330048": {
+  "isbn": "9791175330047",
+  "desc": "툴과 방법을 알아도 매출이 오르지 않는 이유를 구조로 밝힌다. 펀더멘털을 먼저 세우고 테크니컬을 얹는 순서를 제시하며, 아마존&라쿠텐 베스트셀러 1위로 검증된 실전형 마케팅 구조를 정리한다.",
+  "publisher": "인피니티북스",
+  "year": "2026",
+  "genre": "사회과학 > 경제학 > 경영관리",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801174574801": {
+  "isbn": "9791174574800",
+  "desc": "화장품이 넘쳐나는 시대, 왜 피부 관리는 여전히 어렵게 느껴질까요. 문제는 제품의 부족이 아니라 사용 방식에 있다. K-뷰티가 오랜 시간 축적해 온 스킨케어 철학과 과학적 원리를 바탕으로, 이 책은 피부 관리의 흐름을 차분히 정리한다.",
+  "publisher": "한국학술정보",
+  "year": "2026",
+  "genre": "기술과학 > 가정학 및 가정생활 > 몸치장(몸단장), 화장",
+  "src": "nl",
+  "crema": false,
+  "cremaUrl": ""
  }
 }

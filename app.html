@@ -301,6 +301,8 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-way.ok{border-color:rgba(34,197,94,.32);}
 .lcd-way .wtag{font-size:11px;font-weight:700;color:#15803d;background:rgba(34,197,94,.13);border-radius:999px;padding:3px 10px;}
 body.dark .lcd-way .wtag{color:#86efac;}
+.lcd-way .wtag.sub{color:#7c3aed;background:rgba(124,58,237,.12);}
+body.dark .lcd-way .wtag.sub{color:#c4b5fd;}
 .lcd-way .wsub{font-size:12px;color:var(--text-light);}
 .lcd-way .ar{margin-left:auto;color:var(--text-light);font-size:15px;}
 .lcd-rank .ricon{display:inline-flex;vertical-align:-2px;margin-right:5px;}
@@ -4687,6 +4689,7 @@ function libDetail(isbn){
   // SVG 라인 아이콘(이모지 대체)
   const SVG_EBOOK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
   const SVG_PAPER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+  const SVG_SUB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
   const SVG_RANK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18v-6"/><path d="M12 18V8"/><path d="M16 18v-9"/></svg>';
   const meta=[];
   if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${b.rating}${b.ratingCount?` · ${b.ratingCount}명`:''}`);
@@ -4708,9 +4711,10 @@ function libDetail(isbn){
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
         : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">우리 도서관에서 찾기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`}
-      ${(b._sm && en && en.paper) ? `<div class="lcd-ways">
-        <div class="lcd-ways-h">종이책으로도 있어요</div>
-        <a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>
+      ${(b._sm && en && (en.paper || en.crema)) ? `<div class="lcd-ways">
+        <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
+        ${en.crema ? `<a class="lcd-way t-sub" href="${en.cremaUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽 구독</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
+        ${en.paper ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
       </div>` : ''}
     </div>
     <div class="lcd-src">${b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
@@ -5106,7 +5110,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';

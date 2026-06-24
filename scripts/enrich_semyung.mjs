@@ -59,6 +59,24 @@ async function smDetail(brcd){
   }catch(e){ return null; }
 }
 
+// 제목 정규화(괄호·부제·구두점 무시)
+const titleCore=s=>(s||"").replace(/\[[^\]]*\]/g,"").split(/[:：]/)[0].replace(/[()（）\[\]]/g,"").replace(/[\s\-·,.'"’“”]/g,"").toLowerCase().trim();
+// YES24 크레마클럽 공개검색 — 세명대 구독(무제한). 제목 일치 결과의 BookClub/Detail/{id} 반환.
+async function cremaCheck(title){
+  try{
+    const r=await fetch(`https://cremaclub.yes24.com/BookClub/Search?query=${encodeURIComponent((title||"").split(/\s*[:\[(]/)[0].trim())}`,{headers:{"User-Agent":UA}});
+    if(!r.ok) return null;
+    const h=await r.text();
+    const mine=titleCore(title);
+    const re=/BookClub\/Detail\/(\d+)"[^>]*>\s*([^<]{1,80})/g; let m;
+    while((m=re.exec(h))){
+      const id=m[1], t=m[2].replace(/\s+/g," ").trim(); const tc=titleCore(t);
+      if(tc && (tc===mine || tc.startsWith(mine) || mine.startsWith(tc)))
+        return {cremaUrl:`https://cremaclub.yes24.com/BookClub/Detail/${id}`};
+    }
+    return null;
+  }catch(e){ return null; }
+}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const best=await smList("best"), nw=await smList("new");
 const seen=new Set(), all=[];
@@ -68,20 +86,24 @@ console.log(`세명대 라이브 ${all.length}권 보강 시작…`);
 // 기존 캐시를 읽어 병합(종이책 paper 필드 보존) — enrich/holdings 실행 순서 무관
 const CACHE=new URL("../books/semyung_enrich.json", import.meta.url);
 let cache={}; try{ cache=JSON.parse(readFileSync(CACHE,"utf8")); }catch(e){ cache={}; }
-let nNl=0, nSm=0, nFail=0;
+let nNl=0, nSm=0, nFail=0, nCrema=0;
 for(const b of all){
   const isbn=await kyoboIsbn(b.brcd);
   let rec=null, src=null, usedIsbn=isbn||"";
   if(isbn){ const nl=await nlBook(isbn); if(nl){ rec=nl; src="nl"; } }
   if(!rec){ const sm=await smDetail(b.brcd); if(sm){ rec=sm; src="sm"; } }
+  const cr=await cremaCheck(b.title);              // 크레마클럽 구독 여부
+  const e=cache[b.brcd]||(cache[b.brcd]={});
   if(rec){
-    cache[b.brcd]=Object.assign(cache[b.brcd]||{}, {isbn:usedIsbn, desc:rec.desc||"", publisher:rec.publisher||"", year:rec.year||"", genre:rec.genre||"", src});
+    Object.assign(e, {isbn:usedIsbn, desc:rec.desc||"", publisher:rec.publisher||"", year:rec.year||"", genre:rec.genre||"", src});
     if(src==="nl")nNl++; else nSm++;
-    console.log(`✅ ${b.title}  [${src}] ${rec.publisher||""} ${rec.year||""} | 줄거리 ${(rec.desc||"").length}자`);
-  }else{ nFail++; console.log(`❌ ${b.title}  보강 실패`); }
+  }else{ if(usedIsbn)e.isbn=usedIsbn; nFail++; }
+  e.crema=!!cr; e.cremaUrl=cr?cr.cremaUrl:"";
+  if(cr)nCrema++;
+  console.log(`${rec?"✅":"❌"} ${b.title}  ${rec?`[${src}] 줄거리${(rec.desc||"").length}자`:"보강실패"}${cr?" · 크레마⭕":""}`);
   await sleep(120);
 }
-cache._meta=Object.assign(cache._meta||{}, {builtFrom:"semyung-best(best+new)", total:all.length, nl:nNl, sm:nSm, fail:nFail});
+cache._meta=Object.assign(cache._meta||{}, {builtFrom:"semyung-best(best+new)", total:all.length, nl:nNl, sm:nSm, fail:nFail, crema:nCrema});
 writeFileSync(CACHE, JSON.stringify(cache,null,1));
-console.log(`\n완료: 국중 ${nNl} + 세명대상세 ${nSm} + 실패 ${nFail} / ${all.length}`);
+console.log(`\n완료: 국중 ${nNl} + 세명대상세 ${nSm} + 실패 ${nFail} / ${all.length} · 크레마 ${nCrema}`);
 console.log("→ books/semyung_enrich.json 저장");
