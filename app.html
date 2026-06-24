@@ -327,6 +327,20 @@ body.dark .lcd-way .wtag.sub{color:#c4b5fd;}
 body.dark .fmt-ebook{color:#93c5fd;}
 body.dark .fmt-paper{color:#86efac;}
 body.dark .fmt-sub{color:#c4b5fd;}
+/* 종이책 라이브 소장/대출가능 현황 (모달) */
+.lcd-holding{margin:14px 0 4px;padding:12px 14px;border-radius:13px;font-size:13.5px;line-height:1.5;border:1px solid var(--border);background:var(--bg-input);}
+.lcd-holding.loading{color:var(--text-light);font-size:12.5px;}
+.lcd-holding.ok{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.28);}
+.lcd-holding.out{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.3);}
+.lh-line{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--text);}
+.lh-line b{font-weight:800;}
+.lcd-holding.ok .lh-line b:first-of-type{color:#15803d;}
+.lh-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.lh-dot.ok{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18);}
+.lh-dot.out{background:#94a3b8;}
+.lh-where{margin-top:6px;font-size:12.5px;color:var(--text-sub);font-weight:500;}
+.lh-where b{color:var(--text);font-weight:700;}
+body.dark .lcd-holding.ok .lh-line b:first-of-type{color:#86efac;}
 .lcd-rank .ricon{display:inline-flex;vertical-align:-2px;margin-right:5px;}
 .lcd-rank .ricon svg{width:13px;height:13px;}
 .lcd-btn.primary .bic{display:inline-flex;vertical-align:-3px;margin-right:8px;}
@@ -4206,6 +4220,26 @@ function spineHeight(s){const hs=[150,174,186,158,178,146,190,164,154,182];let h
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
 const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
+const SMHOLD_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-holding";
+// 종이책 모달: 라이브 소장/대출가능 현황 (semyung-holding Edge Fn, reckey=CATTOT...)
+async function loadHolding(reckey){
+  const el=document.getElementById('lcdHolding'); if(!el) return;
+  try{
+    const r=await fetch(SMHOLD_FN+'?reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(!d||!d.ok||!d.total){ el.style.display='none'; return; }
+    const avail=d.available>0;
+    const c=(d.copies||[]).find(x=>x.status==='대출가능')||(d.copies||[])[0]||{};
+    const loc=esc(c.location||''), call=esc(c.callNum||'');
+    let backDate='';
+    if(!avail){ const ds=(d.copies||[]).map(x=>x.returnDate).filter(Boolean).sort(); backDate=ds[0]||''; }
+    const where=(loc||call)?`<div class="lh-where">📍 ${loc}${call?` · 청구기호 <b>${call}</b>`:''}</div>`:'';
+    el.className='lcd-holding '+(avail?'ok':'out');
+    el.innerHTML = (avail
+      ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?` · ${d.available}/${d.total}권`:''}</div>`
+      : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where;
+  }catch(e){ el.style.display='none'; }
+}
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
 function lcCvHTML(b){
@@ -4792,6 +4826,8 @@ function libDetail(isbn){
   const genre = (en&&en.genre) || '';
   // 세명대 통합검색 딥링크(제목) — 종이책 소장·구독 전자책 확인용
   const opacUrl = 'https://lib.semyung.ac.kr/search/tot/result?st=KWRD&si=TOTAL&q='+encodeURIComponent(cleanT(b.t||''));
+  const reckey=(b.isbn||'').replace(/^sm-/,'');
+  const isPaperHold=/^CATTOT/.test(reckey);   // OPAC 종이책 → 라이브 대출가능 현황 표시
   // SVG 라인 아이콘(이모지 대체)
   const SVG_EBOOK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
   const SVG_PAPER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
@@ -4811,6 +4847,7 @@ function libDetail(isbn){
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
     ${desc?`<p class="lcd-desc">${esc(desc)}</p>`:''}
+    ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">📚 우리 도서관 소장 현황 확인 중…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
         const tags=b.tags||null;
@@ -4847,6 +4884,7 @@ function libDetail(isbn){
     })()}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
+  if(isPaperHold) loadHolding(reckey);
   renderDetailReviews(b.isbn, cleanT(b.t));
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
