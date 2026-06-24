@@ -3,7 +3,7 @@
 //   실패 시 → 세명대 상세페이지(contentView.ink)에서 줄거리·출판사·출간일 폴백
 // 출력: books/semyung_enrich.json  { [brcd]: {isbn, desc, publisher, year, genre, cover, src} }
 // ⚠️ 국중 API는 호출 IP 등록 필요 → 등록된 IP(사장님 PC)에서 실행할 것.
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 
 const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 const SMBEST="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
@@ -65,20 +65,23 @@ const seen=new Set(), all=[];
 [...best,...nw].forEach(b=>{ if(b&&b.brcd&&!seen.has(b.brcd)){ seen.add(b.brcd); all.push(b); } });
 console.log(`세명대 라이브 ${all.length}권 보강 시작…`);
 
-const cache={}; let nNl=0, nSm=0, nFail=0;
+// 기존 캐시를 읽어 병합(종이책 paper 필드 보존) — enrich/holdings 실행 순서 무관
+const CACHE=new URL("../books/semyung_enrich.json", import.meta.url);
+let cache={}; try{ cache=JSON.parse(readFileSync(CACHE,"utf8")); }catch(e){ cache={}; }
+let nNl=0, nSm=0, nFail=0;
 for(const b of all){
   const isbn=await kyoboIsbn(b.brcd);
   let rec=null, src=null, usedIsbn=isbn||"";
   if(isbn){ const nl=await nlBook(isbn); if(nl){ rec=nl; src="nl"; } }
   if(!rec){ const sm=await smDetail(b.brcd); if(sm){ rec=sm; src="sm"; } }
   if(rec){
-    cache[b.brcd]={isbn:usedIsbn, desc:rec.desc||"", publisher:rec.publisher||"", year:rec.year||"", genre:rec.genre||"", src};
+    cache[b.brcd]=Object.assign(cache[b.brcd]||{}, {isbn:usedIsbn, desc:rec.desc||"", publisher:rec.publisher||"", year:rec.year||"", genre:rec.genre||"", src});
     if(src==="nl")nNl++; else nSm++;
     console.log(`✅ ${b.title}  [${src}] ${rec.publisher||""} ${rec.year||""} | 줄거리 ${(rec.desc||"").length}자`);
   }else{ nFail++; console.log(`❌ ${b.title}  보강 실패`); }
   await sleep(120);
 }
-cache._meta={builtFrom:"semyung-best(best+new)", total:all.length, nl:nNl, sm:nSm, fail:nFail};
-writeFileSync(new URL("../books/semyung_enrich.json", import.meta.url), JSON.stringify(cache,null,1));
+cache._meta=Object.assign(cache._meta||{}, {builtFrom:"semyung-best(best+new)", total:all.length, nl:nNl, sm:nSm, fail:nFail});
+writeFileSync(CACHE, JSON.stringify(cache,null,1));
 console.log(`\n완료: 국중 ${nNl} + 세명대상세 ${nSm} + 실패 ${nFail} / ${all.length}`);
 console.log("→ books/semyung_enrich.json 저장");

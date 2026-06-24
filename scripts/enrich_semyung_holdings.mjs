@@ -23,28 +23,46 @@ const b=await pw.chromium.launch();
 const pg=await b.newPage({userAgent:"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"});
 console.log(`세명대 ${all.length}권 종이책 소장 조회…`);
 
+// 저자 매칭: 우리 책 저자의 토큰(2자+)이 결과 저자/본문에 있나
+function authorMatch(mine, ctx){
+  const toks=(mine||"").split(/[\s,·/]+/).filter(t=>t.length>=2);
+  if(!toks.length) return true;            // 저자 모르면 통과
+  return toks.some(t=>ctx.includes(t));
+}
+const titleCore=s=>(s||"").split(/\s*[:\-(\[]/)[0].replace(/\s+/g,"").trim();
+
 let nPaper=0, nNo=0;
 for(const it of all){
-  const q=(it.title||"").split(/\s*[:\-(\[]/)[0].trim();   // 제목 핵심부만
-  let rec={paper:false, paperCount:0, paperStatus:""};
+  const q=(it.title||"").split(/\s*[:\-(\[]/)[0].trim();   // 제목 핵심부로 검색
+  let rec={paper:false, paperStatus:"", paperUrl:""};
   try{
     await pg.goto(`https://lib.semyung.ac.kr/search/tot/result?st=KWRD&si=TOTAL&q=${encodeURIComponent(q)}`,{waitUntil:"networkidle",timeout:30000});
     await pg.waitForTimeout(1800);
-    rec=await pg.evaluate(()=>{
-      const all=document.body.innerText.replace(/\s+/g," ");
-      const fm=all.match(/단행본\((\d+)\)/);
-      const cnt=fm?+fm[1]:0;
-      // 첫 단행본 결과의 대출상태: '대출가능' 우선, 없으면 '대출중'
-      let status="";
-      if(/대출가능/.test(all)) status="대출가능";
-      else if(/대출중|대출불가/.test(all)) status="대출중";
-      return {paper:cnt>0, paperCount:cnt, paperStatus:cnt>0?status:""};
+    const results=await pg.evaluate(()=>{
+      const norm=s=>(s||"").replace(/\s+/g," ").trim();
+      const seen=new Set(), out=[];
+      for(const a of document.querySelectorAll('a[href*="/search/detail/CATTOT"]')){
+        const title=norm(a.textContent); const href=a.getAttribute("href")||"";
+        if(!title||seen.has(href))continue; seen.add(href);
+        let box=a; for(let i=0;i<6;i++){ box=box.parentElement; if(!box)break; if(box.textContent.length>60 && /(단행본|컴퓨터파일|학위논문|연속간행물|비도서)/.test(box.textContent)) break; }
+        const txt=norm(box?box.textContent:"");
+        const type=(txt.match(/(단행본|컴퓨터파일|학위논문|연속간행물|비도서)/)||[])[1]||"";
+        const status=/대출가능/.test(txt)?"대출가능":(/대출중|대출불가|예약/.test(txt)?"대출중":"");
+        out.push({title, href:href.split("?")[0], type, status, ctx:txt.slice(0,200)});
+        if(out.length>=15)break;
+      }
+      return out;
     });
+    // 단행본(종이책) 중 '정확한 제목 일치' 우선, 저자 일치하면 더 확실(로마자 저자는 폴백 허용)
+    const mineCore=titleCore(it.title);
+    const exact=results.filter(r=>r.type==="단행본" && titleCore(r.title)===mineCore);
+    const hit=exact.find(r=>authorMatch(it.author, r.ctx)) || exact[0];
+    if(hit){ rec={paper:true, paperStatus:hit.status||"소장", paperUrl:"https://lib.semyung.ac.kr"+hit.href}; }
   }catch(e){}
   if(cache[it.brcd]) Object.assign(cache[it.brcd], rec);
   else cache[it.brcd]=Object.assign({isbn:"",desc:"",publisher:"",year:"",genre:"",src:"none"}, rec);
-  if(rec.paper){ nPaper++; console.log(`📖 ${it.title}  종이책 ${rec.paperCount}권 · ${rec.paperStatus||"소장"}`); }
-  else { nNo++; console.log(`—  ${it.title}  종이책 없음(전자책만)`); }
+  if(rec.paper){ nPaper++; console.log(`O ${it.title}  종이책 · ${rec.paperStatus} · ${rec.paperUrl.slice(-20)}`); }
+  else { nNo++; console.log(`- ${it.title}  종이책 매칭 없음`); }
 }
 await b.close();
 cache._meta=Object.assign(cache._meta||{}, {holdingsBuilt:true, paper:nPaper, paperNone:nNo});
