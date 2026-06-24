@@ -93,11 +93,14 @@ body.dark .bl-word{color:#f1f5f9;}
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
-.gnb{display:flex;gap:4px;flex:1;align-items:center;margin-left:16px;}
-.gnb-item{position:relative;display:flex;align-items:center;padding:8px 15px;border-radius:11px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .16s,color .16s;letter-spacing:-0.3px;}
-.gnb-item:hover{color:var(--text);background:rgba(20,28,50,.05);}
-body.dark .gnb-item:hover{background:rgba(255,255,255,.06);}
-.gnb-item.active{color:#fff;background:var(--brand-grad);font-weight:700;box-shadow:0 4px 12px -3px rgba(56,98,220,.45);}
+.gnb{display:flex;gap:6px;flex:1;align-items:center;margin-left:16px;}
+.gnb-item{position:relative;display:flex;align-items:center;padding:7px 13px 9px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.3px;}
+.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:3px;border-radius:3px;background:var(--brand-grad);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
+.gnb-item:hover{color:var(--text);}
+.gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
+.gnb-item.active{color:#4f46e5;font-weight:700;}
+body.dark .gnb-item.active{color:#818cf8;}
+.gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
 .gnb-menu::before{content:'';position:absolute;top:-9px;left:0;right:0;height:9px;}
