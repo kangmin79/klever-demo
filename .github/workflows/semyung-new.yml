@@ -1,0 +1,26 @@
+name: 세명대 신착 갱신 (전자책+종이책)
+
+# 매일 세명대 전자도서관 신착(6개월) + OPAC 종이책 신착을 긁어 semyung_new 갱신.
+# 수동 실행(workflow_dispatch)으로 즉시 테스트도 가능.
+on:
+  schedule:
+    - cron: '0 17 * * *'   # 매일 02:00 KST (UTC 17:00)
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 전자책 신착 (전자도서관 6개월)
+        env:
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: python scripts/build_semyung_new.py
+      - name: 종이책 신착 (OPAC newbook)
+        env:
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+          ALADIN_TTBKEY: ${{ secrets.ALADIN_TTBKEY }}
+        run: python scripts/build_semyung_new_paper.py
