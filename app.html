@@ -4395,7 +4395,10 @@ function millieHTML(secs,classicMode){
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
       const hc=LC_PUB.find(c=>(c.location||'').split(',').includes(s.slot));
-      out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life),(hc&&hc.intro)||note,hc||cur,s.title); return;
+      // 설명: 사서가 이 칸에 적은 부제(s.subtitle)가 최우선. 사서가 책을 담은 칸은 그 칸 부제만 사용(비면 기본문).
+      // 미설정 칸만 슬롯 배정 큐레이션 소개를 허용. 첫 챌린지 소개문을 무단으로 끌어다 쓰지 않음.
+      const heroNote = own.length ? (s.subtitle||'') : (s.subtitle || (hc&&hc.intro) || '');
+      out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life), heroNote, hc||cur, s.title); return;
     }
     // [데모] '사서가 주목한 책'(우리도서관 row) = 세명대 실소장 베스트 소설 + 헤일메리, 클릭 시 도서관 딥링크
     if(s.slot==='row'&&!classicMode){
@@ -5131,7 +5134,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260624p';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260624q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260623';
