@@ -4446,15 +4446,15 @@ function millieHTML(secs,classicMode){
   const cur=LC_PUB[0];
   const life=(cur&&(cur.books||[])[0]&&cur.books[0].t)?cur.books[0]:(P[0]||{});
   const note=life.note||(cur&&cur.intro)||'';
-  // 랭킹: 종이책 실대출(횟수 있음) 우선 → 전자책 베스트(순위만) → 폴백
-  const liveRank=(SEMYUNG_LOANRANK&&SEMYUNG_LOANRANK.length)?SEMYUNG_LOANRANK.slice(0,12)
-                :(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length)?SEMYUNG_BEST_LIVE.slice(0,12):null;
+  // 종이책 대출 랭킹(횟수+변동). 전자책 인기는 ebookrank 줄에서 별도 표시.
+  const liveRank=(SEMYUNG_LOANRANK&&SEMYUNG_LOANRANK.length)?SEMYUNG_LOANRANK.slice(0,12):null;
   const rank=liveRank||[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
   let out='';
   secs.forEach((s,i)=>{
     const st=s.style||'row';
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
-    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 랭킹: 라이브(세명대 대출 베스트) 우선, 없으면 폴백
+    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
+    if(st==='ebookrank'){ if(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length) out+=mlRank(s.title,s.subtitle,SEMYUNG_BEST_LIVE.slice(0,12),true); return; }   // 전자책 인기(순위만, 전자도서관)
     if(st==='newlive'){ let nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 신착: semyung_new(전자+종이), 줄엔 최신 80권만 표시(전체는 검색풀에)
     const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
@@ -4596,15 +4596,26 @@ let SECTIONS=[
   {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero'},
   {slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row'},
   {slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank'},
+  {slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank'},
   {slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'},
   {slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad'},
 ];
-// 서버 발행 섹션이 기본 SECTIONS를 덮어써도 '세명대 신착 자료'(라이브)는 항상 대출 랭킹 뒤에 끼운다(중복 방지)
+// 서버 발행 섹션이 기본 SECTIONS를 덮어써도 라이브 줄(전자책 인기·신착)은 항상 대출 랭킹 뒤에 끼운다(중복 방지)
 function injectNewArr(arr){
-  if(!Array.isArray(arr)||arr.some(s=>s.slot==='newarr'||s.style==='newlive')) return arr;
-  const sec={slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'};
+  if(!Array.isArray(arr)) return arr;
   const i=arr.findIndex(s=>s.slot==='rank'||s.style==='rank');
-  if(i>=0) arr.splice(i+1,0,sec); else arr.push(sec);
+  // 전자책 인기 = 종이책 대출 랭킹 바로 아래
+  if(!arr.some(s=>s.slot==='ebookrank'||s.style==='ebookrank')){
+    const eb={slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank'};
+    if(i>=0) arr.splice(i+1,0,eb); else arr.push(eb);
+  }
+  // 신착 = 전자책 인기 바로 아래
+  if(!arr.some(s=>s.slot==='newarr'||s.style==='newlive')){
+    const j=arr.findIndex(s=>s.slot==='ebookrank'||s.style==='ebookrank');
+    const sec={slot:'newarr',title:'세명대 신착 자료',subtitle:'새로 들어온 책',style:'newlive'};
+    const at=(j>=0?j:i);
+    if(at>=0) arr.splice(at+1,0,sec); else arr.push(sec);
+  }
   return arr;
 }
 async function loadSections(){
