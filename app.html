@@ -4235,6 +4235,16 @@ async function _smFetch(kind){
     return l.length?_smMap(l):null;
   }catch(e){ return null; }
 }
+// 신착 = semyung_new 테이블(최근 6개월 발행분, scripts/build_semyung_new.py가 매일 갱신). 라이브 10권 대신 테이블 사용.
+async function _smNewTable(){
+  try{
+    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date&order=pub_date.desc&limit=300`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return null;
+    const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
+    return rows.map((b,i)=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:i+1,pubDate:b.pub_date||''}));
+  }catch(e){ return null; }
+}
 // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) — scripts/enrich_semyung.mjs가 빌드. 모달에서 brcd로 조회.
 let SM_ENRICH={};
 async function loadSemyungEnrich(){
@@ -4244,7 +4254,7 @@ async function loadSemyungEnrich(){
 }
 async function loadSemyungBest(){
   loadSemyungEnrich();   // 보강 캐시 병행 로드(모달용)
-  const [best,nw]=await Promise.all([_smFetch('best'),_smFetch('new')]);
+  const [best,nw]=await Promise.all([_smFetch('best'),_smNewTable().then(v=>v||_smFetch('new'))]);
   if(best) SEMYUNG_BEST_LIVE=best;
   if(nw) SEMYUNG_NEW_LIVE=nw;
   if(best||nw){ rebuildLibPool(); const g=document.getElementById('libCurationGrid'); if(g){ g.innerHTML=millieHTML(); try{mlBindDrag();}catch(e){} } }
