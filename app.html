@@ -4235,14 +4235,32 @@ async function _smFetch(kind){
     return l.length?_smMap(l):null;
   }catch(e){ return null; }
 }
-// 신착 = semyung_new 테이블(최근 6개월 발행분, scripts/build_semyung_new.py가 매일 갱신). 라이브 10권 대신 테이블 사용.
+// 신착 = semyung_new 테이블(세명대 전자책 6개월치 + 종이책 신착 OPAC, build_semyung_new*.py가 매일 갱신).
+// 전자책(pub_date순)·종이책(입고순=reckey) 각각 정렬 후 교차배치, 같은 책은 제목으로 합쳐 전자/종이 태그 둘 다.
+function _normT(s){ return (s||'').split(/[:(]/)[0].replace(/[\s:·,()\[\]'"]+/g,'').toLowerCase(); }
 async function _smNewTable(){
   try{
-    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date&order=pub_date.desc&limit=300`,
+    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date,pub_year,kind&limit=400`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return null;
     const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
-    return rows.map((b,i)=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:i+1,pubDate:b.pub_date||''}));
+    const ebs=rows.filter(b=>b.kind!=='종이책').sort((a,b)=>(b.pub_date||'').localeCompare(a.pub_date||''));
+    const pps=rows.filter(b=>b.kind==='종이책').sort((a,b)=>(b.brcd||'').localeCompare(a.brcd||''));  // reckey 내림 = 입고 최신순
+    const out=[], seen={};
+    const add=(b,tag)=>{
+      const k=_normT(b.title);
+      if(seen[k]!==undefined){ const e=out[seen[k]]; if(!e.tags.includes(tag))e.tags.push(tag);
+        if(tag==='ebook')e._eb=b.detail; else e._pp=b.detail;
+        if(!e.cover)e.cover=b.cover||''; return; }
+      seen[k]=out.length;
+      out.push({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
+        _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],
+        _eb:tag==='ebook'?b.detail:'', _pp:tag==='paper'?b.detail:''});
+    };
+    let i=0,j=0;
+    while(i<ebs.length||j<pps.length){ if(i<ebs.length)add(ebs[i++],'ebook'); if(j<pps.length)add(pps[j++],'paper'); }
+    out.forEach((e,idx)=>{ e.lib=e._eb||e._pp||smDetail(e.isbn.replace(/^sm-/,'')); e.rank=idx+1; });
+    return out;
   }catch(e){ return null; }
 }
 // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) — scripts/enrich_semyung.mjs가 빌드. 모달에서 brcd로 조회.
@@ -4269,7 +4287,13 @@ function authorRich(b){const a=authName(b);return b.publisher?`${a} · ${b.publi
 function authorLine(b){return authorRich(b);}
 // 보유 형태 태그(전자책/종이책/구독) — SM_ENRICH(brcd 키)로 조회. 목록 카드에 노출.
 function fmtTags(b){
-  if(!b||!b._sm||!b.isbn) return '';
+  if(!b) return '';
+  // 신착(semyung_new)은 명시적 tags 배열(전자책/종이책)을 가짐 — 우선 사용
+  if(b.tags&&b.tags.length){
+    const M={ebook:'전자책',paper:'종이책',sub:'구독'};
+    return `<div class="fmt-tags">${b.tags.map(k=>`<span class="fmt-tag fmt-${k}">${M[k]||k}</span>`).join('')}</div>`;
+  }
+  if(!b._sm||!b.isbn) return '';
   const en=(typeof SM_ENRICH!=='undefined')?SM_ENRICH[b.isbn.replace(/^sm-/,'')]:null;
   const t=[];
   if(b.lib) t.push(['전자책','ebook']);
@@ -4400,7 +4424,7 @@ function millieHTML(secs,classicMode){
     const st=s.style||'row';
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 랭킹: 라이브(세명대 대출 베스트) 우선, 없으면 폴백
-    if(st==='newlive'){ const nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb); return; }   // 신착: 세명대 newContent 라이브
+    if(st==='newlive'){ let nb=(SEMYUNG_NEW_LIVE&&SEMYUNG_NEW_LIVE.length)?SEMYUNG_NEW_LIVE:(booksForSection(s).length?booksForSection(s):booksForSlot(s.slot)); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 신착: semyung_new(전자+종이), 줄엔 최신 80권만 표시(전체는 검색풀에)
     const own=booksForSection(s);                                     // 꾸미기로 이 칸에 담은 책(우선)
     const assigned=own.length?own:booksForSlot(s.slot);               // 없으면 발행 프로그램(챌린지)
     if(st==='hero'){
@@ -4740,18 +4764,39 @@ function libDetail(isbn){
     </div>
     ${desc?`<p class="lcd-desc">${esc(desc)}</p>`:''}
     <div class="lcd-acts">
-      ${b.lib
+      ${(()=>{
+        const tags=b.tags||null;
+        // 신착(semyung_new)은 tags로 형태 확정 — 종이책에 '전자책 읽기' 오표기 방지
+        if(tags){
+          const hasEb=tags.includes('ebook'), hasPaper=tags.includes('paper');
+          const primary = hasEb
+            ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>
+               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
+            : `<a class="lcd-btn primary" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="bic">${SVG_PAPER}</span>종이책 대출하기<span class="ar">›</span></a>
+               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 종이책 · 세명대 통합검색으로 연결</div>`;
+          const otherPaper=(hasEb&&hasPaper) ? `<a class="lcd-way t-paper ok" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">소장</span><span class="ar">›</span></a>` : '';
+          return primary + (otherPaper?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${otherPaper}</div>`:'');
+        }
+        return (b.lib
         ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
         : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">우리 도서관에서 찾기<span class="ar">›</span></div>
-           <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`}
-      ${(b._sm && en && (en.paper || en.crema)) ? `<div class="lcd-ways">
+           <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`)
+        + ((b._sm && en && (en.paper || en.crema)) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
         ${en.crema ? `<a class="lcd-way t-sub" href="${en.cremaUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽 구독</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
         ${en.paper ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
-      </div>` : ''}
+      </div>` : '');
+      })()}
     </div>
-    <div class="lcd-src">${b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)'}</div>
+    <div class="lcd-src">${(()=>{
+      const tags=b.tags||null;
+      if(tags){
+        const fmt = tags.includes('ebook') ? '전자도서관 소장' : '소장(종이책)';
+        return '출처 · 세명대학교 학술정보원 '+fmt+(tags.includes('paper')&&!tags.includes('ebook')?' · 표지 알라딘':'');
+      }
+      return b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)';
+    })()}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
   renderDetailReviews(b.isbn, cleanT(b.t));
