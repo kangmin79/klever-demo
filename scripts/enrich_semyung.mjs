@@ -61,18 +61,29 @@ async function smDetail(brcd){
 
 // 제목 정규화(괄호·부제·구두점 무시)
 const titleCore=s=>(s||"").replace(/\[[^\]]*\]/g,"").split(/[:：]/)[0].replace(/[()（）\[\]]/g,"").replace(/[\s\-·,.'"’“”]/g,"").toLowerCase().trim();
-// YES24 크레마클럽 공개검색 — 세명대 구독(무제한). 제목 일치 결과의 BookClub/Detail/{id} 반환.
-async function cremaCheck(title){
+// YES24 크레마클럽 공개검색 — 세명대 구독(무제한). 우리 책과 "동일 작품"인 BookClub/Detail/{id} 반환.
+// ⚠️ 2026-06-26 정밀화(저자 검증): 제목만 startsWith로 매칭하면 동명 비평서/해설서가 오탐됨
+//    (예: "작별하지 않는다, 끝나지 않는 기억의 애도"=한강 원작 아닌 2차 해설서).
+//    규칙: 후보 Detail의 og:title 기준 ① 제목 정확일치(titleCore)는 채택,
+//    ② 부제가 붙은 startsWith는 그 부제(접미사)에 우리 저자명이 들어있을 때만 채택(예: "수양대군(김동인 장편소설)").
+const ogTitle=h=>{ const m=h.match(/property="og:title"\s+content="([^"]*)"/)||h.match(/content="([^"]*)"\s+property="og:title"/); return m?m[1].replace(/\s*-\s*크레마클럽\s*$/,"").trim():""; };
+const authorToks=a=>(a||"").split(/[\s,·/()（）]+/).map(t=>titleCore(t)).filter(t=>t.length>=2);
+async function cremaCheck(title, author){
   try{
     const r=await fetch(`https://cremaclub.yes24.com/BookClub/Search?query=${encodeURIComponent((title||"").split(/\s*[:\[(]/)[0].trim())}`,{headers:{"User-Agent":UA}});
     if(!r.ok) return null;
     const h=await r.text();
-    const mine=titleCore(title);
-    const re=/BookClub\/Detail\/(\d+)"[^>]*>\s*([^<]{1,80})/g; let m;
-    while((m=re.exec(h))){
-      const id=m[1], t=m[2].replace(/\s+/g," ").trim(); const tc=titleCore(t);
-      if(tc && (tc===mine || tc.startsWith(mine) || mine.startsWith(tc)))
-        return {cremaUrl:`https://cremaclub.yes24.com/BookClub/Detail/${id}`};
+    const mine=titleCore(title), atoks=authorToks(author);
+    const ids=[]; let m; const re=/BookClub\/Detail\/(\d+)"/g;
+    while((m=re.exec(h))){ if(!ids.includes(m[1])) ids.push(m[1]); if(ids.length>=8) break; }
+    for(const id of ids){
+      let dt=""; try{ const dr=await fetch(`https://cremaclub.yes24.com/BookClub/Detail/${id}`,{headers:{"User-Agent":UA}}); if(dr.ok) dt=ogTitle(await dr.text()); }catch(e){}
+      const tc=titleCore(dt); if(!tc) continue;
+      if(tc===mine) return {cremaUrl:`https://cremaclub.yes24.com/BookClub/Detail/${id}`};   // 정확 일치
+      if(tc.startsWith(mine)){                                                                 // 부제 변형 → 접미사에 저자가 있어야 채택
+        const extra=tc.slice(mine.length);
+        if(atoks.length && atoks.some(a=>extra.includes(a))) return {cremaUrl:`https://cremaclub.yes24.com/BookClub/Detail/${id}`};
+      }
     }
     return null;
   }catch(e){ return null; }
@@ -92,7 +103,7 @@ for(const b of all){
   let rec=null, src=null, usedIsbn=isbn||"";
   if(isbn){ const nl=await nlBook(isbn); if(nl){ rec=nl; src="nl"; } }
   if(!rec){ const sm=await smDetail(b.brcd); if(sm){ rec=sm; src="sm"; } }
-  const cr=await cremaCheck(b.title);              // 크레마클럽 구독 여부
+  const cr=await cremaCheck(b.title, b.author);    // 크레마클럽 구독 여부(저자 정밀 검증)
   const e=cache[b.brcd]||(cache[b.brcd]={});
   if(rec){
     Object.assign(e, {isbn:usedIsbn, desc:rec.desc||"", publisher:rec.publisher||"", year:rec.year||"", genre:rec.genre||"", src});

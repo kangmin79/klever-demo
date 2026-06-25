@@ -23,7 +23,7 @@
   "paperStatus": "",
   "paperUrl": "",
   "crema": true,
-  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/185324678"
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/125213967"
  },
  "480D250401050": {
   "isbn": "",
@@ -48,8 +48,8 @@
   "paper": true,
   "paperStatus": "대출가능",
   "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000479496",
-  "crema": true,
-  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/190387579"
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801158395934": {
   "isbn": "9791158395933",
@@ -350,7 +350,10 @@
   "holdingsBuilt": true,
   "paper": 9,
   "paperNone": 17,
-  "crema": 11
+  "crema": 11,
+  "tagVerified": "2026-06-26 multi-agent crema(author-precise)+OPAC paper, live best+new 28",
+  "tagPaper": 13,
+  "tagCrema": 15
  },
  "4801175780041": {
   "isbn": "9791175780040",
@@ -358,7 +361,12 @@
   "publisher": "부키",
   "year": "2026",
   "genre": "기술과학 > 가정학 및 가정생활 > 주택관리 및 가정설비",
-  "src": "nl"
+  "src": "nl",
+  "paper": true,
+  "paperStatus": "대출가능",
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000553610",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/174039932"
  },
  "4801160002523": {
   "isbn": "",
@@ -366,7 +374,12 @@
   "publisher": "",
   "year": "",
   "genre": "",
-  "src": "sm"
+  "src": "sm",
+  "paper": false,
+  "paperStatus": "",
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801193811666": {
   "isbn": "9791193811665",
@@ -374,7 +387,12 @@
   "publisher": "생각정원",
   "year": "2026",
   "genre": "철학 > 윤리학, 도덕철학 > 도덕훈, 교훈",
-  "src": "nl"
+  "src": "nl",
+  "paper": true,
+  "paperStatus": "대출가능",
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000550729",
+  "crema": false,
+  "cremaUrl": ""
  },
  "4801124075044": {
   "isbn": "9791124075043",
@@ -461,7 +479,9 @@
   "src": "nl",
   "paper": true,
   "paperStatus": "대출가능",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000550306"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000550306",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/183038755"
  },
  "4801167852954": {
   "isbn": "9791167852953",
@@ -483,7 +503,9 @@
   "src": "none",
   "paper": true,
   "paperStatus": "대출중",
-  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000552071"
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000552071",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/182624966"
  },
  "4801172740710": {
   "isbn": "9791172740719",
@@ -682,5 +704,83 @@
   "src": "nl",
   "crema": false,
   "cremaUrl": ""
+ },
+ "4808954622035": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": true,
+  "paperStatus": "대출가능",
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000341678",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801138850620": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": false,
+  "paperStatus": "",
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801139729772": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": false,
+  "paperStatus": "",
+  "paperUrl": "",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/183758282"
+ },
+ "4801199378705": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": false,
+  "paperStatus": "",
+  "paperUrl": "",
+  "crema": false,
+  "cremaUrl": ""
+ },
+ "4801199489531": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": true,
+  "paperStatus": "대출가능",
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000552036",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/187884213"
+ },
+ "4801170874103": {
+  "isbn": "",
+  "desc": "",
+  "publisher": "",
+  "year": "",
+  "genre": "",
+  "src": "none",
+  "paper": true,
+  "paperStatus": "대출가능",
+  "paperUrl": "https://lib.semyung.ac.kr/search/detail/CATTOT000000433109",
+  "crema": true,
+  "cremaUrl": "https://cremaclub.yes24.com/BookClub/Detail/175161482"
  }
 }
