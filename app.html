@@ -341,6 +341,14 @@ body.dark .fmt-sub{color:#c4b5fd;}
 .lh-where{margin-top:6px;font-size:12.5px;color:var(--text-sub);font-weight:500;}
 .lh-where b{color:var(--text);font-weight:700;}
 body.dark .lcd-holding.ok .lh-line b:first-of-type{color:#86efac;}
+/* 찾아줘북즈 — 북스타 안에서 바로 예약 */
+.lh-resv{margin-top:10px;padding:11px 14px;border-radius:11px;text-align:center;font-weight:800;font-size:13px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#6366f1,#06b6d4);box-shadow:0 4px 14px rgba(99,102,241,.32);transition:transform .12s,box-shadow .12s,opacity .12s;user-select:none;}
+.lh-resv:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(99,102,241,.42);}
+.lh-resv.busy{opacity:.6;cursor:default;}
+.lh-resv.done{background:rgba(22,163,74,.1);color:#15803d;box-shadow:none;border:1px solid rgba(22,163,74,.32);cursor:default;font-weight:700;line-height:1.55;}
+body.dark .lh-resv.done{color:#86efac;}
+.lh-cancel{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:600;color:var(--text-light);text-decoration:underline;cursor:pointer;}
+.lh-cancel:hover{color:#dc2626;}
 .lcd-rank .ricon{display:inline-flex;vertical-align:-2px;margin-right:5px;}
 .lcd-rank .ricon svg{width:13px;height:13px;}
 .lcd-btn.primary .bic{display:inline-flex;vertical-align:-3px;margin-right:8px;}
@@ -4234,11 +4242,38 @@ async function loadHolding(reckey){
     let backDate='';
     if(!avail){ const ds=(d.copies||[]).map(x=>x.returnDate).filter(Boolean).sort(); backDate=ds[0]||''; }
     const where=(loc||call)?`<div class="lh-where">📍 ${loc}${call?` · 청구기호 <b>${call}</b>`:''}</div>`:'';
+    // 대출가능본이 있으면 북스타 안에서 바로 예약(찾아줘북즈) — 도서관 사이트로 안 나감
+    const resv=avail?`<div class="lh-resv" id="lhResv" onclick="smReserve('${esc(reckey)}')">📦 예약하기 · 서가에서 빼서 보관해 드려요</div>`:'';
     el.className='lcd-holding '+(avail?'ok':'out');
     el.innerHTML = (avail
       ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?` · ${d.available}/${d.total}권`:''}</div>`
-      : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where;
+      : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
   }catch(e){ el.style.display='none'; }
+}
+// 찾아줘북즈 예약 — 서버(semyung-reserve)가 도서관장 계정으로 로그인·신청까지 북스타 안에서 완결
+const SMRESV_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-reserve";
+async function smReserve(reckey){
+  const btn=document.getElementById('lhResv'); if(!btn||btn.dataset.busy) return;
+  const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='⏳ 예약 신청 중…';
+  try{
+    const r=await fetch(SMRESV_FN+'?action=reserve&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok){
+      btn.removeAttribute('onclick'); btn.className='lh-resv done';
+      btn.innerHTML='✅ 예약 완료 · 민송도서관 2층 안내데스크에서 <b>24시간 내</b> 수령<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\')">예약 취소하기</span>';
+    }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
+  }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
+}
+async function smCancel(reckey,acc){
+  const btn=document.getElementById('lhResv'); if(!btn) return;
+  if(!confirm('예약을 취소할까요?')) return;
+  btn.innerHTML='⏳ 취소 중…';
+  try{
+    const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smReserve('"+esc(reckey)+"')"); btn.innerHTML='📦 예약하기 · 서가에서 빼서 보관해 드려요'; }
+    else alert('취소에 실패했어요');
+  }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
