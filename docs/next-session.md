@@ -2,6 +2,14 @@
 
 > ⚠️ git 전 `cd klever_demo` / 한글 파일은 Edit·Write로 / 바로 배포 OK (별 repo: kangmin79/klever-demo)
 
+## ✅ 완료(6/26) — 세명대 종이책 전수 DB 구축 (semyung_paper 34,158)
+- 배경: ISBN 매칭 불가(판형마다 ISBN 다름 + OPAC ISBN검색 0건) → "세명대 보유"를 라이브 제목검색 대신 **로컬 DB 조인**으로 하기 위한 토대.
+- 방법(검증 완료): OPAC 통합검색 `q=의`(전 카탈로그 38,956 커버) + `cpp=100` 페이지순회를 **`ctx.request.get` 원본 HTML**로 받아(pg.goto는 JS재렌더로 행 소실) 자료유형=단행본만 채택, CATTOT id 중복제거. pn 1~390 겹침0 끝까지, 결과창 상한 없음.
+- 결과: **semyung_paper 34,158**(=facet 정확일치, 누락0) / 대출가능 28,105 / 저자·제목 빈값 0 / 출판년 99.5%. 컬럼: cattot_id PK, title, author, publisher, pub_year, callno, status, detail_url, isbn13(미채움), updated_at. RLS 공개읽기.
+- 스크립트: `~/Desktop/클레버/scripts/harvest_semyung_paper.mjs` (**git 아님**, PC에만). 멱등.
+- ⚠️ ISBN은 목록에 없어 미채움 — 필요시 book_pool 매칭분만 상세 열어 백필. 다음 단계: book_pool 종이책 매칭을 라이브 대신 **semyung_paper 로컬 조인**으로 교체(현 sm_paper 5,231는 라이브, 오탐0이라 급하진 않음).
+- 이로써 "전자(semyung_books 20,074) + 종이(semyung_paper 34,158)" **세명대 전수 DB 양쪽 완비**. [[project_bookstar_curate_book_pool]]
+
 ## ✅ 완료(6/26 후속) — book_pool 9,887 채널 매칭 검증·정정 (클레버 스크립트, git 아님)
 - 범위 정정: **book_pool(국중 인기 9,887)은 종이 5,231 + 전자 1,799 두 채널뿐, 구독(crema) 컬럼 자체 없음**(구독은 작은 라이브 목록 semyung_enrich에만).
 - 종이책 sm_paper: 표본 100건 **오탐 0** — 이미 저자매칭 있어 정상. 손 안 댐.
