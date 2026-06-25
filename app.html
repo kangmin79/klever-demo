@@ -4385,8 +4385,23 @@ const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위
 // 세명대 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
 const SM_LBRY=20213;
 const smDetail=(brcd)=>`https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=${SM_LBRY}&brcd=${brcd}`;
-// 구독(크레마)은 세명대 기관 IP가 필요 → libproxy로 감싸 세명대 로그인 학생에게 바로 열림(가 방식)
-const cremaProxyUrl=(u)=> u ? 'https://libproxy.semyung.ac.kr/_Lib_Proxy_Url/'+u : '';
+// 구독(크레마) — 세명대 도서관 자동 로그인 후 크레마 기관 진입(가 방식). retUrl=/relation/crema로 평소 학생 흐름 재현.
+const SM_LIB_ID='03251', SM_LIB_PW='000000s!';   // 데모 공유계정(도서관 제공)
+function smCremaOpen(bookUrl){
+  const w=window.open('','_blank');
+  if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
+  const ret=encodeURIComponent('/relation/crema');   // 라이브러리 크레마 런처 → 기관 세션 확립
+  const esc2=s=>String(s).replace(/"/g,'&quot;');
+  const html='<!doctype html><meta charset="utf-8"><title>세명대 크레마클럽</title>'
+    +'<body style="font-family:system-ui,-apple-system,sans-serif;padding:60px 24px;text-align:center;color:#475569">'
+    +'<div style="font-size:15px;font-weight:600">세명대학교 크레마클럽으로 이동 중…</div>'
+    +'<div style="font-size:13px;color:#94a3b8;margin-top:8px">도서관 인증을 거쳐 무제한 구독 도서로 연결됩니다.</div>'
+    +'<form id="f" method="post" action="https://lib.semyung.ac.kr/login?retUrl='+ret+'">'
+    +'<input type="hidden" name="id" value="'+esc2(SM_LIB_ID)+'">'
+    +'<input type="hidden" name="password" value="'+esc2(SM_LIB_PW)+'"></form>'
+    +'<script>document.getElementById("f").submit()<\/script></body>';
+  w.document.write(html); w.document.close();
+}
 const smCover=(p)=>'https:'+p;
 const SEMYUNG_BEST=[
   {brcd:'4808954682152',t:'작별하지 않는다',a:'한강',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954682152/L4808954682152.jpg',note:'노벨문학상 한강의 장편'},
@@ -5000,7 +5015,7 @@ function libDetail(isbn){
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`)
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
-        ${en.crema ? `<a class="lcd-way t-sub" href="${cremaProxyUrl(en.cremaUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
+        ${en.crema ? `<a class="lcd-way t-sub" href="javascript:void(0)" onclick="smCremaOpen('${esc(en.cremaUrl||'')}')"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
         ${(en.paper && !isPaperHold) ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
       </div>` : '');
       })()}
