@@ -4569,14 +4569,14 @@ function mlRank(t,s,books,live){
   const sub = isLoan?'우리 학교에서 가장 많이 빌린 책 · 최근 6개월' : (live?'세명대 전자도서관에서 많이 빌린 책':s);
   const chips=(live||isLoan)?'':`<div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>`;
   const bar=isLoan
-    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 · 종이책 대출</span><span class="ml-rkbar-r">최근 6개월 · 지난달 대비 ▲▼</span></div>`
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 · 종이책 대출</span><span class="ml-rkbar-r">최근 6개월</span></div>`
     : live
     ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 전자도서관</span><span class="ml-rkbar-r">${today} 기준</span></div>`
     : `<div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>`;
   return `<div>${mlHead(t,sub)}
     ${chips}
     ${bar}
-    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${isLoan?loanMove(b):(live?'':chgBadge(i))}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div>${b.loan!=null?`<div style="font-size:11.5px;font-weight:800;color:#c2410c;margin-top:3px">대출 ${b.loan}회</div>`:''}${fmtTags(b)}</div></div>`).join('')}</div></div>`;}
+    <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${(isLoan||live)?'':chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div>${fmtTags(b)}</div></div>`).join('')}</div></div>`;}
 // 대출 랭킹 변동(지난달 대비): ▲상승(초록)·▼하락(회색)·NEW(보라)·─유지
 function loanMove(b){
   if(b.prevRank==null) return `<span class="ml-mv ml-mv-new">NEW</span>`;
