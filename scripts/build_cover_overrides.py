@@ -44,18 +44,19 @@ def semyung_cover_url(brcd):
     return "https://ebook.semyung.ac.kr/upload/20213/content/ebook/%s/L%s.jpg" % (brcd, brcd)
 
 def is_placeholder(cover_url):
-    """표지가 placeholder인지: GIF(준비중) 또는 8KB 미만 초소형."""
+    """표지가 placeholder인지: 표지없음 / GIF(준비중) / 8KB 미만 초소형.
+    ⚠️ 접근 실패(세명대 차단 등)는 placeholder로 보지 않음 → 함부로 교체해 오답표지 내는 사고 방지."""
     if not cover_url:
-        return True
+        return True                 # 표지 URL 자체가 없음 = 교체 대상
     if cover_url.startswith("//"):
         cover_url = "https:" + cover_url
     try:
         data = get(cover_url)
     except Exception:
+        return False                # 접근 실패 → 원본 유지(교체 안 함)
+    if data[:4] == b"GIF8":         # 준비중 placeholder는 .jpg로 위장한 GIF
         return True
-    if len(data) < 8000:        # 실표지는 보통 15KB+, 준비중 placeholder는 ~5KB
-        return True
-    if data[:4] == b"GIF8":     # 준비중 placeholder는 GIF
+    if len(data) < 8000:            # 실표지는 보통 15KB+, 준비중 placeholder는 ~5KB
         return True
     return False
 
