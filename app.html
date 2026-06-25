@@ -4268,7 +4268,7 @@ async function loadHolding(reckey){
       : `<div class="lh-resv" id="lhResv" onclick="smHoldConfirm('${esc(reckey)}')">예약하기 · 반납되면 순번대로 빌려드려요</div>`;
     el.className='lcd-holding '+(avail?'ok':'out');
     el.innerHTML = (avail
-      ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?` · ${d.available}/${d.total}권`:''}</div>`
+      ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?(d.available>=d.total?` · ${d.total}권 모두`:` · ${d.available}/${d.total}권`):''}</div>`
       : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
   }catch(e){
     // 조회 실패 시에만 최소 폴백(막다른 길 방지) — 도서관 상세로 직접 확인
