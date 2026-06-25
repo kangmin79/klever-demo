@@ -4262,8 +4262,10 @@ async function loadHolding(reckey){
     let backDate='';
     if(!avail){ const ds=(d.copies||[]).map(x=>x.returnDate).filter(Boolean).sort(); backDate=ds[0]||''; }
     const where=(loc||call)?`<div class="lh-where">${loc?`<b>위치</b> ${loc}`:''}${call?`${loc?' · ':''}<b>청구기호</b> ${call}`:''}</div>`:'';
-    // 대출가능본이 있으면 북스타 안에서 바로 예약(찾아줘북즈) — 도서관 사이트로 안 나감
-    const resv=avail?`<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">예약하기 · 서가에서 찾아 보관해 드려요</div>`:'';
+    // 대출가능: 찾아줘북즈(서가 픽업) / 대출중: 반납 예약(순번 대기) — 둘 다 북스타 안에서
+    const resv=avail
+      ? `<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">예약하기 · 서가에서 찾아 보관해 드려요</div>`
+      : `<div class="lh-resv" id="lhResv" onclick="smHoldConfirm('${esc(reckey)}')">예약하기 · 반납되면 순번대로 빌려드려요</div>`;
     el.className='lcd-holding '+(avail?'ok':'out');
     el.innerHTML = (avail
       ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?` · ${d.available}/${d.total}권`:''}</div>`
@@ -4317,6 +4319,49 @@ async function smCancel(reckey,acc){
     const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
     if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 서가에서 찾아 보관해 드려요'; }
+    else alert('취소에 실패했어요');
+  }catch(e){ alert('취소 중 오류가 발생했어요'); }
+}
+// 도서 예약(반납 대기) — 전권 대출중인 책을 반납되면 순번대로 받기
+function smHoldConfirm(reckey){
+  const title=((document.querySelector('#lcDetail h2')||{}).textContent||'이 책').trim();
+  let sh=document.getElementById('rsvSheet');
+  if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
+    sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
+  sh.innerHTML=`<div class="rsv-card">
+    <h3>반납되면 예약해 드릴까요?</h3>
+    <div class="rsv-sub">「${esc(title)}」은(는) 지금 대출 중이에요. 예약해 두면 <b>반납되는 대로 순번대로</b> 빌리실 수 있어요.</div>
+    <ul class="rsv-rules">
+      <li><span class="rsv-tag">대출</span><span>반납되면 <b>대출 안내</b>를 보내드려요. 먼저 예약한 순서대로 진행됩니다.</span></li>
+      <li><span class="rsv-tag">기한</span><span>안내 후 <b>3일 안에</b> 대출하지 않으면 예약이 자동 취소돼요.</span></li>
+      <li><span class="rsv-tag">한도</span><span>한 책당 <b>1순위</b>만 예약 가능 · 예약은 <b>3권</b>까지</span></li>
+    </ul>
+    <div class="rsv-btns">
+      <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
+      <button class="rsv-go" onclick="document.getElementById('rsvSheet').classList.remove('on');smHold('${esc(reckey)}')">예약 신청</button>
+    </div></div>`;
+  sh.classList.add('on');
+}
+async function smHold(reckey){
+  const btn=document.getElementById('lhResv'); if(!btn||btn.dataset.busy) return;
+  const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='예약 신청 중…';
+  try{
+    const r=await fetch(SMRESV_FN+'?action=hold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok){
+      btn.removeAttribute('onclick'); btn.className='lh-resv done';
+      btn.innerHTML='도서 예약이 접수됐어요 · 반납되면 <b>순번대로</b> 대출 안내를 보내드려요<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\')">예약 취소하기</span>';
+    }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
+  }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
+}
+async function smUnhold(reckey){
+  const btn=document.getElementById('lhResv'); if(!btn) return;
+  if(!confirm('예약을 취소할까요?')) return;
+  btn.innerHTML='취소 중…';
+  try{
+    const r=await fetch(SMRESV_FN+'?action=unhold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 순번대로 빌려드려요'; }
     else alert('취소에 실패했어요');
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
