@@ -4385,6 +4385,8 @@ const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위
 // 세명대 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
 const SM_LBRY=20213;
 const smDetail=(brcd)=>`https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=${SM_LBRY}&brcd=${brcd}`;
+// 구독(크레마)은 세명대 기관 IP가 필요 → libproxy로 감싸 세명대 로그인 학생에게 바로 열림(가 방식)
+const cremaProxyUrl=(u)=> u ? 'https://libproxy.semyung.ac.kr/_Lib_Proxy_Url/'+u : '';
 const smCover=(p)=>'https:'+p;
 const SEMYUNG_BEST=[
   {brcd:'4808954682152',t:'작별하지 않는다',a:'한강',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954682152/L4808954682152.jpg',note:'노벨문학상 한강의 장편'},
@@ -4998,7 +5000,7 @@ function libDetail(isbn){
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`)
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
-        ${en.crema ? `<a class="lcd-way t-sub" href="${en.cremaUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽 구독</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
+        ${en.crema ? `<a class="lcd-way t-sub" href="${cremaProxyUrl(en.cremaUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
         ${(en.paper && !isPaperHold) ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
       </div>` : '');
       })()}
