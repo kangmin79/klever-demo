@@ -4455,7 +4455,10 @@ async function _smLoanRank(){
 }
 // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) — scripts/enrich_semyung.mjs가 빌드. 모달에서 brcd로 조회.
 let SM_ENRICH={};
+// 표지 안전망 — 세명대 표지가 placeholder(준비중 GIF)인 책만 알라딘 실표지로 교체. brcd 키. scripts/build_cover_overrides.py가 빌드.
+let COVER_OVR={};
 async function loadSemyungEnrich(){
+  try{ const r=await fetch('./books/cover_overrides.json?t='+Date.now()); if(r.ok) COVER_OVR=await r.json(); }catch(e){}
   try{ const r=await fetch('./books/semyung_enrich.json?t='+Date.now()); if(r.ok) SM_ENRICH=await r.json(); }catch(e){ SM_ENRICH={}; }
   // 보강 로드 후 목록 재렌더 → 형태 태그 반영
   try{ const g=document.getElementById('libCurationGrid'); if(g&&g.innerHTML.trim()){ rebuildLibPool(); g.innerHTML=millieHTML(); mlBindDrag(); } }catch(e){}
@@ -4837,6 +4840,8 @@ function rebuildLibPool(){
   if(SEMYUNG_BEST_LIVE) SEMYUNG_BEST_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 대출 베스트 라이브
   if(SEMYUNG_NEW_LIVE) SEMYUNG_NEW_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 신착 자료 라이브
   if(SEMYUNG_LOANRANK) SEMYUNG_LOANRANK.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 종이책 대출 랭킹
+  // 표지 안전망: 세명대 표지가 placeholder(준비중)인 책은 알라딘 실표지로 덮어쓰기 (brcd 매칭)
+  LIB_POOL.forEach(b=>{ const m=/^sm-(.+)$/.exec(b.isbn||''); if(m && COVER_OVR[m[1]]) b.cover=COVER_OVR[m[1]]; });
 }
 // 카테고리에 직접 담긴 책(꾸미기) — pool에서 표지·별점 보강
 function booksForSection(s){
