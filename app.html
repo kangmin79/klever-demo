@@ -5051,13 +5051,33 @@ function bridgeHTML(b){
 }
 function lcBorrow(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
-  // 소장 전자책=뷰어로 바로 읽기 / 그 외=세명대 통합검색으로 연결(이탈을 매끄러운 한 번의 브리지로)
-  const dest = b.lib || semyungLink(cleanT(b.t||b.title||''));
+  const reckey=(b.isbn||'').replace(/^sm-/,'');
+  // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
+  const isEbookLoan = /^sm-/.test(b.isbn||'') && /^\d+$/.test(reckey) &&
+    ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
   if(b.lib) shelfAdd(b);   // 전자책 열람만 '읽는 중' 기록 → 마이페이지 완독 인증('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
+  if(isEbookLoan){
+    if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
+    try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
+    smEbookBorrowOpen(reckey, w);   // 대출 → viewerUrl로 이동
+    return;
+  }
+  const dest = b.lib || semyungLink(cleanT(b.t||b.title||''));
   if(!w){ window.open(dest,'_blank','noopener'); return; }
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
   setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);   // 북스타 브리지 → 실제 뷰어/통합검색
+}
+// 전자도서관 구매 전자책 대출 — semyung-ebook-borrow가 로그인·대출·뷰어URL 생성까지 대행, 그 URL로 이동
+const SMEBK_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook-borrow";
+async function smEbookBorrowOpen(brcd, w){
+  try{
+    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } }
+    else{ const msg=(d&&(d.message||d.error))||'지금은 대출할 수 없어요(동시이용 한도일 수 있어요)';
+      try{ w.document.body.innerHTML='<div style="font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#334"><p style="font-size:15px">'+msg+'</p><p style="font-size:13px;color:#889;margin-top:10px">창을 닫고 다시 시도해 주세요.</p></div>'; }catch(e){ alert(msg); } }
+  }catch(e){ try{ w.document.body.innerHTML='<p style="font-family:sans-serif;padding:48px;text-align:center">대출 중 오류가 발생했어요. 다시 시도해 주세요.</p>'; }catch(_){ } }
 }
 // 별이(플로팅 챗봇) 추천 책 → 도서관 연결: 제목이 세명대 소장 전자책과 같으면 '바로 읽기', 아니면 통합검색. 둘 다 북스타 브리지 경유.
 function libBridgeOpen(book){
