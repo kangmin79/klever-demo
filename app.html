@@ -357,9 +357,11 @@ body.dark .lh-resv.done{color:#86efac;}
 .rsv-card h3{margin:0 0 5px;font-size:17px;font-weight:800;color:var(--text);}
 .rsv-sub{font-size:13px;color:var(--text-sub);line-height:1.5;margin-bottom:17px;}
 .rsv-sub b{color:var(--text);font-weight:700;}
-.rsv-rules{list-style:none;padding:0;margin:0 0 19px;display:flex;flex-direction:column;gap:12px;}
-.rsv-rules li{display:flex;gap:10px;font-size:13px;line-height:1.45;color:var(--text);}
-.rsv-rules .ic{flex:0 0 auto;}
+.rsv-rules{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-direction:column;gap:13px;}
+.rsv-rules li{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;line-height:1.5;color:var(--text);}
+.rsv-tag{flex:0 0 auto;min-width:38px;text-align:center;padding:2px 8px;border-radius:7px;font-size:11.5px;font-weight:700;background:var(--bg-input);color:var(--text-sub);margin-top:1px;}
+.rsv-tag.warn{background:rgba(185,28,28,.1);color:#b91c1c;}
+body.dark .rsv-tag.warn{background:rgba(252,165,165,.14);color:#fca5a5;}
 .rsv-rules b{font-weight:800;}
 .rsv-warn{color:#b91c1c;}
 body.dark .rsv-warn{color:#fca5a5;}
@@ -4259,14 +4261,19 @@ async function loadHolding(reckey){
     const loc=esc(c.location||''), call=esc(c.callNum||'');
     let backDate='';
     if(!avail){ const ds=(d.copies||[]).map(x=>x.returnDate).filter(Boolean).sort(); backDate=ds[0]||''; }
-    const where=(loc||call)?`<div class="lh-where">📍 ${loc}${call?` · 청구기호 <b>${call}</b>`:''}</div>`:'';
+    const where=(loc||call)?`<div class="lh-where">${loc?`<b>위치</b> ${loc}`:''}${call?`${loc?' · ':''}<b>청구기호</b> ${call}`:''}</div>`:'';
     // 대출가능본이 있으면 북스타 안에서 바로 예약(찾아줘북즈) — 도서관 사이트로 안 나감
-    const resv=avail?`<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">📦 예약하기 · 서가에서 빼서 보관해 드려요</div>`:'';
+    const resv=avail?`<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">예약하기 · 서가에서 찾아 보관해 드려요</div>`:'';
     el.className='lcd-holding '+(avail?'ok':'out');
     el.innerHTML = (avail
       ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?` · ${d.available}/${d.total}권`:''}</div>`
       : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
-  }catch(e){ el.style.display='none'; }
+  }catch(e){
+    // 조회 실패 시에만 최소 폴백(막다른 길 방지) — 도서관 상세로 직접 확인
+    el.className='lcd-holding out';
+    el.innerHTML='<div class="lh-line"><span class="lh-dot out"></span>소장 정보를 잠시 불러오지 못했어요</div>'
+      +'<div class="lh-where"><a href="https://lib.semyung.ac.kr/search/detail/'+esc(reckey)+'" target="_blank" rel="noopener" style="color:var(--accent,#6366f1);text-decoration:underline;font-weight:600">도서관에서 직접 확인하기</a></div>';
+  }
 }
 // 찾아줘북즈 예약 — 서버(semyung-reserve)가 도서관장 계정으로 로그인·신청까지 북스타 안에서 완결
 const SMRESV_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-reserve";
@@ -4277,12 +4284,12 @@ function smConfirm(reckey){
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
   sh.innerHTML=`<div class="rsv-card">
-    <h3>📦 찾아줘북즈로 예약할까요?</h3>
-    <div class="rsv-sub">「${esc(title)}」을(를) 서가에서 빼서 <b>민송도서관 2층 안내데스크</b>에 보관해 드려요.</div>
+    <h3>찾아줘북즈로 예약할까요?</h3>
+    <div class="rsv-sub">「${esc(title)}」을(를) 서가에서 찾아 <b>민송도서관 2층 안내데스크</b>에 보관해 드려요.</div>
     <ul class="rsv-rules">
-      <li><span class="ic">⏱️</span><span>도서관 승인 후 <b>24시간 안에</b> 2층 안내데스크에서 수령하세요.</span></li>
-      <li><span class="ic">📚</span><span>예약은 <b>1인 3권</b>까지 · 대출기간 <b>14일</b></span></li>
-      <li><span class="ic">⚠️</span><span class="rsv-warn">안 찾아가면 노쇼예요. <b>3회 쌓이면 30일간</b> 예약이 막혀요.</span></li>
+      <li><span class="rsv-tag">수령</span><span>도서관 승인 후 <b>24시간 안에</b> 민송도서관 2층 안내데스크에서 받으세요.</span></li>
+      <li><span class="rsv-tag">한도</span><span>예약 <b>1인 3권</b>까지 · 대출기간 <b>14일</b></span></li>
+      <li><span class="rsv-tag warn">주의</span><span class="rsv-warn">받아가지 않으면 노쇼로 기록돼요. <b>3회 쌓이면 30일간</b> 예약이 제한됩니다.</span></li>
     </ul>
     <div class="rsv-btns">
       <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
@@ -4292,24 +4299,24 @@ function smConfirm(reckey){
 }
 async function smReserve(reckey){
   const btn=document.getElementById('lhResv'); if(!btn||btn.dataset.busy) return;
-  const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='⏳ 예약 신청 중…';
+  const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='예약 신청 중…';
   try{
     const r=await fetch(SMRESV_FN+'?action=reserve&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
     if(d&&d.ok){
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
-      btn.innerHTML='✅ 예약 신청 완료 · 도서관 승인되면 민송도서관 2층에서 <b>24시간 내</b> 수령<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\')">예약 취소하기</span>';
+      btn.innerHTML='예약 신청이 접수됐어요 · 도서관 승인 후 민송도서관 2층에서 <b>24시간 안에</b> 받으세요<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\')">예약 취소하기</span>';
     }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
   }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
 }
 async function smCancel(reckey,acc){
   const btn=document.getElementById('lhResv'); if(!btn) return;
   if(!confirm('예약을 취소할까요?')) return;
-  btn.innerHTML='⏳ 취소 중…';
+  btn.innerHTML='취소 중…';
   try{
     const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
-    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='📦 예약하기 · 서가에서 빼서 보관해 드려요'; }
+    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 서가에서 찾아 보관해 드려요'; }
     else alert('취소에 실패했어요');
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
@@ -4920,7 +4927,7 @@ function libDetail(isbn){
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
     ${desc?`<p class="lcd-desc">${esc(desc)}</p>`:''}
-    ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">📚 우리 도서관 소장 현황 확인 중…</div>':''}
+    ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">우리 도서관 소장 현황을 확인하고 있어요…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
         const tags=b.tags||null;
@@ -4930,6 +4937,8 @@ function libDetail(isbn){
           const primary = hasEb
             ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>
                <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
+            : isPaperHold
+            ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
             : `<a class="lcd-btn primary" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="bic">${SVG_PAPER}</span>종이책 대출하기<span class="ar">›</span></a>
                <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 종이책 · 세명대 통합검색으로 연결</div>`;
           const otherPaper=(hasEb&&hasPaper) ? `<a class="lcd-way t-paper ok" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">소장</span><span class="ar">›</span></a>` : '';
@@ -4938,12 +4947,14 @@ function libDetail(isbn){
         return (b.lib
         ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
+        : isPaperHold
+        ? '' /* 종이책 소장+예약은 위 소장현황 박스에서 — 일원화 */
         : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">우리 도서관에서 찾기<span class="ar">›</span></div>
            <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`)
-        + ((b._sm && en && (en.paper || en.crema)) ? `<div class="lcd-ways">
+        + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
         ${en.crema ? `<a class="lcd-way t-sub" href="${en.cremaUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽 구독</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
-        ${en.paper ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
+        ${(en.paper && !isPaperHold) ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
       </div>` : '');
       })()}
     </div>
