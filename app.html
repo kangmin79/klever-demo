@@ -4382,7 +4382,7 @@ const LIB_LINK_BASE='https://lib.semyung.ac.kr/searchTotal/result?st=KWRD&si=TOT
 const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
 // 세명대 데모 계정(도서관 제공)이 이미 대출한 책 → '빌리기' 클릭 시 예스24 EPUB 뷰어가 바로 열림(원클릭 읽기 데모)
 const SEMYUNG_DEMO_USER='00003251';
-const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
+const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',cover:'https://image.aladin.co.kr/product/27045/43/cover200/k692135851_3.jpg',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
   lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
 // 세명대 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
 const SM_LBRY=20213;
@@ -4405,7 +4405,7 @@ const SEMYUNG_BEST=[
   {brcd:'4808954622035',t:'살인자의 기억법',a:'김영하',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954622035/L4808954622035.jpg'},
   {brcd:'4808954646079',t:'바깥은 여름',a:'김애란',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954646079/L4808954646079.jpg'},
   {brcd:'4808954681179',t:'밝은 밤',a:'최은영',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808954681179/L4808954681179.jpg'},
-  {brcd:'4808972753698',t:'용의자 X의 헌신',a:'히가시노 게이고',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808972753698/L4808972753698.jpg'},
+  {brcd:'4808972753698',t:'용의자 X의 헌신',a:'히가시노 게이고',cv:'//image.aladin.co.kr/product/11649/82/cover200/8990982707_1.jpg'},
   {brcd:'4470894',t:'고래',a:'천명관',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/4289284.jpg'},
   {brcd:'4808982814471',t:'연금술사',a:'파울로 코엘료',cv:'//ebook.semyung.ac.kr/upload/20213/content/ebook/4808982814471/L4808982814471.jpg'},
   {brcd:'11951396',t:'미 비포 유',a:'조조 모예스',cv:'//ebook.semyung.ac.kr/upload/20213/content/DRMContent/YES24/bookimg/M_201658.jpg'},
