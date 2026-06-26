@@ -1,38 +1,29 @@
 # 다음 세션 — 북스타(klever_demo) 이어하기
 
 > ⚠️ git 전 `cd klever_demo` / 한글 파일은 Edit·Write로 / 바로 배포 OK (별 repo: kangmin79/klever-demo)
+> ⚠️ 클레버 수집·매칭 스크립트는 `~/Desktop/클레버/scripts/`에 있고 **git 아님**(PC에만). 키=`~/Desktop/클레버/api_keys.md`(SUPABASE_PAT, 도서관계정 03251/000000s!/외부이용자)
 
-## ✅ 완료(6/26) — 세명대 종이책 전수 DB 구축 (semyung_paper 34,158)
-- 배경: ISBN 매칭 불가(판형마다 ISBN 다름 + OPAC ISBN검색 0건) → "세명대 보유"를 라이브 제목검색 대신 **로컬 DB 조인**으로 하기 위한 토대.
-- 방법(검증 완료): OPAC 통합검색 `q=의`(전 카탈로그 38,956 커버) + `cpp=100` 페이지순회를 **`ctx.request.get` 원본 HTML**로 받아(pg.goto는 JS재렌더로 행 소실) 자료유형=단행본만 채택, CATTOT id 중복제거. pn 1~390 겹침0 끝까지, 결과창 상한 없음.
-- 결과: **semyung_paper 34,158**(=facet 정확일치, 누락0) / 대출가능 28,105 / 저자·제목 빈값 0 / 출판년 99.5%. 컬럼: cattot_id PK, title, author, publisher, pub_year, callno, status, detail_url, isbn13(미채움), updated_at. RLS 공개읽기.
-- 스크립트: `~/Desktop/클레버/scripts/harvest_semyung_paper.mjs` (**git 아님**, PC에만). 멱등.
-- ⚠️ ISBN은 목록에 없어 미채움 — 필요시 book_pool 매칭분만 상세 열어 백필. 다음 단계: book_pool 종이책 매칭을 라이브 대신 **semyung_paper 로컬 조인**으로 교체(현 sm_paper 5,231는 라이브, 오탐0이라 급하진 않음).
-- 이로써 "전자(semyung_books 20,074) + 종이(semyung_paper 34,158)" **세명대 전수 DB 양쪽 완비**. [[project_bookstar_curate_book_pool]]
+## 📌 현재 상태 — 세명대 도서 "전수 DB" 양쪽 완비 (Supabase 검증완료)
+| 테이블 | 권수 | 채움률 | 수집 스크립트(클레버) |
+|---|---|---|---|
+| `semyung_paper` (종이책) | **34,158** | title/author 100%, pub_year 99.5%, 상태 98%, **ISBN13 70%(24,029)** | `harvest_semyung_paper.mjs` + `backfill_paper_isbn.mjs` |
+| `semyung_books` (전자책) | **20,074** | title/author/provider 100%, **ISBN13 75%(14,984)** | (6/12 수집, ⚠️비표준 ISBN 516건) |
+| `book_pool` (국중 인기) | 9,887 | sm_paper 5,231 / sm_ebook **1,705** | `harvest`·`holdings`·`ebook_live`_book_pool.mjs |
 
-## ✅ 완료(6/26 후속) — book_pool 9,887 채널 매칭 검증·정정 (클레버 스크립트, git 아님)
-- 범위 정정: **book_pool(국중 인기 9,887)은 종이 5,231 + 전자 1,799 두 채널뿐, 구독(crema) 컬럼 자체 없음**(구독은 작은 라이브 목록 semyung_enrich에만).
-- 종이책 sm_paper: 표본 100건 **오탐 0** — 이미 저자매칭 있어 정상. 손 안 댐.
-- 전자책 sm_ebook: **버그 2개 발견·수정** → 전량 재매칭. **1,799 → 1,705**.
-  - ① `ebook_live_book_pool.mjs`가 제목만 보고 **저자 미검증** → 동명이서 오탐(종의기원=정유정인데 다윈, 굿라이프=최인철인데 마크롤랜즈, 부의추월차선→직장인편). searchList writer 저자로 **명확 불일치 기각** 추가.
-  - ② **brcd 추출 정규식 `\d+` 버그**(원본부터) → `480D…` 영숫자 brcd 책이 통째 누락(혼모노·방금떠나온세계·대온실수리보고서 등). `'([^']+)'`로 수정 → 대거 복구.
-  - 검증: 현재 true 표본 130 잔존오탐 0 / 현재 false 인기 150 오제거 0. 필명(닥터라이블리=최지영)·번역서 보존.
-- ⚠️ 클레버 스크립트(`~/Desktop/클레버/scripts/ebook_live_book_pool.mjs`)는 **git 아님** — 수정본은 PC에만. 데모 전 재실행 런북: build_book_pool→holdings_book_pool→tag_provider→ebook_live_book_pool. [[project_bookstar_curate_book_pool]]
+- ISBN이 없는 책(종이 30%·옛책)은 ISBN 자체가 원래 없음 → 100% 불가, 제목+저자 매칭으로 보완. ISBN은 OPAC 목록 JS `callThumbnail(...,'{isbn}',...)`에서 추출(상세 안 열고).
 
-## ✅ 완료(6/26) — 형태 태그(종이책/전자책/구독) 정확도 재빌드 (0f8955c)
-- 멀티에이전트 검증: 라이브 best+new **28권**을 ① 4개 에이전트로 크레마 **저자+제목 정밀** 판정(비평서/동명이서/요약본 배제), ② OPAC 단행본 **저자매칭**으로 종이책 재확인.
-- **11권 정정/추가**. 표시 28권 기준 종이책 13 / 구독 15. (종이책 True→False 0건 = 회귀없음, 구독 오탐 1건만 제거)
-  - 오탐 제거: **작별하지 않는다** = 한강 원작 아닌 2차 해설서("끝나지 않는 기억의 애도") → 구독 해제
-  - 누락 복구(false neg): **내가 돈을 벌고 있다는 착각·중드 보다 중국사·돈이 쌓이는 집** 구독 추가
-  - enrich 없던 신규 6권(**살인자의 기억법** 등) 레코드 생성 + 검증 태그(살인자=종이책 추가)
-- 근본수정: `enrich_semyung.mjs` **cremaCheck 저자 정밀화** — 후보 Detail og:title 정확일치 채택, 부제 startsWith는 **접미사에 저자명 있을 때만** 채택(수양대군"(김동인 장편소설)" 보존, 비평서 차단). 호출부 `cremaCheck(b.title, b.author)`.
-- ⚠️ 남은 한계(설계): enrich는 빌드 시점 스냅샷이라 **라이브 목록이 매일 회전**하면 새 책이 다시 무태그(전자책만)로 뜸. → **데모 전 `enrich_semyung.mjs`+holdings 재실행** 필수(런북 유지). 향후 더 견고히 하려면 태그를 라이브 점검으로 옮기는 설계 검토.
-- 검증 산출물: scratchpad `ground_truth.json`/`crema_evidence_full.txt`/`paper_scrutiny.txt`/`crema_verdicts.json`.
+## ✅ 6/26 완료
+1. **형태 태그(종이/전자/구독) 정확도 재빌드** (klever_demo 0f8955c) — 멀티에이전트 검증. 작별하지않는다=비평서 구독오탐 제거, 내가돈을=구독 누락복구. `enrich_semyung.mjs` cremaCheck 저자정밀화. 라이브 목록(app.html `fmtTags`) 배지에 반영됨.
+2. **book_pool 전자책 매칭 검증·정정** (클레버, 1,799→1,705) — ⓐ저자 미검증 동명이서 오탐(종의기원=정유정인데 다윈 등) → searchList writer 저자 기각 ⓑ **brcd 정규식 `\d+` 버그**(원본부터) → `480D…` 영숫자 brcd 책 누락 → `'([^']+)'`. 검증: true표본 잔존오탐0/false인기150 오제거0. 종이책 sm_paper는 표본100 오탐0(정상).
+3. **세명대 종이책 전수 수집** semyung_paper 34,158 + ISBN 70% 백필.
 
-## ✅ 오늘(6/26) 완료·배포
-- 크레마클럽 = **C(딥링크)** 확정 (524fb82). 웹리더 없음+특정책자동펼침불가 → 스킴/토큰 폐기. cremaHref→Detail새탭. 메모리 [[project_bookstar_crema_deeplink]]
-- 좌측 네비 등장(중앙→좌측)+스크롤 드리프트 애니메이션
-- 우리 학교 대출 랭킹: 대출횟수·지난달대비 ▲▼ 제거 (3d8d1a1)
-- 표지 안전망: placeholder(준비중=위장GIF) 감지→알라딘 실표지. `scripts/build_cover_overrides.py`+`books/cover_overrides.json` (6be06d4). 용의자X·헤일메리 수정. ⚠️GIF만 신호(크기기준 금지=고래 6.4KB 실표지 오판)
+## ⚖️ 열려있는 결정/다음 후보 (사장님 지시 대기)
+- **구독(크레마) 플래그**: 깔끔한 벌크 소스 **없음** 확정. 방법B(크레마 카탈로그 덤프)=YES24 별도로그인 막힘 / OPAC=전자책 117권뿐+크레마마커 없음(`/relation/crema`는 전 레코드 공통버튼) / 전자도서관=구분필드 없음. → 유일한 길=공개 크레마검색 권당(무로그인). **표시 대상(book_pool 큐레이션+인기/신착 ≈수천권)에만 채우는 게 현실적.** 보류 상태.
+- **book_pool 매칭을 로컬 조인으로 재정비**: 지금은 책마다 라이브 OPAC/전자도서관 검색 → semyung_paper/semyung_books 로컬 조인(제목+저자/ISBN)으로 교체하면 라이브 검색 졸업(brcd버그·변동 면역). 종이·전자만, 구독은 크레마검색 유지.
+- **semyung_books 비표준 ISBN 516건 정리** (선택, 소).
+- **semyung_books 최신화** (6/12 스냅샷이라 신간 누락).
 
-자세한 맥락: docs/2026-06-26.md
+## 핵심 사실(왜 ISBN으로 못 묶나 등)
+- 같은 책도 판형마다 ISBN 다름 + OPAC ISBN검색 0건 + 전자도서관 detail ISBN 없음 → **제목+저자 매칭**이 정답.
+- 세명대 통합검색(lib.semyung)의 전자책/크레마 책은 실시간 아니라 **미리 적재된 카탈로그 레코드**. 단 전자책은 117권만 카탈로그됨(본체는 전자도서관 20,074).
+- 구매/구독 구분은 도서관 데이터 어디에도 없음. 학생 경험상 둘 다 동일("빌려읽기").
