@@ -299,6 +299,9 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-bar-t span{font-size:12px;color:var(--sub)}
 #aiCurCard .aic-bar-x{flex:none;font-size:12.5px;font-weight:800;color:var(--ai-d);background:var(--ai-t);padding:7px 13px;border-radius:99px;transition:.15s}
 #aiCurCard .aic-bar:hover .aic-bar-x{filter:brightness(.97)}
+#aiCurCard .aic-usage{flex:none;font-size:11px;font-weight:700;color:var(--ai-d);background:#fff;border:1px solid #e2def9;padding:5px 10px;border-radius:99px;white-space:nowrap}
+#aiCurCard .aic-usage.warn{color:#b45309;background:#fffbeb;border-color:#fcd9a8}
+#aiCurCard .aic-usage.full{color:#b91c1c;background:#fef2f2;border-color:#f5b9b9}
 #aiCurCard .aic-body{display:none;padding:0 18px 20px}
 #aiCurCard[data-open="1"] .aic-body{display:block}
 #aiCurCard .aic-field-l{font-size:12px;font-weight:700;color:var(--ink2,#56607a);margin:14px 0 7px}
@@ -772,6 +775,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
             <button type="button" class="aic-bar" onclick="aicToggle()">
               <span class="aic-spark">✦</span>
               <span class="aic-bar-t"><b>AI로 큐레이션 만들기</b><span>주제만 적으면 우리 도서관 소장도서로 한 칸을 뚝딱 만들어 드려요</span></span>
+              <span class="aic-usage" id="aicUsage" title="AI 큐레이션 생성은 매월 500회까지 무료예요 · 다음 달 1일 자동 초기화">이번 달 –/500</span>
               <span class="aic-bar-x" id="aicChevron">열기 ▾</span>
             </button>
             <div class="aic-body" id="aicBody">
@@ -1554,7 +1558,7 @@ function renderSettings(){
           <span class="deco-add" onclick="event.stopPropagation();secOpenPicker(${i})">+ 책<br>담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
-  const aic=el('aiCurCard'); if(aic) aic.style.display=(curArea==='우리도서관')?'':'none';   // AI 큐레이션(소장도서)은 우리도서관에서만
+  const aic=el('aiCurCard'); if(aic){ const on=curArea==='우리도서관'; aic.style.display=on?'':'none'; if(on)aicLoadUsage(); }   // AI 큐레이션(소장도서)은 우리도서관에서만 + 사용량 배지 갱신
   updatePvCap(); pvSync();
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
@@ -1724,6 +1728,15 @@ function aicBuildGrid(){
   aicUpdateCount();
 }
 function aicToggleBook(i){ if(AIC_PICKED.has(i))AIC_PICKED.delete(i); else AIC_PICKED.add(i); aicBuildGrid(); }
+const AIC_CAP=500;   // 월 무료 한도(curate MONTHLY_CAP과 동일)
+function aicSetUsage(n){ const u=el('aicUsage'); if(!u)return; n=Math.max(0,n|0);
+  u.textContent=`이번 달 ${n}/${AIC_CAP}`;
+  u.classList.toggle('full',n>=AIC_CAP); u.classList.toggle('warn',n>=AIC_CAP*0.9&&n<AIC_CAP); }
+async function aicLoadUsage(){ const u=el('aicUsage'); if(!u)return;
+  const ym=new Date().toISOString().slice(0,7);   // 서버 bumpAiUsage와 동일한 키(년-월)
+  try{ const r=await fetch(`${SB_REST}/ai_curation_usage?ym=eq.${ym}&select=count`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const a=await r.json(); aicSetUsage((Array.isArray(a)&&a[0])?(a[0].count||0):0);
+  }catch(_){ u.textContent='이번 달 –/500'; } }
 async function aicGenerate(isRe){
   const topic=(el('aicTopic').value||'').trim(); if(!topic){ el('aicTopic').focus(); toast('주제를 적어주세요'); return; }
   const fields=[...document.querySelectorAll('#aicChips button.on')].map(b=>b.textContent.trim());
@@ -1742,6 +1755,7 @@ async function aicGenerate(isRe){
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
   ids.forEach(x=>{el(x).classList.remove('active');el(x).classList.add('done');}); await new Promise(s=>setTimeout(s,320));
   steps.classList.remove('show'); ids.forEach(x=>el(x).classList.remove('done')); btn.disabled=false;
+  if(j){ if(typeof j.monthCount==='number') aicSetUsage(j.monthCount); else aicLoadUsage(); }   // sonnet 호출은 검색 전 카운터 +1 — 성공·실패 무관 배지 갱신
   if(j&&j.limited){ toast('🚫 '+(j.error||'이번 달 AI 큐레이션 생성 한도(500회)에 도달했어요')); return; }   // 월 한도 초과
   if(err||!j||!(j.candidates||[]).length){ toast('생성 실패: '+(err||'소장도서에서 후보를 못 찾았어요')); return; }
   AIC_RESULTS=j.candidates; AIC_PICKED=new Set(AIC_RESULTS.slice(0,AIC_COUNT||8).map((_,i)=>i));
