@@ -308,8 +308,11 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-quick>span{font-size:11px;color:var(--light)}
 #aiCurCard .aic-quick button{border:1px dashed #cfd6e2;background:#fbfcfe;color:var(--sub);font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:99px;cursor:pointer}
 #aiCurCard .aic-quick button:hover{border-color:var(--ai);color:var(--ai-d)}
-#aiCurCard .aic-opts{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px}
-#aiCurCard .aic-opt{flex:1;min-width:200px}
+#aiCurCard .aic-opts{margin-top:4px}
+#aiCurCard .aic-opt{margin-top:16px}
+#aiCurCard .aic-opt .aic-field-l{margin:0 0 9px}
+#aiCurCard .aic-opt-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#aiCurCard .aic-opt-row .aic-field-l{margin:0;flex:none}
 #aiCurCard .aic-seg{display:flex;gap:6px;flex-wrap:wrap}
 #aiCurCard .aic-seg button,#aiCurCard .aic-chips button{border:1.5px solid #e0e4ec;background:#fff;color:var(--sub);font-family:inherit;font-weight:700;cursor:pointer}
 #aiCurCard .aic-seg button{font-size:12.5px;padding:8px 14px;border-radius:9px}
@@ -778,13 +781,13 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
                 <button type="button" onclick="aicSetTopic('과학으로 보는 세상')">과학</button>
               </div>
               <div class="aic-opts">
-                <div class="aic-opt"><div class="aic-field-l">② 책 권수</div>
+                <div class="aic-opt aic-opt-row"><div class="aic-field-l">② 책 권수</div>
                   <div class="aic-seg" id="aicSeg">
                     <button type="button" onclick="aicCount(this,6)">6권</button>
                     <button type="button" class="on" onclick="aicCount(this,8)">8권</button>
                     <button type="button" onclick="aicCount(this,10)">10권</button>
                   </div></div>
-                <div class="aic-opt"><div class="aic-field-l">③ 분야 좁히기 <span style="color:var(--light);font-weight:600">· 선택 안 하면 전체에서</span></div>
+                <div class="aic-opt"><div class="aic-field-l">③ 분야 좁히기 <span style="color:var(--light);font-weight:600">· 선택 안 하면 전체에서 골라요</span></div>
                   <div class="aic-chips" id="aicChips">
                     <button type="button" onclick="aicTog(this)">문학·소설</button>
                     <button type="button" onclick="aicTog(this)">에세이</button>
