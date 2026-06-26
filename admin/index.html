@@ -1742,6 +1742,7 @@ async function aicGenerate(isRe){
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
   ids.forEach(x=>{el(x).classList.remove('active');el(x).classList.add('done');}); await new Promise(s=>setTimeout(s,320));
   steps.classList.remove('show'); ids.forEach(x=>el(x).classList.remove('done')); btn.disabled=false;
+  if(j&&j.limited){ toast('🚫 '+(j.error||'이번 달 AI 큐레이션 생성 한도(500회)에 도달했어요')); return; }   // 월 한도 초과
   if(err||!j||!(j.candidates||[]).length){ toast('생성 실패: '+(err||'소장도서에서 후보를 못 찾았어요')); return; }
   AIC_RESULTS=j.candidates; AIC_PICKED=new Set(AIC_RESULTS.slice(0,AIC_COUNT||8).map((_,i)=>i));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
