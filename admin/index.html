@@ -369,6 +369,13 @@ body.pv-open .main{max-width:none}
 .sec-panel.pv-focus{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 6px 20px rgba(26,41,66,.1)}
 .sec-panel.drag-over{outline:2.5px dashed var(--accent,#3a6ea5);outline-offset:3px;background:rgba(58,110,165,.07)}
 .sec-panel.drag-over .sec-drag::after{content:'여기로 이동';margin-left:4px;font-size:10.5px;color:var(--accent);font-weight:800}
+/* 학교 도서관 고정 칸 — 마우스 올리면 은은하게 떠오름(자동 카테고리 강조) */
+.sec-fixed{transition:box-shadow .16s ease, transform .16s ease, border-color .16s ease}
+.sec-fixed:hover{box-shadow:0 10px 28px rgba(26,41,66,.13);transform:translateY(-2px);border-color:var(--primary)}
+/* 노출 on/off 토글 — 누르고 싶어지는 택타일 호버(떠오르기→그림자→누름) */
+.vis-toggle{transition:transform .12s ease, box-shadow .12s ease, filter .12s ease}
+.vis-toggle:hover{transform:translateY(-1.5px);box-shadow:0 5px 14px rgba(0,0,0,.14);filter:brightness(1.04)}
+.vis-toggle:active{transform:translateY(0) scale(.95);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .pv-phone{border:1px solid var(--border);border-radius:14px;overflow:hidden;height:calc(100vh - 118px);min-height:540px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.10)}
 .pv-phone iframe{width:100%;height:100%;border:0;background:#fff;display:block}
 .pv-phone-cap{text-align:center;font-size:11.5px;color:var(--light);margin-top:8px}
@@ -1376,10 +1383,10 @@ function renderSettings(){
   el('secList').innerHTML=list.map((o,k)=>{
     const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
     const first=k===0, last=k===list.length-1;
-    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px${isFix&&!vis?';opacity:.5':''}" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
+    return `<div class="panel sec-panel${isFix?' sec-fixed':''}${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px${isFix&&!vis?';opacity:.5':''}" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span class="sec-no">칸 ${k+1}${isFix?' · 고정':''}</span><span style="flex:1"></span>
-      ${isFix?`<button class="btn-ghost" style="padding:5px 11px;font-weight:700;${vis?'color:#1a8f4c;border-color:#bfe6cd;background:#f0faf3':'color:var(--light);border-color:var(--border)'}" onclick="event.stopPropagation();toggleVisible(${i})" title="우리 도서관에 보일지 켜고 끄기">${vis?'👁 노출 켜짐':'🚫 숨김'}</button>
+      ${isFix?`<button class="btn-ghost vis-toggle" style="padding:5px 11px;font-weight:700;${vis?'color:#1a8f4c;border-color:#bfe6cd;background:#f0faf3':'color:var(--light);border-color:var(--border)'}" onclick="event.stopPropagation();toggleVisible(${i})" title="우리 도서관에 보일지 켜고 끄기">${vis?'👁 노출 켜짐':'🚫 숨김'}</button>
         <span class="btn-ghost" style="padding:5px 10px;color:var(--light)" title="자동 집계 고정 — 삭제 불가">🔒 고정</span>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="event.stopPropagation();delSection(${i})">삭제</button>`}
     </div>
