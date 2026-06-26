@@ -281,6 +281,15 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .cand .pick{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;font-size:15px;font-weight:800;color:var(--light);display:flex;align-items:center;justify-content:center}
 .cand.on .pick{background:var(--primary);border-color:var(--primary);color:#fff}
 .cur-loading{text-align:center;color:var(--light);font-size:13px;padding:28px 0}
+/* AI 큐레이션 통째로 만들기 배너 */
+.ai-cur-banner{display:flex;align-items:center;gap:12px;border:1.5px solid var(--primary);background:linear-gradient(135deg,rgba(26,41,66,.05),rgba(212,169,59,.08));border-radius:13px;padding:12px 14px;margin-bottom:12px}
+.ai-cur-banner .acb-l{flex:1;min-width:0}
+.ai-cur-banner .acb-k{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.2px;margin-bottom:2px}
+.ai-cur-banner .acb-t{font-size:15px;font-weight:800;color:var(--primary);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-cur-banner .acb-s{font-size:12px;color:var(--sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-cur-banner .acb-btn{flex:0 0 auto;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px 15px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+.ai-cur-banner .acb-btn:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(26,41,66,.25);filter:brightness(1.06)}
+.ai-cur-banner .acb-btn:active{transform:translateY(0) scale(.97)}
 /* 도서 담기 탭 */
 .booktabs{display:flex;gap:6px;margin-bottom:10px}
 .btab{font-size:12.5px;font-weight:700;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 13px;cursor:pointer}
@@ -1415,6 +1424,7 @@ function renderSettings(){
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
 let scTab='nat', scIdx=-1, SCAND=[], scHead='', scMode='sec';   // scMode: sec(우리도서관 칸) | chal(챌린지)
+let _aiCur=null;   // 통합검색(AI)이 제안한 큐레이션 제목·부제 — '이 큐레이션 통째로 담기'용
 let _clsOrigin='all';   // 북스타 고전 필터: all | kr(한국) | foreign(서양)
 let _clsLock=null;      // 탭 영역에 묶인 강제 필터(해외 칸='foreign' / 국내 칸='kr'). 설정 시 변경 칩 숨김
 function clsChips(){
@@ -1440,7 +1450,7 @@ function secOpenPicker(i,mode){scMode=mode||'sec';if(scMode==='chal')readChalInp
   document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===scTab));
   el('secOv').classList.add('on');secApplyTab();loadInventory();}
 function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')renderChallenges();else renderSettings();}
-function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];secApplyTab();}
+function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];_aiCur=null;secApplyTab();}
 function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
   if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';
@@ -1487,10 +1497,11 @@ async function secSearch(){
     const r=await fetch(SB_REST+'/semyung_books?or=(title.ilike.'+p+',author.ilike.'+p+')&select=brcd,title,author,cover,detail_url,provider&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     const d=await r.json(); return Array.isArray(d)?d:[];
   }catch(e){ return []; } })();
-  // 2) 국중 전체(자연어 OK — curate+Haiku)
+  // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
+  _aiCur=null;
   const natP=(async()=>{ try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
-    const d=await r.json(); return d.candidates||[];
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q,genTitle:true})});
+    const d=await r.json(); if(d&&d.title) _aiCur={title:d.title,subtitle:d.subtitle||''}; return d.candidates||[];
   }catch(e){ return []; } })();
   const [sm,nat]=await Promise.all([smP,natP]);
   const smCand=sm.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true,prov:b.provider||''}));
@@ -1527,8 +1538,39 @@ async function secLookupISBN(){
     secRenderCands('조회 결과 — + 를 눌러 담으세요');
   }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
 }
+// 통합검색(AI) 결과 위에 뜨는 'AI 큐레이션 통째로 만들기' 배너 — 제목·부제 + 상위 8권을 한 번에
+function aiCurBanner(){
+  if(scMode!=='sec'||scTab!=='nat'||!_aiCur||!_aiCur.title||!SCAND.length) return '';
+  return `<div class="ai-cur-banner">
+    <div class="acb-l">
+      <div class="acb-k">✨ AI 큐레이션 제안</div>
+      <div class="acb-t">${esc(_aiCur.title)}</div>
+      ${_aiCur.subtitle?`<div class="acb-s">${esc(_aiCur.subtitle)}</div>`:''}
+    </div>
+    <button class="acb-btn" onclick="secMakeAICuration()">이 큐레이션으로 만들기 →</button>
+  </div>`;
+}
+function secMakeAICuration(){
+  if(!_aiCur) return;
+  const o=pkObj(); if(!o) return;
+  readSecInputs();
+  // 제목·부제: 비었거나 기본값일 때만 AI 제안으로 채움(사서가 정한 제목은 보존)
+  const DEF=new Set(['','새 카테고리','새 큐레이션']);
+  if(DEF.has((o.title||'').trim())){ o.title=_aiCur.title; const ti=el('sec_t_'+o.slot); if(ti) ti.value=o.title; }
+  if(_aiCur.subtitle && !((o.subtitle||'').trim())){ o.subtitle=_aiCur.subtitle; const si=el('sec_s_'+o.slot); if(si) si.value=o.subtitle; }
+  // 상위 8권을 한 번에 담기(소장 우선 — SCAND가 이미 소장 먼저). 이미 담긴 책·중복 제외
+  o.books=o.books||[]; const have=new Set(o.books.map(b=>b.isbn||b.id).filter(Boolean)); let added=0;
+  for(const b of SCAND){ if(added>=8) break; const key=b.isbn||b.id; if(key&&have.has(key)) continue;
+    if(b.cls||b.id){ o.books.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''}); }
+    else if(b._sm){ o.books.push({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''}); }
+    else{ o.books.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held}); if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);} }
+    if(key) have.add(key); added++;
+  }
+  toast(`✨ AI 큐레이션 완성 — 책 ${added}권 담았어요. 미리보기를 확인하세요`);
+  pvSync(); secNote(); secRenderCands(scHead);
+}
 function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[]).map(b=>b.isbn||b.id).filter(Boolean));
-  el('secCandWrap').innerHTML=`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
+  el('secCandWrap').innerHTML=aiCurBanner()+`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
     SCAND.map((b,i)=>{const key=b.isbn||b.id;const added=key&&have.has(key);const own=b.isbn&&LIB_INV.has(b.isbn);
     return `<div class="cand ${added?'on':''}">
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
