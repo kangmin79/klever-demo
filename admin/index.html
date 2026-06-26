@@ -1086,10 +1086,36 @@ function toggleStyleGrid(e,slot){ const g=el('stylegrid_'+slot); if(!g)return;
 const AREAS=['우리도서관','고전 컬렉션 해외','고전 컬렉션 국내','International'];
 let curArea='우리도서관';
 const aOf=s=>s.area||'우리도서관';
+// 학교 도서관 고정 카테고리 — 데이터가 자동 집계되는 칸(책을 직접 담지 않음). 사서는 노출 on/off·제목만 손댐.
+const FIXED_SLOTS={
+  rank:      {style:'rank',     label:'대출 랭킹 (종이책·자동)'},
+  ebookrank: {style:'ebookrank',label:'인기 전자책 (전자도서관·자동)'},
+  newarr_p:  {style:'newlive_p',label:'종이책 신착 (자동)'},
+  newarr_e:  {style:'newlive_e',label:'전자책 신착 (자동)'},
+};
+const FIXED_ORDER=['rank','ebookrank','newarr_p','newarr_e'];
+const isFixed=s=>!!FIXED_SLOTS[s&&s.slot];
+const visOf=s=>s.visible!==false;   // 기본 노출
+// 우리도서관 영역에 고정 4칸이 모두 있도록 보장(없으면 대출 랭킹 뒤에 끼움)
+function injectFixed(arr){
+  if(!Array.isArray(arr)) return arr;
+  let anchor=arr.findIndex(s=>aOf(s)==='우리도서관'&&s.slot==='rank');
+  FIXED_ORDER.forEach(slot=>{
+    if(arr.some(s=>aOf(s)==='우리도서관'&&s.slot===slot)) return;
+    const def={rank:['우리 학교 대출 랭킹','이번 달 가장 많이 빌린 책'],ebookrank:['세명대 인기 전자책','전자도서관에서 많이 빌린 전자책'],newarr_p:['세명대 종이책 신착','새로 들어온 종이책'],newarr_e:['세명대 전자책 신착','새로 들어온 전자책']}[slot];
+    const row={area:'우리도서관',slot,title:def[0],subtitle:def[1],style:FIXED_SLOTS[slot].style,visible:true,books:[]};
+    const at=arr.findIndex(s=>aOf(s)==='우리도서관'&&s.slot===FIXED_ORDER[FIXED_ORDER.indexOf(slot)-1]);
+    if(at>=0) arr.splice(at+1,0,row); else if(anchor>=0) arr.splice(anchor+1,0,row); else arr.push(row);
+  });
+  return arr;
+}
 let SECTIONS=[
   {area:'우리도서관',slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero',books:[]},
   {area:'우리도서관',slot:'row',title:'사서가 주목한 책',subtitle:'우리 학교 사서가 직접 고른 책',style:'row',books:[]},
-  {area:'우리도서관',slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank',books:[]},
+  {area:'우리도서관',slot:'rank',title:'우리 학교 대출 랭킹',subtitle:'이번 달 가장 많이 빌린 책',style:'rank',visible:true,books:[]},
+  {area:'우리도서관',slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank',visible:true,books:[]},
+  {area:'우리도서관',slot:'newarr_p',title:'세명대 종이책 신착',subtitle:'새로 들어온 종이책',style:'newlive_p',visible:true,books:[]},
+  {area:'우리도서관',slot:'newarr_e',title:'세명대 전자책 신착',subtitle:'새로 들어온 전자책',style:'newlive_e',visible:true,books:[]},
   {area:'우리도서관',slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad',books:[]},
   {area:'우리도서관',slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai',books:[]},
 ];
@@ -1097,9 +1123,10 @@ let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
 let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
-    SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+    SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
+    injectFixed(SECTIONS);   // 고정 4칸(대출랭킹·인기전자책·종이/전자 신착) 항상 존재 보장
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
     LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
     buildNtLoc(); if(MK.type)buildLoc();
@@ -1124,8 +1151,10 @@ function readSecInputs(){
 }
 function addSection(){readSecInputs();SECTIONS.push({area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
 function delSection(i){readSecInputs();
-  if(SECTIONS[i].slot==='rank'){toast('대출 랭킹은 삭제할 수 없어요 (자동 집계 고정)');return;}
+  if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
+// 고정 칸 노출 on/off — 우리 도서관에 보일지 사서가 결정
+function toggleVisible(i){readSecInputs();SECTIONS[i].visible=!visOf(SECTIONS[i]);renderSettings();}
 // 순서 번호 지정 — 같은 영역 안에서 이 칸을 N번째로 이동(드래그/↑↓ 대체)
 function setSecOrder(i,val){readSecInputs();
   const area=aOf(SECTIONS[i]); const moved=SECTIONS[i];
@@ -1147,11 +1176,11 @@ function closeReorder(){ el('reOv').classList.remove('on'); renderSettings(); }
 function renderReorderList(){
   const items=_areaSecs();
   el('reList').innerHTML=items.map((o,k)=>{
-    const s=o.s, isRank=s.slot==='rank';
+    const s=o.s, isFix=isFixed(s);
     return `<div class="re-row" draggable="true" data-k="${k}"
       ondragstart="reDragStart(event,${k})" ondragover="reDragOver(event,${k})" ondragleave="reDragLeave(event)" ondrop="reDrop(event,${k})" ondragend="reDragEnd()">
       <span class="re-handle">⠿</span><span class="re-no">${k+1}</span>
-      <span class="re-t">${esc(s.title||'(제목 없음)')}${isRank?'<span class="re-lock">랭킹·자동</span>':''}</span>
+      <span class="re-t">${esc(s.title||'(제목 없음)')}${isFix?`<span class="re-lock">고정·자동${visOf(s)?'':' · 숨김'}</span>`:''}</span>
       <span class="re-btns">
         <button class="re-arrow" ${k===0?'disabled':''} onclick="reMove(${k},-1)" title="위로">▲</button>
         <button class="re-arrow" ${k===items.length-1?'disabled':''} onclick="reMove(${k},1)" title="아래로">▼</button>
@@ -1175,7 +1204,7 @@ function reDragEnd(){ _reDrag=-1; document.querySelectorAll('.re-row.drag-over,.
 // 미리보기 — 저장 전 SECTIONS를 localStorage로 넘겨 app.html?preview=1 을 iframe으로 띄움
 function previewSections(){
   readSecInputs();
-  const rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(rows)); }catch(e){}
   el('pvFrame').src='/app.html?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
   el('pvOv').classList.add('on');
@@ -1185,7 +1214,7 @@ async function applyFromPreview(){ closePreview(); await saveSections(); }
 // ── 실시간 미리보기 (오른쪽 폰 패널 — postMessage로 새로고침 없이 즉시 반영) ──
 let _pvFocusSlot=null;   // 설정 시 미리보기에 그 칸만 보냄(좌측 편집 칸 = 우측 미리보기)
 function pvBuildRows(){ readSecInputs();
-  let rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  let rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   if(_pvFocusSlot){ const f=rows.filter(r=>r.slot===_pvFocusSlot); if(f.length) return f; _pvFocusSlot=null; }   // 칸 삭제 등으로 사라지면 전체로 복귀
   return rows;
 }
@@ -1293,7 +1322,7 @@ function pvSync(){
 }
 async function saveSections(){
   readSecInputs();
-  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[]}));
+  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{
     const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -1345,17 +1374,18 @@ function renderSettings(){
   renderAreaTabs();
   const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
   el('secList').innerHTML=list.map((o,k)=>{
-    const s=o.s, i=o.i, isRank=s.slot==='rank', books=s.books||[];
+    const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
     const first=k===0, last=k===list.length-1;
-    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
+    return `<div class="panel sec-panel${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px${isFix&&!vis?';opacity:.5':''}" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <span class="sec-no">칸 ${k+1}${isRank?' · 고정':''}</span><span style="flex:1"></span>
-      ${isRank?`<button class="btn-ghost" style="padding:5px 10px;color:var(--light)" disabled title="자동 집계 고정 — 삭제 불가">🔒 고정</button>`
+      <span class="sec-no">칸 ${k+1}${isFix?' · 고정':''}</span><span style="flex:1"></span>
+      ${isFix?`<button class="btn-ghost" style="padding:5px 11px;font-weight:700;${vis?'color:#1a8f4c;border-color:#bfe6cd;background:#f0faf3':'color:var(--light);border-color:var(--border)'}" onclick="event.stopPropagation();toggleVisible(${i})" title="우리 도서관에 보일지 켜고 끄기">${vis?'👁 노출 켜짐':'🚫 숨김'}</button>
+        <span class="btn-ghost" style="padding:5px 10px;color:var(--light)" title="자동 집계 고정 — 삭제 불가">🔒 고정</span>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="event.stopPropagation();delSection(${i})">삭제</button>`}
     </div>
     <div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
-    <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지)</div>${isRank
-      ?`<input class="cur-inp" value="랭킹 (대출수 자동·고정)" disabled style="color:var(--light)">`
+    <div class="flabel" style="margin-top:11px">스타일 (앱에서 어떻게 보일지)</div>${isFix
+      ?`<input class="cur-inp" value="${esc(FIXED_SLOTS[s.slot].label)}" disabled style="color:var(--light)">`
       :`<input type="hidden" id="sec_style_${s.slot}" value="${esc(s.style||'row')}">
         <div class="style-bar" onclick="toggleStyleGrid(event,'${s.slot}')">
           <span class="style-cur"><span class="sb-th">${styleThumb(s.style||'row')}</span><b id="style_lbl_${s.slot}">${esc(styleLabel(s.style||'row'))}</b></span>
@@ -1363,7 +1393,7 @@ function renderSettings(){
         </div>
         <div class="style-pick" id="stylegrid_${s.slot}" style="display:none">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}
     <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
-    ${isRank?`<div class="note" style="margin-top:12px">⚙ 대출수 자동 정렬 — 책을 직접 담지 않습니다.</div>`
+    ${isFix?`<div class="note" style="margin-top:12px">⚙ 자동 집계 — 책을 직접 담지 않습니다. ${vis?'지금 <b>우리 도서관에 노출 중</b>이에요.':'지금 <b>숨김</b> 상태 — 학생 앱에 안 보여요.'}</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
         <div class="deco-list">${books.map((b,bi)=>`<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">
