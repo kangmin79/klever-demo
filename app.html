@@ -4628,6 +4628,7 @@ function millieHTML(secs,classicMode){
   let out='';
   secs.forEach((s,i)=>{
     const st=s.style||'row';
+    if(s.visible===false) return;   // 사서가 '노출 끄기' 한 고정 칸은 우리 도서관에 안 보임
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
     if(st==='ebookrank'){ if(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length) out+=mlRank(s.title,s.subtitle,SEMYUNG_BEST_LIVE.slice(0,12),true); return; }   // 전자책 인기(순위만, 전자도서관)
@@ -4801,11 +4802,11 @@ function injectNewArr(arr){
 async function loadSections(){
   try{
     // 우리도서관 페이지는 area='우리도서관' 칸만 (고전 컬렉션·International은 별도 영역)
-    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books&order=sort_order`,
+    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
     SECTIONS=rows.filter(x=>(x.area||'우리도서관')==='우리도서관')
-      .map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+      .map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
     injectNewArr(SECTIONS);   // 서버 섹션에도 신착 라이브 보장
   }catch(e){}
 }
@@ -4888,7 +4889,7 @@ async function _pvLoadPub(){
 }
 function _pvRender(rawSecs){
   _pvLastSecs=rawSecs;
-  const secs=(rawSecs||[]).map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[]}));
+  const secs=(rawSecs||[]).map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
   if(PV_AREA==='우리도서관') SECTIONS=secs;
   rebuildLibPool();
   // 담긴 책을 풀에 보강(표지·별점)
@@ -5504,10 +5505,10 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260626b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260627a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
-const BODIES_VER = '260623';
+const BODIES_VER = '260627';
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
