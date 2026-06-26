@@ -290,6 +290,76 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 .ai-cur-banner .acb-btn{flex:0 0 auto;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px 15px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
 .ai-cur-banner .acb-btn:hover{transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(26,41,66,.25);filter:brightness(1.06)}
 .ai-cur-banner .acb-btn:active{transform:translateY(0) scale(.97)}
+/* ===== 인라인 'AI로 큐레이션 만들기' 카드 (소장도서·#aiCurCard) ===== */
+#aiCurCard{--ai:#6b5cf0;--ai-d:#4f3fd6;--ai-t:#efedfe;--ai-g1:#7b6ef2;--ai-g2:#9b6ef0;--ai-green:#1d9e75;--ai-green-d:#0e7c53;--ai-green-t:#eaf6f0;border:1px solid #e2def9;border-radius:16px;background:linear-gradient(180deg,#fbfaff,#fff);margin-bottom:16px;overflow:hidden}
+#aiCurCard .aic-bar{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;font-family:inherit;text-align:left;padding:15px 18px;cursor:pointer}
+#aiCurCard .aic-spark{width:32px;height:32px;flex:none;border-radius:9px;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;box-shadow:0 6px 16px -6px rgba(107,92,240,.6)}
+#aiCurCard .aic-bar-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+#aiCurCard .aic-bar-t b{font-size:15.5px;font-weight:800;color:#1f2a44}
+#aiCurCard .aic-bar-t span{font-size:12px;color:var(--sub)}
+#aiCurCard .aic-bar-x{flex:none;font-size:12.5px;font-weight:800;color:var(--ai-d);background:var(--ai-t);padding:7px 13px;border-radius:99px;transition:.15s}
+#aiCurCard .aic-bar:hover .aic-bar-x{filter:brightness(.97)}
+#aiCurCard .aic-body{display:none;padding:0 18px 20px}
+#aiCurCard[data-open="1"] .aic-body{display:block}
+#aiCurCard .aic-field-l{font-size:12px;font-weight:700;color:var(--ink2,#56607a);margin:14px 0 7px}
+#aiCurCard .aic-topic{width:100%;border:1.5px solid #dfe3ec;border-radius:12px;padding:13px 15px;font-family:inherit;font-size:14px;color:#1f2733;background:#fff}
+#aiCurCard .aic-topic:focus{outline:none;border-color:var(--ai)}
+#aiCurCard .aic-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;align-items:center}
+#aiCurCard .aic-quick>span{font-size:11px;color:var(--light)}
+#aiCurCard .aic-quick button{border:1px dashed #cfd6e2;background:#fbfcfe;color:var(--sub);font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:99px;cursor:pointer}
+#aiCurCard .aic-quick button:hover{border-color:var(--ai);color:var(--ai-d)}
+#aiCurCard .aic-opts{display:flex;gap:18px;flex-wrap:wrap;margin-top:6px}
+#aiCurCard .aic-opt{flex:1;min-width:200px}
+#aiCurCard .aic-seg{display:flex;gap:6px;flex-wrap:wrap}
+#aiCurCard .aic-seg button,#aiCurCard .aic-chips button{border:1.5px solid #e0e4ec;background:#fff;color:var(--sub);font-family:inherit;font-weight:700;cursor:pointer}
+#aiCurCard .aic-seg button{font-size:12.5px;padding:8px 14px;border-radius:9px}
+#aiCurCard .aic-seg button.on{border-color:var(--ai);color:var(--ai-d);background:var(--ai-t)}
+#aiCurCard .aic-chips{display:flex;gap:6px;flex-wrap:wrap}
+#aiCurCard .aic-chips button{font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px}
+#aiCurCard .aic-chips button.on{border-color:var(--ai);color:var(--ai-d);background:var(--ai-t)}
+#aiCurCard .aic-genrow{display:flex;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+#aiCurCard .aic-genbtn{border:0;border-radius:12px;padding:13px 22px;font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));box-shadow:0 10px 22px -10px rgba(107,92,240,.65);transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+#aiCurCard .aic-genbtn:hover{transform:translateY(-1.5px);filter:brightness(1.05)}
+#aiCurCard .aic-genbtn:active{transform:translateY(0) scale(.97)}
+#aiCurCard .aic-genbtn:disabled{opacity:.55;cursor:not-allowed;box-shadow:none;transform:none}
+#aiCurCard .aic-note{font-size:11.5px;color:var(--light)}
+#aiCurCard .aic-steps{display:none;margin-top:16px;padding:14px 16px;background:#faf9ff;border:1px solid #e7e3fb;border-radius:13px}
+#aiCurCard .aic-steps.show{display:block}
+#aiCurCard .aic-stp{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--sub);padding:6px 0}
+#aiCurCard .aic-stp .ic{width:22px;height:22px;border-radius:50%;border:2px solid #ddd6f7;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--light)}
+#aiCurCard .aic-stp.done{color:#1f2733}
+#aiCurCard .aic-stp.done .ic{background:var(--ai-green);border-color:var(--ai-green);color:#fff}
+#aiCurCard .aic-stp.active .ic{border-color:var(--ai);border-top-color:transparent;animation:aicSpin .7s linear infinite}
+@keyframes aicSpin{to{transform:rotate(360deg)}}
+#aiCurCard .aic-result{display:none;margin-top:18px;border-top:1px dashed #e2def9;padding-top:18px}
+#aiCurCard .aic-result.show{display:block}
+#aiCurCard .aic-res-banner{display:flex;align-items:center;gap:10px;background:var(--ai-t);border:1px solid #ddd6f7;border-radius:12px;padding:11px 15px;margin-bottom:16px;font-size:12.5px;color:var(--ai-d);font-weight:600}
+#aiCurCard .aic-res-banner button{margin-left:auto;border:1px solid #cfc7f3;background:#fff;color:var(--ai-d);font-family:inherit;font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:8px;cursor:pointer}
+#aiCurCard .aic-ed-l{font-size:11.5px;font-weight:700;color:var(--sub);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+#aiCurCard .aic-mini{font-size:9.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));padding:2px 7px;border-radius:99px}
+#aiCurCard .aic-ed{width:100%;border:1.5px solid #e3e7ef;border-radius:11px;padding:12px 14px;font-family:inherit;color:#1f2733;background:#fff}
+#aiCurCard .aic-ed.aic-title{font-size:16px;font-weight:800}
+#aiCurCard textarea.aic-ed{resize:vertical;min-height:58px;font-size:13px;line-height:1.6}
+#aiCurCard .aic-bookhead{display:flex;align-items:center;gap:9px;margin:20px 0 5px}
+#aiCurCard .aic-bookhead h3{font-size:14px;font-weight:800}
+#aiCurCard .aic-count{font-size:12px;font-weight:800;color:var(--ai-green-d);background:var(--ai-green-t);padding:3px 11px;border-radius:99px}
+#aiCurCard .aic-bookhint{font-size:11.5px;color:var(--light);margin-bottom:12px}
+#aiCurCard .aic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#aiCurCard .aic-bk{position:relative;border:1.5px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;background:#fff;transition:.12s;display:flex;gap:10px}
+#aiCurCard .aic-bk:hover{border-color:#cfd6e2}
+#aiCurCard .aic-bk.on{border-color:var(--ai);background:#fbfaff;box-shadow:0 4px 14px -8px rgba(107,92,240,.5)}
+#aiCurCard .aic-bk .ck{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;border:2px solid #d3d9e4;background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
+#aiCurCard .aic-bk.on .ck{background:var(--ai);border-color:var(--ai);color:#fff}
+#aiCurCard .aic-bk .cv{width:38px;height:54px;border-radius:5px;flex:none;object-fit:cover}
+#aiCurCard .aic-bk .bi{flex:1;min-width:0;padding-right:12px}
+#aiCurCard .aic-bk .bt{font-size:12.5px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#aiCurCard .aic-bk .ba{font-size:11px;color:var(--light);margin-top:3px}
+#aiCurCard .aic-bk .bk-kw{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+#aiCurCard .aic-bk .bk-kw span{font-size:9px;color:var(--ai-green-d);background:var(--ai-green-t);border-radius:4px;padding:1px 5px}
+#aiCurCard .aic-addrow{margin-top:18px}
+#aiCurCard .aic-addbtn{width:100%;border:0;border-radius:12px;padding:14px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));box-shadow:0 10px 22px -12px rgba(107,92,240,.7);transition:transform .12s ease,filter .12s ease}
+#aiCurCard .aic-addbtn:hover{transform:translateY(-1.5px);filter:brightness(1.05)}
+#aiCurCard .aic-addbtn:active{transform:translateY(0) scale(.99)}
 /* 도서 담기 탭 */
 .booktabs{display:flex;gap:6px;margin-bottom:10px}
 .btab{font-size:12.5px;font-weight:700;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 13px;cursor:pointer}
@@ -690,6 +760,63 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div></div>
       <div class="settings-wrap">
         <div class="settings-main">
+          <!-- ② AI로 큐레이션 만들기 (소장도서·인라인) — 책담기 팝업 방식과 별개의 두 번째 방법 -->
+          <div id="aiCurCard" data-open="0">
+            <button type="button" class="aic-bar" onclick="aicToggle()">
+              <span class="aic-spark">✦</span>
+              <span class="aic-bar-t"><b>AI로 큐레이션 만들기</b><span>주제만 적으면 우리 도서관 소장도서로 한 칸을 뚝딱 만들어 드려요</span></span>
+              <span class="aic-bar-x" id="aicChevron">열기 ▾</span>
+            </button>
+            <div class="aic-body" id="aicBody">
+              <div class="aic-field-l">① 어떤 큐레이션을 만들까요?</div>
+              <input class="aic-topic" id="aicTopic" placeholder="예: 위로가 필요한 학생을 위한 책 / 새 학기 새로운 시작 / 진로가 고민될 때">
+              <div class="aic-quick"><span>빠른 선택:</span>
+                <button type="button" onclick="aicSetTopic('위로가 필요할 때 읽는 책')">위로</button>
+                <button type="button" onclick="aicSetTopic('새 학기, 새로운 시작')">새 학기</button>
+                <button type="button" onclick="aicSetTopic('진로와 미래가 고민될 때')">진로·취업</button>
+                <button type="button" onclick="aicSetTopic('사랑을 다룬 이야기')">사랑</button>
+                <button type="button" onclick="aicSetTopic('과학으로 보는 세상')">과학</button>
+              </div>
+              <div class="aic-opts">
+                <div class="aic-opt"><div class="aic-field-l">② 책 권수</div>
+                  <div class="aic-seg" id="aicSeg">
+                    <button type="button" onclick="aicCount(this,6)">6권</button>
+                    <button type="button" class="on" onclick="aicCount(this,8)">8권</button>
+                    <button type="button" onclick="aicCount(this,10)">10권</button>
+                  </div></div>
+                <div class="aic-opt"><div class="aic-field-l">③ 분야 좁히기 <span style="color:var(--light);font-weight:600">· 선택 안 하면 전체에서</span></div>
+                  <div class="aic-chips" id="aicChips">
+                    <button type="button" onclick="aicTog(this)">문학·소설</button>
+                    <button type="button" onclick="aicTog(this)">에세이</button>
+                    <button type="button" onclick="aicTog(this)">인문</button>
+                    <button type="button" onclick="aicTog(this)">사회과학</button>
+                    <button type="button" onclick="aicTog(this)">과학</button>
+                    <button type="button" onclick="aicTog(this)">예술</button>
+                  </div></div>
+              </div>
+              <div class="aic-genrow">
+                <button class="aic-genbtn" id="aicGenBtn" onclick="aicGenerate(false)">✦ AI로 만들기</button>
+                <span class="aic-note">소장도서에서 후보를 찾아 골라 드려요</span>
+              </div>
+              <div class="aic-steps" id="aicSteps">
+                <div class="aic-stp" id="aicS1"><span class="ic">1</span><span>소장도서에서 <b>후보</b>를 좁히는 중…</span></div>
+                <div class="aic-stp" id="aicS2"><span class="ic">2</span><span>후보 중 <b>가장 잘 맞는 책</b>을 고르는 중…</span></div>
+                <div class="aic-stp" id="aicS3"><span class="ic">3</span><span><b>제목과 부제</b>를 짓는 중…</span></div>
+              </div>
+              <div class="aic-result" id="aicResult">
+                <div class="aic-res-banner">✦ AI가 만든 초안이에요. 제목·부제·책을 자유롭게 고친 뒤 칸으로 추가하세요.
+                  <button type="button" onclick="aicGenerate(true)">↻ 다시 만들기</button></div>
+                <div class="aic-ed-l">제목 <span class="aic-mini">AI</span></div>
+                <input class="aic-ed aic-title" id="aicTitle">
+                <div class="aic-ed-l" style="margin-top:14px">부제 — 학생에게 보일 설명 <span class="aic-mini">AI</span></div>
+                <textarea class="aic-ed aic-sub" id="aicSub" rows="2"></textarea>
+                <div class="aic-bookhead"><h3>담을 책</h3><span class="aic-count" id="aicCnt">0권</span></div>
+                <div class="aic-bookhint" id="aicHint"></div>
+                <div class="aic-grid" id="aicGrid"></div>
+                <div class="aic-addrow"><button class="aic-addbtn" onclick="aicAddSection()">이 큐레이션을 칸으로 추가 →</button></div>
+              </div>
+            </div>
+          </div>
           <div id="secList"></div>
           <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
             <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
@@ -1420,6 +1547,7 @@ function renderSettings(){
           <span class="deco-add" onclick="event.stopPropagation();secOpenPicker(${i})">+ 책<br>담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
+  const aic=el('aiCurCard'); if(aic) aic.style.display=(curArea==='우리도서관')?'':'none';   // AI 큐레이션(소장도서)은 우리도서관에서만
   updatePvCap(); pvSync();
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
@@ -1568,6 +1696,70 @@ function secMakeAICuration(){
   }
   toast(`✨ AI 큐레이션 완성 — 책 ${added}권 담았어요. 미리보기를 확인하세요`);
   pvSync(); secNote(); secRenderCands(scHead);
+}
+/* ===== 인라인 'AI로 큐레이션 만들기' (소장도서) — 책담기 팝업과 별개의 두 번째 방법 ===== */
+let AIC_RESULTS=[], AIC_PICKED=new Set(), AIC_COUNT=8;
+function aicToggle(){ const c=el('aiCurCard'); if(!c)return; const open=c.getAttribute('data-open')==='1';
+  c.setAttribute('data-open',open?'0':'1'); const ch=el('aicChevron'); if(ch)ch.textContent=open?'열기 ▾':'닫기 ▴';
+  if(!open){ const t=el('aicTopic'); if(t)setTimeout(()=>t.focus(),80); } }
+function aicSetTopic(t){ const i=el('aicTopic'); if(i){i.value=t;i.focus();} }
+function aicCount(b,n){ document.querySelectorAll('#aicSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); AIC_COUNT=n; aicUpdateCount(); }
+function aicTog(b){ b.classList.toggle('on'); }
+function aicUpdateCount(){ const c=el('aicCnt'); if(c)c.textContent=AIC_PICKED.size+'권'; }
+function aicBuildGrid(){
+  const g=el('aicGrid'); if(!g)return;
+  g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const bd=[];
+    if(b.smPaper)bd.push('<span>📕 종이</span>');
+    if(b.smEbook)bd.push('<span>💻 전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
+    const cv=b.cover?`<img class="cv" src="${esc(b.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv" style="background:linear-gradient(135deg,#7b6ef2,#9b6ef0)"></div>`;
+    return `<div class="aic-bk ${on?'on':''}" onclick="aicToggleBook(${i})"><span class="ck">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
+  }).join('');
+  aicUpdateCount();
+}
+function aicToggleBook(i){ if(AIC_PICKED.has(i))AIC_PICKED.delete(i); else AIC_PICKED.add(i); aicBuildGrid(); }
+async function aicGenerate(isRe){
+  const topic=(el('aicTopic').value||'').trim(); if(!topic){ el('aicTopic').focus(); toast('주제를 적어주세요'); return; }
+  const fields=[...document.querySelectorAll('#aicChips button.on')].map(b=>b.textContent.trim());
+  const q=fields.length?`${topic} (${fields.join(', ')} 분야)`:topic;
+  const steps=el('aicSteps'), result=el('aicResult'), btn=el('aicGenBtn');
+  el('aicS1').querySelector('span:last-child').innerHTML=`소장도서에서 <b>'${esc(topic)}' 후보</b>를 좁히는 중…`;
+  steps.classList.add('show'); result.classList.remove('show'); btn.disabled=true;
+  const ids=['aicS1','aicS2','aicS3']; ids.forEach(id=>el(id).classList.remove('done','active'));
+  [0,700,1500].forEach((t,k)=>setTimeout(()=>{ ids.forEach(x=>el(x).classList.remove('active')); for(let m=0;m<k;m++)el(ids[m]).classList.add('done'); el(ids[k]).classList.add('active'); },t));
+  const started=Date.now(); let j=null, err=null;
+  try{
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
+      body:JSON.stringify({query:q, onlyHeld:true, genTitle:true, holdings:true, count:(AIC_COUNT||8)+6})});
+    j=await r.json(); if(j&&j.error)err=j.error;
+  }catch(e){ err=String(e); }
+  await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
+  ids.forEach(x=>{el(x).classList.remove('active');el(x).classList.add('done');}); await new Promise(s=>setTimeout(s,320));
+  steps.classList.remove('show'); ids.forEach(x=>el(x).classList.remove('done')); btn.disabled=false;
+  if(err||!j||!(j.candidates||[]).length){ toast('생성 실패: '+(err||'소장도서에서 후보를 못 찾았어요')); return; }
+  AIC_RESULTS=j.candidates; AIC_PICKED=new Set(AIC_RESULTS.slice(0,AIC_COUNT||8).map((_,i)=>i));
+  el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
+  el('aicHint').innerHTML=`AI가 후보 <b>${AIC_RESULTS.length}권</b> 중 <b>${AIC_PICKED.size}권</b>을 골라뒀어요. 빼려면 누르고, 다른 책을 눌러 담으세요. (모두 <b>우리 도서관 소장</b>)`;
+  aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
+  toast(isRe?'큐레이션을 새로 만들었어요':'AI 큐레이션 초안이 완성됐어요');
+}
+function aicAddSection(){
+  const picks=[...AIC_PICKED].map(i=>AIC_RESULTS[i]).filter(Boolean);
+  if(!picks.length){ toast('책을 1권 이상 담아주세요'); return; }
+  readSecInputs();
+  const title=(el('aicTitle').value||'').trim()||'AI 추천';
+  const subtitle=(el('aicSub').value||'').trim();
+  const books=picks.map(b=>{ const o={isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:''};
+    if(b.smEbook&&b.smEbookUrl){o._sm=true;o.lib=b.smEbookUrl;} return o; });
+  // 고정 칸들 뒤에 새 큐레이션 칸 삽입(현재 영역)
+  const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
+  const lastFixed=[...idxs].reverse().find(i=>isFixed(SECTIONS[i]));
+  const at=(lastFixed!=null?lastFixed+1:(idxs.length?idxs[idxs.length-1]+1:SECTIONS.length));
+  SECTIONS.splice(at,0,{area:curArea,slot:'ai'+Date.now().toString(36),title,subtitle,style:'row',books});
+  // 카드 접고 결과 초기화
+  el('aiCurCard').setAttribute('data-open','0'); const ch=el('aicChevron'); if(ch)ch.textContent='열기 ▾';
+  el('aicResult').classList.remove('show'); el('aicTopic').value=''; AIC_RESULTS=[]; AIC_PICKED=new Set();
+  renderSettings(); pvSync();
+  toast(`✦ '${title}' 칸으로 추가됐어요 — 저장하면 학생 앱에 반영됩니다`);
 }
 function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[]).map(b=>b.isbn||b.id).filter(Boolean));
   el('secCandWrap').innerHTML=aiCurBanner()+`<div style="font-size:12px;font-weight:800;margin-bottom:9px">${esc(head)}</div>`+
