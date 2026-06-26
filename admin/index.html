@@ -307,7 +307,9 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;align-items:center}
 #aiCurCard .aic-quick>span{font-size:11px;color:var(--light)}
 #aiCurCard .aic-quick button{border:1px dashed #cfd6e2;background:#fbfcfe;color:var(--sub);font-family:inherit;font-size:11.5px;padding:6px 12px;border-radius:99px;cursor:pointer}
-#aiCurCard .aic-quick button:hover{border-color:var(--ai);color:var(--ai-d)}
+#aiCurCard .aic-quick button,#aiCurCard .aic-seg button,#aiCurCard .aic-chips button{transition:transform .12s ease,border-color .12s ease,background .12s ease,color .12s ease,box-shadow .12s ease}
+#aiCurCard .aic-quick button:hover,#aiCurCard .aic-seg button:hover,#aiCurCard .aic-chips button:hover{border-color:var(--ai);color:var(--ai-d);background:var(--ai-t);transform:translateY(-1.5px);box-shadow:0 4px 12px -4px rgba(107,92,240,.35)}
+#aiCurCard .aic-quick button:active,#aiCurCard .aic-seg button:active,#aiCurCard .aic-chips button:active{transform:translateY(0) scale(.96)}
 #aiCurCard .aic-opts{margin-top:4px}
 #aiCurCard .aic-opt{margin-top:16px}
 #aiCurCard .aic-opt .aic-field-l{margin:0 0 9px}
