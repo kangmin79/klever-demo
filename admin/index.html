@@ -1797,9 +1797,8 @@ function aicCount(b,n){ document.querySelectorAll('#aicSeg button').forEach(x=>x
 function aicUpdateCount(){ const c=el('aicCnt'); if(c)c.textContent=AIC_PICKED.size+'권'; }
 function aicBuildGrid(){
   const g=el('aicGrid'); if(!g)return;
-  g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const weak=(b.rel===1||b.rel===2); const bd=[];
-    if(b.rel===2)bd.push('<span class="kw-weak">⚠ 관련도 보통</span>');        // 주제권이나 약함
-    else if(b.rel===1)bd.push('<span class="kw-weak">⚠ 관련도 낮음</span>');   // 약간만 관련 — 확인 후 담기
+  g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const weak=(b.rel===1); const bd=[];
+    if(b.rel===1)bd.push('<span class="kw-weak">⚠ 관련 낮음</span>');   // rel=1(약간만 관련) — 기본 제외, 확인 후 담기. rel=2(주제권)는 정상으로 취급
     if(b.smPaper)bd.push('<span class="kw-paper">종이</span>');
     if(b.smEbook)bd.push('<span class="kw-ebook">전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
     if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
@@ -1842,12 +1841,12 @@ async function aicRunGenerate(topic,isRe){
   if(err||!j||!(j.candidates||[]).length){ aicPush('ai','음… 그 주제로는 소장도서에서 책을 못 찾았어요. 조금 다르게 말씀해 주실래요?'); return; }
   AIC_RESULTS=j.candidates;
   // 기본 선택 = 관련도 강함(rel 3, 또는 rel 없는 응답)만 → 약한 매칭은 사서가 판단. 강한 게 없으면 전체에서 채움.
-  const strongIdx=AIC_RESULTS.map((b,i)=>i).filter(i=>AIC_RESULTS[i].rel===undefined||AIC_RESULTS[i].rel>=3);
+  const strongIdx=AIC_RESULTS.map((b,i)=>i).filter(i=>AIC_RESULTS[i].rel===undefined||AIC_RESULTS[i].rel>=2);   // 주제권(rel≥2) 기본 담기, rel=1만 제외
   const baseIdx=strongIdx.length?strongIdx:AIC_RESULTS.map((_,i)=>i);
   AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
-  const weakN=AIC_RESULTS.filter(b=>b.rel===1||b.rel===2).length;
-  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 관련도 높은 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련도 보통·낮음 ${weakN}권</span>은 확인 후 담으세요`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
+  const weakN=AIC_RESULTS.filter(b=>b.rel===1).length;
+  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
@@ -1858,8 +1857,7 @@ function aicShowChips2(items){ const q=el('aicQchips'); if(!q)return; q.innerHTM
 // 후보 상세(줄거리·작가·형태) — 사서가 내용 모르는 책도 보고 담게. 줄거리는 클릭 시 lazy 조회(클릭한 책만).
 function aicShowDetail(i){ const b=AIC_RESULTS[i]; if(!b)return; AIC_DT_I=i;
   const tags=[];
-  if(b.rel===2)tags.push('<span class="kw-weak">⚠ 관련도 보통</span>');
-  else if(b.rel===1)tags.push('<span class="kw-weak">⚠ 관련도 낮음</span>');
+  if(b.rel===1)tags.push('<span class="kw-weak">⚠ 관련 낮음</span>');
   if(b.smEbook)tags.push('<span class="kw-ebook">전자책</span>');
   if(b.smPaper)tags.push('<span class="kw-paper">종이책</span>');
   if(b.crema)tags.push('<span class="kw-sub">구독</span>');
