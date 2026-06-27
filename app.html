@@ -2764,6 +2764,13 @@ const ic = (name, cls='icon') => `<svg class="${cls}" viewBox="0 0 24 24">${SVG[
    Mock 데이터
    ═══════════════════════════════════════════════════════════ */
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// 서지 텍스트에 박혀오는 HTML 엔티티(&#40;=( &amp;=& 등) 방어 디코드 — esc() 직전에 한 번. 깨끗한 텍스트엔 무영향.
+const _ENT={amp:'&',lt:'<',gt:'>',quot:'"',apos:"'",nbsp:' '};
+const decEnt = (s) => String(s ?? '')
+  .replace(/&#x([0-9a-fA-F]+);/g,(_,h)=>String.fromCodePoint(parseInt(h,16)))
+  .replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d,10)))
+  .replace(/&([a-zA-Z]+);/g,(_,n)=>_ENT[n.toLowerCase()]??`&${n};`);
+const escD = (s) => esc(decEnt(s)); // 디코드 후 안전 인코딩(서지 표시용)
 
 /* ===== 리치 본문 sanitize (관리자 에디터와 동일 화이트리스트) — 공지/커뮤니티 본문 렌더용 ===== */
 const RT_ALLOW={B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,H4:1,P:1,BR:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,A:1,IMG:1,SPAN:1,DIV:1,HR:1,FONT:1,
@@ -5017,11 +5024,11 @@ function libDetail(isbn){
   ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
       <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
-      <div class="lcd-i">${b.rank?`<div class="lcd-rank"><span class="ricon">${SVG_RANK}</span>우리 학교 대출 ${b.rank}위</div>`:''}<h2>${esc(cleanT(b.t))}</h2><div class="au">${esc(authorLine(b))}${publisher?` · ${esc(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
+      <div class="lcd-i">${b.rank?`<div class="lcd-rank"><span class="ricon">${SVG_RANK}</span>우리 학교 대출 ${b.rank}위</div>`:''}<h2>${escD(cleanT(b.t))}</h2><div class="au">${escD(authorLine(b))}${publisher?` · ${escD(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
-    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${esc(desc)}</p>
+    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${escD(desc)}</p>
     ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">우리 도서관 소장 현황을 확인하고 있어요…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
@@ -8197,11 +8204,11 @@ function usCardsHTML(results){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">📕 소장·예약 보기</button>`;
     }
     return `<div class="book-card" onclick="libDetail('${esc(isbn)}')">
-      <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
+      <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="book-info">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
-        <div class="book-title">${esc(b.title)}</div>
-        <div class="book-author">${esc(b.author||'')}</div>
+        <div class="book-title">${escD(b.title)}</div>
+        <div class="book-author">${escD(b.author||'')}</div>
         ${act}
       </div></div>`;
   }).join('')+`</div>`;
