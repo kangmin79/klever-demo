@@ -385,6 +385,28 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-send{flex:none;width:44px;height:44px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));color:#fff;font-size:16px;cursor:pointer;box-shadow:0 6px 16px -8px rgba(107,92,240,.6)}
 #aiCurCard .aic-send:hover{filter:brightness(1.06)}
 #aiCurCard .aic-send:disabled{opacity:.5;cursor:not-allowed}
+#aiCurCard .aic-bk .ck{cursor:pointer}
+#aiCurCard .aic-bk .ck:hover{border-color:var(--ai)}
+/* 후보 상세 모달(줄거리·작가·형태) */
+.aic-dt-ov{position:fixed;inset:0;background:rgba(20,16,40,.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.aic-dt-ov.on{display:flex}
+.aic-dt{background:#fff;border-radius:18px;max-width:440px;width:100%;max-height:86vh;overflow-y:auto;padding:22px;position:relative;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+.aic-dt-x{position:absolute;top:12px;right:16px;font-size:24px;color:#999;cursor:pointer;line-height:1}
+.aic-dt-top{display:flex;gap:14px;margin-bottom:14px;padding-right:24px}
+.aic-dt-cv{width:84px;height:120px;flex:none;border-radius:8px;overflow:hidden;background:#eef0f5;display:flex;align-items:center;justify-content:center;font-size:30px}
+.aic-dt-cv img{width:100%;height:100%;object-fit:cover}
+.aic-dt-i h3{margin:0 0 6px;font-size:16px;font-weight:800;line-height:1.35;color:#1f2333}
+.aic-dt-i .au{font-size:12.5px;color:#6b7280;margin-bottom:9px}
+.aic-dt-tags{display:flex;flex-wrap:wrap;gap:4px}
+.aic-dt-tags span{font-size:10.5px;font-weight:700;border-radius:5px;padding:3px 7px}
+.aic-dt-tags .kw-ebook{color:#1f5fa6;background:#e9f2fc}
+.aic-dt-tags .kw-paper{color:#0e7c53;background:#eaf6f0}
+.aic-dt-tags .kw-sub{color:#6b21a8;background:#f6edff}
+.aic-dt-tags .kw-loan{color:#b91c1c;background:#fef2f2}
+.aic-dt-tags .kw-weak{color:#b45309;background:#fff4e5}
+.aic-dt-desc{font-size:13.5px;line-height:1.7;color:#374151;white-space:pre-wrap;margin:4px 0 18px}
+.aic-dt-btn{width:100%;border:1.5px solid var(--ai,#6b5cf0);background:var(--ai,#6b5cf0);color:#fff;font-family:inherit;font-weight:800;font-size:14px;padding:13px;border-radius:12px;cursor:pointer}
+.aic-dt-btn.on{background:#fff;color:var(--ai-d,#4f3fd6)}
 #aiCurCard .aic-addrow{margin-top:18px}
 #aiCurCard .aic-addbtn{width:100%;border:0;border-radius:12px;padding:14px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));box-shadow:0 10px 22px -12px rgba(107,92,240,.7);transition:transform .12s ease,filter .12s ease}
 #aiCurCard .aic-addbtn:hover{transform:translateY(-1.5px);filter:brightness(1.05)}
@@ -804,11 +826,11 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
                 <input class="aic-topic" id="aicTopic" placeholder="예: 시험 스트레스에 지친 학생 / 새 학기 / 진로 고민" onkeydown="if(event.key==='Enter'){event.preventDefault();aicSend();}">
                 <button type="button" class="aic-send" id="aicSendBtn" onclick="aicSend()" title="보내기">➤</button>
               </div>
-              <div class="aic-opt aic-opt-row" style="margin-top:12px"><div class="aic-field-l">책 권수</div>
+              <div class="aic-opt aic-opt-row" style="margin-top:12px"><div class="aic-field-l">후보 권수 <span style="color:var(--light);font-weight:600">· 쭉 보고 골라 담으세요</span></div>
                 <div class="aic-seg" id="aicSeg">
-                  <button type="button" onclick="aicCount(this,6)">6권</button>
-                  <button type="button" class="on" onclick="aicCount(this,8)">8권</button>
                   <button type="button" onclick="aicCount(this,10)">10권</button>
+                  <button type="button" onclick="aicCount(this,15)">15권</button>
+                  <button type="button" class="on" onclick="aicCount(this,20)">20권</button>
                 </div></div>
               <div class="aic-steps" id="aicSteps">
                 <div class="aic-stp" id="aicS1"><span class="ic">1</span><span>소장도서에서 <b>후보</b>를 좁히는 중…</span></div>
@@ -827,6 +849,13 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
                 <div class="aic-grid" id="aicGrid"></div>
                 <div class="aic-addrow"><button class="aic-addbtn" onclick="aicAddSection()">이 큐레이션을 칸으로 추가 →</button></div>
               </div>
+            </div>
+          </div>
+          <div id="aicDetail" class="aic-dt-ov" onclick="if(event.target===this)aicCloseDetail()">
+            <div class="aic-dt">
+              <span class="aic-dt-x" onclick="aicCloseDetail()">×</span>
+              <div id="aicDtBody"></div>
+              <div class="aic-dt-acts"><button type="button" class="aic-dt-btn" id="aicDtToggle" onclick="aicDetailToggle()">+ 이 책 담기</button></div>
             </div>
           </div>
           <div id="secList"></div>
@@ -1720,7 +1749,7 @@ function secMakeAICuration(){
   pvSync(); secNote(); secRenderCands(scHead);
 }
 /* ===== 인라인 'AI로 큐레이션 만들기' (소장도서) — 책담기 팝업과 별개의 두 번째 방법 ===== */
-let AIC_RESULTS=[], AIC_PICKED=new Set(), AIC_COUNT=8, AIC_MSGS=[], AIC_TOPIC='', AIC_BUSY=false;
+let AIC_RESULTS=[], AIC_PICKED=new Set(), AIC_COUNT=20, AIC_MSGS=[], AIC_TOPIC='', AIC_BUSY=false, AIC_DT_I=-1;
 const AIC_GREETING="어떤 책이 필요하세요? 🙂\n주제·분위기·대상을 편하게 말씀해 주세요. 제가 의도를 파악해서 우리 도서관 소장도서로 골라드릴게요.";
 const AIC_QUICK=["위로가 필요한 학생","새 학기 새로운 시작","진로·취업 고민","사랑을 다룬 이야기","과학으로 보는 세상"];
 function aicToggle(){ const c=el('aiCurCard'); if(!c)return; const open=c.getAttribute('data-open')==='1';
@@ -1775,7 +1804,7 @@ function aicBuildGrid(){
     if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
     if(b.loan)bd.push('<span class="kw-loan">🔥 국중인기 '+Number(b.loan).toLocaleString()+'</span>');   // 국중(정보나루) 대출수 — 검증된 인기도서
     const cv=b.cover?`<img class="cv" src="${esc(b.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv" style="background:linear-gradient(135deg,#7b6ef2,#9b6ef0)"></div>`;
-    return `<div class="aic-bk ${on?'on':''}${weak?' weak':''}" onclick="aicToggleBook(${i})"><span class="ck">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
+    return `<div class="aic-bk ${on?'on':''}${weak?' weak':''}" onclick="aicShowDetail(${i})" title="눌러서 줄거리·정보 보기"><span class="ck" onclick="event.stopPropagation();aicToggleBook(${i})" title="담기/빼기">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
   }).join('');
   aicUpdateCount();
 }
@@ -1817,7 +1846,7 @@ async function aicRunGenerate(topic,isRe){
   AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
   const weakN=AIC_RESULTS.filter(b=>b.rel===2).length;
-  el('aicHint').innerHTML=`관련도 높은 <b>${AIC_PICKED.size}권</b>을 골라뒀어요 (후보 ${AIC_RESULTS.length}권${weakN?`, <span style="color:#b45309">⚠ 관련도 보통 ${weakN}권</span>은 빼는 걸 권해요`:''}). 빼려면 누르고, 더 담으려면 누르세요. (모두 <b>우리 도서관 소장</b>)`;
+  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 관련도 높은 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련도 보통 ${weakN}권</span>은 빼는 걸 권해요`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
@@ -1825,6 +1854,40 @@ async function aicRunGenerate(topic,isRe){
 // 결과 후 조정 칩(직접 핸들러)
 function aicShowChips2(items){ const q=el('aicQchips'); if(!q)return; q.innerHTML='';
   (items||[]).forEach(it=>{ const b=document.createElement('button'); b.type='button'; b.textContent=it.t; b.onclick=()=>aicAdjust(it.k); q.appendChild(b); }); }
+// 후보 상세(줄거리·작가·형태) — 사서가 내용 모르는 책도 보고 담게. 줄거리는 클릭 시 lazy 조회(클릭한 책만).
+function aicShowDetail(i){ const b=AIC_RESULTS[i]; if(!b)return; AIC_DT_I=i;
+  const tags=[];
+  if(b.rel===2)tags.push('<span class="kw-weak">⚠ 관련도 보통</span>');
+  if(b.smEbook)tags.push('<span class="kw-ebook">전자책</span>');
+  if(b.smPaper)tags.push('<span class="kw-paper">종이책</span>');
+  if(b.crema)tags.push('<span class="kw-sub">구독</span>');
+  if(b.loan)tags.push('<span class="kw-loan">🔥 국중인기 '+Number(b.loan).toLocaleString()+'</span>');
+  const meta=[b.author,b.publisher,b.year].filter(Boolean).join(' · ');
+  el('aicDtBody').innerHTML=`<div class="aic-dt-top">
+      <div class="aic-dt-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
+      <div class="aic-dt-i"><h3>${esc(b.title||'')}</h3><div class="au">${esc(meta)}</div>
+        <div class="aic-dt-tags">${tags.join('')||'<span class="kw-ebook">소장 도서</span>'}</div></div>
+    </div>
+    <p class="aic-dt-desc" id="aicDtDesc">줄거리를 불러오는 중…</p>`;
+  aicDtSyncBtn(); el('aicDetail').classList.add('on'); aicLoadDescAdmin(b);
+}
+function aicDtSyncBtn(){ const on=AIC_PICKED.has(AIC_DT_I); const btn=el('aicDtToggle'); if(!btn)return;
+  btn.textContent=on?'✓ 담김 — 빼기':'+ 이 책 담기'; btn.classList.toggle('on',on); }
+function aicDetailToggle(){ if(AIC_DT_I<0)return; aicToggleBook(AIC_DT_I); aicDtSyncBtn(); }
+function aicCloseDetail(){ const d=el('aicDetail'); if(d)d.classList.remove('on'); }
+async function aicLoadDescAdmin(b){ const e=el('aicDtDesc'); if(!e)return;
+  const brcd=b.brcd||(b.isbn||'').replace(/^sm-/,''); const isbn=(b.isbn||'').replace(/^sm-/,'');
+  if(!brcd&&!isbn){ e.textContent='줄거리 정보가 아직 없어요.'; return; }
+  try{
+    const ors=[]; if(brcd)ors.push('brcd.eq.'+encodeURIComponent(brcd)); if(isbn&&isbn!==brcd)ors.push('isbn13.eq.'+encodeURIComponent(isbn));
+    const r=await fetch(`${SB_REST}/semyung_books?or=(${ors.join(',')})&select=description,author,publisher,pub_year&limit=1`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const a=await r.json(); const row=(Array.isArray(a)&&a[0])||{};
+    e.textContent=row.description||'줄거리 정보가 아직 없어요. (소장 도서 · 표지/형태로 판단해 주세요)';
+    // 작가·출판사 보강(후보에 비어있으면 채움 — 모달 표시 + 담을 때 저장에도 반영)
+    const c=AIC_RESULTS[AIC_DT_I]; if(c){ if(!c.author&&row.author)c.author=row.author; if(!c.publisher&&row.publisher)c.publisher=row.publisher; if(!c.year&&row.pub_year)c.year=row.pub_year; }
+    const au=document.querySelector('#aicDtBody .au'); if(au&&!au.textContent.trim()&&c){ au.textContent=[c.author,c.publisher,c.year].filter(Boolean).join(' · '); }
+  }catch(_){ e.textContent='줄거리를 불러오지 못했어요.'; }
+}
 function aicAddSection(){
   const picks=[...AIC_PICKED].map(i=>AIC_RESULTS[i]).filter(Boolean);
   if(!picks.length){ toast('책을 1권 이상 담아주세요'); return; }
