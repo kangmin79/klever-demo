@@ -4426,13 +4426,13 @@ async function _smFetch(kind){
 // 전자책·종이책을 각각 별도 줄로 표시(SEMYUNG_NEW_E / SEMYUNG_NEW_P). 각자 진짜 최신순.
 function _smMapNew(b,tag){
   const o={isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
-    _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],lib:b.detail||''};
+    _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],lib:b.detail||'',description:b.summary||''};
   if(tag==='ebook') o._eb=b.detail; else o._pp=b.detail;
   return o;
 }
 async function _smNewTable(){
   try{
-    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date,pub_year,kind&limit=400`,
+    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date,pub_year,kind,summary,isbn13&limit=400`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return null;
     const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
