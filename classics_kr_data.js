@@ -743,7 +743,7 @@ const BOOKS_CLASSICS_KR = [
   "locale": "modern",
   "intl": true,
   "hasBody": true,
-  "hasTrans": false,
+  "hasTrans": true,
   "src": "공유마당",
   "participants": 177,
   "reviews": 9,
