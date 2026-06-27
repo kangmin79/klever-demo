@@ -366,6 +366,7 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-bk .bk-kw span{font-size:9.5px;font-weight:700;border-radius:4px;padding:2px 6px}
 #aiCurCard .aic-bk .bk-kw .kw-paper{color:#0e7c53;background:#eaf6f0}
 #aiCurCard .aic-bk .bk-kw .kw-ebook{color:#1f5fa6;background:#e9f2fc}
+#aiCurCard .aic-bk .bk-kw .kw-sub{color:#6b21a8;background:#f6edff}
 #aiCurCard .aic-addrow{margin-top:18px}
 #aiCurCard .aic-addbtn{width:100%;border:0;border-radius:12px;padding:14px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--ai-g1),var(--ai-g2));box-shadow:0 10px 22px -12px rgba(107,92,240,.7);transition:transform .12s ease,filter .12s ease}
 #aiCurCard .aic-addbtn:hover{transform:translateY(-1.5px);filter:brightness(1.05)}
@@ -1722,6 +1723,7 @@ function aicBuildGrid(){
   g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const bd=[];
     if(b.smPaper)bd.push('<span class="kw-paper">종이</span>');
     if(b.smEbook)bd.push('<span class="kw-ebook">전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
+    if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
     const cv=b.cover?`<img class="cv" src="${esc(b.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv" style="background:linear-gradient(135deg,#7b6ef2,#9b6ef0)"></div>`;
     return `<div class="aic-bk ${on?'on':''}" onclick="aicToggleBook(${i})"><span class="ck">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
   }).join('');
@@ -1771,7 +1773,9 @@ function aicAddSection(){
   const title=(el('aicTitle').value||'').trim()||'AI 추천';
   const subtitle=(el('aicSub').value||'').trim();
   const books=picks.map(b=>{ const o={isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:''};
-    if(b.smEbook&&b.smEbookUrl){o._sm=true;o.lib=b.smEbookUrl;} return o; });
+    if(b.smEbook&&b.smEbookUrl){o._sm=true;o.lib=b.smEbookUrl;}
+    if(b.crema){o.crema=true;o.cremaUrl=b.cremaUrl||'';}   // 크레마클럽 구독 — 저장 보존(학생 노출 시 활용)
+    return o; });
   // 고정 칸들 뒤에 새 큐레이션 칸 삽입(현재 영역)
   const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
   const lastFixed=[...idxs].reverse().find(i=>isFixed(SECTIONS[i]));
