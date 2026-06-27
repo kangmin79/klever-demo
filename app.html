@@ -8685,6 +8685,7 @@ window.addEventListener('keydown', (e) => {
 /* ═══ 플로팅 AI 사서 챗봇 (hwc 네임스페이스) — chat Edge Function 대화 맥락 ═══ */
 (function(){
   const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/chat";
+  const BRAIN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 의도 라우팅(운영정보=KB로 바로 답 / 책=추천)
   const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
   const GREET="안녕하세요, 별이예요. 🌙\n오늘은 어떤 책이 당기세요? 기분이나 상황만 편하게 말씀해 주시면 딱 맞는 책을 찾아드릴게요.";
   const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
@@ -8714,6 +8715,19 @@ window.addEventListener('keydown', (e) => {
   function addRow(role,html){const r=document.createElement('div');r.className='hwc-row '+(role==='user'?'user':'bot');r.innerHTML=`<div class="hwc-msg">${html}</div>`;el('hwcBody').appendChild(r);scroll();}
   function addUser(t){addRow('user',esc(t));}
   function addBot(t){addRow('bot',esc(t));}
+  // 운영정보 답변: 요약 텍스트 + (있으면)도서관 링크 버튼 + 빠른답변 칩
+  function addBotRich(text, link, label, chips){
+    let h=esc(text);
+    if(link && /^https?:\/\/lib\.semyung\.ac\.kr\//.test(link)){
+      h+=`<a href="${esc(link)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:7px 12px;border-radius:9px;background:var(--gold,#d4a017);color:#1a1a2e;font-weight:700;font-size:13px;text-decoration:none">📄 ${esc(label||'자세히 보기')}</a>`;
+    }
+    addRow('bot',h);
+    if(Array.isArray(chips) && chips.length){
+      const cr=document.createElement('div');cr.className='hwc-chips';
+      cr.innerHTML=chips.slice(0,4).map(c=>`<span class="hwc-chip" onclick='hwcChip(${JSON.stringify(String(c))})'>${esc(c)}</span>`).join('');
+      el('hwcBody').appendChild(cr);scroll();
+    }
+  }
 
   function cardHtml(b,gi){
     const star=b.rating!=null?`<span style="color:var(--gold);font-weight:700">★ ${f5(b.rating)}</span>`:'';
@@ -8777,6 +8791,20 @@ window.addEventListener('keydown', (e) => {
     document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());   // 직접 입력 시에도 후속 칩 정리
     addUser(shown||text); msgs.push({role:'user',content:text}); typing(true);
     try{
+      // 1) 별이 두뇌: 의도 라우팅. 운영정보(info)·잡담(other)·모호한 책요청 → KB로 바로 답(추천 호출 안 함).
+      try{
+        const br=await fetch(BRAIN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
+        const bd=await br.json();
+        if(bd && bd.intent && !(bd.intent==='books' && bd.ready!==false)){
+          typing(false);
+          const reply=bd.reply||'무엇을 도와드릴까요?';
+          addBotRich(reply, bd.link, bd.linkLabel, bd.chips);
+          msgs.push({role:'assistant',content:reply});
+          busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
+          return;
+        }
+      }catch(e){ /* 두뇌 실패 → 아래 기존 추천 경로로 폴백 */ }
+      // 2) 책 추천(기존 chat 경로)
       const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
       const d=await r.json(); typing(false);
       const m=d.message||'음… 다시 한 번 말씀해 주실래요?';
