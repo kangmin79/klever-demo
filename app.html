@@ -502,10 +502,12 @@ body.dark .sh-btn.joined{background:transparent;color:#cdd5e6;border-color:rgba(
 .bt-tag.bt-fr{background:#EEEDFE;color:#3C3489;}
 .bt-tag.bt-eb{background:#E1F5EE;color:#0F6E56;}
 .bt-tag.bt-pp{background:#FAEEDA;color:#633806;}
+.bt-tag.bt-sub{background:#EDE9FE;color:#5B21B6;}
 body.dark .bt-tag.bt-kr{background:#1e3a5f;color:#a5c8ef;}
 body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
 body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
 body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
+body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
 /* 고전 컬렉션 — 한국/해외 권역 헤더 (데스크톱: 상단 네비 드롭다운으로 선택, 여기엔 현재 권역 표시) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
@@ -7977,7 +7979,8 @@ function changeLang(lang){
 /* ═══════════════════════════════════════════════════════════
    통합 검색 페이지 (Ver03) — 키워드(즉시) + 자연어(별이 추천)
    ═══════════════════════════════════════════════════════════ */
-const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
+const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";  // (구) 옛 books 풀 추천 — 별이는 curate로 전환
+const US_CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";        // 별이(학생) = 사서 큐레이션과 동일 코어(세명대 실소장 의미검색)
 const US_NL_EX=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어"];
 let US_MODE='kw';
 let US_LAST_NL=[];
@@ -8067,31 +8070,61 @@ function onUnifiedSearch(submit){
   box.innerHTML=html;
 }
 
+// curate 후보(세명대 실소장 23,727 의미검색 결과) → 앱 공용 book 객체로 정규화 + LIB_POOL 등재
+//   (libDetail/lcBorrow가 isbn으로 풀에서 찾아 줄거리·형태·읽기 경로를 표시·연결한다)
+function curateToLibBook(c){
+  const tags=[];
+  if(c.smEbook) tags.push('ebook');
+  if(c.smPaper) tags.push('paper');
+  if(c.crema===true) tags.push('sub');
+  const b={
+    isbn:c.isbn, t:c.title||'', a:c.author||'', cover:c.cover||'',
+    publisher:c.publisher||'', pubYear:c.year||'', loan:c.loan||null,
+    tags:tags.length?tags:undefined, _sm:((c.isbn||'').indexOf('sm-')===0)||undefined,
+    lib:c.smEbookUrl||'', _pp:c.smPaperUrl||'', cremaUrl:c.cremaUrl||'', brcd:c.brcd||''
+  };
+  const ex=LIB_POOL.find(x=>x.isbn===b.isbn);
+  if(ex) Object.assign(ex,b); else LIB_POOL.push(b);
+  return b;
+}
+// 형태 배지(전자책/종이책/구독) — 별이 추천 카드용
+function usFormBadges(c){
+  const out=[];
+  if(c.smEbook) out.push('<span class="bt-tag bt-eb">전자책</span>');
+  if(c.smPaper) out.push('<span class="bt-tag bt-pp">종이책</span>');
+  if(c.crema===true) out.push('<span class="bt-tag bt-sub">구독</span>');
+  if(!out.length) out.push('<span class="bt-tag bt-eb">전자책</span>');
+  return out.join(' ');
+}
+
 async function usNaturalSearch(q){
   const box=document.getElementById('usResults');
   if(!q){ box.innerHTML=''; return; }
-  box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">⭐ 별이가 책을 고르는 중…</div>';
+  box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">⭐ 별이가 우리 도서관에서 책을 고르는 중…</div>';
   try{
-    const r=await fetch(US_RECOMMEND_FN,{method:'POST',
+    // 사서 큐레이션과 같은 코어(curate) 재사용: 세명대 실소장 의미검색 + 리랭킹 + 오프토픽 게이트 + 국중 인기 + 크레마
+    const r=await fetch(US_CURATE_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:q})});
+      body:JSON.stringify({query:q, onlyHeld:true, rerank:true, count:12})});
     const d=await r.json();
-    const results=d.results||[]; US_LAST_NL=results;
-    if(!results.length){
-      box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">딱 맞는 책을 못 찾았어요. 조금 다르게 말해보세요.</div>';
+    if(d.offtopic){
+      box.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-light);line-height:1.6;">${esc(d.message||'책 주제를 적어주세요. 예: \'시험 스트레스에 지친 마음\', \'여름에 읽는 추리소설\'')}</div>`;
       return;
     }
-    const intro=d.intro?`<div style="font-size:14px;color:var(--text);margin-bottom:6px;">${esc(d.intro)}</div>`:'';
+    const results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title); US_LAST_NL=results;
+    if(!results.length){
+      box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해보세요.</div>';
+      return;
+    }
+    results.forEach(curateToLibBook);   // 상세 모달·대출이 isbn으로 찾도록 풀 등재
+    const intro=d.subtitle?`<div style="font-size:14px;color:var(--text);margin-bottom:6px;line-height:1.5;">${esc(d.subtitle)}</div>`:'';
     const cards=results.map((b,i)=>{
-      const tag=bookTypeTag(b,'lib');
-      const reason=b.reason?`<div style="font-size:11px;color:var(--text-sub);line-height:1.5;margin-top:4px;">${esc(b.reason)}</div>`:'';
       return `<div class="book-card" onclick="usOpenNL(${i})">
         <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
         <div class="book-info">
-          <span class="bt-tag ${tag.cls}">${tag.label}</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
           <div class="book-title">${esc(b.title)}</div>
           <div class="book-author">${esc(b.author||'')}</div>
-          ${reason}
         </div></div>`;
     }).join('');
     box.innerHTML=`${intro}<div class="us-section-label" style="margin-top:10px;">⭐ 별이의 추천 <span style="color:var(--text-light);font-weight:600;">${results.length}</span></div><div class="book-grid">${cards}</div>`;
@@ -8099,7 +8132,8 @@ async function usNaturalSearch(q){
     box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">잠시 문제가 생겼어요. 다시 시도해 주세요.</div>';
   }
 }
-function usOpenNL(i){ const b=US_LAST_NL[i]; if(b && typeof libBridgeOpen==='function') libBridgeOpen(b); }
+// 별이 추천 카드 클릭 → 줄거리·형태·읽기 경로를 담은 상세 모달(libDetail). 바로 뷰어 직행 대신 한 단계 정보 노출.
+function usOpenNL(i){ const b=US_LAST_NL[i]; if(b && b.isbn) libDetail(b.isbn); }
 
 /* ═══════════════════════════════════════════════════════════
    피드 (Ver03) — 모든 학생의 한 줄 소감 광장 (bookstar_challenge_results)
