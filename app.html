@@ -8008,7 +8008,8 @@ function changeLang(lang){
    ═══════════════════════════════════════════════════════════ */
 const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";  // (구) 옛 books 풀 추천 — 별이는 curate로 전환
 const US_CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";        // 별이(학생) = 사서 큐레이션과 동일 코어(세명대 실소장 의미검색)
-const US_NL_EX=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어"];
+const US_BRAIN_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 별이 두뇌 = 의도 라우팅(책/운영정보/잡담) + 도서관 지식베이스 답변
+const US_NL_EX=["요즘 지쳐서 위로받고 싶어","오싹하고 무서운 이야기","우주와 과학이 궁금해","도서관 운영시간 알려줘","대출 몇 권까지 돼?"];
 let US_MODE='kw';
 let US_LAST_NL=[];
 
@@ -8167,8 +8168,8 @@ let US_CHAT_BUSY=false;
 function usChatReset(){
   const prof=usMyProfile();
   const hi=(prof&&prof.name)
-    ? `안녕하세요, ${prof.name}님 ⭐ 별이예요.${prof.dept?' '+prof.dept+'시죠?':''} 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.`
-    : '안녕하세요, 별이예요 ⭐ 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.';
+    ? `안녕하세요, ${prof.name}님 ⭐ 별이예요.${prof.dept?' '+prof.dept+'시죠?':''} 책 추천부터 도서관 운영시간·대출·시설 안내까지 뭐든 물어보세요.`
+    : '안녕하세요, 별이예요 ⭐ 책 추천부터 도서관 운영시간·대출·시설 안내까지, 뭐든 편하게 물어보세요.';
   US_CHAT=[{role:'assistant', content:hi, chips:US_NL_EX.slice()}];
   US_CHAT_BUSY=false;
   usChatRender();
@@ -8218,7 +8219,8 @@ function usChatRender(){
   const th=box.querySelector('.usc-thread'); if(th){ const k=th.lastElementChild; if(k&&k.scrollIntoView) k.scrollIntoView({block:'nearest'}); }
 }
 
-// 사용자 메시지 전송 → curate chat(의도 파악) → ready면 추천 생성
+// 사용자 메시지 전송 → 별이 두뇌(library-brain)가 의도 라우팅:
+//   info(운영정보)·other(잡담) → 별이가 KB로 바로 답 / books → ready면 추천 생성, 모호하면 되묻기
 async function usChatSend(text){
   text=(text||'').trim();
   if(!text || US_CHAT_BUSY) return;
@@ -8226,19 +8228,20 @@ async function usChatSend(text){
   US_CHAT_BUSY=true; usChatRender();
   try{
     const hist=US_CHAT.filter(m=>!m.kind).map(m=>({role:m.role, content:m.content}));
-    const r=await fetch(US_CURATE_FN,{method:'POST',
+    const r=await fetch(US_BRAIN_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:text, chat:true, messages:hist})});
+      body:JSON.stringify({messages:hist})});
     const d=await r.json();
     US_CHAT_BUSY=false;
-    if(d.ready===false || d.offtopic){   // 더 물어보거나 비도서 거절
-      US_CHAT.push({role:'assistant', content:d.reply||'어떤 책이 필요하세요?', chips:Array.isArray(d.chips)?d.chips:[]});
-      usChatRender();
+    if(d.intent==='books' && d.ready!==false){
+      // 책 의도 확정 → 짧은 확인 후 세명대 실소장 추천 생성
+      US_CHAT.push({role:'assistant', content:d.reply||'좋아요, 골라볼게요 ✨'});
+      await usChatRecommend(d.refinedTopic||text, '');
       return;
     }
-    // 의도 확정 → 짧은 확인 멘트 후 추천 생성
-    US_CHAT.push({role:'assistant', content:d.reply||'좋아요, 골라볼게요 ✨'});
-    await usChatRecommend(d.refinedTopic||text, d.subtitle||'');
+    // 운영정보 답변 / 잡담 안내 / 책 의도지만 모호(되묻기) → 별이 답변 + 빠른답변 칩
+    US_CHAT.push({role:'assistant', content:d.reply||'무엇을 도와드릴까요?', chips:Array.isArray(d.chips)?d.chips:[]});
+    usChatRender();
   }catch(e){
     US_CHAT_BUSY=false;
     US_CHAT.push({role:'assistant', content:'잠시 문제가 생겼어요. 다시 한 번 말씀해 주세요.'});
