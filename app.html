@@ -527,6 +527,10 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .usc-cards{flex:1;min-width:0;}
 .usc-cards-h{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px;}
 .usc-cards-h span{color:var(--text-light);}
+.usc-act{display:block;width:100%;margin-top:8px;padding:8px 10px;border:0;border-radius:9px;background:var(--primary);color:#fff;font-size:12.5px;font-weight:800;text-align:center;cursor:pointer;text-decoration:none;box-sizing:border-box;transition:.14s;}
+.usc-act:hover{opacity:.9;}
+.usc-act.ghost{background:transparent;border:1px solid var(--border);color:var(--text-sub);}
+.usc-act.ghost:hover{border-color:var(--primary);color:var(--primary);}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
 /* 고전 컬렉션 — 한국/해외 권역 헤더 (데스크톱: 상단 네비 드롭다운으로 선택, 여기엔 현재 권역 표시) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
@@ -8129,16 +8133,26 @@ function usChatReset(){
   usChatRender();
 }
 
-// 추천 결과 카드 그리드(클릭 → libDetail 상세 모달; 후보는 LIB_POOL 등재돼 있음)
+// 추천 결과 카드 그리드(클릭 → libDetail 상세; 카드 안에서 바로 읽기/예약 = #1 in-chat 완결)
 function usCardsHTML(results){
   return `<div class="book-grid">`+results.map(b=>{
     const isbn=String(b.isbn||'').replace(/'/g,'');
+    // 인라인 액션: 묻기→읽기를 대화 안에서 한 탭으로(카드 본문 클릭은 상세 모달, 버튼은 stopPropagation)
+    let act='';
+    if(b.smEbook){
+      act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">📖 바로 읽기</button>`;
+    } else if(b.crema===true){
+      act=`<a class="usc-act" href="${esc(cremaHref(b.cremaUrl||'', b.title||''))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">크레마클럽에서 읽기</a>`;
+    } else if(b.smPaper){
+      act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">📕 소장·예약 보기</button>`;
+    }
     return `<div class="book-card" onclick="libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
       <div class="book-info">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
         <div class="book-title">${esc(b.title)}</div>
         <div class="book-author">${esc(b.author||'')}</div>
+        ${act}
       </div></div>`;
   }).join('')+`</div>`;
 }
