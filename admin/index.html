@@ -368,6 +368,7 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-bk .bk-kw .kw-ebook{color:#1f5fa6;background:#e9f2fc}
 #aiCurCard .aic-bk .bk-kw .kw-sub{color:#6b21a8;background:#f6edff}
 #aiCurCard .aic-bk .bk-kw .kw-weak{color:#b45309;background:#fff4e5}
+#aiCurCard .aic-bk .bk-kw .kw-loan{color:#b91c1c;background:#fef2f2}
 #aiCurCard .aic-bk.weak{opacity:.62}
 #aiCurCard .aic-bk.weak.on{opacity:1}
 /* 대화형 */
@@ -1772,6 +1773,7 @@ function aicBuildGrid(){
     if(b.smPaper)bd.push('<span class="kw-paper">종이</span>');
     if(b.smEbook)bd.push('<span class="kw-ebook">전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
     if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
+    if(b.loan)bd.push('<span class="kw-loan">🔥 국중인기 '+Number(b.loan).toLocaleString()+'</span>');   // 국중(정보나루) 대출수 — 검증된 인기도서
     const cv=b.cover?`<img class="cv" src="${esc(b.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv" style="background:linear-gradient(135deg,#7b6ef2,#9b6ef0)"></div>`;
     return `<div class="aic-bk ${on?'on':''}${weak?' weak':''}" onclick="aicToggleBook(${i})"><span class="ck">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
   }).join('');
