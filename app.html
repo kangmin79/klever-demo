@@ -508,6 +508,25 @@ body.dark .bt-tag.bt-fr{background:#332d6b;color:#c4bdf5;}
 body.dark .bt-tag.bt-eb{background:#163d31;color:#8fd9bf;}
 body.dark .bt-tag.bt-pp{background:#3d2f15;color:#e0b878;}
 body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
+/* 대화형 별이(검색 페이지) */
+.usc-thread{display:flex;flex-direction:column;gap:14px;max-width:760px;}
+.usc-row{display:flex;gap:9px;align-items:flex-end;}
+.usc-row.user{justify-content:flex-end;}
+.usc-av{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fde68a,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 8px rgba(245,158,11,.3);}
+.usc-bubble{max-width:78%;padding:11px 15px;border-radius:16px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.usc-row.user .usc-bubble{background:var(--primary);color:#fff;border-bottom-right-radius:5px;}
+.usc-row.star .usc-bubble{background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:5px;}
+.usc-bubble.usc-sub{font-size:13px;color:var(--text-sub);background:transparent;border:0;padding:2px 0 4px;max-width:100%;}
+.usc-typing{display:inline-flex;gap:5px;padding:14px 16px;}
+.usc-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-light);animation:uscbk 1s infinite ease-in-out;}
+.usc-typing span:nth-child(2){animation-delay:.15s;}.usc-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes uscbk{0%,80%,100%{opacity:.25;transform:translateY(0);}40%{opacity:1;transform:translateY(-4px);}}
+.usc-chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 2px 37px;}
+.usc-chip{font-size:12.5px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.14s;}
+.usc-chip:hover{border-color:var(--primary);color:var(--primary);}
+.usc-cards{flex:1;min-width:0;}
+.usc-cards-h{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.usc-cards-h span{color:var(--text-light);}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
 /* 고전 컬렉션 — 한국/해외 권역 헤더 (데스크톱: 상단 네비 드롭다운으로 선택, 여기엔 현재 권역 표시) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
@@ -8002,14 +8021,14 @@ function setSearchMode(m){
     ? "별이에게 말하듯 물어보세요 — 예: 요즘 지쳐서 위로받고 싶어"
     : "책 제목·저자·키워드를 입력하세요";
   const chips=document.getElementById('usChips');
-  if(m==='nl'){
-    chips.style.display='flex';
-    chips.innerHTML=US_NL_EX.map(e=>`<span class="air-chip" style="cursor:pointer;background:var(--bg-input);border:1px solid var(--border);border-radius:16px;padding:5px 12px;font-size:12px;" onclick="document.getElementById('usSearchInput').value='${e}';onUnifiedSearch(true)">${esc(e)}</span>`).join('');
-  } else {
-    chips.style.display='none';
-  }
+  chips.style.display='none';   // 예시칩은 대화 스레드 안(별이 인사)에 표시
   document.getElementById('usResults').innerHTML='';
-  if(inp.value.trim() && m==='kw') onUnifiedSearch(false);
+  if(m==='nl'){
+    inp.placeholder="별이에게 말하듯 답해보세요";
+    usChatReset();              // 대화형 별이 시작(인사 + 예시 빠른답변)
+  } else if(inp.value.trim()){
+    onUnifiedSearch(false);
+  }
 }
 
 // 검색 결과 카드 (고전 = openDetail / 도서관 = libDetail)
@@ -8039,8 +8058,9 @@ function onUnifiedSearch(submit){
   const box=document.getElementById('usResults');
   const q=(inp.value||'').trim();
   if(US_MODE==='nl'){
-    if(!submit) return;          // 자연어는 엔터/버튼/칩에서만 실행(타이핑마다 호출 X)
-    return usNaturalSearch(q);
+    if(!submit) return;          // 대화형은 엔터/보내기에서만 실행(타이핑마다 호출 X)
+    inp.value='';
+    return usChatSend(q);
   }
   // 키워드 모드 — 즉시 로컬 검색
   if(!q){ box.innerHTML=''; return; }
@@ -8097,43 +8117,106 @@ function usFormBadges(c){
   return out.join(' ');
 }
 
-async function usNaturalSearch(q){
+/* ── 대화형 별이 ── 사서 빌더와 같은 curate chat 모드 재사용(의도 수렴).
+   철학: 턴 제한 없음, 기본은 바로 추천(ready=true). 정말 모호할 때만 질문 1개 + 빠른답변 칩.
+   메시지 종류: {role,content} 일반 / {role:'assistant',kind:'cards',cards,subtitle} 추천결과 / chips 첨부 */
+let US_CHAT=[];
+let US_CHAT_BUSY=false;
+
+function usChatReset(){
+  US_CHAT=[{role:'assistant', content:'안녕하세요, 별이예요 ⭐ 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.', chips:US_NL_EX.slice()}];
+  US_CHAT_BUSY=false;
+  usChatRender();
+}
+
+// 추천 결과 카드 그리드(클릭 → libDetail 상세 모달; 후보는 LIB_POOL 등재돼 있음)
+function usCardsHTML(results){
+  return `<div class="book-grid">`+results.map(b=>{
+    const isbn=String(b.isbn||'').replace(/'/g,'');
+    return `<div class="book-card" onclick="libDetail('${esc(isbn)}')">
+      <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
+      <div class="book-info">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
+        <div class="book-title">${esc(b.title)}</div>
+        <div class="book-author">${esc(b.author||'')}</div>
+      </div></div>`;
+  }).join('')+`</div>`;
+}
+
+function usChatRender(){
   const box=document.getElementById('usResults');
-  if(!q){ box.innerHTML=''; return; }
-  box.innerHTML='<div style="padding:48px;text-align:center;color:var(--text-light);">⭐ 별이가 우리 도서관에서 책을 고르는 중…</div>';
+  if(!box) return;
+  const rows=US_CHAT.map(m=>{
+    if(m.kind==='cards'){
+      const sub=m.subtitle?`<div class="usc-bubble usc-sub">${esc(m.subtitle)}</div>`:'';
+      return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-cards"><div class="usc-cards-h">⭐ 별이의 추천 <span>${m.cards.length}</span></div>${sub}${usCardsHTML(m.cards)}</div></div>`;
+    }
+    if(m.role==='user') return `<div class="usc-row user"><div class="usc-bubble">${esc(m.content)}</div></div>`;
+    return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-bubble">${esc(m.content)}</div></div>`;
+  }).join('');
+  const typing=US_CHAT_BUSY?`<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-bubble usc-typing"><span></span><span></span><span></span></div></div>`:'';
+  const last=US_CHAT[US_CHAT.length-1];
+  const chips=(!US_CHAT_BUSY && last && last.role==='assistant' && Array.isArray(last.chips) && last.chips.length)
+    ? `<div class="usc-chips">${last.chips.map(c=>`<span class="usc-chip" onclick="usChatSend(${JSON.stringify(String(c)).replace(/"/g,'&quot;')})">${esc(c)}</span>`).join('')}</div>` : '';
+  box.innerHTML=`<div class="usc-thread">${rows}${typing}${chips}</div>`;
+  const th=box.querySelector('.usc-thread'); if(th){ const k=th.lastElementChild; if(k&&k.scrollIntoView) k.scrollIntoView({block:'nearest'}); }
+}
+
+// 사용자 메시지 전송 → curate chat(의도 파악) → ready면 추천 생성
+async function usChatSend(text){
+  text=(text||'').trim();
+  if(!text || US_CHAT_BUSY) return;
+  US_CHAT.push({role:'user', content:text});
+  US_CHAT_BUSY=true; usChatRender();
   try{
-    // 사서 큐레이션과 같은 코어(curate) 재사용: 세명대 실소장 의미검색 + 리랭킹 + 오프토픽 게이트 + 국중 인기 + 크레마
+    const hist=US_CHAT.filter(m=>!m.kind).map(m=>({role:m.role, content:m.content}));
     const r=await fetch(US_CURATE_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:q, onlyHeld:true, rerank:true, count:12})});
+      body:JSON.stringify({query:text, chat:true, messages:hist})});
     const d=await r.json();
-    if(d.offtopic){
-      box.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text-light);line-height:1.6;">${esc(d.message||'책 주제를 적어주세요. 예: \'시험 스트레스에 지친 마음\', \'여름에 읽는 추리소설\'')}</div>`;
+    US_CHAT_BUSY=false;
+    if(d.ready===false || d.offtopic){   // 더 물어보거나 비도서 거절
+      US_CHAT.push({role:'assistant', content:d.reply||'어떤 책이 필요하세요?', chips:Array.isArray(d.chips)?d.chips:[]});
+      usChatRender();
       return;
     }
-    const results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title); US_LAST_NL=results;
-    if(!results.length){
-      box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해보세요.</div>';
-      return;
-    }
-    results.forEach(curateToLibBook);   // 상세 모달·대출이 isbn으로 찾도록 풀 등재
-    const intro=d.subtitle?`<div style="font-size:14px;color:var(--text);margin-bottom:6px;line-height:1.5;">${esc(d.subtitle)}</div>`:'';
-    const cards=results.map((b,i)=>{
-      return `<div class="book-card" onclick="usOpenNL(${i})">
-        <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${esc(b.title)}</div>`}</div>
-        <div class="book-info">
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
-          <div class="book-title">${esc(b.title)}</div>
-          <div class="book-author">${esc(b.author||'')}</div>
-        </div></div>`;
-    }).join('');
-    box.innerHTML=`${intro}<div class="us-section-label" style="margin-top:10px;">⭐ 별이의 추천 <span style="color:var(--text-light);font-weight:600;">${results.length}</span></div><div class="book-grid">${cards}</div>`;
+    // 의도 확정 → 짧은 확인 멘트 후 추천 생성
+    US_CHAT.push({role:'assistant', content:d.reply||'좋아요, 골라볼게요 ✨'});
+    await usChatRecommend(d.refinedTopic||text, d.subtitle||'');
   }catch(e){
-    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">잠시 문제가 생겼어요. 다시 시도해 주세요.</div>';
+    US_CHAT_BUSY=false;
+    US_CHAT.push({role:'assistant', content:'잠시 문제가 생겼어요. 다시 한 번 말씀해 주세요.'});
+    usChatRender();
   }
 }
-// 별이 추천 카드 클릭 → 줄거리·형태·읽기 경로를 담은 상세 모달(libDetail). 바로 뷰어 직행 대신 한 단계 정보 노출.
-function usOpenNL(i){ const b=US_LAST_NL[i]; if(b && b.isbn) libDetail(b.isbn); }
+
+// 확정된 주제로 세명대 실소장 추천 생성(무거운 호출) → 카드 메시지로 스레드에 추가
+async function usChatRecommend(topic, subtitleHint){
+  US_CHAT_BUSY=true; usChatRender();
+  try{
+    const r=await fetch(US_CURATE_FN,{method:'POST',
+      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({query:topic, onlyHeld:true, rerank:true, count:12})});
+    const d=await r.json();
+    US_CHAT_BUSY=false;
+    if(d.offtopic){
+      US_CHAT.push({role:'assistant', content:d.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
+      usChatRender(); return;
+    }
+    const results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
+    if(!results.length){
+      US_CHAT.push({role:'assistant', content:'아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
+      usChatRender(); return;
+    }
+    results.forEach(curateToLibBook);   // 상세·대출이 isbn으로 찾도록 풀 등재
+    US_CHAT.push({role:'assistant', kind:'cards', cards:results, subtitle:d.subtitle||subtitleHint||''});
+    usChatRender();
+  }catch(e){
+    US_CHAT_BUSY=false;
+    US_CHAT.push({role:'assistant', content:'책을 고르다 문제가 생겼어요. 다시 시도해 주세요.'});
+    usChatRender();
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════
    피드 (Ver03) — 모든 학생의 한 줄 소감 광장 (bookstar_challenge_results)
