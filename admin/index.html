@@ -1797,8 +1797,9 @@ function aicCount(b,n){ document.querySelectorAll('#aicSeg button').forEach(x=>x
 function aicUpdateCount(){ const c=el('aicCnt'); if(c)c.textContent=AIC_PICKED.size+'권'; }
 function aicBuildGrid(){
   const g=el('aicGrid'); if(!g)return;
-  g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const weak=(b.rel===2); const bd=[];
-    if(weak)bd.push('<span class="kw-weak">⚠ 관련도 보통</span>');   // 리랭킹 rel=2(주제권이나 약함) — 빼는 걸 권장
+  g.innerHTML=AIC_RESULTS.map((b,i)=>{ const on=AIC_PICKED.has(i); const weak=(b.rel===1||b.rel===2); const bd=[];
+    if(b.rel===2)bd.push('<span class="kw-weak">⚠ 관련도 보통</span>');        // 주제권이나 약함
+    else if(b.rel===1)bd.push('<span class="kw-weak">⚠ 관련도 낮음</span>');   // 약간만 관련 — 확인 후 담기
     if(b.smPaper)bd.push('<span class="kw-paper">종이</span>');
     if(b.smEbook)bd.push('<span class="kw-ebook">전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
     if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
@@ -1845,8 +1846,8 @@ async function aicRunGenerate(topic,isRe){
   const baseIdx=strongIdx.length?strongIdx:AIC_RESULTS.map((_,i)=>i);
   AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
-  const weakN=AIC_RESULTS.filter(b=>b.rel===2).length;
-  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 관련도 높은 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련도 보통 ${weakN}권</span>은 빼는 걸 권해요`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
+  const weakN=AIC_RESULTS.filter(b=>b.rel===1||b.rel===2).length;
+  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 관련도 높은 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련도 보통·낮음 ${weakN}권</span>은 확인 후 담으세요`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
@@ -1858,6 +1859,7 @@ function aicShowChips2(items){ const q=el('aicQchips'); if(!q)return; q.innerHTM
 function aicShowDetail(i){ const b=AIC_RESULTS[i]; if(!b)return; AIC_DT_I=i;
   const tags=[];
   if(b.rel===2)tags.push('<span class="kw-weak">⚠ 관련도 보통</span>');
+  else if(b.rel===1)tags.push('<span class="kw-weak">⚠ 관련도 낮음</span>');
   if(b.smEbook)tags.push('<span class="kw-ebook">전자책</span>');
   if(b.smPaper)tags.push('<span class="kw-paper">종이책</span>');
   if(b.crema)tags.push('<span class="kw-sub">구독</span>');
