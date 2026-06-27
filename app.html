@@ -4990,7 +4990,7 @@ function libDetail(isbn){
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
-    ${desc?`<p class="lcd-desc">${esc(desc)}</p>`:''}
+    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${esc(desc)}</p>
     ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">우리 도서관 소장 현황을 확인하고 있어요…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
@@ -5034,6 +5034,18 @@ function libDetail(isbn){
   ov.classList.add('on');
   if(isPaperHold) loadHolding(reckey);
   renderDetailReviews(b.isbn, cleanT(b.t));
+  // 줄거리 lazy 로드 — 리스트 피드가 description을 안 싣고 와도 semyung_books에서 채움(전자책 brcd/isbn13). 종이책(CATTOT) 제외.
+  if(!desc && b._sm && reckey && !/^CATTOT/.test(reckey)) loadDesc(reckey);
+}
+// 모달 줄거리 보강: semyung_books에서 brcd 또는 isbn13으로 description 조회 → #lcdDesc 채움.
+async function loadDesc(key){
+  try{
+    const r=await fetch(`${SB_REST}/semyung_books?or=(brcd.eq.${encodeURIComponent(key)},isbn13.eq.${encodeURIComponent(key)})&select=description&limit=1`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
+    if(!d||!d.description) return;
+    const el=document.getElementById('lcdDesc'); if(el){ el.textContent=d.description; el.style.display=''; }
+  }catch(e){}
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
