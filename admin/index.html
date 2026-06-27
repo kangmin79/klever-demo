@@ -1751,7 +1751,7 @@ async function aicGenerate(isRe){
   const started=Date.now(); let j=null, err=null;
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:q, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', count:(AIC_COUNT||8)+6})});
+      body:JSON.stringify({query:q, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6})});
     j=await r.json(); if(j&&j.error)err=j.error;
   }catch(e){ err=String(e); }
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
