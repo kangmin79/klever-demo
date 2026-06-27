@@ -4826,7 +4826,7 @@ async function renderAreaCuration(containerId, area){
   const secs=await loadAreaSections(area);
   if(!secs.length){ grid.innerHTML=''; return; }
   // 담긴 책을 풀에 병합(표지·별점 보강)
-  secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
+  secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push(Object.assign({},b,{t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''})); }));   // 형태 필드 보존
   grid.innerHTML=millieHTML(secs, isClassicsArea(area));
   try{ mlBindDrag(); }catch(e){}
   try{ backfillPool(); }catch(e){}
@@ -4834,7 +4834,7 @@ async function renderAreaCuration(containerId, area){
 function rebuildLibPool(){
   const seen=new Set(); LIB_POOL=[];
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
-  SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); const sm=b._sm||(b.isbn||'').startsWith('sm-'); LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:sm||undefined}); } }));
+  SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); const sm=b._sm||(b.isbn||'').startsWith('sm-'); LIB_POOL.push(Object.assign({},b,{t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:sm||undefined})); } }));   // 형태 필드(tags·_pp·crema·cremaUrl) 보존 위해 전체 복사
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
   if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
   SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설(폴백)
@@ -4997,16 +4997,24 @@ function libDetail(isbn){
         const tags=b.tags||null;
         // 신착(semyung_new)은 tags로 형태 확정 — 종이책에 '전자책 읽기' 오표기 방지
         if(tags){
-          const hasEb=tags.includes('ebook'), hasPaper=tags.includes('paper');
+          const hasEb=tags.includes('ebook'), hasPaper=tags.includes('paper'), hasSub=tags.includes('sub');
+          const cremaUrl=b.cremaUrl||(en&&en.cremaUrl)||'';
           const primary = hasEb
             ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>
                <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 전자책 · 북스타 안에서 바로 시작</div>`
             : isPaperHold
             ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
-            : `<a class="lcd-btn primary" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="bic">${SVG_PAPER}</span>종이책 대출하기<span class="ar">›</span></a>
-               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 종이책 · 세명대 통합검색으로 연결</div>`;
+            : hasPaper
+            ? `<a class="lcd-btn primary" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="bic">${SVG_PAPER}</span>종이책 대출하기<span class="ar">›</span></a>
+               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 종이책 · 세명대 통합검색으로 연결</div>`
+            : hasSub
+            ? `<a class="lcd-btn primary" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="bic">${SVG_SUB}</span>크레마클럽에서 읽기<span class="ar">›</span></a>
+               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">구독 전자책 · 크레마클럽 무제한</div>`
+            : '';
           const otherPaper=(hasEb&&hasPaper) ? `<a class="lcd-way t-paper ok" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">소장</span><span class="ar">›</span></a>` : '';
-          return primary + (otherPaper?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${otherPaper}</div>`:'');
+          const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
+          const ways=otherPaper+cremaWay;
+          return primary + (ways?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${ways}</div>`:'');
         }
         return (b.lib
         ? `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')"><span class="bic">${SVG_EBOOK}</span>전자책 바로 읽기<span class="ar">›</span></div>

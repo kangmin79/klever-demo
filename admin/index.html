@@ -1690,6 +1690,16 @@ function aiCurBanner(){
     <button class="acb-btn" onclick="secMakeAICuration()">이 큐레이션으로 만들기 →</button>
   </div>`;
 }
+// 후보(검색결과)의 소장형태 → 저장 책 객체에 박을 형태필드(tags + 링크). 학생앱 fmtTags/모달이 그대로 사용.
+function bkForm(b){
+  const o={}, tags=[];
+  const ebUrl=b.lib||b.smEbookUrl||'';
+  if(b._sm||b.smEbook||ebUrl){ tags.push('ebook'); if(ebUrl)o.lib=ebUrl; }
+  if(b.smPaper){ tags.push('paper'); if(b.smPaperUrl)o._pp=b.smPaperUrl; if(b.smPaperStatus)o.paperStatus=b.smPaperStatus; }
+  if(b.crema){ tags.push('sub'); o.crema=true; if(b.cremaUrl)o.cremaUrl=b.cremaUrl; }
+  if(tags.length)o.tags=tags;
+  return o;
+}
 function secMakeAICuration(){
   if(!_aiCur) return;
   const o=pkObj(); if(!o) return;
@@ -1702,8 +1712,8 @@ function secMakeAICuration(){
   o.books=o.books||[]; const have=new Set(o.books.map(b=>b.isbn||b.id).filter(Boolean)); let added=0;
   for(const b of SCAND){ if(added>=8) break; const key=b.isbn||b.id; if(key&&have.has(key)) continue;
     if(b.cls||b.id){ o.books.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''}); }
-    else if(b._sm){ o.books.push({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''}); }
-    else{ o.books.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held}); if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);} }
+    else if(b._sm){ o.books.push(Object.assign({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''},bkForm(b))); }
+    else{ o.books.push(Object.assign({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held},bkForm(b))); if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);} }
     if(key) have.add(key); added++;
   }
   toast(`✨ AI 큐레이션 완성 — 책 ${added}권 담았어요. 미리보기를 확인하세요`);
@@ -1774,8 +1784,7 @@ function aicAddSection(){
   const subtitle=(el('aicSub').value||'').trim();
   const books=picks.map(b=>{ const o={isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:''};
     if(b.smEbook&&b.smEbookUrl){o._sm=true;o.lib=b.smEbookUrl;}
-    if(b.crema){o.crema=true;o.cremaUrl=b.cremaUrl||'';}   // 크레마클럽 구독 — 저장 보존(학생 노출 시 활용)
-    return o; });
+    return Object.assign(o, bkForm(b)); });   // tags(전자/종이/구독) + 링크 일괄 저장
   // 고정 칸들 뒤에 새 큐레이션 칸 삽입(현재 영역)
   const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
   const lastFixed=[...idxs].reverse().find(i=>isFixed(SECTIONS[i]));
@@ -1800,8 +1809,8 @@ function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(b.id&&x.id===b.id)||(x.title===b.t));
   if(idx>=0)arr.splice(idx,1);
   else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''});}   // 북스타 고전 참조
-  else if(b._sm){arr.push({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''});}   // 세명대 전자책(lib=상세 딥링크)
-  else{arr.push({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held});if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);}}   // 미소장(국중)은 소장목록에 넣지 않음
+  else if(b._sm){arr.push(Object.assign({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''},bkForm(b)));}   // 세명대 전자책(lib=상세 딥링크) + 형태태그
+  else{arr.push(Object.assign({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held},bkForm(b)));if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);}}   // 국중책도 세명대 소장형태(전자/종이) 있으면 태그 저장
   secRenderCands(scHead);secNote();
 }
 
