@@ -531,6 +531,7 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .usc-act:hover{opacity:.9;}
 .usc-act.ghost{background:transparent;border:1px solid var(--border);color:var(--text-sub);}
 .usc-act.ghost:hover{border-color:var(--primary);color:var(--primary);}
+.usc-pnote{font-size:12px;color:var(--primary);font-weight:700;margin:-4px 0 10px;}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
 /* 고전 컬렉션 — 한국/해외 권역 헤더 (데스크톱: 상단 네비 드롭다운으로 선택, 여기엔 현재 권역 표시) */
 .cl-locale-head{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.6px;margin:6px 0 18px;display:flex;align-items:center;gap:10px;}
@@ -4694,8 +4695,11 @@ const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const BX_SB = SB_REST;
 const BX_H = {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON, 'content-type':'application/json'};
 const BX_STUDENTS = [
-  {id:'s1',name:'김민준',emoji:'📘'},{id:'s2',name:'이서연',emoji:'🌷'},
-  {id:'s3',name:'박도윤',emoji:'⚽'},{id:'s4',name:'최지우',emoji:'🎨'},{id:'s5',name:'정하준',emoji:'🚀'}
+  {id:'s1',name:'김민준',emoji:'📘',dept:'기계공학과',interests:['로봇','공학','과학']},
+  {id:'s2',name:'이서연',emoji:'🌷',dept:'심리학과',interests:['심리','마음','에세이']},
+  {id:'s3',name:'박도윤',emoji:'⚽',dept:'스포츠과학과',interests:['운동','건강','자기계발']},
+  {id:'s4',name:'최지우',emoji:'🎨',dept:'시각디자인학과',interests:['예술','디자인','창작']},
+  {id:'s5',name:'정하준',emoji:'🚀',dept:'항공우주공학과',interests:['우주','물리','미래']}
 ];
 function bxStudent(){ try{ return JSON.parse(localStorage.getItem('bookstar-current-student')||'null'); }catch(e){ return null; } }
 function bxSetStudent(s){ try{ localStorage.setItem('bookstar-current-student', JSON.stringify(s)); }catch(e){} }
@@ -8121,6 +8125,39 @@ function usFormBadges(c){
   return out.join(' ');
 }
 
+/* ── 개인화 레이어(#2) ── 북스타가 소유한 신호만 사용(학과·관심분야·내가 읽은 책).
+   추천 엔진(curate)은 범용 유지하고, 개인화는 클라이언트에서 얹는다.
+   ⚠️세명대 ILS 실제 대출이력은 계정 1개(데모한정)라 접근 불가 → 북스타 자체 활동으로 대체. */
+function usMyProfile(){
+  const s=(typeof bxStudent==='function')?bxStudent():null; if(!s) return null;
+  const base=(typeof BX_STUDENTS!=='undefined'?BX_STUDENTS.find(x=>x.id===s.id):null)||{};   // 기존 로그인 객체에 dept 없을 수 있어 마스터에서 보강
+  let extra={}; try{ extra=JSON.parse(localStorage.getItem('bookstar-interests-'+(s.id||''))||'{}')||{}; }catch(e){}
+  const dept=extra.dept||s.dept||base.dept||'';
+  const interests=(Array.isArray(extra.interests)&&extra.interests.length)?extra.interests:((s.interests||base.interests)||[]);
+  const done=(typeof _doneBooks==='function')?_doneBooks():[];
+  const reading=(typeof _readingBooks==='function')?_readingBooks().map(x=>x.b):[];
+  const all=reading.concat(done);
+  const norm=t=>String(t||'').replace(/\s+/g,'').toLowerCase();
+  const readTitles=[...new Set(all.map(b=>b&&b.title).filter(Boolean))];
+  const prof={name:s.name||'', dept, interests, readTitles, readNorm:readTitles.map(norm)};
+  if(!dept && !interests.length && !readTitles.length) return null;   // 신호 없으면 개인화 생략
+  return prof;
+}
+// ①이미 읽은 책 제외 ②관심·전공 키워드 매칭 책을 위로(동점 보정 — 주제적합도는 서버 리랭킹이 이미 보장)
+function usPersonalize(results, prof){
+  if(!prof) return {list:results, used:false, excluded:0};
+  const norm=t=>String(t||'').replace(/\s+/g,'').toLowerCase();
+  const kws=[...(prof.interests||[]), ...(prof.dept?[prof.dept.replace(/(학부|전공|과)$/,'')]:[])]
+    .map(k=>String(k||'').trim()).filter(k=>k.length>=2);
+  const before=results.length;
+  let list=results.filter(b=>!prof.readNorm.includes(norm(b.title)));
+  const excluded=before-list.length;
+  const hit=b=>{ const hay=((b.title||'')+' '+(b.author||'')+' '+(b.kdc||'')).toLowerCase(); return kws.filter(k=>hay.includes(k.toLowerCase())).length; };
+  const matched=list.filter(b=>hit(b)>0).length;
+  list=list.map((b,i)=>({b,h:hit(b),i})).sort((x,y)=>y.h-x.h||x.i-y.i).map(x=>x.b);   // 안정 정렬(매칭 없으면 원순서 유지)
+  return {list, used:(excluded>0 || matched>0), excluded, matched};   // 실제 변화가 있을 때만 used
+}
+
 /* ── 대화형 별이 ── 사서 빌더와 같은 curate chat 모드 재사용(의도 수렴).
    철학: 턴 제한 없음, 기본은 바로 추천(ready=true). 정말 모호할 때만 질문 1개 + 빠른답변 칩.
    메시지 종류: {role,content} 일반 / {role:'assistant',kind:'cards',cards,subtitle} 추천결과 / chips 첨부 */
@@ -8128,7 +8165,11 @@ let US_CHAT=[];
 let US_CHAT_BUSY=false;
 
 function usChatReset(){
-  US_CHAT=[{role:'assistant', content:'안녕하세요, 별이예요 ⭐ 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.', chips:US_NL_EX.slice()}];
+  const prof=usMyProfile();
+  const hi=(prof&&prof.name)
+    ? `안녕하세요, ${prof.name}님 ⭐ 별이예요.${prof.dept?' '+prof.dept+'시죠?':''} 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.`
+    : '안녕하세요, 별이예요 ⭐ 어떤 책이 필요하세요? 기분·상황·주제 뭐든 편하게 말씀해 주세요.';
+  US_CHAT=[{role:'assistant', content:hi, chips:US_NL_EX.slice()}];
   US_CHAT_BUSY=false;
   usChatRender();
 }
@@ -8163,7 +8204,8 @@ function usChatRender(){
   const rows=US_CHAT.map(m=>{
     if(m.kind==='cards'){
       const sub=m.subtitle?`<div class="usc-bubble usc-sub">${esc(m.subtitle)}</div>`:'';
-      return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-cards"><div class="usc-cards-h">⭐ 별이의 추천 <span>${m.cards.length}</span></div>${sub}${usCardsHTML(m.cards)}</div></div>`;
+      const note=m.note?`<div class="usc-pnote">✨ ${esc(m.note)}</div>`:'';
+      return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-cards"><div class="usc-cards-h">⭐ 별이의 추천 <span>${m.cards.length}</span></div>${note}${sub}${usCardsHTML(m.cards)}</div></div>`;
     }
     if(m.role==='user') return `<div class="usc-row user"><div class="usc-bubble">${esc(m.content)}</div></div>`;
     return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-bubble">${esc(m.content)}</div></div>`;
@@ -8217,13 +8259,20 @@ async function usChatRecommend(topic, subtitleHint){
       US_CHAT.push({role:'assistant', content:d.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
       usChatRender(); return;
     }
-    const results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
+    let results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
     if(!results.length){
       US_CHAT.push({role:'assistant', content:'아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
       usChatRender(); return;
     }
+    // 개인화(#2): 이미 읽은 책 제외 + 관심·전공 매칭 위로
+    const prof=usMyProfile();
+    const pz=usPersonalize(results, prof);
+    if(pz.list.length) results=pz.list;   // 개인화로 0이 되면 원본 유지(안전)
+    const note=(prof && pz.used && (prof.dept||prof.interests.length))
+      ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
+      : '';
     results.forEach(curateToLibBook);   // 상세·대출이 isbn으로 찾도록 풀 등재
-    US_CHAT.push({role:'assistant', kind:'cards', cards:results, subtitle:d.subtitle||subtitleHint||''});
+    US_CHAT.push({role:'assistant', kind:'cards', cards:results, subtitle:d.subtitle||subtitleHint||'', note});
     usChatRender();
   }catch(e){
     US_CHAT_BUSY=false;
