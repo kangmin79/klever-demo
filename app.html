@@ -4445,12 +4445,12 @@ async function _smNewTable(){
 // 우리 학교 대출 랭킹 = 종이책 실대출(OPAC popularloanList, 최근1년, 대출횟수 있음). scripts/build_semyung_loan_rank.py 갱신.
 async function _smLoanRank(){
   try{
-    const r=await fetch(`${SB_REST}/semyung_loan_rank?select=rank,title,author,publisher,pub_year,loan_count,cover,detail,brcd,prev_rank&order=rank&limit=20`,
+    const r=await fetch(`${SB_REST}/semyung_loan_rank?select=rank,title,author,publisher,pub_year,loan_count,cover,detail,brcd,prev_rank,description&order=rank&limit=20`,
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return null;
     const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
     return rows.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
-      lib:b.detail||'',_sm:true,rank:b.rank,loan:b.loan_count,prevRank:(b.prev_rank==null?null:b.prev_rank),pubYear:b.pub_year||'',tags:['paper']}));
+      lib:b.detail||'',_sm:true,rank:b.rank,loan:b.loan_count,prevRank:(b.prev_rank==null?null:b.prev_rank),pubYear:b.pub_year||'',description:b.description||'',tags:['paper']}));
   }catch(e){ return null; }
 }
 // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) — scripts/enrich_semyung.mjs가 빌드. 모달에서 brcd로 조회.
@@ -5026,7 +5026,7 @@ function libDetail(isbn){
       const tags=b.tags||null;
       if(tags){
         const fmt = tags.includes('ebook') ? '전자도서관 소장' : '소장(종이책)';
-        return '출처 · 세명대학교 학술정보원 '+fmt+(tags.includes('paper')&&!tags.includes('ebook')?' · 표지 알라딘':'');
+        return '출처 · 세명대학교 학술정보원 '+fmt+(tags.includes('paper')&&!tags.includes('ebook')?(desc?' · 표지·줄거리 알라딘':' · 표지 알라딘'):'');
       }
       return b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)';
     })()}</div>
