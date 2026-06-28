@@ -8260,6 +8260,7 @@ async function usChatSend(text){
     }
     // 운영정보 답변 / 잡담 안내 / 책 의도지만 모호(되묻기) → 별이 답변 + (운영정보면)도서관 링크 + 빠른답변 칩
     US_CHAT.push({role:'assistant', content:d.reply||'무엇을 도와드릴까요?', chips:Array.isArray(d.chips)?d.chips:[], link:d.link||'', linkLabel:d.linkLabel||''});
+    byeoliLog({surface:'main',query:text,intent:d.intent||'',ready:d.ready,refined_topic:d.refinedTopic||'',kb_link:d.link||''});
     usChatRender();
   }catch(e){
     US_CHAT_BUSY=false;
@@ -8296,7 +8297,7 @@ async function usChatRecommend(topic, subtitleHint){
   US_CHAT_BUSY=true; usChatRender();
   try{
     // 통합 책검색(전자책 curate + 종이/논문 find + 하이브리드 키워드) — 플로팅 위젯과 동일 엔진
-    const fr=await byeoliFindBooks(topic);
+    const fr=await byeoliFindBooks(topic, 'main');
     US_CHAT_BUSY=false;
     if(fr.offtopic){
       US_CHAT.push({role:'assistant', content:fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
@@ -8319,7 +8320,15 @@ async function usChatRecommend(topic, subtitleHint){
 // curate(세명대 전자책 23,727 의미검색·리랭킹) + semyung-find(종이책/논문/비도서 85,609) 병렬 병합
 // → 제목 dedup → 개인화(읽은책 제외·관심 위로) → LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음).
 // 반환 {offtopic, message?, results, subtitle}. results는 curate 후보 형태(usFormBadges/libDetail 호환).
-async function byeoliFindBooks(topic){
+// 별이 질의 로그(fire-and-forget) — 약한/실패 질의 수집·분석용(byeoli_query_logs). 실패해도 UX 무영향.
+function byeoliLog(o){
+  try{
+    fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/byeoli_query_logs',{method:'POST',
+      headers:{apikey:COVER_ANON,'Authorization':'Bearer '+COVER_ANON,'content-type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(o)}).catch(()=>{});
+  }catch(e){}
+}
+async function byeoliFindBooks(topic, surface){
   const [r, rf, rk]=await Promise.all([
     fetch(US_CURATE_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
@@ -8333,7 +8342,7 @@ async function byeoliFindBooks(topic){
       body:JSON.stringify({q:topic, lim:6})}).then(x=>x.json()).catch(()=>[]),
   ]);
   const d=await r.json();
-  if(d.offtopic) return {offtopic:true, message:d.message||'', results:[]};
+  if(d.offtopic){ byeoliLog({surface:surface||'',query:topic,intent:'books',offtopic:true,result_count:0}); return {offtopic:true, message:d.message||'', results:[]}; }
   let curCands=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
   let catCands=[];
   try{ const df=rf?await rf.json():null; catCands=((df&&df.candidates)||[]).map(findToCand); }catch(e){}
@@ -8351,6 +8360,7 @@ async function byeoliFindBooks(topic){
     ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
     : '';
   results.forEach(curateToLibBook);
+  byeoliLog({surface:surface||'',query:topic,intent:'books',ready:true,refined_topic:topic,result_count:results.length,top_titles:results.slice(0,3).map(b=>b.title||'')});
   return {offtopic:false, results, subtitle:d.subtitle||'', note};
 }
 
@@ -8814,7 +8824,7 @@ window.addEventListener('keydown', (e) => {
     busy=true; el('hwcSend').disabled=true;
     addUser(f.label.replace('🔄 ','')); typing(true);
     try{
-      const fr=await byeoliFindBooks((lastTopic+f.mod).trim()); typing(false);
+      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float'); typing(false);
       if(fr.offtopic){ addBot(fr.message||'다른 주제로 찾아볼까요?'); }
       else { const n=hwcAddBooks(fr.results); if(!n) addBot('이 주제로는 더 보여드릴 책이 없네요. 다른 걸로 찾아볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 다시 시도해 주세요.'); }
@@ -8858,6 +8868,7 @@ window.addEventListener('keydown', (e) => {
           const reply=bd.reply||'무엇을 도와드릴까요?';
           addBotRich(reply, bd.link, bd.linkLabel, bd.chips);
           msgs.push({role:'assistant',content:reply});
+          byeoliLog({surface:'float',query:text,intent:bd.intent||'',ready:bd.ready,refined_topic:bd.refinedTopic||'',kb_link:bd.link||''});
           busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
           return;
         }
@@ -8865,7 +8876,7 @@ window.addEventListener('keydown', (e) => {
       }catch(e){ /* 두뇌 실패 → 원문 질의로 검색 */ }
       // 2) 책 추천 — 메인 별이와 동일 엔진(세명대 실소장 11만: curate 전자책 + semyung-find 종이/논문)
       lastTopic = refined || text;
-      const fr = await byeoliFindBooks(lastTopic);
+      const fr = await byeoliFindBooks(lastTopic, 'float');
       typing(false);
       if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
       else { const n=hwcAddBooks(fr.results, fr.subtitle); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
