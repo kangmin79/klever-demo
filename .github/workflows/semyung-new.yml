@@ -15,6 +15,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: 전자책 신착 (전자도서관 6개월)
         env:
           SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
@@ -24,8 +27,19 @@ jobs:
           SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
           ALADIN_TTBKEY: ${{ secrets.ALADIN_TTBKEY }}
         run: python scripts/build_semyung_new_paper.py
+      # 빌드가 summary를 리셋하므로 같은 런에서 줄거리 재보강(멱등). 국중은 IP등록제→CI는 알라딘만(국중 전용 잔여는 PC에서 보충).
+      - name: 종이책 신착 줄거리 보강 (알라딘)
+        env:
+          SUPABASE_PAT: ${{ secrets.SUPABASE_PAT }}
+          ALADIN_TTBKEY: ${{ secrets.ALADIN_TTBKEY }}
+        run: node scripts/desc_semyung_new_paper.mjs
       - name: 종이책 대출 랭킹 (OPAC 인기대출 1년)
         env:
           SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
           ALADIN_TTBKEY: ${{ secrets.ALADIN_TTBKEY }}
         run: python scripts/build_semyung_loan_rank.py
+      - name: 종이책 대출 랭킹 줄거리 보강 (알라딘)
+        env:
+          SUPABASE_PAT: ${{ secrets.SUPABASE_PAT }}
+          ALADIN_TTBKEY: ${{ secrets.ALADIN_TTBKEY }}
+        run: node scripts/desc_loan_rank.mjs
