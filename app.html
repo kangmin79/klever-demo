@@ -8326,6 +8326,35 @@ async function usChatRecommend(topic, subtitleHint){
   }
 }
 
+// ── 별이 통합 책검색(메인 nl챗 + 플로팅 위젯 공용) ──
+// curate(세명대 전자책 23,727 의미검색·리랭킹) + semyung-find(종이책/논문/비도서 85,609) 병렬 병합
+// → 제목 dedup → 개인화(읽은책 제외·관심 위로) → LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음).
+// 반환 {offtopic, message?, results, subtitle}. results는 curate 후보 형태(usFormBadges/libDetail 호환).
+async function byeoliFindBooks(topic){
+  const [r, rf]=await Promise.all([
+    fetch(US_CURATE_FN,{method:'POST',
+      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({query:topic, onlyHeld:true, rerank:true, count:12})}),
+    fetch(US_FIND_FN,{method:'POST',
+      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({query:topic, count:8})}).catch(()=>null),
+  ]);
+  const d=await r.json();
+  if(d.offtopic) return {offtopic:true, message:d.message||'', results:[]};
+  let results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
+  let catCands=[];
+  try{ const df=rf?await rf.json():null; catCands=((df&&df.candidates)||[]).map(findToCand); }catch(e){}
+  const normT=t=>String(t||'').replace(/\s+/g,'').replace(/[\(\)\[\]:：·]/g,'').toLowerCase();
+  const seen=new Set(results.map(b=>normT(b.title)));
+  const merged=results.slice(0,8);
+  for(const c of catCands){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); merged.push(c); } }
+  results=merged.slice(0,14);
+  const prof=usMyProfile(); const pz=usPersonalize(results, prof);
+  if(pz.list.length) results=pz.list;
+  results.forEach(curateToLibBook);
+  return {offtopic:false, results, subtitle:d.subtitle||''};
+}
+
 /* ═══════════════════════════════════════════════════════════
    피드 (Ver03) — 모든 학생의 한 줄 소감 광장 (bookstar_challenge_results)
    ═══════════════════════════════════════════════════════════ */
@@ -8691,6 +8720,7 @@ window.addEventListener('keydown', (e) => {
   const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
   let msgs=[], books=[], busy=false, opened=false, lastQ='';
+  let shownKeys=new Set(), lastTopic='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제
   const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_books";
   const el=id=>document.getElementById(id);
   const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
@@ -8747,21 +8777,49 @@ window.addEventListener('keydown', (e) => {
     followRow();   // 마음에 드는 게 없을 때 — 한 번의 탭으로 재추천 (대화창 안에서 완결)
     scroll();
   }
-  // 추천 직후 후속 칩 — 라벨은 짧게, 실제 메시지엔 이미 보여준 제목 제외 조건을 실어 보냄
+  // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
+  function hwcCandCard(b){
+    const isbn=String(b.isbn||'').replace(/'/g,'');
+    const read=b.smEbook?'<div class="hwc-read">📖 바로 읽기</div>':'';
+    return `<div class="hwc-card" onclick="libDetail('${esc(isbn)}')">
+      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
+      <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(b.author||'')}</div>
+      <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
+  }
+  // 새 결과 중 이미 보여준 책(isbn) 제외하고 카드 추가 → 추가 개수 반환
+  function hwcAddBooks(results, subtitle){
+    const fresh=(results||[]).filter(b=>b&&b.isbn&&!shownKeys.has(b.isbn));
+    if(!fresh.length) return 0;
+    fresh.forEach(b=>shownKeys.add(b.isbn));
+    addBot('우리 도서관에서 골라봤어요 ⭐'+(subtitle?' '+subtitle:''));
+    const wrap=document.createElement('div');wrap.className='hwc-row bot';
+    wrap.innerHTML=`<div class="hwc-cards">${fresh.map(hwcCandCard).join('')}</div>`;
+    el('hwcBody').appendChild(wrap);
+    followRow(); scroll();
+    return fresh.length;
+  }
+  // 후속 칩 — 같은 주제 재검색(이미 본 책 자동 제외) 또는 톤/분야 변형
   const FOLLOWS=[
-    {label:'🔄 다른 책 보여주세요', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 같은 취향으로 다른 책을 추천해 주세요.`},
-    {label:'더 가볍게', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 더 가볍고 부담 없이 읽히는 책으로 추천해 주세요.`},
-    {label:'분야 바꿔서', make:t=>`지금까지 추천해 준 책(${t})은 빼고, 전혀 다른 분야의 책으로 새로 추천해 주세요.`}];
+    {label:'🔄 다른 책', mod:''},
+    {label:'더 가볍게', mod:' 가볍고 부담 없이 읽히는 책'},
+    {label:'분야 바꿔서', mod:' 다른 분야의 책'}];
   function followRow(){
     document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());
     const r=document.createElement('div');r.className='hwc-chips hwc-follow';
     r.innerHTML=FOLLOWS.map((f,i)=>`<span class="hwc-chip" onclick="hwcFollow(${i})">${esc(f.label)}</span>`).join('');
     el('hwcBody').appendChild(r);
   }
-  window.hwcFollow=function(i){
-    const f=FOLLOWS[i]; if(!f)return;
-    const titles=books.slice(-15).map(b=>_core(b.title)).filter(Boolean).join(', ');
-    doSend(f.make(titles), f.label.replace('🔄 ',''));
+  window.hwcFollow=async function(i){
+    const f=FOLLOWS[i]; if(!f||busy)return;
+    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());
+    busy=true; el('hwcSend').disabled=true;
+    addUser(f.label.replace('🔄 ','')); typing(true);
+    try{
+      const fr=await byeoliFindBooks((lastTopic+f.mod).trim()); typing(false);
+      if(fr.offtopic){ addBot(fr.message||'다른 주제로 찾아볼까요?'); }
+      else { const n=hwcAddBooks(fr.results); if(!n) addBot('이 주제로는 더 보여드릴 책이 없네요. 다른 걸로 찾아볼까요?'); }
+    }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 다시 시도해 주세요.'); }
+    busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
   };
   function chipsRow(){
     const r=document.createElement('div');r.className='hwc-chips';r.id='hwcChips';
@@ -8791,6 +8849,7 @@ window.addEventListener('keydown', (e) => {
     document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());   // 직접 입력 시에도 후속 칩 정리
     addUser(shown||text); msgs.push({role:'user',content:text}); typing(true);
     try{
+      let refined='';
       // 1) 별이 두뇌: 의도 라우팅. 운영정보(info)·잡담(other)·모호한 책요청 → KB로 바로 답(추천 호출 안 함).
       try{
         const br=await fetch(BRAIN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
@@ -8803,12 +8862,14 @@ window.addEventListener('keydown', (e) => {
           busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
           return;
         }
-      }catch(e){ /* 두뇌 실패 → 아래 기존 추천 경로로 폴백 */ }
-      // 2) 책 추천(기존 chat 경로)
-      const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
-      const d=await r.json(); typing(false);
-      const m=d.message||'음… 다시 한 번 말씀해 주실래요?';
-      addBot(m); msgs.push({role:'assistant',content:m}); await addCards(d.results);
+        if(bd && bd.refinedTopic) refined=bd.refinedTopic;   // 두뇌가 다듬은 검색 주제
+      }catch(e){ /* 두뇌 실패 → 원문 질의로 검색 */ }
+      // 2) 책 추천 — 메인 별이와 동일 엔진(세명대 실소장 11만: curate 전자책 + semyung-find 종이/논문)
+      lastTopic = refined || text;
+      const fr = await byeoliFindBooks(lastTopic);
+      typing(false);
+      if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
+      else { const n=hwcAddBooks(fr.results, fr.subtitle); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'); }
     busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
   }
