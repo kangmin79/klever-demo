@@ -8033,6 +8033,7 @@ const US_BRAIN_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library
 const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-find";     // 통합검색 브리지 = 종이책 단행본·학위논문 의미검색(semyung_catalog, CATTOT키→소장/예약)
 const US_KEYWORD_RPC="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/rpc/keyword_books"; // 하이브리드 키워드(정규화 ILIKE): 벡터가 놓치는 정확 제목/저자/축약어(총균쇠·한의학) → 맨 위로
 const US_PAPER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-paper";   // 학술 계층 1단계 = KCI 한국 등재 학술지 논문 의미검색(kci_papers, 제목+키워드+초록). 원문은 KCI 링크
+const US_NANET_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/nanet-search";    // 학술 보충 = 국회 국가학술정보 라이브검색(학위논문+최신+자유검색). 학술질의(KCI 논문>0)일 때만 호출
 const US_NL_EX=["요즘 지쳐서 위로받고 싶어","오싹하고 무서운 이야기","우주와 과학이 궁금해","도서관 운영시간 알려줘","대출 몇 권까지 돼?"];
 let US_MODE='kw';
 let US_LAST_NL=[];
@@ -8147,6 +8148,7 @@ function usFormBadges(c){
   const out=[];
   // 통합검색 브리지 자료(종이책 단행본·학위논문 등)는 _material로 정확한 배지 표기
   if(c._material==='kci'){ out.push('<span class="bt-tag bt-pp">논문</span>'); return out.join(' '); }
+  if(c._material==='nanet'){ out.push('<span class="bt-tag bt-pp">'+escD(c._nanetType||'학술자료')+'</span>'); return out.join(' '); }
   if(c._material==='thesis'){ out.push('<span class="bt-tag bt-pp">학위논문</span>'); return out.join(' '); }
   if(c._material==='serial'){ out.push('<span class="bt-tag bt-pp">연속간행물</span>'); return out.join(' '); }
   if(c._material==='av'){ out.push('<span class="bt-tag bt-pp">비도서</span>'); return out.join(' '); }
@@ -8210,12 +8212,18 @@ function usChatReset(){
 function usCardsHTML(results){
   return `<div class="book-grid">`+results.map(b=>{
     const isbn=String(b.isbn||'').replace(/'/g,'');
-    // KCI 논문: 도서관 소장 개념 없음 → 카드 전체가 KCI 논문 페이지로 직행(libDetail 미적용). 원문공개면 "원문 바로보기".
-    if(b._material==='kci'){
-      const url=esc(b._kciUrl||'');
-      const act=`<a class="usc-act${b._orte?'':' ghost'}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${b._orte?'원문 바로보기':'KCI에서 보기'}</a>`;
-      const sub=b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문';
-      return `<div class="book-card" onclick="window.open('${url}','_blank','noopener')">
+    // 학술자료(KCI 논문 / 국회 학위논문·논문): 도서관 소장 개념 없음 → 카드가 외부 원문 페이지로 직행(libDetail 미적용).
+    if(b._material==='kci' || b._material==='nanet'){
+      const ext=b._material==='nanet';
+      const url=esc(ext?(b._nanetUrl||''):(b._kciUrl||''));
+      const sub=ext
+        ? (escD([b.author,b.publisher,b.year].filter(Boolean).join(' · '))||'국회 학술자료')
+        : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
+      const actTxt=ext?'원문 보기':(b._orte?'원문 바로보기':'KCI에서 보기');
+      const ghost=(!ext && !b._orte)?' ghost':'';
+      const act=url?`<a class="usc-act${ghost}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${actTxt}</a>`:'';
+      const open=url?`onclick="window.open('${url}','_blank','noopener')"`:'';
+      return `<div class="book-card" ${open}>
         <div class="book-cover"><div class="lc-fb">${escD(b.title)}</div></div>
         <div class="book-info">
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8320,6 +8328,15 @@ function paperToCand(c){
     _orte:c.orteYn==='Y', _keyword:c.keyword||'', sim:c.similarity,
   };
 }
+// 국회 국가학술정보(nanet-search) → 앱 공용 cand. 학위논문/논문/단행본. 원문은 국회 링크.
+function nanetToCand(c){
+  return {
+    isbn:'nanet-'+c.lodID, title:c.title||'', author:c.authors||'', publisher:c.journal||'', cover:'', year:c.year||'', loan:null,
+    description:'',
+    smEbook:false, smEbookUrl:'', smPaper:false, smPaperUrl:'', crema:false, cremaUrl:'', brcd:c.lodID||'',
+    _material:'nanet', _nanetUrl:c.url||'', _nanetType:c.type||'학술자료', _keyword:c.keyword||'',
+  };
+}
 // 하이브리드 키워드 RPC 행(전자책/종이책 혼합) → 앱 공용 cand 형태로 정규화
 function keywordToCand(r){
   if(r.src==='ebook'){
@@ -8399,13 +8416,27 @@ async function byeoliFindBooks(topic, surface){
   }
   const papers=[];
   for(const c of paperCands){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); papers.push(c); } }
-  let results=[...books.slice(0,12), ...papers.slice(0,4)];
+  // 국회 국가학술정보 라이브 보충: 학술 질의(KCI 논문>0)일 때만 호출 → 캐주얼 질의 노이즈 차단 + 한도 절약.
+  // 학위논문(KCI엔 없음) 우선으로 최대 3건 꼬리에 추가.
+  let nanet=[];
+  if(papers.length){
+    try{
+      const rn=await fetch(US_NANET_FN,{method:'POST',
+        headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+        body:JSON.stringify({query:topic, count:10})});
+      const dn=rn?await rn.json():null;
+      const nc=((dn&&dn.candidates)||[]).map(nanetToCand).filter(b=>b.isbn&&b.title);
+      nc.sort((a,b)=>(a._nanetType==='학위논문'?0:1)-(b._nanetType==='학위논문'?0:1));   // 학위논문 우선
+      for(const c of nc){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); nanet.push(c); } if(nanet.length>=3) break; }
+    }catch(e){}
+  }
+  let results=[...books.slice(0,12), ...papers.slice(0,4), ...nanet];
   const prof=usMyProfile(); const pz=usPersonalize(results, prof);
   if(pz.list.length) results=pz.list;
   const note=(prof && pz.used && (prof.dept||prof.interests.length))
     ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
     : '';
-  results.forEach(b=>{ if(b._material!=='kci') curateToLibBook(b); });
+  results.forEach(b=>{ if(b._material!=='kci' && b._material!=='nanet') curateToLibBook(b); });
   byeoliLog({surface:surface||'',query:topic,intent:'books',ready:true,refined_topic:topic,result_count:results.length,top_titles:results.slice(0,3).map(b=>b.title||'')});
   return {offtopic:false, results, subtitle:d.subtitle||'', note};
 }
@@ -8835,14 +8866,19 @@ window.addEventListener('keydown', (e) => {
   // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
   function hwcCandCard(b){
     const isbn=String(b.isbn||'').replace(/'/g,'');
-    // KCI 논문: 도서관 소장 개념 없음 → 카드 클릭이 KCI 논문 페이지로 직행, 원문공개면 "원문 바로보기".
-    if(b._material==='kci'){
-      const url=esc(b._kciUrl||'');
-      const sub=b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문';
-      return `<div class="hwc-card" onclick="window.open('${url}','_blank','noopener')">
+    // 학술자료(KCI 논문 / 국회 학위논문·논문): 카드 클릭이 외부 원문 페이지로 직행.
+    if(b._material==='kci' || b._material==='nanet'){
+      const ext=b._material==='nanet';
+      const url=esc(ext?(b._nanetUrl||''):(b._kciUrl||''));
+      const sub=ext
+        ? (escD([b.author,b.publisher,b.year].filter(Boolean).join(' · '))||'국회 학술자료')
+        : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
+      const read=ext?'<div class="hwc-read">원문 보기</div>':(b._orte?'<div class="hwc-read">원문 바로보기</div>':'');
+      const open=url?`onclick="window.open('${url}','_blank','noopener')"`:'';
+      return `<div class="hwc-card" ${open}>
         <div class="hwc-cv"></div>
         <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${sub}</div>
-        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${b._orte?'<div class="hwc-read">원문 바로보기</div>':''}</div></div>`;
+        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
     }
     const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
     return `<div class="hwc-card" onclick="libDetail('${esc(isbn)}')">
