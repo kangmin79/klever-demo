@@ -8272,26 +8272,33 @@ function usChatRender(){
   box.innerHTML=`<div class="usc-thread">${rows}${typing}${chips}</div>`;
   // 새로 추가된 추천 카드만 한 권씩 차례로 나타나게(이미 본 카드는 즉시 표시 — 재렌더 시 재애니메이션 방지)
   const lastCards=[...US_CHAT].reverse().find(m=>m.kind==='cards');
+  const th=box.querySelector('.usc-thread');
   if(lastCards && !lastCards._revealed){
     lastCards._revealed=true;
     const grids=box.querySelectorAll('.book-grid');
-    byeoliStagger(grids[grids.length-1]);
+    // 카드는 한 장씩 등장하며 그 카드로 화면을 따라 내려가게(한꺼번에 쑥 내려가지 않도록 즉시 스크롤은 생략)
+    byeoliStagger(grids[grids.length-1], el=>{ if(el&&el.scrollIntoView) el.scrollIntoView({block:'nearest'}); });
+  } else if(th){
+    const k=th.lastElementChild; if(k&&k.scrollIntoView) k.scrollIntoView({block:'nearest'});
   }
-  const th=box.querySelector('.usc-thread'); if(th){ const k=th.lastElementChild; if(k&&k.scrollIntoView) k.scrollIntoView({block:'nearest'}); }
 }
 
-// 카드 컨테이너의 자식을 한 장씩 순차 페이드인(opacity/transform만 사용 → 레이아웃 높이 유지, 스크롤 흔들림 없음)
-function byeoliStagger(grid){
+// 카드를 한 장씩 '톡, 톡' 추가하듯 순차 등장 — 처음엔 display:none으로 자리도 없이 숨겼다가
+// 하나씩 칸이 생기며 떠오르게(진짜 한 권씩 나타나는 느낌). onStep마다 새 카드로 화면을 따라 스크롤.
+function byeoliStagger(grid, onStep){
   if(!grid) return;
   const cards=[...grid.children];
+  cards.forEach(el=>{ el.style.display='none'; el.style.opacity='0'; el.style.transform='translateY(14px)'; });
+  const STEP=460;   // 카드 간격(ms) — 느긋하게 한 장씩
   cards.forEach((el,i)=>{
-    el.style.opacity='0';
-    el.style.transform='translateY(10px)';
     setTimeout(()=>{
-      el.style.transition='opacity .45s ease, transform .45s ease';
+      el.style.display='';
+      void el.offsetWidth;   // 리플로우 강제 → 트랜지션 발동
+      el.style.transition='opacity .5s ease, transform .5s ease';
       el.style.opacity='1';
       el.style.transform='none';
-    }, 80 + i*150);
+      if(typeof onStep==='function') onStep(el);
+    }, i*STEP);
   });
 }
 
@@ -8917,8 +8924,9 @@ window.addEventListener('keydown', (e) => {
     const wrap=document.createElement('div');wrap.className='hwc-row bot';
     wrap.innerHTML=`<div class="hwc-cards">${fresh.map(hwcCandCard).join('')}</div>`;
     el('hwcBody').appendChild(wrap);
-    byeoliStagger(wrap.querySelector('.hwc-cards'));   // 한 권씩 차례로 나타나게(틴더식 — 별이가 골라주는 느낌)
-    followRow(); scroll();
+    followRow();
+    // 한 권씩 '톡, 톡' 나타나며 그때마다 따라 스크롤(틴더식 — 별이가 골라주는 느낌). 즉시 scroll() 생략.
+    byeoliStagger(wrap.querySelector('.hwc-cards'), ()=>scroll());
     return fresh.length;
   }
   // 후속 칩 — 같은 주제 재검색(이미 본 책 자동 제외) 또는 톤/분야 변형
