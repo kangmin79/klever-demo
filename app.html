@@ -2771,6 +2771,8 @@ const decEnt = (s) => String(s ?? '')
   .replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(parseInt(d,10)))
   .replace(/&([a-zA-Z]+);/g,(_,n)=>_ENT[n.toLowerCase()]??`&${n};`);
 const escD = (s) => esc(decEnt(s)); // 디코드 후 안전 인코딩(서지 표시용)
+// 챗 말풍선용 경량 마크다운: **굵게**만 <b>로(LLM이 가끔 markdown을 씀). 나머지는 esc 그대로(줄바꿈은 CSS pre-wrap이 처리).
+const mdLite = (s) => esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
 
 /* ===== 리치 본문 sanitize (관리자 에디터와 동일 화이트리스트) — 공지/커뮤니티 본문 렌더용 ===== */
 const RT_ALLOW={B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,H4:1,P:1,BR:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,A:1,IMG:1,SPAN:1,DIV:1,HR:1,FONT:1,
@@ -8225,7 +8227,7 @@ function usChatRender(){
     }
     if(m.role==='user') return `<div class="usc-row user"><div class="usc-bubble">${esc(m.content)}</div></div>`;
     const linkBtn=m.link?`<a class="usc-link" href="${esc(m.link)}" target="_blank" rel="noopener">📄 ${esc(m.linkLabel||'자세히 보기')}<span style="opacity:.6">›</span></a>`:'';
-    return `<div class="usc-row star"><div class="usc-av">⭐</div><div style="min-width:0;max-width:78%"><div class="usc-bubble" style="max-width:100%">${esc(m.content)}</div>${linkBtn}</div></div>`;
+    return `<div class="usc-row star"><div class="usc-av">⭐</div><div style="min-width:0;max-width:78%"><div class="usc-bubble" style="max-width:100%">${mdLite(m.content)}</div>${linkBtn}</div></div>`;
   }).join('');
   const typing=US_CHAT_BUSY?`<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-bubble usc-typing"><span></span><span></span><span></span></div></div>`:'';
   const last=US_CHAT[US_CHAT.length-1];
@@ -8747,9 +8749,9 @@ window.addEventListener('keydown', (e) => {
   function addBot(t){addRow('bot',esc(t));}
   // 운영정보 답변: 요약 텍스트 + (있으면)도서관 링크 버튼 + 빠른답변 칩
   function addBotRich(text, link, label, chips){
-    let h=esc(text);
+    let h=mdLite(text);
     if(link && /^https?:\/\/lib\.semyung\.ac\.kr\//.test(link)){
-      h+=`<a href="${esc(link)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;padding:7px 12px;border-radius:9px;background:var(--gold,#d4a017);color:#1a1a2e;font-weight:700;font-size:13px;text-decoration:none">📄 ${esc(label||'자세히 보기')}</a>`;
+      h+=`<a href="${esc(link)}" target="_blank" rel="noopener" style="display:block;width:fit-content;margin-top:11px;padding:8px 13px;border-radius:9px;background:var(--gold,#d4a017);color:#1a1a2e;font-weight:700;font-size:12.5px;text-decoration:none">📄 ${esc(label||'자세히 보기')}</a>`;
     }
     addRow('bot',h);
     if(Array.isArray(chips) && chips.length){
