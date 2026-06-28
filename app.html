@@ -5082,14 +5082,16 @@ function libDetail(isbn){
   ov.classList.add('on');
   if(isPaperHold) loadHolding(reckey);
   renderDetailReviews(b.isbn, cleanT(b.t));
-  // 줄거리 lazy 로드 — 리스트 피드가 description을 안 싣고 와도 semyung_books에서 채움(전자책 brcd/isbn13). 종이책(CATTOT) 제외.
-  if(!desc && b._sm && reckey && !/^CATTOT/.test(reckey)) loadDesc(reckey);
+  // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. 전자책=semyung_books(brcd/isbn13), 종이책=semyung_catalog(CATTOT key).
+  if(!desc && b._sm && reckey) loadDesc(reckey, /^CATTOT/.test(reckey));
 }
-// 모달 줄거리 보강: semyung_books에서 brcd 또는 isbn13으로 description 조회 → #lcdDesc 채움.
-async function loadDesc(key){
+// 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(semyung_catalog.key), 아니면 전자책(semyung_books).
+async function loadDesc(key, isCatalog){
   try{
-    const r=await fetch(`${SB_REST}/semyung_books?or=(brcd.eq.${encodeURIComponent(key)},isbn13.eq.${encodeURIComponent(key)})&select=description&limit=1`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const url=isCatalog
+      ? `${SB_REST}/semyung_catalog?key=eq.${encodeURIComponent(key)}&select=description&limit=1`
+      : `${SB_REST}/semyung_books?or=(brcd.eq.${encodeURIComponent(key)},isbn13.eq.${encodeURIComponent(key)})&select=description&limit=1`;
+    const r=await fetch(url,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
     if(!d||!d.description) return;
     const el=document.getElementById('lcdDesc'); if(el){ el.textContent=d.description; el.style.display=''; }
@@ -8122,6 +8124,7 @@ function curateToLibBook(c){
   const b={
     isbn:c.isbn, t:c.title||'', a:c.author||'', cover:c.cover||'',
     publisher:c.publisher||'', pubYear:c.year||'', loan:c.loan||null,
+    description:c.description||'',
     tags:tags.length?tags:undefined, _sm:((c.isbn||'').indexOf('sm-')===0)||undefined,
     lib:c.smEbookUrl||'', _pp:c.smPaperUrl||'', cremaUrl:c.cremaUrl||'', brcd:c.brcd||'',
     _material:c._material||undefined
@@ -8275,7 +8278,7 @@ async function usChatSend(text){
 function findToCand(c){
   return {
     isbn:'sm-'+c.key, title:c.title||'', author:c.author||'', publisher:c.publisher||'',
-    cover:'', year:'', loan:null,
+    cover:c.cover||'', year:'', loan:null, description:c.description||'',
     smEbook:false, smEbookUrl:'', smEbookProvider:'',
     smPaper:true, smPaperStatus:'', smPaperUrl:c.detailUrl||('https://lib.semyung.ac.kr/search/detail/'+c.key),
     crema:false, cremaUrl:'', brcd:c.key,
@@ -8285,11 +8288,11 @@ function findToCand(c){
 // 하이브리드 키워드 RPC 행(전자책/종이책 혼합) → 앱 공용 cand 형태로 정규화
 function keywordToCand(r){
   if(r.src==='ebook'){
-    return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null,
+    return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null, description:r.description||'',
       smEbook:true, smEbookUrl:r.detail_url||'', smPaper:false, smPaperUrl:'',
       crema:r.crema===true, cremaUrl:r.crema_url||'', brcd:r.id, _kw:true };
   }
-  return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:'', year:'', loan:null,
+  return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null, description:r.description||'',
     smEbook:false, smEbookUrl:'', smPaper:true, smPaperUrl:r.detail_url||('https://lib.semyung.ac.kr/search/detail/'+r.id),
     crema:false, cremaUrl:'', brcd:r.id, _material:r.material||'book', _kw:true };
 }
