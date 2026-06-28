@@ -5549,7 +5549,7 @@ function openDetail(bookId){
     <p class="lcd-desc">${esc(intro)}</p>
     <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">3가지 방식으로 읽어요</div>
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">📖 전문 바로 읽기<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">· 북스타 표준 본문</span><span class="ar">›</span></div>
+      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">전문 바로 읽기<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">· 북스타 표준 본문</span><span class="ar">›</span></div>
       <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 퀴즈로 깊이 읽기<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">· 챌린지 + 한 줄 소감</span><span class="ar">›</span></div>
       ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
     </div>
@@ -8203,11 +8203,11 @@ function usCardsHTML(results){
     // 인라인 액션: 묻기→읽기를 대화 안에서 한 탭으로(카드 본문 클릭은 상세 모달, 버튼은 stopPropagation)
     let act='';
     if(b.smEbook){
-      act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">📖 바로 읽기</button>`;
+      act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">바로 읽기</button>`;
     } else if(b.crema===true){
       act=`<a class="usc-act" href="${esc(cremaHref(b.cremaUrl||'', b.title||''))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">크레마클럽에서 읽기</a>`;
     } else if(b.smPaper){
-      act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">📕 소장·예약 보기</button>`;
+      act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
     return `<div class="book-card" onclick="libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
@@ -8664,7 +8664,7 @@ window.addEventListener('keydown', (e) => {
       <div class="air-bd"><h3>${esc(b.title)}</h3><div class="air-au">${esc(b.author)}</div>
         <div class="air-meta">${star}${loan}</div>
         ${b.reason?`<div class="air-why">${esc(b.reason)}</div>`:''}
-        ${b._smLib?'<div class="air-read">📖 우리 도서관 전자책 · 바로 읽기</div>':''}
+        ${b._smLib?'<div class="air-read">우리 도서관 전자책 · 바로 읽기</div>':''}
       </div></div>`;
   }
   function render(d){
@@ -8697,7 +8697,7 @@ window.addEventListener('keydown', (e) => {
       ${b.reason?`<div class="air-swhy">${esc(b.reason)}</div>`:''}
       <p class="air-sdesc">${esc(b.description||'')}</p>
       ${kws.length?`<div class="air-kws">${kws.map(k=>'<span class="air-kw">'+esc(k)+'</span>').join('')}</div>`:''}
-      <div class="air-acts"><button class="air-cta" onclick="libBridgeOpen(window.__airBook)">${b._smLib?'📖 전자책 바로 읽기':'🔍 우리 도서관에서 찾기'}</button><button class="air-cta2" onclick="airClose()">닫기</button></div>
+      <div class="air-acts"><button class="air-cta" onclick="libBridgeOpen(window.__airBook)">${b._smLib?'전자책 바로 읽기':'우리 도서관에서 찾기'}</button><button class="air-cta2" onclick="airClose()">닫기</button></div>
       <div class="air-src">출처 · 별점·표지 알라딘 / 대출·키워드 정보나루(국립중앙도서관)</div>`;
     document.getElementById('airOv').classList.add('on');
   };
@@ -8777,7 +8777,7 @@ window.addEventListener('keydown', (e) => {
       <div class="hwc-cv"><img src="${esc(hiCover(b.cover||''))}" loading="lazy" onerror="this.style.opacity=0"></div>
       <div class="hwc-ci"><h4>${esc(b.title)}</h4><div class="au">${esc(b.author||'')}${star?' · '+star:''}</div>
       ${b.reason?`<div class="why">${esc(b.reason)}</div>`:''}
-      ${b._smLib?'<div class="hwc-read">📖 바로 읽기</div>':''}</div></div>`;
+      ${b._smLib?'<div class="hwc-read">바로 읽기</div>':''}</div></div>`;
   }
   async function addCards(results){
     if(!results||!results.length)return;
@@ -8792,7 +8792,7 @@ window.addEventListener('keydown', (e) => {
   // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
   function hwcCandCard(b){
     const isbn=String(b.isbn||'').replace(/'/g,'');
-    const read=b.smEbook?'<div class="hwc-read">📖 바로 읽기</div>':'';
+    const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
     return `<div class="hwc-card" onclick="libDetail('${esc(isbn)}')">
       <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(b.author||'')}</div>
