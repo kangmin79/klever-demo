@@ -8270,7 +8270,29 @@ function usChatRender(){
   const chips=(!US_CHAT_BUSY && last && last.role==='assistant' && Array.isArray(last.chips) && last.chips.length)
     ? `<div class="usc-chips">${last.chips.map(c=>`<span class="usc-chip" onclick="usChatSend(${JSON.stringify(String(c)).replace(/"/g,'&quot;')})">${esc(c)}</span>`).join('')}</div>` : '';
   box.innerHTML=`<div class="usc-thread">${rows}${typing}${chips}</div>`;
+  // 새로 추가된 추천 카드만 한 권씩 차례로 나타나게(이미 본 카드는 즉시 표시 — 재렌더 시 재애니메이션 방지)
+  const lastCards=[...US_CHAT].reverse().find(m=>m.kind==='cards');
+  if(lastCards && !lastCards._revealed){
+    lastCards._revealed=true;
+    const grids=box.querySelectorAll('.book-grid');
+    byeoliStagger(grids[grids.length-1]);
+  }
   const th=box.querySelector('.usc-thread'); if(th){ const k=th.lastElementChild; if(k&&k.scrollIntoView) k.scrollIntoView({block:'nearest'}); }
+}
+
+// 카드 컨테이너의 자식을 한 장씩 순차 페이드인(opacity/transform만 사용 → 레이아웃 높이 유지, 스크롤 흔들림 없음)
+function byeoliStagger(grid){
+  if(!grid) return;
+  const cards=[...grid.children];
+  cards.forEach((el,i)=>{
+    el.style.opacity='0';
+    el.style.transform='translateY(10px)';
+    setTimeout(()=>{
+      el.style.transition='opacity .45s ease, transform .45s ease';
+      el.style.opacity='1';
+      el.style.transform='none';
+    }, 80 + i*150);
+  });
 }
 
 // 사용자 메시지 전송 → 별이 두뇌(library-brain)가 의도 라우팅:
@@ -8895,6 +8917,7 @@ window.addEventListener('keydown', (e) => {
     const wrap=document.createElement('div');wrap.className='hwc-row bot';
     wrap.innerHTML=`<div class="hwc-cards">${fresh.map(hwcCandCard).join('')}</div>`;
     el('hwcBody').appendChild(wrap);
+    byeoliStagger(wrap.querySelector('.hwc-cards'));   // 한 권씩 차례로 나타나게(틴더식 — 별이가 골라주는 느낌)
     followRow(); scroll();
     return fresh.length;
   }
