@@ -8021,6 +8021,7 @@ const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/rec
 const US_CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";        // 별이(학생) = 사서 큐레이션과 동일 코어(세명대 실소장 의미검색)
 const US_BRAIN_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 별이 두뇌 = 의도 라우팅(책/운영정보/잡담) + 도서관 지식베이스 답변
 const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-find";     // 통합검색 브리지 = 종이책 단행본·학위논문 의미검색(semyung_catalog, CATTOT키→소장/예약)
+const US_KEYWORD_RPC="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/rpc/keyword_books"; // 하이브리드 키워드(정규화 ILIKE): 벡터가 놓치는 정확 제목/저자/축약어(총균쇠·한의학) → 맨 위로
 const US_NL_EX=["요즘 지쳐서 위로받고 싶어","오싹하고 무서운 이야기","우주와 과학이 궁금해","도서관 운영시간 알려줘","대출 몇 권까지 돼?"];
 let US_MODE='kw';
 let US_LAST_NL=[];
@@ -8280,46 +8281,32 @@ function findToCand(c){
     _material:c.material||'book', sim:c.similarity,
   };
 }
+// 하이브리드 키워드 RPC 행(전자책/종이책 혼합) → 앱 공용 cand 형태로 정규화
+function keywordToCand(r){
+  if(r.src==='ebook'){
+    return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null,
+      smEbook:true, smEbookUrl:r.detail_url||'', smPaper:false, smPaperUrl:'',
+      crema:r.crema===true, cremaUrl:r.crema_url||'', brcd:r.id, _kw:true };
+  }
+  return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:'', year:'', loan:null,
+    smEbook:false, smEbookUrl:'', smPaper:true, smPaperUrl:r.detail_url||('https://lib.semyung.ac.kr/search/detail/'+r.id),
+    crema:false, cremaUrl:'', brcd:r.id, _material:r.material||'book', _kw:true };
+}
 async function usChatRecommend(topic, subtitleHint){
   US_CHAT_BUSY=true; usChatRender();
   try{
-    // 전자책(curate, 리랭킹 정밀) + 종이책·학위논문(semyung-find) 병렬 → 별이 = 도서관 통합검색
-    const [r, rf]=await Promise.all([
-      fetch(US_CURATE_FN,{method:'POST',
-        headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-        body:JSON.stringify({query:topic, onlyHeld:true, rerank:true, count:12})}),
-      fetch(US_FIND_FN,{method:'POST',
-        headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-        body:JSON.stringify({query:topic, count:8})}).catch(()=>null),
-    ]);
-    const d=await r.json();
+    // 통합 책검색(전자책 curate + 종이/논문 find + 하이브리드 키워드) — 플로팅 위젯과 동일 엔진
+    const fr=await byeoliFindBooks(topic);
     US_CHAT_BUSY=false;
-    if(d.offtopic){
-      US_CHAT.push({role:'assistant', content:d.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
+    if(fr.offtopic){
+      US_CHAT.push({role:'assistant', content:fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
       usChatRender(); return;
     }
-    let results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
-    // 종이책·학위논문 병합(전자책에 없는 제목만 추가 — 전자책 우선=즉시 읽기 가능)
-    let catCands=[];
-    try{ const df=rf?await rf.json():null; catCands=((df&&df.candidates)||[]).map(findToCand); }catch(e){}
-    const normT=t=>String(t||'').replace(/\s+/g,'').replace(/[\(\)\[\]:：·]/g,'').toLowerCase();
-    const seen=new Set(results.map(b=>normT(b.title)));
-    const merged=results.slice(0,8);   // 전자책 상위 8 + 종이책/논문으로 폭 확장
-    for(const c of catCands){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); merged.push(c); } }
-    results=merged.slice(0,14);
-    if(!results.length){
+    if(!fr.results.length){
       US_CHAT.push({role:'assistant', content:'아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
       usChatRender(); return;
     }
-    // 개인화(#2): 이미 읽은 책 제외 + 관심·전공 매칭 위로
-    const prof=usMyProfile();
-    const pz=usPersonalize(results, prof);
-    if(pz.list.length) results=pz.list;   // 개인화로 0이 되면 원본 유지(안전)
-    const note=(prof && pz.used && (prof.dept||prof.interests.length))
-      ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
-      : '';
-    results.forEach(curateToLibBook);   // 상세·대출이 isbn으로 찾도록 풀 등재
-    US_CHAT.push({role:'assistant', kind:'cards', cards:results, subtitle:d.subtitle||subtitleHint||'', note});
+    US_CHAT.push({role:'assistant', kind:'cards', cards:fr.results, subtitle:fr.subtitle||subtitleHint||'', note:fr.note||''});
     usChatRender();
   }catch(e){
     US_CHAT_BUSY=false;
@@ -8333,28 +8320,38 @@ async function usChatRecommend(topic, subtitleHint){
 // → 제목 dedup → 개인화(읽은책 제외·관심 위로) → LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음).
 // 반환 {offtopic, message?, results, subtitle}. results는 curate 후보 형태(usFormBadges/libDetail 호환).
 async function byeoliFindBooks(topic){
-  const [r, rf]=await Promise.all([
+  const [r, rf, rk]=await Promise.all([
     fetch(US_CURATE_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
       body:JSON.stringify({query:topic, onlyHeld:true, rerank:true, count:12})}),
     fetch(US_FIND_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
       body:JSON.stringify({query:topic, count:8})}).catch(()=>null),
+    // 하이브리드 키워드: 정확 제목/저자/축약어를 벡터와 별개로 잡아 맨 위로(질의가 제목/저자에 안 닿으면 0건=무영향)
+    fetch(US_KEYWORD_RPC,{method:'POST',
+      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({q:topic, lim:6})}).then(x=>x.json()).catch(()=>[]),
   ]);
   const d=await r.json();
   if(d.offtopic) return {offtopic:true, message:d.message||'', results:[]};
-  let results=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
+  let curCands=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
   let catCands=[];
   try{ const df=rf?await rf.json():null; catCands=((df&&df.candidates)||[]).map(findToCand); }catch(e){}
-  const normT=t=>String(t||'').replace(/\s+/g,'').replace(/[\(\)\[\]:：·]/g,'').toLowerCase();
-  const seen=new Set(results.map(b=>normT(b.title)));
-  const merged=results.slice(0,8);
-  for(const c of catCands){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); merged.push(c); } }
-  results=merged.slice(0,14);
+  const kwCands=(Array.isArray(rk)?rk:[]).map(keywordToCand).filter(b=>b.isbn&&b.title);
+  // 병합 순서: 키워드 정확매칭 → 전자책(curate 상위 8) → 종이책/논문(find). 제목 중복 제거.
+  const normT=t=>String(t||'').replace(/\s+/g,'').replace(/[\(\)\[\]:：·,.]/g,'').toLowerCase();
+  const seen=new Set(); const merged=[];
+  for(const c of [...kwCands, ...curCands.slice(0,8), ...catCands]){
+    const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); merged.push(c); }
+  }
+  let results=merged.slice(0,14);
   const prof=usMyProfile(); const pz=usPersonalize(results, prof);
   if(pz.list.length) results=pz.list;
+  const note=(prof && pz.used && (prof.dept||prof.interests.length))
+    ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
+    : '';
   results.forEach(curateToLibBook);
-  return {offtopic:false, results, subtitle:d.subtitle||''};
+  return {offtopic:false, results, subtitle:d.subtitle||'', note};
 }
 
 /* ═══════════════════════════════════════════════════════════
