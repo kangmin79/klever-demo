@@ -4524,12 +4524,20 @@ function fmtTags(b){
     const M={ebook:'전자책',paper:'종이책',sub:'구독'};
     return `<div class="fmt-tags">${b.tags.map(k=>`<span class="fmt-tag fmt-${k}">${M[k]||k}</span>`).join('')}</div>`;
   }
-  if(!b._sm||!b.isbn) return '';
-  const en=(typeof SM_ENRICH!=='undefined')?SM_ENRICH[b.isbn.replace(/^sm-/,'')]:null;
+  const isbn=b.isbn||'';
   const t=[];
-  if(b.lib) t.push(['전자책','ebook']);
-  if(en&&en.paper) t.push(['종이책','paper']);
-  if(en&&en.crema) t.push(['구독','sub']);
+  if(b._sm && isbn){
+    const en=(typeof SM_ENRICH!=='undefined')?SM_ENRICH[isbn.replace(/^sm-/,'')]:null;
+    if(b.lib) t.push(['전자책','ebook']);
+    if(en&&en.paper) t.push(['종이책','paper']);
+    if(en&&en.crema) t.push(['구독','sub']);
+  }
+  // 폴백: tags·deeplink·enrich 정보가 없어도 책 정체(isbn)로 형태 추정 → 배지 누락 방지.
+  //   세명대 전자도서관(semyung_books)=숫자 brcd=전자책 / 통합검색 카탈로그(semyung_catalog)=CATTOT=종이책.
+  if(!t.length){
+    if(/^sm-CATTOT/i.test(isbn) || b._material) t.push(['종이책','paper']);
+    else if(/^sm-/.test(isbn) || b._sm || b.lib || b._smLib) t.push(['전자책','ebook']);
+  }
   return t.length?`<div class="fmt-tags">${t.map(x=>`<span class="fmt-tag fmt-${x[1]}">${x[0]}</span>`).join('')}</div>`:'';
 }
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
