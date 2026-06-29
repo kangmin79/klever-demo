@@ -532,6 +532,17 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .usc-act.ghost{background:transparent;border:1px solid var(--border);color:var(--text-sub);}
 .usc-act.ghost:hover{border-color:var(--primary);color:var(--primary);}
 .usc-pnote{font-size:12px;color:var(--primary);font-weight:700;margin:-4px 0 10px;}
+/* Answer Engine 답변 버블 — 소장자료 근거 합성답(인용 [n]→카드 점프) */
+.usc-answer{margin:0 0 12px;padding:13px 15px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,.10),rgba(99,102,241,.04));border:1px solid rgba(99,102,241,.28);}
+.usc-answer-h{font-size:11.5px;font-weight:800;color:var(--primary);margin-bottom:6px;letter-spacing:.3px;}
+.usc-answer-t{font-size:14px;line-height:1.62;color:var(--text);word-break:break-word;}
+.usc-cite{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;margin:0 1px;padding:0 4px;border-radius:8px;background:var(--primary);color:#fff;font-size:10px;font-weight:800;cursor:pointer;vertical-align:super;line-height:16px;transition:.12s;}
+.usc-cite:hover{transform:scale(1.18);box-shadow:0 2px 8px rgba(99,102,241,.4);}
+.usc-refs{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+.usc-ref{font-size:11.5px;font-weight:700;color:var(--primary);background:var(--bg-card);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:4px 9px;cursor:pointer;transition:.12s;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.usc-ref:hover{border-color:var(--primary);box-shadow:0 3px 10px rgba(99,102,241,.2);}
+.book-card.cite-flash{outline:3px solid var(--primary);outline-offset:2px;border-radius:12px;transition:outline .2s;animation:citePulse 1.4s ease;}
+@keyframes citePulse{0%,100%{box-shadow:0 0 0 rgba(99,102,241,0);}30%{box-shadow:0 0 22px rgba(99,102,241,.55);}}
 .usc-link{display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:8px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card);color:var(--primary);font-size:12.5px;font-weight:800;text-decoration:none;transition:.14s;}
 .usc-link:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(99,102,241,.18);}
 .us-section-label{font-size:13px;font-weight:800;color:var(--text-sub);margin:8px 0 14px;}
@@ -8210,6 +8221,31 @@ function usChatReset(){
 }
 
 // 추천 결과 카드 그리드(클릭 → libDetail 상세; 카드 안에서 바로 읽기/예약 = #1 in-chat 완결)
+// ── Answer Engine 답변 버블(인용 [n]을 카드로 점프하는 칩으로 치환) ──
+// 별이가 '우리 소장 자료만 근거로' 합성한 답. [n]→해당 책 카드로 스크롤+하이라이트. 환각0(서버가 목록 번호로만 인용).
+function usAnswerHTML(answer){
+  if(!answer || !answer.used || !answer.text) return '';
+  const cites=Array.isArray(answer.cited)?answer.cited:[];
+  const byN={}; cites.forEach(c=>{ byN[c.n]=c; });
+  // [n] 마커를 클릭 가능한 인용 칩으로
+  const html=esc(answer.text).replace(/\[(\d+)\]/g, (m,n)=>{
+    const c=byN[+n]; if(!c) return '';
+    const isbn=String(c.isbn||'').replace(/'/g,'');
+    return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="usCiteJump('${esc(isbn)}',event)">${esc(n)}</sup>`;
+  });
+  const refs=cites.length?`<div class="usc-refs">📚 ${cites.map(c=>`<span class="usc-ref" onclick="usCiteJump('${esc(String(c.isbn||'').replace(/'/g,''))}',event)">${esc(c.title||'')}</span>`).join('')}</div>`:'';
+  return `<div class="usc-answer"><div class="usc-answer-h">⭐ 별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+}
+// 인용 클릭 → 같은 결과 묶음 안의 해당 카드로 스크롤 + 잠깐 강조
+function usCiteJump(isbn, ev){
+  try{ if(ev) ev.stopPropagation();
+    const box=document.getElementById('usResults')||document;
+    const card=box.querySelector('.book-card[data-isbn="'+(window.CSS&&CSS.escape?CSS.escape(isbn):isbn)+'"]');
+    if(!card) return;
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    card.classList.add('cite-flash'); setTimeout(()=>card.classList.remove('cite-flash'), 1400);
+  }catch(e){}
+}
 function usCardsHTML(results){
   return `<div class="book-grid">`+results.map(b=>{
     const isbn=String(b.isbn||'').replace(/'/g,'');
@@ -8224,7 +8260,7 @@ function usCardsHTML(results){
       const ghost=(!ext && !b._orte)?' ghost':'';
       const act=url?`<a class="usc-act${ghost}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${actTxt}</a>`:'';
       const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
-      return `<div class="book-card" ${open}>
+      return `<div class="book-card" data-isbn="${esc(isbn)}" ${open}>
         <div class="book-cover"><div class="lc-fb">${escD(b.title)}</div></div>
         <div class="book-info">
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8242,7 +8278,7 @@ function usCardsHTML(results){
     } else if(b.smPaper){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
-    return `<div class="book-card" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
+    return `<div class="book-card" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="book-info">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8260,7 +8296,8 @@ function usChatRender(){
     if(m.kind==='cards'){
       const sub=m.subtitle?`<div class="usc-bubble usc-sub">${esc(m.subtitle)}</div>`:'';
       const note=m.note?`<div class="usc-pnote">✨ ${esc(m.note)}</div>`:'';
-      return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-cards"><div class="usc-cards-h">⭐ 별이의 추천 <span>${m.cards.length}</span></div>${note}${sub}${usCardsHTML(m.cards)}</div></div>`;
+      const ans=usAnswerHTML(m.answer);
+      return `<div class="usc-row star"><div class="usc-av">⭐</div><div class="usc-cards">${ans}<div class="usc-cards-h">⭐ 별이의 추천 <span>${m.cards.length}</span></div>${note}${sub}${usCardsHTML(m.cards)}</div></div>`;
     }
     if(m.role==='user') return `<div class="usc-row user"><div class="usc-bubble">${esc(m.content)}</div></div>`;
     const linkBtn=m.link?`<a class="usc-link" href="${esc(m.link)}" target="_blank" rel="noopener">📄 ${esc(m.linkLabel||'자세히 보기')}<span style="opacity:.6">›</span></a>`:'';
@@ -8392,7 +8429,7 @@ async function usChatRecommend(topic, subtitleHint){
       US_CHAT.push({role:'assistant', content:'아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
       usChatRender(); return;
     }
-    US_CHAT.push({role:'assistant', kind:'cards', cards:fr.results, subtitle:fr.subtitle||subtitleHint||'', note:fr.note||''});
+    US_CHAT.push({role:'assistant', kind:'cards', cards:fr.results, subtitle:fr.subtitle||subtitleHint||'', note:fr.note||'', answer:fr.answer||null});
     usChatRender();
   }catch(e){
     US_CHAT_BUSY=false;
@@ -8423,7 +8460,7 @@ async function byeoliFindBooks(topic, surface){
   try{
     const r=await fetch(US_SEARCH_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, surface:surface||'api', count:12})});
+      body:JSON.stringify({query:topic, surface:surface||'api', count:12, config:{answer:true}})});
     d=await r.json();
   }catch(e){ d=null; }
   if(!d){ return {offtopic:false, results:[], subtitle:''}; }
@@ -8442,7 +8479,7 @@ async function byeoliFindBooks(topic, surface){
   results.forEach(b=>{ if(b._material!=='kci' && b._material!=='nanet') curateToLibBook(b); });
   results.forEach((b,i)=>{ if(b&&b.isbn){ b._pos=i; US_CLICKMAP[String(b.isbn).replace(/'/g,'')]=b; } });   // 클릭 로깅 참조용(표시순 위치)
   byeoliLog({surface:surface||'',query:topic,intent:'books',ready:true,refined_topic:topic,result_count:results.length,top_titles:results.slice(0,3).map(b=>b.title||'')});
-  return {offtopic:false, results, subtitle:d.subtitle||'', note};
+  return {offtopic:false, results, subtitle:d.subtitle||'', note, answer:(d.answer&&d.answer.used)?d.answer:null};
 }
 // 측정훅 ② 클릭 로깅 — 어떤 결과를 눌렀나(위치·소스별 CTR=리랭킹 신호 + 영업지표). 실패해도 UX 무영향.
 function byeoliClickLog(b){
@@ -8900,10 +8937,22 @@ window.addEventListener('keydown', (e) => {
       <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
   }
   // 새 결과 중 이미 보여준 책(isbn) 제외하고 카드 추가 → 추가 개수 반환
-  function hwcAddBooks(results, subtitle){
+  // Answer Engine 답변 행(플로팅) — 인용 [n]·근거 칩 클릭 시 libDetail 상세 모달
+  function hwcAnswerRow(answer){
+    if(!answer||!answer.used||!answer.text) return;
+    const cites=Array.isArray(answer.cited)?answer.cited:[];
+    const byN={}; cites.forEach(c=>{ byN[c.n]=c; });
+    const html=esc(answer.text).replace(/\[(\d+)\]/g,(m,n)=>{ const c=byN[+n]; if(!c) return ''; const isbn=String(c.isbn||'').replace(/'/g,''); return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="libDetail('${esc(isbn)}')">${esc(n)}</sup>`; });
+    const refs=cites.length?`<div class="usc-refs">📚 ${cites.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,''); return `<span class="usc-ref" onclick="libDetail('${esc(isbn)}')">${esc(c.title||'')}</span>`; }).join('')}</div>`:'';
+    const row=document.createElement('div'); row.className='hwc-row bot';
+    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">⭐ 별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+    el('hwcBody').appendChild(row);
+  }
+  function hwcAddBooks(results, subtitle, answer){
     const fresh=(results||[]).filter(b=>b&&b.isbn&&!shownKeys.has(b.isbn));
     if(!fresh.length) return 0;
     fresh.forEach(b=>shownKeys.add(b.isbn));
+    hwcAnswerRow(answer);
     addBot('우리 도서관에서 골라봤어요 ⭐'+(subtitle?' '+subtitle:''));
     const wrap=document.createElement('div');wrap.className='hwc-row bot';
     wrap.innerHTML=`<div class="hwc-cards">${fresh.map(hwcCandCard).join('')}</div>`;
@@ -8985,7 +9034,7 @@ window.addEventListener('keydown', (e) => {
       const fr = await byeoliFindBooks(lastTopic, 'float');
       typing(false);
       if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
-      else { const n=hwcAddBooks(fr.results, fr.subtitle); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
+      else { const n=hwcAddBooks(fr.results, fr.subtitle, fr.answer); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'); }
     busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
   }
