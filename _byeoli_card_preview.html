@@ -1,0 +1,74 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>별이 검색결과 카드 미리보기</title>
+<style>
+:root{
+  --primary:#1a2942; --accent:#3a6ea5; --gold:#d4a93b;
+  --bg:#f7f6f1; --bg-card:#fff; --text:#1a2942; --text-sub:#475569; --text-light:#64748b; --border:#e3dfd5;
+}
+body{margin:0;background:var(--bg);font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:var(--text);padding:24px;}
+.wrap{max-width:760px;margin:0 auto;}
+.demo-q{display:inline-block;background:var(--primary);color:#fff;font-size:13px;font-weight:700;padding:9px 15px;border-radius:14px 14px 4px 14px;margin:0 0 16px;}
+.usc-cards{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 16px 18px;}
+.usc-cards-h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--text);margin-bottom:14px;}
+.usc-cards-h::before{content:'';width:3px;height:13px;border-radius:2px;background:var(--accent);}
+.usc-cards-h span{color:var(--text-light);font-weight:700;}
+
+/* ── 결과 그룹(도서 / 학술자료) ── */
+.usc-group{margin-bottom:18px;}
+.usc-group:last-child{margin-bottom:0;}
+.usc-group-h{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:var(--text-sub);margin:0 0 10px;letter-spacing:.2px;}
+.usc-group-h::before{content:'';width:3px;height:12px;border-radius:2px;}
+.usc-group.g-book  .usc-group-h::before{background:var(--accent);}
+.usc-group.g-paper .usc-group-h::before{background:var(--gold);}
+.usc-group-h em{font-style:normal;color:var(--text-light);font-weight:700;}
+
+.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+.book-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:.18s;position:relative;border-left-width:3px;}
+.book-card:hover{box-shadow:0 6px 18px rgba(26,41,66,.12);transform:translateY(-2px);}
+.book-card.bc-book {border-left-color:var(--accent);}
+.book-card.bc-paper{border-left-color:var(--gold);}
+.book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;overflow:hidden;}
+.book-cover.cv-book {background:linear-gradient(160deg,#2b4a73,#1a2942);}
+.book-cover.cv-paper{background:linear-gradient(160deg,#6b5a2d,#3d3318);}
+.lc-fb{font-size:13px;font-weight:800;color:#fff;line-height:1.35;}
+.book-info{padding:11px 13px;}
+.bt-tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;margin-bottom:6px;}
+.bt-eb{background:#E1F5EE;color:#0F6E56;}
+.bt-pp{background:#FAEEDA;color:#633806;}
+.bt-sub{background:#EDE9FE;color:#5B21B6;}
+.book-title{font-size:13px;font-weight:800;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.book-author{font-size:11px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.note{font-size:12px;color:var(--text-light);margin:22px 0 6px;text-align:center;}
+</style></head>
+<body><div class="wrap">
+
+<div class="demo-q">우주·과학 책이랑 관련 논문 좀 찾아줘</div>
+
+<div class="usc-cards">
+  <div class="usc-cards-h">별이의 추천 <span>11</span></div>
+
+  <!-- 도서 그룹 (블루 바) -->
+  <div class="usc-group g-book">
+    <div class="usc-group-h">도서 <em>8</em></div>
+    <div class="book-grid">
+      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">떨림과 울림</div></div><div class="book-info"><span class="bt-tag bt-eb">전자책</span><div class="book-title">떨림과 울림</div><div class="book-author">김상욱 · 동아시아</div></div></div>
+      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">우주의 신비</div></div><div class="book-info"><span class="bt-tag bt-pp">종이책</span><div class="book-title">우주의 신비</div><div class="book-author">우주과학 다이제스트</div></div></div>
+      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">가장 짧은 우주의 역사</div></div><div class="book-info"><span class="bt-tag bt-eb">전자책</span><div class="book-title">가장 짧은 우주의 역사</div><div class="book-author">데이비드 베이커</div></div></div>
+      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">우주를 만지다</div></div><div class="book-info"><span class="bt-tag bt-sub">구독</span><div class="book-title">우주를 만지다</div><div class="book-author">권재술</div></div></div>
+    </div>
+  </div>
+
+  <!-- 학술자료 그룹 (골드 바) -->
+  <div class="usc-group g-paper">
+    <div class="usc-group-h">학술자료 <em>3</em></div>
+    <div class="book-grid">
+      <div class="book-card bc-paper"><div class="book-cover cv-paper"><div class="lc-fb">초기 우주의 급팽창 이론 검토</div></div><div class="book-info"><span class="bt-tag bt-pp">논문</span><div class="book-title">초기 우주의 급팽창 이론 검토</div><div class="book-author">KCI · 2023</div></div></div>
+      <div class="book-card bc-paper"><div class="book-cover cv-paper"><div class="lc-fb">외계행성 탐사 기법 동향</div></div><div class="book-info"><span class="bt-tag bt-pp">학위논문</span><div class="book-title">외계행성 탐사 기법 동향</div><div class="book-author">국회 · 2024</div></div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">도서=블루 바 · 학술자료=골드 바 / 섞지 않고 그룹 분리 · 세부(전자책·종이책·구독·논문)는 배지</div>
+</div></body></html>
