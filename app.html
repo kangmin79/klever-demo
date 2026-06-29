@@ -8455,12 +8455,13 @@ let US_CLICKMAP={};   // isbn→후보(현 검색결과). 카드 클릭 시 byeo
 // 5소스 병렬호출 + RRF 융합 + 측정훅은 모두 서버(byeoli-search)가 수행. 클라는 호출 + 개인화 + 렌더만.
 // (구 *ToCand 매퍼·인라인 병합 로직은 서버로 이전됨. findToCand 등은 호환 위해 남겨둠 = 죽은 코드)
 // 개인화(학과·관심·읽은책)는 북스타 로컬 신호라 클라에 유지 — 서버 RRF 위에 얹는다.
-async function byeoliFindBooks(topic, surface){
+async function byeoliFindBooks(topic, surface, wantAnswer){
   let d=null;
   try{
     const r=await fetch(US_SEARCH_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, surface:surface||'api', count:12, config:{answer:true}})});
+      // answer는 표시되는 표면에서만 요청(팔로업 등은 끔=불필요한 +3~4s Haiku 콜 절약). 기본 true.
+      body:JSON.stringify({query:topic, surface:surface||'api', count:12, config:{answer: wantAnswer!==false}})});
     d=await r.json();
   }catch(e){ d=null; }
   if(!d){ return {offtopic:false, results:[], subtitle:''}; }
@@ -8478,8 +8479,18 @@ async function byeoliFindBooks(topic, surface){
   // LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음). 논문(kci/nanet)은 외부링크라 제외.
   results.forEach(b=>{ if(b._material!=='kci' && b._material!=='nanet') curateToLibBook(b); });
   results.forEach((b,i)=>{ if(b&&b.isbn){ b._pos=i; US_CLICKMAP[String(b.isbn).replace(/'/g,'')]=b; } });   // 클릭 로깅 참조용(표시순 위치)
+  // Answer 인용을 최종 표시 results와 정합 — 개인화로 빠진 책(이미 읽음 등) 인용 제거 + 본문 [n] strip.
+  // (서버 cited는 개인화 전 out 기준 → 안 하면 화면에 없는 책 인용 = 칩 클릭 먹통 + 본문이 없는 책 추천)
+  let answer=(d.answer&&d.answer.used)?d.answer:null;
+  if(answer){
+    const shown=new Set(results.map(b=>String(b.isbn)));
+    const keep=new Set();
+    const cited=(answer.cited||[]).filter(c=>{ if(shown.has(String(c.isbn))){ keep.add(c.n); return true; } return false; });
+    const atext=String(answer.text||'').replace(/\[(\d+)\]/g,(m,n)=>keep.has(+n)?m:'');
+    answer = atext.trim() ? {...answer, cited, text:atext} : null;
+  }
   byeoliLog({surface:surface||'',query:topic,intent:'books',ready:true,refined_topic:topic,result_count:results.length,top_titles:results.slice(0,3).map(b=>b.title||'')});
-  return {offtopic:false, results, subtitle:d.subtitle||'', note, answer:(d.answer&&d.answer.used)?d.answer:null};
+  return {offtopic:false, results, subtitle:d.subtitle||'', note, answer};
 }
 // 측정훅 ② 클릭 로깅 — 어떤 결과를 눌렀나(위치·소스별 CTR=리랭킹 신호 + 영업지표). 실패해도 UX 무영향.
 function byeoliClickLog(b){
@@ -8979,7 +8990,7 @@ window.addEventListener('keydown', (e) => {
     busy=true; el('hwcSend').disabled=true;
     addUser(f.label.replace('🔄 ','')); typing(true);
     try{
-      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float'); typing(false);
+      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float', false); typing(false);   // 팔로업=answer 생략(렌더 안 함)
       if(fr.offtopic){ addBot(fr.message||'다른 주제로 찾아볼까요?'); }
       else { const n=hwcAddBooks(fr.results); if(!n) addBot('이 주제로는 더 보여드릴 책이 없네요. 다른 걸로 찾아볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 다시 시도해 주세요.'); }
