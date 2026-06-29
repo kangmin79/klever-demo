@@ -8034,6 +8034,7 @@ const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-
 const US_KEYWORD_RPC="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/rpc/keyword_books"; // 하이브리드 키워드(정규화 ILIKE): 벡터가 놓치는 정확 제목/저자/축약어(총균쇠·한의학) → 맨 위로
 const US_PAPER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-paper";   // 학술 계층 1단계 = KCI 한국 등재 학술지 논문 의미검색(kci_papers, 제목+키워드+초록). 원문은 KCI 링크
 const US_NANET_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/nanet-search";    // 학술 보충 = 국회 국가학술정보 라이브검색(학위논문+최신+자유검색). 학술질의(KCI 논문>0)일 때만 호출
+const US_SEARCH_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/byeoli-search";  // 별이 통합검색 단일 엔진: 위 5소스 병렬호출+RRF 융합+측정훅을 백엔드로 일원화(화면은 렌더만)
 const US_NL_EX=["요즘 지쳐서 위로받고 싶어","오싹하고 무서운 이야기","우주와 과학이 궁금해","도서관 운영시간 알려줘","대출 몇 권까지 돼?"];
 let US_MODE='kw';
 let US_LAST_NL=[];
@@ -8222,7 +8223,7 @@ function usCardsHTML(results){
       const actTxt=ext?'원문 보기':(b._orte?'원문 바로보기':'KCI에서 보기');
       const ghost=(!ext && !b._orte)?' ghost':'';
       const act=url?`<a class="usc-act${ghost}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${actTxt}</a>`:'';
-      const open=url?`onclick="window.open('${url}','_blank','noopener')"`:'';
+      const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
       return `<div class="book-card" ${open}>
         <div class="book-cover"><div class="lc-fb">${escD(b.title)}</div></div>
         <div class="book-info">
@@ -8241,7 +8242,7 @@ function usCardsHTML(results){
     } else if(b.smPaper){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
-    return `<div class="book-card" onclick="libDetail('${esc(isbn)}')">
+    return `<div class="book-card" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="book-info">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8412,62 +8413,45 @@ function byeoliLog(o){
       body:JSON.stringify(o)}).catch(()=>{});
   }catch(e){}
 }
+let US_CLICKMAP={};   // isbn→후보(현 검색결과). 카드 클릭 시 byeoliClickLog가 위치·소스·eventId 참조
+// ── 별이 통합 책검색: 백엔드 단일 엔진(byeoli-search) 호출 ──
+// 5소스 병렬호출 + RRF 융합 + 측정훅은 모두 서버(byeoli-search)가 수행. 클라는 호출 + 개인화 + 렌더만.
+// (구 *ToCand 매퍼·인라인 병합 로직은 서버로 이전됨. findToCand 등은 호환 위해 남겨둠 = 죽은 코드)
+// 개인화(학과·관심·읽은책)는 북스타 로컬 신호라 클라에 유지 — 서버 RRF 위에 얹는다.
 async function byeoliFindBooks(topic, surface){
-  const [r, rf, rk, rp]=await Promise.all([
-    fetch(US_CURATE_FN,{method:'POST',
+  let d=null;
+  try{
+    const r=await fetch(US_SEARCH_FN,{method:'POST',
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, onlyHeld:true, rerank:true, count:12})}),
-    fetch(US_FIND_FN,{method:'POST',
-      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, count:8})}).catch(()=>null),
-    // 하이브리드 키워드: 정확 제목/저자/축약어를 벡터와 별개로 잡아 맨 위로(질의가 제목/저자에 안 닿으면 0건=무영향)
-    fetch(US_KEYWORD_RPC,{method:'POST',
-      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({q:topic, lim:6})}).then(x=>x.json()).catch(()=>[]),
-    // 학술 계층: KCI 한국 등재 학술지 논문(초록 임베딩). 비학술 질의엔 floor로 0건=무영향, 학술 질의에 가치.
-    fetch(US_PAPER_FN,{method:'POST',
-      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, count:6})}).catch(()=>null),
-  ]);
-  const d=await r.json();
+      body:JSON.stringify({query:topic, surface:surface||'api', count:12})});
+    d=await r.json();
+  }catch(e){ d=null; }
+  if(!d){ return {offtopic:false, results:[], subtitle:''}; }
   if(d.offtopic){ byeoliLog({surface:surface||'',query:topic,intent:'books',offtopic:true,result_count:0}); return {offtopic:true, message:d.message||'', results:[]}; }
-  let curCands=(d.candidates||[]).filter(b=>b&&b.isbn&&b.title);
-  let catCands=[];
-  try{ const df=rf?await rf.json():null; catCands=((df&&df.candidates)||[]).map(findToCand); }catch(e){}
-  const kwCands=(Array.isArray(rk)?rk:[]).map(keywordToCand).filter(b=>b.isbn&&b.title);
-  let paperCands=[];
-  try{ const dp=rp?await rp.json():null; paperCands=((dp&&dp.candidates)||[]).map(paperToCand).filter(b=>b.isbn&&b.title); }catch(e){}
-  // 병합: 책(키워드 정확 → 전자책 curate 상위8 → 종이책/논문 find) 먼저, 그 뒤 논문(KCI) 꼬리(최대 4). 제목 중복 제거.
-  const normT=t=>String(t||'').replace(/\s+/g,'').replace(/[\(\)\[\]:：·,.]/g,'').toLowerCase();
-  const seen=new Set(); const books=[];
-  for(const c of [...kwCands, ...curCands.slice(0,8), ...catCands]){
-    const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); books.push(c); }
-  }
-  const papers=[];
-  for(const c of paperCands){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); papers.push(c); } }
-  // 국회 국가학술정보 라이브 보충: 학술 질의(KCI 논문>0)일 때만 호출 → 캐주얼 질의 노이즈 차단 + 한도 절약.
-  // 학위논문(KCI엔 없음) 우선으로 최대 3건 꼬리에 추가.
-  let nanet=[];
-  if(papers.length){
-    try{
-      const rn=await fetch(US_NANET_FN,{method:'POST',
-        headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-        body:JSON.stringify({query:topic, count:10})});
-      const dn=rn?await rn.json():null;
-      const nc=((dn&&dn.candidates)||[]).map(nanetToCand).filter(b=>b.isbn&&b.title);
-      nc.sort((a,b)=>(a._nanetType==='학위논문'?0:1)-(b._nanetType==='학위논문'?0:1));   // 학위논문 우선
-      for(const c of nc){ const n=normT(c.title); if(n&&!seen.has(n)){ seen.add(n); nanet.push(c); } if(nanet.length>=3) break; }
-    }catch(e){}
-  }
-  let results=[...books.slice(0,12), ...papers.slice(0,4), ...nanet];
+  let results=(d.results||[]).filter(b=>b&&b.isbn&&b.title);
+  // 측정훅(클릭 로깅용): 이 검색의 eventId/위치/소스를 후보에 부착
+  const evId=(d.meta&&d.meta.eventId)||null;
+  results.forEach((b,i)=>{ b._eventId=evId; b._pos=i; b._q=topic; b._surface=surface||''; });
+  // 개인화(클라 신호) — 이미 읽은 책 제외 + 관심·전공 매칭 위로
   const prof=usMyProfile(); const pz=usPersonalize(results, prof);
   if(pz.list.length) results=pz.list;
   const note=(prof && pz.used && (prof.dept||prof.interests.length))
     ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
     : '';
+  // LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음). 논문(kci/nanet)은 외부링크라 제외.
   results.forEach(b=>{ if(b._material!=='kci' && b._material!=='nanet') curateToLibBook(b); });
+  results.forEach((b,i)=>{ if(b&&b.isbn){ b._pos=i; US_CLICKMAP[String(b.isbn).replace(/'/g,'')]=b; } });   // 클릭 로깅 참조용(표시순 위치)
   byeoliLog({surface:surface||'',query:topic,intent:'books',ready:true,refined_topic:topic,result_count:results.length,top_titles:results.slice(0,3).map(b=>b.title||'')});
   return {offtopic:false, results, subtitle:d.subtitle||'', note};
+}
+// 측정훅 ② 클릭 로깅 — 어떤 결과를 눌렀나(위치·소스별 CTR=리랭킹 신호 + 영업지표). 실패해도 UX 무영향.
+function byeoliClickLog(b){
+  try{
+    if(!b) return;
+    fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/byeoli_search_clicks',{method:'POST',
+      headers:{apikey:COVER_ANON,'Authorization':'Bearer '+COVER_ANON,'content-type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({event_id:b._eventId||null, surface:b._surface||'', query:b._q||'', isbn:b.isbn||'', title:b.title||'', position:(typeof b._pos==='number'?b._pos:null), source:b._source||'', kind:b._kind||''})}).catch(()=>{});
+  }catch(e){}
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -8903,14 +8887,14 @@ window.addEventListener('keydown', (e) => {
         ? (escD([b.author,b.publisher,b.year].filter(Boolean).join(' · '))||'국회 학술자료')
         : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
       const read=ext?'<div class="hwc-read">원문 보기</div>':(b._orte?'<div class="hwc-read">원문 바로보기</div>':'');
-      const open=url?`onclick="window.open('${url}','_blank','noopener')"`:'';
+      const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
       return `<div class="hwc-card" ${open}>
         <div class="hwc-cv"></div>
         <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${sub}</div>
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
     }
     const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
-    return `<div class="hwc-card" onclick="libDetail('${esc(isbn)}')">
+    return `<div class="hwc-card" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(b.author||'')}</div>
       <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
