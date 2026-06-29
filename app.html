@@ -8147,7 +8147,9 @@ function curateToLibBook(c){
     isbn:c.isbn, t:c.title||'', a:c.author||'', cover:c.cover||'',
     publisher:c.publisher||'', pubYear:c.year||'', loan:c.loan||null,
     description:c.description||'',
-    tags:tags.length?tags:undefined, _sm:((c.isbn||'').indexOf('sm-')===0)||undefined,
+    // _sm = 세명대 소장 책 표식. curate/byeoli-search 전자책은 isbn을 raw isbn13로 주므로('sm-' 접두 없음)
+    //   접두뿐 아니라 smEbook/smPaper로도 판정 — 안 그러면 libDetail이 loadDesc(줄거리 lazy)를 건너뛰고 출처라벨도 오표기.
+    tags:tags.length?tags:undefined, _sm:((c.isbn||'').indexOf('sm-')===0 || c.smEbook===true || c.smPaper===true)||undefined,
     lib:c.smEbookUrl||'', _pp:c.smPaperUrl||'', cremaUrl:c.cremaUrl||'', brcd:c.brcd||'',
     _material:c._material||undefined
   };
