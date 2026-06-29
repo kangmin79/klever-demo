@@ -3,57 +3,52 @@
 <title>별이 카드 테두리 구분 미리보기</title>
 <style>
 :root{
-  --primary:#1a2942; --accent:#3a6ea5; --gold:#d4a93b;
-  --bg:#f7f6f1; --bg-card:#fff; --text:#1a2942; --text-sub:#475569; --text-light:#64748b; --border:#e3dfd5;
+  --bg:#f7f6f1; --bg-card:#fff; --bg-input:#f0efeb;
+  --text:#1a2942; --text-sub:#475569; --text-light:#64748b; --border:#e3dfd5; --gold:#d4a93b;
+  /* 은은한 구분 테두리 — 채도 낮춰 차분하게 */
+  --edge-book:#bcd0e6;   /* 도서 = 연한 블루 */
+  --edge-paper:#e6d4a6;  /* 학술자료 = 연한 샌드골드 */
 }
-body{margin:0;background:var(--bg);font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:var(--text);padding:24px;}
-.wrap{max-width:920px;margin:0 auto;}
-.usc-cards{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px;}
-.usc-cards-h{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:800;margin-bottom:16px;}
-.usc-cards-h::before{content:'';width:3px;height:14px;border-radius:2px;background:var(--accent);}
-.usc-cards-h span{color:var(--text-light);font-weight:700;}
-.grp-h{font-size:12px;font-weight:800;color:var(--text-sub);margin:0 0 11px;}
-.grp-h em{font-style:normal;color:var(--text-light);}
-.grp{margin-bottom:22px;}.grp:last-child{margin-bottom:0;}
+body{margin:0;background:#eef1f6;font-family:'Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;color:var(--text);padding:22px;}
+.wrap{max-width:430px;margin:0 auto;background:var(--bg);border-radius:18px;padding:16px;box-shadow:0 10px 40px rgba(20,25,45,.12);}
 
-.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:18px;}
-/* ▼ 카드 전체 테두리 색으로 도서/논문 구분 (2px) */
-.book-card{background:var(--bg-card);border:2px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:.18s;}
-.book-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(20,25,45,.14);}
-.book-card.bc-book {border-color:var(--accent);}   /* 도서 = 블루 테두리 */
-.book-card.bc-paper{border-color:var(--gold);}      /* 논문 = 골드 테두리 */
-.book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
-.cv-book {background:linear-gradient(160deg,#2b4a73,#1a2942);}
-.cv-paper{background:linear-gradient(160deg,#6b5a2d,#3d3318);}
-.lc-fb{font-size:15px;font-weight:800;color:#fff;line-height:1.3;}
-.book-info{padding:11px 13px;}
-.bt-tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;margin-bottom:6px;}
+.grp{margin-bottom:16px;}.grp:last-child{margin-bottom:0;}
+.grp-h{font-size:11px;font-weight:700;color:var(--text-light);margin:0 0 9px;letter-spacing:.3px;}
+.grp-h em{font-style:normal;}
+
+.hwc-cards{display:flex;flex-direction:column;gap:8px;}
+/* ▼ 은은한 1px 테두리로 도서/논문 구분 */
+.hwc-card{display:flex;gap:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:9px;cursor:pointer;transition:.16s;}
+.hwc-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(20,25,45,.08);}
+.hwc-card.bc-book {border-color:var(--edge-book);}
+.hwc-card.bc-paper{border-color:var(--edge-paper);}
+.hwc-cv{flex:0 0 50px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#e7e7ec;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#9aa0ad;text-align:center;padding:4px;line-height:1.2;box-shadow:0 2px 6px rgba(20,20,45,.08);}
+.hwc-ci{flex:1;min-width:0;display:flex;flex-direction:column;}
+.hwc-ci h4{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.3;margin:0;}
+.hwc-ci .au{font-size:10.5px;color:var(--text-light);margin:3px 0 5px;}
+.bt-tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;}
 .bt-eb{background:#E1F5EE;color:#0F6E56;}.bt-pp{background:#FAEEDA;color:#633806;}.bt-sub{background:#EDE9FE;color:#5B21B6;}
-.book-title{font-size:13px;font-weight:800;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.book-author{font-size:11px;color:var(--text-sub);}
-.note{font-size:12px;color:var(--text-light);margin:18px 2px 0;text-align:center;}
+.hwc-read{display:inline-flex;align-items:center;gap:3px;margin-top:5px;align-self:flex-start;padding:2px 8px;border-radius:99px;background:var(--gold);color:#1a1208;font-size:10.5px;font-weight:800;}
+.note{font-size:11px;color:var(--text-light);margin:16px 4px 2px;text-align:center;line-height:1.5;}
 </style></head>
 <body><div class="wrap">
-<div class="usc-cards">
-  <div class="usc-cards-h">별이의 추천 <span>11</span></div>
 
   <div class="grp">
-    <div class="grp-h">도서 <em>8</em></div>
-    <div class="book-grid">
-      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">떨림과 울림</div></div><div class="book-info"><span class="bt-tag bt-eb">전자책</span><div class="book-title">떨림과 울림</div><div class="book-author">김상욱 · 동아시아</div></div></div>
-      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">우주의 신비</div></div><div class="book-info"><span class="bt-tag bt-pp">종이책</span><div class="book-title">우주의 신비</div><div class="book-author">우주과학 다이제스트</div></div></div>
-      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">가장 짧은 우주의 역사</div></div><div class="book-info"><span class="bt-tag bt-eb">전자책</span><div class="book-title">가장 짧은 우주의 역사</div><div class="book-author">데이비드 베이커</div></div></div>
-      <div class="book-card bc-book"><div class="book-cover cv-book"><div class="lc-fb">우주를 만지다</div></div><div class="book-info"><span class="bt-tag bt-sub">구독</span><div class="book-title">우주를 만지다</div><div class="book-author">권재술</div></div></div>
+    <div class="grp-h">도서 <em>4</em></div>
+    <div class="hwc-cards">
+      <div class="hwc-card bc-book"><div class="hwc-cv">표지</div><div class="hwc-ci"><h4>떨림과 울림</h4><div class="au">김상욱 · 동아시아</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="bt-tag bt-eb">전자책</span></div><div class="hwc-read">바로 읽기</div></div></div>
+      <div class="hwc-card bc-book"><div class="hwc-cv">표지</div><div class="hwc-ci"><h4>우주의 신비 (우주과학 다이제스트 시리즈 1)</h4><div class="au">우주과학 다이제스트</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="bt-tag bt-pp">종이책</span><span class="bt-tag bt-sub">구독</span></div><div class="hwc-read">바로 읽기</div></div></div>
+      <div class="hwc-card bc-book"><div class="hwc-cv">표지</div><div class="hwc-ci"><h4>별 빛의 과학</h4><div class="au">지웅배</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="bt-tag bt-eb">전자책</span></div><div class="hwc-read">바로 읽기</div></div></div>
     </div>
   </div>
 
   <div class="grp">
-    <div class="grp-h">학술자료 <em>3</em></div>
-    <div class="book-grid">
-      <div class="book-card bc-paper"><div class="book-cover cv-paper"><div class="lc-fb">초기 우주의 급팽창 이론 검토</div></div><div class="book-info"><span class="bt-tag bt-pp">논문</span><div class="book-title">초기 우주의 급팽창 이론 검토</div><div class="book-author">한국우주과학회 · 2023</div></div></div>
-      <div class="book-card bc-paper"><div class="book-cover cv-paper"><div class="lc-fb">외계행성 탐사 기법 동향</div></div><div class="book-info"><span class="bt-tag bt-pp">학위논문</span><div class="book-title">외계행성 탐사 기법 동향</div><div class="book-author">국회 학술정보 · 2024</div></div></div>
+    <div class="grp-h">학술자료 <em>2</em></div>
+    <div class="hwc-cards">
+      <div class="hwc-card bc-paper"><div class="hwc-cv">표지</div><div class="hwc-ci"><h4>초기 우주의 급팽창 이론에 관한 고찰</h4><div class="au">한국우주과학회 · 2023</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="bt-tag bt-pp">논문</span></div><div class="hwc-read">원문 바로보기</div></div></div>
+      <div class="hwc-card bc-paper"><div class="hwc-cv">표지</div><div class="hwc-ci"><h4>외계행성 탐사 기법의 최신 동향 분석</h4><div class="au">국회 학술정보 · 2024</div><div style="display:flex;gap:4px;flex-wrap:wrap"><span class="bt-tag bt-pp">학위논문</span></div><div class="hwc-read">원문 보기</div></div></div>
     </div>
   </div>
-</div>
-<div class="note">카드 전체 테두리 색으로 구분 · 도서 = 블루 / 학술자료 = 골드</div>
+
+  <div class="note">은은한 1px 테두리 · 도서 = 연한 블루 / 학술자료 = 연한 골드</div>
 </div></body></html>
