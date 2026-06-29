@@ -484,6 +484,11 @@ body.dark .sh-btn.joined{background:transparent;color:#cdd5e6;border-color:rgba(
 .book-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;position:relative;}
 .book-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(26,41,66,0.14);border-color:var(--primary);}
 .book-card.has-mns{border-color:var(--gold);}
+/* 도서/학술자료 은은한 글로우 테두리 구분 — 별이 검색결과 카드(메인 .book-card + 플로팅 .hwc-card) */
+.book-card.bc-book,.hwc-card.bc-book{border-color:#a9c8ea;box-shadow:0 0 0 1px rgba(58,110,165,.10),0 2px 14px rgba(58,110,165,.22);}
+.book-card.bc-paper,.hwc-card.bc-paper{border-color:#ecd391;box-shadow:0 0 0 1px rgba(212,169,59,.14),0 2px 14px rgba(212,169,59,.30);}
+.book-card.bc-book:hover,.hwc-card.bc-book:hover{border-color:#8bb4e0;box-shadow:0 0 0 1px rgba(58,110,165,.18),0 5px 22px rgba(58,110,165,.34);}
+.book-card.bc-paper:hover,.hwc-card.bc-paper:hover{border-color:#e3c373;box-shadow:0 0 0 1px rgba(212,169,59,.22),0 5px 22px rgba(212,169,59,.42);}
 .mns-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--gold);color:#1a1208;font-size:10px;font-weight:800;letter-spacing:-.2px;padding:3px 7px;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,.18);}
 .detail-meta-chip.mns-chip{background:var(--gold);color:#1a1208;}
 .book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;position:relative;overflow:hidden;}
@@ -8263,7 +8268,7 @@ function usCardsHTML(results){
       const ghost=(!ext && !b._orte)?' ghost':'';
       const act=url?`<a class="usc-act${ghost}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${actTxt}</a>`:'';
       const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
-      return `<div class="book-card" data-isbn="${esc(isbn)}" ${open}>
+      return `<div class="book-card bc-paper" data-isbn="${esc(isbn)}" ${open}>
         <div class="book-cover"><div class="lc-fb">${escD(b.title)}</div></div>
         <div class="book-info">
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8281,7 +8286,7 @@ function usCardsHTML(results){
     } else if(b.smPaper){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
-    return `<div class="book-card" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
+    return `<div class="book-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="book-info">
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
@@ -8939,13 +8944,13 @@ window.addEventListener('keydown', (e) => {
         : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
       const read=ext?'<div class="hwc-read">원문 보기</div>':(b._orte?'<div class="hwc-read">원문 바로보기</div>':'');
       const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
-      return `<div class="hwc-card" ${open}>
+      return `<div class="hwc-card bc-paper" ${open}>
         <div class="hwc-cv"></div>
         <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${sub}</div>
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
     }
     const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
-    return `<div class="hwc-card" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
+    return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(b.author||'')}</div>
       <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
