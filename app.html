@@ -534,7 +534,8 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .usc-pnote{font-size:12px;color:var(--primary);font-weight:700;margin:-4px 0 10px;}
 /* Answer Engine 답변 버블 — 소장자료 근거 합성답(인용 [n]→카드 점프) */
 .usc-answer{margin:0 0 12px;padding:13px 15px;border-radius:14px;background:linear-gradient(135deg,rgba(99,102,241,.10),rgba(99,102,241,.04));border:1px solid rgba(99,102,241,.28);}
-.usc-answer-h{font-size:11.5px;font-weight:800;color:var(--primary);margin-bottom:6px;letter-spacing:.3px;}
+.usc-answer-h{font-size:11.5px;font-weight:800;color:var(--primary);margin-bottom:6px;letter-spacing:.3px;display:flex;align-items:center;gap:7px;}
+.usc-answer-h::before{content:'';width:3px;height:12px;border-radius:2px;background:var(--primary);flex:none;}
 .usc-answer-t{font-size:14px;line-height:1.62;color:var(--text);word-break:break-word;}
 .usc-cite{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;margin:0 1px;padding:0 4px;border-radius:8px;background:var(--primary);color:#fff;font-size:10px;font-weight:800;cursor:pointer;vertical-align:super;line-height:16px;transition:.12s;}
 .usc-cite:hover{transform:scale(1.18);box-shadow:0 2px 8px rgba(99,102,241,.4);}
@@ -8235,8 +8236,8 @@ function usAnswerHTML(answer){
     const isbn=String(c.isbn||'').replace(/'/g,'');
     return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="usCiteJump('${esc(isbn)}',event)">${esc(n)}</sup>`;
   });
-  const refs=cites.length?`<div class="usc-refs">📚 ${cites.map(c=>`<span class="usc-ref" onclick="usCiteJump('${esc(String(c.isbn||'').replace(/'/g,''))}',event)">${esc(c.title||'')}</span>`).join('')}</div>`:'';
-  return `<div class="usc-answer"><div class="usc-answer-h">⭐ 별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+  const refs=cites.length?`<div class="usc-refs">${cites.map(c=>`<span class="usc-ref" onclick="usCiteJump('${esc(String(c.isbn||'').replace(/'/g,''))}',event)">${esc(c.title||'')}</span>`).join('')}</div>`:'';
+  return `<div class="usc-answer"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
 }
 // 인용 클릭 → 같은 결과 묶음 안의 해당 카드로 스크롤 + 잠깐 강조
 function usCiteJump(isbn, ev){
@@ -8956,9 +8957,9 @@ window.addEventListener('keydown', (e) => {
     const cites=Array.isArray(answer.cited)?answer.cited:[];
     const byN={}; cites.forEach(c=>{ byN[c.n]=c; });
     const html=esc(answer.text).replace(/\[(\d+)\]/g,(m,n)=>{ const c=byN[+n]; if(!c) return ''; const isbn=String(c.isbn||'').replace(/'/g,''); return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="libDetail('${esc(isbn)}')">${esc(n)}</sup>`; });
-    const refs=cites.length?`<div class="usc-refs">📚 ${cites.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,''); return `<span class="usc-ref" onclick="libDetail('${esc(isbn)}')">${esc(c.title||'')}</span>`; }).join('')}</div>`:'';
+    const refs=cites.length?`<div class="usc-refs">${cites.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,''); return `<span class="usc-ref" onclick="libDetail('${esc(isbn)}')">${esc(c.title||'')}</span>`; }).join('')}</div>`:'';
     const row=document.createElement('div'); row.className='hwc-row bot';
-    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">⭐ 별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
     el('hwcBody').appendChild(row);
   }
   function hwcAddBooks(results, subtitle, answer){
