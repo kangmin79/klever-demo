@@ -9024,7 +9024,7 @@ window.addEventListener('keydown', (e) => {
     document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());   // 직접 입력 시에도 후속 칩 정리
     addUser(shown||text); msgs.push({role:'user',content:text}); typing(true);
     try{
-      let refined='';
+      let refined='', brainReply='';
       // 1) 별이 두뇌: 의도 라우팅. 운영정보(info)·잡담(other)·모호한 책요청 → KB로 바로 답(추천 호출 안 함).
       try{
         const br=await fetch(BRAIN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
@@ -9039,11 +9039,15 @@ window.addEventListener('keydown', (e) => {
           return;
         }
         if(bd && bd.refinedTopic) refined=bd.refinedTopic;   // 두뇌가 다듬은 검색 주제
+        if(bd && bd.reply) brainReply=bd.reply;               // 책 확인 한마디(아래에서 assistant 턴으로 기록)
       }catch(e){ /* 두뇌 실패 → 원문 질의로 검색 */ }
       // 2) 책 추천 — 메인 별이와 동일 엔진(세명대 실소장 11만: curate 전자책 + semyung-find 종이/논문)
       lastTopic = refined || text;
       const fr = await byeoliFindBooks(lastTopic, 'float');
       typing(false);
+      // ⚠️책 추천도 assistant 턴으로 이력에 남긴다 — 안 남기면 user 메시지가 연속 누적되어
+      //   Anthropic API가 한 덩어리로 합쳐 직전 책맥락이 다음 운영질문("운영시간?")을 books로 오분류시킨다(메인 챗은 8359에서 이미 기록).
+      msgs.push({role:'assistant', content: brainReply || '책을 찾아드렸어요.'});
       if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
       else { const n=hwcAddBooks(fr.results, fr.subtitle, fr.answer); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'); }
