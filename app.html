@@ -3029,8 +3029,10 @@ function shelfAdd(b){
 function shelfCard(x){
   const cv=x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:'📖';
   const right = x.status==='done'
-    ? `<span style="font-size:12px;font-weight:800;color:#1d6b48;white-space:nowrap">✔ 완독</span>`
-    : `<button onclick="event.stopPropagation();shelfCertOpen('${esc(x.key)}')" style="background:var(--gold);color:#1a1208;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap">완독 인증 →</button>`;
+    ? `<span style="font-size:12px;font-weight:800;color:#1d6b48;white-space:nowrap">✔ 완독${x.returned?' · 반납됨':''}</span>`
+    : `<div style="display:flex;gap:6px;align-items:center;white-space:nowrap">`
+      + (x.loanSrmb?`<button onclick="event.stopPropagation();shelfReturn('${esc(x.key)}')" style="background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer">반납</button>`:'')
+      + `<button onclick="event.stopPropagation();shelfCertOpen('${esc(x.key)}')" style="background:var(--gold);color:#1a1208;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer">완독 인증 →</button></div>`;
   return `<div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)">
     <div style="flex:0 0 42px;width:42px;height:60px;border-radius:6px;overflow:hidden;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:20px">${cv}</div>
     <div style="flex:1;min-width:0">
@@ -3042,7 +3044,7 @@ function renderMyShelf(){
   const el=document.getElementById('myShelf'); if(!el) return;
   const a=shelfLoad();
   if(!a.length){ el.innerHTML=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;padding:26px 10px;background:var(--bg-input);border-radius:12px;line-height:1.7">아직 빌린 책이 없어요.<br><b style="color:var(--primary)">우리 도서관</b>에서 책을 빌리면 여기에 쌓이고, 다 읽으면 <b>완독 인증</b>으로 점수가 올라가요.</div>`; return; }
-  const reading=a.filter(x=>x.status!=='done'), done=a.filter(x=>x.status==='done');
+  const reading=a.filter(x=>x.status!=='done' && !x.returned), done=a.filter(x=>x.status==='done');
   const sub=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:14px 0 2px">${t}</div>`;
   el.innerHTML=(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
     +(done.length?sub(`✅ 완독 ${done.length}`)+done.map(shelfCard).join(''):'');
@@ -3074,6 +3076,19 @@ function shelfCertSubmit(key){
     title:`『${esc(cleanT(it.t))}』<br>완독 인증 완료!`,
     rows:[`독서 이력에 추가 — 누적 완독 <b>${done}권</b>`],
   });
+}
+// 전자책 반납 — semyung-ebook-borrow(action=return)로 대출 슬롯 비우기. 반납 시각 기록 → 대출기간 측정.
+async function shelfReturn(key){
+  const a=shelfLoad(); const it=a.find(x=>x.key===key); if(!it) return;
+  if(!it.loanSrmb){ readerToast('반납 정보가 없어요 — 도서관에서 직접 확인해 주세요'); return; }
+  if(!confirm(`「${cleanT(it.t)}」 반납할까요?`)) return;
+  readerToast('반납 중…');
+  try{
+    const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(it.loanSrmb),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(d&&d.ok){ it.returned=true; it.returnedTs=Date.now(); shelfSave(a); renderMyShelf(); readerToast('반납 완료 — 대출 슬롯이 비었어요'); }
+    else{ readerToast('반납에 실패했어요. 잠시 후 다시 시도해 주세요'); }
+  }catch(e){ readerToast('반납 중 오류가 났어요'); }
 }
 
 function applyReaderPrefs(){
@@ -5203,7 +5218,7 @@ function lcBorrow(isbn){
   // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
   const isEbookLoan = /^sm-/.test(b.isbn||'') && /^\d+$/.test(reckey) &&
     ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
-  if(b.lib) shelfAdd(b);   // 전자책 열람만 '읽는 중' 기록 → 마이페이지 완독 인증('읽고 돌아오기' 루프)
+  if(b.lib || isEbookLoan) shelfAdd(b);   // 전자책 열람/대출 → '읽는 중' 기록 → 마이페이지 완독 인증·반납('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
   if(isEbookLoan){
     if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
@@ -5222,7 +5237,11 @@ async function smEbookBorrowOpen(brcd, w){
   try{
     const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
-    if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } }
+    if(d&&d.ok&&d.viewerUrl){
+      // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
+      try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.loanSrmb=d.loanSrmb||''; it.ents=d.entsDvsnCode||''; it.ts=Date.now(); it.returned=false; shelfSave(a); } }catch(e){}
+      try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); }
+    }
     else{ const msg=(d&&(d.message||d.error))||'지금은 대출할 수 없어요(동시이용 한도일 수 있어요)';
       try{ w.document.body.innerHTML='<div style="font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#334"><p style="font-size:15px">'+msg+'</p><p style="font-size:13px;color:#889;margin-top:10px">창을 닫고 다시 시도해 주세요.</p></div>'; }catch(e){ alert(msg); } }
   }catch(e){ try{ w.document.body.innerHTML='<p style="font-family:sans-serif;padding:48px;text-align:center">대출 중 오류가 발생했어요. 다시 시도해 주세요.</p>'; }catch(_){ } }
@@ -5634,7 +5653,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260630b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260630c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
