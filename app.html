@@ -5639,10 +5639,6 @@ function openDetail(bookId){
       <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 퀴즈로 깊이 읽기<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">· 챌린지 + 한 줄 소감</span><span class="ar">›</span></div>
       ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
     </div>
-    <div style="display:flex;gap:8px;padding:0 24px 14px;">
-      <a href="https://search.kyobobook.co.kr/search?keyword=${encodeURIComponent(b.title)}&target=total" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">교보문고에서 보기 ↗</a>
-      <a href="https://www.aladin.co.kr/search/wsearchresult.aspx?SearchWord=${encodeURIComponent(b.title)}" target="_blank" rel="noopener" style="flex:1;text-align:center;text-decoration:none;font-size:12px;font-weight:700;color:var(--text-sub);border:1px solid var(--border);border-radius:10px;padding:9px 0;">알라딘에서 보기 ↗</a>
-    </div>
     <div class="lcd-src">저작권 만료(PD) · 본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
@@ -5653,7 +5649,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260630c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260630d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
