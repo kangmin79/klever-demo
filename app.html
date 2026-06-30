@@ -317,10 +317,12 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 body.dark .lcd-way .wtag{color:#86efac;}
 .lcd-way .wtag.sub{color:#7c3aed;background:rgba(124,58,237,.12);}
 body.dark .lcd-way .wtag.sub{color:#c4b5fd;}
-/* 전자책 바로 읽기 = 종이책처럼 깔끔한 박스(주 동작이라 아이콘칩만 네이비로 채워 강조) */
-.lcd-way.t-ebook{border-color:rgba(26,41,66,.22);cursor:pointer;}
-.lcd-way.t-ebook:hover{border-color:var(--primary);}
-.lcd-way.t-ebook .wic{background:var(--primary);color:#fff;}
+/* 주 동작(전자책/종이책/크레마/찾기)도 종이책처럼 깔끔한 박스 — primary는 아이콘칩을 채워 강조 */
+.lcd-way.pw,.lcd-way.t-ebook{border-color:rgba(26,41,66,.22);cursor:pointer;}
+.lcd-way.pw:hover,.lcd-way.t-ebook:hover{border-color:var(--primary);}
+.lcd-way.t-ebook .wic,.lcd-way.t-find .wic{background:var(--primary);color:#fff;}
+.lcd-way.pw.t-paper .wic{background:#6366f1;color:#fff;}
+.lcd-way.pw.t-sub .wic{background:#7c3aed;color:#fff;}
 .lcd-way .wtag.eb{color:#0F6E56;background:rgba(34,160,110,.13);}
 body.dark .lcd-way .wtag.eb{color:#8fd9bf;}
 .lcd-way .wsub{font-size:12px;color:var(--text-light);}
@@ -5087,11 +5089,9 @@ function libDetail(isbn){
             : isPaperHold
             ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
             : hasPaper
-            ? `<a class="lcd-btn primary" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="bic">${SVG_PAPER}</span>종이책 대출하기<span class="ar">›</span></a>
-               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">우리 도서관 소장 종이책 · 세명대 통합검색으로 연결</div>`
+            ? `<a class="lcd-way pw t-paper" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="wtag">소장</span><span class="ar">›</span></a>`
             : hasSub
-            ? `<a class="lcd-btn primary" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="bic">${SVG_SUB}</span>크레마클럽에서 읽기<span class="ar">›</span></a>
-               <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">구독 전자책 · 크레마클럽 무제한</div>`
+            ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
             : '';
           const otherPaper=(hasEb&&hasPaper) ? `<a class="lcd-way t-paper ok" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">소장</span><span class="ar">›</span></a>` : '';
           const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
@@ -5102,8 +5102,7 @@ function libDetail(isbn){
         ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb">소장</span><span class="ar">›</span></div>`
         : isPaperHold
         ? '' /* 종이책 소장+예약은 위 소장현황 박스에서 — 일원화 */
-        : `<div class="lcd-btn primary" onclick="lcBorrow('${b.isbn}')">우리 도서관에서 찾기<span class="ar">›</span></div>
-           <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">세명대학교 학술정보원 통합검색으로 연결</div>`)
+        : `<div class="lcd-way pw t-find" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_PAPER}</span><span class="wlabel">우리 도서관에서 찾기</span><span class="ar">›</span></div>`)
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
         ${en.crema ? `<a class="lcd-way t-sub" href="${esc(cremaHref(en.cremaUrl||'', b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
