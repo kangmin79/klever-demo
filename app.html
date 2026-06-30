@@ -358,6 +358,10 @@ body.dark .lcd-holding.ok .lh-line b:first-of-type{color:#86efac;}
 body.dark .lh-resv.done{color:#86efac;}
 .lh-cancel{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:600;color:var(--text-light);text-decoration:underline;cursor:pointer;}
 .lh-cancel:hover{color:#dc2626;}
+/* 전자책+종이책: '종이책 대출' 탭하면 소장정보 펼침 */
+.lcd-way .pw-ar{transition:transform .16s;display:inline-block;}
+.lcd-way.pw-open .pw-ar{transform:rotate(90deg);}
+.lcd-holding.pw-hold{margin:6px 0 2px;}
 /* 예약 직전 확인 시트 */
 .rsv-sheet{position:fixed;inset:0;z-index:1200;display:none;align-items:flex-end;justify-content:center;background:rgba(15,23,42,.5);}
 .rsv-sheet.on{display:flex;}
@@ -4326,8 +4330,9 @@ const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
 const SMHOLD_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-holding";
 // 종이책 모달: 라이브 소장/대출가능 현황 (semyung-holding Edge Fn, reckey=CATTOT...)
-async function loadHolding(reckey){
-  const el=document.getElementById('lcdHolding'); if(!el) return;
+async function loadHolding(reckey, elId){
+  const el=document.getElementById(elId||'lcdHolding'); if(!el) return;
+  const pw = el.classList.contains('pw-hold')?' pw-hold':'';   // 펼침 박스면 여백 클래스 유지
   try{
     const r=await fetch(SMHOLD_FN+'?reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
@@ -4342,15 +4347,26 @@ async function loadHolding(reckey){
     const resv=avail
       ? `<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">예약하기 · 서가에서 찾아 보관해 드려요</div>`
       : `<div class="lh-resv" id="lhResv" onclick="smHoldConfirm('${esc(reckey)}')">예약하기 · 반납되면 순번대로 빌려드려요</div>`;
-    el.className='lcd-holding '+(avail?'ok':'out');
+    el.className='lcd-holding '+(avail?'ok':'out')+pw;
     el.innerHTML = (avail
       ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?(d.available>=d.total?` · ${d.total}권 모두`:` · ${d.available}/${d.total}권`):''}</div>`
       : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
   }catch(e){
     // 조회 실패 시에만 최소 폴백(막다른 길 방지) — 도서관 상세로 직접 확인
-    el.className='lcd-holding out';
+    el.className='lcd-holding out'+pw;
     el.innerHTML='<div class="lh-line"><span class="lh-dot out"></span>소장 정보를 잠시 불러오지 못했어요</div>'
       +'<div class="lh-where"><a href="https://lib.semyung.ac.kr/search/detail/'+esc(reckey)+'" target="_blank" rel="noopener" style="color:var(--accent,#6366f1);text-decoration:underline;font-weight:600">도서관에서 직접 확인하기</a></div>';
+  }
+}
+// 전자책+종이책 책: '종이책 대출' 줄을 탭하면 같은 소장정보(위치/청구기호/대출가능/예약)를 그 자리에서 펼침
+function togglePaperHold(reckey, row){
+  const box=row.nextElementSibling; if(!box) return;
+  const closed = box.style.display==='none';
+  if(closed){
+    box.style.display=''; row.classList.add('pw-open');
+    if(!box.dataset.loaded){ box.dataset.loaded='1'; box.className='lcd-holding pw-hold loading'; box.textContent='우리 도서관 소장 현황을 확인하고 있어요…'; loadHolding(reckey, box.id); }
+  } else {
+    box.style.display='none'; row.classList.remove('pw-open');
   }
 }
 // 찾아줘북즈 예약 — 서버(semyung-reserve)가 도서관장 계정으로 로그인·신청까지 북스타 안에서 완결
@@ -5057,11 +5073,22 @@ function libDetail(isbn){
   const opacUrl = 'https://lib.semyung.ac.kr/search/tot/result?st=KWRD&si=TOTAL&q='+encodeURIComponent(cleanT(b.t||''));
   const reckey=(b.isbn||'').replace(/^sm-/,'');
   const isPaperHold=/^CATTOT/.test(reckey);   // OPAC 종이책 → 라이브 대출가능 현황 표시
+  // 전자책+종이책 책: 짝이 되는 종이책 소장키(CATTOT) — paperUrl(or _pp)에서 추출 → 있으면 종이책 줄을 탭 펼침으로
+  const paperHoldKey=(()=>{ const m=String((en&&en.paperUrl)||b._pp||'').match(/CATTOT\d+/); return m?m[0]:''; })();
   // SVG 라인 아이콘(이모지 대체)
   const SVG_EBOOK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
   const SVG_PAPER='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
   const SVG_SUB='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
   const SVG_RANK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18v-6"/><path d="M12 18V8"/><path d="M16 18v-9"/></svg>';
+  // 보조 '종이책 대출' 줄: 소장키 있으면 탭하면 소장정보 펼침(종이책만일 때와 동일 박스), 없으면 OPAC 링크 폴백
+  const paperWay=(statusLabel,fallbackHref)=>{
+    const wtag=`<span class="wtag">${esc(statusLabel||'소장')}</span>`;
+    if(paperHoldKey){
+      return `<div class="lcd-way t-paper ok" onclick="togglePaperHold('${paperHoldKey}',this)"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar pw-ar">›</span></div>`
+        + `<div class="lcd-holding pw-hold" id="pwHold-${paperHoldKey}" style="display:none"></div>`;
+    }
+    return `<a class="lcd-way t-paper ok" href="${esc(fallbackHref)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar">›</span></a>`;
+  };
   const meta=[];
   if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${b.rating}${b.ratingCount?` · ${b.ratingCount}명`:''}`);
   if(b.loan) meta.push(`대출 ${Number(b.loan).toLocaleString()}`);
@@ -5093,7 +5120,7 @@ function libDetail(isbn){
             : hasSub
             ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
             : '';
-          const otherPaper=(hasEb&&hasPaper) ? `<a class="lcd-way t-paper ok" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">소장</span><span class="ar">›</span></a>` : '';
+          const otherPaper=(hasEb&&hasPaper) ? paperWay((en&&en.paperStatus)||'소장', b._pp||opacUrl) : '';
           const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
           const ways=otherPaper+cremaWay;
           return primary + (ways?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${ways}</div>`:'');
@@ -5106,7 +5133,7 @@ function libDetail(isbn){
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
         ${en.crema ? `<a class="lcd-way t-sub" href="${esc(cremaHref(en.cremaUrl||'', b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
-        ${(en.paper && !isPaperHold) ? `<a class="lcd-way t-paper ok" href="${en.paperUrl||opacUrl}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="wtag">${esc(en.paperStatus||'소장')}</span><span class="ar">›</span></a>` : ''}
+        ${(en.paper && !isPaperHold) ? paperWay(en.paperStatus||'소장', en.paperUrl||opacUrl) : ''}
       </div>` : '');
       })()}
     </div>
@@ -5607,7 +5634,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260629a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260630a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
