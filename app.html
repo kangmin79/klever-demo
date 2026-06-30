@@ -5649,7 +5649,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260630d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260630e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -5874,8 +5874,10 @@ async function openViewer(bookId, mode){
   let _reload = false;
   if((b.hasTrans||LEGACY_BODY_FILES[bookId]) && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
   if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
-  // gb- 번역책은 bodies에 원문·번역이 모두 있어 Supabase 원문 fetch가 불필요(중복 네트워크 제거 → 더 빨리 표시)
-  const _haveForeignBody = bookId.startsWith('gb-') && (BODIES_SENT[bookId]||BODIES_ORIG[bookId]||BODIES_TRANS[bookId]);
+  // 원문(좌)을 로컬 bodies에 이미 가진 경우만 Supabase 원문 fetch 생략(중복 네트워크 제거).
+  // ⚠️ TRANS만 있는 ko-only 책(74권)·원문 누락/스크립트 실패 책은 좌측 원문을 Supabase에서 받아야 함
+  //    (TRANS 보유를 '원문 확보'로 오판하면 좌측이 '본문 불러오는 중…'에 영구히 멈춤).
+  const _haveForeignBody = bookId.startsWith('gb-') && (BODIES_SENT[bookId]||BODIES_ORIG[bookId]);
   if(classicFetchId(bookId) && !_haveForeignBody){ await ensureClassicBody(bookId); _reload = true; }
   if(_reload && currentBook===b) renderViewer();
   // 리더 모듈 초기화
