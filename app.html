@@ -2138,7 +2138,14 @@ body.dark .hwc-row.user .hwc-msg{color:#0f172a;}
 .hwc-cv{flex:0 0 50px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--bg-input);box-shadow:0 4px 10px rgba(20,20,45,.16);}
 .hwc-cv img{width:100%;height:100%;object-fit:cover;}
 .hwc-ci{flex:1;min-width:0;display:flex;flex-direction:column;}
-.hwc-read{display:inline-flex;align-items:center;gap:3px;margin-top:5px;align-self:flex-start;padding:2px 8px;border-radius:99px;background:var(--gold);color:#1a1208;font-size:10.5px;font-weight:800;}
+.hwc-read{display:inline-flex;align-items:center;gap:3px;margin-top:7px;align-self:flex-start;padding:5px 12px;border-radius:9px;background:rgba(26,41,66,.055);color:var(--primary);font-size:11px;font-weight:700;border:1px solid rgba(26,41,66,.10);transition:.14s;}
+.hwc-read::after{content:'\203A';font-size:13px;line-height:1;opacity:.65;}
+.hwc-card:hover .hwc-read{background:var(--primary);color:#fff;border-color:var(--primary);}
+body.dark .hwc-read{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);}
+/* 대출 횟수(인기도) — 있을 때만, 차분한 골드톤 */
+.hwc-loan{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#9a8348;}
+.hwc-loan b{color:#7a6534;}
+body.dark .hwc-loan{color:#c5a85e;}body.dark .hwc-loan b{color:#d9bd72;}
 .hwc-more{width:100%;margin-top:2px;padding:11px;border:1px solid var(--primary);background:var(--bg-card);color:var(--primary);border-radius:12px;font-weight:800;font-size:13px;cursor:pointer;transition:.16s;}
 .hwc-more:hover{background:var(--primary);color:#fff;}
 .hwc-ci h4{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.3;}
@@ -8289,9 +8296,9 @@ function usCardsHTML(results){
     return `<div class="book-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="book-info">
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}${b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:''}</div>
         <div class="book-title">${escD(b.title)}</div>
-        <div class="book-author">${escD(b.author||'')}</div>
+        <div class="book-author">${escD([b.author,b.publisher,(b.year||b.pubYear)].filter(Boolean).join(' · '))}</div>
         ${act}
       </div></div>`;
   }).join('')+`</div>`;
@@ -8950,10 +8957,12 @@ window.addEventListener('keydown', (e) => {
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
     }
     const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
+    const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
+    const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
     return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
       <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
-      <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(b.author||'')}</div>
-      <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
+      <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(meta)}</div>
+      <div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">${usFormBadges(b)}${loan}</div>${read}</div></div>`;
   }
   // 새 결과 중 이미 보여준 책(isbn) 제외하고 카드 추가 → 추가 개수 반환
   // Answer Engine 답변 행(플로팅) — 인용 [n]·근거 칩 클릭 시 libDetail 상세 모달
