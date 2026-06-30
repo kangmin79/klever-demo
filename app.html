@@ -5613,7 +5613,7 @@ function openDetail(bookId){
   if(!b) return;
   // 체감 속도↑: 상세 보는 동안 '전문 바로읽기' 본문을 백그라운드로 미리 당겨옴(await 안 함, 클릭 시 즉시 표시)
   try{
-    if((b.hasTrans||LEGACY_BODY_FILES[bookId]) && bookId.startsWith('gb-')) ensureForeignBody(bookId);          // 번역 bodies(원문+번역 포함)
+    if(bookId.startsWith('gb-')) ensureClassicBody(bookId);          // Supabase 원문+번역 데움(대용량 JS는 번역 없을 때만 openViewer에서)
     else if(b.hasTrans && bookId.startsWith('kr-')){ ensureKrBody(b); if(classicFetchId(bookId)) ensureClassicBody(bookId); }
     else if(classicFetchId(bookId)) ensureClassicBody(bookId);
   }catch(e){}
@@ -5649,7 +5649,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260630e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260630f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -5872,13 +5872,16 @@ async function openViewer(bookId, mode){
   renderViewer();
   // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
   let _reload = false;
-  if((b.hasTrans||LEGACY_BODY_FILES[bookId]) && bookId.startsWith('gb-')){ await ensureForeignBody(bookId); _reload = true; }
+  // 해외 고전(gb-): Supabase에서 원문(body)+번역(body_trans) 먼저 받음 → 번역이 있으면 대용량 JS 본문파일 생략(가볍게).
+  // 번역이 Supabase에 아직 없으면(정렬형 SENT·미이전분) JS 본문파일로 폴백. (원문은 정렬형이면 SENT가 덮어씀)
+  if(bookId.startsWith('gb-')){
+    await ensureClassicBody(bookId);
+    if(!CLASSIC_TRANS[bookId] && (b.hasTrans||LEGACY_BODY_FILES[bookId])) await ensureForeignBody(bookId);
+    _reload = true;
+  }
   if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
-  // 원문(좌)을 로컬 bodies에 이미 가진 경우만 Supabase 원문 fetch 생략(중복 네트워크 제거).
-  // ⚠️ TRANS만 있는 ko-only 책(74권)·원문 누락/스크립트 실패 책은 좌측 원문을 Supabase에서 받아야 함
-  //    (TRANS 보유를 '원문 확보'로 오판하면 좌측이 '본문 불러오는 중…'에 영구히 멈춤).
-  const _haveForeignBody = bookId.startsWith('gb-') && (BODIES_SENT[bookId]||BODIES_ORIG[bookId]);
-  if(classicFetchId(bookId) && !_haveForeignBody){ await ensureClassicBody(bookId); _reload = true; }
+  // kr-/레거시(g\d+) 등 gb- 외 고전 원문 fetch (gb-는 위에서 처리)
+  if(classicFetchId(bookId) && !bookId.startsWith('gb-')){ await ensureClassicBody(bookId); _reload = true; }
   if(_reload && currentBook===b) renderViewer();
   // 리더 모듈 초기화
   setTimeout(() => {
@@ -6006,6 +6009,7 @@ function viewerLabels(book){
 // 고전 본문 캐시 (Supabase classics 테이블서 fetch)
 // kr-* = 한국 고전, gb-* = 해외 고전, 옛 해외 g{N} = gb-{N} 로 매핑
 const CLASSIC_BODIES = {};
+const CLASSIC_TRANS = {};   // 고전 번역본(좌우 평행용) — Supabase classics.body_trans 이전분(ko-only 등)
 function classicFetchId(id){
   if(!id) return null;
   if(id.startsWith('kr-') || id.startsWith('gb-')) return id;
@@ -6016,10 +6020,12 @@ async function ensureClassicBody(id){
   const fid = classicFetchId(id);
   if(!fid || CLASSIC_BODIES[id] !== undefined) return;
   try{
-    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}&select=body`,
+    // body(원문) + body_trans(번역, ko-only 등 이전분) 한 번에 — 있으면 JS 본문파일 불필요
+    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}&select=body,body_trans`,
       {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}});
     const rows = await r.json();
     CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
+    if(rows && rows[0] && rows[0].body_trans) CLASSIC_TRANS[id] = rows[0].body_trans;
   }catch(e){ CLASSIC_BODIES[id] = ''; }
 }
 
@@ -6085,7 +6091,8 @@ function viewerBodies(book){
     || (typeof BODIES_ORIG !== 'undefined' && BODIES_ORIG[id] ? bodyToHtml(BODIES_ORIG[id]) : '')
     || (CLASSIC_BODIES[id] ? bodyToHtml(CLASSIC_BODIES[id]) : '');
   let trans = mock.trans
-    || (typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id] ? bodyToHtml(BODIES_TRANS[id]) : '');
+    || (typeof BODIES_TRANS !== 'undefined' && BODIES_TRANS[id] ? bodyToHtml(BODIES_TRANS[id]) : '')
+    || (CLASSIC_TRANS[id] ? bodyToHtml(CLASSIC_TRANS[id]) : '');
   // modern: trans는 별도 없음 — 비워두고 placeholder가 노출되게 함
   return { orig, trans, quiz: mock.quiz, nativeEN: mock.nativeEN };
 }
