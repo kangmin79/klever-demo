@@ -8238,16 +8238,9 @@ function usChatReset(){
 // 별이가 '우리 소장 자료만 근거로' 합성한 답. [n]→해당 책 카드로 스크롤+하이라이트. 환각0(서버가 목록 번호로만 인용).
 function usAnswerHTML(answer){
   if(!answer || !answer.used || !answer.text) return '';
-  const cites=Array.isArray(answer.cited)?answer.cited:[];
-  const byN={}; cites.forEach(c=>{ byN[c.n]=c; });
-  // [n] 마커를 클릭 가능한 인용 칩으로
-  const html=esc(answer.text).replace(/\[(\d+)\]/g, (m,n)=>{
-    const c=byN[+n]; if(!c) return '';
-    const isbn=String(c.isbn||'').replace(/'/g,'');
-    return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="usCiteJump('${esc(isbn)}',event)">${esc(n)}</sup>`;
-  });
-  const refs=cites.length?`<div class="usc-refs">${cites.map(c=>`<span class="usc-ref" onclick="usCiteJump('${esc(String(c.isbn||'').replace(/'/g,''))}',event)">${esc(c.title||'')}</span>`).join('')}</div>`:'';
-  return `<div class="usc-answer"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+  // 번호 인용·칩 폐지(가독성) — 주제 요약 문단만. [n] 잔재가 있어도 제거. 책 목록은 바로 아래 카드가 담당.
+  const html=esc(answer.text).replace(/\s*\[\d+\]/g,'');
+  return `<div class="usc-answer"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div></div>`;
 }
 // 인용 클릭 → 같은 결과 묶음 안의 해당 카드로 스크롤 + 잠깐 강조
 function usCiteJump(isbn, ev){
@@ -8966,12 +8959,10 @@ window.addEventListener('keydown', (e) => {
   // Answer Engine 답변 행(플로팅) — 인용 [n]·근거 칩 클릭 시 libDetail 상세 모달
   function hwcAnswerRow(answer){
     if(!answer||!answer.used||!answer.text) return;
-    const cites=Array.isArray(answer.cited)?answer.cited:[];
-    const byN={}; cites.forEach(c=>{ byN[c.n]=c; });
-    const html=esc(answer.text).replace(/\[(\d+)\]/g,(m,n)=>{ const c=byN[+n]; if(!c) return ''; const isbn=String(c.isbn||'').replace(/'/g,''); return `<sup class="usc-cite" title="${esc(c.title||'')}" onclick="libDetail('${esc(isbn)}')">${esc(n)}</sup>`; });
-    const refs=cites.length?`<div class="usc-refs">${cites.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,''); return `<span class="usc-ref" onclick="libDetail('${esc(isbn)}')">${esc(c.title||'')}</span>`; }).join('')}</div>`:'';
+    // 번호 인용·칩 폐지(가독성) — 주제 요약 문단만. 책 목록은 아래 카드가 담당.
+    const html=esc(answer.text).replace(/\s*\[\d+\]/g,'');
     const row=document.createElement('div'); row.className='hwc-row bot';
-    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div>${refs}</div>`;
+    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div></div>`;
     el('hwcBody').appendChild(row);
   }
   function hwcAddBooks(results, subtitle, answer){
