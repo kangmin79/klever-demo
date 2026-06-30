@@ -8884,27 +8884,12 @@ window.addEventListener('keydown', (e) => {
   const GREET="안녕하세요, 별이예요. 🌙\n오늘은 어떤 책을 찾으세요? 기분이나 상황만 편하게 말씀해 주시면 딱 맞는 책을 골라드릴게요.";
   const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
-  let msgs=[], books=[], busy=false, opened=false, lastQ='';
+  let msgs=[], busy=false, opened=false, lastQ='';
   let shownKeys=new Set(), lastTopic='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제
   const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_books";
   const el=id=>document.getElementById(id);
   const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
   const _norm=t=>(t||'').replace(/\s+/g,'').toLowerCase();
-  // 추천 책 제목 → 세명대 전자책 매칭(있으면 _smLib=상세 딥링크 → '바로 읽기' 배지/읽기)
-  async function smMatch(results){
-    const cores=results.map(b=>_core(b.title)).filter(Boolean).slice(0,12);
-    if(!cores.length) return;
-    const or=cores.map(c=>'title.ilike.*'+encodeURIComponent(c.replace(/[(),*]/g,' ').trim())+'*').join(',');
-    try{
-      const r=await fetch(SBR+'?or=('+or+')&select=title,detail_url&limit=80',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
-      const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return;
-      results.forEach(b=>{
-        const c=_norm(_core(b.title)); if(!c) return;
-        const hit=rows.find(x=>{const xc=_norm(_core(x.title)); return xc&&(xc.includes(c)||c.includes(xc));});
-        if(hit) b._smLib=hit.detail_url;
-      });
-    }catch(e){}
-  }
   const scroll=()=>{const b=el('hwcBody');b.scrollTop=b.scrollHeight;};
 
   function addRow(role,html){const r=document.createElement('div');r.className='hwc-row '+(role==='user'?'user':'bot');r.innerHTML=`<div class="hwc-msg">${html}</div>`;el('hwcBody').appendChild(r);scroll();}
@@ -8924,24 +8909,6 @@ window.addEventListener('keydown', (e) => {
     }
   }
 
-  function cardHtml(b,gi){
-    const star=b.rating!=null?`<span style="color:var(--gold);font-weight:700">★ ${f5(b.rating)}</span>`:'';
-    return `<div class="hwc-card" onclick="hwcBook(${gi})">
-      <div class="hwc-cv"><img src="${esc(hiCover(b.cover||''))}" loading="lazy" onerror="this.style.opacity=0"></div>
-      <div class="hwc-ci"><h4>${esc(b.title)}</h4><div class="au">${esc(b.author||'')}${star?' · '+star:''}</div>
-      ${b.reason?`<div class="why">${esc(b.reason)}</div>`:''}
-      ${b._smLib?'<div class="hwc-read">바로 읽기</div>':''}</div></div>`;
-  }
-  async function addCards(results){
-    if(!results||!results.length)return;
-    await smMatch(results);   // 세명대 전자책 매칭 → '바로 읽기' 배지
-    const start=books.length; books.push(...results);
-    const wrap=document.createElement('div');wrap.className='hwc-row bot';
-    wrap.innerHTML=`<div class="hwc-cards">${results.map((b,i)=>cardHtml(b,start+i)).join('')}</div>`;
-    el('hwcBody').appendChild(wrap);
-    followRow();   // 마음에 드는 게 없을 때 — 한 번의 탭으로 재추천 (대화창 안에서 완결)
-    scroll();
-  }
   // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
   function hwcCandCard(b){
     const isbn=String(b.isbn||'').replace(/'/g,'');
@@ -9072,29 +9039,6 @@ window.addEventListener('keydown', (e) => {
     busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
   }
 
-  window.hwcBook=function(gi){
-    const b=books[gi]; if(!b)return;
-    window.__hwcBook=b;   // 전역 보관 → '우리 도서관에서 읽기' 버튼이 참조
-    const ov=document.getElementById('lcDetail'); if(!ov)return;
-    const meta=[];
-    if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${f5(b.rating)}${b.rating_count?` · ${b.rating_count}명`:''}`);
-    if(b.loan_count) meta.push(`대출 ${Number(b.loan_count).toLocaleString()}`);
-    if(b.pages) meta.push(`${b.pages}쪽`);
-    ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
-      <div class="lcd-top">
-        <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
-        <div class="lcd-i"><h2>${esc(b.title)}</h2><div class="au">${esc(b.author||'')}${b.pub_year?` · ${esc(b.pub_year)}`:''}</div>
-          ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
-          ${b.reason?`<div class="lcd-note">“${esc(b.reason)}” — 북스타 사서</div>`:''}</div>
-      </div>
-      ${b.description?`<p class="lcd-desc">${esc(b.description)}</p>`:''}
-      <div class="lcd-acts">
-        <div class="lcd-btn primary" onclick="libBridgeOpen(window.__hwcBook)">📖 우리 도서관에서 읽기<span class="ar">›</span></div>
-        <div style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px">소장 전자책은 바로 읽기 · 그 외엔 세명대 통합검색으로 연결</div>
-      </div>
-      <div class="lcd-src">출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관) / 추천 Bookstar AI</div>`;
-    ov.classList.add('on');
-  };
 })();
 </script>
 </body>
