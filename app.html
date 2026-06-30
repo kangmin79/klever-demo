@@ -489,6 +489,11 @@ body.dark .sh-btn.joined{background:transparent;color:#cdd5e6;border-color:rgba(
 .book-card.bc-paper,.hwc-card.bc-paper{border-color:#ecd391;box-shadow:0 0 0 1px rgba(212,169,59,.14),0 2px 14px rgba(212,169,59,.30);}
 .book-card.bc-book:hover,.hwc-card.bc-book:hover{border-color:#8bb4e0;box-shadow:0 0 0 1px rgba(58,110,165,.18),0 5px 22px rgba(58,110,165,.34);}
 .book-card.bc-paper:hover,.hwc-card.bc-paper:hover{border-color:#e3c373;box-shadow:0 0 0 1px rgba(212,169,59,.22),0 5px 22px rgba(212,169,59,.42);}
+/* 논문(KCI·국회)은 표지가 없음 → 빈 박스 대신 문서 아이콘 플레이스홀더(골드 톤) */
+.paper-cover{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f6eed9;color:#b58f3e;}
+.paper-cover svg{width:42%;height:42%;}
+.book-cover:has(.paper-cover){padding:0;}
+body.dark .paper-cover{background:#3a3115;color:#d9b768;}
 .mns-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--gold);color:#1a1208;font-size:10px;font-weight:800;letter-spacing:-.2px;padding:3px 7px;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,.18);}
 .detail-meta-chip.mns-chip{background:var(--gold);color:#1a1208;}
 .book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;padding:18px;text-align:center;position:relative;overflow:hidden;}
@@ -8254,6 +8259,8 @@ function usCiteJump(isbn, ev){
     card.classList.add('cite-flash'); setTimeout(()=>card.classList.remove('cite-flash'), 1400);
   }catch(e){}
 }
+// 논문 표지 대체(학술자료는 표지 이미지 없음) — 문서 라인 아이콘 플레이스홀더
+const PAPER_COVER='<div class="paper-cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg></div>';
 function usCardsHTML(results){
   return `<div class="book-grid">`+results.map(b=>{
     const isbn=String(b.isbn||'').replace(/'/g,'');
@@ -8269,7 +8276,7 @@ function usCardsHTML(results){
       const act=url?`<a class="usc-act${ghost}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${actTxt}</a>`:'';
       const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
       return `<div class="book-card bc-paper" data-isbn="${esc(isbn)}" ${open}>
-        <div class="book-cover"><div class="lc-fb">${escD(b.title)}</div></div>
+        <div class="book-cover">${PAPER_COVER}</div>
         <div class="book-info">
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}</div>
           <div class="book-title">${escD(b.title)}</div>
@@ -8945,7 +8952,7 @@ window.addEventListener('keydown', (e) => {
       const read=ext?'<div class="hwc-read">원문 보기</div>':(b._orte?'<div class="hwc-read">원문 바로보기</div>':'');
       const open=url?`onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);window.open('${url}','_blank','noopener')"`:'';
       return `<div class="hwc-card bc-paper" ${open}>
-        <div class="hwc-cv"></div>
+        <div class="hwc-cv">${PAPER_COVER}</div>
         <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${sub}</div>
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${usFormBadges(b)}</div>${read}</div></div>`;
     }
