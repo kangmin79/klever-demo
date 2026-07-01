@@ -3465,19 +3465,31 @@ function alignParallel(){
   const L=document.querySelector('.viewer-pane.left'), R=document.querySelector('.viewer-pane.right');
   if(!L||!R) return;
   const lc=L.querySelectorAll('.cv-chunk'), rc=R.querySelectorAll('.cv-chunk');
-  if(!_vis(L)||!_vis(R)){   // 단일 페인(원문만/번역만)·모바일 탭 → 정렬용 min-height 제거(빈 공백 방지)
-    [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title,.cv-chunk').forEach(e=>{ e.style.minHeight=''; }));
+  if(!_vis(L)||!_vis(R)){   // 단일 페인(원문만/번역만)·모바일 탭 → 정렬용 스타일 제거(빈 공백 방지)
+    [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title,.cv-chunk').forEach(e=>{ e.style.minHeight=''; e.style.lineHeight=''; }));
     return;
   }
   const lp=L.querySelectorAll('p[data-pi]'), rp=R.querySelectorAll('p[data-pi]');
   if(!lp.length || lp.length!==rp.length) return;        // 정렬책(문단 1:1) 아니면 패스 — ko전용은 건너뜀
   const lh=L.querySelectorAll('h3.ch-title'), rh=R.querySelectorAll('h3.ch-title');
-  // 1) 이전 min-height 초기화 + 측정 위해 cv-chunk 강제 렌더(화면 밖도)
-  lp.forEach(p=>p.style.minHeight=''); rp.forEach(p=>p.style.minHeight='');
+  // 1) 이전 min-height·line-height 초기화 + 측정 위해 cv-chunk 강제 렌더(화면 밖도)
+  lp.forEach(p=>{ p.style.minHeight=''; p.style.lineHeight=''; }); rp.forEach(p=>p.style.minHeight='');
   lh.forEach(h=>h.style.minHeight=''); rh.forEach(h=>h.style.minHeight='');
   [...lc,...rc].forEach(c=>{ c.style.minHeight=''; c.style.contentVisibility='visible'; });
-  // 2) 읽기(레이아웃 1회) → 쓰기 분리(thrash 방지). 문단 쌍은 data-pi로, 장 제목은 순서로 매칭
   const rmap={}; rp.forEach(p=>{ rmap[p.dataset.pi]=p; });
+  // 1.5) ★ 원문(왼쪽 영어)을 번역(오른쪽 한국어) 높이에 맞춰 줄간격 조절 → 한국어는 자연 균일간격 유지,
+  //      빈 공간(padding) 없이 문단시작 정렬. gb-책(영어원문+한국어번역)만. 읽기 일괄 후 쓰기 일괄(thrash 최소화).
+  if(currentBook && currentBook.id && currentBook.id.startsWith('gb-')){
+    const baseLH = parseFloat(getComputedStyle(L).lineHeight) || 0;
+    const fs = parseFloat(getComputedStyle(lp[0]||L).fontSize) || 15;
+    const meas=[]; lp.forEach(l=>{ const r=rmap[l.dataset.pi]; meas.push(r?[l, l.offsetHeight, r.offsetHeight]:null); });  // 읽기 일괄(자연 높이)
+    if(baseLH>0) meas.forEach(m=>{ if(!m) return; const [l,enH,koH]=m;
+      if(enH>0 && koH>0 && Math.abs(enH-koH) > baseLH*0.6){   // 반 줄 이상 차이날 때만 조절
+        const lhpx = Math.max(fs*1.25, Math.min(fs*2.6, baseLH*(koH/enH)));  // 가독성 클램프(1.25~2.6배)
+        l.style.lineHeight = lhpx+'px';
+      }});
+  }
+  // 2) 읽기(레이아웃 1회) → 쓰기 분리(thrash 방지). 문단 쌍은 data-pi로, 장 제목은 순서로 매칭
   const work=[];
   lp.forEach(l=>{ const r=rmap[l.dataset.pi]; if(r) work.push([l,r,Math.max(l.offsetHeight,r.offsetHeight)]); });
   const hwork=[];
