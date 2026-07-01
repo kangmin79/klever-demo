@@ -1899,6 +1899,8 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
 .viewer-pane p{margin:0 0 1em 0;}
 .viewer-pane .chapter-anchor{scroll-margin-top:20px;}
 .viewer-pane .cv-chunk{content-visibility:auto;contain-intrinsic-size:auto 700px;}
+/* 정렬본(대작 아님): 가상화 끔 → 좌우 문단 높이잠금(짧은쪽 빈공간 채움)이 스크롤해도 안 사라져 항상 정렬. */
+.sent-novirt .viewer-pane .cv-chunk{content-visibility:visible;contain-intrinsic-size:auto;}
 .viewer-loading{color:var(--text-light);text-align:center;padding:48px 0;font-size:14px;}
 .viewer-pane h3.ch-title{font-size:1.15em;font-weight:800;margin:1.6em 0 0.6em;padding-top:0.4em;border-top:1px solid var(--border);color:var(--primary);}
 
@@ -6160,6 +6162,12 @@ function renderViewer(){
   // 장르별 조판 클래스 (category 기반)
   body.classList.remove(...GENRE_CLASSES);
   body.classList.add('gv-' + genreOf(currentBook.category));
+  // 정렬본(문장쌍) 중 대작이 아닌 책: content-visibility 가상화를 꺼서 좌우 문단 높이잠금이 항상 정확·안정
+  // (화면 밖 가상화가 정렬을 무너뜨리는 브라우저 문제 원천차단). 대작은 성능 위해 가상화 유지(청크쌍 잠금으로 방어).
+  body.classList.remove('sent-novirt');
+  { const _S = (typeof BODIES_SENT!=='undefined') && BODIES_SENT[currentBook.id];
+    const _mockOrigin = (typeof BOOK_CONTENT!=='undefined' && BOOK_CONTENT[currentBook.id] && BOOK_CONTENT[currentBook.id].origin);
+    if(_S && !_mockOrigin && _S.length <= 4500) body.classList.add('sent-novirt'); }
 
   if(currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[currentBook.id]){
     renderSceneChallenge(CHALLENGE_SCENES[currentBook.id], body, info);
