@@ -6138,7 +6138,7 @@ function ensureForeignBody(id){
 // 재정렬 대상 중 챕터블록 렌더가 정합성 검증된 14권(오프라인 blocksim/coherence 확인).
 // gb-580·2701·74·76은 body_sent 앞 TOC/프론트매터 제거(DB 수리) 후 편입.
 // 제외 2권=전면 재구축 필요: gb-6593(톰존스, body_sent 전면 오정렬)·gb-135(레미제라블, body 원천 손상).
-const CHAPTER_BLOCK_BOOKS = new Set(['gb-121','gb-1184','gb-164','gb-2226','gb-4217','gb-564','gb-821','gb-5921','gb-913','gb-28054','gb-580','gb-2701','gb-74','gb-76']);
+const CHAPTER_BLOCK_BOOKS = new Set(['gb-121','gb-1184','gb-164','gb-2226','gb-4217','gb-564','gb-821','gb-5921','gb-913','gb-28054','gb-580','gb-2701','gb-74','gb-76','gb-6593','gb-135']);
 // concat TOC junk(헤더 토큰 2개+ 이어붙고 en===ko) 감지 → 블록 렌더서 스킵
 function _isConcatTocJunk(g){
   if(!g||g.length!==1) return false;
