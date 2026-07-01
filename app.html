@@ -3435,10 +3435,17 @@ function setupParallel(){
   scheduleAlign();   // A안: 문단 쌍 높이 맞춰 좌우 수평 정렬
 }
 /* ── A안: 정렬책(문단 1:1) 좌우 문단 쌍을 같은 높이로 → 항상 수평 정렬 (짧은 쪽 빈 공백 감수) ── */
-let _alignT=0, _alignResizeBound=false;
+let _alignT=0, _alignT2=0, _alignResizeBound=false;
 function scheduleAlign(){
-  if(!_alignResizeBound){ window.addEventListener('resize', scheduleAlign); _alignResizeBound=true; }
-  clearTimeout(_alignT); _alignT=setTimeout(alignParallel, 60);
+  if(!_alignResizeBound){
+    window.addEventListener('resize', scheduleAlign);
+    if(window.visualViewport) visualViewport.addEventListener('resize', scheduleAlign); // 브라우저 줌·OS 디스플레이 배율(125%/150%) 변화 대응
+    window.addEventListener('load', scheduleAlign);                                     // 이미지·리소스 늦게 로드되는 PC 대응
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleAlign); // 웹폰트 로드 후 재측정(캐시 없는 PC)
+    _alignResizeBound=true;
+  }
+  clearTimeout(_alignT);  _alignT =setTimeout(alignParallel, 60);
+  clearTimeout(_alignT2); _alignT2=setTimeout(alignParallel, 500);  // 폰트/레이아웃 늦게 안정화되는 PC 대비 안전 재측정 1회
 }
 function alignParallel(){
   const L=document.querySelector('.viewer-pane.left'), R=document.querySelector('.viewer-pane.right');
