@@ -3860,8 +3860,10 @@ function runSearch(dir){
   if(!pane) return;
   const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
   const walker = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT, {
-    acceptNode: n => (n.parentElement.closest('mark') ? NodeFilter.FILTER_REJECT
-                      : (rx.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT))
+    // g 플래그 test()는 성공 시 lastIndex를 남겨 다음 노드 검사가 중간부터 시작됨(결과 누락) → 매번 리셋
+    acceptNode: n => { if(n.parentElement.closest('mark')) return NodeFilter.FILTER_REJECT;
+                       rx.lastIndex=0;
+                       return rx.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT; }
   });
   const targets=[]; let n;
   while((n=walker.nextNode())) targets.push(n);
@@ -5980,9 +5982,13 @@ async function openViewer(bookId, mode){
   if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
   // kr-/레거시(g\d+) 등 gb- 외 고전 원문 fetch (gb-는 위에서 처리)
   if(classicFetchId(bookId) && !bookId.startsWith('gb-')){ await ensureClassicBody(bookId); _reload = true; }
-  if(_reload && currentBook===b) renderViewer();
+  // 레이스 가드: 위 await(수 초) 동안 다른 책을 열었으면 A의 꼬리 초기화가 B 화면을 오염시키지 않게 중단
+  // (이전 책 사전(glossary) 적용·스크롤 스냅백·세션 타이머 리셋 방지)
+  if(currentBook !== b) return;
+  if(_reload) renderViewer();
   // 리더 모듈 초기화
   setTimeout(() => {
+    if(currentBook !== b) return;   // setTimeout 시점 재확인
     applyReaderPrefs();
     buildTOC();
     restoreHighlights();   // 페이지 모드 조판 전에 복원해야 형광펜이 페이지에도 실림
@@ -6112,20 +6118,30 @@ function classicFetchId(id){
   const m = id.match(/^g(\d+)$/);        // 옛 해외 g15 → gb-15
   return m ? 'gb-' + m[1] : null;
 }
+const CLASSIC_BODY_P = {};   // in-flight 프라미스 캐시 — 상세모달 프리페치+뷰어 열기가 같은 수 MB를 2번 받지 않게
 async function ensureClassicBody(id){
   const fid = classicFetchId(id);
-  if(!fid || CLASSIC_BODIES[id] !== undefined) return;
-  try{
-    // body(원문) + body_trans(ko-only 번역) + body_sent(정렬형 문장쌍) 한 번에 — 있으면 JS 본문파일 불필요
-    const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}&select=body,body_trans,body_sent`,
-      {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}});
-    const rows = await r.json();
-    CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
-    if(rows && rows[0] && rows[0].body_trans) CLASSIC_TRANS[id] = rows[0].body_trans;
-    // 정렬형(문장쌍): Supabase body_sent를 전역 BODIES_SENT에 주입 → viewerBodies가 JS 없이 평행 렌더
-    if(rows && rows[0] && rows[0].body_sent && typeof BODIES_SENT !== 'undefined' && !BODIES_SENT[id])
-      BODIES_SENT[id] = rows[0].body_sent;
-  }catch(e){ CLASSIC_BODIES[id] = ''; }
+  if(!fid) return;
+  // 성공(본문 or 문장쌍 확보) 시에만 skip — 실패로 남은 ''는 다음 열기 때 재시도 (새로고침 전까지 빈 화면 고착 방지)
+  if(CLASSIC_BODIES[id] !== undefined &&
+     (CLASSIC_BODIES[id] || (typeof BODIES_SENT !== 'undefined' && BODIES_SENT[id]))) return;
+  if(CLASSIC_BODY_P[id]) return CLASSIC_BODY_P[id];   // 이미 받는 중이면 그 프라미스 공유
+  CLASSIC_BODY_P[id] = (async()=>{
+    try{
+      // body(원문) + body_trans(ko-only 번역) + body_sent(정렬형 문장쌍) 한 번에 — 있으면 JS 본문파일 불필요
+      const r = await fetch(`https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}&select=body,body_trans,body_sent`,
+        {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}});
+      if(!r.ok) throw new Error('HTTP '+r.status);   // 429/5xx 에러응답을 성공으로 오인해 빈 본문 캐시하는 것 방지
+      const rows = await r.json();
+      CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';
+      if(rows && rows[0] && rows[0].body_trans) CLASSIC_TRANS[id] = rows[0].body_trans;
+      // 정렬형(문장쌍): Supabase body_sent를 전역 BODIES_SENT에 주입 → viewerBodies가 JS 없이 평행 렌더
+      if(rows && rows[0] && rows[0].body_sent && typeof BODIES_SENT !== 'undefined' && !BODIES_SENT[id])
+        BODIES_SENT[id] = rows[0].body_sent;
+    }catch(e){ CLASSIC_BODIES[id] = ''; }   // 이번 뷰는 placeholder 표시, 위 가드 덕에 다음 열기 때 재시도됨
+    finally{ delete CLASSIC_BODY_P[id]; }
+  })();
+  return CLASSIC_BODY_P[id];
 }
 
 // 해외 번역 bodies(bodies_gb{id}.js) 지연 로드 — 147권 수동 <script> include 대체.
@@ -6680,9 +6696,14 @@ function addScore(pts, type, note){ /* 점수는 _chalBookScore에서 파생 —
   log.push({ts:Date.now(), pts, type, note});
   try{ localStorage.setItem('bookstar-score-log', JSON.stringify(log)); }catch(e){}
 }
+function _chalAllIds(){   // 점수·완독 집계 대상 = 진열 전체 + 장면챌린지 키(진열 제외돼도 기록 보존)
+  const ids = new Set((typeof BOOKS !== 'undefined' ? BOOKS : []).map(b=>b.id));
+  if(typeof CHALLENGE_SCENES !== 'undefined') Object.keys(CHALLENGE_SCENES).forEach(id=>ids.add(id));
+  return [...ids];
+}
 function chalEarned(){   // 현재 계정의 모든 책 결과에서 점수 합산
-  if(typeof CHALLENGE_SCENES === 'undefined') return 0;
-  return Object.keys(CHALLENGE_SCENES).reduce((s,id)=>{ const sc=_chalBookScore(id); return s+(sc?sc.pts:0); }, 0);
+  // (기존: CHALLENGE_SCENES 3권만 순회 → 다른 책 완독인증 +50점이 합산에서 빠지던 버그)
+  return _chalAllIds().reduce((s,id)=>{ const sc=_chalBookScore(id); return s+(sc?sc.pts:0); }, 0);
 }
 function renderChalScore(){
   const el = document.getElementById('statScore');
@@ -6967,13 +6988,11 @@ function chatSubmitImpression(){
 /* 마이페이지 상단 히어로 — 실측 3숫자(완독·정답률·누적점수) */
 function _myStats(){
   let done=0, ok=0, answered=0;
-  if(typeof CHALLENGE_SCENES!=='undefined'){
-    Object.keys(CHALLENGE_SCENES).forEach(id=>{
-      const r=_chalRead(id); if(!r) return;
-      if((r.read_pct||0)>=95) done++;
-      const a=Object.values(r.ans||{}); answered+=a.length; ok+=a.filter(x=>x.ok).length;
-    });
-  }
+  _chalAllIds().forEach(id=>{   // 전체 책 기준(기존 CHALLENGE_SCENES 3권만 → 완독 수 미집계 버그)
+    const r=_chalRead(id); if(!r) return;
+    if((r.read_pct||0)>=95) done++;
+    const a=Object.values(r.ans||{}); answered+=a.length; ok+=a.filter(x=>x.ok).length;
+  });
   return {done, ok, answered, rate: answered?Math.round(ok/answered*100):0, score: SCORE_BASE+chalEarned()};
 }
 function renderMyHero(){
@@ -7474,12 +7493,14 @@ async function renderMyWritings(){
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */
 function renderMyImpressions(){
   const el = document.getElementById('myImpressions');
-  if(!el || typeof CHALLENGE_SCENES === 'undefined') return;
+  if(!el) return;
   const rows = [];
-  for(const [id, sc] of Object.entries(CHALLENGE_SCENES)){
+  for(const id of _chalAllIds()){   // 전체 책 기준(기존 CHALLENGE_SCENES 3권만 → 완독인증 소감 미표시 버그)
     const sv = _chalRead(id);
     if(!sv || !sv.impression) continue;
-    rows.push({title:sc.bookTitle, author:sc.author, impression:sv.impression, score:_chalBookScore(id)});
+    const sc = (typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[id]) || null;
+    const bk = (typeof BOOKS !== 'undefined' && BOOKS.find(b=>b.id===id)) || null;
+    rows.push({title:(sc&&sc.bookTitle)||(bk&&bk.title)||id, author:(sc&&sc.author)||(bk&&bk.author)||'', impression:sv.impression, score:_chalBookScore(id)});
   }
   if(!rows.length){ el.innerHTML = ''; return; }
   el.innerHTML = `
