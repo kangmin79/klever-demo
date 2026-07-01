@@ -1839,6 +1839,9 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-pane.right{display:none;}                          /* 기본: 본문(left)만 전체폭 */
   .viewer-body.mob-second .viewer-pane.left{display:none;}    /* 탭으로 두번째 칸 보기 */
   .viewer-body.mob-second .viewer-pane.right{display:block;}
+  /* KO 1단 기본(pane-trans)은 데스크톱 전용 — 모바일은 위 탭이 담당하므로 중화(빈 화면 방지) */
+  .viewer-body.pane-trans:not(.mob-second) .viewer-pane.left{display:block;}
+  .viewer-body.pane-trans:not(.mob-second) .viewer-pane.right{display:none;}
   .pane-tabs{display:flex;}
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
@@ -4047,6 +4050,16 @@ function _fsHost(){
 }
 
 /* ── 페인 보기 토글 (해외책: 나란히 → 원문만 → 번역만) ── */
+// KO 1단 기본 책(Phase1 KO2COL): 문장쌍(body_sent) 없이 원문/번역이 독립 2단이라 좌우가 어긋남.
+// 나란히 대신 한국어 번역 1단을 기본으로(영어 원문은 데스크톱 토글/모바일 탭으로 접근). 파일럿 gb-1200.
+const KO1COL_BOOKS = new Set(['gb-1200']);
+function applyPaneDefault(){
+  const ko1 = currentBook && KO1COL_BOOKS.has(currentBook.id) && currentMode==='full';
+  _paneView = ko1 ? 'trans' : 'both';
+  const body=document.getElementById('viewerBody');
+  if(body){ body.classList.remove('pane-orig','pane-trans'); if(ko1) body.classList.add('pane-trans'); }
+  const lbl=document.getElementById('paneToggleLabel'); if(lbl) lbl.textContent = ko1 ? '번역만' : '나란히';
+}
 let _paneView='both';
 function cyclePaneView(){
   const body=document.getElementById('viewerBody');
@@ -5942,6 +5955,7 @@ async function openViewer(bookId, mode){
   if(!b) return;
   currentBook = b;
   currentMode = mode || 'challenge';
+  applyPaneDefault();   // KO 1단 기본 책이면 pane-trans, 아니면 나란히로 리셋
 
   document.getElementById('viewerTitle').textContent = b.title;
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
@@ -5988,9 +6002,7 @@ function setMode(mode){
   document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
   document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
   stopTTS();
-  _paneView='both';
-  document.getElementById('viewerBody')?.classList.remove('pane-orig','pane-trans');
-  const _pl=document.getElementById('paneToggleLabel'); if(_pl)_pl.textContent='나란히';
+  applyPaneDefault();   // KO 1단 기본 책+완독이면 pane-trans, 그 외 나란히 리셋
   renderViewer();
   setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } else exitPageMode(); hlHintOnce(); }, 0);
 }
