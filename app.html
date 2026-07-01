@@ -5637,8 +5637,8 @@ function renderClassicShelves(){
     headBody = `<div class="cl-welcome">
         <div class="globe">🌐</div>
         <div style="flex:1;min-width:200px;">
-          <h3>너의 언어로 읽는 한국 고전</h3>
-          <p>한국어가 익숙하지 않아도 괜찮아요. 번역본을 원문과 나란히 읽어보세요.</p>
+          <h3>${(CL_WELCOME[_clLang]||CL_WELCOME.all).h}</h3>
+          <p>${(CL_WELCOME[_clLang]||CL_WELCOME.all).p}</p>
         </div>
         <div class="cl-langchips">${chips}</div>
       </div>`;
@@ -5662,7 +5662,20 @@ function _gnbClSync(){
 }
 // 상단 네비(세계고전/International) → 권역 설정 후 고전 컬렉션 페이지로
 function navCl(t){ _clTab=t; if(t!=='modern') _clLang='all'; nav('collection'); }
-function clSetLang(l){ _clLang=l; renderClassicShelves(); }
+// International 배너 다국어 — 대상이 한국어 서툰 유학생인데 문구가 한국어뿐이던 모순 해소.
+// 칩 = '너의 언어 선택기': 배너가 그 언어로 바뀌고, 책 열 때 기본 번역 언어(KR_LANG)도 따라감.
+const CL_WELCOME = {
+  all:{h:'너의 언어로 읽는 한국 고전',            p:'한국어가 익숙하지 않아도 괜찮아요. 번역본을 원문과 나란히 읽어보세요.'},
+  en:{ h:'Korean Classics in Your Language',      p:"Don't worry if your Korean isn't fluent — read the translation side by side with the original."},
+  zh:{ h:'用你的语言阅读韩国古典文学',              p:'韩语不熟练也没关系。译文与原文并排对照，轻松阅读。'},
+  vi:{ h:'Đọc văn học kinh điển Hàn Quốc bằng ngôn ngữ của bạn', p:'Chưa giỏi tiếng Hàn cũng không sao — hãy đọc bản dịch song song với nguyên văn.'},
+  ja:{ h:'あなたの言語で読む韓国古典',              p:'韓国語がまだ苦手でも大丈夫。翻訳を原文と並べて読んでみましょう。'},
+};
+function clSetLang(l){
+  _clLang=l;
+  if(l!=='all' && typeof KR_LANG!=='undefined') KR_LANG=l;   // 칩 선택 → 리더 기본 번역 언어로 연동
+  renderClassicShelves();
+}
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
 let LOAN_DATA = {};
@@ -5842,7 +5855,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260702b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260702c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
