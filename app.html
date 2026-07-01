@@ -3424,6 +3424,8 @@ function setupParallel(){
   const left=document.querySelector('.viewer-pane.left');
   const right=document.querySelector('.viewer-pane.right');
   if(!left||!right||!_vis(left)||!_vis(right)) return;
+  // 챕터블록(B) 책: 문단 1:1 짝맞춤 안 함 → _parallelOn=false 유지(비율 동기 스크롤), 챕터 섹션만 정렬
+  if(currentBook && typeof CHAPTER_BLOCK_BOOKS!=='undefined' && CHAPTER_BLOCK_BOOKS.has(currentBook.id)){ scheduleAlign(); return; }
   const lp=left.querySelectorAll('p'), rp=right.querySelectorAll('p');
   if(!lp.length || lp.length!==rp.length) return;   // 문단 수 다르면 정렬책 아님
   lp.forEach((p,i)=>p.dataset.pi=i);
@@ -3461,9 +3463,26 @@ function scheduleAlign(){
   clearTimeout(_alignT);  _alignT =setTimeout(alignParallel, 60);
   clearTimeout(_alignT2); _alignT2=setTimeout(alignParallel, 500);  // 폰트/레이아웃 늦게 안정화되는 PC 대비 안전 재측정 1회
 }
+// 챕터블록(B): 챕터 섹션 단위로만 좌우 높이 잠금 → 챕터 경계 정렬 + 양쪽 총높이 동일(비율 스크롤 정확).
+// 챕터 내부는 자연 흐름(짧은쪽 하단 여백). 드리프트한 문장쌍 정렬을 회피.
+function alignSections(L,R){
+  const ls=[...L.querySelectorAll('.chapter-anchor')], rs=[...R.querySelectorAll('.chapter-anchor')];
+  const lc=[...L.querySelectorAll('.cv-chunk')], rc=[...R.querySelectorAll('.cv-chunk')];
+  [...ls,...rs].forEach(s=>s.style.minHeight='');
+  [...lc,...rc].forEach(c=>{ c.style.minHeight=''; c.style.contentVisibility='visible'; });   // 측정 위해 강제 렌더
+  const n=Math.min(ls.length,rs.length), hs=[];
+  for(let i=0;i<n;i++) hs.push(Math.max(ls[i].offsetHeight, rs[i].offsetHeight));   // 읽기 일괄
+  for(let i=0;i<n;i++){ ls[i].style.minHeight=hs[i]+'px'; rs[i].style.minHeight=hs[i]+'px'; }   // 쓰기 일괄
+  [...lc,...rc].forEach(c=>c.style.contentVisibility='');   // 가상화 복귀(섹션 min-height는 유지)
+}
 function alignParallel(){
   const L=document.querySelector('.viewer-pane.left'), R=document.querySelector('.viewer-pane.right');
   if(!L||!R) return;
+  // 챕터블록 책: 섹션 단위 정렬로 분기
+  if(currentBook && typeof CHAPTER_BLOCK_BOOKS!=='undefined' && CHAPTER_BLOCK_BOOKS.has(currentBook.id)){
+    if(!_vis(L)||!_vis(R)){ [L,R].forEach(P=>P.querySelectorAll('.chapter-anchor,.cv-chunk').forEach(e=>{ e.style.minHeight=''; })); return; }
+    alignSections(L,R); return;
+  }
   const lc=L.querySelectorAll('.cv-chunk'), rc=R.querySelectorAll('.cv-chunk');
   if(!_vis(L)||!_vis(R)){   // 단일 페인(원문만/번역만)·모바일 탭 → 정렬용 스타일 제거(빈 공백 방지)
     [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title,.cv-chunk').forEach(e=>{ e.style.minHeight=''; e.style.lineHeight=''; }));
@@ -6113,6 +6132,43 @@ function ensureForeignBody(id){
   return FOREIGN_BODY_P[id];
 }
 
+// ── 챕터블록 렌더(B) 책: 문장쌍 정렬이 드리프트한 재정렬 대상 ──
+// 문장 짝맞춤을 포기하고 챕터 단위로만 좌우 정렬. 각 챕터의 en/ko를 독립 블록으로 흘려 렌더.
+// 챕터 헤더가 좌우 동일 위치라 챕터 경계서 정렬(alignSections), 챕터 내부는 자연 흐름 → 미스얼라인 0.
+const CHAPTER_BLOCK_BOOKS = new Set(['gb-121']);   // 파일럿. 검증 후 재정렬 16권 확장.
+// concat TOC junk(헤더 토큰 2개+ 이어붙고 en===ko) 감지 → 블록 렌더서 스킵
+function _isConcatTocJunk(g){
+  if(!g||g.length!==1) return false;
+  const en=(g[0][0]||'').trim(), ko=(g[0][1]||'').trim();
+  const hits=(en.match(/\b(CHAPTER|BOOK|PART|CANTO|LETTER|ACT|SCENE)\b\s+[IVXLCDM0-9]+/gi)||[]).length;
+  return hits>=2 && en===ko;
+}
+// 챕터블록 렌더: side(0=원문/1=번역) 컬럼을 챕터별 블록으로. data-pi/psent 없음(짝맞춤 안 함).
+function sentBlockHtml(sentArr, side){
+  const chPat = /^\s*(CHAPTER|BOOK|PART|ACT|SCENE|CANTO)\s+[IVXLCDM\d]+[.:]?[^\n]*$/i;
+  const mdPat = /^\s*#{1,6}\s+\S/;
+  const looksHead = s => chPat.test(s) || mdPat.test(s);
+  const isHeadPara = g => g.length===1 && looksHead((g[0][0]||'').trim()) && looksHead((g[0][1]||'').trim());
+  const arr = sentArr.filter(g => !_isConcatTocJunk(g));   // TOC junk 제거
+  const paraText = g => g.map(c=>(c[side]||'')).join(' ').trim();
+  const cvChunks = (from, to) => {
+    let out=''; for(let i=from;i<to;i+=12){ let inner='';
+      for(let j=i;j<Math.min(i+12,to);j++){ const t=paraText(arr[j]); if(t) inner += '<p>'+esc(t).replace(/\n/g,'<br>')+'</p>'; }
+      if(inner) out += '<div class="cv-chunk">'+inner+'</div>'; }
+    return out;
+  };
+  const headerIdx = []; arr.forEach((g,i)=>{ if(isHeadPara(g)) headerIdx.push(i); });
+  if(headerIdx.length < 2) return cvChunks(0, arr.length);
+  let html = '';
+  if(headerIdx[0] > 0) html += '<section class="chapter-anchor" data-ch-title="서문 · 머리말">'+cvChunks(0, headerIdx[0])+'</section>';
+  for(let i=0;i<headerIdx.length;i++){
+    const s=headerIdx[i], e=i+1<headerIdx.length?headerIdx[i+1]:arr.length;
+    const title=((arr[s][0]||[])[side]||'').trim().replace(/^#{1,6}\s+/,'').replace(/\s+/g,' ');
+    html += '<section class="chapter-anchor" data-ch-title="'+esc(title)+'"><h3 class="ch-title">'+esc(title)+'</h3>'+cvChunks(s+1, e)+'</section>';
+  }
+  return html;
+}
+
 // 문장정렬 책: 각 문단을 문장 그룹 <span>으로 (data-pi/data-sg 같으면 원문↔번역 대응)
 // 모든 책 공통: 챕터헤더(#/CHAPTER)는 chapter-anchor 섹션+제목(TOC용), 산문은 문장 span,
 // 12문단씩 cv-chunk(content-visibility)로 묶어 대작(레미제라블 등) 성능 확보. bodyToHtml과 동일 구조.
@@ -6149,6 +6205,8 @@ function viewerBodies(book){
   // 문장정렬 데이터 있으면 문장 span 렌더(상호 하이라이트용). mock(군주론 등)이 우선.
   if(!mock.origin && typeof BODIES_SENT !== 'undefined' && BODIES_SENT[id]){
     const S = BODIES_SENT[id];
+    if(CHAPTER_BLOCK_BOOKS.has(id))   // 재정렬 책: 챕터블록 렌더(문장 짝맞춤 X, 챕터 단위 정렬)
+      return { orig: sentBlockHtml(S, 0), trans: sentBlockHtml(S, 1), quiz: mock.quiz, nativeEN: mock.nativeEN };
     return { orig: sentHtml(S, 0), trans: sentHtml(S, 1), quiz: mock.quiz, nativeEN: mock.nativeEN };
   }
   const orig = mock.origin
