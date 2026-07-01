@@ -2771,9 +2771,12 @@ function applyKrLang(id){                  // 선택 언어를 BODIES_SENT에 �
   const lang=d[KR_LANG]?KR_LANG:(Object.keys(d)[0]); KR_LANG=lang;
   if(d[lang]) BODIES_SENT[id]=d[lang];
 }
-function setKrLang(lang){                  // 뷰어 언어 칩 클릭 → 언어 전환 + 재렌더
+function setKrLang(lang){                  // 뷰어 언어 셀렉터 → 언어 전환 + 재렌더
   KR_LANG=lang;
-  if(currentBook){ applyKrLang(currentBook.id); renderViewer(); setTimeout(()=>{applyReaderPrefs();updatePaneToggleVisibility();},0); }
+  // 재렌더로 pane이 새로 만들어지므로 setMode와 동일 체인으로 전부 재초기화
+  // (기존: applyReaderPrefs만 → 스크롤 리스너·형광펜·읽던 위치·TOC가 죽던 버그)
+  if(currentBook){ applyKrLang(currentBook.id); renderViewer();
+    setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } }, 0); }
 }
 const SVG = {
   user:        '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -4106,13 +4109,14 @@ function toggleTTS(){
   if(!('speechSynthesis' in window)){ readerToast('이 브라우저는 음성 읽기를 지원하지 않아요'); return; }
   const btn=document.getElementById('ttsBtn');
   if(_ttsOn){ stopTTS(); return; }
-  const pane = document.querySelector('.viewer-pane.left');
+  // 화면에 보이는 칸을 읽음 (기존: 항상 left 고정 → '번역만'/KO1COL 기본/모바일 번역 탭에서 숨은 칸을 읽던 버그)
+  const pane = _scrollEl();
   // content-visibility로 화면 밖 청크가 innerText에서 빠지는 문제 → DOM 기반 textContent로 전체 수집
   const text = pane ? [...pane.querySelectorAll('p')].map(p=>p.textContent).join('\n').trim() : '';
   if(!text){ return; }
   const u=new SpeechSynthesisUtterance(text.slice(0,4000));
-  // 해외책 원문(영어)이면 영어, 그 외 한국어
-  u.lang = (currentBook.locale==='foreign') ? 'en-US' : 'ko-KR';
+  // 언어는 locale이 아니라 실제 읽는 텍스트 기준(한글 포함 여부)으로 판정
+  u.lang = /[가-힣]/.test(text.slice(0,200)) ? 'ko-KR' : 'en-US';
   u.rate=0.95;
   u.onend=()=>{ _ttsOn=false; btn.classList.remove('on'); };
   window.speechSynthesis.cancel();
@@ -4136,8 +4140,9 @@ async function loadGlossary(bookId){
   _glossary = {}; _glossaryBook = bookId;
   try{
     const res = await fetch(`./books/glossary_${bookId}.json`);
-    if(res.ok) _glossary = await res.json();
-  }catch(e){ _glossary = {}; }
+    if(_glossaryBook !== bookId) return;   // 그 사이 다른 책을 열었으면 폐기(이전 책 사전 오염 방지)
+    if(res.ok){ const data = await res.json(); if(_glossaryBook === bookId) _glossary = data; }
+  }catch(e){ if(_glossaryBook === bookId) _glossary = {}; }
 }
 
 function lookupSelection(){
@@ -4396,16 +4401,21 @@ function renderChalCards(){
   g.innerHTML=`<div class="ml">${out}</div>`;
   try{ bindDragScroll('#chalLive .ml-hrow'); }catch(e){}
 }
-function joinedChals(){            // 참여 중인 챌린지 배열 (구버전 단일키 자동 이전)
+// 참여 목록 키를 계정별로 분리 (기존: 전역 키 → 계정 전환 시 참여 상태 혼입. 퀴즈기록 _chalKey와 동일 패턴)
+function _joinedKey(){ return 'bookstar-joined-chals-' + _bxSid(); }
+function joinedChals(){            // 참여 중인 챌린지 배열 (구버전 전역키/단일키 자동 이전)
   try{
-    const arr = JSON.parse(localStorage.getItem('bookstar-joined-chals')||'null');
+    const arr = JSON.parse(localStorage.getItem(_joinedKey())||'null');
     if(Array.isArray(arr)) return arr;
+    // 구 전역 키 → 현재 계정 키로 1회 이전(전역 키는 남겨두지 않음 — 다음 계정에 재이전 방지)
+    const g = JSON.parse(localStorage.getItem('bookstar-joined-chals')||'null');
+    if(Array.isArray(g)){ localStorage.setItem(_joinedKey(), JSON.stringify(g)); localStorage.removeItem('bookstar-joined-chals'); return g; }
     const old = JSON.parse(localStorage.getItem('bookstar-joined-chal')||'null');
-    if(old){ const a=[old]; localStorage.setItem('bookstar-joined-chals', JSON.stringify(a)); return a; }
+    if(old){ const a=[old]; localStorage.setItem(_joinedKey(), JSON.stringify(a)); return a; }
   }catch(e){}
   return [];
 }
-function _saveJoinedChals(a){ try{ localStorage.setItem('bookstar-joined-chals', JSON.stringify(a)); }catch(e){} }
+function _saveJoinedChals(a){ try{ localStorage.setItem(_joinedKey(), JSON.stringify(a)); }catch(e){} }
 function chalJoin(id){
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
   const arr=joinedChals();
@@ -4916,9 +4926,11 @@ async function bxUpsertResult(bookId, obj){          // 서버 저장(계정별�
 }
 async function bxLoadResultsFromDB(){                // 로그인/전환 시 서버→로컬 캐시
   const s=bxStudent(); if(!s) return;
+  const sid=s.id;   // 요청 세대 캡처
   try{
-    const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(s.id)}&select=*`,{headers:BX_H});
+    const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=*`,{headers:BX_H});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+    if((bxStudent()||{}).id!==sid) return;   // 응답 대기 중 다른 계정으로 전환됐으면 폐기(계정간 기록 혼입 방지)
     rows.forEach(x=>_chalWriteLocal(x.book_id,{ans:x.ans||{},impression:x.impression||'',submitted:!!x.submitted,read_pct:x.read_pct||0,ts:Date.now()}));
   }catch(e){}
 }
@@ -4947,9 +4959,11 @@ function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다�
 }
 async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더통계 → 로컬 병합 후 재렌더
   const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
+  const sid=s.id;   // 요청 세대 캡처
   try{
-    const r=await fetch(`${BX_SB}/bookstar_reader_stats?student_id=eq.${encodeURIComponent(s.id)}&select=data`,{headers:BX_H});
+    const r=await fetch(`${BX_SB}/bookstar_reader_stats?student_id=eq.${encodeURIComponent(sid)}&select=data`,{headers:BX_H});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)||!rows[0]||!rows[0].data) return;
+    if(((typeof bxStudent==='function'&&bxStudent())||{}).id!==sid) return;   // 계정 전환됐으면 폐기
     _rsMergeServer(rows[0].data);
     try{ localStorage.setItem(_rsKey(), JSON.stringify(readerStats)); }catch(e){}   // 로컬 갱신(서버 재upsert 루프 방지 위해 saveReaderStats 미사용)
     try{ renderReadingRhythm(); }catch(e){}
@@ -5267,13 +5281,17 @@ function libDetail(isbn){
 // 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(semyung_catalog.key), 아니면 전자책(semyung_books).
 async function loadDesc(key, isCatalog){
   try{
+    // 대상 요소를 await 전에 캡처 — 다른 책 모달로 바뀌면 이 el은 detach돼 늦은 응답이 무해해짐
+    // (기존: 응답 후 id로 찾아 → A책 줄거리가 B책 모달에 쓰이던 레이스)
+    const el=document.getElementById('lcdDesc'); if(!el) return;
     const url=isCatalog
       ? `${SB_REST}/semyung_catalog?key=eq.${encodeURIComponent(key)}&select=description&limit=1`
       : `${SB_REST}/semyung_books?or=(brcd.eq.${encodeURIComponent(key)},isbn13.eq.${encodeURIComponent(key)})&select=description&limit=1`;
     const r=await fetch(url,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
     if(!d||!d.description) return;
-    const el=document.getElementById('lcdDesc'); if(el){ el.textContent=d.description; el.style.display=''; }
+    if(!el.isConnected) return;   // 모달이 재렌더/닫힘 → 폐기
+    el.textContent=d.description; el.style.display='';
   }catch(e){}
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
@@ -5959,6 +5977,14 @@ function pgTap(clientX){
 async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  // 뷰어가 열린 채 다른 책으로 전환(bxOpenBook 등): 이전 책 정산·상태 초기화
+  // (기존: 독서시간 유실 + 이전 책 페이지 위치가 새 책에 적용되던 버그)
+  if(currentBook && currentBook.id !== bookId
+     && document.getElementById('viewerOverlay')?.classList.contains('open')){
+    saveScrollPos(); readerSessionEnd();
+    if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
+  }
+  if(currentBook && currentBook.id !== bookId){ _pg.chIdx=0; _pg.page=0; }
   currentBook = b;
   currentMode = mode || 'challenge';
   applyPaneDefault();   // KO 1단 기본 책이면 pane-trans, 아니면 나란히로 리셋
@@ -8898,15 +8924,22 @@ async function openStudentProfile(sid){
   if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
   ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
   ov.classList.add('on'); document.body.style.overflow='hidden';
+  // stale 가드: 최신 호출만 렌더 (기존: A 프로필 늦은 응답이 B 모달을 통째로 덮어쓰던 레이스)
+  const token = (openStudentProfile._t = {});
   let writings=[], results=[], totals=null, enroll=[];
-  try{ const r=await fetch(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}&select=*&order=created_at.desc`,{headers:BX_H}); if(r.ok) writings=await r.json(); }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`,{headers:BX_H}); if(r.ok) results=await r.json(); }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_student_totals?student_id=eq.${encodeURIComponent(sid)}&select=total_stars,grade`,{headers:BX_H}); if(r.ok){ const a=await r.json(); totals=Array.isArray(a)&&a[0]; } }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`,{headers:BX_H}); if(r.ok) enroll=await r.json(); }catch(e){}
   const me=_bxSid();
   let followers=0, followingN=0, iFollow=_myFollows.has(sid);
-  try{ const r=await fetch(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } } }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(sid)}&select=following_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); if(Array.isArray(a)) followingN=a.length; } }catch(e){}
+  const _gj = async (url, fn) => { try{ const r=await fetch(url,{headers:BX_H}); if(r.ok) fn(await r.json()); }catch(e){} };
+  // 독립 6요청 병렬 (기존: 순차 6왕복 동안 '불러오는 중')
+  await Promise.all([
+    _gj(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}&select=*&order=created_at.desc`, a=>{ writings=a; }),
+    _gj(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`, a=>{ results=a; }),
+    _gj(`${BX_SB}/bookstar_student_totals?student_id=eq.${encodeURIComponent(sid)}&select=total_stars,grade`, a=>{ totals=Array.isArray(a)&&a[0]; }),
+    _gj(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`, a=>{ enroll=a; }),
+    _gj(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`, a=>{ if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } }),
+    _gj(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(sid)}&select=following_id`, a=>{ if(Array.isArray(a)) followingN=a.length; }),
+  ]);
+  if(openStudentProfile._t !== token) return;   // 그 사이 다른 프로필을 열었으면 이 응답은 폐기
   writings=Array.isArray(writings)?writings.filter(w=>!w.hidden):[];
   results=Array.isArray(results)?results:[]; enroll=Array.isArray(enroll)?enroll:[];
   const done=enroll.filter(e=>e.status==='done').length;
@@ -9128,7 +9161,8 @@ window.addEventListener('keydown', (e) => {
     addRow('bot',h);
     if(Array.isArray(chips) && chips.length){
       const cr=document.createElement('div');cr.className='hwc-chips';
-      cr.innerHTML=chips.slice(0,4).map(c=>`<span class="hwc-chip" onclick='hwcChip(${JSON.stringify(String(c))})'>${esc(c)}</span>`).join('');
+      // LLM 생성 칩에 홑따옴표(')가 있으면 홑따옴표 속성이 조기 종료되던 것 → 메인 챗(aicShowChips)과 동일한 쌍따옴표+&quot; 패턴
+      cr.innerHTML=chips.slice(0,4).map(c=>`<span class="hwc-chip" onclick="hwcChip(${JSON.stringify(String(c)).replace(/"/g,'&quot;')})">${esc(c)}</span>`).join('');
       el('hwcBody').appendChild(cr);scroll();
     }
   }
