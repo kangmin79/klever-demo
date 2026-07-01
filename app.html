@@ -3524,10 +3524,14 @@ function onParallelClick(e){
   if(R) R.classList.add('pp-on');
   // 양쪽 문단을 각 칸 중앙으로 (동기 스크롤 일시 정지 → 핑퐁 방지)
   _suppressSync=true;
+  // 대상 문단이 content-visibility로 가상화된(화면 밖) 청크 안이면 offsetTop/clientHeight가 부정확 →
+  // 좌우가 서로 다른 곳으로 스크롤돼 어긋남(첫 클릭 실패, 재클릭 시 화면에 들어와 정상). 먼저 강제 렌더 후 측정.
+  [L,R].forEach(el=>{ const ch=el&&el.closest('.cv-chunk'); if(ch) ch.style.contentVisibility='visible'; });
   const center=(pane,el)=>{ if(pane&&el&&_vis(pane)) pane.scrollTo({top: el.offsetTop - pane.clientHeight/2 + el.clientHeight/2, behavior:'smooth'}); };
   center(left,L); center(right,R);
   clearTimeout(_suppressTimer);
-  _suppressTimer=setTimeout(()=>{ _suppressSync=false; updateProgress(); }, 650);
+  _suppressTimer=setTimeout(()=>{ _suppressSync=false; updateProgress();
+    [L,R].forEach(el=>{ const ch=el&&el.closest('.cv-chunk'); if(ch) ch.style.contentVisibility=''; }); }, 650);
 }
 
 /* 읽기 세션 · streak */
