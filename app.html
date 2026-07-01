@@ -1181,7 +1181,7 @@ body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .rss-toggle.on::after{left:20px;}
 .viewer-pane h1{font-size:22px;margin-bottom:6px;}
 .viewer-pane h2{font-size:13px;font-style:italic;color:var(--text-sub);margin-bottom:24px;font-weight:500;}
-.viewer-pane p{margin-bottom:16px;text-align:justify;}
+.viewer-pane p{margin-bottom:16px;text-align:left;}   /* 양끝맞춤 대신 왼쪽정렬 → 자간(단어 간격) 균일, 한글 justify 벌어짐 방지 */
 .viewer-pane-label{font-size:10px;font-weight:800;color:var(--text-light);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;}
 
 /* 챌린지 모드 우측 — 퀴즈 */
@@ -1910,12 +1910,12 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
 .gv-poem .viewer-pane p{text-align:left;text-indent:0;margin:0 auto .5em;max-width:32em;}
 .gv-poem .viewer-pane.left{font-family:'Noto Serif KR',var(--reader-ff),serif;}
 /* 소설: 첫 줄 들여쓰기 + 양끝맞춤 + 단락 촘촘(이야기 흐름) */
-.gv-novel .viewer-pane p{text-align:justify;text-indent:1.1em;margin:0 0 .4em;}
+.gv-novel .viewer-pane p{text-align:left;text-indent:1.1em;margin:0 0 .4em;}
 .gv-novel .viewer-pane .chapter-anchor > .cv-chunk:first-of-type > p:first-child{text-indent:0;}
 /* 희곡: 내어쓰기(화자·지문 줄바꿈 가독), 좌측 정렬 */
 .gv-drama .viewer-pane p{text-align:left;padding-left:1.5em;text-indent:-1.5em;margin:0 0 .55em;}
 /* 철학·사상: 양끝맞춤, 단락 또렷이 구분(논지 단위), 편안한 단 폭 */
-.gv-idea .viewer-pane p{text-align:justify;margin:0 0 1.15em;max-width:38em;}
+.gv-idea .viewer-pane p{text-align:left;margin:0 0 1.15em;max-width:38em;}
 /* 수필·에세이: 미니멀, 좌측 정렬, 들여쓰기 없이 넉넉한 여백, 좁은 단 가운데 */
 .gv-essay .viewer-pane p{text-align:left;text-indent:0;margin:0 auto 1.2em;max-width:33em;}
 
