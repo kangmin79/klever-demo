@@ -2729,15 +2729,18 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
   </div>
 </div>
 
-<script src="mvp35_data.js?b=260616d"></script>
-<script src="books_extra.js?b=260612g"></script>
+<!-- mvp35_data.js(7.27MB)·books_extra.js(920KB) 제거(2026-07-02 성능감사): 도달 불가 죽은 데이터.
+     mvp35의 BODIES_ORIG 181권은 전부 k-접두 id인데 진열도서(BOOKS_RAW)는 kr-/gb-뿐이라 절대 매칭 안 됨.
+     books_extra 41권(g#### id)도 표시·검색 제외 상태(아래 2900번대 주석 참고). 두 파일은 repo에 보존(되돌리기 가능).
+     QUEST_MVP35(1KB)만 실사용 → 아래 인라인 QUEST 폴백 배열에 실데이터 반영함. -->
 <script src="classics_kr_data.js?b=260628c"></script>
 <script src="classics_foreign_data.js?b=260621d"></script>
 <script src="classics_ko_titles.js?b=260616a"></script>
 <!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
      예전엔 BODIES_SENT를 아래 인라인 스크립트에서 선언 → 초기 4권의 문장정렬 데이터가 통째로 누락되어
-     정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결. -->
-<script>var BODIES_SENT={}, KR_SENT={};</script>
+     정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결.
+     BODIES_ORIG/BODIES_TRANS: 원래 mvp35_data.js가 선언 → 제거 후 여기서 빈 객체로(레거시 bodies가 채움). -->
+<script>var BODIES_SENT={}, KR_SENT={}, BODIES_ORIG={}, BODIES_TRANS={};</script>
 <script src="bodies_dq.js?b=260612g"></script>
 <!-- bodies_gatsby/demian/emma(≈7MB)는 정적 include 제거 → 책 열 때만 ensureForeignBody가 지연 로드(LEGACY_BODY_FILES) -->
 <!-- bodies_gb{id}.js(변신 등 양산 산출물)는 ensureForeignBody()가 viewer 열 때 지연 로드 -->
@@ -2922,15 +2925,16 @@ const CURATIONS = [
   {id:'c6', cls:'cur-6', eyebrow:'정서·감성',     title:'한국인 특유의 감정을 이해하다',   desc:'김소월·윤동주·한용운의 정서',              meta:'9권 · 384명 참여', intl:true},
 ];
 
+// 구 QUEST_MVP35(mvp35_data.js) 실데이터를 인라인으로 이전(2026-07-02, 7.27MB 파일 제거하며 유일 실사용분만 옮김)
 const QUEST = (typeof QUEST_MVP35 !== 'undefined' && QUEST_MVP35.length) ? QUEST_MVP35 : [
-  {week:1, book:'동백꽃',      done:true,  current:false},
-  {week:2, book:'봄봄',        done:true,  current:false},
-  {week:3, book:'메밀꽃 필 무렵', done:true,  current:false},
-  {week:4, book:'운수 좋은 날', done:true,  current:false},
-  {week:5, book:'진달래꽃',    done:false, current:true},
-  {week:6, book:'서시',        done:false, current:false},
-  {week:7, book:'양반전',      done:false, current:false},
-  {week:8, book:'구운몽',      done:false, current:false},
+  {week:1, book:'동백꽃',      id:'k9000397',  done:true,  current:false},
+  {week:2, book:'봄봄',        id:'k9000404',  done:true,  current:false},
+  {week:3, book:'메밀꽃 필 무렵', id:'k9001211',  done:true,  current:false},
+  {week:4, book:'운수 좋은 날', id:'k9002094',  done:true,  current:false},
+  {week:5, book:'진달래꽃',    id:'k9000320',  done:false, current:true},
+  {week:6, book:'서시',        id:'k9000779',  done:false, current:false},
+  {week:7, book:'청춘예찬',    id:'k13313822', done:false, current:false},
+  {week:8, book:'님의 침묵',   id:'k9001830',  done:false, current:false},
 ];
 
 const BADGES = [
@@ -5351,7 +5355,7 @@ function libBridgeOpen(book){
     b=hit||{t:book.title||book.t||'', cover:book.cover||'', a:book.author||book.a||'', lib:null};
   }
   const dest=b.lib||semyungLink(cleanT(b.t||''));
-  if(b.lib&&hit) shelfAdd(b);   // 소장 전자책 열람만 '읽는 중' 기록
+  if(b.lib) shelfAdd(b);   // 소장 전자책 열람만 '읽는 중' 기록 (lib 확보 = _smLib 딥링크 or 풀 매칭)
   const w=window.open('','_blank');
   if(!w){ window.open(dest,'_blank','noopener'); return; }
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
