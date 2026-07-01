@@ -6135,9 +6135,10 @@ function ensureForeignBody(id){
 // ── 챕터블록 렌더(B) 책: 문장쌍 정렬이 드리프트한 재정렬 대상 ──
 // 문장 짝맞춤을 포기하고 챕터 단위로만 좌우 정렬. 각 챕터의 en/ko를 독립 블록으로 흘려 렌더.
 // 챕터 헤더가 좌우 동일 위치라 챕터 경계서 정렬(alignSections), 챕터 내부는 자연 흐름 → 미스얼라인 0.
-// 재정렬 대상 중 챕터블록 렌더가 정합성 검증된 10권(오프라인 blocksim/coherence 확인).
-// 제외 6권=개별 세션(gb-580 머리junk·gb-74톰소여·gb-76허클베리·gb-2701모비딕=en컬럼 제목오염, gb-6593톰존스=TOC샘, gb-135레미제라블=ko헤더소실).
-const CHAPTER_BLOCK_BOOKS = new Set(['gb-121','gb-1184','gb-164','gb-2226','gb-4217','gb-564','gb-821','gb-5921','gb-913','gb-28054']);
+// 재정렬 대상 중 챕터블록 렌더가 정합성 검증된 14권(오프라인 blocksim/coherence 확인).
+// gb-580·2701·74·76은 body_sent 앞 TOC/프론트매터 제거(DB 수리) 후 편입.
+// 제외 2권=전면 재구축 필요: gb-6593(톰존스, body_sent 전면 오정렬)·gb-135(레미제라블, body 원천 손상).
+const CHAPTER_BLOCK_BOOKS = new Set(['gb-121','gb-1184','gb-164','gb-2226','gb-4217','gb-564','gb-821','gb-5921','gb-913','gb-28054','gb-580','gb-2701','gb-74','gb-76']);
 // concat TOC junk(헤더 토큰 2개+ 이어붙고 en===ko) 감지 → 블록 렌더서 스킵
 function _isConcatTocJunk(g){
   if(!g||g.length!==1) return false;
