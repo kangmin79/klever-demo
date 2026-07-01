@@ -3272,7 +3272,12 @@ function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본
   let hasSecond,label;
   if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
-  else { hasSecond=!!c.trans; label='번역'; }
+  else {
+    hasSecond=!!c.trans;
+    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → 라벨도 '원문'
+    const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
+    label = krSwap ? '원문' : '번역';
+  }
   updatePaneTabs(hasSecond,label);
 }
 // 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
@@ -4931,7 +4936,17 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
     const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=*`,{headers:BX_H});
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     if((bxStudent()||{}).id!==sid) return;   // 응답 대기 중 다른 계정으로 전환됐으면 폐기(계정간 기록 혼입 방지)
-    rows.forEach(x=>_chalWriteLocal(x.book_id,{ans:x.ans||{},impression:x.impression||'',submitted:!!x.submitted,read_pct:x.read_pct||0,ts:Date.now()}));
+    // 통째 교체가 아닌 병합: cert_prompted 등 로컬 전용 필드 보존 + read_pct는 max(서버 upsert 실패분 후퇴 방지)
+    rows.forEach(x=>{
+      const cur=_chalRead(x.book_id)||{};
+      _chalWriteLocal(x.book_id, Object.assign({}, cur, {
+        ans:(x.ans&&Object.keys(x.ans).length)?x.ans:(cur.ans||{}),
+        impression:x.impression||cur.impression||'',
+        submitted:!!(cur.submitted||x.submitted),
+        read_pct:Math.max(cur.read_pct||0, x.read_pct||0),
+        ts:Date.now()
+      }));
+    });
   }catch(e){}
 }
 let _rsServerTimer=null;
@@ -4947,7 +4962,7 @@ function bxUpsertReaderStats(){            // 리더 통계(읽은시간·streak
 function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다기기 안전: 맵 합집합, 읽은시간·streak 최댓값)
   if(!sv||typeof sv!=='object') return;
   const L=readerStats;
-  ['positions','completedChapters','highlights','bookmarks'].forEach(k=>{ L[k]=Object.assign({}, sv[k]||{}, L[k]||{}); });
+  ['positions','completedChapters','highlights','bookmarks','pagePos'].forEach(k=>{ L[k]=Object.assign({}, sv[k]||{}, L[k]||{}); });   // pagePos 포함(페이지모드 위치 다기기 동기)
   const days={}, sd=(sv.readingTime&&sv.readingTime.days)||{}, ld=(L.readingTime&&L.readingTime.days)||{};
   for(const k in sd) days[k]=Math.max(days[k]||0, Math.round(sd[k]||0));
   for(const k in ld) days[k]=Math.max(days[k]||0, Math.round(ld[k]||0));
@@ -5333,12 +5348,13 @@ function lcBorrow(isbn){
   // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
   const isEbookLoan = /^sm-/.test(b.isbn||'') && /^\d+$/.test(reckey) &&
     ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
-  if(b.lib || isEbookLoan) shelfAdd(b);   // 전자책 열람/대출 → '읽는 중' 기록 → 마이페이지 완독 인증·반납('읽고 돌아오기' 루프)
+  // 대출형(isEbookLoan)은 대출 '성공 후'에 서재 기록(smEbookBorrowOpen 내) — 실패해도 '읽는 중'에 남던 버그 방지
+  if(b.lib && !isEbookLoan) shelfAdd(b);   // 외부 열람형은 열기=열람 시작으로 기록('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
   if(isEbookLoan){
     if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
     try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
-    smEbookBorrowOpen(reckey, w);   // 대출 → viewerUrl로 이동
+    smEbookBorrowOpen(reckey, w, b);   // 대출 → 성공 시 서재 기록 + viewerUrl로 이동
     return;
   }
   const dest = b.lib || semyungLink(cleanT(b.t||b.title||''));
@@ -5348,11 +5364,12 @@ function lcBorrow(isbn){
 }
 // 전자도서관 구매 전자책 대출 — semyung-ebook-borrow가 로그인·대출·뷰어URL 생성까지 대행, 그 URL로 이동
 const SMEBK_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook-borrow";
-async function smEbookBorrowOpen(brcd, w){
+async function smEbookBorrowOpen(brcd, w, book){
   try{
     const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
     if(d&&d.ok&&d.viewerUrl){
+      if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
       // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
       try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.loanSrmb=d.loanSrmb||''; it.ents=d.entsDvsnCode||''; it.ts=Date.now(); it.returned=false; shelfSave(a); } }catch(e){}
       try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); }
@@ -8073,8 +8090,14 @@ function openCommModal(tab,i){
       ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
     <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
     <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 내서재에서 진행률과 점수를 확인할 수 있어요.'}</div>
-    <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="alert('✅ ‘${esc(p.title)}’ 참여 신청 완료!\\n내서재에서 진행률을 확인하세요.');closeCommModal();">참여하기 →</button>`;
+    <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="commJoinAlert('${esc(tab)}',${i})">참여하기 →</button>`;
   document.getElementById('commModal').classList.add('on');
+}
+// 제목을 onclick JS 문자열에 직접 삽입하지 않음 — 제목에 따옴표(’책제목’ 인용 관행) 있으면 버튼이 죽던 버그
+function commJoinAlert(tab,i){
+  const p=(COMMUNITY_POSTS[tab]||[])[i];
+  alert('✅ ‘'+(p?p.title:'')+'’ 참여 신청 완료!\n내서재에서 진행률을 확인하세요.');
+  closeCommModal();
 }
 function closeCommModal(){ document.getElementById('commModal').classList.remove('on'); }
 // 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리 (공지도 community_posts가 소스, 구 library_notices 미사용)
@@ -8130,7 +8153,11 @@ async function rvFetch(qs){
 }
 async function likeReview(id,elm){
   const b=elm.querySelector('b'); const n=(parseInt(b.textContent)||0)+1; b.textContent=n;
-  try{ await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'PATCH',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({likes:n})}); }catch(e){}
+  // 실패 시 화면 숫자 롤백(DB와 영구 불일치 방지). 동시 클릭 원자성은 데모 규모상 보류(서버 RPC 필요)
+  try{
+    const r=await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'PATCH',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({likes:n})});
+    if(!r.ok) b.textContent=n-1;
+  }catch(e){ b.textContent=n-1; }
 }
 // 책 상세 모달 안에 서평 영역
 async function renderDetailReviews(bookId,bookTitle){
@@ -8326,6 +8353,11 @@ function bookTypeTag(b, kind){
   const id=b.id||'';
   if(id.indexOf('kr-')===0) return {label:'북스타 한국고전', cls:'bt-kr'};
   if(id.indexOf('gb-')===0 || /^g\d/.test(id)) return {label:'북스타 해외고전', cls:'bt-fr'};
+  // tags 우선 판정(usFormBadges와 일치) — 'sm-' 접두 종이책(CATTOT)이 '전자책'으로 오표기되던 것
+  if(Array.isArray(b.tags)){
+    if(b.tags.includes('ebook')) return {label:'전자책', cls:'bt-eb'};
+    if(b.tags.includes('paper')) return {label:'종이책', cls:'bt-pp'};
+  }
   if(b._sm || (b.isbn||'').indexOf('sm-')===0 || b._smLib || b.lib) return {label:'전자책', cls:'bt-eb'};
   return {label:'종이책', cls:'bt-pp'};
 }
@@ -8520,7 +8552,7 @@ function usCardsHTML(results){
     // 학술자료(KCI 논문 / 국회 학위논문·논문): 도서관 소장 개념 없음 → 카드가 외부 원문 페이지로 직행(libDetail 미적용).
     if(b._material==='kci' || b._material==='nanet'){
       const ext=b._material==='nanet';
-      const url=esc(ext?(b._nanetUrl||''):(b._kciUrl||''));
+      const url=esc(String(ext?(b._nanetUrl||''):(b._kciUrl||'')).replace(/'/g,'%27'));   // URL 내 홑따옴표가 onclick JS 문자열을 깨는 것 방지
       const sub=ext
         ? (escD([b.author,b.publisher,b.year].filter(Boolean).join(' · '))||'국회 학술자료')
         : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
@@ -8694,7 +8726,9 @@ async function usChatRecommend(topic, subtitleHint){
       usChatRender(); return;
     }
     if(!fr.results.length){
-      US_CHAT.push({role:'assistant', content:'아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
+      US_CHAT.push({role:'assistant', content: fr.error
+        ? '연결이 잠깐 불안정했어요. 잠시 후 다시 시도해 주세요.'
+        : '아쉽지만 그 주제에 딱 맞는 책을 우리 도서관에서 못 찾았어요. 조금 다르게 말해볼까요?'});
       usChatRender(); return;
     }
     US_CHAT.push({role:'assistant', kind:'cards', cards:fr.results, subtitle:fr.subtitle||subtitleHint||'', note:fr.note||'', answer:fr.answer||null});
@@ -8730,9 +8764,11 @@ async function byeoliFindBooks(topic, surface, wantAnswer){
       headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
       // answer는 표시되는 표면에서만 요청(팔로업 등은 끔=불필요한 +3~4s Haiku 콜 절약). 기본 true.
       body:JSON.stringify({query:topic, surface:surface||'api', count:12, config:{answer: wantAnswer!==false}})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
     d=await r.json();
   }catch(e){ d=null; }
-  if(!d){ return {offtopic:false, results:[], subtitle:''}; }
+  // 네트워크/서버 실패는 '못 찾았어요'(정상 무결과)와 구분해 error 플래그로 반환
+  if(!d){ return {offtopic:false, error:true, results:[], subtitle:''}; }
   if(d.offtopic){ byeoliLog({surface:surface||'',query:topic,intent:'books',offtopic:true,result_count:0}); return {offtopic:true, message:d.message||'', results:[]}; }
   let results=(d.results||[]).filter(b=>b&&b.isbn&&b.title);
   // 측정훅(클릭 로깅용): 이 검색의 eventId/위치/소스를 후보에 부착
@@ -9173,7 +9209,7 @@ window.addEventListener('keydown', (e) => {
     // 학술자료(KCI 논문 / 국회 학위논문·논문): 카드 클릭이 외부 원문 페이지로 직행.
     if(b._material==='kci' || b._material==='nanet'){
       const ext=b._material==='nanet';
-      const url=esc(ext?(b._nanetUrl||''):(b._kciUrl||''));
+      const url=esc(String(ext?(b._nanetUrl||''):(b._kciUrl||'')).replace(/'/g,'%27'));   // URL 내 홑따옴표가 onclick JS 문자열을 깨는 것 방지
       const sub=ext
         ? (escD([b.author,b.publisher,b.year].filter(Boolean).join(' · '))||'국회 학술자료')
         : (b._keyword?escD(String(b._keyword).split(',').slice(0,3).join(' · ')):'KCI 학술논문');
@@ -9292,7 +9328,7 @@ window.addEventListener('keydown', (e) => {
       //   Anthropic API가 한 덩어리로 합쳐 직전 책맥락이 다음 운영질문("운영시간?")을 books로 오분류시킨다(메인 챗은 8359에서 이미 기록).
       msgs.push({role:'assistant', content: brainReply || '책을 찾아드렸어요.'});
       if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
-      else { const n=hwcAddBooks(fr.results, fr.subtitle, fr.answer); if(!n) addBot('아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
+      else { const n=hwcAddBooks(fr.results, fr.subtitle, fr.answer); if(!n) addBot(fr.error ? '연결이 잠깐 불안정했어요. 잠시 후 다시 시도해 주세요.' : '아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'); }
     busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
   }

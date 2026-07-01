@@ -920,7 +920,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 <script>
 /* ====== 헬퍼 ====== */
 const el=id=>document.getElementById(id);
-const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf=n=>(n||0).toLocaleString();
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
 function gtag(t){const k=t==='큐레이션'?'cur':t==='고전챌린지'?'clas':'chal';
@@ -2611,7 +2611,9 @@ function ntPeriodStr(){
   const f=fmt(el('ntFrom').value), t=fmt(el('ntTo').value);
   if(f&&t)return f+' ~ '+t; return f||t||'';
 }
-function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map(l=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLoc('${l}')">${l}</span>`).join('');}
+// 칸 제목(사서 자유입력)을 onclick JS 문자열에 직접 넣지 않음 — 따옴표/< 포함 제목에 칩이 죽던 버그 → 인덱스 방식
+function buildNtLoc(){el('ntLoc').innerHTML=LOCATIONS.map((l,i)=>`<span class="locchip ${ntLocSel.includes(l)?'on':''}" onclick="toggleNtLocIdx(${i})">${esc(l)}</span>`).join('');}
+function toggleNtLocIdx(i){toggleNtLoc(LOCATIONS[i]);}
 function toggleNtLoc(l){const i=ntLocSel.indexOf(l);if(i<0)ntLocSel.push(l);else ntLocSel.splice(i,1);buildNtLoc();}
 async function loadNotices(){
   try{
