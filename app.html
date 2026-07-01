@@ -3462,8 +3462,9 @@ function scheduleAlign(){
 function alignParallel(){
   const L=document.querySelector('.viewer-pane.left'), R=document.querySelector('.viewer-pane.right');
   if(!L||!R) return;
+  const lc=L.querySelectorAll('.cv-chunk'), rc=R.querySelectorAll('.cv-chunk');
   if(!_vis(L)||!_vis(R)){   // 단일 페인(원문만/번역만)·모바일 탭 → 정렬용 min-height 제거(빈 공백 방지)
-    [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title').forEach(e=>{ e.style.minHeight=''; }));
+    [L,R].forEach(P=>P.querySelectorAll('p[data-pi],h3.ch-title,.cv-chunk').forEach(e=>{ e.style.minHeight=''; }));
     return;
   }
   const lp=L.querySelectorAll('p[data-pi]'), rp=R.querySelectorAll('p[data-pi]');
@@ -3472,8 +3473,7 @@ function alignParallel(){
   // 1) 이전 min-height 초기화 + 측정 위해 cv-chunk 강제 렌더(화면 밖도)
   lp.forEach(p=>p.style.minHeight=''); rp.forEach(p=>p.style.minHeight='');
   lh.forEach(h=>h.style.minHeight=''); rh.forEach(h=>h.style.minHeight='');
-  const chunks=[...L.querySelectorAll('.cv-chunk'), ...R.querySelectorAll('.cv-chunk')];
-  chunks.forEach(c=>c.style.contentVisibility='visible');
+  [...lc,...rc].forEach(c=>{ c.style.minHeight=''; c.style.contentVisibility='visible'; });
   // 2) 읽기(레이아웃 1회) → 쓰기 분리(thrash 방지). 문단 쌍은 data-pi로, 장 제목은 순서로 매칭
   const rmap={}; rp.forEach(p=>{ rmap[p.dataset.pi]=p; });
   const work=[];
@@ -3482,8 +3482,14 @@ function alignParallel(){
   for(let i=0;i<Math.min(lh.length,rh.length);i++) hwork.push([lh[i],rh[i],Math.max(lh[i].offsetHeight,rh[i].offsetHeight)]);
   work.forEach(([l,r,h])=>{ l.style.minHeight=h+'px'; r.style.minHeight=h+'px'; });
   hwork.forEach(([l,r,h])=>{ l.style.minHeight=h+'px'; r.style.minHeight=h+'px'; });
-  // 3) cv-chunk 복귀(auto가 실측 크기 기억 → 화면 밖에서도 정렬 유지, 대작 성능 보존)
-  chunks.forEach(c=>c.style.contentVisibility='');
+  // 3) ★ 문단쌍 정렬 후 cv-chunk 컨테이너 높이도 좌우 동일하게 잠금. 좌우 청크는 동일 12문단 경계로 생성돼
+  //    개수·순서가 같다. 화면 밖으로 나가 content-visibility가 내부를 스킵(contain-intrinsic-size)해도
+  //    청크 박스 min-height가 좌우 같아 스크롤 누적 드리프트 방지(auto 미지원 브라우저·모니터 무관 정합).
+  const cwork=[];
+  for(let i=0;i<Math.min(lc.length,rc.length);i++) cwork.push([lc[i],rc[i],Math.max(lc[i].offsetHeight,rc[i].offsetHeight)]);
+  cwork.forEach(([l,r,h])=>{ l.style.minHeight=h+'px'; r.style.minHeight=h+'px'; });
+  // 4) cv-chunk 렌더 스킵 복귀(청크 min-height는 유지 → 화면 밖에서도 높이 고정, 대작 성능 보존)
+  [...lc,...rc].forEach(c=>c.style.contentVisibility='');
 }
 /* 형광펜 친 원문 문단의 번역 문단에 .hl-pair 마커 동기화 (정렬책 전용) */
 function syncPairMarks(){
