@@ -172,23 +172,7 @@ const BOOKS_CLASSICS_KR = [
   "quizzes": 5,
   "progress": 0
  },
- {
-  "id": "kr-김남천-소년행",
-  "coverSrc": "./covers/kr-sonyeonhaeng.webp",
-  "title": "소년행",
-  "author": "김남천",
-  "category": "소설",
-  "period": "근대",
-  "locale": "modern",
-  "intl": true,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "공유마당",
-  "participants": 164,
-  "reviews": 1,
-  "quizzes": 5,
-  "progress": 0
- },
+ 
  {
   "id": "kr-김동인-K박사의-연구",
   "coverSrc": "./covers/kr-kbaksauiyeongu.webp",
@@ -631,23 +615,7 @@ const BOOKS_CLASSICS_KR = [
   "quizzes": 5,
   "progress": 0
  },
- {
-  "id": "kr-신채호-백세-노승의-미인담",
-  "coverSrc": "./covers/kr-baeksenoseunguimiindam.webp",
-  "title": "백세 노승의 미인담",
-  "author": "신채호",
-  "category": "소설",
-  "period": "근대",
-  "locale": "modern",
-  "intl": true,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "공유마당",
-  "participants": 107,
-  "reviews": 7,
-  "quizzes": 5,
-  "progress": 0
- },
+ 
  {
   "id": "kr-신채호-용과-용의-대격전",
   "coverSrc": "./covers/kr-yonggwayonguidaegyeokjeon.webp",
@@ -665,23 +633,7 @@ const BOOKS_CLASSICS_KR = [
   "quizzes": 5,
   "progress": 0
  },
- {
-  "id": "kr-신채호-을지문덕",
-  "coverSrc": "./covers/kr-euljimundeok.webp",
-  "title": "을지문덕",
-  "author": "신채호",
-  "category": "소설",
-  "period": "근대",
-  "locale": "modern",
-  "intl": true,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "공유마당",
-  "participants": 51,
-  "reviews": 12,
-  "quizzes": 5,
-  "progress": 0
- },
+ 
  {
   "id": "kr-신채호-이순신",
   "coverSrc": "./covers/kr-isunsin.webp",
@@ -784,23 +736,7 @@ const BOOKS_CLASSICS_KR = [
   "quizzes": 5,
   "progress": 0
  },
- {
-  "id": "kr-이광수-사랑",
-  "coverSrc": "./covers/kr-sarang-el.webp",
-  "title": "사랑",
-  "author": "이광수",
-  "category": "소설",
-  "period": "근대",
-  "locale": "modern",
-  "intl": true,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "공유마당",
-  "participants": 163,
-  "reviews": 13,
-  "quizzes": 5,
-  "progress": 0
- },
+ 
  {
   "id": "kr-이광수-원효대사",
   "coverSrc": "./covers/kr-wonhyodaesa-el.webp",
