@@ -4051,8 +4051,8 @@ function _fsHost(){
 
 /* ── 페인 보기 토글 (해외책: 나란히 → 원문만 → 번역만) ── */
 // KO 1단 기본 책(Phase1 KO2COL): 문장쌍(body_sent) 없이 원문/번역이 독립 2단이라 좌우가 어긋남.
-// 나란히 대신 한국어 번역 1단을 기본으로(영어 원문은 데스크톱 토글/모바일 탭으로 접근). 파일럿 gb-1200.
-const KO1COL_BOOKS = new Set(['gb-1200']);
+// 나란히 대신 한국어 번역 1단을 기본으로(영어 원문은 데스크톱 토글/모바일 탭으로 접근). KO2COL 8권.
+const KO1COL_BOOKS = new Set(['gb-1200','gb-1251','gb-1666','gb-1837','gb-3154','gb-804','gb-9198','gb-9611']);
 function applyPaneDefault(){
   const ko1 = currentBook && KO1COL_BOOKS.has(currentBook.id) && currentMode==='full';
   _paneView = ko1 ? 'trans' : 'both';
