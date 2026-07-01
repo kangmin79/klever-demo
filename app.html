@@ -6135,7 +6135,9 @@ function ensureForeignBody(id){
 // ── 챕터블록 렌더(B) 책: 문장쌍 정렬이 드리프트한 재정렬 대상 ──
 // 문장 짝맞춤을 포기하고 챕터 단위로만 좌우 정렬. 각 챕터의 en/ko를 독립 블록으로 흘려 렌더.
 // 챕터 헤더가 좌우 동일 위치라 챕터 경계서 정렬(alignSections), 챕터 내부는 자연 흐름 → 미스얼라인 0.
-const CHAPTER_BLOCK_BOOKS = new Set(['gb-121']);   // 파일럿. 검증 후 재정렬 16권 확장.
+// 재정렬 대상 중 챕터블록 렌더가 정합성 검증된 10권(오프라인 blocksim/coherence 확인).
+// 제외 6권=개별 세션(gb-580 머리junk·gb-74톰소여·gb-76허클베리·gb-2701모비딕=en컬럼 제목오염, gb-6593톰존스=TOC샘, gb-135레미제라블=ko헤더소실).
+const CHAPTER_BLOCK_BOOKS = new Set(['gb-121','gb-1184','gb-164','gb-2226','gb-4217','gb-564','gb-821','gb-5921','gb-913','gb-28054']);
 // concat TOC junk(헤더 토큰 2개+ 이어붙고 en===ko) 감지 → 블록 렌더서 스킵
 function _isConcatTocJunk(g){
   if(!g||g.length!==1) return false;
@@ -6159,10 +6161,15 @@ function sentBlockHtml(sentArr, side){
   };
   const headerIdx = []; arr.forEach((g,i)=>{ if(isHeadPara(g)) headerIdx.push(i); });
   if(headerIdx.length < 2) return cvChunks(0, arr.length);
+  // 섹션 범위 계산 + 연속 3개 이상 "빈(본문 0문단) 헤더 섹션" = 미니TOC 블록 → drop (개별 BOOK 구분자는 유지)
+  const ranges=[]; for(let i=0;i<headerIdx.length;i++){ const s=headerIdx[i], e=i+1<headerIdx.length?headerIdx[i+1]:arr.length; ranges.push([s,e,e-s-1]); }
+  const drop=new Array(ranges.length).fill(false);
+  for(let i=0;i<ranges.length;){ if(ranges[i][2]===0){ let j=i; while(j<ranges.length&&ranges[j][2]===0) j++; if(j-i>=3) for(let k=i;k<j;k++) drop[k]=true; i=j; } else i++; }
   let html = '';
   if(headerIdx[0] > 0) html += '<section class="chapter-anchor" data-ch-title="서문 · 머리말">'+cvChunks(0, headerIdx[0])+'</section>';
-  for(let i=0;i<headerIdx.length;i++){
-    const s=headerIdx[i], e=i+1<headerIdx.length?headerIdx[i+1]:arr.length;
+  for(let i=0;i<ranges.length;i++){
+    if(drop[i]) continue;
+    const [s,e]=ranges[i];
     const title=((arr[s][0]||[])[side]||'').trim().replace(/^#{1,6}\s+/,'').replace(/\s+/g,' ');
     html += '<section class="chapter-anchor" data-ch-title="'+esc(title)+'"><h3 class="ch-title">'+esc(title)+'</h3>'+cvChunks(s+1, e)+'</section>';
   }
