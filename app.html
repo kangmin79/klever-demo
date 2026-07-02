@@ -2068,6 +2068,9 @@ mark.hl.hl-flash{animation:hlFlash 1.4s ease;}
 .dict-trans b{color:var(--text);font-weight:700;}
 .dict-trans span{color:var(--text-sub);}
 .dict-empty{font-size:12px;color:var(--text-light);line-height:1.6;}
+.dict-links{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.dict-links a{font-size:12px;font-weight:700;color:var(--primary);text-decoration:none;}
+.dict-links a:hover{text-decoration:underline;}
 .dict-lang-tabs{display:flex;gap:4px;padding:8px 16px 0;flex-wrap:wrap;}
 .dict-lang-tab{font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px;border:1px solid var(--border);cursor:pointer;color:var(--text-sub);}
 .dict-lang-tab.on{background:var(--primary);color:#fff;border-color:var(--primary);}
@@ -4273,7 +4276,7 @@ function showDict(word, x, y){
     tabs.innerHTML = avail.map(([code,label])=>
       `<span class="dict-lang-tab ${code===_dictLang?'on':''}" onclick="setDictLang('${code}')">${label}</span>`).join('');
   } else { tabs.innerHTML=''; }
-  renderDictBody(hit);
+  renderDictBody(hit, word);
   pop.classList.add('open');
   // 위치: 선택/더블클릭 지점 근처
   const px = (x!=null) ? Math.min(x, window.innerWidth-320) : (window.innerWidth/2-150);
@@ -4286,10 +4289,15 @@ function setDictLang(code){ _dictLang=code; const hit=dictEntryFor(document.getE
   document.querySelectorAll('.dict-lang-tab').forEach(t=>t.classList.toggle('on', t.textContent===DICT_LANGS.find(([c])=>c===code)[1]));
   renderDictBody(hit); }
 
-function renderDictBody(hit){
+function renderDictBody(hit, word){
   const body = document.getElementById('dictBody');
   if(!hit){
-    body.innerHTML = `<div class="dict-empty">이 단어는 사전에 없어요.<br><br>· 고어·한자어는 추후 작품별 풀이 사전에서 제공됩니다.<br>· 현대 한국어 단어를 선택해 보세요.</div>`;
+    word = (word || document.getElementById('dictWord').textContent || '').trim();
+    const isEn = /^[A-Za-z][A-Za-z'’\-]*$/.test(word);
+    const naver = (isEn ? 'https://en.dict.naver.com/#/search?query=' : 'https://ko.dict.naver.com/#/search?query=') + encodeURIComponent(word);
+    body.innerHTML = `<div class="dict-empty" id="dictOnline">${isEn ? '온라인 사전에서 찾는 중…' : '작품 풀이 사전에 없는 단어예요.'}</div>
+      <div class="dict-links"><a href="${naver}" target="_blank" rel="noopener">네이버 사전에서 열기 ↗</a></div>`;
+    if(isEn && word) _dictOnline(word);
     return;
   }
   const e = hit.e;
@@ -4302,6 +4310,24 @@ function renderDictBody(hit){
   `;
 }
 function closeDict(){ document.getElementById('dictPopup').classList.remove('open'); }
+// 작품 사전에 없는 영단어: 무료 온라인 사전(dictionaryapi.dev, 무키·CORS 허용)으로 폴백
+async function _dictOnline(word){
+  const cur=()=>document.getElementById('dictWord').textContent;
+  try{
+    const r=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(word.toLowerCase()));
+    if(cur()!==word) return;                                  // 그새 다른 단어 조회
+    const el=document.getElementById('dictOnline'); if(!el) return;
+    if(!r.ok){ el.textContent='온라인 사전에도 없는 단어예요.'; return; }
+    const j=await r.json(); if(cur()!==word) return;
+    const e=Array.isArray(j)?j[0]:null;
+    if(!e){ el.textContent='뜻을 찾지 못했어요.'; return; }
+    const ph=e.phonetic || ((e.phonetics||[]).find(p=>p.text)||{}).text || '';
+    let html=`<div class="dict-ko"><b style="color:var(--primary);">${esc(e.word||word)}</b>${ph?` <span style="color:var(--text-light);">${esc(ph)}</span>`:''}</div>`;
+    (e.meanings||[]).slice(0,3).forEach(m=>{ const d=(m.definitions||[])[0]; if(!d||!d.definition) return;
+      html+=`<div class="dict-row"><span class="dict-lang">${esc(m.partOfSpeech||'')}</span><span class="dict-trans">${esc(d.definition)}</span></div>`; });
+    el.outerHTML=html;                                        // 로딩 노드 → 결과(링크는 형제로 유지)
+  }catch(e){ const el=document.getElementById('dictOnline'); if(el) el.textContent='온라인 사전 연결에 실패했어요.'; }
+}
 
 /* ═══ 문장 인용 카드 (본문 선택 → canvas 이미지 카드로 공유·저장) ═══ */
 const QC_THEMES=[
