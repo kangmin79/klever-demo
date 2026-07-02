@@ -4236,7 +4236,9 @@ function closeDict(){ document.getElementById('dictPopup').classList.remove('ope
 /* ═══════════════════════════════════════════════════════════
    네비게이션
    ═══════════════════════════════════════════════════════════ */
+let _navPage='ourlib';   // 현재 페이지(사이드바 라벨 재렌더용)
 function nav(page){
+  _navPage=page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.gnb-item').forEach(i=>i.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -5112,7 +5114,11 @@ async function renderAreaCuration(containerId, area){
   if(!secs.length){ grid.innerHTML=''; return; }
   // 담긴 책을 풀에 병합(표지·별점 보강)
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push(Object.assign({},b,{t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''})); }));   // 형태 필드 보존
-  grid.innerHTML=millieHTML(secs, isClassicsArea(area));
+  // International(국내 탭)에서 언어 선택 시 사서 큐레이션 줄 제목·부제 번역(사전 미등재는 한국어 폴백)
+  let secsR=secs;
+  if(typeof clT==='function' && typeof CL_AREA!=='undefined' && area===CL_AREA.modern && _clTab==='modern' && _clLang!=='all')
+    secsR=secs.map(s=>Object.assign({},s,{title:clT(s.title||''),subtitle:clT(s.subtitle||'')}));
+  grid.innerHTML=millieHTML(secsR, isClassicsArea(area));
   try{ mlBindDrag(); }catch(e){}
   try{ backfillPool(); }catch(e){}
 }
@@ -5467,7 +5473,7 @@ function renderSideNav(activePage){
     const on = (activePage===n.page) ? ' active' : '';
     return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
       ${ic(n.icon)}
-      <div class="side-node-label">${esc(n.label)}</div>
+      <div class="side-node-label">${esc(typeof uiT==='function'?uiT(n.label):n.label)}</div>
     </div>`;
   }).join('');
 }
@@ -5589,13 +5595,17 @@ function clCard(b, opts){
       ? `<div class="cl-cardlangs">${CL_LANG_ORDER.map(l=>`<span class="cl-lg">${KR_LANG_NAMES[l]}</span>`).join('')}</div>`
       : `<div class="cl-cardlangs"><span class="cl-lg hl">${KR_LANG_NAMES[opts.krLang]}</span><span class="cl-lg">+한국어</span></div>`;
   }
+  // 언어 선택 시 번역 제목을 주 제목으로, 한국어 원제는 아래 줄에 (title_tr, classic_translations)
+  const tt = (b.locale==='modern' && typeof krTitleOf==='function') ? krTitleOf(b) : null;
   return `<div class="book-card cl-card${b.minumsa?' has-mns':''}" onclick="openDetail('${b.id}')">`
     + `${b.minumsa?'<span class="mns-badge">★ 민음사</span>':''}${badge}${bookCoverHTML(b)}`
-    + `<div class="book-info"><div class="book-title">${esc(b.title)}</div>`
-    + `<div class="book-author">${esc(b.author)}</div>${chips}</div></div>`;
+    + `<div class="book-info"><div class="book-title">${esc(tt||b.title)}</div>`
+    + `<div class="book-author">${esc(tt ? (b.title+' · '+b.author) : b.author)}</div>${chips}</div></div>`;
 }
 function clShelf(title, books, opts){
-  return `<div class="cl-shelf">${mlHead(title, (CLASSIC_SUB[title]||'')+' · '+books.length+'권')}`
+  const unit = {en:' books',zh:'本',vi:' cuốn',ja:'冊'};
+  const u = (_clTab==='modern'&&_clLang!=='all') ? (unit[_clLang]||'권') : '권';
+  return `<div class="cl-shelf">${mlHead(clT(title), clT(CLASSIC_SUB[title]||'')+' · '+books.length+u)}`
     + `${mlCarousel(`<div class="ml-hrow">${books.map(b=>clCard(b,opts)).join('')}</div>`)}</div>`;
 }
 function clShelvesHTML(loc, opts){
@@ -5633,7 +5643,8 @@ function renderClassicShelves(){
   if(foreign){
     headBody = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
   } else {
-    const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?'전체':KR_LANG_NAMES[l]}</span>`).join('');
+    const allLbl = ({en:'All',zh:'全部',vi:'Tất cả',ja:'すべて'})[_clLang] || '전체';
+    const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?allLbl:KR_LANG_NAMES[l]}</span>`).join('');
     headBody = `<div class="cl-welcome">
         <div class="globe">🌐</div>
         <div style="flex:1;min-width:200px;">
@@ -5652,7 +5663,7 @@ function renderClassicShelves(){
   // 탭별 사서 큐레이션(해외/국내 각각) 렌더
   renderAreaCuration('collectionCuration', CL_AREA[_clTab]);
 }
-function clSetTab(t){ _clTab=t; if(t!=='modern') _clLang='all'; renderClassicShelves(); _gnbClSync(); }
+function clSetTab(t){ _clTab=t; if(t!=='modern'){ _clLang='all'; applyUiLang('ko'); } renderClassicShelves(); _gnbClSync(); }
 // 페이지 내 탭 전환 시 GNB(세계고전/International) 밑줄도 현재 권역으로 동기화
 function _gnbClSync(){
   const pg=document.getElementById('page-collection');
@@ -5661,7 +5672,95 @@ function _gnbClSync(){
     el.classList.toggle('active', el.dataset.cl===(_clTab==='modern'?'modern':'foreign')));
 }
 // 상단 네비(세계고전/International) → 권역 설정 후 고전 컬렉션 페이지로
-function navCl(t){ _clTab=t; if(t!=='modern') _clLang='all'; nav('collection'); }
+function navCl(t){ _clTab=t; if(t!=='modern'){ _clLang='all'; applyUiLang('ko'); } nav('collection'); }
+// ── International 언어 전환: 칩 클릭 시 GNB·사이드바·줄제목·장르서가·책제목까지 일괄 전환 ──
+// UI 크롬(GNB·사이드바) 고정 문구 사전. 그 외 페이지 콘텐츠(우리도서관 큐레이션 등)는 한국어 유지.
+const UI_I18N={
+  en:{'우리 도서관':'Our Library','독서 챌린지':'Reading Challenge','세계고전':'World Classics','커뮤니티':'Community',
+      '마이 챌린지':'My Challenge','리더보드':'Leaderboard','검색':'Search','피드':'Feed','내서재':'My Library'},
+  zh:{'우리 도서관':'我们的图书馆','독서 챌린지':'阅读挑战','세계고전':'世界古典','커뮤니티':'社区',
+      '마이 챌린지':'我的挑战','리더보드':'排行榜','검색':'搜索','피드':'动态','내서재':'我的书架'},
+  vi:{'우리 도서관':'Thư viện của chúng ta','독서 챌린지':'Thử thách đọc sách','세계고전':'Kinh điển thế giới','커뮤니티':'Cộng đồng',
+      '마이 챌린지':'Thử thách của tôi','리더보드':'Bảng xếp hạng','검색':'Tìm kiếm','피드':'Bảng tin','내서재':'Tủ sách của tôi'},
+  ja:{'우리 도서관':'私たちの図書館','독서 챌린지':'読書チャレンジ','세계고전':'世界古典','커뮤니티':'コミュニティ',
+      '마이 챌린지':'マイチャレンジ','리더보드':'リーダーボード','검색':'検索','피드':'フィード','내서재':'マイ本棚'},
+};
+let UI_LANG='ko';
+function uiT(ko){ return (UI_I18N[UI_LANG]||{})[ko]||ko; }
+function applyUiLang(l){
+  UI_LANG=(l&&UI_I18N[l])?l:'ko';
+  document.querySelectorAll('.gnb-item').forEach(el=>{
+    if(!el.dataset.ko) el.dataset.ko=el.textContent.trim();
+    el.textContent=uiT(el.dataset.ko);
+  });
+  if(typeof _navPage!=='undefined'&&_navPage) renderSideNav(_navPage);   // 사이드바 라벨 재렌더
+}
+// International 콘텐츠(줄제목·부제·장르라벨) 사전 — 한국어 원문 키. 사서가 제목을 바꾸면 자동으로 한국어 폴백.
+const CL_I18N={
+en:{
+ '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'Your First Step into Korea','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'Short and easy — the gentlest way into Korean literature',
+ '[유학생] 변하지 않는 마음':'Feelings That Never Change','설렘도 그리움도, 결국 같은 마음':'Longing and love — the same heart everywhere',
+ '다시, 처음처럼':'Again, Like the First Time','익숙한 제목 아네, 아직 읽지 않은 이야기':"Familiar titles, stories you haven't read yet",
+ '[유학생] 오래 사랑받는 이름들':'Names Loved for Generations','시간이 지나도 빛나는, 그 이름들과의 만남':'Meet the names that shine through time',
+ '무너지지 않는 마음':"Hearts That Don't Break",'흔들려도 끝내 무너지지 않은 마음들':'Shaken, but never broken',
+ '[유학생] 한국이라는 마음':'The Heart of Korea','한 걸음 더 가까이, 이 나라의 안쪽으로':'One step closer to the inside of this country',
+ '문장이 머무는 자리':'Where Sentences Stay','짧은 한 줄이 오래 남는 순간':'When one short line lingers',
+ '[유학생] 스스로를 택한 여자들':'Women Who Chose Themselves','누구의 눈치도 보지 안고, 자기 삶을':'Living their own lives, on their own terms',
+ '소설':'Fiction','시':'Poetry','철학·사상':'Philosophy & Thought','그 외 고전':'More Classics',
+ '한 편의 이야기로 시대를 읽다':'Reading an era through a single story','짧은 행에 담긴 깊은 울림':'Deep resonance in short lines','생각하는 법을 배우는 고전':'Classics that teach you how to think'},
+zh:{
+ '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'初次翻开，最亲近的韩国','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'短小易读，走进韩国文学最轻松的第一步',
+ '[유학생] 변하지 않는 마음':'不变的心','설렘도 그리움도, 결국 같은 마음':'心动与思念，终究是同一种心情',
+ '다시, 처음처럼':'再一次，像初见','익숙한 제목 아네, 아직 읽지 않은 이야기':'熟悉的书名，还未读过的故事',
+ '[유학생] 오래 사랑받는 이름들':'被长久喜爱的名字','시간이 지나도 빛나는, 그 이름들과의 만남':'与历久弥新的名字相遇',
+ '무너지지 않는 마음':'不会倒下的心','흔들려도 끝내 무너지지 않은 마음들':'纵然动摇，终未倒下的心',
+ '[유학생] 한국이라는 마음':'名为韩国的心','한 걸음 더 가까이, 이 나라의 안쪽으로':'再近一步，走进这个国家的内心',
+ '문장이 머무는 자리':'文字停留的地方','짧은 한 줄이 오래 남는 순간':'短短一行，久久难忘',
+ '[유학생] 스스로를 택한 여자들':'选择了自己的女性','누구의 눈치도 보지 안고, 자기 삶을':'不看任何人的眼色，活出自己的人生',
+ '소설':'小说','시':'诗歌','철학·사상':'哲学·思想','그 외 고전':'其他古典',
+ '한 편의 이야기로 시대를 읽다':'以一个故事读懂一个时代','짧은 행에 담긴 깊은 울림':'短句中蕴含的深沉回响','생각하는 법을 배우는 고전':'学会思考的古典'},
+vi:{
+ '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'Bước đầu đến với Hàn Quốc','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'Ngắn gọn, dễ đọc — bước khởi đầu nhẹ nhàng vào văn học Hàn Quốc',
+ '[유학생] 변하지 않는 마음':'Những cảm xúc không đổi thay','설렘도 그리움도, 결국 같은 마음':'Rung động hay nhớ nhung, cuối cùng vẫn là một tấm lòng',
+ '다시, 처음처럼':'Một lần nữa, như lần đầu','익숙한 제목 아네, 아직 읽지 않은 이야기':'Tựa sách quen thuộc, câu chuyện bạn chưa từng đọc',
+ '[유학생] 오래 사랑받는 이름들':'Những cái tên được yêu mến lâu dài','시간이 지나도 빛나는, 그 이름들과의 만남':'Gặp gỡ những cái tên tỏa sáng theo thời gian',
+ '무너지지 않는 마음':'Những trái tim không gục ngã','흔들려도 끝내 무너지지 않은 마음들':'Dao động nhưng không bao giờ sụp đổ',
+ '[유학생] 한국이라는 마음':'Tấm lòng mang tên Hàn Quốc','한 걸음 더 가까이, 이 나라의 안쪽으로':'Thêm một bước, vào sâu bên trong đất nước này',
+ '문장이 머무는 자리':'Nơi câu văn ở lại','짧은 한 줄이 오래 남는 순간':'Một dòng ngắn đọng lại thật lâu',
+ '[유학생] 스스로를 택한 여자들':'Những người phụ nữ chọn chính mình','누구의 눈치도 보지 안고, 자기 삶을':'Sống cuộc đời của mình, không e dè ai',
+ '소설':'Tiểu thuyết','시':'Thơ','철학·사상':'Triết học & Tư tưởng','그 외 고전':'Các tác phẩm khác',
+ '한 편의 이야기로 시대를 읽다':'Đọc cả một thời đại qua một câu chuyện','짧은 행에 담긴 깊은 울림':'Âm vang sâu lắng trong những dòng thơ ngắn','생각하는 법을 배우는 고전':'Những tác phẩm dạy ta cách suy nghĩ'},
+ja:{
+ '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'初めてひらく、いちばん身近な韓国','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'短くてやさしい、韓国文学への心地よい第一歩',
+ '[유학생] 변하지 않는 마음':'変わらない心','설렘도 그리움도, 결국 같은 마음':'ときめきも恋しさも、結局おなじ心',
+ '다시, 처음처럼':'もう一度、初めてのように','익숙한 제목 아네, 아직 읽지 않은 이야기':'なじみのタイトル、まだ読んでいない物語',
+ '[유학생] 오래 사랑받는 이름들':'長く愛される名前たち','시간이 지나도 빛나는, 그 이름들과의 만남':'時を超えて輝く、その名前との出会い',
+ '무너지지 않는 마음':'くじけない心','흔들려도 끝내 무너지지 않은 마음들':'揺れても、ついに崩れなかった心',
+ '[유학생] 한국이라는 마음':'韓国という心','한 걸음 더 가까이, 이 나라의 안쪽으로':'もう一歩近く、この国の内側へ',
+ '문장이 머무는 자리':'文章がとどまる場所','짧은 한 줄이 오래 남는 순간':'短い一行が長く残る瞬間',
+ '[유학생] 스스로를 택한 여자들':'自分を選んだ女性たち','누구의 눈치도 보지 안고, 자기 삶을':'誰の顔色もうかがわず、自分の人生を',
+ '소설':'小説','시':'詩','철학·사상':'哲学・思想','그 외 고전':'そのほかの古典',
+ '한 편의 이야기로 시대를 읽다':'一つの物語で時代を読む','짧은 행에 담긴 깊은 울림':'短い行にこもる深い響き','생각하는 법을 배우는 고전':'考える方法を学ぶ古典'},
+};
+// International(국내 탭) 문자열 번역 — 사전에 없으면 한국어 그대로
+function clT(ko){ if(_clTab!=='modern'||_clLang==='all') return ko; return (CL_I18N[_clLang]||{})[ko]||ko; }
+// 책 제목 번역(classic_translations.title_tr) — 칩 선택 시 1회 로드 후 캐시
+let KR_TITLE_TR=null, _krTitleP=null;
+function loadKrTitles(){
+  if(KR_TITLE_TR||_krTitleP) return _krTitleP||Promise.resolve();
+  _krTitleP=fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classic_translations?select=classic_id,lang,title_tr',
+    {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}})
+    .then(r=>r.ok?r.json():[]).then(rows=>{
+      KR_TITLE_TR={};
+      (rows||[]).forEach(x=>{ if(x.title_tr){ (KR_TITLE_TR[x.classic_id]=KR_TITLE_TR[x.classic_id]||{})[x.lang]=x.title_tr; } });
+      if(_clTab==='modern'&&_clLang!=='all') renderClassicShelves();   // 로드 완료 후 재렌더
+    }).catch(()=>{ KR_TITLE_TR={}; });
+  return _krTitleP;
+}
+function krTitleOf(b){
+  if(_clLang==='all'||!KR_TITLE_TR||!b||!b.id) return null;
+  const m=KR_TITLE_TR[b.id]; return (m&&m[_clLang])||null;
+}
 // International 배너 다국어 — 대상이 한국어 서툰 유학생인데 문구가 한국어뿐이던 모순 해소.
 // 칩 = '너의 언어 선택기': 배너가 그 언어로 바뀌고, 책 열 때 기본 번역 언어(KR_LANG)도 따라감.
 const CL_WELCOME = {
@@ -5674,6 +5773,8 @@ const CL_WELCOME = {
 function clSetLang(l){
   _clLang=l;
   if(l!=='all' && typeof KR_LANG!=='undefined') KR_LANG=l;   // 칩 선택 → 리더 기본 번역 언어로 연동
+  applyUiLang(l==='all'?'ko':l);                             // GNB·사이드바도 함께 전환
+  if(l!=='all') loadKrTitles();                              // 책 제목 번역(1회 로드)
   renderClassicShelves();
 }
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
@@ -5855,7 +5956,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260702c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260702d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -8414,7 +8515,14 @@ function enrollProgram(key){
 
 
 function changeLang(lang){
-  if(lang !== 'ko') alert(`Language changed to: ${lang.toUpperCase()}\n뷰어를 열면 자동으로 ${lang} 모드로 표시됩니다.`);
+  // 헤더 언어 드롭다운 = International 칩과 동일 전환 (GNB·사이드바 + 국내 탭 콘텐츠 + 리더 기본 번역 언어)
+  if(lang==='ko'){ applyUiLang('ko'); _clLang='all'; }
+  else{
+    applyUiLang(lang);
+    if(typeof KR_LANG!=='undefined') KR_LANG=lang;
+    _clLang=lang; loadKrTitles();
+  }
+  if(document.getElementById('page-collection')?.classList.contains('active')) renderClassicShelves();
 }
 
 
