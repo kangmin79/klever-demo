@@ -4425,15 +4425,17 @@ function chalBookCard(b,c){
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
   if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
-  let out=chalHero(CHAL_PUB[0]);
+  // 히어로는 사서가 '이달의 챌린지'(featured)로 지정한 경우에만 노출. 자동 생성 안 함(=중복/자동 히어로 방지).
+  const heroC=CHAL_PUB.find(c=>c.featured)||null;
+  const listC=heroC?CHAL_PUB.filter(c=>c!==heroC):CHAL_PUB;   // 히어로로 뜬 챌린지는 아래 목록에서 제외(중복 방지)
+  let out=heroC?chalHero(heroC):'';
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
-    + CHAL_PUB.map((c,idx)=>{
+    + listC.map((c)=>{
         const books=(c.books||[]);
         const row=books.length
           ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
           : '';
-        // 상세내용: 첫 챌린지는 히어로 인용구에 이미 노출 → 두 번째 이후 행에만 표시
-        const desc=(idx>0&&c.intro)?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
+        const desc=c.intro?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
         return `<div class="cl-shelf">${chalRowHead(c)}${desc}${row}</div>`;
       }).join('')
     + `</div>`;
