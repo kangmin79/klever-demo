@@ -626,7 +626,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div class="navi" onclick="goArea(this,'우리도서관')"><span>우리 도서관</span></div>
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>세계 고전</span></div>
-    <div class="navi" onclick="goArea(this,'International')"><span>International</span></div>
+    <div class="navi" onclick="goArea(this,'고전 컬렉션 국내')"><span>한국 고전</span></div>
   </aside>
 
   <main class="main">
@@ -1538,7 +1538,7 @@ function secDrop(e,i){ e.preventDefault(); const from=_secDragFrom; const panel=
   if(target<0)target=0; if(target>SECTIONS.length)target=SECTIONS.length;
   SECTIONS.splice(target,0,moved); renderSettings(); }
 function secDragEnd(){ _secDragFrom=-1; document.querySelectorAll('.sec-panel.drag-over,.sec-panel.dragging').forEach(x=>{x.classList.remove('drag-over');x.classList.remove('dragging');}); }
-const AREA_LABELS={'우리도서관':'우리 도서관','고전 컬렉션':'고전 컬렉션','고전 컬렉션 해외':'고전 컬렉션 · 해외','고전 컬렉션 국내':'고전 컬렉션 · 국내','International':'International Students'};
+const AREA_LABELS={'우리도서관':'우리 도서관','고전 컬렉션':'고전 컬렉션','고전 컬렉션 해외':'세계 고전','고전 컬렉션 국내':'한국 고전','International':'International Students'};
 const AREA_HINTS={
   '우리도서관':'학생 앱 ‘우리 도서관’ 첫 화면 — 칸 추가·이름·순서·책 담기.',
   '고전 컬렉션 해외':'학생 앱 ‘고전 컬렉션 > 해외 고전’ 탭 큐레이션 — 해외 고전 선반을 직접 구성합니다.',
