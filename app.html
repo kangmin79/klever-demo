@@ -1876,7 +1876,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
 .reader-btn{padding:6px 10px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
 .reader-btn.bm-saved{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important;}
 body.dark .reader-btn.bm-saved{background:var(--gold)!important;color:#0f172a!important;}
-.reader-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(8px);z-index:130;background:rgba(20,24,40,.94);color:#fff;padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;}
+.reader-toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(8px);z-index:9999;background:rgba(20,24,40,.94);color:#fff;padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:700;box-shadow:0 12px 32px rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center;}
 .reader-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 /* 퀴즈 정답/오답 인라인 피드백 (alert 대체) */
 .quiz-fb{margin-top:8px;padding:9px 12px;border-radius:8px;font-size:12.5px;font-weight:700;line-height:1.5;animation:fbIn .25s ease;}
@@ -1946,6 +1946,24 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
 .viewer-prog-label{position:absolute;right:12px;bottom:10px;font-size:11px;font-weight:700;color:var(--text-light);background:color-mix(in srgb,var(--bg-input,#fff) 82%,transparent);padding:2px 8px;border-radius:999px;pointer-events:none;letter-spacing:.2px;transition:opacity .2s;z-index:3;}
 .viewer-prog-label:empty{display:none;}
 .viewer-shell.chrome-hidden .viewer-prog-label{opacity:0;}
+/* 문장 인용 카드 모달 */
+.qc-overlay{display:none;position:fixed;inset:0;z-index:6000;background:rgba(10,14,25,.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;}
+.qc-overlay.open{display:flex;}
+.qc-modal{background:var(--bg-card,#fff);color:var(--text,#1a1a1a);border-radius:18px;padding:18px;width:min(420px,94vw);max-height:94vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.4);}
+.qc-head{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:800;margin-bottom:12px;}
+.qc-head .qc-x{cursor:pointer;font-size:18px;color:var(--text-light);line-height:1;padding:2px 6px;}
+.qc-canvas-wrap{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.18);}
+#qcCanvas{width:100%;height:100%;display:block;}
+.qc-themes{display:flex;gap:9px;justify-content:center;margin:14px 0 6px;}
+.qc-theme{width:30px;height:30px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s;}
+.qc-theme:hover{transform:scale(1.1);}
+.qc-theme.on{border-color:var(--primary,#c9a227);box-shadow:0 0 0 2px var(--bg-card,#fff),0 0 0 4px var(--primary,#c9a227);}
+.qc-bi{display:flex;align-items:center;gap:7px;justify-content:center;font-size:12.5px;color:var(--text-sub);margin:8px 0 4px;cursor:pointer;user-select:none;}
+.qc-bi input{width:16px;height:16px;accent-color:var(--primary,#c9a227);cursor:pointer;}
+.qc-actions{display:flex;gap:10px;margin-top:14px;}
+.qc-btn{flex:1;padding:13px;border-radius:11px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);font-size:14px;font-weight:800;cursor:pointer;}
+.qc-btn.primary{background:var(--gold,#c9a227);color:#1a1208;border:none;}
+.qc-btn:active{transform:translateY(1px);}
 .viewer-progress-text{font-size:11px;color:var(--text-light);font-variant-numeric:tabular-nums;margin-left:8px;}
 
 /* 챌린지 모드 = 복사·드래그·우클릭 차단 */
@@ -2718,6 +2736,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       <button onclick="addHighlight()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>하이라이트</button>
       <button onclick="addNote()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>메모</button>
       <button onclick="lookupSelection()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>사전</button>
+      <button onclick="openQuoteCard()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.757-2-2-2H4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h4"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2-2-2h-4c-1.243 0-2 .75-2 2v6c0 1.25.757 2 2 2h4"/></svg>인용 카드</button>
     </div>
     <div class="dict-popup" id="dictPopup">
       <div class="dict-head">
@@ -2732,6 +2751,20 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
       <div class="viewer-actions" id="viewerActions">
         <button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 문장 인용 카드 (본문 선택 → 예쁜 이미지 카드로 공유/저장) -->
+<div class="qc-overlay" id="qcOverlay" onclick="if(event.target.id==='qcOverlay')closeQuoteCard()">
+  <div class="qc-modal">
+    <div class="qc-head"><span>문장 인용 카드</span><span class="qc-x" onclick="closeQuoteCard()">✕</span></div>
+    <div class="qc-canvas-wrap"><canvas id="qcCanvas" width="1080" height="1080"></canvas></div>
+    <div class="qc-themes" id="qcThemes"></div>
+    <label class="qc-bi" id="qcBiWrap"><input type="checkbox" id="qcBi" onchange="renderQuoteCard()"> 원문·번역 함께 담기</label>
+    <div class="qc-actions">
+      <button class="qc-btn primary" onclick="saveQuoteCard()">📥 이미지 저장</button>
+      <button class="qc-btn" id="qcShareBtn" onclick="shareQuoteCard()">↗ 공유</button>
     </div>
   </div>
 </div>
@@ -4269,6 +4302,131 @@ function renderDictBody(hit){
   `;
 }
 function closeDict(){ document.getElementById('dictPopup').classList.remove('open'); }
+
+/* ═══ 문장 인용 카드 (본문 선택 → canvas 이미지 카드로 공유·저장) ═══ */
+const QC_THEMES=[
+  {id:'night', label:'네이비',   bg:['#1a2544','#0e1730'], fg:'#f4f1e8', accent:'#e0b64a', rule:'rgba(224,182,74,.55)'},
+  {id:'cream', label:'크림',     bg:['#f7f1e1','#efe6cf'], fg:'#3a3222', accent:'#a9791f', rule:'rgba(169,121,31,.45)'},
+  {id:'forest',label:'포레스트', bg:['#12362c','#0b241d'], fg:'#eef3ec', accent:'#8fd0a7', rule:'rgba(143,208,167,.5)'},
+  {id:'ink',   label:'잉크',     bg:['#22242a','#111318'], fg:'#f2f2f2', accent:'#c9a227', rule:'rgba(201,162,39,.55)'},
+];
+let _qc={text:'', alt:'', theme:'night'};
+function _qcPair(){   // 선택이 문장정렬 span 안이면 반대 언어 짝을 반환(원문·번역 함께 담기용)
+  try{
+    const sel=window.getSelection();
+    const r=_lastSelectionRange || (sel&&sel.rangeCount?sel.getRangeAt(0):null); if(!r) return null;
+    let el=r.startContainer; el=el.nodeType===1?el:el.parentElement;
+    const span=el&&el.closest('span.psent'); if(!span) return null;
+    const grp=((typeof BODIES_SENT!=='undefined'&&BODIES_SENT[currentBook.id])||[])[+span.dataset.pi];
+    const g=grp&&grp[+span.dataset.sg]; if(!g) return null;
+    const inLeft=!!span.closest('.viewer-pane.left');
+    const self=((inLeft?g[0]:g[1])||'').trim(), alt=((inLeft?g[1]:g[0])||'').trim();
+    return self?{self,alt}:null;
+  }catch(e){ return null; }
+}
+function openQuoteCard(){
+  if(!currentBook) return;
+  const sel=window.getSelection();
+  let text=((_lastSelectionRange?_lastSelectionRange.toString():(sel?sel.toString():''))||'').trim();
+  const pair=_qcPair();
+  if(pair){ text=pair.self; _qc.alt=pair.alt; } else { _qc.alt=''; }
+  if(!text){ readerToast('먼저 카드로 담을 문장을 드래그해 주세요'); return; }
+  if(text.length>300) text=text.slice(0,300).replace(/\s+\S*$/,'')+'…';
+  _qc.text=text;
+  const hp=document.getElementById('hlPopup'); if(hp) hp.style.display='none';
+  document.getElementById('qcBiWrap').style.display=_qc.alt?'flex':'none';
+  document.getElementById('qcBi').checked=false;
+  document.getElementById('qcThemes').innerHTML=QC_THEMES.map(t=>
+    `<span class="qc-theme${t.id===_qc.theme?' on':''}" data-t="${t.id}" title="${t.label}" style="background:linear-gradient(135deg,${t.bg[0]},${t.bg[1]})" onclick="setQuoteTheme('${t.id}')"></span>`).join('');
+  document.getElementById('qcShareBtn').style.display=(navigator.canShare&&navigator.share)?'':'none';
+  document.getElementById('qcOverlay').classList.add('open');
+  renderQuoteCard();
+}
+function setQuoteTheme(id){ _qc.theme=id; document.querySelectorAll('.qc-theme').forEach(e=>e.classList.toggle('on',e.dataset.t===id)); renderQuoteCard(); }
+function closeQuoteCard(){ document.getElementById('qcOverlay').classList.remove('open'); }
+function _qcClip(s,n){ s=(s||'').trim(); return s.length>n?s.slice(0,n)+'…':s; }
+function _qcFilename(){ return '북스타_'+((_qcClip(currentBook.title,16)||'인용').replace(/[\\/:*?"<>|]/g,''))+'.png'; }
+function _qcWrap(ctx,text,maxW){   // 공백 기준 줄바꿈, 공백 없는 긴 토큰(한국어)은 글자단위로
+  const lines=[];
+  (text||'').split('\n').forEach(para=>{
+    let line=''; const push=()=>{ lines.push(line); line=''; };
+    para.split(/(\s+)/).forEach(tok=>{
+      if(tok==='') return;
+      if(ctx.measureText(tok).width>maxW){
+        for(const ch of tok){ if(line!==''&&ctx.measureText(line+ch).width>maxW) push(); line+=ch; }
+        return;
+      }
+      if(line.trim()!==''&&ctx.measureText(line+tok).width>maxW){ push(); if(/^\s+$/.test(tok)) return; }
+      line+=tok;
+    });
+    push();
+  });
+  return lines.map(l=>l.trim()).filter((l,i,a)=>l!==''||a.length===1);
+}
+function renderQuoteCard(){
+  const cv=document.getElementById('qcCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'); const W=cv.width, H=cv.height;
+  const t=QC_THEMES.find(x=>x.id===_qc.theme)||QC_THEMES[0];
+  const bi=document.getElementById('qcBi').checked && !!_qc.alt;
+  const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,t.bg[0]); grad.addColorStop(1,t.bg[1]);
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+  const PAD=96, cw=W-PAD*2;
+  ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+  // 여는 따옴표(배경 장식)
+  ctx.fillStyle=t.accent; ctx.globalAlpha=.30; ctx.font='700 230px Georgia,serif';
+  ctx.fillText('“', PAD-18, PAD+160); ctx.globalAlpha=1;
+  const serifFont=s=>`600 ${s}px "Noto Serif KR","Nanum Myeongjo",Georgia,serif`;
+  const primary=_qc.text, len=primary.length;
+  let fs=len<40?60:len<80?52:len<140?44:len<210?37:31;
+  const footerH=210, avail=H-PAD*2-footerH-40;
+  let pLines,aLines,afs,alh,lhF,totalH;
+  for(;;){
+    lhF=fs*1.5; afs=Math.max(20,Math.round(fs*0.62)); alh=afs*1.5;
+    ctx.font=serifFont(fs); pLines=_qcWrap(ctx,primary,cw);
+    aLines=[]; if(bi){ ctx.font=serifFont(afs); aLines=_qcWrap(ctx,_qc.alt,cw); }
+    totalH=pLines.length*lhF+(bi?(28+aLines.length*alh):0);
+    if(totalH<=avail||fs<=22) break;
+    fs-=3;
+  }
+  let y=PAD+150+Math.max(0,(avail-totalH)/2);
+  ctx.fillStyle=t.fg; ctx.font=serifFont(fs);
+  pLines.forEach(l=>{ ctx.fillText(l,PAD,y); y+=lhF; });
+  if(bi&&aLines.length){
+    y+=10; ctx.fillStyle=t.accent; ctx.globalAlpha=.92; ctx.font=serifFont(afs);
+    aLines.forEach(l=>{ ctx.fillText(l,PAD,y); y+=alh; }); ctx.globalAlpha=1;
+  }
+  // 출처 + 브랜딩
+  const by=H-PAD-92;
+  ctx.strokeStyle=t.rule; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(PAD,by-24); ctx.lineTo(PAD+92,by-24); ctx.stroke();
+  ctx.fillStyle=t.fg; ctx.font='700 34px "Noto Serif KR",Georgia,serif';
+  ctx.fillText('『'+_qcClip(currentBook.title,20)+'』', PAD, by+24);
+  if(currentBook.author){ ctx.fillStyle=t.accent; ctx.globalAlpha=.85; ctx.font='500 27px "Noto Sans KR",sans-serif';
+    ctx.fillText(_qcClip(currentBook.author,26), PAD, by+64); ctx.globalAlpha=1; }
+  ctx.textAlign='right'; ctx.fillStyle=t.accent; ctx.font='800 28px "Noto Sans KR",sans-serif';
+  ctx.fillText('북스타', W-PAD, by+24);
+  ctx.fillStyle=t.fg; ctx.globalAlpha=.55; ctx.font='500 22px "Noto Sans KR",sans-serif';
+  ctx.fillText('bookstar.co.kr', W-PAD, by+58); ctx.globalAlpha=1;
+  ctx.textAlign='left';
+}
+function saveQuoteCard(){
+  document.getElementById('qcCanvas').toBlob(b=>{
+    if(!b){ readerToast('이미지 생성에 실패했어요'); return; }
+    const url=URL.createObjectURL(b), a=document.createElement('a');
+    a.href=url; a.download=_qcFilename(); document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000); readerToast('이미지를 저장했어요');
+  },'image/png');
+}
+function shareQuoteCard(){
+  document.getElementById('qcCanvas').toBlob(async b=>{
+    if(!b){ readerToast('이미지 생성에 실패했어요'); return; }
+    const file=new File([b],_qcFilename(),{type:'image/png'});
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file], text:'『'+currentBook.title+'』 — 북스타'});
+      else saveQuoteCard();
+    }catch(e){}
+  },'image/png');
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElementById('qcOverlay')?.classList.contains('open')){ e.stopPropagation(); closeQuoteCard(); }},true);
 
 /* ═══════════════════════════════════════════════════════════
    네비게이션
