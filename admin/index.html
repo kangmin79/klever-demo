@@ -609,28 +609,24 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
 <div class="topbar">
   <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>Builder</small></div>
-  <div class="school">📚 한국대학교 도서관</div>
   <div class="spacer"></div>
-  <div class="who"><span class="av">한</span><span>한국대 사서</span>
+  <div class="who"><span class="av">한</span><span>한국대학교 관리자</span>
     <span class="lo" onclick="lgOut()">로그아웃</span></div>
 </div>
 
 <div class="shell">
   <aside class="side">
-    <div class="grp">측정·운영</div>
+    <div class="grp">Bookstar Insights</div>
     <div class="navi on" onclick="go(this,'dash')"><span>대시보드</span></div>
     <div class="navi" onclick="go(this,'stats')"><span>이용통계</span></div>
-    <div class="navi" onclick="go(this,'writings')"><span>학생 글</span></div>
-    <div class="navi" onclick="go(this,'history')"><span>히스토리 보기</span></div>
+    <div class="navi" onclick="go(this,'writings')"><span>피드관리</span></div>
+    <div class="navi" onclick="go(this,'history')"><span>운영이력</span></div>
 
-    <div class="grp builder">bookstar Builder<span class="sub">사서가 만드는 콘텐츠</span></div>
-    <div class="navi" onclick="goArea(this,'우리도서관')"><span>한국대학교 도서관</span></div>
+    <div style="height:20px"></div>
+    <div class="navi" onclick="goArea(this,'우리도서관')"><span>우리 도서관</span></div>
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
-    <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>고전 컬렉션 (해외)</span></div>
-    <div class="navi" onclick="goArea(this,'고전 컬렉션 국내')"><span>고전 컬렉션 (국내)</span></div>
-    <div class="navi" onclick="goArea(this,'International')"><span>International Students</span></div>
-    <div class="navi" onclick="go(this,'comm')"><span>커뮤니티</span></div>
-    <div class="navi" onclick="go(this,'notice')"><span>공지글 작성</span></div>
+    <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>세계 고전</span></div>
+    <div class="navi" onclick="goArea(this,'International')"><span>International</span></div>
   </aside>
 
   <main class="main">
