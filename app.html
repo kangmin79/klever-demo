@@ -1943,6 +1943,9 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
 /* 진행률 */
 .viewer-progress-wrap{position:relative;height:3px;background:var(--border);overflow:hidden;}
 .viewer-progress-bar{position:absolute;left:0;top:0;bottom:0;background:var(--primary);width:0%;transition:width 0.2s;}
+.viewer-prog-label{position:absolute;right:12px;bottom:10px;font-size:11px;font-weight:700;color:var(--text-light);background:color-mix(in srgb,var(--bg-input,#fff) 82%,transparent);padding:2px 8px;border-radius:999px;pointer-events:none;letter-spacing:.2px;transition:opacity .2s;z-index:3;}
+.viewer-prog-label:empty{display:none;}
+.viewer-shell.chrome-hidden .viewer-prog-label{opacity:0;}
 .viewer-progress-text{font-size:11px;color:var(--text-light);font-variant-numeric:tabular-nums;margin-left:8px;}
 
 /* 챌린지 모드 = 복사·드래그·우클릭 차단 */
@@ -2704,6 +2707,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
         <div class="paged-clip" id="pagedClip"><div class="viewer-pane paged-flow" id="pagedFlow"></div></div>
         <div class="paged-info" id="pagedInfo"></div>
       </div>
+      <div class="viewer-prog-label" id="viewerProgLabel"></div>
     </div>
     <div class="pane-tabs" id="paneTabs">
       <button class="pt-btn on" data-pane="main" onclick="switchMobilePane('main')" id="ptMain">본문</button>
@@ -3333,12 +3337,42 @@ function restoreScrollPos(){
   if(p && typeof p==='object') _applyAnchor(p);          // 신규: 앵커
   else { el.scrollTop = p || 0; updateProgress(); }       // 구버전 호환: px 숫자
 }
+// 남은 읽기시간 추정: 보이는 칸 총 글자수 / 읽기속도(한글 ~550자/분, 영문 ~1100자≈220wpm/분).
+// pane 요소별 캐시(WeakMap) — 재렌더로 pane 교체되면 자동 무효.
+const _readMinCache = new WeakMap();
+function _bookTotalMin(el){
+  if(!el) return 0;
+  let c=_readMinCache.get(el);
+  if(!c){
+    const ps=el.querySelectorAll('p'); let chars=0;
+    for(const p of ps) chars+=p.textContent.length;
+    const ko=/[가-힣]/.test(el.textContent.slice(0,400));
+    c={min: chars/(ko?550:1100)};
+    _readMinCache.set(el,c);
+  }
+  return c.min;
+}
+function _fmtReadMin(m){
+  if(m<1) return '곧 끝';
+  if(m<60) return '약 '+Math.round(m)+'분';
+  const h=Math.floor(m/60), mm=Math.round(m%60);
+  return '약 '+h+'시간'+(mm?' '+mm+'분':'');
+}
+function _setProgLabel(frac){
+  const lbl=document.getElementById('viewerProgLabel'); if(!lbl) return;
+  frac=Math.max(0,Math.min(1,frac||0));
+  const totMin=_bookTotalMin(_scrollEl());
+  const pct=Math.round(frac*100);
+  lbl.textContent = totMin>1 ? (pct+'% · 남은 '+_fmtReadMin(totMin*(1-frac))) : (pct+'%');
+}
 function updateProgress(){
   const el = _scrollEl();
   const bar = document.getElementById('viewerProg');
   if(!el || !bar) return;
   const max = el.scrollHeight - el.clientHeight;
-  bar.style.width = (max > 0 ? Math.min(100,(el.scrollTop/max)*100) : 0).toFixed(1) + '%';
+  const frac = max>0 ? el.scrollTop/max : 0;
+  bar.style.width = (Math.min(100, frac*100)).toFixed(1) + '%';
+  _setProgLabel(frac);
 }
 let _progRAF=0;
 function readerOnScroll(){
@@ -6132,10 +6166,10 @@ function updatePagedInfo(){
   const multi=_pg.chapters.length>1;
   if(info) info.textContent=(multi&&ch.title?ch.title+' · ':'')+(_pg.page+1)+' / '+_pg.count;
   const bar=document.getElementById('viewerProg');
-  if(bar){
-    const per=_pg.count?((_pg.page+1)/_pg.count):1;
-    bar.style.width=Math.min(100,((_pg.chIdx+per)/_pg.chapters.length)*100).toFixed(1)+'%';
-  }
+  const per=_pg.count?((_pg.page+1)/_pg.count):1;
+  const frac=(_pg.chIdx+per)/Math.max(1,_pg.chapters.length);
+  if(bar) bar.style.width=Math.min(100,frac*100).toFixed(1)+'%';
+  _setProgLabel(frac);
 }
 function pgSave(){
   if(!currentBook) return;
