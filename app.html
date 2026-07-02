@@ -7015,9 +7015,20 @@ function _scnSyncTo(sceneNo){
   }
   if(!marked) target.classList.add('scn-flash');   // 최후 폴백: 문단 강조
   _scnMarkP=target;
-  const doScroll=()=>{ const mk=target.querySelector('mark.bx-hl')||target.querySelector('span.psent.scn-hl')||target;
-    const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect(); left.scrollTop += (r1.top-r0.top)-100; };
-  doScroll(); requestAnimationFrame(doScroll);
+  // 대작 본문은 content-visibility 가상화로 화면 밖 문단 위치가 '추정치'라 1회 스크롤이 크게 빗나감
+  // (태양은다시떠오른다 문제2가 엉뚱한 페이지에 안착하던 버그). 대상 청크 강제 렌더 + 수렴할 때까지 반복 보정.
+  const ch=target.closest && target.closest('.cv-chunk'); if(ch) ch.style.contentVisibility='visible';
+  const syncedTarget=target; let tries=0;
+  const doScroll=()=>{
+    if(_scnMarkP!==syncedTarget){ if(ch) ch.style.contentVisibility=''; return; }   // 그새 다른 장면으로 이동
+    const mk=syncedTarget.querySelector('mark.bx-hl')||syncedTarget.querySelector('span.psent.scn-hl')||syncedTarget;
+    const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect();
+    const d=(r1.top-r0.top)-100;
+    left.scrollTop += d;
+    if(Math.abs(d)>2 && ++tries<12) requestAnimationFrame(doScroll);   // 렌더로 레이아웃이 밀리는 동안 재보정
+    else if(ch) ch.style.contentVisibility='';
+  };
+  doScroll();
 }
 function _scnSetupSync(retries){
   if(_scnIO){ _scnIO.disconnect(); _scnIO=null; }
