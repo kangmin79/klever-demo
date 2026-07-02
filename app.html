@@ -581,13 +581,17 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-tab.on{color:var(--text);}
 .cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
 .cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
-.cl-welcome{display:flex;align-items:center;gap:16px;background:linear-gradient(120deg,rgba(212,169,59,.16),rgba(212,169,59,.05));border:1px solid rgba(212,169,59,.32);border-radius:18px;padding:18px 22px;margin:18px 2px 6px;flex-wrap:wrap;}
-.cl-welcome .globe{width:50px;height:50px;border-radius:15px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:25px;flex:none;}
-.cl-welcome h3{font-size:19px;font-weight:900;margin-bottom:3px;color:var(--text);letter-spacing:-0.5px;}
+/* International 환영 배너: 위=소개(아이콘+문구), 구분선, 아래=언어 선택. 초광폭에서 좌우 배치의 죽은 중앙공간 제거 */
+.cl-welcome{display:flex;flex-direction:column;gap:15px;background:linear-gradient(120deg,rgba(212,169,59,.16),rgba(212,169,59,.05));border:1px solid rgba(212,169,59,.32);border-radius:18px;padding:20px 24px;margin:18px 2px 8px;}
+.cl-wel-lead{display:flex;align-items:center;gap:16px;}
+.cl-welcome .globe{width:48px;height:48px;border-radius:14px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex:none;}
+.cl-welcome h3{font-size:18.5px;font-weight:900;margin-bottom:3px;color:var(--text);letter-spacing:-0.5px;}
 .cl-welcome p{font-size:13px;color:var(--text-sub);line-height:1.6;}
 .cl-welcome p b{color:var(--gold);}
-.cl-langchips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
-@media(max-width:760px){.cl-langchips{margin-left:0;width:100%;}}
+/* 언어 선택 줄: 구분선 위, 캡션 + 칩을 한 줄 왼쪽 정렬 */
+.cl-langpick{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-top:14px;border-top:1px solid rgba(212,169,59,.28);}
+.cl-lang-cap{font-size:11.5px;font-weight:800;letter-spacing:.01em;color:var(--gold);opacity:.9;flex:none;}
+.cl-langchips{display:flex;gap:7px;flex-wrap:wrap;}
 .cl-lchip{background:var(--bg-card);border:1px solid var(--border);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--text-light);cursor:pointer;}
 .cl-lchip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);}
 .cl-card .cl-langbadge{position:absolute;top:8px;left:8px;z-index:2;background:rgba(20,16,12,.62);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;}
@@ -5645,13 +5649,20 @@ function renderClassicShelves(){
   } else {
     const allLbl = ({en:'All',zh:'全部',vi:'Tất cả',ja:'すべて'})[_clLang] || '전체';
     const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?allLbl:KR_LANG_NAMES[l]}</span>`).join('');
+    const capMap = {ko:'언어 선택',en:'Choose your language',zh:'选择语言',vi:'Chọn ngôn ngữ',ja:'言語を選ぶ'};
+    const cap = capMap[_clLang]||capMap.ko;
     headBody = `<div class="cl-welcome">
-        <div class="globe">🌐</div>
-        <div style="flex:1;min-width:200px;">
-          <h3>${(CL_WELCOME[_clLang]||CL_WELCOME.all).h}</h3>
-          <p>${(CL_WELCOME[_clLang]||CL_WELCOME.all).p}</p>
+        <div class="cl-wel-lead">
+          <div class="globe">🌐</div>
+          <div class="cl-wel-txt">
+            <h3>${(CL_WELCOME[_clLang]||CL_WELCOME.all).h}</h3>
+            <p>${(CL_WELCOME[_clLang]||CL_WELCOME.all).p}</p>
+          </div>
         </div>
-        <div class="cl-langchips">${chips}</div>
+        <div class="cl-langpick">
+          <div class="cl-lang-cap">${cap}</div>
+          <div class="cl-langchips">${chips}</div>
+        </div>
       </div>`;
   }
   // 탭(모바일만 노출) + (국내)배너/인트로 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래.
@@ -5956,7 +5967,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260702d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260702e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
