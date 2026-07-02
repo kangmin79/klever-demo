@@ -30,7 +30,7 @@ async function patch(brcd,summary){
   const r=await fetch(u,{method:'PATCH',headers:{...H,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({summary})});
   if(!r.ok)throw new Error('PATCH '+(await r.text()).slice(0,200));
 }
-async function aladin(isbn){try{const r=await fetch(`https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${TTB}&itemIdType=ISBN13&ItemId=${isbn}&output=js&Version=20131101`,{headers:{'User-Agent':UA}});let t=(await r.text()).trim().replace(/;$/,'');const j=JSON.parse(t);const it=(j.item||[])[0];return it?clean(it.description):'';}catch(e){return '';}}
+async function aladin(isbn){try{const _it=(String(isbn).replace(/[^0-9Xx]/g,'').length===10)?'ISBN':'ISBN13';const r=await fetch(`https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${TTB}&itemIdType=${_it}&ItemId=${isbn}&output=js&Version=20131101`,{headers:{'User-Agent':UA}});let t=(await r.text()).trim().replace(/;$/,'');const j=JSON.parse(t);const it=(j.item||[])[0];return it?clean(it.description):'';}catch(e){return '';}}
 async function nl(isbn){if(!AUTH)return '';try{const r=await fetch(`http://data4library.kr/api/srchDtlList?authKey=${AUTH}&isbn13=${isbn}&format=json&loaninfoYN=N`,{headers:{'User-Agent':UA}});if(!r.ok)return '';const j=JSON.parse(await r.text());const d=((j.response||{}).detail||[])[0];const book=d&&d.book;return book?clean(book.description||''):'';}catch(e){return '';}}
 (async()=>{
   const rows=await getEmpty();

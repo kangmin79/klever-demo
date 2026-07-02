@@ -42,8 +42,10 @@ def parse(h):
 def aladin_cover(isbn):
     if not isbn:
         return ""
-    url = ("https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=%s&itemIdType=ISBN13&ItemId=%s"
-           "&output=js&Version=20131101" % (AL, isbn))
+    # ISBN 길이에 맞춰 조회 — 10자리 책을 ISBN13 타입으로 조회하면 표지 누락(2026-07-02 수정)
+    itype = "ISBN" if len(re.sub(r"[^0-9Xx]", "", isbn)) == 10 else "ISBN13"
+    url = ("https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=%s&itemIdType=%s&ItemId=%s"
+           "&output=js&Version=20131101" % (AL, itype, isbn))
     try:
         d = json.loads(get(url))
         cov = (d.get("item") or [{}])[0].get("cover", "") or ""
