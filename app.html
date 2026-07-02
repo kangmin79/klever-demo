@@ -6893,11 +6893,16 @@ async function mpLoadQuiz(m){
   if(!qt||!lv){ box.innerHTML='<div class="mp-load">퀴즈 유형·난이도가 설정되지 않았어요.</div>'; return; }
   const n=10;   /* 퀴즈 문항 수 = 10개 고정 (유형/난이도별 10장면 전부) */
   let items=[];
+  _scnDbAnchors=null;   // 이전 책 앵커 잔존 방지
   try{
-    const url=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&level=eq.${encodeURIComponent(lv)}&order=scene_no&limit=${n}&select=id,scene_no,scene_title,question,opts,correct,expl`;
+    const url=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&level=eq.${encodeURIComponent(lv)}&order=scene_no&limit=${n}&select=id,scene_no,scene_title,question,opts,correct,expl,anchor`;
     const r=await fetch(url,{headers:BX_H}); if(r.ok) items=await r.json();
   }catch(e){}
   if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
+  // DB 앵커(장면별 본문 정확일치 문장) 수집 → 하드코딩 SCENE_ANCHORS 없는 책도 좌측 본문 점프+형광펜
+  { const arr=new Array(10).fill(''); let has=false;
+    items.forEach(it=>{ if(it.anchor&&it.scene_no>=1&&it.scene_no<=10){ arr[it.scene_no-1]=it.anchor; has=true; } });
+    if(has) _scnDbAnchors=arr; }
   _mpCtx.quizCount=items.length;
   box.innerHTML='';
   items.forEach((it,qi)=>{
@@ -6978,7 +6983,8 @@ const SCENE_ANCHORS = {
  ]
 };
 let _scnIO=null, _scnCur=-1, _scnMarkP=null;
-function _scnAnchors(){ return (currentBook && SCENE_ANCHORS[currentBook.id]) || null; }
+let _scnDbAnchors=null;   // DB(bookstar_quiz_items.anchor)에서 받은 장면 앵커 — 하드코딩 없는 신규 책용(143권 확장)
+function _scnAnchors(){ return (currentBook && SCENE_ANCHORS[currentBook.id]) || _scnDbAnchors; }
 function _scnClearMark(){
   if(!_scnMarkP) return;
   const p=_scnMarkP; _scnMarkP=null;
