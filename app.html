@@ -7113,6 +7113,9 @@ function _mpStepInit(box, items){
   // 왼쪽 pane을 '결정적 장면' 카드로 교체(본문 대신 인용구+배경설명)
   const left=document.querySelector('.viewer-pane.left');
   if(left) left.innerHTML='<div class="viewer-pane-label">결정적 장면</div><div id="mpSceneBox" class="mp-scene"></div>';
+  // 카드모드엔 본문 장(章)이 안 보이므로 바닥의 장 이동(◀이전/다음▶) 버튼 제거 — 미션 닫기만 남김
+  const acts=document.getElementById('viewerActions');
+  if(acts) acts.innerHTML=`<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`;
   const nav=document.createElement('div'); nav.className='mp-step-nav'; nav.id='mpStepNav';
   nav.innerHTML=`<button class="mp-step-btn" id="mpStepPrev" onclick="mpStepGo(-1)">◀ 이전</button>`
     +`<span class="mp-step-count"><b id="mpStepCur">1</b> / ${items.length}</span>`
