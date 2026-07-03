@@ -2518,7 +2518,7 @@ function renderChallenges(){
     }).join('');
     const quizCfg=(isClassic&&m.quiz)?`<div style="margin:6px 0 2px">
       <div class="row2">
-        <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${m.quizType&&!CH_QTYPES.includes(m.quizType)?`<option selected>${m.quizType}</option>`:''}${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${m.quizType&&!CH_QTYPES.includes(m.quizType)?`<option value="${m.quizType}" selected>${m.quizType} (구버전)</option>`:''}${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
         <div><div class="flabel" style="font-weight:500">권당 문항 수</div><div class="qn" style="margin-top:2px"><span class="on">10문제 고정</span></div></div>
       </div></div>`:'';
     return `<div class="panel" style="margin-bottom:12px">
