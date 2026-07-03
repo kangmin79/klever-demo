@@ -2317,6 +2317,15 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-prog-top .mp-prog-full{color:var(--gold)}
 .mp-prog-bar{height:9px;border-radius:6px;background:var(--bg-input);overflow:hidden}
 .mp-prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .35s ease}
+/* 한 문제씩 넘기기(프로토타입: 개츠비) — 문제↔장면 1:1 */
+.mp-step-on .mp-q{border-top:none;padding-top:2px}
+.mp-step-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:13px;border-top:1px solid var(--border)}
+.mp-step-count{font-size:13px;font-weight:800;color:var(--text-sub)}
+.mp-step-count b{color:var(--accent);font-size:15px}
+.mp-step-btn{border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13px;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer;transition:.12s}
+.mp-step-btn:hover:not(:disabled){border-color:var(--accent)}
+.mp-step-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.mp-step-btn:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body>
@@ -6904,7 +6913,7 @@ async function mpLoadQuiz(m){
     items.forEach(it=>{ if(it.anchor&&it.scene_no>=1&&it.scene_no<=10){ arr[it.scene_no-1]=it.anchor; has=true; } });
     if(has) _scnDbAnchors=arr; }
   _mpCtx.quizCount=items.length;
-  box.innerHTML='';
+  box.innerHTML=''; box.classList.remove('mp-step-on');
   items.forEach((it,qi)=>{
     const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
     const q=document.createElement('div'); q.className='mp-q';
@@ -6917,7 +6926,8 @@ async function mpLoadQuiz(m){
     if(prev){ mpRevealQuiz(q, it, it.correct, !!prev.ok, true, prev.pick); }
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
-  _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
+  if(_mpStepMode()) _mpStepInit(box, items);   // 한 문제씩 넘기기(프로토타입: 개츠비)
+  else _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
 }
 /* ═══ DB 퀴즈 ↔ 왼쪽 본문 동기화 — 장면별 자동 점프·형광펜 (앵커: 본문 정확 일치 문장) ═══ */
 const SCENE_ANCHORS = {
@@ -7051,6 +7061,38 @@ function _scnSetupSync(retries){
   }, {root:right, rootMargin:'0px 0px -55% 0px', threshold:0});   // 오른쪽 칸 상단 45%에 걸린 문항=활성
   qs.forEach(q=>_scnIO.observe(q));
 }
+/* ═══ 한 문제씩 넘기기 (프로토타입: 개츠비 gb-64317) — 스크롤 대신 문제→장면 1:1 ═══ */
+let _mpStep=null;
+function _mpStepMode(){ return !!(currentBook && currentBook.id==='gb-64317'); }
+function _mpStepInit(box, items){
+  if(_scnIO){ _scnIO.disconnect(); _scnIO=null; }   // 스크롤 감시 끔(이 모드는 수동 이동)
+  _scnCur=-1; _scnMarkP=null;
+  box.classList.add('mp-step-on');
+  _mpStep={idx:0, n:items.length};
+  const nav=document.createElement('div'); nav.className='mp-step-nav'; nav.id='mpStepNav';
+  nav.innerHTML=`<button class="mp-step-btn" id="mpStepPrev" onclick="mpStepGo(-1)">◀ 이전</button>`
+    +`<span class="mp-step-count"><b id="mpStepCur">1</b> / ${items.length}</span>`
+    +`<button class="mp-step-btn primary" id="mpStepNext" onclick="mpStepGo(1)">다음 ▶</button>`;
+  box.appendChild(nav);
+  _mpStepShow(0, 0);
+}
+function _mpStepShow(i, retry){
+  if(!_mpStep) return;
+  const box=document.getElementById('mpQuizBox'); if(!box) return;
+  const qs=box.querySelectorAll('.mp-q'); if(!qs.length) return;
+  i=Math.max(0, Math.min(qs.length-1, i)); _mpStep.idx=i;
+  qs.forEach((q,qi)=>{ q.style.display=(qi===i)?'':'none'; });
+  const cur=document.getElementById('mpStepCur'); if(cur) cur.textContent=i+1;
+  const prev=document.getElementById('mpStepPrev'); if(prev) prev.disabled=(i===0);
+  const next=document.getElementById('mpStepNext');
+  if(next){ const last=(i>=qs.length-1); next.disabled=last; next.textContent=last?'마지막 문제':'다음 ▶'; }
+  const right=document.querySelector('.viewer-pane.right'); if(right) right.scrollTop=0;
+  // 왼쪽 본문 동기화 — 본문 로딩 전이면 잠시 후 재시도(고전 지연 로드 대비)
+  const left=document.querySelector('.viewer-pane.left');
+  if(left && !left.querySelector('p') && (retry||0)<6){ setTimeout(()=>_mpStepShow(i,(retry||0)+1), 400); return; }
+  _scnSyncTo(+qs[i].dataset.scene||1);
+}
+function mpStepGo(dir){ if(_mpStep) _mpStepShow(_mpStep.idx+dir, 0); }
 async function mpAnswer(el,q,it){
   if(!_mpCtx) return;
   q.querySelectorAll('.mp-opt').forEach(x=>x.classList.add('mp-lock'));
