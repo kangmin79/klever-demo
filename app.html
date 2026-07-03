@@ -2332,6 +2332,7 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-scene-desc{font-family:'Noto Sans KR','Malgun Gothic',system-ui,sans-serif}
 .mp-scene-desc-h{font-size:14px;font-weight:800;color:var(--accent);margin-bottom:13px;letter-spacing:.3px}
 .mp-scene-desc p{font-size:15.5px;line-height:2.05;color:var(--text);opacity:.86;margin:0;text-align:left}
+.mp-scene-img{width:100%;max-width:520px;border-radius:14px;margin:0 0 26px;display:block}
 body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 </style>
 </head>
@@ -6935,7 +6936,8 @@ async function mpLoadQuiz(m){
     if(prev){ mpRevealQuiz(q, it, it.correct, !!prev.ok, true, prev.pick); }
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
-  if(_mpStepMode()) _mpStepInit(box, items);   // 한 문제씩 넘기기(프로토타입: 개츠비)
+  await _mpFetchScenes();   // DB 장면카드(핵심문장+배경설명) 로드 → 있으면 카드모드
+  if(_mpStepMode()) _mpStepInit(box, items);   // 카드모드: 왼쪽=인용구+배경설명
   else _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
 }
 /* ═══ DB 퀴즈 ↔ 왼쪽 본문 동기화 — 장면별 자동 점프·형광펜 (앵커: 본문 정확 일치 문장) ═══ */
@@ -7085,9 +7087,19 @@ function _scnSetupSync(retries){
   }, {root:right, rootMargin:'0px 0px -55% 0px', threshold:0});   // 오른쪽 칸 상단 45%에 걸린 문항=활성
   qs.forEach(q=>_scnIO.observe(q));
 }
-/* ═══ 한 문제씩 넘기기 (프로토타입: 개츠비 gb-64317) — 스크롤 대신 문제→장면 1:1 ═══ */
-let _mpStep=null;
-function _mpStepMode(){ return !!(currentBook && currentBook.id==='gb-64317'); }
+/* ═══ 한 문제씩 넘기기(카드모드) — 왼쪽=인용구+배경설명, DB 장면카드 있는 책 자동 적용 ═══ */
+let _mpStep=null, _mpScenes=null;
+async function _mpFetchScenes(){
+  _mpScenes=null;
+  if(!currentBook) return;
+  try{
+    const r=await fetch(`${SB_REST}/bookstar_quiz_scenes?book_id=eq.${encodeURIComponent(currentBook.id)}&order=scene_no&select=scene_no,title,core_sentence,source,scene_desc,image_url`,{headers:BX_H});
+    if(r.ok){ const rows=await r.json();
+      if(Array.isArray(rows)&&rows.length){ _mpScenes={}; rows.forEach(x=>{ _mpScenes[x.scene_no]={core:x.core_sentence,desc:x.scene_desc,title:x.title,source:x.source,image:x.image_url||''}; }); }
+    }
+  }catch(e){}
+}
+function _mpStepMode(){ return !!(_mpScenes && Object.keys(_mpScenes).length); }
 function _mpStepInit(box, items){
   if(_scnIO){ _scnIO.disconnect(); _scnIO=null; }   // 스크롤 감시 끔(이 모드는 수동 이동)
   _scnCur=-1; _scnMarkP=null;
@@ -7118,10 +7130,14 @@ function _mpStepShow(i){
 }
 function _mpRenderScene(sn){
   const box=document.getElementById('mpSceneBox'); if(!box) return;
-  const anchors=(currentBook && SCENE_ANCHORS[currentBook.id])||[];
+  const sc=(_mpScenes&&_mpScenes[sn])||null;
+  const anchors=(currentBook && SCENE_ANCHORS[currentBook.id])||[];   // DB 실패 시 폴백(기존 하드코딩)
   const descs=(currentBook && SCENE_DESC[currentBook.id])||[];
-  const quote=anchors[sn-1]||''; const desc=descs[sn-1]||'';
+  const quote=(sc&&sc.core)||anchors[sn-1]||'';
+  const desc=(sc&&sc.desc)||descs[sn-1]||'';
+  const img=(sc&&sc.image)||'';
   box.innerHTML=(quote?`<div class="mp-scene-quote">“${esc(quote)}”</div>`:'')
+    +(img?`<img class="mp-scene-img" src="${esc(img)}" alt="">`:'')
     +(desc?`<div class="mp-scene-desc"><div class="mp-scene-desc-h">배경 설명</div><p>${esc(desc)}</p></div>`:'');
   const left=document.querySelector('.viewer-pane.left'); if(left) left.scrollTop=0;
 }
