@@ -6913,7 +6913,7 @@ async function mpLoadQuiz(m){
     items.forEach(it=>{ if(it.anchor&&it.scene_no>=1&&it.scene_no<=10){ arr[it.scene_no-1]=it.anchor; has=true; } });
     if(has) _scnDbAnchors=arr; }
   _mpCtx.quizCount=items.length;
-  box.innerHTML=''; box.classList.remove('mp-step-on');
+  box.innerHTML=''; box.classList.remove('mp-step-on'); _mpStep=null;
   items.forEach((it,qi)=>{
     const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
     const q=document.createElement('div'); q.className='mp-q';
@@ -7033,7 +7033,8 @@ function _scnSyncTo(sceneNo){
     if(_scnMarkP!==syncedTarget){ if(ch) ch.style.contentVisibility=''; return; }   // 그새 다른 장면으로 이동
     const mk=syncedTarget.querySelector('mark.bx-hl')||syncedTarget.querySelector('span.psent.scn-hl')||syncedTarget;
     const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect();
-    const d=(r1.top-r0.top)-100;
+    // step 모드(개츠비): 형광펜 문장을 세로 중앙에 / 스크롤 모드: 상단 100px
+    const d=(r1.top-r0.top) - (_mpStepMode() ? Math.max(60,(r0.height-r1.height)/2) : 100);
     left.scrollTop += d;
     if(Math.abs(d)>2 && ++tries<12) requestAnimationFrame(doScroll);   // 렌더로 레이아웃이 밀리는 동안 재보정
     else if(ch) ch.style.contentVisibility='';
