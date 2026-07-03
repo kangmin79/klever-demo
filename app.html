@@ -3412,6 +3412,7 @@ function _fmtReadMin(m){
 }
 function _setProgLabel(frac){
   const lbl=document.getElementById('viewerProgLabel'); if(!lbl) return;
+  if(currentMode==='challenge'){ lbl.textContent=''; return; }   // 챌린지 화면: 남은시간 미표시(미션 진행바로 충분)
   frac=Math.max(0,Math.min(1,frac||0));
   const totMin=_bookTotalMin(_scrollEl());
   const pct=Math.round(frac*100);
