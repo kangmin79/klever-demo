@@ -2464,7 +2464,8 @@ function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(essay/
   _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
   return o;
 }
-const CH_MAX=3, CH_QTYPES=['고전 이해','작가 의도','인문학','나의 삶','사회(관계)'];
+/* Ver10 2종 체제(2026-07-04): ①작품 이해 ②인문 성찰, 난이도 없음. 옛 5종 값은 발행된 챌린지에만 잔존(수정 시 보존) */
+const CH_MAX=3, CH_QTYPES=['작품 이해','인문 성찰'];
 function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
   const m=c.mission||{};
   const o={reward:m.reward||(c.type==='고전챌린지'?'rank':'draw'),
@@ -2517,11 +2518,9 @@ function renderChallenges(){
     }).join('');
     const quizCfg=(isClassic&&m.quiz)?`<div style="margin:6px 0 2px">
       <div class="row2">
-        <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
-        <div><div class="flabel" style="font-weight:500">난이도</div><select class="cur-inp" id="ch_ql_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${['상','중','하'].map(l=>`<option ${m.quizLevel===l?'selected':''}>${l}</option>`).join('')}</select></div>
-      </div>
-      <div class="flabel" style="font-weight:500;margin-top:8px">권당 문항 수</div>
-      <div class="qn"><span class="on">10문제 고정</span></div></div>`:'';
+        <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${m.quizType&&!CH_QTYPES.includes(m.quizType)?`<option selected>${m.quizType}</option>`:''}${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div><div class="flabel" style="font-weight:500">권당 문항 수</div><div class="qn" style="margin-top:2px"><span class="on">10문제 고정</span></div></div>
+      </div></div>`:'';
     return `<div class="panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span>
@@ -2570,7 +2569,7 @@ async function saveChallenges(){
     if(!c.title||!c.title.trim()){toast('제목이 빈 챌린지가 있어요');return;}
     if(!c.books||!c.books.length){toast(`‘${c.title}’에 책을 1권 이상 담아주세요`);return;}
     if(chalMissCount(c)===0){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
-    if(c.type==='고전챌린지'&&c.mission.quiz&&(!c.mission.quizType||!c.mission.quizLevel)){toast(`‘${c.title}’의 퀴즈 유형·난이도를 선택해주세요`);return;}
+    if(c.type==='고전챌린지'&&c.mission.quiz&&!c.mission.quizType){toast(`‘${c.title}’의 퀴즈 유형을 선택해주세요`);return;}
   }
   try{
     if(CHALLENGES.length){

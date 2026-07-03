@@ -4561,7 +4561,8 @@ const CH_MISSIONS=[
   {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,   ph:'책에 대해 떠오른 질문을 적어 보세요.'},
   {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:100, ph:'책에 대한 평을 100자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
 ];
-const CH_QMAP={'고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
+/* Ver10 2종 체제(2026-07-04) + 레거시 5종 명칭(옛 발행 챌린지 호환) */
+const CH_QMAP={'작품 이해':'01','인문 성찰':'02','고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
 const CH_SCHOOL='hankuk';
 // 미션 객체 정규화(구버전 review→oneline / question 호환, 고전챌린지 quiz 강제)
 function appChalMission(c){
@@ -6909,14 +6910,18 @@ function _mpShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.r
 async function mpLoadQuiz(m){
   const box=document.getElementById('mpQuizBox'); if(!box) return;
   const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
-  if(!qt||!lv){ box.innerHTML='<div class="mp-load">퀴즈 유형·난이도가 설정되지 않았어요.</div>'; return; }
-  const n=10;   /* 퀴즈 문항 수 = 10개 고정 (유형/난이도별 10장면 전부) */
+  if(!qt){ box.innerHTML='<div class="mp-load">퀴즈 유형이 설정되지 않았어요.</div>'; return; }
+  const n=10;   /* 퀴즈 문항 수 = 10개 고정 (유형별 10장면 전부) */
   let items=[];
   _scnDbAnchors=null;   // 이전 책 앵커 잔존 방지
   try{
-    const url=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&level=eq.${encodeURIComponent(lv)}&order=scene_no&limit=${n}&select=id,scene_no,scene_title,question,opts,correct,expl,anchor`;
-    const r=await fetch(url,{headers:BX_H}); if(r.ok) items=await r.json();
+    /* 2종 체제: 난이도 없는 챌린지는 q_type만으로 로드. 난이도 있는 옛 챌린지는 level 필터 →
+       0건이면(책이 2종 신규 데이터) level 없이 재조회. 장면당 1문항만 남겨 어떤 조합에서도 10문항 보장 */
+    const base=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&order=scene_no&limit=40&select=id,scene_no,scene_title,question,opts,correct,expl,anchor`;
+    if(lv){ const r=await fetch(`${base}&level=eq.${encodeURIComponent(lv)}`,{headers:BX_H}); if(r.ok) items=await r.json(); }
+    if(!Array.isArray(items)||!items.length){ const r2=await fetch(base,{headers:BX_H}); if(r2.ok) items=await r2.json(); }
   }catch(e){}
+  if(Array.isArray(items)&&items.length){ const seen=new Set(); items=items.filter(it=>{ if(seen.has(it.scene_no))return false; seen.add(it.scene_no); return true; }).slice(0,n); }
   if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
   // DB 앵커(장면별 본문 정확일치 문장) 수집 → 하드코딩 SCENE_ANCHORS 없는 책도 좌측 본문 점프+형광펜
   { const arr=new Array(10).fill(''); let has=false;
