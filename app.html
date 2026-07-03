@@ -2326,6 +2326,13 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-step-btn:hover:not(:disabled){border-color:var(--accent)}
 .mp-step-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .mp-step-btn:disabled{opacity:.4;cursor:default}
+/* 결정적 장면 카드(왼쪽) — 인용구 + 배경 설명 */
+#mpSceneBox{max-width:660px}
+.mp-scene-quote{font-size:19px;font-weight:700;line-height:1.65;color:var(--text);border:1.5px solid var(--border);border-radius:16px;padding:26px 28px;margin-bottom:28px}
+.mp-scene-desc{font-family:'Noto Sans KR','Malgun Gothic',system-ui,sans-serif}
+.mp-scene-desc-h{font-size:14px;font-weight:800;color:var(--accent);margin-bottom:11px}
+.mp-scene-desc p{font-size:15px;line-height:1.85;color:var(--text-sub);margin:0;text-align:left}
+body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 </style>
 </head>
 <body>
@@ -6992,6 +6999,21 @@ const SCENE_ANCHORS = {
   "그러나 소용없는 일이었다. 아무도 오지 않았다"
  ]
 };
+/* 결정적 장면 배경 설명 — 카드 모드(한 문제씩 넘기기) 왼쪽용. 맥락은 주되 정답은 흘리지 않게 작성 */
+const SCENE_DESC = {
+ "gb-64317": [
+  "닉이 개츠비를 처음 목격하는 밤, 그는 만(灣) 건너편에서 반짝이는 작은 초록 불빛을 향해 홀로 팔을 뻗는다. 이 불빛은 개츠비가 오랫동안 품어 온 대상과 미래에 대한 갈망을 응축한 상징으로, 소설 전체를 관통하는 ‘손에 닿지 않는 꿈’의 이미지가 여기서 처음 등장한다.",
+  "웨스트에그에서 뉴욕으로 가는 길목에는 잿빛 먼지가 쌓인 황량한 산업 지대가 펼쳐진다. 화려한 부자들의 세계와 극명하게 대비되는 이 공간에서는 낡은 광고판 위 거대한 두 눈이 모든 것을 말없이 내려다본다. 부의 뒷면에 버려진 사람들과 도덕적 공허를 상징하는 무대다.",
+  "개츠비의 대저택에서는 여름밤마다 초대장 없이도 수백 명이 몰려드는 성대한 잔치가 열린다. 사람들은 개츠비가 누구인지, 어떻게 그런 부를 쌓았는지 온갖 소문을 주고받으면서도 정작 주인에게는 별 관심이 없다. 눈부신 화려함 뒤의 공허와 정체 모를 주인공의 미스터리가 함께 드러난다.",
+  "닉의 조용한 주선으로 개츠비는 오랜 세월이 흐른 뒤 데이지와 다시 마주 앉는다. 처음에는 숨 막히는 어색함과 긴장된 침묵이 흐르지만, 곧 억눌러 온 감정이 되살아난다. 개츠비가 그토록 많은 것을 쌓아 올린 진짜 이유가 이 재회에서 서서히 모습을 드러낸다.",
+  "개츠비의 화려한 이름과 신분은 사실 그가 스스로 지어낸 것이다. 가난한 집안에서 태어난 한 청년이 자신의 초라한 과거를 지우고 완전히 새로운 인물로 다시 태어났다. ‘무일푼에서 자수성가’라는 미국식 꿈의 눈부신 빛과 그 이면의 그림자를 동시에 보여주는 대목이다.",
+  "무더운 여름날 뉴욕의 한 호텔 방, 겉으로 억눌려 있던 인물들의 긴장이 마침내 폭발한다. 한 인물이 개츠비의 부가 어디서 왔는지, 그 뒷세계를 들춰내며 그를 몰아세운다. 개츠비가 공들여 쌓아 온 이미지에 균열이 생기는 결정적 대치 장면이다.",
+  "뉴욕에서 돌아오는 밤, 잿빛 골짜기에서 한 여자가 어둠 속으로 달려 나오다 자동차에 치이는 비극이 벌어진다. 그 순간 누가 운전대를 잡고 있었는지, 그리고 누가 그 책임을 대신 떠안게 되는지가 이후의 이야기를 파국으로 몰아간다. 우연한 사고 하나가 인물들의 운명을 송두리째 뒤바꾼다.",
+  "사고가 있던 밤, 개츠비는 데이지의 집 밖 어둠 속에서 홀로 서서 밤을 지새운다. 그는 여전히 그녀를 지키려 하지만, 환하게 불 밝힌 집 안의 두 사람은 이미 그와는 다른 쪽을 향해 가고 있다. 개츠비의 헌신이 얼마나 일방적인 것이었는지 서늘하게 드러나는 장면이다.",
+  "오랫동안 물 한 번 대지 않던 수영장으로 개츠비가 향한다. 그는 끝내 오지 않을 전화를 기다리며 여름의 끝자락을 맞이한다. 그토록 화려했던 삶이 가장 조용하고 쓸쓸한 방식으로 매듭지어지는 순간이다.",
+  "살아 있을 때 그의 파티에 구름처럼 몰려들던 수백 명 가운데, 마지막 자리에 나타난 사람은 거의 없었다. 텅 빈 그 자리는 개츠비를 둘러쌌던 눈부신 화려함이 얼마나 허망한 것이었는지를 말없이 증언한다. 소설은 이 공허를 통해 한 시대의 꿈과 그 배신을 응축해 보여준다."
+ ]
+};
 let _scnIO=null, _scnCur=-1, _scnMarkP=null;
 let _scnDbAnchors=null;   // DB(bookstar_quiz_items.anchor)에서 받은 장면 앵커 — 하드코딩 없는 신규 책용(143권 확장)
 function _scnAnchors(){ return (currentBook && SCENE_ANCHORS[currentBook.id]) || _scnDbAnchors; }
@@ -7033,8 +7055,7 @@ function _scnSyncTo(sceneNo){
     if(_scnMarkP!==syncedTarget){ if(ch) ch.style.contentVisibility=''; return; }   // 그새 다른 장면으로 이동
     const mk=syncedTarget.querySelector('mark.bx-hl')||syncedTarget.querySelector('span.psent.scn-hl')||syncedTarget;
     const r1=mk.getBoundingClientRect(), r0=left.getBoundingClientRect();
-    // step 모드(개츠비): 형광펜 문장을 세로 중앙에 / 스크롤 모드: 상단 100px
-    const d=(r1.top-r0.top) - (_mpStepMode() ? Math.max(60,(r0.height-r1.height)/2) : 100);
+    const d=(r1.top-r0.top)-100;
     left.scrollTop += d;
     if(Math.abs(d)>2 && ++tries<12) requestAnimationFrame(doScroll);   // 렌더로 레이아웃이 밀리는 동안 재보정
     else if(ch) ch.style.contentVisibility='';
@@ -7070,14 +7091,17 @@ function _mpStepInit(box, items){
   _scnCur=-1; _scnMarkP=null;
   box.classList.add('mp-step-on');
   _mpStep={idx:0, n:items.length};
+  // 왼쪽 pane을 '결정적 장면' 카드로 교체(본문 대신 인용구+배경설명)
+  const left=document.querySelector('.viewer-pane.left');
+  if(left) left.innerHTML='<div class="viewer-pane-label">결정적 장면</div><div id="mpSceneBox" class="mp-scene"></div>';
   const nav=document.createElement('div'); nav.className='mp-step-nav'; nav.id='mpStepNav';
   nav.innerHTML=`<button class="mp-step-btn" id="mpStepPrev" onclick="mpStepGo(-1)">◀ 이전</button>`
     +`<span class="mp-step-count"><b id="mpStepCur">1</b> / ${items.length}</span>`
     +`<button class="mp-step-btn primary" id="mpStepNext" onclick="mpStepGo(1)">다음 ▶</button>`;
   box.appendChild(nav);
-  _mpStepShow(0, 0);
+  _mpStepShow(0);
 }
-function _mpStepShow(i, retry){
+function _mpStepShow(i){
   if(!_mpStep) return;
   const box=document.getElementById('mpQuizBox'); if(!box) return;
   const qs=box.querySelectorAll('.mp-q'); if(!qs.length) return;
@@ -7088,12 +7112,18 @@ function _mpStepShow(i, retry){
   const next=document.getElementById('mpStepNext');
   if(next){ const last=(i>=qs.length-1); next.disabled=last; next.textContent=last?'마지막 문제':'다음 ▶'; }
   const right=document.querySelector('.viewer-pane.right'); if(right) right.scrollTop=0;
-  // 왼쪽 본문 동기화 — 본문 로딩 전이면 잠시 후 재시도(고전 지연 로드 대비)
-  const left=document.querySelector('.viewer-pane.left');
-  if(left && !left.querySelector('p') && (retry||0)<6){ setTimeout(()=>_mpStepShow(i,(retry||0)+1), 400); return; }
-  _scnSyncTo(+qs[i].dataset.scene||1);
+  _mpRenderScene(+qs[i].dataset.scene||1);   // 왼쪽 장면 카드 갱신
 }
-function mpStepGo(dir){ if(_mpStep) _mpStepShow(_mpStep.idx+dir, 0); }
+function _mpRenderScene(sn){
+  const box=document.getElementById('mpSceneBox'); if(!box) return;
+  const anchors=(currentBook && SCENE_ANCHORS[currentBook.id])||[];
+  const descs=(currentBook && SCENE_DESC[currentBook.id])||[];
+  const quote=anchors[sn-1]||''; const desc=descs[sn-1]||'';
+  box.innerHTML=(quote?`<div class="mp-scene-quote">“${esc(quote)}”</div>`:'')
+    +(desc?`<div class="mp-scene-desc"><div class="mp-scene-desc-h">배경 설명</div><p>${esc(desc)}</p></div>`:'');
+  const left=document.querySelector('.viewer-pane.left'); if(left) left.scrollTop=0;
+}
+function mpStepGo(dir){ if(_mpStep) _mpStepShow(_mpStep.idx+dir); }
 async function mpAnswer(el,q,it){
   if(!_mpCtx) return;
   q.querySelectorAll('.mp-opt').forEach(x=>x.classList.add('mp-lock'));
