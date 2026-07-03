@@ -6754,6 +6754,7 @@ function renderViewer(){
     const _mockOrigin = (typeof BOOK_CONTENT!=='undefined' && BOOK_CONTENT[currentBook.id] && BOOK_CONTENT[currentBook.id].origin);
     if(_S && !_mockOrigin && _S.length <= 4500) body.classList.add('sent-novirt'); }
 
+  if(currentMode==='challenge'){ const _pl=document.getElementById('viewerProgLabel'); if(_pl) _pl.textContent=''; }   // 챌린지: 남은시간 라벨 강제 비움(스크롤 없어 _setProgLabel 미호출 대비)
   if(currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[currentBook.id]){
     renderSceneChallenge(CHALLENGE_SCENES[currentBook.id], body, info);
   } else if(currentMode === 'challenge'){
