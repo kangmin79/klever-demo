@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>우리 도서관 — 별마당 콘셉트 미리보기</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --sky-a:#070b1e; --sky-b:#141d3d; --sky-c:#1f2b52;
+  --gold:#f0c060; --gold-soft:rgba(240,192,96,.55);
+  --wood:#6b4423; --wood-hi:#9c6a38;
+  --ink:#f6f1e6; --ink-sub:rgba(246,241,230,.72);
+  --card:#101830; --border:rgba(240,192,96,.18);
+  --shelf-glow:rgba(255,200,110,.28);
+}
+body.day{
+  --sky-a:#dfe7f2; --sky-b:#eef3f9; --sky-c:#f8f5ee;
+  --gold:#b8860b; --gold-soft:rgba(184,134,11,.4);
+  --wood:#a97b48; --wood-hi:#c99b64;
+  --ink:#1a2340; --ink-sub:rgba(26,35,64,.68);
+  --card:#ffffff; --border:rgba(26,35,64,.12);
+  --shelf-glow:rgba(255,220,150,.5);
+}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--sky-b);color:var(--ink);overflow-x:hidden;transition:background .5s;}
+
+/* ── 상단 미리보기 바 ── */
+.pvbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(10,14,32,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+body.day .pvbar{background:rgba(255,255,255,.78);}
+.pvbar b{font-size:13px;letter-spacing:-.3px;}
+.pvbar b span{color:var(--gold);}
+.pvbar small{font-size:11px;color:var(--ink-sub);margin-left:8px;}
+.mode-tg{display:flex;gap:4px;background:rgba(128,128,128,.15);border-radius:999px;padding:3px;}
+.mode-tg button{border:none;background:transparent;color:var(--ink-sub);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;font-family:inherit;transition:.2s;}
+.mode-tg button.on{background:var(--gold);color:#141d3d;}
+
+/* ── 히어로: 별마당 아트리움 ── */
+.atrium{position:relative;height:100vh;min-height:640px;overflow:hidden;background:linear-gradient(180deg,var(--sky-a) 0%,var(--sky-b) 46%,var(--sky-c) 100%);transition:background .5s;}
+/* 별 */
+.stars{position:absolute;inset:0 0 40% 0;pointer-events:none;transition:opacity .5s;}
+body.day .stars{opacity:0;}
+.star{position:absolute;background:#fff;border-radius:50%;opacity:.7;animation:tw 3.2s ease-in-out infinite;}
+@keyframes tw{0%,100%{opacity:.18;}50%{opacity:.85;}}
+/* 천장에서 내려오는 금빛 */
+.lightwash{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(52% 34% at 50% -6%,var(--gold-soft),transparent 70%),
+  radial-gradient(30% 22% at 22% 0%,var(--shelf-glow),transparent 75%),
+  radial-gradient(30% 22% at 78% 0%,var(--shelf-glow),transparent 75%);}
+
+/* 3D 서가 벽 */
+.scene{position:absolute;inset:0;perspective:1150px;perspective-origin:50% 42%;}
+.wall{position:absolute;top:0;bottom:12%;width:46%;display:flex;flex-direction:column;justify-content:flex-end;gap:0;overflow:hidden;}
+.wall.left {left:-7%; transform:rotateY(52deg); transform-origin:left center;}
+.wall.right{right:-7%;transform:rotateY(-52deg);transform-origin:right center;}
+.shelfrow{position:relative;flex:0 0 auto;height:92px;display:flex;align-items:flex-end;gap:3px;padding:0 10px 0;overflow:hidden;}
+.shelfrow::after{content:'';position:absolute;left:0;right:0;bottom:0;height:9px;background:linear-gradient(180deg,var(--wood-hi),var(--wood));box-shadow:0 -6px 14px var(--shelf-glow);border-radius:1px;}
+.shelfrow img{flex:0 0 auto;width:auto;border-radius:1.5px;filter:brightness(.92) saturate(.95);box-shadow:1px 0 0 rgba(0,0,0,.35);}
+body.day .shelfrow img{filter:brightness(1.02);}
+.wall .shelfrow:nth-child(1) img{filter:brightness(.55);}
+.wall .shelfrow:nth-child(2) img{filter:brightness(.68);}
+.wall .shelfrow:nth-child(3) img{filter:brightness(.8);}
+body.day .wall .shelfrow:nth-child(1) img{filter:brightness(.82);}
+body.day .wall .shelfrow:nth-child(2) img{filter:brightness(.9);}
+body.day .wall .shelfrow:nth-child(3) img{filter:brightness(.96);}
+/* 바닥 */
+.floor{position:absolute;left:0;right:0;bottom:0;height:13%;background:linear-gradient(180deg,var(--sky-c),var(--sky-a));}
+.floor::before{content:'';position:absolute;inset:0;background:radial-gradient(60% 100% at 50% 0%,var(--shelf-glow),transparent 72%);opacity:.5;}
+
+/* 중앙 카피 */
+.hero-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:5;padding:0 20px;}
+.hero-eyebrow{font-size:13px;font-weight:700;letter-spacing:.34em;color:var(--gold);text-transform:uppercase;margin-bottom:18px;}
+.hero-title{font-size:clamp(34px,6vw,62px);font-weight:900;letter-spacing:-.02em;line-height:1.16;text-shadow:0 4px 40px rgba(0,0,0,.45);}
+body.day .hero-title{text-shadow:none;}
+.hero-title .st{color:var(--gold);}
+.hero-sub{margin-top:16px;font-size:clamp(13.5px,1.7vw,16.5px);color:var(--ink-sub);line-height:1.7;font-weight:500;}
+.hero-search{margin-top:34px;display:flex;align-items:center;gap:10px;width:min(520px,88vw);background:rgba(255,255,255,.09);border:1px solid var(--border);border-radius:999px;padding:15px 22px;backdrop-filter:blur(8px);box-shadow:0 18px 50px -18px rgba(0,0,0,.5);cursor:pointer;transition:.2s;}
+body.day .hero-search{background:rgba(255,255,255,.85);}
+.hero-search:hover{border-color:var(--gold);transform:translateY(-2px);}
+.hero-search .ic{font-size:17px;}
+.hero-search input{flex:1;border:none;background:transparent;outline:none;font-size:14.5px;color:var(--ink);font-family:inherit;}
+.hero-search input::placeholder{color:var(--ink-sub);}
+.hero-search .go{flex:0 0 auto;background:var(--gold);color:#141d3d;font-size:12.5px;font-weight:800;border:none;border-radius:999px;padding:8px 16px;cursor:pointer;font-family:inherit;}
+.hero-stats{margin-top:30px;display:flex;gap:34px;}
+.hst{text-align:center;}
+.hst b{display:block;font-size:20px;font-weight:900;color:var(--gold);letter-spacing:-.4px;}
+.hst span{display:block;margin-top:4px;font-size:11.5px;color:var(--ink-sub);font-weight:600;}
+.scrolldown{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:6;font-size:11.5px;color:var(--ink-sub);letter-spacing:.14em;animation:bob 2.2s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,7px);}}
+
+/* ── 아래: 서가 섹션 ── */
+.body-wrap{position:relative;background:linear-gradient(180deg,var(--sky-a),var(--sky-b) 30%);padding:76px 0 90px;transition:background .5s;}
+.sec{max-width:1080px;margin:0 auto 84px;padding:0 26px;}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px;}
+.sec-eyebrow{font-size:11px;font-weight:800;letter-spacing:.28em;color:var(--gold);margin-bottom:9px;}
+.sec-title{font-size:24px;font-weight:900;letter-spacing:-.5px;}
+.sec-sub{margin-top:7px;font-size:13px;color:var(--ink-sub);}
+.sec-more{font-size:12.5px;color:var(--ink-sub);cursor:pointer;white-space:nowrap;padding-bottom:4px;}
+.sec-more:hover{color:var(--gold);}
+
+/* 나무 선반 위 책 */
+.bigshelf{position:relative;margin-top:26px;}
+.shelf-books{display:flex;align-items:flex-end;gap:16px;overflow-x:auto;padding:26px 14px 0;scrollbar-width:none;}
+.shelf-books::-webkit-scrollbar{display:none;}
+.sbk{flex:0 0 auto;width:128px;cursor:pointer;transition:transform .22s cubic-bezier(.2,.7,.2,1);position:relative;}
+.sbk:hover{transform:translateY(-10px);}
+.sbk .cv{width:128px;aspect-ratio:2/3;border-radius:3px 6px 6px 3px;overflow:hidden;box-shadow:-6px 0 0 -2px rgba(255,255,255,.06),0 16px 30px -12px rgba(0,0,0,.6);background:var(--card);}
+body.day .sbk .cv{box-shadow:0 14px 26px -12px rgba(26,35,64,.35);}
+.sbk .cv img{width:100%;height:100%;object-fit:cover;display:block;}
+.sbk .t{margin-top:11px;font-size:13px;font-weight:700;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;letter-spacing:-.3px;}
+.sbk .a{margin-top:3px;font-size:11.5px;color:var(--ink-sub);}
+.shelf-board{position:relative;height:16px;margin-top:-58px;margin-bottom:58px;border-radius:3px;background:linear-gradient(180deg,var(--wood-hi) 0%,var(--wood) 55%,#3d2712 100%);box-shadow:0 -10px 26px var(--shelf-glow),0 14px 26px -8px rgba(0,0,0,.55);z-index:-1;}
+.shelf-board::after{content:'';position:absolute;left:2%;right:2%;top:16px;height:26px;background:radial-gradient(50% 100% at 50% 0%,rgba(0,0,0,.4),transparent 80%);}
+
+/* 챌린지 배너 — 별마당 무대 느낌 */
+.stage{position:relative;border-radius:24px;overflow:hidden;padding:52px 48px;background:
+  radial-gradient(70% 120% at 50% -20%,var(--gold-soft),transparent 60%),
+  linear-gradient(140deg,#182246,#0c1330 60%);border:1px solid var(--border);display:flex;gap:40px;align-items:center;flex-wrap:wrap;}
+body.day .stage{background:radial-gradient(70% 120% at 50% -20%,rgba(255,215,140,.55),transparent 60%),linear-gradient(140deg,#fdf8ee,#f1e9d8 60%);}
+.stage-txt{flex:1 1 300px;}
+.stage-k{font-size:11px;font-weight:800;letter-spacing:.3em;color:var(--gold);}
+.stage-h{margin-top:12px;font-size:26px;font-weight:900;letter-spacing:-.6px;line-height:1.3;}
+.stage-s{margin-top:12px;font-size:13.5px;color:var(--ink-sub);line-height:1.75;}
+.stage-btn{margin-top:22px;display:inline-block;background:var(--gold);color:#141d3d;font-size:13.5px;font-weight:800;border:none;border-radius:999px;padding:13px 28px;cursor:pointer;font-family:inherit;box-shadow:0 12px 30px -10px var(--gold-soft);}
+.stage-covers{flex:0 0 auto;display:flex;gap:-20px;}
+.stage-covers img{width:108px;aspect-ratio:2/3;object-fit:cover;border-radius:6px;box-shadow:0 20px 40px -14px rgba(0,0,0,.65);}
+.stage-covers img:nth-child(1){transform:rotate(-7deg) translateX(16px);}
+.stage-covers img:nth-child(2){transform:translateY(-12px);z-index:2;position:relative;}
+.stage-covers img:nth-child(3){transform:rotate(7deg) translateX(-16px);}
+
+.foot-note{max-width:1080px;margin:0 auto;padding:0 26px;font-size:12px;color:var(--ink-sub);line-height:1.8;border-top:1px solid var(--border);padding-top:26px;}
+@media(max-width:760px){
+  .wall{width:58%;}
+  .wall.left{left:-22%;}
+  .wall.right{right:-22%;}
+  .shelfrow{height:70px;}
+  .hero-stats{gap:22px;}
+  .stage{padding:38px 26px;}
+}
+</style>
+</head>
+<body>
+
+<div class="pvbar">
+  <b>BOOK<span>★</span>STAR <small>‘우리 도서관’ 별마당 콘셉트 — 디자인 미리보기 (실서비스 아님)</small></b>
+  <div class="mode-tg">
+    <button id="btnNight" class="on" onclick="setMode('night')">🌙 밤</button>
+    <button id="btnDay" onclick="setMode('day')">☀️ 낮</button>
+  </div>
+</div>
+
+<!-- ═══ 히어로: 아트리움 ═══ -->
+<div class="atrium">
+  <div class="stars" id="stars"></div>
+  <div class="scene">
+    <div class="wall left" id="wallL"></div>
+    <div class="wall right" id="wallR"></div>
+  </div>
+  <div class="lightwash"></div>
+  <div class="floor"></div>
+
+  <div class="hero-center">
+    <div class="hero-eyebrow">SEMYUNG UNIVERSITY LIBRARY</div>
+    <h1 class="hero-title">책과 별이 만나는 곳,<br>우리 도서관<span class="st">★</span></h1>
+    <p class="hero-sub">23,000권의 장서와 AI 사서 별이가 기다리고 있어요.<br>오늘은 어떤 책과 만날까요?</p>
+    <div class="hero-search" onclick="this.querySelector('input').focus()">
+      <span class="ic">🔍</span>
+      <input placeholder="별이에게 물어보세요 — “요즘 위로가 되는 소설 있어?”">
+      <button class="go">검색</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hst"><b>23,727</b><span>소장 도서</span></div>
+      <div class="hst"><b>238</b><span>고전 컬렉션</span></div>
+      <div class="hst"><b>지금 열림</b><span>09:00 – 22:00</span></div>
+    </div>
+  </div>
+  <div class="scrolldown">아래로 스크롤 ↓</div>
+</div>
+
+<!-- ═══ 본문 서가 ═══ -->
+<div class="body-wrap">
+
+  <div class="sec">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">LIBRARIAN'S PICK</div>
+        <div class="sec-title">사서가 주목한 책</div>
+        <div class="sec-sub">이번 주, 우리 도서관 사서가 직접 골라 서가에 올렸어요</div>
+      </div>
+      <div class="sec-more">전체 보기 →</div>
+    </div>
+    <div class="bigshelf">
+      <div class="shelf-books" id="row1"></div>
+      <div class="shelf-board"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="stage">
+      <div class="stage-txt">
+        <div class="stage-k">READING CHALLENGE</div>
+        <div class="stage-h">7월의 챌린지<br>“여름밤, 고전 한 권”</div>
+        <div class="stage-s">위대한 개츠비부터 메밀꽃 필 무렵까지 —<br>완독하고 퀴즈를 풀면 별이 쌓여요. 지금 142명 참여 중.</div>
+        <button class="stage-btn">챌린지 참여하기 ★</button>
+      </div>
+      <div class="stage-covers" id="stageCv"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head">
+      <div>
+        <div class="sec-eyebrow">CLASSIC COLLECTION</div>
+        <div class="sec-title">고전 컬렉션 — 지금 바로 읽기</div>
+        <div class="sec-sub">한국·해외 고전 238권, 앱에서 전문을 무료로</div>
+      </div>
+      <div class="sec-more">전체 보기 →</div>
+    </div>
+    <div class="bigshelf">
+      <div class="shelf-books" id="row2"></div>
+      <div class="shelf-board"></div>
+    </div>
+  </div>
+
+  <div class="foot-note">
+    ※ 이 페이지는 <b>‘우리 도서관’ 탭 리디자인 콘셉트 미리보기</b>입니다. 별마당 도서관(코엑스)의 “천장까지 닿는 서가 + 따뜻한 조명 + 탁 트인 아트리움” 무드를 북스타 네이비/골드 브랜드로 옮겼습니다. 표지는 실제 소장 고전 표지를 사용했고, 책 제목·수치는 데모용입니다. 실서비스(app.html)에는 아직 적용되지 않았습니다.
+  </div>
+</div>
+
+<script>
+const COVERS=['gb-10007','gb-10148','gb-1023','gb-103','gb-1079','gb-1080','gb-11','gb-110','gb-113','gb-1184','gb-120','gb-1200','gb-121','gb-122','gb-1237','gb-1251','gb-1260','gb-131','gb-1342','gb-135','gb-1399','gb-1400','gb-143','gb-145','gb-14838','gb-1565','gb-15711','gb-158','gb-1597','gb-16','gb-164','gb-1666','gb-174','gb-1837','gb-18857','gb-19942','gb-203','gb-208','gb-2085','gb-21','gb-211','gb-2130','gb-2145','gb-215','gb-2160','gb-21839','gb-219','gb-2226','gb-23058','gb-23639','gb-23700','gb-2434','gb-25102','gb-2527','gb-25344','gb-2554','gb-2600','gb-2701','gb-271','gb-27681','gb-27805','gb-28054','gb-2833','gb-2852','gb-2874','gb-29021','gb-30201','gb-3154','gb-325','gb-3268','gb-33858','gb-345','gb-3526','gb-36','gb-36151','gb-36462','gb-370','gb-37106','gb-376','gb-41659','gb-4217','gb-42401','gb-43','gb-4300','gb-4397','gb-45','gb-45858','gb-46','gb-468','gb-47530','gb-500','gb-50109','gb-51252','gb-5160','gb-5200','gb-521','gb-5225','gb-52521','gb-53489','gb-54700','gb-561','gb-564','gb-56463','gb-5658','gb-56644','gb-57342','gb-580','gb-5921','gb-597','gb-599','gb-601','gb-64317','gb-64636','gb-6593','gb-66073','gb-67138','gb-696','gb-69768','gb-71865','gb-73','gb-74','gb-74222','gb-75170','gb-75201','gb-76','gb-76513','gb-766','gb-768','gb-77','gb-804','gb-82','gb-821','gb-829','gb-83','gb-84','gb-86','gb-913','gb-9198','gb-9611','gb-963','gb-967','gb-968','gb-98','kr-12wol12il','kr-baettaragi','kr-bakdol','kr-bakyongcheolsiseon','kr-balgarakidalmassda','kr-beongeorisamryongi','kr-bincheo','kr-bongbyeolgi','kr-bsagam','kr-bul','kr-bulgeunsan','kr-bunnyeo','kr-byeoleulangeodeun','kr-chisuk','kr-daeha','kr-danjongaesa','kr-deul','kr-don','kr-donghae','kr-donghwa','kr-dosiwayuryeong','kr-dusunjeong','kr-eomeoniwattal','kr-gaesalgu','kr-gamja','kr-gasil','kr-geumeumbam','kr-giawasalyuk','kr-gimyeongrangsiseon','kr-gohyang','kr-gwanghwasa','kr-gwangran','kr-gwangyeomsonata','kr-gwontae','kr-gyeonghui','kr-gyeongyeong','kr-gyuwon','kr-haengrangjasik','kr-halmeoniuijukeum','kr-hanyongunsiseon','kr-heulkuinoye','kr-heulkuiserye','kr-hongyeom','kr-huisaenghwa','kr-hwabun','kr-ichadonuisa','kr-imhwasiseon','kr-inganmunje','kr-ireoncheoji','kr-isanghwasiseon','kr-isunsin','kr-iyuksasiseon','kr-jaesaeng','kr-jangmibyeongdeulda','kr-je1gwaje1jang','kr-jeolmeungeudeul','kr-jeongjanamuissneunsabhwa','kr-jeongjiyongsiseon','kr-jihachon','kr-jijuhoesi','kr-jjochgieoganeunideul','kr-jongsaenggi','kr-jukeum','kr-kbaksauiyeongu','kr-keunmuljindwi','kr-kimsowol-poems','kr-kkumhaneul','kr-maek','kr-maeumiyeoteunjayeo','kr-mauitaeja','kr-memilkkot','kr-miseuteobang','kr-mujeong','kr-mujigae','kr-mul','kr-mulrebanga','kr-myeongil','kr-myeongmun','kr-nalgae','kr-noniyagi','kr-noryeonggeunhae','kr-ojanghwansiseon','kr-pageum','kr-piano','kr-ppong','kr-redimeideu','kr-san','kr-sanga','kr-sarang','kr-sigolhwangseobang','kr-sogeum','kr-somang','kr-ssukguksae','kr-sulgwonhaneunsahoe','kr-sutalk','kr-taehyeong','kr-taepyeongcheonha','kr-takryu','kr-talchulgi','kr-tarakja','kr-unsujoeunnal','kr-wongoryoibaekwon','kr-wonhyodaesa','kr-yakhanjauiseulpeum','kr-yonggwayonguidaegyeokjeon','kr-yujeong','k13313590','k13313606','k13313607','k13313608','k13313683','k13313730','k13313731','k13313732','k13313733','k13313734','k13313735','k13313736','k13313775','k13313776','k13313822','k13313843','k13313883','k9000034','k9000035','k9000036','k9000075','k9000078','k9000094','k9000113','k9000251','k9000276','k9000320','k9000395','k9000397','k9000403','k9000404','k9000409','k9000455','k9000456','k9000607','k9000609','k9000752','k9000759','k9000761','k9000779','k9000799','k9001014','k9001035','k9001047','k9001048','k9001052','k9001059','k9001060','k9001181','k9001204','k9001205','k9001211','k9001386','k9001393','k9001402','k9001439','k9001756','k9001758','k9001761','k9001830','k9001832','k9001836','k9002092','k9002094','k9002100','k9002117','k9020973','k9029186','k9029192','k9029200','k9029363','k9031268','k9031445','k9031527','k9031949','k9031993','k9032975','k9032993','k9032994','k9032995','k9032996'];
+const cov=n=>`covers/${n}.webp`;
+
+// 시드 셔플(새로고침마다 동일한 벽 — 비교용)
+function shuffled(arr,seed){const a=arr.slice();let s=seed;const rnd=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// ── 히어로 서가 벽 ──
+function buildWall(el,seed){
+  const rowH = window.innerWidth<=760 ? 70 : 92;
+  const rows=Math.max(7,Math.ceil(el.clientHeight/rowH)+1), perRow=16;
+  const pool=shuffled(COVERS,seed);
+  let k=0, s=seed;
+  const rnd=()=>{s=(s*48271)%2147483647;return s/2147483647;};
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');row.className='shelfrow';
+    for(let i=0;i<perRow;i++){
+      const img=document.createElement('img');
+      img.src=cov(pool[k++%pool.length]);
+      img.loading='eager'; img.decoding='sync'; img.alt='';
+      img.onerror=function(){this.remove();};
+      const h=68+Math.floor(rnd()*18);       // 68~85px, 키 제각각
+      img.style.height=h+'px';
+      if(rnd()<0.08) img.style.transform='rotate(3.5deg) translateY(1px)'; // 가끔 기울어진 책
+      row.appendChild(img);
+    }
+    el.appendChild(row);
+  }
+}
+buildWall(document.getElementById('wallL'),7);
+buildWall(document.getElementById('wallR'),42);
+
+// ── 별 ──
+(function(){
+  const box=document.getElementById('stars');
+  let s=99;const rnd=()=>{s=(s*48271)%2147483647;return s/2147483647;};
+  for(let i=0;i<70;i++){
+    const d=document.createElement('div');d.className='star';
+    const sz=(rnd()*2+0.8).toFixed(1);
+    d.style.cssText=`width:${sz}px;height:${sz}px;left:${(rnd()*100).toFixed(1)}%;top:${(rnd()*100).toFixed(1)}%;animation-delay:${(rnd()*3).toFixed(1)}s`;
+    box.appendChild(d);
+  }
+})();
+
+// ── 아래 서가 두 줄 ──
+const DEMO1=[
+  ['gb-64317','위대한 개츠비','F. 스콧 피츠제럴드'],['kr-memilkkot','메밀꽃 필 무렵','이효석'],
+  ['gb-1342','오만과 편견','제인 오스틴'],['kr-unsujoeunnal','운수 좋은 날','현진건'],
+  ['gb-11','이상한 나라의 앨리스','루이스 캐럴'],['kr-nalgae','날개','이상'],
+  ['gb-1260','제인 에어','샬럿 브론테'],['kr-gamja','감자','김동인'],
+  ['gb-345','드라큘라','브램 스토커'],['kr-sarang','사랑','이광수'],
+  ['gb-2554','죄와 벌','도스토옙스키'],['kr-bincheo','빈처','현진건']
+];
+const DEMO2=[
+  ['kr-mujeong','무정','이광수'],['gb-84','프랑켄슈타인','메리 셸리'],
+  ['kr-bul','불','현진건'],['gb-158','에마','제인 오스틴'],
+  ['kr-talchulgi','탈출기','최서해'],['gb-16','피터 팬','J. M. 배리'],
+  ['kr-ppong','뽕','나도향'],['gb-2600','전쟁과 평화','톨스토이'],
+  ['kr-hwabun','화분','이효석'],['gb-1184','몬테크리스토 백작','알렉상드르 뒤마'],
+  ['kr-san','산','이효석'],['gb-768','폭풍의 언덕','에밀리 브론테']
+];
+function fillRow(id,items){
+  const el=document.getElementById(id);
+  el.innerHTML=items.map(([f,t,a])=>`
+    <div class="sbk">
+      <div class="cv"><img src="${cov(f)}" loading="lazy" alt="${t}" onerror="this.parentElement.style.background='linear-gradient(160deg,#2a3558,#141d3d)'"></div>
+      <div class="t">${t}</div><div class="a">${a}</div>
+    </div>`).join('');
+}
+fillRow('row1',DEMO1);
+fillRow('row2',DEMO2);
+
+// 챌린지 배너 표지 3장
+document.getElementById('stageCv').innerHTML=['gb-64317','kr-memilkkot','gb-2554']
+  .map(f=>`<img src="${cov(f)}" alt="">`).join('');
+
+// ── 낮/밤 토글 ──
+function setMode(m){
+  document.body.classList.toggle('day',m==='day');
+  document.getElementById('btnDay').classList.toggle('on',m==='day');
+  document.getElementById('btnNight').classList.toggle('on',m!=='day');
+}
+const Q=new URLSearchParams(location.search);
+if(Q.get('mode')==='day') setMode('day');
+if(Q.get('noatrium')==='1') document.querySelector('.atrium').style.display='none'; // 검증용
+
+</script>
+</body>
+</html>
