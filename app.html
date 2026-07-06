@@ -2356,7 +2356,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()">🙂 로그인</button>
-    <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>한국대학교 도서관</span>
+    <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대 학술정보원</span>
     <span class="hdr-div"></span>
     <select class="lang-select" onchange="changeLang(this.value)">
       <option value="ko">한국어</option>
@@ -8769,7 +8769,7 @@ async function renderSummaryCard(){
   host.innerHTML=`
     <div class="ss-kicker">✦ 2026-1학기 독서 결산</div>
     <div class="ss-name">${esc(readerName())} 님</div>
-    <div class="ss-period">한국대학교 도서관 · bookstar</div>
+    <div class="ss-period">세명대 학술정보원 · bookstar</div>
     <div class="ss-grid">
       <div class="ss-cell"><div class="ss-num">${books}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
       <div class="ss-cell"><div class="ss-num">${avg.toFixed(1)}</div><div class="ss-lbl">평균 별점</div></div>
@@ -8787,7 +8787,7 @@ function shareSummary(){
   x.fillStyle=g; x.fillRect(0,0,W,H); x.textAlign='center';
   x.fillStyle='#c9b88a'; x.font='bold 34px Georgia'; x.fillText('✦ 2026-1학기 독서 결산', W/2, 175);
   x.fillStyle='#fff'; x.font='bold 76px sans-serif'; x.fillText(readerName()+' 님', W/2, 285);
-  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('한국대학교 도서관 · bookstar', W/2, 345);
+  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('세명대 학술정보원 · bookstar', W/2, 345);
   const cells=[[(d.books||'0')+'권','완독'],[d.avg||'4.3','평균 별점'],['86%','퀴즈 정답률'],[(d.hours||'14.5')+'h','독서 시간']];
   const cw=480,ch=230,gap=40,sx=(W-cw*2-gap)/2,sy=455;
   cells.forEach((cell,i)=>{ const col=i%2,row=(i/2)|0,cx=sx+col*(cw+gap),cy=sy+row*(ch+gap);
@@ -9500,7 +9500,7 @@ async function openStudentProfile(sid){
   ov.querySelector('.bxp').innerHTML=`
     <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
       <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div>
-      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}한국대학교 도서관</div>
+      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}세명대 학술정보원</div>
       <div class="bxp-fl"><span>팔로워 <b id="bxpFollowers">${followers}</b></span><span>팔로잉 <b>${followingN}</b></span></div>
       ${me===sid?'':`<button class="bxp-followbtn${iFollow?' on':''}" onclick="profileFollow(this,'${esc(sid)}')">${iFollow?'팔로잉':'팔로우'}</button>`}</div>
     <div class="bxp-stats">
