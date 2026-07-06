@@ -2360,7 +2360,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()" style="display:none;">🙂 로그인</button>
-    <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대 학술정보원</span>
+    <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대학교 학술정보원</span>
     <span class="hdr-div"></span>
     <select class="lang-select" onchange="changeLang(this.value)">
       <option value="ko">한국어</option>
@@ -4879,14 +4879,14 @@ function lcCvHTML(b){
 }
 let LIB_POOL=[];
 const LIB_SAMPLE=['9788936434267','9791161571188','9791165341909','9791188862290','9788936434120','9788998441012','9788936434595','9788937473401'];
-// [데모] 도서관 통합검색 딥링크 — 세명대 학술정보원. 책 상세의 "도서관에서 빌리기" 클릭 시 실제 lib.semyung.ac.kr 통합검색(소장자료+예스24+학술DB)으로 바로 이동
+// [데모] 도서관 통합검색 딥링크 — 세명대학교 학술정보원. 책 상세의 "도서관에서 빌리기" 클릭 시 실제 lib.semyung.ac.kr 통합검색(소장자료+예스24+학술DB)으로 바로 이동
 const LIB_LINK_BASE='https://lib.semyung.ac.kr/searchTotal/result?st=KWRD&si=TOTAL&q=';
 const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
 // 세명대 데모 계정(도서관 제공)이 이미 대출한 책 → '빌리기' 클릭 시 예스24 EPUB 뷰어가 바로 열림(원클릭 읽기 데모)
 const SEMYUNG_DEMO_USER='00003251';
 const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',cover:'https://image.aladin.co.kr/product/27045/43/cover200/k692135851_3.jpg',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
   lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
-// 세명대 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
+// 세명대학교 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
 const SM_LBRY=20213;
 const smDetail=(brcd)=>`https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=${SM_LBRY}&brcd=${brcd}`;
 // 구독(크레마) — C(딥링크): 그 책의 크레마클럽 페이지를 새 탭으로 엶.
@@ -5096,9 +5096,9 @@ function mlRank(t,s,books,live){
   const sub = isLoan?'우리 학교에서 가장 많이 빌린 책 · 최근 6개월' : (live?'세명대 전자도서관에서 많이 빌린 책':s);
   const chips=(live||isLoan)?'':`<div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>`;
   const bar=isLoan
-    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 · 종이책 대출</span><span class="ml-rkbar-r">최근 6개월</span></div>`
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 · 종이책 대출</span><span class="ml-rkbar-r">최근 6개월</span></div>`
     : live
-    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대 학술정보원 전자도서관</span><span class="ml-rkbar-r">${today} 기준</span></div>`
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 전자도서관</span><span class="ml-rkbar-r">${today} 기준</span></div>`
     : `<div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>`;
   return `<div>${mlHead(t,sub)}
     ${chips}
@@ -8787,7 +8787,7 @@ async function renderSummaryCard(){
   host.innerHTML=`
     <div class="ss-kicker">✦ 2026-1학기 독서 결산</div>
     <div class="ss-name">${esc(readerName())} 님</div>
-    <div class="ss-period">세명대 학술정보원 · bookstar</div>
+    <div class="ss-period">세명대학교 학술정보원 · bookstar</div>
     <div class="ss-grid">
       <div class="ss-cell"><div class="ss-num">${books}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
       <div class="ss-cell"><div class="ss-num">${avg.toFixed(1)}</div><div class="ss-lbl">평균 별점</div></div>
@@ -8805,7 +8805,7 @@ function shareSummary(){
   x.fillStyle=g; x.fillRect(0,0,W,H); x.textAlign='center';
   x.fillStyle='#c9b88a'; x.font='bold 34px Georgia'; x.fillText('✦ 2026-1학기 독서 결산', W/2, 175);
   x.fillStyle='#fff'; x.font='bold 76px sans-serif'; x.fillText(readerName()+' 님', W/2, 285);
-  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('세명대 학술정보원 · bookstar', W/2, 345);
+  x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('세명대학교 학술정보원 · bookstar', W/2, 345);
   const cells=[[(d.books||'0')+'권','완독'],[d.avg||'4.3','평균 별점'],['86%','퀴즈 정답률'],[(d.hours||'14.5')+'h','독서 시간']];
   const cw=480,ch=230,gap=40,sx=(W-cw*2-gap)/2,sy=455;
   cells.forEach((cell,i)=>{ const col=i%2,row=(i/2)|0,cx=sx+col*(cw+gap),cy=sy+row*(ch+gap);
@@ -9518,7 +9518,7 @@ async function openStudentProfile(sid){
   ov.querySelector('.bxp').innerHTML=`
     <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
       <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div>
-      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}세명대 학술정보원</div>
+      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}세명대학교 학술정보원</div>
       <div class="bxp-fl"><span>팔로워 <b id="bxpFollowers">${followers}</b></span><span>팔로잉 <b>${followingN}</b></span></div>
       ${me===sid?'':`<button class="bxp-followbtn${iFollow?' on':''}" onclick="profileFollow(this,'${esc(sid)}')">${iFollow?'팔로잉':'팔로우'}</button>`}</div>
     <div class="bxp-stats">
