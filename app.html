@@ -91,6 +91,9 @@ body.dark .logo{background:var(--gold);color:#0f172a;}
 .bl-word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:-.4px;color:var(--text);line-height:1;}
 .bl-word span{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
 body.dark .bl-word{color:#f1f5f9;}
+.bl-tag{display:flex;flex-direction:column;justify-content:center;margin-left:10px;padding-left:11px;border-left:1px solid var(--line,#d5deec);line-height:1.22;flex:0 0 auto;}
+.bl-tag span{font-size:11px;font-weight:600;color:var(--text-light,#6b7a90);white-space:nowrap;letter-spacing:-.2px;}
+@media(max-width:960px){ .bl-tag{display:none;} }
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
@@ -2345,6 +2348,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div class="brand-logo" onclick="nav('ourlib')" title="우리 도서관">
     <span class="bl-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="7.6" r="3.7" fill="#4ade80"/><circle cx="8.7" cy="10.2" r="2.7" fill="#4ade80"/><circle cx="15.3" cy="10.2" r="2.7" fill="#4ade80"/><rect x="11" y="9" width="2" height="8" rx="1" fill="#fff"/><path d="M4.3 15.6 Q12 13.2 12 14.8 Q12 13.2 19.7 15.6 L19.7 19.4 Q12 17.2 12 18.8 Q12 17.2 4.3 19.4 Z" fill="#fff"/></svg></span>
     <span class="bl-word">참<span>나루</span></span>
+    <span class="bl-tag"><span>세명대학교</span><span>독서 플랫폼</span></span>
   </div>
   <nav class="gnb">
     <div class="gnb-item active" data-page="ourlib" onclick="nav('ourlib')">우리 도서관</div>
