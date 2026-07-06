@@ -2504,6 +2504,11 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 
 </section>
 
+<!-- 2-1b) 마이 챌린지 — 내 챌린지(참여 중 + 완료). 좌측 사이드바 '마이 챌린지' 전용 -->
+<section class="page" id="page-mychal">
+  <div id="chalGroupMy"></div>
+</section>
+
 <!-- ═══════════════════════════════════════════════════════════
      2-2) AI추천 (ai.html 이식 — 도서관 1,133권 자연어 추천)
      ═══════════════════════════════════════════════════════════ -->
@@ -2618,7 +2623,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <!-- ① 내 활동 그룹 (프로필 6스탯 + 별 내역·등급 + 내 기록) — 실데이터 -->
   <div id="actGroup"></div>
 
-  <!-- ② 내 챌린지 그룹 (참여 중 Quest Map + 완료한 챌린지 결과·복습) — 실데이터 -->
+  <!-- ② 내 챌린지 그룹 (참여 중 Quest Map + 완료한 챌린지) — 내서재 & 마이 챌린지 양쪽 표시 -->
   <div id="chalGroup"></div>
 
   <!-- ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 -->
@@ -4500,6 +4505,9 @@ function nav(page){
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
   }
+  if(page === 'mychal') {
+    setTimeout(()=>renderChalGroup(), 30);
+  }
   if(page === 'collection') {
     setTimeout(()=>renderClassicShelves(), 30);   // 탭+책줄+탭별 사서큐레이션 일괄 렌더
   }
@@ -5702,7 +5710,7 @@ function libBridgeOpen(book){
 }
 /* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 리더보드 / 검색 / 피드 / 내서재 */
 const SIDE_MENU = [
-  {key:'mychal', icon:'target',   label:'마이 챌린지', page:'curation'},
+  {key:'mychal', icon:'target',   label:'마이 챌린지', page:'mychal'},
   {key:'leader', icon:'trophy',   label:'리더보드',    page:'leaderboard'},
   {key:'search', icon:'search',   label:'검색',        page:'search'},
   {key:'feed',   icon:'users',    label:'피드',        page:'feed'},
@@ -7935,8 +7943,14 @@ const CG_IC='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentCo
 const IC_CHK='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg>';
 let _cgDone=[], _cgLoaded={};
 function _scQuizTotal(bookId){ const sc=(typeof CHALLENGE_SCENES!=='undefined')?CHALLENGE_SCENES[bookId]:null; if(!sc) return 0; return (sc.scenes||[]).reduce((s,x)=>s+((x.quiz||[]).length),0); }
-async function renderChalGroup(){
-  const el=document.getElementById('chalGroup'); if(!el) return;
+async function renderChalGroup(rootId){
+  // 내 챌린지는 내서재(#chalGroup) · 마이 챌린지(#chalGroupMy) 두 곳에 표시.
+  // 내부 id(questMapBody 등) 충돌 방지 위해, 지금 보이는 화면 한 곳에만 그리고 반대쪽은 비움.
+  const HOSTS=['chalGroup','chalGroupMy'];
+  let target=rootId;
+  if(!target){ const onMy=document.getElementById('page-mychal')?.classList.contains('active'); target=onMy?'chalGroupMy':'chalGroup'; }
+  HOSTS.filter(h=>h!==target).forEach(h=>{ const o=document.getElementById(h); if(o) o.innerHTML=''; });
+  const el=document.getElementById(target); if(!el) return;
   const head='<div class="lib-grp"><div class="lib-grp-ic">'+CG_IC+'</div><div><div class="lib-grp-t">내 챌린지</div><div class="lib-grp-s">참여 중 · 완료</div></div></div>';
   const s=bxStudent();
   if(!s){ el.innerHTML=head+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 챌린지가 보여요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
