@@ -5394,7 +5394,10 @@ function booksForSection(s){
   return (s.books||[]).map(b=>{
     if(isCls(b)){ const c=(typeof BOOKS!=='undefined')&&BOOKS.find(x=>x.id===b.id);   // 마스터 목록(BOOKS)에서 한글 제목·표지 보강 — 저장된 영어 제목/빈 표지 대신. new·grid·mag 등 모든 큐레이션 스타일에 표지·한글 적용
       return {id:b.id, t:(c&&c.title)||b.title||b.t||'', a:(c&&c.author)||b.author||b.a||'', cover:(c&&c.coverSrc)||'', cls:true}; }
-    const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn)); return p||{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note};
+    const p=(b.isbn&&LIB_POOL.find(x=>x.isbn===b.isbn));
+    const r=p?Object.assign({},p):{t:b.title||b.t,a:b.author||b.a,isbn:b.isbn,cover:b.cover,note:b.note};
+    if(b.tags&&b.tags.length) r.tags=b.tags;   // 섹션에 저장된 형태태그(전자책/종이책)를 최우선 보존 — 풀 매칭이 태그 없는 버전과 겹쳐도 뱃지 유지
+    return r;
   }).filter(b=>b.t||b.title||b.id)
     // 2026-06-21 사용자 지시: 큐레이션도 노출목록(BOOKS)에 있는 고전만 표시. 장르제외 희곡·시(셰익스피어 등)·미번역 해외고전은 사서 큐레이션에 담겨 있어도 숨김. 일반 도서관 책(isbn)은 영향 없음.
     .filter(b=> !(b.cls && typeof BOOKS!=='undefined' && !BOOKS.some(x=>x.id===b.id)) );
