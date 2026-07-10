@@ -3376,21 +3376,8 @@ function _withAnchorKept(fn){ const a=_captureAnchor(); fn(); requestAnimationFr
 function saveScrollPos(){
   if(!currentBook) return;
   const a=_captureAnchor(); if(a){ readerStats.positions[currentBook.id] = a; saveReaderStats(); }
-  // 완독 모드: 도달한 최대 읽기 % 를 계정 DB에 저장
-  if(currentMode==='full'){
-    const el=_scrollEl();
-    if(el){
-      const max=el.scrollHeight-el.clientHeight;
-      const pct=max>0?Math.min(100,Math.round((el.scrollTop/max)*100)):0;
-      const prev=(_chalRead(currentBook.id)||{}).read_pct||0;
-      if(pct>prev){
-        _chalMerge(currentBook.id,{read_pct:pct});   // 로컬은 매 % 저장(정밀 유지)
-        // 서버 POST + 퀘스트맵 전체 재렌더는 5% 계단·90%+에서만 (기존: 1%마다 → 정독 시 100회 네트워크+DOM 재구축)
-        if(Math.floor(pct/5)>Math.floor(prev/5) || pct>=90){ bxUpsertRead(currentBook.id,pct); try{ renderQuestMap(); }catch(e){} }
-      }
-      if(pct>=90) maybeCertPrompt(currentBook.id);   // 90% 도달 → 완독 인증 제안(책당 1회)
-    }
-  }
+  // 완독 모드: 완독율 v4 = min(글자수 진행률, 독서시간 환산 진행률) 재계산·저장
+  if(currentMode==='full') v4Recalc();
 }
 function restoreScrollPos(){
   if(!currentBook) return;
@@ -3439,6 +3426,7 @@ function updateProgress(){
 }
 let _progRAF=0;
 function readerOnScroll(){
+  v4Activity();   // 완독율 v4: 스크롤 = 읽는 중(2분 무활동 타이머 리셋)
   if(!_progRAF) _progRAF=requestAnimationFrame(()=>{ _progRAF=0; updateProgress(); });   // 스크롤 이벤트마다 reflow 강제 → 1프레임당 1회로 코얼레스
   if(_scrollSaveTimer) clearTimeout(_scrollSaveTimer);
   _scrollSaveTimer = setTimeout(saveScrollPos, 800);
@@ -3726,6 +3714,66 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ if(_viewerOpen()) readerSessionEnd(); }
   else { if(_viewerOpen() && !_readerSessionStart) _readerSessionStart = Date.now(); }
 });
+
+/* ── 완독율 v4 — min(글자수 진행률, 독서시간 환산 진행률) · 규칙 문서: 북스타_완독율_최종규칙_v4.md ──
+   글자수 진행률: 가장 멀리 도달한 지점(뒤로 가도 안 줄어듦)
+   독서시간: 책별 누적, 화면 이탈·같은 자리 2분 무활동이면 멈춤
+   필요시간 기준: 글자당 0.08초 → 시간환산% = 누적초 / (전체글자 × 0.08) */
+const V4_SEC_PER_CHAR = 0.08;
+const V4_IDLE_MS = 120000;
+let _v4LastAct = Date.now();
+let _v4Cache = {bookId:null, total:0};
+function v4Activity(){ _v4LastAct = Date.now(); }
+function _v4TotalChars(){   // 책 전체 글자수 — 한국어(한글 포함) 칸 기준, 책당 1회 계산
+  if(!currentBook) return 0;
+  if(_v4Cache.bookId === currentBook.id && _v4Cache.total > 0) return _v4Cache.total;
+  const panes=[document.querySelector('.viewer-pane.left'), document.querySelector('.viewer-pane.right')].filter(Boolean);
+  const pane = panes.find(p=>/[가-힣]/.test((p.textContent||'').slice(0,2000))) || panes[0];
+  if(!pane) return 0;
+  let total=0;
+  pane.querySelectorAll('p').forEach(p=>{ const t=p.textContent||''; if(/[가-힣]/.test(t)) total+=t.length; });
+  if(total<500){ total=0; pane.querySelectorAll('p').forEach(p=>{ total+=(p.textContent||'').length; }); }
+  if(total>0) _v4Cache={bookId:currentBook.id, total};
+  return total;
+}
+function _v4Frac(){   // 지금 도달한 지점(0~1) — 스크롤=화면 하단 기준, 페이지 모드=장 글자가중 + 장 내 페이지 비율
+  if(typeof _pg!=='undefined' && _pg.on && _pg.chapters && _pg.chapters.length){
+    if(!_pg.v4w || _pg.v4w.length!==_pg.chapters.length)
+      _pg.v4w=_pg.chapters.map(c=>Math.max(1,(c.html||'').replace(/<[^>]+>/g,'').length));
+    const sum=_pg.v4w.reduce((a,b)=>a+b,0);
+    let before=0; for(let i=0;i<_pg.chIdx;i++) before+=_pg.v4w[i];
+    const inCh=_pg.count?((_pg.page+1)/_pg.count):0;
+    return Math.min(1,(before+inCh*(_pg.v4w[_pg.chIdx]||0))/sum);
+  }
+  const el=_scrollEl(); if(!el||!el.scrollHeight) return 0;
+  return Math.min(1,(el.scrollTop+el.clientHeight)/el.scrollHeight);
+}
+function v4Recalc(){   // 완독율 재계산 → 로컬 저장 + 5% 계단·90%+에서만 서버 반영
+  if(!currentBook || currentMode!=='full') return;
+  const total=_v4TotalChars(); if(!total) return;
+  const cur=_chalRead(currentBook.id)||{};
+  // char_pct: 최대 도달 글자% (기존 read_pct도 하한으로 — 다른 기기에서 온 기록 보호)
+  const charPct=Math.max(cur.char_pct||0, cur.read_pct||0, Math.min(100,_v4Frac()*100));
+  const sec=cur.read_sec||0;
+  const timePct=Math.min(100, sec/(total*V4_SEC_PER_CHAR)*100);
+  const pct=Math.floor(Math.min(charPct,timePct));
+  const prev=cur.read_pct||0;
+  const patch={char_pct:Math.round(charPct*10)/10};
+  if(pct>prev) patch.read_pct=pct;   // 완독율은 오르기만 함
+  _chalMerge(currentBook.id,patch);
+  if(pct>prev && (Math.floor(pct/5)>Math.floor(prev/5) || pct>=90)){ bxUpsertRead(currentBook.id,pct,sec); try{ renderQuestMap(); }catch(e){} }
+  if(pct>=90) maybeCertPrompt(currentBook.id);   // 90% 도달 → 완독 인증 제안(책당 1회)
+}
+let _v4TickN=0;
+setInterval(()=>{   // 독서시간 심박 5초 — 뷰어 닫힘·화면 이탈·2분 무활동이면 누적 안 함
+  if(!_viewerOpen() || document.hidden || !currentBook || currentMode!=='full') return;
+  if(Date.now()-_v4LastAct > V4_IDLE_MS) return;
+  const cur=_chalRead(currentBook.id)||{};
+  _chalMerge(currentBook.id,{read_sec:(cur.read_sec||0)+5});
+  if(++_v4TickN%6===0) v4Recalc();   // 스크롤 없이 시간만 차오를 때도 30초마다 완독율 갱신
+}, 5000);
+document.addEventListener('pointerdown', ()=>{ if(_viewerOpen()) v4Activity(); }, true);
+document.addEventListener('keydown', ()=>{ if(_viewerOpen()) v4Activity(); }, true);
 
 /* 하이라이트 (완독 모드에서만) — 위치 앵커(장+문단+글자위치) 저장 → 다시 열어도 복원 */
 function setupHighlightHandlers(){
@@ -5210,11 +5258,13 @@ function _chalMerge(bookId, patch){   // 기존 기록에 일부만 갱신(퀴�
   const next = Object.assign(cur, patch, {ts:Date.now()});
   _chalWriteLocal(bookId, next); return next;
 }
-async function bxUpsertRead(bookId, pct){   // 읽기 진행률만 서버 저장(퀴즈 컬럼 보존)
+async function bxUpsertRead(bookId, pct, sec){   // 읽기 진행률(완독율 v4)+독서시간만 서버 저장(퀴즈 컬럼 보존)
   const s=bxStudent(); if(!s) return;
+  const row={student_id:s.id,book_id:bookId,read_pct:pct,updated_at:new Date().toISOString()};
+  if(typeof sec==='number') row.read_sec=Math.round(sec);
   try{ await fetch(`${BX_SB}/bookstar_challenge_results?on_conflict=student_id,book_id`,
     {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-     body:JSON.stringify({student_id:s.id,book_id:bookId,read_pct:pct,updated_at:new Date().toISOString()})}); }catch(e){}
+     body:JSON.stringify(row)}); }catch(e){}
 }
 async function bxUpsertResult(bookId, obj){          // 서버 저장(계정별·책별 upsert)
   const s=bxStudent(); if(!s) return;
@@ -5243,6 +5293,7 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
         impression:x.impression||cur.impression||'',
         submitted:!!(cur.submitted||x.submitted),
         read_pct:Math.max(cur.read_pct||0, x.read_pct||0),
+        read_sec:Math.max(cur.read_sec||0, x.read_sec||0),   // 완독율 v4: 독서시간도 다기기 최댓값 병합
         ts:Date.now()
       }));
     });
@@ -6220,7 +6271,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260702e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260710a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -6394,6 +6445,7 @@ function pgSave(){
   if(!readerStats.pagePos) readerStats.pagePos={};
   readerStats.pagePos[currentBook.id]={ch:_pg.chIdx, page:_pg.page};
   saveReaderStats();
+  v4Activity(); v4Recalc();   // 완독율 v4: 페이지 넘김 = 활동 + 진행률 갱신
 }
 let _pgBound=false, _pgTouchActive=false;
 function setupPagedGestures(){
