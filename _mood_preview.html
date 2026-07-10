@@ -1,0 +1,31 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>한국 고전 표지 — 메밀꽃 감성 미리보기</title>
+<style>
+body{margin:0;background:#14121c;color:#e8e4f0;font-family:-apple-system,'Malgun Gothic',sans-serif;padding:24px}
+h1{font-size:19px;text-align:center;margin:8px 0 4px}
+p.sub{text-align:center;color:#a99fc0;font-size:13px;margin:0 0 24px}
+.sec{max-width:1100px;margin:0 auto 32px}
+.lbl{font-size:14px;font-weight:700;color:#c9bfe6;margin:0 0 12px;border-left:3px solid #7a5acf;padding-left:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.card{background:#1e1a2c;border-radius:12px;overflow:hidden}
+.card img{width:100%;display:block;aspect-ratio:2/3;object-fit:cover;background:#2a2438}
+.card .t{padding:8px 10px;font-size:12px;color:#b8aed0}
+</style></head><body>
+<h1>🌙 한국 고전 표지 — 메밀꽃 감성</h1>
+<p class="sub">새로 생성한 3권이 기존 메밀꽃·운수 좋은 날 톤과 맞는지 확인하세요</p>
+
+<div class="sec"><div class="lbl">✨ 새로 생성 (메밀꽃 감성 스타일)</div>
+<div class="grid" id="new"></div></div>
+
+<div class="sec"><div class="lbl">📖 기존 (이 톤으로 통일하려는 목표)</div>
+<div class="grid" id="ref"></div></div>
+
+<script>
+const V='?b='+Date.now();
+const NEW=[['소금','강경애','_try_mood_kr-sogeum'],['어머니와 딸','강경애','_try_mood_kr-eomeoniwattal'],['원고료 이백 원','강경애','_try_mood_kr-wongoryoibaekwon']];
+const REF=[['메밀꽃 필 무렵','이효석','kr-memilkkot'],['운수 좋은 날','현진건','kr-unsujoeunnal']];
+const card=([t,a,s])=>`<div class="card"><img src="covers/${s}.webp${V}" alt="${t}"><div class="t">${t} · ${a}</div></div>`;
+document.getElementById('new').innerHTML=NEW.map(card).join('');
+document.getElementById('ref').innerHTML=REF.map(card).join('');
+</script></body></html>
