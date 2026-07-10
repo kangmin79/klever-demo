@@ -598,7 +598,7 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-langchips{display:flex;gap:7px;flex-wrap:wrap;}
 .cl-lchip{background:var(--bg-card);border:1px solid var(--border);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:var(--text-light);cursor:pointer;}
 .cl-lchip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);}
-.cl-card .cl-langbadge{position:absolute;top:8px;left:8px;z-index:2;background:rgba(20,16,12,.62);color:#fff;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;border-radius:50%;}
+.cl-card .cl-langbadge{position:absolute;top:0;left:0;z-index:2;width:0;height:0;border-style:solid;border-width:24px 24px 0 0;border-color:var(--gold) transparent transparent transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));}
 .cl-card .cl-cardlangs{margin:6px 0 1px;display:flex;gap:4px;flex-wrap:wrap;}
 .cl-card .cl-lg{font-size:9.5px;font-weight:700;color:var(--gold);background:rgba(212,169,59,.15);border-radius:5px;padding:2px 6px;}
 .cl-card .cl-lg.hl{background:var(--gold);color:#1a1208;}
@@ -5978,7 +5978,7 @@ const CL_LANG_ORDER = ['zh','vi','en','ja'];
 function clCard(b, opts){
   opts = opts || {};
   const showLang = opts.krLang && b.locale==='modern' && b.hasTrans;   // 번역된 한국 고전만 4개언어 표시
-  const badge = showLang ? '<span class="cl-langbadge">🌐</span>' : '';
+  const badge = showLang ? '<span class="cl-langbadge" aria-label="번역서"></span>' : '';
   let chips = '';
   if(showLang && opts.krLang!=='all'){   // 'all'일 땐 표지 배지(🌐 4개 언어)와 중복이라 칩 생략, 특정 언어 선택 시에만 표시
     chips = `<div class="cl-cardlangs"><span class="cl-lg hl">${KR_LANG_NAMES[opts.krLang]}</span><span class="cl-lg">+한국어</span></div>`;
