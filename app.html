@@ -5980,10 +5980,8 @@ function clCard(b, opts){
   const showLang = opts.krLang && b.locale==='modern' && b.hasTrans;   // 번역된 한국 고전만 4개언어 표시
   const badge = showLang ? '<span class="cl-langbadge">🌐 4개 언어</span>' : '';
   let chips = '';
-  if(showLang){
-    chips = (opts.krLang==='all')
-      ? `<div class="cl-cardlangs">${CL_LANG_ORDER.map(l=>`<span class="cl-lg">${KR_LANG_NAMES[l]}</span>`).join('')}</div>`
-      : `<div class="cl-cardlangs"><span class="cl-lg hl">${KR_LANG_NAMES[opts.krLang]}</span><span class="cl-lg">+한국어</span></div>`;
+  if(showLang && opts.krLang!=='all'){   // 'all'일 땐 표지 배지(🌐 4개 언어)와 중복이라 칩 생략, 특정 언어 선택 시에만 표시
+    chips = `<div class="cl-cardlangs"><span class="cl-lg hl">${KR_LANG_NAMES[opts.krLang]}</span><span class="cl-lg">+한국어</span></div>`;
   }
   // 언어 선택 시 번역 제목을 주 제목으로, 한국어 원제는 아래 줄에 (title_tr, classic_translations)
   const tt = (b.locale==='modern' && typeof krTitleOf==='function') ? krTitleOf(b) : null;
