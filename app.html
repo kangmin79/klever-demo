@@ -5290,9 +5290,45 @@ const BX_STUDENTS = [
   {id:'s4',name:'최지우',emoji:'🎨',dept:'시각디자인학과',interests:['예술','디자인','창작']},
   {id:'s5',name:'정하준',emoji:'🚀',dept:'항공우주공학과',interests:['우주','물리','미래']}
 ];
-function bxStudent(){ try{ return JSON.parse(localStorage.getItem('bookstar-current-student')||'null'); }catch(e){ return null; } }
+// ── 학생 식별 단일 진입점 (SSO 연결 지점) ──
+// 세명대 SSO 붙는 날: 로그인 성공 후 window.__SSO_STUDENT = {id, name, emoji, dept} 를 세팅하면
+// bxStudent()를 쓰는 앱 전역(40여 곳)이 전부 그 학생으로 동작한다(다른 코드 무변경).
+// 데모에선 __SSO_STUDENT 미설정 → 아래 localStorage 데모 계정으로 폴백.
+function bxStudent(){
+  try{ if(window.__SSO_STUDENT && window.__SSO_STUDENT.id) return window.__SSO_STUDENT; }catch(e){}
+  try{ return JSON.parse(localStorage.getItem('bookstar-current-student')||'null'); }catch(e){ return null; }
+}
 function bxSetStudent(s){ try{ localStorage.setItem('bookstar-current-student', JSON.stringify(s)); }catch(e){} }
 function _bxSid(){ const s=bxStudent(); return s?s.id:'guest'; }
+// 로컬 독서기록(챌린지 캐시·참여목록)을 한 계정 → 다른 계정으로 이관·병합. SSO 방식과 무관한 순수 로컬 유틸.
+// 데모: 게스트로 읽다 로그인 시 진행이 안 날아가게. SSO 후에도 동일 함수로 재사용 가능.
+function _migrateChalRecords(fromId, toId){
+  if(!fromId || !toId || fromId===toId) return;
+  try{
+    const pre='bookstar-chal-'+fromId+'-', keys=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf(pre)===0) keys.push(k); }
+    keys.forEach(fk=>{
+      const bookId=fk.slice(pre.length);
+      const from=JSON.parse(localStorage.getItem(fk)||'null'); if(!from) return;
+      const tk='bookstar-chal-'+toId+'-'+bookId;
+      const to=JSON.parse(localStorage.getItem(tk)||'null')||{};
+      const merged=Object.assign({}, from, to, {   // 더 진행된 값 우선
+        read_pct:Math.max(from.read_pct||0, to.read_pct||0),
+        read_sec:Math.max(from.read_sec||0, to.read_sec||0),
+        char_pct:Math.max(from.char_pct||0, to.char_pct||0),
+        submitted:!!(from.submitted||to.submitted),
+        ans:Object.assign({}, from.ans||{}, to.ans||{}),
+        ts:Date.now()
+      });
+      localStorage.setItem(tk, JSON.stringify(merged));
+      localStorage.removeItem(fk);
+    });
+    const fj='bookstar-joined-chals-'+fromId, tj='bookstar-joined-chals-'+toId, fjv=localStorage.getItem(fj);
+    if(fjv){ try{ const fa=JSON.parse(fjv)||[], ta=JSON.parse(localStorage.getItem(tj)||'[]')||[];
+      localStorage.setItem(tj, JSON.stringify([...new Set([...ta, ...fa])])); }catch(e){}
+      localStorage.removeItem(fj); }
+  }catch(e){}
+}
 function _chalKey(bookId){ return 'bookstar-chal-'+_bxSid()+'-'+bookId; }   // 계정별 로컬 캐시 키
 function _chalRead(bookId){ try{ return JSON.parse(localStorage.getItem(_chalKey(bookId))||'null'); }catch(e){ return null; } }
 function _chalWriteLocal(bookId, obj){ try{ localStorage.setItem(_chalKey(bookId), JSON.stringify(obj)); }catch(e){} }
@@ -5396,6 +5432,7 @@ function bxOpenPicker(){
 function bxClosePicker(){ document.getElementById('bxAccOverlay')?.classList.remove('open'); }
 async function bxPickStudent(id){
   const s=BX_STUDENTS.find(x=>x.id===id)||{id,name:id,emoji:'🙂'};
+  _migrateChalRecords('guest', id);   // 로그인 전 게스트로 읽던 진행을 이 계정으로 승계(안 날아가게)
   bxSetStudent(s); bxRenderAccountChip(); bxClosePicker();
   _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
@@ -6314,7 +6351,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260710b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260710c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -9754,8 +9791,9 @@ function toggleTheme(){
 window.addEventListener('DOMContentLoaded', () => {
   // 테스트 계정: 칩 표시 + (로그인됨)서버 결과 로딩 / (미로그인)선택창
   bxRenderAccountChip();
+  const _isDash = new URLSearchParams(location.search).get('page')==='dashboard';   // 사서 대시보드 딥링크는 학생 로그인창 띄우지 않음
   if(bxStudent()){ bxLoadResultsFromDB().then(()=>{ try{ renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){} }); }
-  else { setTimeout(bxOpenPicker, 400); }
+  else if(!_isDash){ setTimeout(bxOpenPicker, 400); }
   // 리더 prefs / stats 복원
   loadReaderPrefs(); loadReaderStats(); if(bxStudent()) bxLoadReaderStats();
   // 레거시 klever-theme(다크 토글) → 새 prefs로 흡수
