@@ -153,13 +153,29 @@ body.with-sidenav .side-nav{display:flex;}
   background:var(--bg-card);border:1px solid var(--border);border-radius:18px;
   box-shadow:0 10px 28px -10px rgba(20,28,50,.18);
   flex-direction:column;overflow:hidden;
+  transition:transform .22s cubic-bezier(.2,.7,.2,1);
 }
 body.dark .kmap-panel{box-shadow:0 10px 28px -10px rgba(0,0,0,.5);}
+.kmap-panel.collapsed{transform:translateX(-332px);}
 .kmap-body{flex:1;overflow-y:auto;padding:4px 16px 16px;}
+/* 카카오맵처럼 패널 오른쪽 가장자리에 붙은 접기/펼치기 화살표 탭 */
+.kmap-toggle{
+  display:none;position:fixed;top:50%;left:316px;transform:translateY(-50%);z-index:81;
+  width:22px;height:56px;border-radius:0 10px 10px 0;
+  background:var(--bg-card);border:1px solid var(--border);border-left:none;
+  box-shadow:2px 0 10px rgba(20,28,50,.10);
+  align-items:center;justify-content:center;cursor:pointer;
+  color:var(--text-light);font-size:12px;
+  transition:left .22s cubic-bezier(.2,.7,.2,1);
+}
+body.dark .kmap-toggle{box-shadow:2px 0 10px rgba(0,0,0,.4);}
+.kmap-toggle.collapsed{left:16px;}
 @media (min-width:901px){
-  body.with-sidenav .main{padding-left:332px;}
+  body.with-sidenav .main{padding-left:332px;transition:padding-left .22s cubic-bezier(.2,.7,.2,1);}
+  body.with-sidenav.kmap-collapsed .main{padding-left:48px;}
   .side-nav{display:none !important;}   /* PC는 통합 패널만 사용, 낱개 레일 숨김 */
   body.with-sidenav .kmap-panel{display:flex;}
+  body.with-sidenav .kmap-toggle{display:flex;}
 }
 .kmap-panel .sf-tabs{padding:16px 16px 12px;margin:0;border-bottom:1px solid var(--border);flex:none;}
 .sf-tabs{display:flex;gap:6px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);}
@@ -2452,6 +2468,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div class="sf-tabs" id="kmapTabs"></div>
   <div class="kmap-body" id="kmapBody"></div>
 </aside>
+<div class="kmap-toggle" id="kmapToggle" onclick="kmToggle()">◀</div>
 
 <main class="main">
 
@@ -5920,6 +5937,13 @@ function kmSetTab(key){
   _kmKey=key;
   document.querySelectorAll('#kmapTabs .sf-tab').forEach((el,i)=>el.classList.toggle('on', SIDE_MENU[i].key===key));
   kmRenderBody();
+}
+function kmToggle(){
+  const panel=document.getElementById('kmapPanel'), btn=document.getElementById('kmapToggle');
+  const collapsed = panel.classList.toggle('collapsed');
+  btn.classList.toggle('collapsed', collapsed);
+  btn.textContent = collapsed ? '▶' : '◀';
+  document.body.classList.toggle('kmap-collapsed', collapsed);
 }
 function kmRenderBody(){
   const box=document.getElementById('kmapBody'); if(!box) return;
