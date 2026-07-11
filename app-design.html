@@ -146,23 +146,22 @@ body.with-sidenav .side-nav{display:flex;}
 /* 자동 숨김 트리거 제거 (Ver03: 메뉴 고정) */
 .side-hot{display:none !important;}
 /* 본문이 고정 사이드바에 가리지 않도록 좌측 여백 확보 (PC) */
+/* 카카오맵 스타일 통합 패널 — PC에서는 낱개 아이콘 레일 대신 이 패널 하나만 항상 노출(탭+미리보기). 모바일 하단바는 그대로 유지(실험용 app-design.html) */
+.kmap-panel{
+  display:none;position:fixed;top:calc(var(--header-h) + 24px);left:16px;z-index:80;
+  width:300px;height:calc(100vh - var(--header-h) - 48px);
+  background:var(--bg-card);border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 10px 28px -10px rgba(20,28,50,.18);
+  flex-direction:column;overflow:hidden;
+}
+body.dark .kmap-panel{box-shadow:0 10px 28px -10px rgba(0,0,0,.5);}
+.kmap-body{flex:1;overflow-y:auto;padding:4px 16px 16px;}
 @media (min-width:901px){
-  body.with-sidenav .main{padding-left:84px;}
-  /* PC: 평소엔 아이콘만 보이는 얇은 레일, 마우스를 올리면 글자까지 펼쳐짐(모바일 하단바는 그대로 유지) */
-  .side-nav{width:52px;transition:width .22s cubic-bezier(.2,.7,.2,1);}
-  .side-nav:hover{width:80px;}
-  .side-node-label{white-space:nowrap;overflow:hidden;max-height:14px;opacity:1;transition:opacity .15s ease,max-height .15s ease,margin-top .15s ease;}
-  .side-nav:not(:hover) .side-node-label{opacity:0;max-height:0;margin-top:0;}
+  body.with-sidenav .main{padding-left:332px;}
+  .side-nav{display:none !important;}   /* PC는 통합 패널만 사용, 낱개 레일 숨김 */
+  body.with-sidenav .kmap-panel{display:flex;}
 }
-/* 카카오맵 스타일 플라이아웃 — 사이드바 아이콘 클릭 시 탭+미리보기(요약), '더보기'는 실제 페이지로 이동 (PC 전용, 실험용 app-design.html) */
-.side-flyout{
-  display:none;position:fixed;top:calc(var(--header-h) + 24px);left:84px;z-index:85;
-  width:300px;max-height:calc(100vh - var(--header-h) - 48px);overflow-y:auto;
-  background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
-  box-shadow:0 16px 40px -14px rgba(20,28,50,.28);padding:14px;
-}
-body.dark .side-flyout{box-shadow:0 16px 40px -14px rgba(0,0,0,.55);}
-.side-flyout.open{display:block;}
+.kmap-panel .sf-tabs{padding:16px 16px 12px;margin:0;border-bottom:1px solid var(--border);flex:none;}
 .sf-tabs{display:flex;gap:6px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);}
 .sf-tab{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;cursor:pointer;color:var(--text-light);}
 .sf-tab .icon{width:18px;height:18px;}
@@ -2449,7 +2448,10 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <!-- 좌측 사이드바 (자동 숨김 — 왼쪽 가장자리 호버 시 노출) -->
 <div class="side-hot"></div>
 <aside class="side-nav" id="sideNav"></aside>
-<div class="side-flyout" id="sideFlyout"></div>
+<aside class="kmap-panel" id="kmapPanel">
+  <div class="sf-tabs" id="kmapTabs"></div>
+  <div class="kmap-body" id="kmapBody"></div>
+</aside>
 
 <main class="main">
 
@@ -4622,6 +4624,7 @@ function nav(page){
   // 홈 제외하고 좌측 사이드바 표시
   document.body.classList.toggle('with-sidenav', page !== 'home');
   renderSideNav(page);
+  renderKmapPanel(page);
   if(page !== 'home') playSideNavEntrance();   // 첫 등장: 화면 중앙 → 좌측 도킹(최초 1회)
 
   if(page === 'ourlib') {
@@ -5893,7 +5896,7 @@ function renderSideNav(activePage){
   if(!el) return;
   el.innerHTML = SIDE_MENU.map(n=>{
     const on = (activePage===n.page) ? ' active' : '';
-    return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideIcon('${n.key}')">
+    return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
       ${ic(n.icon)}
       <div class="side-node-label">${esc(typeof uiT==='function'?uiT(n.label):n.label)}</div>
     </div>`;
@@ -5903,28 +5906,26 @@ function renderSideNav(activePage){
 function onSideMenu(key){
   const item = SIDE_MENU.find(n=>n.key===key);
   if(item) nav(item.page);
-  sfClose();
 }
 
-/* ── 카카오맵식 플라이아웃(실험용): 아이콘 클릭 → 탭+미리보기, '더보기'만 실제 페이지 이동 ── */
-let _sfKey=null;
-function onSideIcon(key){
-  if(!window.matchMedia('(min-width:901px)').matches){ onSideMenu(key); return; }   // 모바일은 기존처럼 바로 이동
-  if(_sfKey===key && document.getElementById('sideFlyout').classList.contains('open')){ sfClose(); return; }
-  _sfKey=key; sfRender(); document.getElementById('sideFlyout').classList.add('open');
+/* ── 카카오맵식 통합 패널(실험용): 탭 눌러도 페이지 이동 없이 미리보기만 바뀜, '자세히 보기'만 실제 페이지로 이동 ── */
+let _kmKey=null;
+function renderKmapPanel(activePage){
+  const tabsEl=document.getElementById('kmapTabs'); if(!tabsEl) return;
+  if(!_kmKey){ const m=SIDE_MENU.find(n=>n.page===activePage); _kmKey = m ? m.key : SIDE_MENU[0].key; }
+  tabsEl.innerHTML = SIDE_MENU.map(n=>`<div class="sf-tab${n.key===_kmKey?' on':''}" onclick="kmSetTab('${n.key}')">${ic(n.icon)}</div>`).join('');
+  kmRenderBody();
 }
-function sfClose(){ _sfKey=null; const el=document.getElementById('sideFlyout'); if(el){ el.classList.remove('open'); el.innerHTML=''; } }
-document.addEventListener('click', e=>{
-  if(!_sfKey) return;
-  if(e.target.closest('#sideFlyout') || e.target.closest('#sideNav')) return;
-  sfClose();
-});
-function sfRender(){
-  const el=document.getElementById('sideFlyout'); if(!el) return;
-  const tabs=SIDE_MENU.map(n=>`<div class="sf-tab${n.key===_sfKey?' on':''}" onclick="event.stopPropagation();_sfKey='${n.key}';sfRender();">${ic(n.icon)}</div>`).join('');
-  const item=SIDE_MENU.find(n=>n.key===_sfKey);
-  el.innerHTML=`<div class="sf-tabs">${tabs}</div><div class="sf-title">${esc(item.label)}</div><div id="sfBody"></div>`;
-  sfRenderBody(_sfKey);
+function kmSetTab(key){
+  _kmKey=key;
+  document.querySelectorAll('#kmapTabs .sf-tab').forEach((el,i)=>el.classList.toggle('on', SIDE_MENU[i].key===key));
+  kmRenderBody();
+}
+function kmRenderBody(){
+  const box=document.getElementById('kmapBody'); if(!box) return;
+  const item=SIDE_MENU.find(n=>n.key===_kmKey);
+  box.innerHTML=`<div class="sf-title">${esc(item.label)}</div><div id="sfBody"></div>`;
+  sfRenderBody(_kmKey);
 }
 function sfMoreBtn(key){ return `<div class="sf-more" onclick="onSideMenu('${key}')">자세히 보기 →</div>`; }
 function sfRenderBody(key){
@@ -5946,7 +5947,7 @@ function sfRenderBody(key){
     box.innerHTML='<div class="sf-empty">불러오는 중…</div>';
     (async()=>{
       if(!_feedItems.length) await Promise.all([loadFeedItems(), loadFeedSocial()]);
-      if(_sfKey!=='feed') return;   // 로딩 중 탭 전환됐으면 무시
+      if(_kmKey!=='feed') return;   // 로딩 중 탭 전환됐으면 무시
       const list=_feedItems.slice(0,3);
       if(!list.length){ box.innerHTML=`<div class="sf-empty">아직 올라온 글이 없어요.</div>`+sfMoreBtn('feed'); return; }
       box.innerHTML=list.map((x,i)=>feedCard(x,i)).join('')+sfMoreBtn('feed');
@@ -5961,13 +5962,13 @@ function sfRenderBody(key){
           _agFetch(`bookstar_student_totals?school_id=eq.${CH_SCHOOL}&order=total_stars.desc&limit=3&select=student_id,total_stars`),
           _agFetch(`bookstar_students?select=id,name,emoji`)
         ]);
-        if(_sfKey!=='leader') return;
+        if(_kmKey!=='leader') return;
         const nameMap={}, emoMap={};
         (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; emoMap[s.id]=s.emoji||''; });
         const rows=(totals||[]);
         if(!rows.length){ box.innerHTML=`<div class="sf-empty">아직 랭킹이 없어요.</div>`+sfMoreBtn('leader'); return; }
         box.innerHTML=rows.map((t,i)=>`<div class="sf-row" onclick="onSideMenu('leader')"><div class="sf-rank">${i+1}</div><div>${emoMap[t.student_id]||'📘'}</div><div><div class="sf-row-t">${esc(nameMap[t.student_id]||'이름 없는 친구')}</div><div class="sf-row-a">⭐ ${(t.total_stars||0).toLocaleString()}</div></div></div>`).join('')+sfMoreBtn('leader');
-      }catch(e){ if(_sfKey==='leader') box.innerHTML=`<div class="sf-empty">불러오지 못했어요.</div>`+sfMoreBtn('leader'); }
+      }catch(e){ if(_kmKey==='leader') box.innerHTML=`<div class="sf-empty">불러오지 못했어요.</div>`+sfMoreBtn('leader'); }
     })();
     return;
   }
@@ -5985,8 +5986,8 @@ function sfDoSearch(q){
     (b.title||'').toLowerCase().includes(q) || (b.author||'').toLowerCase().includes(q)
   ).slice(0,5);
   if(!hits.length){ box.innerHTML='<div class="sf-empty">검색 결과가 없어요.</div>'; return; }
-  box.innerHTML=hits.map(b=>`<div class="sf-row" onclick="event.stopPropagation();sfClose();openDetail('${b.id}')"><div class="sf-row-cv"><img src="${esc(b.coverSrc||'')}" onerror="this.style.display='none'"></div><div><div class="sf-row-t">${esc(b.title)}</div><div class="sf-row-a">${esc(b.author||'')}</div></div></div>`).join('')
-    +`<div class="sf-more" onclick="event.stopPropagation();nav('search');sfClose();">검색 페이지에서 전체 보기 →</div>`;
+  box.innerHTML=hits.map(b=>`<div class="sf-row" onclick="openDetail('${b.id}')"><div class="sf-row-cv"><img src="${esc(b.coverSrc||'')}" onerror="this.style.display='none'"></div><div><div class="sf-row-t">${esc(b.title)}</div><div class="sf-row-a">${esc(b.author||'')}</div></div></div>`).join('')
+    +`<div class="sf-more" onclick="nav('search')">검색 페이지에서 전체 보기 →</div>`;
 }
 
 /* 좌측 네비 — 첫 등장 연출(화면 중앙 → 좌측 제자리로 도킹). 최초 1회만. PC 전용 */
