@@ -2249,6 +2249,8 @@ mark.hl.hl-flash{animation:hlFlash 1.4s ease;}
 @keyframes hwcPulse{0%{box-shadow:0 10px 28px rgba(15,20,35,.42),0 0 0 0 rgba(201,168,106,.45);}70%{box-shadow:0 10px 28px rgba(15,20,35,.42),0 0 0 14px rgba(201,168,106,0);}100%{box-shadow:0 10px 28px rgba(15,20,35,.42),0 0 0 0 rgba(201,168,106,0);}}
 #hwcPanel{position:fixed;right:20px;bottom:24px;z-index:151;width:380px;max-width:calc(100vw - 32px);height:600px;max-height:calc(100vh - 110px);background:var(--bg-card);border:1px solid var(--border);border-radius:20px;box-shadow:0 24px 60px rgba(15,20,35,.32);display:none;flex-direction:column;overflow:hidden;}
 #hwcPanel.on{display:flex;animation:hwcOpen .26s cubic-bezier(.2,.8,.2,1);}
+/* 실험: 검색 탭에서 열면 오른쪽 아래가 아니라 왼쪽 패널과 똑같은 자리·크기에 나타나게 */
+#hwcPanel.hwc-at-nav{top:calc(var(--header-h) + 12px);left:24px;right:auto;bottom:auto;width:300px;max-width:300px;height:auto;max-height:calc(100vh - var(--header-h) - 36px);border-radius:18px;z-index:90;}
 @keyframes hwcOpen{from{opacity:0;transform:translateY(16px) scale(.96);}to{opacity:1;transform:none;}}
 /* 별이 헤더 — 밤하늘(남색+별빛+골드) */
 .hwc-head{display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden;
@@ -5959,6 +5961,7 @@ function renderKmapPanel(activePage){
   kmRenderBody();
 }
 function kmSetTab(key){
+  if(_kmKey==='search' && key!=='search' && typeof closeByeoliAtNav==='function') closeByeoliAtNav();
   _kmKey=key;
   document.querySelectorAll('#kmapTabs .sf-tab').forEach((el,i)=>el.classList.toggle('on', SIDE_MENU[i].key===key));
   kmRenderBody();
@@ -5968,7 +5971,10 @@ function kmToggle(){
   const collapsed = panel.classList.toggle('collapsed');
   btn.classList.toggle('collapsed', collapsed);
   document.body.classList.toggle('kmap-collapsed', collapsed);
-  if(!collapsed) kmSetTab('search');   // 별이(패널 토글)를 누르면 검색 탭으로 바로 진입
+  if(collapsed){
+    const hp=document.getElementById('hwcPanel');
+    if(hp && hp.classList.contains('hwc-at-nav') && hp.classList.contains('on')) hwcToggle();   // 패널 접을 때 별이도 같이 닫기
+  } else kmSetTab('search');   // 별이(패널 토글)를 누르면 검색 탭으로 바로 진입
 }
 // 접기 화살표를 패널 세로 중앙에 붙임 — 패널 높이가 탭마다 다른데 화살표가 화면 중앙(고정)에 있어서 짧은 탭에선 패널 밑에 붕 떠 보이던 것 수정
 function positionKmapToggle(){
@@ -6038,12 +6044,32 @@ function sfRenderBody(key){
     return;
   }
   if(key==='search'){
-    // 실험: 좁은 패널 안에 접어넣지 않고, 별이는 원래처럼 화면 위에 뜨는 채팅창으로 열기(눌러서 갈라진 느낌 대신 한 번에 크게)
-    box.innerHTML=`<div class="sf-empty" style="padding:8px 2px 14px;text-align:left">별이에게 물어보면 기분·상황에 맞는 책을 찾아드려요.</div><div class="sf-more" onclick="hwcToggle()">⭐ 별이 열기</div>`;
-    if(typeof hwcToggle==='function' && !document.getElementById('hwcPanel')?.classList.contains('on')) hwcToggle();
+    // 실험: 별이 채팅창을 접어넣거나 딴 데(오른쪽 아래) 띄우지 않고, 지금 이 패널 자리에 그대로 나타나게(같은 위치·크기)
+    box.innerHTML='';
+    openByeoliAtNav();
     return;
   }
 }
+// 별이 채팅창을 왼쪽 패널과 똑같은 자리·크기로 옮겨서 그 자리에서 열기 (패널은 잠깐 안 보이게)
+function openByeoliAtNav(){
+  const hp=document.getElementById('hwcPanel'), kp=document.getElementById('kmapPanel');
+  if(!hp) return;
+  hp.classList.add('hwc-at-nav');
+  if(kp) kp.style.visibility='hidden';
+  if(typeof hwcToggle==='function' && !hp.classList.contains('on')) hwcToggle();
+}
+function closeByeoliAtNav(){
+  const hp=document.getElementById('hwcPanel'), kp=document.getElementById('kmapPanel');
+  if(hp) hp.classList.remove('hwc-at-nav');
+  if(kp) kp.style.visibility='';
+}
+// 별이를 자기(×버튼)가 닫았을 때도 원래 자리(패널)로 복귀하도록 감시
+(function(){
+  const hp=document.getElementById('hwcPanel'); if(!hp) return;
+  new MutationObserver(()=>{
+    if(hp.classList.contains('hwc-at-nav') && !hp.classList.contains('on')) closeByeoliAtNav();
+  }).observe(hp,{attributes:true,attributeFilter:['class']});
+})();
 
 /* 좌측 네비 — 첫 등장 연출(화면 중앙 → 좌측 제자리로 도킹). 최초 1회만. PC 전용 */
 let _sideNavEntered = false, _sideNavEntering = false;
