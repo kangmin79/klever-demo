@@ -130,7 +130,7 @@ body.dark .gnb-item.active{color:#818cf8;}
 .page{padding:32px 24px;display:none;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 */
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
-#page-mypage{max-width:1000px;}
+#page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
 /* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
 #page-collection{padding-top:64px;}
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
