@@ -173,8 +173,10 @@ body.dark .kmap-toggle{box-shadow:2px 0 10px rgba(0,0,0,.4);}
 .kmap-toggle.collapsed{left:24px;}
 @media (min-width:901px){
   /* padding-left도 헤더 패딩(24px)과 맞춰 컨텐츠 좌측 경계가 헤더와 일직선이 되도록 */
-  body.with-sidenav .main{padding-left:340px;transition:padding-left .22s cubic-bezier(.2,.7,.2,1);}
-  body.with-sidenav.kmap-collapsed .main{padding-left:56px;}
+  /* 패널 오른쪽 끝에서 24px만 띄우고, .page 자체 좌측 패딩은 없애서 우측(24px)과 여백이 같아지게 */
+  body.with-sidenav .main{padding-left:348px;transition:padding-left .22s cubic-bezier(.2,.7,.2,1);}
+  body.with-sidenav.kmap-collapsed .main{padding-left:70px;}
+  body.with-sidenav .page{padding-left:0;}
   .side-nav{display:none !important;}   /* PC는 통합 패널만 사용, 낱개 레일 숨김 */
   body.with-sidenav .kmap-panel{display:flex;}
   body.with-sidenav .kmap-toggle{display:flex;}
