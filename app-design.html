@@ -128,7 +128,7 @@ body.dark .bl-sub{color:var(--gold);}
    3. 메인 컨테이너 + 좌측 사이드바
    ═══════════════════════════════════════════════════════════ */
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
-.page{padding:32px 24px;display:none;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 */
+.page{padding:32px 24px;display:none;container-type:inline-size;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 / container-type: 안쪽 요소들이 전체 화면폭 아닌 실제 콘텐츠 폭 기준으로 반응하게 */
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
 #page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
@@ -1172,7 +1172,8 @@ body.dark .sc-day{background:rgba(255,255,255,.06);}
 /* 실험: 잡지(에디토리얼) 스타일 — 둥근 카드 박스 대신 페이지에 그대로 얹혀 숨쉬는 레이아웃, 타이포로 위계 표현 */
 .shelf-hero{position:relative;background:none;border-radius:0;padding:8px 0 0;overflow:visible;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:36px;}
 .sh-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:48px;align-items:center;}
-@media(max-width:680px){.sh-grid{grid-template-columns:1fr;gap:20px;}.sh-stage{min-height:300px;}}
+/* 실험: 브라우저 전체 폭이 아니라 .page(사이드 패널 뺀 실제 콘텐츠 폭) 기준으로 판단 — 패널이 있는 페이지에서 좁아 보이는데도 2단 유지되던 문제 수정 */
+@container (max-width:680px){.sh-grid{grid-template-columns:1fr;gap:20px;}.sh-stage{min-height:300px;}}
 .sh-kicker{font-size:11.5px;letter-spacing:3.5px;font-weight:800;color:#b8902f;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid rgba(184,144,47,.35);display:inline-block;}
 .sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:700;font-size:52px;line-height:1.08;letter-spacing:-.5px;color:#2a2118;margin:20px 0 10px;}
 body.dark .sh-title{color:#f1ece2;}
