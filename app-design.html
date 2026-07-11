@@ -1169,23 +1169,23 @@ body.dark .sc-day{background:rgba(255,255,255,.06);}
 .sc-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-light);margin-top:10px;}
 .sc-legend .sc-day{width:12px;height:12px;}
 /* 책장 히어로 (3D 세워진 책 + 선반) — 공용 컴포넌트 */
-.shelf-hero{position:relative;background:linear-gradient(135deg,#f5eee2 0%,#ece1cf 100%);border-radius:20px;padding:34px 30px 0;overflow:hidden;margin-bottom:10px;}
-body.dark .shelf-hero{background:linear-gradient(135deg,#1f2740,#161c2c);}
-.sh-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:center;}
-@media(max-width:680px){.sh-grid{grid-template-columns:1fr;}.sh-stage{min-height:300px;}}
-.sh-kicker{font-size:12px;letter-spacing:2.5px;font-weight:800;color:#b8902f;}
-.sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:800;font-size:33px;line-height:1.18;color:#2a2118;margin:8px 0 4px;}
+/* 실험: 잡지(에디토리얼) 스타일 — 둥근 카드 박스 대신 페이지에 그대로 얹혀 숨쉬는 레이아웃, 타이포로 위계 표현 */
+.shelf-hero{position:relative;background:none;border-radius:0;padding:8px 0 0;overflow:visible;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:36px;}
+.sh-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:48px;align-items:center;}
+@media(max-width:680px){.sh-grid{grid-template-columns:1fr;gap:20px;}.sh-stage{min-height:300px;}}
+.sh-kicker{font-size:11.5px;letter-spacing:3.5px;font-weight:800;color:#b8902f;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid rgba(184,144,47,.35);display:inline-block;}
+.sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:700;font-size:52px;line-height:1.08;letter-spacing:-.5px;color:#2a2118;margin:20px 0 10px;}
 body.dark .sh-title{color:#f1ece2;}
-.sh-sub{font-size:14px;color:#7a6b54;margin-bottom:14px;}
+.sh-sub{font-size:14px;color:#7a6b54;margin-bottom:20px;}
 body.dark .sh-sub{color:#b9c2d8;}
-.sh-quote{font-size:13.5px;line-height:1.7;color:#5d5240;max-width:400px;}
+.sh-quote{font-family:Georgia,'Noto Serif KR',serif;font-style:italic;font-size:16.5px;line-height:1.65;color:#5d5240;max-width:440px;}
 body.dark .sh-quote{color:#cdd5e6;}
-.sh-quote span{color:#a08b63;font-weight:700;}
-.sh-meta{display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#8a7a5f;font-weight:700;}
-.sh-btn{margin-top:18px;background:#2a2118;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;}
-.sh-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(42,33,24,.3);}
-body.dark .sh-btn{background:var(--gold,#e8c66a);color:#1a1f33;}
-.sh-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:340px;padding-bottom:32px;}
+.sh-quote span{color:#a08b63;font-weight:700;font-style:normal;}
+.sh-meta{display:flex;gap:16px;margin-top:14px;font-size:12.5px;color:#8a7a5f;font-weight:700;}
+.sh-btn{margin-top:24px;background:none;color:#2a2118;border:0;border-bottom:1.5px solid #2a2118;border-radius:0;padding:0 0 3px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;}
+.sh-btn:hover{opacity:.6;}
+body.dark .sh-btn{color:#f1ece2;border-bottom-color:#f1ece2;}
+.sh-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:360px;padding-bottom:32px;}
 .sh-side{position:absolute;left:6px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:11px;letter-spacing:3px;color:#ad9c7c;font-weight:700;}
 .book3d{position:relative;z-index:2;transform:perspective(1600px) rotateY(-20deg);filter:drop-shadow(16px 22px 22px rgba(50,38,24,.42));cursor:pointer;transition:transform .4s ease;}
 .book3d:hover{transform:perspective(1600px) rotateY(-10deg);}
