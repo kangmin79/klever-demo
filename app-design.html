@@ -154,6 +154,31 @@ body.with-sidenav .side-nav{display:flex;}
   .side-node-label{white-space:nowrap;overflow:hidden;max-height:14px;opacity:1;transition:opacity .15s ease,max-height .15s ease,margin-top .15s ease;}
   .side-nav:not(:hover) .side-node-label{opacity:0;max-height:0;margin-top:0;}
 }
+/* 카카오맵 스타일 플라이아웃 — 사이드바 아이콘 클릭 시 탭+미리보기(요약), '더보기'는 실제 페이지로 이동 (PC 전용, 실험용 app-design.html) */
+.side-flyout{
+  display:none;position:fixed;top:calc(var(--header-h) + 24px);left:84px;z-index:85;
+  width:300px;max-height:calc(100vh - var(--header-h) - 48px);overflow-y:auto;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:16px;
+  box-shadow:0 16px 40px -14px rgba(20,28,50,.28);padding:14px;
+}
+body.dark .side-flyout{box-shadow:0 16px 40px -14px rgba(0,0,0,.55);}
+.side-flyout.open{display:block;}
+.sf-tabs{display:flex;gap:6px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);}
+.sf-tab{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;cursor:pointer;color:var(--text-light);}
+.sf-tab .icon{width:18px;height:18px;}
+.sf-tab.on{background:var(--brand-grad);color:#fff;}
+.sf-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.sf-more{display:block;text-align:center;margin-top:12px;padding:10px;border-radius:10px;background:var(--bg-input);color:var(--primary);font-size:12.5px;font-weight:800;cursor:pointer;}
+body.dark .sf-more{color:var(--gold);}
+.sf-empty{text-align:center;color:var(--text-light);font-size:12.5px;padding:20px 6px;line-height:1.7;}
+.sf-search-inp{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;background:var(--bg-input);color:var(--text);margin-bottom:10px;}
+.sf-row{display:flex;align-items:center;gap:10px;padding:7px 2px;cursor:pointer;border-radius:8px;}
+.sf-row:hover{background:var(--bg-input);}
+.sf-row-cv{width:30px;height:42px;border-radius:4px;overflow:hidden;flex:none;background:var(--bg-input);}
+.sf-row-cv img{width:100%;height:100%;object-fit:cover;}
+.sf-row-t{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.35;}
+.sf-row-a{font-size:11px;color:var(--text-light);}
+.sf-rank{width:20px;text-align:center;font-size:12px;font-weight:800;color:var(--text-light);flex:none;}
 .side-node{
   background:var(--bg-card);border:none;
   border-radius:18px;padding:13px 6px;text-align:center;cursor:pointer;
@@ -2424,6 +2449,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <!-- 좌측 사이드바 (자동 숨김 — 왼쪽 가장자리 호버 시 노출) -->
 <div class="side-hot"></div>
 <aside class="side-nav" id="sideNav"></aside>
+<div class="side-flyout" id="sideFlyout"></div>
 
 <main class="main">
 
@@ -5867,7 +5893,7 @@ function renderSideNav(activePage){
   if(!el) return;
   el.innerHTML = SIDE_MENU.map(n=>{
     const on = (activePage===n.page) ? ' active' : '';
-    return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
+    return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideIcon('${n.key}')">
       ${ic(n.icon)}
       <div class="side-node-label">${esc(typeof uiT==='function'?uiT(n.label):n.label)}</div>
     </div>`;
@@ -5877,6 +5903,90 @@ function renderSideNav(activePage){
 function onSideMenu(key){
   const item = SIDE_MENU.find(n=>n.key===key);
   if(item) nav(item.page);
+  sfClose();
+}
+
+/* ── 카카오맵식 플라이아웃(실험용): 아이콘 클릭 → 탭+미리보기, '더보기'만 실제 페이지 이동 ── */
+let _sfKey=null;
+function onSideIcon(key){
+  if(!window.matchMedia('(min-width:901px)').matches){ onSideMenu(key); return; }   // 모바일은 기존처럼 바로 이동
+  if(_sfKey===key && document.getElementById('sideFlyout').classList.contains('open')){ sfClose(); return; }
+  _sfKey=key; sfRender(); document.getElementById('sideFlyout').classList.add('open');
+}
+function sfClose(){ _sfKey=null; const el=document.getElementById('sideFlyout'); if(el){ el.classList.remove('open'); el.innerHTML=''; } }
+document.addEventListener('click', e=>{
+  if(!_sfKey) return;
+  if(e.target.closest('#sideFlyout') || e.target.closest('#sideNav')) return;
+  sfClose();
+});
+function sfRender(){
+  const el=document.getElementById('sideFlyout'); if(!el) return;
+  const tabs=SIDE_MENU.map(n=>`<div class="sf-tab${n.key===_sfKey?' on':''}" onclick="event.stopPropagation();_sfKey='${n.key}';sfRender();">${ic(n.icon)}</div>`).join('');
+  const item=SIDE_MENU.find(n=>n.key===_sfKey);
+  el.innerHTML=`<div class="sf-tabs">${tabs}</div><div class="sf-title">${esc(item.label)}</div><div id="sfBody"></div>`;
+  sfRenderBody(_sfKey);
+}
+function sfMoreBtn(key){ return `<div class="sf-more" onclick="onSideMenu('${key}')">자세히 보기 →</div>`; }
+function sfRenderBody(key){
+  const box=document.getElementById('sfBody'); if(!box) return;
+  if(key==='shelf'){
+    const a=(typeof shelfLoad==='function')?shelfLoad():[];
+    const reading=a.filter(x=>x.status!=='done' && !x.returned).slice(0,4);
+    if(!reading.length){ box.innerHTML=`<div class="sf-empty">아직 읽는 중인 책이 없어요.<br>우리 도서관에서 책을 빌리면 여기 쌓여요.</div>`+sfMoreBtn('shelf'); return; }
+    box.innerHTML=reading.map(x=>`<div class="sf-row" onclick="onSideMenu('shelf')"><div class="sf-row-cv">${x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:'📖'}</div><div><div class="sf-row-t">${esc(cleanT(x.t))}</div><div class="sf-row-a">${esc(x.a||'')}</div></div></div>`).join('')+sfMoreBtn('shelf');
+    return;
+  }
+  if(key==='mychal'){
+    const a=(typeof shelfLoad==='function')?shelfLoad():[];
+    const done=a.filter(x=>x.status==='done').length;
+    box.innerHTML=`<div class="sf-empty" style="padding:8px 2px 14px;text-align:left">지금까지 완독 <b style="color:var(--gold)">${done}권</b>. 오늘의 챌린지에서 이어서 읽어보세요.</div>`+sfMoreBtn('mychal');
+    return;
+  }
+  if(key==='feed'){
+    box.innerHTML='<div class="sf-empty">불러오는 중…</div>';
+    (async()=>{
+      if(!_feedItems.length) await Promise.all([loadFeedItems(), loadFeedSocial()]);
+      if(_sfKey!=='feed') return;   // 로딩 중 탭 전환됐으면 무시
+      const list=_feedItems.slice(0,3);
+      if(!list.length){ box.innerHTML=`<div class="sf-empty">아직 올라온 글이 없어요.</div>`+sfMoreBtn('feed'); return; }
+      box.innerHTML=list.map((x,i)=>feedCard(x,i)).join('')+sfMoreBtn('feed');
+    })();
+    return;
+  }
+  if(key==='leader'){
+    box.innerHTML='<div class="sf-empty">불러오는 중…</div>';
+    (async()=>{
+      try{
+        const [totals, students] = await Promise.all([
+          _agFetch(`bookstar_student_totals?school_id=eq.${CH_SCHOOL}&order=total_stars.desc&limit=3&select=student_id,total_stars`),
+          _agFetch(`bookstar_students?select=id,name,emoji`)
+        ]);
+        if(_sfKey!=='leader') return;
+        const nameMap={}, emoMap={};
+        (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; emoMap[s.id]=s.emoji||''; });
+        const rows=(totals||[]);
+        if(!rows.length){ box.innerHTML=`<div class="sf-empty">아직 랭킹이 없어요.</div>`+sfMoreBtn('leader'); return; }
+        box.innerHTML=rows.map((t,i)=>`<div class="sf-row" onclick="onSideMenu('leader')"><div class="sf-rank">${i+1}</div><div>${emoMap[t.student_id]||'📘'}</div><div><div class="sf-row-t">${esc(nameMap[t.student_id]||'이름 없는 친구')}</div><div class="sf-row-a">⭐ ${(t.total_stars||0).toLocaleString()}</div></div></div>`).join('')+sfMoreBtn('leader');
+      }catch(e){ if(_sfKey==='leader') box.innerHTML=`<div class="sf-empty">불러오지 못했어요.</div>`+sfMoreBtn('leader'); }
+    })();
+    return;
+  }
+  if(key==='search'){
+    box.innerHTML=`<input class="sf-search-inp" id="sfSearchInp" placeholder="책 제목·작가로 찾기…" oninput="sfDoSearch(this.value)" onclick="event.stopPropagation()"><div id="sfSearchResults"></div>`;
+    setTimeout(()=>{ const i=document.getElementById('sfSearchInp'); if(i) i.focus(); }, 0);
+    return;
+  }
+}
+function sfDoSearch(q){
+  const box=document.getElementById('sfSearchResults'); if(!box) return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){ box.innerHTML=''; return; }
+  const hits=(typeof BOOKS!=='undefined'?BOOKS:[]).filter(b=>
+    (b.title||'').toLowerCase().includes(q) || (b.author||'').toLowerCase().includes(q)
+  ).slice(0,5);
+  if(!hits.length){ box.innerHTML='<div class="sf-empty">검색 결과가 없어요.</div>'; return; }
+  box.innerHTML=hits.map(b=>`<div class="sf-row" onclick="event.stopPropagation();sfClose();openDetail('${b.id}')"><div class="sf-row-cv"><img src="${esc(b.coverSrc||'')}" onerror="this.style.display='none'"></div><div><div class="sf-row-t">${esc(b.title)}</div><div class="sf-row-a">${esc(b.author||'')}</div></div></div>`).join('')
+    +`<div class="sf-more" onclick="event.stopPropagation();nav('search');sfClose();">검색 페이지에서 전체 보기 →</div>`;
 }
 
 /* 좌측 네비 — 첫 등장 연출(화면 중앙 → 좌측 제자리로 도킹). 최초 1회만. PC 전용 */
