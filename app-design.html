@@ -5974,6 +5974,18 @@ function kmToggle(){
   btn.textContent = collapsed ? '▶' : '◀';
   document.body.classList.toggle('kmap-collapsed', collapsed);
 }
+// 접기 화살표를 패널 세로 중앙에 붙임 — 패널 높이가 탭마다 다른데 화살표가 화면 중앙(고정)에 있어서 짧은 탭에선 패널 밑에 붕 떠 보이던 것 수정
+function positionKmapToggle(){
+  const panel=document.getElementById('kmapPanel'), btn=document.getElementById('kmapToggle');
+  if(!panel||!btn) return;
+  const r=panel.getBoundingClientRect();
+  if(!r.height) return;
+  btn.style.top=Math.round(r.top+r.height/2)+'px';
+}
+let _posKmT=null;
+function _posKmSoon(){ clearTimeout(_posKmT); _posKmT=setTimeout(positionKmapToggle, 60); }
+window.addEventListener('resize', _posKmSoon);
+(function(){ const kb=document.getElementById('kmapBody'); if(kb) new MutationObserver(_posKmSoon).observe(kb,{childList:true,subtree:true}); })();
 function kmRenderBody(){
   const box=document.getElementById('kmapBody'); if(!box) return;
   const item=SIDE_MENU.find(n=>n.key===_kmKey);
