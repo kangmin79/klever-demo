@@ -183,12 +183,17 @@ body.dark .kmap-toggle{box-shadow:2px 0 10px rgba(0,0,0,.4);}
 .sf-tabs{display:flex;gap:6px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);}
 .sf-tab{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 0;border-radius:10px;cursor:pointer;color:var(--text-light);}
 .sf-tab .icon{width:18px;height:18px;}
-.sf-tab.on{background:var(--brand-grad);color:#fff;}
+.sf-tab.on{background:var(--gold);color:#1a1208;}
 .sf-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;}
 .sf-more{display:block;text-align:center;margin-top:12px;padding:10px;border-radius:10px;background:var(--bg-input);color:var(--primary);font-size:12.5px;font-weight:800;cursor:pointer;}
 body.dark .sf-more{color:var(--gold);}
 .sf-empty{text-align:center;color:var(--text-light);font-size:12.5px;padding:20px 6px;line-height:1.7;}
-.sf-search-inp{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:13px;background:var(--bg-input);color:var(--text);margin-bottom:10px;}
+.sf-search-wrap{position:relative;margin-bottom:6px;}
+.sf-search-wrap .icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-light);pointer-events:none;}
+.sf-search-inp{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:9px 12px 9px 36px;font-size:13px;background:var(--bg-input);color:var(--text);outline:none;transition:box-shadow .15s,border-color .15s;}
+.sf-search-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,169,59,.18);}
+.sf-search-hint{text-align:center;color:var(--text-light);font-size:12px;padding:32px 10px;line-height:1.7;}
+.sf-search-hint .icon{width:26px;height:26px;color:var(--border);margin-bottom:8px;}
 .sf-row{display:flex;align-items:center;gap:10px;padding:7px 2px;cursor:pointer;border-radius:8px;}
 .sf-row:hover{background:var(--bg-input);}
 .sf-row-cv{width:30px;height:42px;border-radius:4px;overflow:hidden;flex:none;background:var(--bg-input);}
@@ -6002,15 +6007,16 @@ function sfRenderBody(key){
     return;
   }
   if(key==='search'){
-    box.innerHTML=`<input class="sf-search-inp" id="sfSearchInp" placeholder="책 제목·작가로 찾기…" oninput="sfDoSearch(this.value)" onclick="event.stopPropagation()"><div id="sfSearchResults"></div>`;
+    box.innerHTML=`<div class="sf-search-wrap">${ic('search')}<input class="sf-search-inp" id="sfSearchInp" placeholder="책 제목·작가로 찾기…" oninput="sfDoSearch(this.value)" onclick="event.stopPropagation()"></div><div id="sfSearchResults">${sfSearchHint()}</div>`;
     setTimeout(()=>{ const i=document.getElementById('sfSearchInp'); if(i) i.focus(); }, 0);
     return;
   }
 }
+function sfSearchHint(){ return `<div class="sf-search-hint">${ic('search')}<br>책 제목이나 작가 이름을 입력해보세요</div>`; }
 function sfDoSearch(q){
   const box=document.getElementById('sfSearchResults'); if(!box) return;
   q=(q||'').trim().toLowerCase();
-  if(!q){ box.innerHTML=''; return; }
+  if(!q){ box.innerHTML=sfSearchHint(); return; }
   const hits=(typeof BOOKS!=='undefined'?BOOKS:[]).filter(b=>
     (b.title||'').toLowerCase().includes(q) || (b.author||'').toLowerCase().includes(q)
   ).slice(0,5);
