@@ -99,11 +99,10 @@ body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
 .gnb{display:flex;gap:6px;flex:1;align-items:center;margin-left:16px;}
 .gnb-item{position:relative;display:flex;align-items:center;padding:7px 13px 9px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.3px;}
-.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:3px;border-radius:3px;background:var(--brand-grad);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
+.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
 .gnb-item:hover{color:var(--text);}
 .gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
-.gnb-item.active{color:#4f46e5;font-weight:700;}
-body.dark .gnb-item.active{color:#818cf8;}
+.gnb-item.active{color:var(--text);font-weight:700;}
 .gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
@@ -113,24 +112,26 @@ body.dark .gnb-item.active{color:#818cf8;}
 .gnb-mi small{display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-top:2px;letter-spacing:.04em;}
 .gnb-mi:hover{background:var(--bg-input);}
 /* 우측 컨트롤 — 동일 높이(32px)·동일 라운드·아웃라인으로 통일, 골드 악센트 */
-.hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:border-color .15s,color .15s;}
-.hdr-ctl:hover{border-color:var(--gold);color:var(--text);}
-.school-tag{height:32px;padding:0 13px;border-radius:9px;background:transparent;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;}
+/* 실험: 오른쪽 유틸 버튼들 테두리 상자를 없애고 평범한 텍스트/아이콘으로 — 호버할 때만 은은하게 배경 표시 */
+.hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:background .15s,color .15s;}
+.hdr-ctl:hover{background:var(--bg-input);color:var(--text);}
+.school-tag{height:32px;padding:0 10px;border-radius:8px;background:transparent;border:none;font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;transition:background .15s;}
+.school-tag:hover{background:var(--bg-input);}
 .school-tag .icon{width:14px;height:14px;color:var(--gold);}
-.lang-select{height:32px;padding:0 10px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:border-color .15s;}
-.lang-select:hover{border-color:var(--gold);}
-.btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-sub);cursor:pointer;transition:border-color .15s,color .15s;}
-.btn-theme:hover{border-color:var(--gold);color:var(--gold);}
-.hdr-div{width:1px;height:20px;background:var(--border);margin:0 2px;}
+.lang-select{height:32px;padding:0 8px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .15s;}
+.lang-select:hover{background:var(--bg-input);}
+.btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:8px;border:none;background:transparent;color:var(--text-sub);cursor:pointer;transition:background .15s,color .15s;}
+.btn-theme:hover{background:var(--bg-input);color:var(--gold);}
+.hdr-div{width:1px;height:18px;background:var(--border);margin:0 4px;}
 
 /* ═══════════════════════════════════════════════════════════
    3. 메인 컨테이너 + 좌측 사이드바
    ═══════════════════════════════════════════════════════════ */
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
-.page{max-width:1280px;margin:0 auto;padding:32px 24px;display:none;}
+.page{padding:32px 24px;display:none;container-type:inline-size;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 / container-type: 안쪽 요소들이 전체 화면폭 아닌 실제 콘텐츠 폭 기준으로 반응하게 */
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
-#page-mypage{max-width:1000px;}
+#page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
 /* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
 #page-collection{padding-top:64px;}
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
@@ -200,8 +201,7 @@ body.dark .side-node .icon{color:var(--gold);}
 .lc-star{color:var(--gold);font-weight:800;}
 .ml{display:flex;flex-direction:column;gap:42px;padding-bottom:20px;}
 .ml-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
-.ml-h-t{font-size:20px;font-weight:800;letter-spacing:-.6px;color:var(--primary);}
-body.dark .ml-h-t{color:var(--gold);}
+.ml-h-t{font-family:Georgia,'Noto Serif KR',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);}
 .ml-h-s{font-size:13px;color:var(--text-light);margin-top:5px;}
 .ml-h-x{font-size:22px;color:var(--text-light);cursor:pointer;line-height:1;padding-top:2px;}
 .ml [class$="-cv"]{position:relative;overflow:hidden;border-radius:7px;box-shadow:0 9px 20px -8px rgba(20,20,45,.32);background:var(--bg-input);transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
@@ -245,7 +245,7 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;cursor:grab;user-select:none;}
 .ml-hrow.grabbing{cursor:grabbing;}
 .ml-hrow::-webkit-scrollbar{display:none;}
-.ml-car{position:relative;}
+.ml-car{position:relative;}   /* 폭은 JS(fitMlCars)가 카드 개수에 딱 맞게 잘라서 지정 — 마지막 책이 반쯤 잘려 보이지 않게 */
 .ml-arrow{position:absolute;top:42%;transform:translateY(-50%);z-index:6;width:42px;height:42px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);box-shadow:0 6px 20px rgba(20,20,45,.2);font-size:22px;line-height:1;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s,transform .12s;}
 .ml-car:hover .ml-arrow{opacity:.96;}
 .ml-arrow:hover{transform:translateY(-50%) scale(1.08);}
@@ -890,15 +890,13 @@ body.dark .stat-num{color:var(--gold);}
 .lb-wrap{display:flex;flex-direction:column;gap:8px;}
 /* 내 순위 카드 */
 .lb-me-card{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:16px;margin-bottom:18px;background:linear-gradient(135deg,var(--primary-bg),transparent);border:1.5px solid var(--primary);}
-.lb-me-av{width:46px;height:46px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.06);}
 .lb-me-main{flex:1;min-width:0;}
 .lb-me-top{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .lb-me-sub{font-size:12px;color:var(--text-sub);margin-top:4px;}
 .lb-me-rank{text-align:right;flex-shrink:0;}
 .lb-me-rk{font-size:22px;font-weight:900;color:var(--primary);line-height:1;}
 .lb-me-rkk{font-size:11px;color:var(--text-light);margin-top:5px;}
-/* 행 내부 (아바타 + 이름/등급 + 측정 보조) */
-.lb-av{width:38px;height:38px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+/* 행 내부 (이름/등급 + 측정 보조) */
 .lb-id{flex:1;min-width:0;}
 .lb-name2{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lb-grade{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap;}
@@ -1122,23 +1120,24 @@ body.dark .sc-day{background:rgba(255,255,255,.06);}
 .sc-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-light);margin-top:10px;}
 .sc-legend .sc-day{width:12px;height:12px;}
 /* 책장 히어로 (3D 세워진 책 + 선반) — 공용 컴포넌트 */
-.shelf-hero{position:relative;background:linear-gradient(135deg,#f5eee2 0%,#ece1cf 100%);border-radius:20px;padding:34px 30px 0;overflow:hidden;margin-bottom:10px;}
-body.dark .shelf-hero{background:linear-gradient(135deg,#1f2740,#161c2c);}
-.sh-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;align-items:center;}
-@media(max-width:680px){.sh-grid{grid-template-columns:1fr;}.sh-stage{min-height:300px;}}
-.sh-kicker{font-size:12px;letter-spacing:2.5px;font-weight:800;color:#b8902f;}
-.sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:800;font-size:33px;line-height:1.18;color:#2a2118;margin:8px 0 4px;}
+/* 실험: 잡지(에디토리얼) 스타일 — 둥근 카드 박스 대신 페이지에 그대로 얹혀 숨쉬는 레이아웃, 타이포로 위계 표현 */
+.shelf-hero{position:relative;background:none;border-radius:0;padding:8px 0 0;overflow:visible;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:36px;}
+.sh-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:48px;align-items:center;}
+/* 실험: 브라우저 전체 폭이 아니라 .page(사이드 패널 뺀 실제 콘텐츠 폭) 기준으로 판단 — 패널이 있는 페이지에서 좁아 보이는데도 2단 유지되던 문제 수정 */
+@container (max-width:680px){.sh-grid{grid-template-columns:1fr;gap:20px;}.sh-stage{min-height:300px;}}
+.sh-kicker{font-size:11.5px;letter-spacing:3.5px;font-weight:800;color:#b8902f;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid rgba(184,144,47,.35);display:inline-block;}
+.sh-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:700;font-size:52px;line-height:1.08;letter-spacing:-.5px;color:#2a2118;margin:20px 0 10px;}
 body.dark .sh-title{color:#f1ece2;}
-.sh-sub{font-size:14px;color:#7a6b54;margin-bottom:14px;}
+.sh-sub{font-size:14px;color:#7a6b54;margin-bottom:20px;}
 body.dark .sh-sub{color:#b9c2d8;}
-.sh-quote{font-size:13.5px;line-height:1.7;color:#5d5240;max-width:400px;}
+.sh-quote{font-family:Georgia,'Noto Serif KR',serif;font-style:italic;font-size:16.5px;line-height:1.65;color:#5d5240;max-width:440px;}
 body.dark .sh-quote{color:#cdd5e6;}
-.sh-quote span{color:#a08b63;font-weight:700;}
-.sh-meta{display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#8a7a5f;font-weight:700;}
-.sh-btn{margin-top:18px;background:#2a2118;color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;}
-.sh-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(42,33,24,.3);}
-body.dark .sh-btn{background:var(--gold,#e8c66a);color:#1a1f33;}
-.sh-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:340px;padding-bottom:32px;}
+.sh-quote span{color:#a08b63;font-weight:700;font-style:normal;}
+.sh-meta{display:flex;gap:16px;margin-top:14px;font-size:12.5px;color:#8a7a5f;font-weight:700;}
+.sh-btn{margin-top:24px;background:none;color:#2a2118;border:0;border-bottom:1.5px solid #2a2118;border-radius:0;padding:0 0 3px;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;}
+.sh-btn:hover{opacity:.6;}
+body.dark .sh-btn{color:#f1ece2;border-bottom-color:#f1ece2;}
+.sh-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:360px;padding-bottom:32px;}
 .sh-side{position:absolute;left:6px;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:11px;letter-spacing:3px;color:#ad9c7c;font-weight:700;}
 .book3d{position:relative;z-index:2;transform:perspective(1600px) rotateY(-20deg);filter:drop-shadow(16px 22px 22px rgba(50,38,24,.42));cursor:pointer;transition:transform .4s ease;}
 .book3d:hover{transform:perspective(1600px) rotateY(-10deg);}
@@ -2283,7 +2282,7 @@ body.dark .hwc-loan{color:#c5a85e;}body.dark .hwc-loan b{color:#d9bd72;}
 .ml-bn-h{font-size:19px;font-weight:800;line-height:1.4;margin:8px 0 6px;}
 .ml-bn-a{font-size:12.5px;opacity:.9;}
 .ml-nw{width:104px;flex:0 0 104px;position:relative;cursor:pointer;}
-.ml-nw-b{position:absolute;top:7px;right:7px;z-index:2;background:var(--gold);color:#1a1208;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px;}
+.ml-nw-b{position:absolute;top:9px;right:9px;z-index:2;color:#fff;font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-shadow:0 1px 3px rgba(0,0,0,.6);}   /* 실험: 골드 배지 대신 코너에 작은 라벨 텍스트만(잡지 캡션 느낌) */
 .ml-nw-cv{width:104px;height:150px;border-radius:7px;overflow:hidden;background:var(--bg-input);margin-bottom:7px;box-shadow:0 6px 16px rgba(20,28,50,.16);}
 .ml-nw-cv img{width:100%;height:100%;object-fit:cover;transition:transform .3s cubic-bezier(.2,.7,.2,1);}
 .ml-nw-cv{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s;}
@@ -5123,6 +5122,23 @@ function mlcv(cls,b){return `<div class="${cls}"${_gbCover(b)?'':` style="backgr
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
+// 캐러셀 폭을 카드 개수 딱 맞게(마지막 책이 반쯤 잘려 보이지 않게) — 카드폭·간격은 실측(줄마다 다름: 130px/150px 등)
+function fitMlCars(){
+  document.querySelectorAll('.ml-car').forEach(el=>{
+    const hrow=el.querySelector('.ml-hrow'); if(!hrow||!hrow.children.length) return;
+    const parent=el.parentElement; if(!parent) return;
+    const avail=parent.clientWidth; if(!avail) return;
+    const cardW=hrow.children[0].getBoundingClientRect().width; if(!cardW) return;
+    const gap=parseFloat(getComputedStyle(hrow).columnGap)||18;
+    const n=Math.max(1, Math.floor((avail+gap)/(cardW+gap)));
+    el.style.width=Math.min(n*cardW+(n-1)*gap, avail)+'px';
+  });
+}
+let _fitMlT=null;
+function _fitMlSoon(){ clearTimeout(_fitMlT); _fitMlT=setTimeout(fitMlCars, 80); }
+window.addEventListener('resize', _fitMlSoon);
+new MutationObserver(_fitMlSoon).observe(document.body, {childList:true, subtree:true});
+document.querySelector('.main')?.addEventListener('transitionend', e=>{ if(e.propertyName==='padding-left') _fitMlSoon(); });
 // ── 캐러셀 드래그 스크롤 (클릭 안전 + 누수 없음) ──
 // setPointerCapture 미사용(click 타깃이 row로 바뀌어 카드 onclick이 안 불림).
 // move/up은 document에 단 1회만 바인딩 → 캐러셀 밖에서 떼도 down이 안 끼고,
@@ -8655,28 +8671,24 @@ function _lbEmpty(){
 function _lbMeCard(me, meId, ranked, meIdx, nameMap, emoMap, doneMap, weekMap){
   if(!me){
     return `<div class="lb-me-card" style="border-style:dashed;cursor:pointer" onclick="bxOpenPicker()">
-      <div class="lb-me-av">👤</div>
       <div class="lb-me-main"><div class="lb-me-top">내 순위 보기</div>
         <div class="lb-me-sub">계정을 선택하면 내 순위가 여기에 표시돼요.</div></div>
       <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:14px">선택 →</div></div></div>`;
   }
-  const emo=emoMap[meId]||me.emoji||'📘';
   const nm=nameMap[meId]||me.name||'나';
   const done=doneMap[meId]||0, week=weekMap[meId]||0;
   if(meIdx<0){     // 계정은 있으나 아직 별 0 → 랭킹 미진입
-    const g=gradeOf(0), gE=GRADE_EMO[g]||'⭐';
+    const g=gradeOf(0);
     return `<div class="lb-me-card">
-      <div class="lb-me-av">${emo}</div>
-      <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${gE} ${esc(g)}</span></div>
-        <div class="lb-me-sub">아직 별을 모으는 중 · 📖 완독 ${done}권 · ⏱ 이번 주 ${_lbMin(week)}</div></div>
+      <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${esc(g)}</span></div>
+        <div class="lb-me-sub">아직 별을 모으는 중 · 완독 ${done}권 · 이번 주 ${_lbMin(week)}</div></div>
       <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:15px">— 위</div><div class="lb-me-rkk">별을 모으면 등장!</div></div></div>`;
   }
-  const t=ranked[meIdx], grade=t.grade||gradeOf(t.total_stars), gE=GRADE_EMO[grade]||'⭐';
+  const t=ranked[meIdx], grade=t.grade||gradeOf(t.total_stars);
   return `<div class="lb-me-card">
-    <div class="lb-me-av">${emo}</div>
-    <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${gE} ${esc(grade)}</span></div>
-      <div class="lb-me-sub">📖 완독 ${done}권 · ⏱ 이번 주 ${_lbMin(week)}</div></div>
-    <div class="lb-me-rank"><div class="lb-me-rk">${meIdx+1}위</div><div class="lb-me-rkk">/ ${ranked.length}명 · ⭐${(t.total_stars||0).toLocaleString()}</div></div></div>`;
+    <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${esc(grade)}</span></div>
+      <div class="lb-me-sub">완독 ${done}권 · 이번 주 ${_lbMin(week)}</div></div>
+    <div class="lb-me-rank"><div class="lb-me-rk">${meIdx+1}위</div><div class="lb-me-rkk">/ ${ranked.length}명 · ${(t.total_stars||0).toLocaleString()}⭐</div></div></div>`;
 }
 async function renderLeaderList(){
   const el = document.getElementById('leaderboardBody');
@@ -8705,16 +8717,15 @@ async function renderLeaderList(){
 
   const rows = ranked.map((t,i)=>{
     const rank=i+1, sid=t.student_id;
-    const nm=nameMap[sid]||'이름 없는 친구', emo=emoMap[sid]||'📘';
-    const grade=t.grade||gradeOf(t.total_stars), gEmo=GRADE_EMO[grade]||'⭐';
+    const nm=nameMap[sid]||'이름 없는 친구';
+    const grade=t.grade||gradeOf(t.total_stars);
     const done=doneMap[sid]||0, week=weekMap[sid]||0;
     const topCls = rank<=3 ? `top${rank}` : '', meCls = sid===meId ? 'me' : '';
     return `<div class="leader-row ${topCls} ${meCls}">
       <div class="leader-rank">${rank}</div>
-      <div class="lb-av">${emo}</div>
       <div class="lb-id">
-        <div class="lb-name2">${esc(nm)} <span class="lb-grade">${gEmo} ${esc(grade)}</span></div>
-        <div class="lb-meas"><span>📖 완독 ${done}권</span><span>⏱ 이번 주 ${_lbMin(week)}</span></div>
+        <div class="lb-name2">${esc(nm)} <span class="lb-grade">${esc(grade)}</span></div>
+        <div class="lb-meas"><span>완독 ${done}권</span><span>이번 주 ${_lbMin(week)}</span></div>
       </div>
       <div class="leader-score">${(t.total_stars||0).toLocaleString()}<span class="lb-unit">⭐</span></div>
     </div>`;
