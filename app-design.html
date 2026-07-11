@@ -294,11 +294,7 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-hrow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none;cursor:grab;user-select:none;}
 .ml-hrow.grabbing{cursor:grabbing;}
 .ml-hrow::-webkit-scrollbar{display:none;}
-.ml-car{position:relative;}
-/* 오른쪽/왼쪽 끝 책이 딱 잘려 보이지 않도록 배경색으로 살짝 페이드 처리 (화살표도 이 위에 뜸) */
-.ml-car::before,.ml-car::after{content:'';position:absolute;top:0;bottom:8px;width:64px;z-index:5;pointer-events:none;}
-.ml-car::before{left:0;background:linear-gradient(90deg,var(--bg),transparent);}
-.ml-car::after{right:0;background:linear-gradient(270deg,var(--bg),transparent);}
+.ml-car{position:relative;}   /* 폭은 JS(fitMlCars)가 카드 개수에 딱 맞게 잘라서 지정 — 마지막 책이 반쯤 잘려 보이지 않게 */
 .ml-arrow{position:absolute;top:42%;transform:translateY(-50%);z-index:6;width:42px;height:42px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);box-shadow:0 6px 20px rgba(20,20,45,.2);font-size:22px;line-height:1;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .18s,transform .12s;}
 .ml-car:hover .ml-arrow{opacity:.96;}
 .ml-arrow:hover{transform:translateY(-50%) scale(1.08);}
@@ -5180,6 +5176,23 @@ function mlcv(cls,b){return `<div class="${cls}"${_gbCover(b)?'':` style="backgr
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
+// 캐러셀 폭을 카드 개수 딱 맞게(마지막 책이 반쯤 잘려 보이지 않게) — 카드폭·간격은 실측(줄마다 다름: 130px/150px 등)
+function fitMlCars(){
+  document.querySelectorAll('.ml-car').forEach(el=>{
+    const hrow=el.querySelector('.ml-hrow'); if(!hrow||!hrow.children.length) return;
+    const parent=el.parentElement; if(!parent) return;
+    const avail=parent.clientWidth; if(!avail) return;
+    const cardW=hrow.children[0].getBoundingClientRect().width; if(!cardW) return;
+    const gap=parseFloat(getComputedStyle(hrow).columnGap)||18;
+    const n=Math.max(1, Math.floor((avail+gap)/(cardW+gap)));
+    el.style.width=Math.min(n*cardW+(n-1)*gap, avail)+'px';
+  });
+}
+let _fitMlT=null;
+function _fitMlSoon(){ clearTimeout(_fitMlT); _fitMlT=setTimeout(fitMlCars, 80); }
+window.addEventListener('resize', _fitMlSoon);
+new MutationObserver(_fitMlSoon).observe(document.body, {childList:true, subtree:true});
+document.querySelector('.main')?.addEventListener('transitionend', e=>{ if(e.propertyName==='padding-left') _fitMlSoon(); });
 // ── 캐러셀 드래그 스크롤 (클릭 안전 + 누수 없음) ──
 // setPointerCapture 미사용(click 타깃이 row로 바뀌어 카드 onclick이 안 불림).
 // move/up은 document에 단 1회만 바인딩 → 캐러셀 밖에서 떼도 down이 안 끼고,
