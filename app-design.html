@@ -99,11 +99,10 @@ body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
 .gnb{display:flex;gap:6px;flex:1;align-items:center;margin-left:16px;}
 .gnb-item{position:relative;display:flex;align-items:center;padding:7px 13px 9px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.3px;}
-.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:3px;border-radius:3px;background:var(--brand-grad);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
+.gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
 .gnb-item:hover{color:var(--text);}
 .gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
-.gnb-item.active{color:#4f46e5;font-weight:700;}
-body.dark .gnb-item.active{color:#818cf8;}
+.gnb-item.active{color:var(--text);font-weight:700;}
 .gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
@@ -113,15 +112,17 @@ body.dark .gnb-item.active{color:#818cf8;}
 .gnb-mi small{display:block;font-size:10px;font-weight:600;color:var(--text-light);margin-top:2px;letter-spacing:.04em;}
 .gnb-mi:hover{background:var(--bg-input);}
 /* 우측 컨트롤 — 동일 높이(32px)·동일 라운드·아웃라인으로 통일, 골드 악센트 */
-.hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:border-color .15s,color .15s;}
-.hdr-ctl:hover{border-color:var(--gold);color:var(--text);}
-.school-tag{height:32px;padding:0 13px;border-radius:9px;background:transparent;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;}
+/* 실험: 오른쪽 유틸 버튼들 테두리 상자를 없애고 평범한 텍스트/아이콘으로 — 호버할 때만 은은하게 배경 표시 */
+.hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:background .15s,color .15s;}
+.hdr-ctl:hover{background:var(--bg-input);color:var(--text);}
+.school-tag{height:32px;padding:0 10px;border-radius:8px;background:transparent;border:none;font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;transition:background .15s;}
+.school-tag:hover{background:var(--bg-input);}
 .school-tag .icon{width:14px;height:14px;color:var(--gold);}
-.lang-select{height:32px;padding:0 10px;border-radius:9px;border:1px solid var(--border);background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:border-color .15s;}
-.lang-select:hover{border-color:var(--gold);}
-.btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-sub);cursor:pointer;transition:border-color .15s,color .15s;}
-.btn-theme:hover{border-color:var(--gold);color:var(--gold);}
-.hdr-div{width:1px;height:20px;background:var(--border);margin:0 2px;}
+.lang-select{height:32px;padding:0 8px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .15s;}
+.lang-select:hover{background:var(--bg-input);}
+.btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:8px;border:none;background:transparent;color:var(--text-sub);cursor:pointer;transition:background .15s,color .15s;}
+.btn-theme:hover{background:var(--bg-input);color:var(--gold);}
+.hdr-div{width:1px;height:18px;background:var(--border);margin:0 4px;}
 
 /* ═══════════════════════════════════════════════════════════
    3. 메인 컨테이너 + 좌측 사이드바
