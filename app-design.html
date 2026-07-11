@@ -386,11 +386,14 @@ body.dark .lcd-way .wtag.eb{color:#8fd9bf;}
 .lcd-way .wsub{font-size:12px;color:var(--text-light);}
 .lcd-way .ar{margin-left:auto;color:var(--text-light);font-size:15px;}
 /* 목록 카드 보유형태 태그 */
-/* 실험: 색색깔 배지 대신 골드 한 가지 색의 캡션 텍스트로(잡지 각주 느낌은 유지하되, 형태 정보라 눈에 띄어야 함) */
-.fmt-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
-.fmt-tag{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#a07a1e;white-space:nowrap;}
-body.dark .fmt-tag{color:var(--gold);}
-.fmt-tag::before{content:'· ';}
+.fmt-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;}
+.fmt-tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;line-height:1.45;white-space:nowrap;}
+.fmt-ebook{color:#1d4ed8;background:rgba(37,99,235,.1);}
+.fmt-paper{color:#15803d;background:rgba(34,197,94,.12);}
+.fmt-sub{color:#7c3aed;background:rgba(124,58,237,.12);}
+body.dark .fmt-ebook{color:#93c5fd;}
+body.dark .fmt-paper{color:#86efac;}
+body.dark .fmt-sub{color:#c4b5fd;}
 /* 종이책 라이브 소장/대출가능 현황 (모달) */
 .lcd-holding{margin:14px 0 4px;padding:12px 14px;border-radius:13px;font-size:13.5px;line-height:1.5;border:1px solid var(--border);background:var(--bg-input);}
 .lcd-holding.loading{color:var(--text-light);font-size:12.5px;}
