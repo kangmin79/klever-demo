@@ -150,7 +150,7 @@ body.with-sidenav .side-nav{display:flex;}
 .kmap-panel{
   /* left:24px — 헤더 좌우 패딩(24px)과 경계를 맞춤 */
   display:none;position:fixed;top:calc(var(--header-h) + 12px);left:24px;z-index:80;
-  width:300px;height:calc(100vh - var(--header-h) - 36px);
+  width:300px;max-height:calc(100vh - var(--header-h) - 36px);
   background:var(--bg-card);border:1px solid var(--border);border-radius:18px;
   box-shadow:0 10px 28px -10px rgba(20,28,50,.18);
   flex-direction:column;overflow:hidden;
