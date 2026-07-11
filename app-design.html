@@ -5984,14 +5984,17 @@ function sfRenderBody(key){
       try{
         const [totals, students] = await Promise.all([
           _agFetch(`bookstar_student_totals?school_id=eq.${CH_SCHOOL}&order=total_stars.desc&limit=3&select=student_id,total_stars`),
-          _agFetch(`bookstar_students?select=id,name,emoji`)
+          _agFetch(`bookstar_students?select=id,name`)
         ]);
         if(_kmKey!=='leader') return;
-        const nameMap={}, emoMap={};
-        (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; emoMap[s.id]=s.emoji||''; });
+        const nameMap={};
+        (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; });
         const rows=(totals||[]);
         if(!rows.length){ box.innerHTML=`<div class="sf-empty">아직 랭킹이 없어요.</div>`+sfMoreBtn('leader'); return; }
-        box.innerHTML=rows.map((t,i)=>`<div class="sf-row" onclick="onSideMenu('leader')"><div class="sf-rank">${i+1}</div><div>${emoMap[t.student_id]||'📘'}</div><div><div class="sf-row-t">${esc(nameMap[t.student_id]||'이름 없는 친구')}</div><div class="sf-row-a">⭐ ${(t.total_stars||0).toLocaleString()}</div></div></div>`).join('')+sfMoreBtn('leader');
+        box.innerHTML=rows.map((t,i)=>{
+          const grade=gradeOf(t.total_stars), gEmo=GRADE_EMO[grade]||'⭐';
+          return `<div class="sf-row" onclick="onSideMenu('leader')"><div class="sf-rank">${i+1}</div><div><div class="sf-row-t">${esc(nameMap[t.student_id]||'이름 없는 친구')} <span style="color:var(--text-light);font-weight:600">${gEmo} ${esc(grade)}</span></div><div class="sf-row-a">⭐ ${(t.total_stars||0).toLocaleString()}</div></div></div>`;
+        }).join('')+sfMoreBtn('leader');
       }catch(e){ if(_kmKey==='leader') box.innerHTML=`<div class="sf-empty">불러오지 못했어요.</div>`+sfMoreBtn('leader'); }
     })();
     return;
