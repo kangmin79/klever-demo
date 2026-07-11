@@ -160,17 +160,18 @@ body.with-sidenav .side-nav{display:flex;}
 body.dark .kmap-panel{box-shadow:0 10px 28px -10px rgba(0,0,0,.5);}
 .kmap-panel.collapsed{transform:translateX(-340px);}
 .kmap-body{flex:1;overflow-y:auto;padding:4px 16px 16px;}
-/* 카카오맵처럼 패널 오른쪽 가장자리에 붙은 접기/펼치기 화살표 탭 */
+/* 패널 접기/펼치기 겸 별이 버튼 — 하나로 합쳐서 오른쪽 아래 별이 버블과 같은 톤(밤하늘+골드 글로우) */
 .kmap-toggle{
-  display:none;position:fixed;top:50%;left:324px;transform:translateY(-50%);z-index:81;
-  width:22px;height:56px;border-radius:0 10px 10px 0;
-  background:var(--bg-card);border:1px solid var(--border);border-left:none;
-  box-shadow:2px 0 10px rgba(20,28,50,.10);
+  display:none;position:fixed;top:50%;left:304px;transform:translateY(-50%);z-index:81;
+  width:40px;height:40px;border-radius:50%;
+  background:radial-gradient(60px 30px at 30% 8%,rgba(201,168,106,.40),transparent 70%),linear-gradient(135deg,#243056 0%,#1a2240 60%,#141a30 100%);
+  box-shadow:0 6px 18px rgba(15,20,35,.35);
   align-items:center;justify-content:center;cursor:pointer;
-  color:var(--text-light);font-size:12px;
-  transition:left .22s cubic-bezier(.2,.7,.2,1);
+  color:#fff;font-size:17px;
+  transition:left .22s cubic-bezier(.2,.7,.2,1),transform .18s;
+  filter:drop-shadow(0 0 5px rgba(201,168,106,.5));
 }
-body.dark .kmap-toggle{box-shadow:2px 0 10px rgba(0,0,0,.4);}
+.kmap-toggle:hover{transform:translateY(-50%) scale(1.08);}
 .kmap-toggle.collapsed{left:24px;}
 @media (min-width:901px){
   /* padding-left도 헤더 패딩(24px)과 맞춰 컨텐츠 좌측 경계가 헤더와 일직선이 되도록 */
@@ -181,6 +182,7 @@ body.dark .kmap-toggle{box-shadow:2px 0 10px rgba(0,0,0,.4);}
   .side-nav{display:none !important;}   /* PC는 통합 패널만 사용, 낱개 레일 숨김 */
   body.with-sidenav .kmap-panel{display:flex;}
   body.with-sidenav .kmap-toggle{display:flex;}
+  body.with-sidenav #hwcBubble{display:none;}   /* 별이 버블 역할을 패널 토글이 대신하므로 중복 노출 방지(홈·모바일은 그대로 유지) */
 }
 .kmap-panel .sf-tabs{padding:16px 16px 12px;margin:0;border-bottom:1px solid var(--border);flex:none;}
 .sf-tabs{display:flex;gap:6px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--border);}
@@ -201,6 +203,8 @@ body.dark .sf-more{color:var(--gold);}
 .sf-search-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,169,59,.18);}
 .sf-search-hint{text-align:center;color:var(--text-light);font-size:12px;padding:32px 10px;line-height:1.7;}
 .sf-search-hint .icon{width:26px;height:26px;color:var(--border);margin-bottom:8px;}
+.sf-byeoli-link{margin-top:10px;padding:11px;border-radius:10px;background:var(--bg-input);text-align:center;font-size:12px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:background .15s;}
+.sf-byeoli-link:hover{background:rgba(212,169,59,.16);color:var(--text);}
 .sf-row{display:flex;align-items:center;gap:10px;padding:7px 2px;cursor:pointer;border-radius:8px;}
 .sf-row:hover{background:var(--bg-input);}
 .sf-row-cv{width:30px;height:42px;border-radius:4px;overflow:hidden;flex:none;background:var(--bg-input);}
@@ -2480,7 +2484,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div class="sf-tabs" id="kmapTabs"></div>
   <div class="kmap-body" id="kmapBody"></div>
 </aside>
-<div class="kmap-toggle" id="kmapToggle" onclick="kmToggle()">◀</div>
+<div class="kmap-toggle" id="kmapToggle" onclick="kmToggle()" aria-label="검색 · 별이">⭐</div>
 
 <main class="main">
 
@@ -5971,8 +5975,8 @@ function kmToggle(){
   const panel=document.getElementById('kmapPanel'), btn=document.getElementById('kmapToggle');
   const collapsed = panel.classList.toggle('collapsed');
   btn.classList.toggle('collapsed', collapsed);
-  btn.textContent = collapsed ? '▶' : '◀';
   document.body.classList.toggle('kmap-collapsed', collapsed);
+  if(!collapsed) kmSetTab('search');   // 별이(패널 토글)를 누르면 검색 탭으로 바로 진입
 }
 // 접기 화살표를 패널 세로 중앙에 붙임 — 패널 높이가 탭마다 다른데 화살표가 화면 중앙(고정)에 있어서 짧은 탭에선 패널 밑에 붕 떠 보이던 것 수정
 function positionKmapToggle(){
@@ -6041,7 +6045,7 @@ function sfRenderBody(key){
     return;
   }
   if(key==='search'){
-    box.innerHTML=`<div class="sf-search-wrap">${ic('search')}<input class="sf-search-inp" id="sfSearchInp" placeholder="책 제목·작가로 찾기…" oninput="sfDoSearch(this.value)" onclick="event.stopPropagation()"></div><div id="sfSearchResults">${sfSearchHint()}</div>`;
+    box.innerHTML=`<div class="sf-search-wrap">${ic('search')}<input class="sf-search-inp" id="sfSearchInp" placeholder="책 제목·작가로 찾기…" oninput="sfDoSearch(this.value)" onclick="event.stopPropagation()"></div><div id="sfSearchResults">${sfSearchHint()}</div><div class="sf-byeoli-link" onclick="hwcToggle()">⭐ 딱 맞는 책이 안 떠오르면 — 별이에게 물어보기</div>`;
     setTimeout(()=>{ const i=document.getElementById('sfSearchInp'); if(i) i.focus(); }, 0);
     return;
   }
