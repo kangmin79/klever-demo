@@ -1904,7 +1904,8 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .gnb::-webkit-scrollbar{display:none;}
   /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
   .gnb-drop:hover .gnb-menu{display:none;}
-  .cl-tabs{display:flex;}
+  /* 인페이지 권역 스위치(cl-tabs)는 GNB에 세계고전/International 탭이 직접 생기면서 중복 → 숨김 */
+  .cl-tabs{display:none;}
   .cl-locale-head{display:none;}
   .gnb-item{display:flex;align-items:center;padding:0 9px;font-size:13px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
   .gnb-item::after{left:9px;right:9px;}
