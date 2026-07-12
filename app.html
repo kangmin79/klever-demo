@@ -6126,8 +6126,9 @@ function applyUiLang(l){
     el.textContent=t;
   });
   // 넘칠 때만 스크롤 페이드 힌트 (다 들어가면 페이드·여백 없이 깔끔하게)
+  // 주의: gnb-scroll 자체가 여백 28px를 추가하므로, 반드시 벗긴 상태에서 측정 (상태 고착 방지)
   const g=document.querySelector('.gnb');
-  if(g)requestAnimationFrame(()=>g.classList.toggle('gnb-scroll',g.scrollWidth>g.clientWidth+2));
+  if(g)requestAnimationFrame(()=>{g.classList.remove('gnb-scroll');g.classList.toggle('gnb-scroll',g.scrollWidth>g.clientWidth+2);});
   if(typeof _navPage!=='undefined'&&_navPage) renderSideNav(_navPage);   // 사이드바 라벨 재렌더
 }
 // International 콘텐츠(줄제목·부제·장르라벨) 사전 — 한국어 원문 키. 사서가 제목을 바꾸면 자동으로 한국어 폴백.
