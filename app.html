@@ -4619,8 +4619,39 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElemen
    네비게이션
    ═══════════════════════════════════════════════════════════ */
 let _navPage='ourlib';   // 현재 페이지(사이드바 라벨 재렌더용)
+
+// ── 뒤로가기 = 앱 안 네비게이션 (SPA 히스토리 통합) ──
+// 화면 전환마다 브라우저 히스토리에 발자국을 남겨서, 안드로이드 뒤로가기가
+// "앱 이탈"이 아니라 "이전 화면/열린 것 닫기"로 동작하게 한다.
+let _histNav=false;   // popstate로 인한 nav 재진입 가드
+function _histPush(page){
+  if(_histNav) return;
+  const st={bs:1,page,cl:(page==='collection'?_clTab:undefined)};
+  try{
+    if(!history.state||!history.state.bs) history.replaceState(st,'','#'+page);
+    else if(history.state.page!==page||history.state.cl!==st.cl) history.pushState(st,'','#'+page);
+  }catch(e){}
+}
+window.addEventListener('popstate', e=>{
+  // 전면 오버레이가 열려 있으면 그것부터 닫는 게 뒤로가기의 기대 동작 (닫고 현재 화면 발자국 복원)
+  const _repush=()=>{ try{history.pushState({bs:1,page:_navPage,cl:(_navPage==='collection'?_clTab:undefined)},'','#'+_navPage);}catch(_){} };
+  const vo=document.getElementById('viewerOverlay');
+  if(vo&&vo.classList.contains('open')){ try{closeViewer();}catch(_){} _repush(); return; }
+  const lc=document.getElementById('lcDetail');
+  if(lc&&lc.classList.contains('on')){ try{closeLc();}catch(_){} _repush(); return; }
+  const hp=document.getElementById('hwcPanel');
+  if(hp&&hp.style.display==='flex'&&typeof hwcToggle==='function'){ try{hwcToggle();}catch(_){} _repush(); return; }
+  const st=e.state;
+  if(st&&st.bs){
+    _histNav=true;
+    try{ if(st.page==='collection'&&st.cl)_clTab=st.cl; nav(st.page||'ourlib'); }finally{ _histNav=false; }
+  }
+  // st.bs 없으면(우리 발자국 이전) 브라우저 기본 동작 = 사이트 이탈
+});
+
 function nav(page){
   _navPage=page;
+  _histPush(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.gnb-item').forEach(i=>i.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
