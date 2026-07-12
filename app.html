@@ -1871,15 +1871,16 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .header{height:98px;flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 14px;}
   .brand-logo{order:1;height:50px;display:flex;align-items:center;}
   .hdr-actions{order:2;margin-left:auto;height:50px;display:flex;align-items:center;}
-  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:0;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
+  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:0;align-items:stretch;justify-content:space-between;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
+  .gnb.gnb-scroll{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
   .gnb::-webkit-scrollbar{display:none;}
   /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
   .gnb-drop:hover .gnb-menu{display:none;}
   .cl-tabs{display:flex;}
   .cl-locale-head{display:none;}
-  .gnb-item{display:flex;align-items:center;padding:0 11px;font-size:13px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
-  .gnb-item::after{left:11px;right:11px;}
-  .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
+  .gnb-item{display:flex;align-items:center;padding:0 9px;font-size:13px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
+  .gnb-item::after{left:9px;right:9px;}
+  .gnb.gnb-scroll .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
   body.dark .gnb-item.active{background:none;color:#f1f5f9;}
@@ -6113,12 +6114,20 @@ const UI_I18N={
 };
 let UI_LANG='ko';
 function uiT(ko){ return (UI_I18N[UI_LANG]||{})[ko]||ko; }
+// 모바일 GNB 축약 라벨 (한국어일 때만) — 5개 탭이 스크롤 없이 한 줄에 들어가게
+const UI_GNB_SHORT={'우리 도서관':'도서관','독서 챌린지':'챌린지'};
 function applyUiLang(l){
   UI_LANG=(l&&UI_I18N[l])?l:'ko';
+  const mob=window.matchMedia('(max-width:900px)').matches;
   document.querySelectorAll('.gnb-item').forEach(el=>{
     if(!el.dataset.ko) el.dataset.ko=el.textContent.trim();
-    el.textContent=uiT(el.dataset.ko);
+    let t=uiT(el.dataset.ko);
+    if(mob&&UI_LANG==='ko'&&UI_GNB_SHORT[el.dataset.ko]) t=UI_GNB_SHORT[el.dataset.ko];
+    el.textContent=t;
   });
+  // 넘칠 때만 스크롤 페이드 힌트 (다 들어가면 페이드·여백 없이 깔끔하게)
+  const g=document.querySelector('.gnb');
+  if(g)requestAnimationFrame(()=>g.classList.toggle('gnb-scroll',g.scrollWidth>g.clientWidth+2));
   if(typeof _navPage!=='undefined'&&_navPage) renderSideNav(_navPage);   // 사이드바 라벨 재렌더
 }
 // International 콘텐츠(줄제목·부제·장르라벨) 사전 — 한국어 원문 키. 사서가 제목을 바꾸면 자동으로 한국어 폴백.
@@ -9816,6 +9825,9 @@ function toggleTheme(){
    초기화
    ═══════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  // 모바일 GNB 축약 라벨 초기 적용 + 회전/리사이즈 대응
+  try{ applyUiLang(UI_LANG); }catch(e){}
+  let _gnbRz; window.addEventListener('resize', ()=>{ clearTimeout(_gnbRz); _gnbRz=setTimeout(()=>{ try{ applyUiLang(UI_LANG); }catch(e){} },200); });
   // 테스트 계정: 칩 표시 + (로그인됨)서버 결과 로딩 / (미로그인)선택창
   bxRenderAccountChip();
   const _isDash = new URLSearchParams(location.search).get('page')==='dashboard';   // 사서 대시보드 딥링크는 학생 로그인창 띄우지 않음
