@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>북스타 · Bookstar — 모든 책은 하늘의 별</title>
 <meta name="description" content="수많은 책 중, 지금 당신에게 길을 비추는 한 권. 북스타 AI가 도서관 책을 자연어로 추천하고, 끝까지 읽도록 함께합니다.">
 <meta property="og:type" content="website">
@@ -180,7 +180,7 @@ body.dark .side-node .icon{color:var(--gold);}
 @media (max-width:900px){
   body.with-sidenav .page:not(#page-home){padding-left:24px;}
   body.with-sidenav .page#page-detail{padding-left:24px;}
-  .side-nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;flex-direction:row;justify-content:space-around;padding:8px 4px;background:var(--bg-card);border-top:1px solid var(--border);gap:0;transform:none;opacity:1;pointer-events:auto;}
+  .side-nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;flex-direction:row;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));background:var(--bg-card);border-top:1px solid var(--border);gap:0;transform:none;opacity:1;pointer-events:auto;}
   .side-hot{display:none !important;}
   .side-node{padding:6px 8px;flex:1;border:none;box-shadow:none;border-radius:8px;}
   .side-node:hover{transform:none;box-shadow:none;}
@@ -191,6 +191,7 @@ body.dark .side-node .icon{color:var(--gold);}
   .side-node-label{font-size:9px;}
 }
 .page-title{font-size:30px;font-weight:800;letter-spacing:-0.9px;margin-bottom:8px;}
+.page-title,.page-subtitle,.section-title,.ml-h-t,.ml-h-s{word-break:keep-all;} /* 한글 단어 중간 줄바꿈 방지 */
 .page-subtitle{color:var(--text-sub);margin-bottom:32px;font-size:14px;letter-spacing:-0.2px;}
 .section{margin-bottom:48px;}
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
@@ -1865,13 +1866,14 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .header{height:98px;flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 14px;}
   .brand-logo{order:1;height:50px;display:flex;align-items:center;}
   .hdr-actions{order:2;margin-left:auto;height:50px;display:flex;align-items:center;}
-  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:2px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
+  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:2px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
   .gnb::-webkit-scrollbar{display:none;}
   /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
   .gnb-drop:hover .gnb-menu{display:none;}
   .cl-tabs{display:flex;}
   .cl-locale-head{display:none;}
   .gnb-item{display:flex;align-items:center;padding:0 12px;font-size:13.5px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
+  .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
   body.dark .gnb-item.active{background:none;color:#f1f5f9;}
@@ -1905,10 +1907,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .vh-nav .reader-btn .icon{width:19px;height:19px;}
   .reader-settings-sheet{right:10px;min-width:210px;}
   /* 바닥 바: 장황한 안내문 숨기고 버튼만 꽉 차게 — 글자 세로쪼개짐 방지 */
-  .viewer-footer{padding:10px 12px;gap:8px;}
+  .viewer-footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px;}
   .viewer-footer > #viewerFooterInfo{display:none;}
   .viewer-footer > .viewer-actions{flex:1;justify-content:space-between;gap:6px;}
   .viewer-action{padding:9px 10px;}
+  .reader-toast{bottom:150px;} /* 하단 버튼(액션+이전다음 2줄)을 안 가리게 */
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2256,8 +2259,8 @@ body.dark .hwc-loan{color:#c5a85e;}body.dark .hwc-loan b{color:#d9bd72;}
 .hwc-send:hover{opacity:.9;}
 .hwc-send:disabled{opacity:.4;cursor:default;}
 @media(max-width:900px){
-  #hwcBubble{bottom:78px;right:14px;}
-  #hwcPanel{bottom:0;right:0;left:0;width:100%;max-width:100%;height:88vh;max-height:88vh;border-radius:20px 20px 0 0;}
+  #hwcBubble{bottom:calc(78px + env(safe-area-inset-bottom));right:14px;}
+  #hwcPanel{bottom:0;right:0;left:0;width:100%;max-width:100%;height:88vh;max-height:88vh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom);}
 }
 /* ── 추가 칸 스타일 (꾸미기 신규 템플릿) ── */
 .ml-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px;}
