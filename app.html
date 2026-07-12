@@ -260,7 +260,14 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 @media(max-width:760px){.ml-arrow{display:none;}}
 .cl-shelf{margin-bottom:34px;}
 .ml-hrow .cl-card{flex:0 0 150px;width:150px;}
-@media(max-width:760px){.ml-hrow .cl-card{flex:0 0 124px;width:124px;}}
+@media(max-width:760px){
+  .ml-hrow .cl-card{flex:0 0 124px;width:124px;}
+  /* 가로 책줄: 카드 살짝 줄이고 다음 책이 반쯤 걸쳐 보이게 (더 있음을 손이 알게) */
+  .ml-bk{width:112px;}
+  .ml-bk-cv{width:112px;}
+  .ml-hrow{gap:14px;scroll-snap-type:x proximity;}
+  .ml-hrow>*{scroll-snap-align:start;}
+}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
 .ml-bk-cv{width:130px;aspect-ratio:2/3;}
 .ml-bk-t{margin-top:10px;font-size:13.5px;font-weight:700;color:var(--text);line-height:1.32;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
@@ -5151,6 +5158,11 @@ function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
 // 캐러셀 폭을 카드 개수 딱 맞게(마지막 책이 반쯤 잘려 보이지 않게) — 카드폭·간격은 실측(줄마다 다름: 130px/150px 등)
 function fitMlCars(){
+  // 모바일: 화살표가 없으므로 "다음 책이 반쯤 보이는" 힌트가 곧 내비게이션 — 통카드 맞춤 끄고 풀폭
+  if(window.matchMedia('(max-width:760px)').matches){
+    document.querySelectorAll('.ml-car').forEach(el=>{ el.style.width=''; });
+    return;
+  }
   document.querySelectorAll('.ml-car').forEach(el=>{
     const hrow=el.querySelector('.ml-hrow'); if(!hrow||!hrow.children.length) return;
     const parent=el.parentElement; if(!parent) return;
