@@ -104,6 +104,11 @@ body.dark .bl-sub{color:var(--gold);}
 .gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
 .gnb-item.active{color:var(--text);font-weight:700;}
 .gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
+/* 터치 기기: 탭 터치 후 hover 상태가 남아 유령 밑줄이 생기는 것 방지 */
+@media(hover:none){
+  .gnb-item:hover::after{transform:scaleX(0);opacity:0;}
+  .gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
+}
 /* 고전 컬렉션 — 상단 네비 호버 드롭다운(해외/국내) */
 .gnb-menu{position:absolute;top:100%;left:8px;min-width:190px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.14);padding:7px;display:none;z-index:120;}
 .gnb-menu::before{content:'';position:absolute;top:-9px;left:0;right:0;height:9px;}
@@ -1866,13 +1871,14 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .header{height:98px;flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 14px;}
   .brand-logo{order:1;height:50px;display:flex;align-items:center;}
   .hdr-actions{order:2;margin-left:auto;height:50px;display:flex;align-items:center;}
-  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:2px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
+  .gnb{order:3;flex-basis:100%;width:100%;height:48px;gap:0;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
   .gnb::-webkit-scrollbar{display:none;}
   /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
   .gnb-drop:hover .gnb-menu{display:none;}
   .cl-tabs{display:flex;}
   .cl-locale-head{display:none;}
-  .gnb-item{display:flex;align-items:center;padding:0 12px;font-size:13.5px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
+  .gnb-item{display:flex;align-items:center;padding:0 11px;font-size:13px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
+  .gnb-item::after{left:11px;right:11px;}
   .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
