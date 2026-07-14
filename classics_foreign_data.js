@@ -16,7 +16,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 42,
   "reviews": 10,
-  "progress": 0
+  "progress": 0,
+  "coverSrc": "./covers/gb-1513.webp"
  },
  {
   "id": "gb-2701",
