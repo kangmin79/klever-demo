@@ -1,8 +1,23 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 150권 (번역 143 / 표지 143)
+// 총 144권 (전권 Supabase classics 행 존재 확인됨, 2026-07-10 유령 7권 제거 / 2026-07-15 셰익스피어 로미오와 줄리엣 gb-1513 추가)
 const BOOKS_CLASSICS_FOREIGN = [
+ {
+  "id": "gb-1513",
+  "title": "Romeo and Juliet",
+  "author": "윌리엄 셰익스피어",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0
+ },
  {
   "id": "gb-2701",
   "title": "Moby Dick; Or, The Whale",
@@ -16,7 +31,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 42,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2701.webp"
  },
@@ -33,7 +47,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 42,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1342.webp"
  },
@@ -50,7 +63,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 128,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-84.webp"
  },
@@ -67,7 +79,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 46,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1184.webp"
  },
@@ -84,7 +95,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 48,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2554.webp"
  },
@@ -101,7 +111,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 118,
   "reviews": 2,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-11.webp"
  },
@@ -118,7 +127,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 174,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-145.webp"
  },
@@ -135,7 +143,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 41,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1260.webp"
  },
@@ -152,7 +159,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 97,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-37106.webp"
  },
@@ -169,7 +175,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 123,
   "reviews": 7,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-43.webp"
  },
@@ -186,7 +191,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 176,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-345.webp"
  },
@@ -203,7 +207,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 101,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-64317.webp"
  },
@@ -220,7 +223,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 99,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-28054.webp"
  },
@@ -237,7 +239,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 51,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-3268.webp"
  },
@@ -254,7 +255,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 41,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2160.webp"
  },
@@ -271,7 +271,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 55,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-6593.webp"
  },
@@ -288,7 +287,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 185,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-768.webp"
  },
@@ -305,7 +303,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 129,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-76.webp"
  },
@@ -322,7 +319,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 127,
   "reviews": 11,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-74.webp"
  },
@@ -339,7 +335,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 133,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-98.webp"
  },
@@ -356,7 +351,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 176,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-174.webp"
  },
@@ -373,7 +367,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 95,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-75201.webp"
  },
@@ -390,7 +383,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 103,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-21839.webp"
  },
@@ -407,7 +399,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 171,
   "reviews": 7,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-601.webp"
  },
@@ -424,7 +415,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 95,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-51252.webp"
  },
@@ -441,7 +431,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2852.webp"
  },
@@ -458,7 +447,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 167,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-120.webp"
  },
@@ -475,7 +463,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 182,
   "reviews": 18,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-468.webp"
  },
@@ -492,7 +479,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 179,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-564.webp"
  },
@@ -509,7 +495,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 40,
   "reviews": 8,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2600.webp"
  },
@@ -526,7 +511,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 168,
   "reviews": 4,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-103.webp"
  },
@@ -543,7 +527,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 48,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2527.webp"
  },
@@ -560,7 +543,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 183,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-829.webp"
  },
@@ -577,7 +559,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 99,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-47530.webp"
  },
@@ -594,7 +575,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 101,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-36462.webp"
  },
@@ -611,7 +591,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 123,
   "reviews": 7,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-16.webp"
  },
@@ -628,7 +607,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 173,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-135.webp"
  },
@@ -645,7 +623,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 109,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-18857.webp"
  },
@@ -662,7 +639,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 39,
   "reviews": 7,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-4300.webp"
  },
@@ -679,7 +655,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 130,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-86.webp"
  },
@@ -696,7 +671,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 37,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1400.webp"
  },
@@ -713,25 +687,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 39,
   "reviews": 7,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-5200.webp"
- },
- {
-  "id": "gb-13951",
-  "title": "Les trois mousquetaires",
-  "author": "알렉상드르 뒤마; 오귀스트 마케",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 99,
-  "reviews": 19,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-10148",
@@ -746,7 +703,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 94,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-10148.webp"
  },
@@ -763,7 +719,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 175,
   "reviews": 11,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-164.webp"
  },
@@ -780,7 +735,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 103,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-23639.webp"
  },
@@ -797,7 +751,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 51,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1837.webp"
  },
@@ -814,7 +767,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 125,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-45.webp"
  },
@@ -831,7 +783,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 41,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1080.webp"
  },
@@ -848,7 +799,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 183,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-766.webp"
  },
@@ -865,7 +815,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 54,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1399.webp"
  },
@@ -882,25 +831,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 101,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-57342.webp"
- },
- {
-  "id": "gb-14287",
-  "title": "L'île mystérieuse",
-  "author": "쥘 베른",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 102,
-  "reviews": 22,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-521",
@@ -915,7 +847,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 172,
   "reviews": 8,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-521.webp"
  },
@@ -932,7 +863,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 172,
   "reviews": 8,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-215.webp"
  },
@@ -949,7 +879,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 41,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1251.webp"
  },
@@ -966,7 +895,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-5921.webp"
  },
@@ -983,7 +911,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 98,
   "reviews": 18,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-25344.webp"
  },
@@ -1000,7 +927,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 168,
   "reviews": 4,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-121.webp"
  },
@@ -1017,7 +943,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 169,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-113.webp"
  },
@@ -1034,41 +959,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 169,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-203.webp"
- },
- {
-  "id": "gb-2610",
-  "title": "Notre-Dame de Paris",
-  "author": "빅토르 위고",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 41,
-  "reviews": 9,
-  "quizzes": 5,
-  "progress": 0
- },
- {
-  "id": "gb-34811",
-  "title": "Buddenbrooks: Verfall einer Familie",
-  "author": "토마스 만",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 97,
-  "reviews": 17,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-1079",
@@ -1083,7 +975,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1079.webp"
  },
@@ -1100,7 +991,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 35,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1200.webp"
  },
@@ -1117,7 +1007,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 46,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-4217.webp"
  },
@@ -1134,7 +1023,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 104,
   "reviews": 0,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-14838.webp"
  },
@@ -1151,7 +1039,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 177,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-580.webp"
  },
@@ -1168,7 +1055,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 186,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-967.webp"
  },
@@ -1185,7 +1071,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 126,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-46.webp"
  },
@@ -1202,7 +1087,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 119,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-21.webp"
  },
@@ -1219,7 +1103,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 107,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-71865.webp"
  },
@@ -1236,7 +1119,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 174,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-271.webp"
  },
@@ -1253,7 +1135,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 126,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-73.webp"
  },
@@ -1270,7 +1151,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 176,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-219.webp"
  },
@@ -1287,7 +1167,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 48,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2833.webp"
  },
@@ -1304,7 +1183,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 38,
   "reviews": 6,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1023.webp"
  },
@@ -1321,7 +1199,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 92,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-23700.webp"
  },
@@ -1338,7 +1215,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 187,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-599.webp"
  },
@@ -1355,7 +1231,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 169,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-500.webp"
  },
@@ -1372,7 +1247,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 54,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1597.webp"
  },
@@ -1389,7 +1263,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 185,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-696.webp"
  },
@@ -1406,7 +1279,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 46,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-5225.webp"
  },
@@ -1423,7 +1295,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 125,
   "reviews": 9,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-36.webp"
  },
@@ -1440,7 +1311,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 104,
   "reviews": 0,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-56463.webp"
  },
@@ -1457,7 +1327,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 38,
   "reviews": 6,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2130.webp"
  },
@@ -1474,7 +1343,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 86,
   "reviews": 6,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-30201.webp"
  },
@@ -1491,7 +1359,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 127,
   "reviews": 11,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-83.webp"
  },
@@ -1508,7 +1375,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 166,
   "reviews": 2,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-110.webp"
  },
@@ -1525,7 +1391,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 88,
   "reviews": 8,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-10007.webp"
  },
@@ -1542,7 +1407,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 105,
   "reviews": 1,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-19942.webp"
  },
@@ -1559,7 +1423,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 102,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-27805.webp"
  },
@@ -1576,7 +1439,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 48,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-3526.webp"
  },
@@ -1593,7 +1455,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 104,
   "reviews": 0,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-27681.webp"
  },
@@ -1610,7 +1471,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 182,
   "reviews": 18,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-963.webp"
  },
@@ -1627,7 +1487,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 130,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-77.webp"
  },
@@ -1644,7 +1503,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 56,
   "reviews": 0,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-5658.webp"
  },
@@ -1661,7 +1519,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 187,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-968.webp"
  },
@@ -1678,7 +1535,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 175,
   "reviews": 11,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-821.webp"
  },
@@ -1695,7 +1551,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 105,
   "reviews": 1,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-67138.webp"
  },
@@ -1712,7 +1567,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 174,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-325.webp"
  },
@@ -1729,7 +1583,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 45,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1237.webp"
  },
@@ -1746,7 +1599,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 169,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-131.webp"
  },
@@ -1763,7 +1615,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 172,
   "reviews": 8,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-143.webp"
  },
@@ -1780,7 +1631,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 100,
   "reviews": 20,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-75170.webp"
  },
@@ -1797,7 +1647,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 95,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-52521.webp"
  },
@@ -1814,7 +1663,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 47,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2085.webp"
  },
@@ -1831,7 +1679,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 45,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2434.webp"
  },
@@ -1848,7 +1695,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 180,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-376.webp"
  },
@@ -1865,7 +1711,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 169,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-122.webp"
  },
@@ -1882,7 +1727,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 44,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-5160.webp"
  },
@@ -1899,7 +1743,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 110,
   "reviews": 6,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-45858.webp"
  },
@@ -1916,7 +1759,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 174,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-208.webp"
  },
@@ -1933,7 +1775,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 55,
   "reviews": 23,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-4397.webp"
  },
@@ -1950,7 +1791,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 94,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-29021.webp"
  },
@@ -1967,7 +1807,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 44,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2226.webp"
  },
@@ -1984,7 +1823,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 44,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2145.webp"
  },
@@ -2001,25 +1839,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 53,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-2874.webp"
- },
- {
-  "id": "gb-52006",
-  "title": "Les liaisons dangereuses Lettres recueillies dans une Société et publiées pour l'instruction de quelques autres",
-  "author": "쇼데를로 드 라클로",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 93,
-  "reviews": 13,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-370",
@@ -2034,7 +1855,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 174,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-370.webp"
  },
@@ -2051,7 +1871,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 109,
   "reviews": 5,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-53489.webp"
  },
@@ -2068,7 +1887,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 107,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-33858.webp"
  },
@@ -2085,25 +1903,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 51,
   "reviews": 19,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1666.webp"
- },
- {
-  "id": "gb-48529",
-  "title": "Essais de Montaigne (self-édition) - Volume I",
-  "author": "미셸 드 몽테뉴",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 108,
-  "reviews": 4,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-9611",
@@ -2118,7 +1919,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-9611.webp"
  },
@@ -2135,7 +1935,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 102,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-66073.webp"
  },
@@ -2152,7 +1951,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 177,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-913.webp"
  },
@@ -2169,7 +1967,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 96,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-36151.webp"
  },
@@ -2186,7 +1983,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 91,
   "reviews": 11,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-42401.webp"
  },
@@ -2203,7 +1999,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 105,
   "reviews": 1,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-56644.webp"
  },
@@ -2220,7 +2015,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 45,
   "reviews": 13,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-3154.webp"
  },
@@ -2237,7 +2031,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 168,
   "reviews": 4,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-211.webp"
  },
@@ -2254,7 +2047,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 90,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-25102.webp"
  },
@@ -2271,7 +2063,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 49,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-1565.webp"
  },
@@ -2288,7 +2079,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 96,
   "reviews": 16,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-54700.webp"
  },
@@ -2305,7 +2095,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 102,
   "reviews": 22,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-76513.webp"
  },
@@ -2322,7 +2111,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 176,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-804.webp"
  },
@@ -2339,7 +2127,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 105,
   "reviews": 1,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-41659.webp"
  },
@@ -2356,7 +2143,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 176,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-561.webp"
  },
@@ -2373,7 +2159,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 59,
   "reviews": 3,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-9198.webp"
  },
@@ -2390,7 +2175,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 116,
   "reviews": 12,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-69768.webp"
  },
@@ -2407,25 +2191,8 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 95,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-15711.webp"
- },
- {
-  "id": "gb-57052",
-  "title": "Röda rummet: Skildringar ur artist- och författarlivet",
-  "author": "아우구스트 스트린드베리",
-  "category": "해외문학",
-  "period": "해외",
-  "locale": "foreign",
-  "intl": false,
-  "hasBody": true,
-  "hasTrans": false,
-  "src": "Gutenberg",
-  "participants": 99,
-  "reviews": 19,
-  "quizzes": 5,
-  "progress": 0
  },
  {
   "id": "gb-597",
@@ -2440,7 +2207,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 185,
   "reviews": 21,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-597.webp"
  },
@@ -2457,7 +2223,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 105,
   "reviews": 1,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-64636.webp"
  },
@@ -2474,7 +2239,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 98,
   "reviews": 18,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-23058.webp"
  },
@@ -2491,7 +2255,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 95,
   "reviews": 15,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-50109.webp"
  },
@@ -2508,7 +2271,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 178,
   "reviews": 14,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-158.webp"
  },
@@ -2525,7 +2287,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 97,
   "reviews": 17,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-74222.webp"
  },
@@ -2542,7 +2303,6 @@ const BOOKS_CLASSICS_FOREIGN = [
   "src": "Gutenberg",
   "participants": 126,
   "reviews": 10,
-  "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-82.webp"
  }
