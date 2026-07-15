@@ -9848,19 +9848,29 @@ async function loadFeedSocial(){
 }
 async function feedLike(btn,key){
   const me=_bxSid(); const liked=_myLikes.has(key);
-  if(liked){ _myLikes.delete(key); _likeCount[key]=Math.max(0,(_likeCount[key]||1)-1); }
-  else { _myLikes.add(key); _likeCount[key]=(_likeCount[key]||0)+1; }
-  btn.classList.toggle('liked',!liked); const c=btn.querySelector('.fl-c'); if(c) c.textContent=_likeCount[key]||0;
-  try{ if(liked) await fetch(`${BX_SB}/bookstar_likes?liker_id=eq.${encodeURIComponent(me)}&item_key=eq.${encodeURIComponent(key)}`,{method:'DELETE',headers:BX_H});
-    else await fetch(`${BX_SB}/bookstar_likes`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({liker_id:me,item_key:key})}); }catch(e){}
+  // 낙관 업데이트 + 서버 거절(RLS 등)·네트워크 실패 시 원복 — 화면만 성공한 척 남는 가짜성공 방지
+  const apply=(on)=>{ if(on){ _myLikes.add(key); _likeCount[key]=(_likeCount[key]||0)+1; }
+    else { _myLikes.delete(key); _likeCount[key]=Math.max(0,(_likeCount[key]||1)-1); }
+    btn.classList.toggle('liked',on); const c=btn.querySelector('.fl-c'); if(c) c.textContent=_likeCount[key]||0; };
+  apply(!liked);
+  try{ const r = liked
+      ? await fetch(`${BX_SB}/bookstar_likes?liker_id=eq.${encodeURIComponent(me)}&item_key=eq.${encodeURIComponent(key)}`,{method:'DELETE',headers:BX_H})
+      : await fetch(`${BX_SB}/bookstar_likes`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({liker_id:me,item_key:key})});
+    if(!r.ok) apply(liked);
+  }catch(e){ apply(liked); }
 }
 async function feedFollow(btn,sid){
   const me=_bxSid(); if(me===sid) return;
   const on=_myFollows.has(sid);
+  const paint=()=>{ document.querySelectorAll('.fc-follow[data-sid="'+sid+'"]').forEach(b=>{ const f=_myFollows.has(sid); b.classList.toggle('on',f); b.textContent=f?'팔로잉':'팔로우'; }); };
   if(on) _myFollows.delete(sid); else _myFollows.add(sid);
-  document.querySelectorAll('.fc-follow[data-sid="'+sid+'"]').forEach(b=>{ const f=_myFollows.has(sid); b.classList.toggle('on',f); b.textContent=f?'팔로잉':'팔로우'; });
-  try{ if(on) await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H});
-    else await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})}); }catch(e){}
+  paint();
+  const revert=()=>{ if(on) _myFollows.add(sid); else _myFollows.delete(sid); paint(); };
+  try{ const r = on
+      ? await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H})
+      : await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})});
+    if(!r.ok) revert();
+  }catch(e){ revert(); }
 }
 function setFeedTab(t){ _feedTab=t; renderFeed(); }
 function setFeedType(t){ _feedType=t; renderFeed(); }
@@ -9907,8 +9917,8 @@ function feedCard(it,i){
       <div class="fc-bi"><div class="fc-bt">${esc(title)}</div><div class="fc-ba">${esc(author)}</div></div>
     </div>
     <div class="fc-acts">
-      <button class="fc-act${liked?' liked':''}" onclick="feedLike(this,'${likeKey}')">♥ <span class="fl-c">${lc}</span></button>
-      <button class="fc-act"${bk}>📖 담기</button>
+      <button class="fc-act${liked?' liked':''}" onclick="feedLike(this,'${esc(likeKey)}')">♥ <span class="fl-c">${lc}</span></button>
+      <button class="fc-act"${bk}>📖 책 보기</button>
     </div>
   </div>`;
 }
@@ -9931,12 +9941,30 @@ async function loadFeedItems(){
 }
 async function renderFeed(){
   const box=document.getElementById('feedBody'); if(!box) return;
-  const head=`<div class="feed-tabs">
+  if(!_feedItems.length){
+    box.innerHTML=_feedHead()+'<div class="feed-empty">피드를 불러오는 중…</div>';
+    await Promise.all([loadFeedItems(), loadFeedSocial()]);
+  } else if(!renderFeed._rf){
+    // 캐시 즉시 표시 + 뒤에서 최신분 갱신(글 남기고 바로 피드 와도 반영) — 내용이 달라졌을 때만 다시 그림
+    renderFeed._rf=Promise.all([loadFeedItems(), loadFeedSocial()]).then(()=>{
+      renderFeed._rf=null;
+      if(_feedSig()!==renderFeed._sig && document.getElementById('feedBody')) _feedPaint();
+    }).catch(()=>{ renderFeed._rf=null; });
+  }
+  _feedPaint();
+}
+function _feedSig(){ return _feedItems.length+'|'+String(_feedItems[0]&&_feedItems[0].time||''); }
+function _feedHead(){
+  return `<div class="feed-tabs">
       <button class="feed-tab ${_feedTab==='rec'?'on':''}" onclick="setFeedTab('rec')">추천</button>
       <button class="feed-tab ${_feedTab==='follow'?'on':''}" onclick="setFeedTab('follow')">팔로잉</button>
     </div>
     <div class="feed-chips">${FEED_TYPES.map(t=>`<button class="feed-chip ${_feedType===t[0]?'on':''}" onclick="setFeedType('${t[0]}')">${t[1]}</button>`).join('')}</div>`;
-  if(!_feedItems.length){ box.innerHTML=head+'<div class="feed-empty">피드를 불러오는 중…</div>'; await Promise.all([loadFeedItems(), loadFeedSocial()]); }
+}
+function _feedPaint(){
+  const box=document.getElementById('feedBody'); if(!box) return;
+  renderFeed._sig=_feedSig();
+  const head=_feedHead();
   let list=_feedItems.slice();
   if(_feedTab==='follow') list=list.filter(x=>_myFollows.has(x.sid));
   if(_feedType!=='all') list=list.filter(x=>(FEED_ACT[x.act]||{}).cat===_feedType);
@@ -9955,11 +9983,18 @@ function closeStudentProfile(){ const ov=document.getElementById('bxProfileOv');
 async function profileFollow(btn,sid){
   const me=_bxSid(); if(me===sid) return;
   const on=_myFollows.has(sid);
+  // feedFollow와 동일: 낙관 업데이트 + 실패 시 원복
   if(on)_myFollows.delete(sid); else _myFollows.add(sid);
   btn.classList.toggle('on',!on); btn.textContent=!on?'팔로잉':'팔로우';
   const fc=document.getElementById('bxpFollowers'); if(fc){ fc.textContent=Math.max(0,(parseInt(fc.textContent,10)||0)+(on?-1:1)); }
-  try{ if(on) await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H});
-    else await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})}); }catch(e){}
+  const revert=()=>{ if(on)_myFollows.add(sid); else _myFollows.delete(sid);
+    btn.classList.toggle('on',on); btn.textContent=on?'팔로잉':'팔로우';
+    const f2=document.getElementById('bxpFollowers'); if(f2){ f2.textContent=Math.max(0,(parseInt(f2.textContent,10)||0)+(on?1:-1)); } };
+  try{ const r = on
+      ? await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H})
+      : await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})});
+    if(!r.ok) revert();
+  }catch(e){ revert(); }
 }
 async function openStudentProfile(sid){
   const s=BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
