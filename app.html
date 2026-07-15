@@ -2918,7 +2918,9 @@ function ensureKrBody(b){                  // 평행 번역 bodies 지연 로드
   if(KR_BODY_P[id]) return KR_BODY_P[id];
   KR_BODY_P[id]=new Promise(res=>{ const s=document.createElement('script');
     s.src='bodies_'+slug+'.js'+(typeof BODIES_VER!=='undefined'?'?b='+BODIES_VER:'');
-    s.onload=res; s.onerror=res; document.head.appendChild(s); });
+    s.onload=res;
+    s.onerror=()=>{ delete KR_BODY_P[id]; s.remove(); res(); };   // 실패분 캐시 삭제 — 다음 열기 때 재시도
+    document.head.appendChild(s); });
   return KR_BODY_P[id];
 }
 function applyKrLang(id){                  // 선택 언어를 BODIES_SENT에 주입 → 기존 sentHtml 평행 렌더 재사용
@@ -3177,7 +3179,12 @@ let _readerSessionStart = 0;
 let _scrollSaveTimer = null;
 let _lastSelectionRange = null;
 
-function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_PREFS_KEY)||'null'); if(s)Object.assign(readerPrefs,s);}catch(e){} }
+function loadReaderPrefs(){ try{ const s=JSON.parse(localStorage.getItem(READER_PREFS_KEY)||'null'); if(s)Object.assign(readerPrefs,s);}catch(e){}
+  // 오염·구버전 값 방어: 인덱스가 범위 밖이면 기본값 — CSS에 undefinedpx가 박혀 조판이 깨지는 것 방지
+  const _ck=(k,n,d)=>{ const v=readerPrefs[k]; if(typeof v!=='number'||!(v>=0&&v<n)) readerPrefs[k]=d; };
+  _ck('fontSizeIdx',FONT_SIZES.length,3); _ck('lineHeightIdx',LINE_HEIGHTS.length,3);
+  _ck('padXIdx',PAD_X.length,2); _ck('padYIdx',PAD_Y.length,1); _ck('fontIdx',READER_FONTS.length,0);
+}
 function saveReaderPrefs(){ try{ localStorage.setItem(READER_PREFS_KEY, JSON.stringify(readerPrefs)); }catch(e){} }
 // 리더 통계는 계정별로 분리(전역 키 공유 시 다계정 테스트가 서로 오염) — 로그인 시 klever-reader-stats-{sid}
 function _rsKey(){ try{ const s=(typeof bxStudent==='function')?bxStudent():null; return (s&&s.id)?READER_STATS_KEY+'-'+s.id:READER_STATS_KEY; }catch(e){ return READER_STATS_KEY; } }
@@ -3185,6 +3192,11 @@ function _rsDefault(){ return {positions:{}, completedChapters:{}, highlights:{}
 function loadReaderStats(){
   readerStats = _rsDefault();                          // 계정 전환 시 이전 계정 잔여 제거
   try{ const s=JSON.parse(localStorage.getItem(_rsKey())||'null'); if(s)Object.assign(readerStats,s);}catch(e){}
+  // 형태 방어: 오염된 저장값(null 등)이 streak 갱신·앵커 복원에서 TypeError로 번져 뷰어 초기화가 중단되지 않게
+  ['positions','completedChapters','highlights','bookmarks','pagePos','deleted'].forEach(k=>{ if(!readerStats[k]||typeof readerStats[k]!=='object') readerStats[k]={}; });
+  if(!readerStats.readingTime||typeof readerStats.readingTime!=='object') readerStats.readingTime={total:0,days:{}};
+  if(!readerStats.readingTime.days||typeof readerStats.readingTime.days!=='object') readerStats.readingTime.days={};
+  if(!readerStats.streak||typeof readerStats.streak!=='object') readerStats.streak={last:'',count:0};
   // 방어: 탭 장시간 방치 등으로 하루가 과대 기록된 값 보정(하루 ≤ 8시간), 누적은 일별 합과 일치
   try{
     const rt=readerStats.readingTime;
@@ -3197,6 +3209,14 @@ function loadReaderStats(){
   }catch(e){}
 }
 function saveReaderStats(){ try{ localStorage.setItem(_rsKey(), JSON.stringify(readerStats)); }catch(e){} bxUpsertReaderStats(); }
+function _rsMigrateGuest(){   // 게스트(공용 키)로 읽던 리더 통계를 로그인 계정으로 병합 — 로그인 순간 하이라이트·독서시간이 사라지지 않게(챌린지 기록 승계와 대칭)
+  try{
+    const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
+    const g=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(!g) return;
+    _rsMergeServer(g);
+    saveReaderStats();
+  }catch(e){}
+}
 
 /* ── 내 서재(도서관에서 빌린 책) — '읽고 돌아오기' 루프의 그릇 ──
    빌리기 클릭 → 읽는 중 기록 → 돌아와서 완독 인증(독후감) → 완독 이력 누적.
@@ -3309,7 +3329,7 @@ function readerLH(d){ _withAnchorKept(()=>{ readerPrefs.lineHeightIdx = Math.max
 function readerTheme(t){ readerPrefs.theme = t; applyReaderPrefs(); saveReaderPrefs(); }
 function readerPadX(d){ _withAnchorKept(()=>{ readerPrefs.padXIdx = Math.max(0, Math.min(PAD_X.length-1, readerPrefs.padXIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
 function readerPadY(d){ _withAnchorKept(()=>{ readerPrefs.padYIdx = Math.max(0, Math.min(PAD_Y.length-1, readerPrefs.padYIdx+d)); applyReaderPrefs(); saveReaderPrefs(); }); }
-function readerFont(i){ readerPrefs.fontIdx = i; applyReaderPrefs(); saveReaderPrefs(); }
+function readerFont(i){ _withAnchorKept(()=>{ readerPrefs.fontIdx = i; applyReaderPrefs(); saveReaderPrefs(); }); }   // 서체도 줄바꿈·높이를 바꾸므로 읽던 자리 보존
 function readerBg(id){ readerPrefs.bg = id; applyReaderPrefs(); saveReaderPrefs(); }
 function toggleMouseHide(){ readerPrefs.mouseHide = !readerPrefs.mouseHide; applyReaderPrefs(); saveReaderPrefs(); }
 /* 마우스 숨기기: 켜져 있으면 2.5초 무동작 시 커서·헤더 숨김, 움직이면 복귀 */
@@ -3406,12 +3426,17 @@ function _scrollEl(){   // 현재 화면에 보이는(스크롤되는) 칸 — P
   return left;
 }
 // ── 모바일 1단 + 본문/번역(퀴즈) 탭 전환 ──
-let _mobPane='main';
+let _mobPane='main', _mobScroll={};   // 탭별 스크롤 위치 보관 — display:none이 scrollTop을 파기하므로 직접 복원
 function switchMobilePane(which){
+  if(which===_mobPane) return;
+  const prevEl=_scrollEl();
+  if(prevEl && prevEl.clientHeight) _mobScroll[_mobPane]=prevEl.scrollTop;   // 숨기기 전에 현재 위치 보관
   _mobPane=which;
   const body=document.getElementById('viewerBody');
   if(body) body.classList.toggle('mob-second', which==='second');
   document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===which));
+  const nowEl=_scrollEl();
+  if(nowEl && _mobScroll[which]!=null) nowEl.scrollTop=_mobScroll[which];   // 왕복 시 맨 위로 튕기지 않게 복원
   attachScrollListener(); updateProgress();
   if(pgEligible()){ _pg.on=false; _pg.chIdx=0; _pg.page=0; enterPageMode(); }   // 페이지 모드: 바뀐 칸으로 재조판
 }
@@ -3422,7 +3447,7 @@ function updatePaneTabs(hasSecond,label){
   document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane==='main'));
 }
 function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본문부터, 탭 라벨/표시 갱신
-  _mobPane='main';
+  _mobPane='main'; _mobScroll={};   // 재렌더 = 새 pane → 보관해둔 탭별 위치 무효
   const body=document.getElementById('viewerBody'); if(body) body.classList.remove('mob-second');
   let hasSecond,label;
   if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
@@ -3438,7 +3463,7 @@ function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본
 // 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
 function _anchorBlocks(){ const el=_scrollEl(); return el?[...el.querySelectorAll('.cv-chunk, h3.ch-title')]:[]; }
 function _captureAnchor(){
-  const el=_scrollEl(); if(!el) return null;
+  const el=_scrollEl(); if(!el||!el.clientHeight) return null;   // 뷰어가 닫혀(display:none) 레이아웃이 없으면 캡처 무효 — 늦은 타이머가 위치를 책 끝으로 덮는 것 방지
   const blocks=_anchorBlocks(); if(!blocks.length) return null;
   const top=el.scrollTop, paneTop=el.getBoundingClientRect().top;
   for(let i=0;i<blocks.length;i++){
@@ -3461,7 +3486,7 @@ function _applyAnchor(a){
 function _withAnchorKept(fn){ const a=_captureAnchor(); fn(); requestAnimationFrame(()=>_applyAnchor(a)); }
 function saveScrollPos(){
   if(!currentBook) return;
-  const a=_captureAnchor(); if(a){ readerStats.positions[currentBook.id] = a; saveReaderStats(); }
+  const a=_captureAnchor(); if(a){ a.m=currentMode; a.t=Date.now(); readerStats.positions[currentBook.id] = a; saveReaderStats(); }   // 모드·시각 기록 — 모드 다르면 복원 생략, 시각은 다기기 최신성 병합용
   // 완독 모드: 완독율 v4 = min(글자수 진행률, 독서시간 환산 진행률) 재계산·저장
   if(currentMode==='full') v4Recalc();
 }
@@ -3469,7 +3494,10 @@ function restoreScrollPos(){
   if(!currentBook) return;
   const el = _scrollEl(); if(!el) return;
   const p = readerStats.positions[currentBook.id];
-  if(p && typeof p==='object') _applyAnchor(p);          // 신규: 앵커
+  if(p && typeof p==='object'){
+    if(p.m && p.m!==currentMode){ updateProgress(); return; }   // 다른 모드에서 저장된 앵커 = 칸 내용이 달라 엉뚱한 지점 → 복원 생략(처음부터)
+    _applyAnchor(p);                                     // 신규: 앵커
+  }
   else { el.scrollTop = p || 0; updateProgress(); }       // 구버전 호환: px 숫자
 }
 // 남은 읽기시간 추정: 보이는 칸 총 글자수 / 읽기속도(한글 ~550자/분, 영문 ~1100자≈220wpm/분).
@@ -3481,7 +3509,10 @@ function _bookTotalMin(el){
   if(!c){
     const ps=el.querySelectorAll('p'); let chars=0;
     for(const p of ps) chars+=p.textContent.length;
-    const ko=/[가-힣]/.test(el.textContent.slice(0,400));
+    // 언어 판정: 라벨("왼쪽 — …" 한글)이 아닌 본문 <p> 표본의 한글 비율로 — 영어 원문 칸이 한국어(550자/분)로 오판되어 남은시간이 2배 되는 것 방지
+    let sample=''; for(const p of ps){ sample+=p.textContent; if(sample.length>=1000) break; }
+    const koN=(sample.match(/[가-힣]/g)||[]).length;
+    const ko=koN/Math.max(1,sample.length)>=0.2;
     c={min: chars/(ko?550:1100)};
     _readMinCache.set(el,c);
   }
@@ -3497,7 +3528,7 @@ function _setProgLabel(frac){
   const lbl=document.getElementById('viewerProgLabel'); if(!lbl) return;
   if(currentMode==='challenge'){ lbl.textContent=''; return; }   // 챌린지 화면: 남은시간 미표시(미션 진행바로 충분)
   frac=Math.max(0,Math.min(1,frac||0));
-  const totMin=_bookTotalMin(_scrollEl());
+  const totMin=_bookTotalMin((typeof _pg!=='undefined'&&_pg.on)?_pgSourcePane():_scrollEl());   // 페이지 모드: 숨겨진 left 폴백이 아니라 실제 조판 중인 칸 기준
   const pct=Math.round(frac*100);
   lbl.textContent = totMin>1 ? (pct+'% · 남은 '+_fmtReadMin(totMin*(1-frac))) : (pct+'%');
 }
@@ -3506,7 +3537,7 @@ function updateProgress(){
   const bar = document.getElementById('viewerProg');
   if(!el || !bar) return;
   const max = el.scrollHeight - el.clientHeight;
-  const frac = max>0 ? el.scrollTop/max : 0;
+  const frac = max>0 ? el.scrollTop/max : (el.querySelector('.cv-chunk')?1:0);   // 스크롤이 필요 없는 한 화면 책 = 전부 보임 = 100%(페이지 모드 1/1과 일치)
   bar.style.width = (Math.min(100, frac*100)).toFixed(1) + '%';
   _setProgLabel(frac);
 }
@@ -3798,7 +3829,7 @@ function readerSessionEnd(){
 function _viewerOpen(){ return document.getElementById('viewerOverlay')?.classList.contains('open'); }
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ if(_viewerOpen()) readerSessionEnd(); }
-  else { if(_viewerOpen() && !_readerSessionStart) _readerSessionStart = Date.now(); }
+  else { if(_viewerOpen() && !_readerSessionStart){ _readerSessionStart = Date.now(); bumpStreak(); } }   // 자정 넘겨 계속 읽는 경우 새 날짜 streak 반영
 });
 
 /* ── 완독율 v4 — min(글자수 진행률, 독서시간 환산 진행률) · 규칙 문서: 북스타_완독율_최종규칙_v4.md ──
@@ -3814,12 +3845,15 @@ function _v4TotalChars(){   // 책 전체 글자수 — 한국어(한글 포함)
   if(!currentBook) return 0;
   if(_v4Cache.bookId === currentBook.id && _v4Cache.total > 0) return _v4Cache.total;
   const panes=[document.querySelector('.viewer-pane.left'), document.querySelector('.viewer-pane.right')].filter(Boolean);
-  const pane = panes.find(p=>/[가-힣]/.test((p.textContent||'').slice(0,2000))) || panes[0];
-  if(!pane) return 0;
+  if(!panes.length) return 0;
+  // 칸 선택: 라벨("왼쪽 — …" 한글)에 속지 않도록 본문 <p>의 한글 글자수가 많은 쪽을 한국어 칸으로 판정
+  const koCount = pn => { let n=0; pn.querySelectorAll('p').forEach(el=>{ n+=((el.textContent||'').match(/[가-힣]/g)||[]).length; }); return n; };
+  const pane = (panes.length>1 && koCount(panes[1])>koCount(panes[0])) ? panes[1] : panes[0];
   let total=0;
   pane.querySelectorAll('p').forEach(p=>{ const t=p.textContent||''; if(/[가-힣]/.test(t)) total+=t.length; });
   if(total<500){ total=0; pane.querySelectorAll('p').forEach(p=>{ total+=(p.textContent||'').length; }); }
-  if(total>0) _v4Cache={bookId:currentBook.id, total};
+  if(total<200) return 0;   // 본문 로드 실패 placeholder(수십 자)를 책 전체로 오인해 완독율 100% 오염되는 것 차단
+  _v4Cache={bookId:currentBook.id, total};
   return total;
 }
 function _v4Frac(){   // 지금 도달한 지점(0~1) — 스크롤=화면 하단 기준, 페이지 모드=장 글자가중 + 장 내 페이지 비율
@@ -4031,7 +4065,9 @@ function hlDelete(ts){
   const arr = readerStats.highlights[currentBook.id] || [];
   const i = arr.findIndex(h => h.ts === ts);
   if(i < 0) return;
-  arr.splice(i, 1); saveReaderStats();
+  arr.splice(i, 1);
+  if(!readerStats.deleted) readerStats.deleted={}; readerStats.deleted['h'+ts]=Date.now();   // 톰스톤 — 다기기 병합 시 되살아나지 않게
+  saveReaderStats();
   document.querySelectorAll(`mark.hl[data-hlts="${ts}"]`).forEach(m => m.replaceWith(document.createTextNode(m.textContent)));
   document.querySelectorAll('.viewer-pane, .paged-flow').forEach(p => p.normalize());
   closeNoteBox(); buildNotesIfOpen();
@@ -4195,7 +4231,10 @@ function buildNotes(){
 }
 function bmDelete(i){
   const bks=readerStats.bookmarks?.[currentBook?.id]; if(!bks||!bks[i]) return;
-  bks.splice(i,1); saveReaderStats(); buildNotes();
+  const _ts=bks[i].ts;
+  bks.splice(i,1);
+  if(_ts){ if(!readerStats.deleted) readerStats.deleted={}; readerStats.deleted['b'+_ts]=Date.now(); }   // 톰스톤 — 다기기 병합 시 되살아나지 않게
+  saveReaderStats(); buildNotes();
   readerToast('책갈피 삭제됨');
 }
 function jumpToPos(pos){
@@ -4453,7 +4492,8 @@ function setDictLang(code){ _dictLang=code; const hit=dictEntryFor(document.getE
 function renderDictBody(hit, word){
   const body = document.getElementById('dictBody');
   if(!hit){
-    word = (word || document.getElementById('dictWord').textContent || '').trim();
+    word = (word || document.getElementById('dictWord').textContent || '').trim()
+           .replace(/^["'“”‘’(\[]+|["'“”‘’)\].,!?;:]+$/g,'');   // 드래그 선택에 딸려온 따옴표·구두점 제거 — "word." 도 영단어로 인식
     const isEn = /^[A-Za-z][A-Za-z'’\-]*$/.test(word);
     const naver = (isEn ? 'https://en.dict.naver.com/#/search?query=' : 'https://ko.dict.naver.com/#/search?query=') + encodeURIComponent(word);
     body.innerHTML = `<div class="dict-empty" id="dictOnline">${isEn ? '온라인 사전에서 찾는 중…' : '작품 풀이 사전에 없는 단어예요.'}</div>
@@ -4487,7 +4527,7 @@ async function _dictOnline(word){
     (e.meanings||[]).slice(0,3).forEach(m=>{ const d=(m.definitions||[])[0]; if(!d||!d.definition) return;
       html+=`<div class="dict-row"><span class="dict-lang">${esc(m.partOfSpeech||'')}</span><span class="dict-trans">${esc(d.definition)}</span></div>`; });
     el.outerHTML=html;                                        // 로딩 노드 → 결과(링크는 형제로 유지)
-  }catch(e){ const el=document.getElementById('dictOnline'); if(el) el.textContent='온라인 사전 연결에 실패했어요.'; }
+  }catch(e){ if(cur()!==word) return; const el=document.getElementById('dictOnline'); if(el) el.textContent='온라인 사전 연결에 실패했어요.'; }   // 그새 다른 단어 조회면 실패 메시지로 덮지 않음
 }
 
 /* ═══ 문장 인용 카드 (본문 선택 → canvas 이미지 카드로 공유·저장) ═══ */
@@ -4519,6 +4559,7 @@ function openQuoteCard(){
   if(pair){ text=pair.self; _qc.alt=pair.alt; } else { _qc.alt=''; }
   if(!text){ readerToast('먼저 카드로 담을 문장을 드래그해 주세요'); return; }
   if(text.length>300) text=text.slice(0,300).replace(/\s+\S*$/,'')+'…';
+  if(_qc.alt.length>300) _qc.alt=_qc.alt.slice(0,300).replace(/\s+\S*$/,'')+'…';   // 번역쪽도 컷 — 긴 문장쌍이 푸터·브랜딩 침범 방지
   _qc.text=text;
   const hp=document.getElementById('hlPopup'); if(hp) hp.style.display='none';
   document.getElementById('qcBiWrap').style.display=_qc.alt?'flex':'none';
@@ -4565,7 +4606,7 @@ function renderQuoteCard(){
   const serifFont=s=>`600 ${s}px "Noto Serif KR","Nanum Myeongjo",Georgia,serif`;
   const primary=_qc.text, len=primary.length;
   let fs=len<40?60:len<80?52:len<140?44:len<210?37:31;
-  const footerH=210, avail=H-PAD*2-footerH-40;
+  const footerH=210, avail=H-PAD*2-footerH-56;   // 텍스트 시작(y=246)~괘선(y=868) 실측 622px에 맞춤
   let pLines,aLines,afs,alh,lhF,totalH;
   for(;;){
     lhF=fs*1.5; afs=Math.max(20,Math.round(fs*0.62)); alh=afs*1.5;
@@ -4574,6 +4615,15 @@ function renderQuoteCard(){
     totalH=pLines.length*lhF+(bi?(28+aLines.length*alh):0);
     if(totalH<=avail||fs<=22) break;
     fs-=3;
+  }
+  // 최소 크기(fs=22)로도 안 들어가면 번역 줄을 잘라내 푸터 침범·캔버스 밖 잘림 방지
+  if(totalH>avail && bi && aLines.length){
+    const maxA=Math.max(1, Math.floor((avail-pLines.length*lhF-28)/alh));
+    if(aLines.length>maxA){
+      aLines=aLines.slice(0,maxA);
+      aLines[maxA-1]=aLines[maxA-1].replace(/\s*\S{0,2}$/,'')+'…';
+      totalH=pLines.length*lhF+28+aLines.length*alh;
+    }
   }
   let y=PAD+150+Math.max(0,(avail-totalH)/2);
   ctx.fillStyle=t.fg; ctx.font=serifFont(fs);
@@ -4596,8 +4646,16 @@ function renderQuoteCard(){
   ctx.textAlign='left';
 }
 function saveQuoteCard(){
-  document.getElementById('qcCanvas').toBlob(b=>{
+  document.getElementById('qcCanvas').toBlob(async b=>{
     if(!b){ readerToast('이미지 생성에 실패했어요'); return; }
+    // iOS(특히 카톡·인스타 인앱 브라우저)는 a.download가 조용히 무시됨 → 공유 시트로 '사진에 저장' 유도
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(ios && navigator.canShare && navigator.share){
+      try{
+        const file=new File([b],_qcFilename(),{type:'image/png'});
+        if(navigator.canShare({files:[file]})){ await navigator.share({files:[file]}); return; }
+      }catch(e){ if(e&&e.name==='AbortError') return; }   // 사용자가 시트를 닫음 — 그대로 종료
+    }
     const url=URL.createObjectURL(b), a=document.createElement('a');
     a.href=url; a.download=_qcFilename(); document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000); readerToast('이미지를 저장했어요');
@@ -4610,7 +4668,7 @@ function shareQuoteCard(){
     try{
       if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file], text:'『'+currentBook.title+'』 — 북스타'});
       else saveQuoteCard();
-    }catch(e){}
+    }catch(e){ if(!e||e.name!=='AbortError') saveQuoteCard(); }   // 공유 불가(권한 소멸 등)면 저장으로 폴백 — "눌렀는데 무반응" 방지
   },'image/png');
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&document.getElementById('qcOverlay')?.classList.contains('open')){ e.stopPropagation(); closeQuoteCard(); }},true);
@@ -4635,6 +4693,8 @@ function _histPush(page){
 window.addEventListener('popstate', e=>{
   // 전면 오버레이가 열려 있으면 그것부터 닫는 게 뒤로가기의 기대 동작 (닫고 현재 화면 발자국 복원)
   const _repush=()=>{ try{history.pushState({bs:1,page:_navPage,cl:(_navPage==='collection'?_clTab:undefined)},'','#'+_navPage);}catch(_){} };
+  const qc=document.getElementById('qcOverlay');
+  if(qc&&qc.classList.contains('open')){ try{closeQuoteCard();}catch(_){} _repush(); return; }   // 인용카드가 뷰어보다 위 — 먼저 닫기
   const vo=document.getElementById('viewerOverlay');
   if(vo&&vo.classList.contains('open')){ try{closeViewer();}catch(_){} _repush(); return; }
   const lc=document.getElementById('lcDetail');
@@ -5482,23 +5542,67 @@ function bxUpsertReaderStats(){            // 리더 통계(읽은시간·streak
   const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
   clearTimeout(_rsServerTimer);
   _rsServerTimer=setTimeout(()=>{
+    _rsServerTimer=null;
     try{ fetch(`${BX_SB}/bookstar_reader_stats?on_conflict=student_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
        body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
   }, 1500);
 }
-function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다기기 안전: 맵 합집합, 읽은시간·streak 최댓값)
+function _rsFlushNow(){   // 탭 종료·화면 이탈 시 대기 중(1.5초 디바운스) 동기화를 keepalive로 즉시 발사 — 마지막 세션 기록 유실 방지
+  if(!_rsServerTimer) return;
+  clearTimeout(_rsServerTimer); _rsServerTimer=null;
+  const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
+  try{ fetch(`${BX_SB}/bookstar_reader_stats?on_conflict=student_id`,
+    {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},keepalive:true,
+     body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
+}
+window.addEventListener('pagehide', ()=>{ try{ if(_viewerOpen()) readerSessionEnd(); }catch(e){} _rsFlushNow(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) _rsFlushNow(); });
+function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다기기 안전: 맵 합집합, 읽은시간 최댓값, 하이라이트·책갈피는 원소 단위)
   if(!sv||typeof sv!=='object') return;
   const L=readerStats;
-  ['positions','completedChapters','highlights','bookmarks','pagePos'].forEach(k=>{ L[k]=Object.assign({}, sv[k]||{}, L[k]||{}); });   // pagePos 포함(페이지모드 위치 다기기 동기)
+  L.completedChapters=Object.assign({}, sv.completedChapters||{}, L.completedChapters||{});
+  ['positions','pagePos'].forEach(k=>{   // 읽던 위치: 책별 최신(t) 우선 — 옛 로컬이 다른 기기의 최신 위치를 덮지 않게(t 없는 구기록은 로컬 우선)
+    const out=Object.assign({}, sv[k]||{});
+    for(const bid in (L[k]||{})){
+      const lv=L[k][bid], svv=out[bid];
+      out[bid]=(svv&&typeof svv==='object'&&lv&&typeof lv==='object'&&(svv.t||0)>(lv.t||0))?svv:lv;
+    }
+    L[k]=out;
+  });
+  // 삭제 기록(톰스톤) 합집합 — 한쪽 기기에서 지운 형광펜·책갈피가 병합으로 되살아나지 않게. 90일 지난 기록은 정리
+  const del=Object.assign({}, sv.deleted||{}, L.deleted||{});
+  const cut=Date.now()-90*86400000; for(const k in del){ if(del[k]<cut) delete del[k]; }
+  L.deleted=del;
+  // 하이라이트·책갈피: 책 단위 통째 교체(마지막 저장이 이김)가 아닌 원소(ts) 단위 합집합 — 다기기 형광펜 유실 방지
+  [['highlights','h'],['bookmarks','b']].forEach(([k,pf])=>{
+    const out={};
+    new Set([...Object.keys(sv[k]||{}), ...Object.keys(L[k]||{})]).forEach(bid=>{
+      const seen=new Set(), m=[];
+      [...((L[k]||{})[bid]||[]), ...((sv[k]||{})[bid]||[])].forEach(x=>{
+        if(!x||seen.has(x.ts)||del[pf+x.ts]) return;
+        seen.add(x.ts); m.push(x);
+      });
+      m.sort((a,b)=>(a.ts||0)-(b.ts||0));
+      out[bid]=m;
+    });
+    L[k]=out;
+  });
   const days={}, sd=(sv.readingTime&&sv.readingTime.days)||{}, ld=(L.readingTime&&L.readingTime.days)||{};
   for(const k in sd) days[k]=Math.max(days[k]||0, Math.round(sd[k]||0));
   for(const k in ld) days[k]=Math.max(days[k]||0, Math.round(ld[k]||0));
   let tot=0; for(const k in days) tot+=days[k];
   L.readingTime={total:tot, days:days};
+  // streak: 최신 날짜 쪽 기준 — 하루 차이(이어 읽음)면 이어붙이고, 같은 날이면 큰 쪽, 끊겼으면 옛 카운트 부활 금지
   const ss=sv.streak||{}, ls=L.streak||{};
-  L.streak = ((ss.last||'')>(ls.last||'')) ? {last:ss.last||'',count:ss.count||0} : {last:ls.last||'',count:ls.count||0};
-  if((ss.count||0)>(L.streak.count||0)) L.streak.count=ss.count||0;
+  const newer=((ss.last||'')>(ls.last||''))?ss:ls, older=(newer===ss)?ls:ss;
+  let cnt=newer.count||0;
+  if((older.last||'')&&(newer.last||'')){
+    const gap=Math.round((new Date(newer.last)-new Date(older.last))/86400000);
+    if(gap===0) cnt=Math.max(cnt, older.count||0);
+    else if(gap===1) cnt=Math.max(cnt, (older.count||0)+1);
+  }
+  L.streak={last:newer.last||'', count:cnt};
 }
 async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더통계 → 로컬 병합 후 재렌더
   const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
@@ -5537,6 +5641,7 @@ async function bxPickStudent(id){
   _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
   await bxLoadResultsFromDB();
   loadReaderStats();            // 새 계정의 로컬 키로 리셋(이전 계정 잔여 제거)
+  _rsMigrateGuest();            // 게스트로 읽던 하이라이트·책갈피·독서시간·streak 승계
   await bxLoadReaderStats();    // 서버 리더통계 → 로컬 병합 + 리듬/streak 재렌더
   try{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); }catch(e){}
   if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
@@ -6480,7 +6585,7 @@ function showUpdateBanner(){
 
 /* ── 읽기 방식: 스크롤 / 탭 넘김 ── */
 function setPageMode(on){ readerPrefs.pageMode=!!on; saveReaderPrefs(); syncPageModeBtns();
-  if(window.innerWidth<=600){ if(on) enterPageMode(); else exitPageMode(); }
+  if(window.innerWidth<=600){ if(on) enterPageMode(true); else exitPageMode(); }   // true=지금 스크롤 위치를 페이지로 승계
   readerToast(on ? '페이지 넘김 · 좌/우 탭·스와이프로 페이지, 가운데 탭으로 바' : '스크롤 모드'); }
 function syncPageModeBtns(){ document.querySelectorAll('.rss-mode').forEach(b=>b.classList.toggle('on', (b.dataset.page==='1')===!!readerPrefs.pageMode)); }
 function readerPage(dir){
@@ -6536,9 +6641,19 @@ function buildPagedChapters(){
   }
   return secs.map(s=>({title:(s.dataset.chTitle||'').replace(/\s+/g,' ').trim(), html:s.outerHTML}));
 }
-function enterPageMode(){
+function _pgFromScroll(){   // 스크롤 모드의 현재 위치 → {ch(장 인덱스), frac(장 내 비율)} — 탭넘김 전환 시 자리 승계용
+  const pane=_scrollEl(); if(!pane||!pane.clientHeight||!pane.scrollTop) return null;
+  const secs=[...pane.querySelectorAll('.chapter-anchor')]; if(!secs.length) return null;
+  const top=pane.scrollTop;
+  let i=0;
+  for(let k=0;k<secs.length;k++){ if(secs[k].offsetTop<=top+4) i=k; else break; }
+  const s=secs[i], h=Math.max(1, s.offsetHeight);
+  return {ch:i, frac:Math.max(0, Math.min(0.999, (top-s.offsetTop)/h))};
+}
+function enterPageMode(fromScroll){
   if(!pgEligible()||!currentBook) return;
   const wasOn=_pg.on, keepCh=_pg.chIdx, keepPg=_pg.page;
+  const cur=(!wasOn && fromScroll)?_pgFromScroll():null;   // pg-active로 본문이 숨기 전에 스크롤 위치 캡처
   _pg.chapters=buildPagedChapters();
   if(!_pg.chapters.length) return;
   _pg.on=true;
@@ -6546,10 +6661,15 @@ function enterPageMode(){
   const pv=document.getElementById('pagedView');
   if(pv){ pv.className='paged-view gv-'+genreOf(currentBook.category); pv.style.display='block'; }
   setupPagedGestures();
-  let ch,pg;
+  let ch,pg,frac=null;
   if(wasOn){ ch=keepCh; pg=keepPg; }
+  else if(cur){ ch=cur.ch; pg=0; frac=cur.frac; }   // 스크롤로 읽던 자리 그대로(페이지 수는 조판 후 확정 → frac로 환산)
   else { const sp=(readerStats.pagePos&&readerStats.pagePos[currentBook.id])||{}; ch=sp.ch||0; pg=sp.page||0; }
   showChapter(ch, pg);
+  if(frac!=null && _pg.count>1){
+    _pg.page=Math.max(0, Math.min(_pg.count-1, Math.round(frac*(_pg.count-1))));
+    applyPageTransform(); updatePagedInfo(); pgSave();
+  }
 }
 function exitPageMode(){
   if(!_pg.on) return;
@@ -6630,7 +6750,7 @@ function updatePagedInfo(){
 function pgSave(){
   if(!currentBook) return;
   if(!readerStats.pagePos) readerStats.pagePos={};
-  readerStats.pagePos[currentBook.id]={ch:_pg.chIdx, page:_pg.page};
+  readerStats.pagePos[currentBook.id]={ch:_pg.chIdx, page:_pg.page, t:Date.now()};
   saveReaderStats();
   v4Activity(); v4Recalc();   // 완독율 v4: 페이지 넘김 = 활동 + 진행률 갱신
 }
@@ -6672,11 +6792,15 @@ function pgTap(clientX){
 async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  // 같은 책·같은 모드가 이미 열려 있으면(더블클릭 등) 재초기화 금지 — 독서 세션 리셋·화면 스냅백 방지
+  if(currentBook && currentBook.id===bookId && currentMode===(mode||'challenge')
+     && document.getElementById('viewerOverlay')?.classList.contains('open')) return;
   // 뷰어가 열린 채 다른 책으로 전환(bxOpenBook 등): 이전 책 정산·상태 초기화
   // (기존: 독서시간 유실 + 이전 책 페이지 위치가 새 책에 적용되던 버그)
   if(currentBook && currentBook.id !== bookId
      && document.getElementById('viewerOverlay')?.classList.contains('open')){
     saveScrollPos(); readerSessionEnd();
+    if(_scrollSaveTimer){ clearTimeout(_scrollSaveTimer); _scrollSaveTimer=null; }   // 이전 책의 대기 디바운스가 새 책 위치를 덮는 것 방지
     if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   }
   if(currentBook && currentBook.id !== bookId){ _pg.chIdx=0; _pg.page=0; }
@@ -6700,16 +6824,16 @@ async function openViewer(bookId, mode){
     if(!haveSupaTrans && (b.hasTrans||LEGACY_BODY_FILES[bookId])) await ensureForeignBody(bookId);
     _reload = true;
   }
-  if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); applyKrLang(bookId); _reload = true; }
+  if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); if(currentBook===b) applyKrLang(bookId); _reload = true; }   // 늦은 응답이 전역 KR_LANG을 바꾸지 않게(레이스 가드 앞이라 별도 확인)
   // kr-/레거시(g\d+) 등 gb- 외 고전 원문 fetch (gb-는 위에서 처리)
   if(classicFetchId(bookId) && !bookId.startsWith('gb-')){ await ensureClassicBody(bookId); _reload = true; }
-  // 레이스 가드: 위 await(수 초) 동안 다른 책을 열었으면 A의 꼬리 초기화가 B 화면을 오염시키지 않게 중단
-  // (이전 책 사전(glossary) 적용·스크롤 스냅백·세션 타이머 리셋 방지)
-  if(currentBook !== b) return;
+  // 레이스 가드: 위 await(수 초) 동안 다른 책을 열었거나 뷰어를 닫았으면 꼬리 초기화 중단
+  // (이전 책 사전(glossary) 적용·스크롤 스냅백·세션 타이머 유령 시작 방지)
+  if(currentBook !== b || !_viewerOpen()) return;
   if(_reload) renderViewer();
   // 리더 모듈 초기화
   setTimeout(() => {
-    if(currentBook !== b) return;   // setTimeout 시점 재확인
+    if(currentBook !== b || !_viewerOpen()) return;   // setTimeout 시점 재확인(책 전환·닫힘)
     applyReaderPrefs();
     buildTOC();
     restoreHighlights();   // 페이지 모드 조판 전에 복원해야 형광펜이 페이지에도 실림
@@ -6887,7 +7011,8 @@ function ensureForeignBody(id){
   FOREIGN_BODY_P[id] = new Promise(res=>{
     const s = document.createElement('script');
     s.src = (LEGACY_BODY_FILES[id] || ('bodies_' + id.replace(/-/g,'') + '.js')) + (typeof BODIES_VER !== 'undefined' ? '?b='+BODIES_VER : '');
-    s.onload = res; s.onerror = res;
+    s.onload = res;
+    s.onerror = ()=>{ delete FOREIGN_BODY_P[id]; s.remove(); res(); };   // 실패분 캐시 삭제 — 새로고침 없이 다음 열기 때 재시도(일시 네트워크 오류·배포 지연 복구)
     document.head.appendChild(s);
   });
   return FOREIGN_BODY_P[id];
@@ -7126,7 +7251,8 @@ function mpMissionCard(x){
       <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
 }
 async function mpHydrate(ch, m, stu){
-  _mpCtx={bookId:currentBook.id, school:CH_SCHOOL, student:stu.id, m, chId:ch.id,
+  const _bid=currentBook.id;   // 레이스 가드: fetch 대기 중 다른 책으로 전환되면 B 화면을 A 미션으로 덮지 않게
+  _mpCtx={bookId:_bid, school:CH_SCHOOL, student:stu.id, m, chId:ch.id,
           done:new Set(), ans:{}, quizCount:0, complete:false};
   // 별 적립 + 퀴즈 시도 복원 — 독립 쿼리 병렬(기존 직렬 2왕복)
   await Promise.all([
@@ -7139,6 +7265,7 @@ async function mpHydrate(ch, m, stu){
       if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].ans&&typeof rows[0].ans==='object') _mpCtx.ans=rows[0].ans; }
     }catch(e){} })(),
   ]);
+  if(!currentBook || currentBook.id!==_bid || _mpCtx.bookId!==_bid) return;   // 책 전환됨 — 낡은 하이드레이트 중단
   mpRefreshTotal(stu.id);
   chalActiveMissions(m).forEach(x=>{
     if(x.kind==='quiz') return;
@@ -7163,6 +7290,7 @@ function mpMarkDone(k){
 function _mpShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 async function mpLoadQuiz(m){
   const box=document.getElementById('mpQuizBox'); if(!box) return;
+  const _bid=currentBook&&currentBook.id;   // 레이스 가드용 — fetch 대기 중 책 전환 감지
   const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
   if(!qt){ box.innerHTML='<div class="mp-load">퀴즈 유형이 설정되지 않았어요.</div>'; return; }
   const n=10;   /* 퀴즈 문항 수 = 10개 고정 (유형별 10장면 전부) */
@@ -7175,6 +7303,7 @@ async function mpLoadQuiz(m){
     if(lv){ const r=await fetch(`${base}&level=eq.${encodeURIComponent(lv)}`,{headers:BX_H}); if(r.ok) items=await r.json(); }
     if(!Array.isArray(items)||!items.length){ const r2=await fetch(base,{headers:BX_H}); if(r2.ok) items=await r2.json(); }
   }catch(e){}
+  if(!currentBook || currentBook.id!==_bid || !box.isConnected) return;   // 책 전환/재렌더됨 — 낡은 응답 폐기(B 컨텍스트 오염 방지)
   if(Array.isArray(items)&&items.length){ const seen=new Set(); items=items.filter(it=>{ if(seen.has(it.scene_no))return false; seen.add(it.scene_no); return true; }).slice(0,n); }
   if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
   // DB 앵커(장면별 본문 정확일치 문장) 수집 → 하드코딩 SCENE_ANCHORS 없는 책도 좌측 본문 점프+형광펜
@@ -7196,6 +7325,7 @@ async function mpLoadQuiz(m){
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
   await _mpFetchScenes();   // DB 장면카드(핵심문장+배경설명) 로드 → 있으면 카드모드
+  if(!currentBook || currentBook.id!==_bid) return;   // 장면카드 대기 중 책 전환 — 중단
   if(_mpStepMode()) _mpStepInit(box, items);   // 카드모드: 왼쪽=인용구+배경설명
   else _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
 }
@@ -8406,6 +8536,7 @@ function submitSceneImpression(){
 }
 
 function closeViewer(){
+  if(_scrollSaveTimer){ clearTimeout(_scrollSaveTimer); _scrollSaveTimer=null; }   // 대기 중 위치저장 디바운스 해제 — 닫힌 화면에서 발화하면 위치 오염
   if(_scnIO){ _scnIO.disconnect(); _scnIO=null; } _scnCur=-1; _scnMarkP=null;   // 장면 동기화 옵저버 정리
   if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   saveScrollPos();
