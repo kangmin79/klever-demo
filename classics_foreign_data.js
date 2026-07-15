@@ -52,6 +52,22 @@ const BOOKS_CLASSICS_FOREIGN = [
   "coverSrc": "./covers/gb-1524.webp"
  },
  {
+  "id": "gb-1533",
+  "title": "Macbeth",
+  "author": "윌리엄 셰익스피어",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-1533.webp"
+ },
+ {
   "id": "gb-2701",
   "title": "Moby Dick; Or, The Whale",
   "author": "허먼 멜빌",
