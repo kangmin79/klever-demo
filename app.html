@@ -6809,6 +6809,7 @@ async function openViewer(bookId, mode){
   if(currentBook && currentBook.id !== bookId){ _pg.chIdx=0; _pg.page=0; }
   currentBook = b;
   currentMode = mode || 'challenge';
+  syncModePill();   // 상세모달 '전문 바로 읽기' 등으로 열 때도 헤더 알약이 실제 모드를 표시(기존: 챌린지로 고정 표시)
   applyPaneDefault();   // KO 1단 기본 책이면 pane-trans, 아니면 나란히로 리셋
 
   document.getElementById('viewerTitle').textContent = b.title;
@@ -6851,14 +6852,17 @@ async function openViewer(bookId, mode){
   loadGlossary(b.id);
 }
 
+function syncModePill(){   // 헤더 모드 알약(챌린지/완독/Intl)을 currentMode와 동기화
+  document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mode' + currentMode.charAt(0).toUpperCase() + currentMode.slice(1))?.classList.add('active');
+}
 function setMode(mode){
   if(currentBook && !currentBook.intl && mode==='intl'){
     readerToast('해외 도서는 International 모드가 제공되지 않아요');
     return;
   }
   currentMode = mode;
-  document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+  syncModePill();
   stopTTS();
   applyPaneDefault();   // KO 1단 기본 책+완독이면 pane-trans, 그 외 나란히 리셋
   renderViewer();
@@ -7178,11 +7182,10 @@ function renderViewer(){
   _setupMobilePanes(_c || {});   // 장면챌린지 모드는 c 미계산(라벨 분기가 c를 안 봄)
   if(!setupSentenceParallel()) setupParallel();   // 문장정렬 책=문장 단위, 아니면 기존 문단 단위
   scheduleAlign(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(scheduleAlign);   // A안: 좌우 문단 수평 정렬(웹폰트 로드 후 재정렬)
-  // 바닥 액션: 완독=장 이동만 / 챌린지·Intl=장 이동 + 수행완료
+  // 바닥 액션: 장 이동(◀이전/다음▶) 버튼 제거 — 스크롤·탭넘김·목차(☰)가 이미 담당, 모바일 세로 한 줄 회수
+  // 장면챌린지의 장면 이동은 퀴즈 진행 자체라 유지. 완독 모드는 버튼이 없어 footer 통째 숨김(독서 공간 확보)
   const acts = document.getElementById('viewerActions');
   if(acts){
-    const nav = `<button class="viewer-action" onclick="gotoChapter(-1)">◀ 이전</button>`
-              + `<button class="viewer-action" onclick="gotoChapter(1)">다음 ▶</button>`;
     const isSceneChal = (currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && !!CHALLENGE_SCENES[currentBook.id]);
     const isChatChal = isSceneChal && CHAT_QUIZ_BOOKS.has(currentBook.id);
     acts.innerHTML = isChatChal
@@ -7191,10 +7194,12 @@ function renderViewer(){
       ? `<button class="viewer-action" onclick="sceneGo(-1)">◀ 이전 장면</button>`
         + `<button class="viewer-action primary" onclick="sceneGo(1)">다음 장면 ▶</button>`
       : (currentMode === 'full')
-      ? nav
+      ? ''
       : (currentMode === 'challenge')
-      ? nav + `<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`
-      : nav + `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
+      ? `<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`
+      : `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
+    const ft = acts.closest('.viewer-footer');
+    if(ft) ft.style.display = acts.innerHTML ? '' : 'none';
   }
 }
 
