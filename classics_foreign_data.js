@@ -1,7 +1,7 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 146권 (전권 Supabase classics 행 존재 확인됨, 2026-07-10 유령 7권 제거 / 2026-07-15 셰익스피어 로미오와 줄리엣 gb-1513 · 한여름 밤의 꿈 gb-1514 · 햄릿 gb-1524 추가)
+// 총 149권 (전권 Supabase classics 행 존재 확인됨, 2026-07-10 유령 7권 제거 / 2026-07-15 셰익스피어 로미오와 줄리엣 gb-1513 · 한여름 밤의 꿈 gb-1514 · 햄릿 gb-1524 · 율리우스 카이사르 gb-1522 · 맥베스 gb-1533 · 오셀로 gb-1531 추가)
 const BOOKS_CLASSICS_FOREIGN = [
  {
   "id": "gb-1513",
@@ -66,6 +66,22 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-1524.webp"
+ },
+ {
+  "id": "gb-1531",
+  "title": "Othello, the Moor of Venice",
+  "author": "윌리엄 셰익스피어",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-1531.webp"
  },
  {
   "id": "gb-1533",
