@@ -2082,8 +2082,9 @@ body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
   position:fixed;z-index:120;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
   padding:6px;box-shadow:0 6px 24px rgba(0,0,0,0.15);display:none;gap:4px;
 }
-.hl-popup button{padding:6px 10px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text);background:var(--bg-input);display:inline-flex;align-items:center;gap:5px;}
+.hl-popup button{padding:6px 10px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text);background:var(--bg-input);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}   /* nowrap: 모바일에서 "하이라이/트" 줄바꿈 깨짐 방지 */
 .hl-popup button:hover{background:var(--primary-bg);}
+@media (max-width:600px){ .hl-popup{padding:5px;gap:3px;} .hl-popup button{padding:6px 7px;font-size:11.5px;gap:4px;} }   /* 좁은 화면: 4버튼 한 줄 유지 */
 
 /* 독서 통계 칩 */
 .reader-stats{display:inline-flex;gap:10px;align-items:center;font-size:11px;color:var(--text-sub);}
@@ -3916,7 +3917,9 @@ function setupHighlightHandlers(){
     _lastSelectionRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
     popup.style.display = 'flex';
-    popup.style.left = Math.max(8, rect.left + rect.width/2 - 80) + 'px';
+    // 먼저 표시해 실제 폭을 잰 뒤 좌우 클램프 — 좁은 화면에서 오른쪽 잘림 방지
+    const px = rect.left + rect.width/2 - popup.offsetWidth/2;
+    popup.style.left = Math.max(8, Math.min(px, window.innerWidth - popup.offsetWidth - 8)) + 'px';
     popup.style.top  = Math.max(8, rect.top - 44) + 'px';
   });
   // 본문 형광펜 클릭 → 메모 보기·수정·지우기 / 박스 밖 클릭 → 닫기
