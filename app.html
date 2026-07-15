@@ -2068,10 +2068,13 @@ body.dark .viewer-pane p.pp-on{background:rgba(212,169,59,0.26);}
 .viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.24);}
 body.dark .viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.32);}
 .viewer-body.sent-mode .viewer-pane p[data-pi]:hover{background:transparent;}   /* 문장 모드: 문단 전체 감싸는 배경 제거 */
-.viewer-pane .sent-reveal{display:block;margin:7px 0 4px;padding:8px 12px;border-left:3px solid var(--gold,#d4a93b);
-  background:rgba(212,169,59,0.10);border-radius:0 6px 6px 0;font-size:14px;line-height:1.7;color:var(--text-sub);
+/* 금색 세로 바를 border-left가 아닌 배경 그라데이션으로 — 일부 기기(삼성 브라우저 등)에서 보더가
+   둥근 배경 모서리 밖으로 꼬리처럼 삐져나오는 문제 원천 차단(배경은 radius에 항상 함께 잘림) */
+.viewer-pane .sent-reveal{display:block;margin:7px 0 4px;padding:8px 12px 8px 15px;
+  background:linear-gradient(to right, var(--gold,#d4a93b) 3px, rgba(212,169,59,0.10) 3px);
+  border-radius:6px;font-size:14px;line-height:1.7;color:var(--text-sub);
   font-family:'Noto Serif KR',serif;}
-body.dark .viewer-pane .sent-reveal{background:rgba(212,169,59,0.14);}
+body.dark .viewer-pane .sent-reveal{background:linear-gradient(to right, var(--gold,#d4a93b) 3px, rgba(212,169,59,0.14) 3px);}
 /* 평행 하이라이트 — 원문에 형광펜 치면 번역쪽 같은 문단에 골드 마커 (은은하게, pp-on보다 약함) */
 .viewer-pane p.hl-pair{box-shadow:inset 3px 0 0 rgba(212,169,59,.65);background:rgba(212,169,59,.06);padding-left:8px;margin-left:-11px;border-radius:3px;}
 body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
