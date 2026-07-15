@@ -36,6 +36,22 @@ const BOOKS_CLASSICS_FOREIGN = [
   "coverSrc": "./covers/gb-1514.webp"
  },
  {
+  "id": "gb-1522",
+  "title": "Julius Caesar",
+  "author": "윌리엄 셰익스피어",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-1522.webp"
+ },
+ {
   "id": "gb-1524",
   "title": "The Tragedy of Hamlet, Prince of Denmark",
   "author": "윌리엄 셰익스피어",
