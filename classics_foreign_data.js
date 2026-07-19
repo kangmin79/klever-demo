@@ -1,8 +1,9 @@
 // 해외 고전 — 북스타 등록 데이터 (자동생성: 클레버/_final_foreign.py)
 // hasTrans=bodies_*.js 존재 자동판정, coverSrc=covers/*.webp 존재 자동판정 (하드코딩 없음)
 // 본문=Supabase classics(origin='foreign') fetch(id=gb-{gutenberg_id})
-// 총 181권 (전권 Supabase classics 행 존재 확인됨, 2026-07-10 유령 7권 제거 / 2026-07-15 셰익스피어 로미오와 줄리엣 gb-1513 · 한여름 밤의 꿈 gb-1514 · 햄릿 gb-1524 · 율리우스 카이사르 gb-1522 · 맥베스 gb-1533 · 오셀로 gb-1531 · 헛소동 gb-1519 추가 / 2026-07-16 베니스의 상인 gb-1515 · 십이야 gb-1526 · 리어왕 gb-1532 추가 / 2026-07-17 안토니우스와 클레오파트라 gb-1534 · 말괄량이 길들이기 gb-1508 · 실수 연발 gb-1504 · 사랑의 헛수고 gb-1510 · 겨울 이야기 gb-1539 · 뜻대로 하세요 gb-1523 · 코리올라누스 gb-1535 · 리처드 2세 gb-1512 · 페리클레스 gb-1537 · 자에는 자로 gb-1530 추가 / 헨리 4세 1부 gb-1516 · 트로일러스와 크레시다 gb-1528 추가 / 2026-07-18 아테네의 타이먼 gb-1536 · 두 귀족 친척 gb-1506 · 심벨린 gb-1538 · 티투스 안드로니쿠스 gb-1507 · 리처드 3세 gb-1503 · 헨리 5세 gb-1521 추가 / 존 왕 gb-1511 · 헨리 6세 1부 gb-1500 · 헨리 4세 2부 gb-1518 · 헨리 8세 gb-1541 추가 / 헨리 6세 2부 gb-1501 · 헨리 6세 3부 gb-1502 추가 / 템페스트 gb-1540 · 베로나의 두 신사 gb-1509 추가 / 끝이 좋으면 다 좋아 gb-1529 · 윈저의 즐거운 아낙네들 gb-1517 추가 — 🏁 셰익스피어 정전 38편 전작 완역 완성(희극 14/14 · 비극 12/12 · 사극 10/10 · 페리클레스 · 두 귀족 친척))
-const BOOKS_CLASSICS_FOREIGN = [
+// 총 183권 (전권 Supabase classics 행 존재 확인됨, 2026-07-10 유령 7권 제거 / 2026-07-15 셰익스피어 로미오와 줄리엣 gb-1513 · 한여름 밤의 꿈 gb-1514 · 햄릿 gb-1524 · 율리우스 카이사르 gb-1522 · 맥베스 gb-1533 · 오셀로 gb-1531 · 헛소동 gb-1519 추가 / 2026-07-16 베니스의 상인 gb-1515 · 십이야 gb-1526 · 리어왕 gb-1532 추가 / 2026-07-17 안토니우스와 클레오파트라 gb-1534 · 말괄량이 길들이기 gb-1508 · 실수 연발 gb-1504 · 사랑의 헛수고 gb-1510 · 겨울 이야기 gb-1539 · 뜻대로 하세요 gb-1523 · 코리올라누스 gb-1535 · 리처드 2세 gb-1512 · 페리클레스 gb-1537 · 자에는 자로 gb-1530 추가 / 헨리 4세 1부 gb-1516 · 트로일러스와 크레시다 gb-1528 추가 / 2026-07-18 아테네의 타이먼 gb-1536 · 두 귀족 친척 gb-1506 · 심벨린 gb-1538 · 티투스 안드로니쿠스 gb-1507 · 리처드 3세 gb-1503 · 헨리 5세 gb-1521 추가 / 존 왕 gb-1511 · 헨리 6세 1부 gb-1500 · 헨리 4세 2부 gb-1518 · 헨리 8세 gb-1541 추가 / 헨리 6세 2부 gb-1501 · 헨리 6세 3부 gb-1502 추가 / 템페스트 gb-1540 · 베로나의 두 신사 gb-1509 추가 / 끝이 좋으면 다 좋아 gb-1529 · 윈저의 즐거운 아낙네들 gb-1517 추가 — 🏁 셰익스피어 정전 38편 전작 완역 완성(희극 14/14 · 비극 12/12 · 사극 10/10 · 페리클레스 · 두 귀족 친척))
+const BOOKS_CLASSICS_FOREIGN =  / 2026-07-19 오스카 와일드 진지함의 중요성 gb-844 · 윈더미어 부인의 부채 gb-790 추가(셰익스피어 다음 작가)
+[
  {
   "id": "gb-1513",
   "title": "Romeo and Juliet",
@@ -2898,5 +2899,37 @@ const BOOKS_CLASSICS_FOREIGN = [
   "reviews": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-1517.webp"
+ },
+ {
+  "id": "gb-844",
+  "title": "The Importance of Being Earnest",
+  "author": "오스카 와일드",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-844.webp"
+ },
+ {
+  "id": "gb-790",
+  "title": "Lady Windermere's Fan",
+  "author": "오스카 와일드",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 42,
+  "reviews": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-790.webp"
  }
 ];
