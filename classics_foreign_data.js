@@ -2982,5 +2982,21 @@ const BOOKS_CLASSICS_FOREIGN =
   "reviews": 14,
   "progress": 0,
   "coverSrc": "./covers/gb-1661.webp"
+ },
+ {
+  "id": "gb-244",
+  "title": "A Study in Scarlet",
+  "author": "아서 코난 도일",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 44,
+  "reviews": 12,
+  "progress": 0,
+  "coverSrc": "./covers/gb-244.webp"
  }
 ];
