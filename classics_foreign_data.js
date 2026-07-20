@@ -1480,6 +1480,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "coverSrc": "./covers/gb-2833.webp"
  },
  {
+  "id": "gb-2834",
+  "title": "The Portrait of a Lady — Volume 2",
+  "author": "헨리 제임스",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 41,
+  "reviews": 9,
+  "progress": 0,
+  "coverSrc": "./covers/gb-2834.webp"
+ },
+ {
   "id": "gb-1023",
   "title": "Bleak House",
   "author": "찰스 디킨스",
