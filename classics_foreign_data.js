@@ -3031,5 +3031,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 5,
   "progress": 0,
   "coverSrc": "./covers/gb-105.webp"
+ },
+ {
+  "id": "gb-141",
+  "title": "맨스필드 파크",
+  "author": "제인 오스틴",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-141.webp"
  }
 ];
