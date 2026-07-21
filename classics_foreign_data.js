@@ -3048,5 +3048,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-141.webp"
+ },
+ {
+  "id": "gb-35",
+  "title": "타임머신",
+  "author": "허버트 조지 웰스",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-35.webp"
  }
 ];
