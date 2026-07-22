@@ -607,19 +607,12 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-tab.on{color:var(--text);}
 .cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
 .cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
-/* International 인트로: 히어로 박스 제거 — 세계고전 탭과 같은 한 줄 소개문 + 언어칩 한 줄 (배너 무거움 해소 2026-07-23) */
-.cl-welcome{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin:16px 2px 4px;}
-.cl-welcome .cl-wel-txt{flex:1 1 340px;min-width:0;}
-.cl-welcome .cl-langpick{flex:none;margin-left:auto;}
+/* International 인트로: 한 줄 소개문만 — 언어 전환은 우상단 헤더 드롭다운 단일화 (2026-07-23) */
+.cl-welcome{margin:16px 2px 4px;}
 .cl-wel-txt{font-size:13px;color:var(--text-sub);line-height:1.6;}
 .cl-wel-txt b{color:var(--text);font-weight:800;}
-.cl-langpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.cl-lang-cap{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--text-light);flex:none;}
-.cl-lang-cap .icon{width:15px;height:15px;stroke-width:1.8;}
-.cl-langchips{display:flex;gap:7px;flex-wrap:wrap;}
-.cl-lchip{background:var(--bg-card);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:border-color .15s,color .15s;}
-.cl-lchip:hover{border-color:var(--gold);color:var(--text);}
-.cl-lchip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);}
+.cl-wel-hint{display:inline-flex;align-items:center;gap:4px;color:var(--text-light);font-size:12px;font-weight:600;margin-left:6px;}
+.cl-wel-hint .icon{width:13px;height:13px;stroke-width:1.8;}
 .cl-card .cl-langbadge{position:absolute;top:0;left:0;z-index:2;width:0;height:0;border-style:solid;border-width:24px 24px 0 0;border-color:var(--gold) transparent transparent transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));}
 .cl-card .cl-cardlangs{margin:6px 0 1px;display:flex;gap:4px;flex-wrap:wrap;}
 .cl-card .cl-lg{font-size:9.5px;font-weight:700;color:var(--gold);background:rgba(212,169,59,.15);border-radius:5px;padding:2px 6px;}
@@ -2443,11 +2436,12 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()" style="display:none;">🙂 로그인</button>
     <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대학교 학술정보원</span>
     <span class="hdr-div"></span>
-    <select class="lang-select" onchange="changeLang(this.value)">
+    <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
       <option value="ko">한국어</option>
       <option value="en">English</option>
       <option value="zh">中文</option>
       <option value="vi">Tiếng Việt</option>
+      <option value="ja">日本語</option>
     </select>
     <button class="btn-theme" id="themeBtn" onclick="toggleTheme()" aria-label="테마"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
   </div>
@@ -6181,7 +6175,6 @@ const CLASSIC_SUB = {
   '서사시·고전':'문명의 뿌리가 된 위대한 서사', '수필·에세이':'삶을 들여다보는 작가의 시선',
   '과학·심리':'세계와 마음을 탐구하다',
 };
-const CL_LANG_ORDER = ['zh','vi','en','ja'];
 function clCard(b, opts){
   opts = opts || {};
   const showLang = opts.krLang && b.locale==='modern' && b.hasTrans;   // 번역된 한국 고전만 4개언어 표시
@@ -6238,17 +6231,11 @@ function renderClassicShelves(){
   if(foreign){
     headBody = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
   } else {
-    const allLbl = ({en:'All',zh:'全部',vi:'Tất cả',ja:'すべて'})[_clLang] || '전체';
-    const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?allLbl:KR_LANG_NAMES[l]}</span>`).join('');
-    const capMap = {ko:'언어 선택',en:'Choose your language',zh:'选择语言',vi:'Chọn ngôn ngữ',ja:'言語を選ぶ'};
-    const cap = capMap[_clLang]||capMap.ko;
+    // 언어 전환 = 우상단 헤더 드롭다운 단일화 (페이지 내 칩 제거 2026-07-23). 소개문에서 우상단으로 안내.
+    const hintMap = {ko:'우측 상단에서 언어를 선택하세요.',en:'Choose your language at the top right.',zh:'请在右上角选择语言。',vi:'Chọn ngôn ngữ ở góc trên bên phải.',ja:'右上で言語を選べます。'};
     const W = CL_WELCOME[_clLang]||CL_WELCOME.all;
     headBody = `<div class="cl-welcome">
-        <div class="cl-wel-txt"><b>${W.h}</b> — ${W.p}</div>
-        <div class="cl-langpick">
-          <div class="cl-lang-cap">${ic('globe')}${cap}</div>
-          <div class="cl-langchips">${chips}</div>
-        </div>
+        <div class="cl-wel-txt"><b>${W.h}</b> — ${W.p} <span class="cl-wel-hint">${ic('globe')}${hintMap[_clLang]||hintMap.ko}</span></div>
       </div>`;
   }
   // 탭(모바일만 노출) + (국내)배너/인트로 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래.
@@ -6288,6 +6275,8 @@ function uiT(ko){ return (UI_I18N[UI_LANG]||{})[ko]||ko; }
 const UI_GNB_SHORT={'우리 도서관':'도서관','독서 챌린지':'챌린지'};
 function applyUiLang(l){
   UI_LANG=(l&&UI_I18N[l])?l:'ko';
+  const _ls=document.getElementById('langSelect'); if(_ls&&_ls.value!==UI_LANG)_ls.value=UI_LANG;   // 헤더 드롭다운 표시값 동기화
+
   const mob=window.matchMedia('(max-width:900px)').matches;
   document.querySelectorAll('.gnb-item').forEach(el=>{
     if(!el.dataset.ko) el.dataset.ko=el.textContent.trim();
@@ -6376,13 +6365,7 @@ const CL_WELCOME = {
   vi:{ h:'Đọc văn học kinh điển Hàn Quốc bằng ngôn ngữ của bạn', p:'Chưa giỏi tiếng Hàn cũng không sao — hãy đọc bản dịch song song với nguyên văn.'},
   ja:{ h:'あなたの言語で読む韓国古典',              p:'韓国語がまだ苦手でも大丈夫。翻訳を原文と並べて読んでみましょう。'},
 };
-function clSetLang(l){
-  _clLang=l;
-  if(l!=='all' && typeof KR_LANG!=='undefined') KR_LANG=l;   // 칩 선택 → 리더 기본 번역 언어로 연동
-  applyUiLang(l==='all'?'ko':l);                             // GNB·사이드바도 함께 전환
-  if(l!=='all') loadKrTitles();                              // 책 제목 번역(1회 로드)
-  renderClassicShelves();
-}
+// (구 clSetLang 삭제 — 언어 전환은 헤더 드롭다운 changeLang() 단일 경로)
 function bindClassicDrag(){ bindDragScroll('#classicShelves .ml-hrow'); }
 // 정보나루 인기대출 캐시 (books/loan_popular.json) — 도서관 대출 추천용
 let LOAN_DATA = {};
