@@ -1922,17 +1922,23 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .pane-tabs{display:flex;}
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
-  /* 리더 헤더 2줄: 위=네비(풀폭)+닫기(절대), 아래=모드토글+Aa. 읽기설정은 Aa 시트로 통합 */
-  .viewer-header{flex-wrap:wrap;gap:10px;padding:10px 14px 12px;align-items:center;}
-  .viewer-header > .vh-nav{order:1;flex:1 1 100% !important;min-width:0;padding-right:40px;}
-  .viewer-header > .viewer-close{order:0;position:absolute;top:8px;right:12px;padding:4px 6px;font-size:20px;}
-  .viewer-header > .mode-toggle{order:2;flex:0 0 auto;}
-  .viewer-header > .reader-aa{order:3;margin-left:auto;display:inline-flex;}
+  /* 리더 헤더 한 줄: 고스트 아이콘 왼쪽 + 모드칩·Aa·닫기 오른쪽 (킨들/애플북스 결 — 2줄+박스버튼 정리 2026-07-23) */
+  .viewer-header{flex-wrap:nowrap;gap:2px;padding:7px 8px;align-items:center;}
+  .viewer-header > .vh-nav{order:0;flex:1 1 auto;min-width:0;padding-right:0;}
+  .viewer-header > .mode-toggle{order:1;flex:none;}
+  .viewer-header > .reader-aa{order:2;margin-left:2px;display:inline-flex;border:0;background:transparent;}
+  .viewer-header > .viewer-close{order:3;position:static;padding:6px 6px 6px 4px;font-size:19px;flex:none;}
   .viewer-header > .reader-toolbar{display:none !important;}   /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
   .viewer-header .viewer-title,.viewer-header .viewer-author{display:none;}  /* 제목 제거 — 방금 연 책이라 중복, 전자책 리더 관행 */
-  .vh-nav{gap:2px;}
-  .vh-nav .reader-btn{font-size:0;padding:9px;}                              /* 아이콘 전용 (한글 라벨 숨김 — 킨들/애플북스/리디 결) */
-  .vh-nav .reader-btn .icon{width:19px;height:19px;}
+  .vh-nav{gap:0;}
+  .vh-nav .reader-btn{font-size:0;padding:8px 6px;border:0;background:transparent;}   /* 고스트 아이콘 — 테두리 박스 제거 */
+  .vh-nav .reader-btn .icon{width:20px;height:20px;}
+  /* 모드 알약: 접힘=현재 모드만 + ▾ (탭하면 3개 펼침, 선택하면 접힘) — 애플북스 칩 방식 */
+  .mode-toggle{padding:3px;}
+  .mode-toggle button{display:none;padding:7px 11px;}
+  .mode-toggle button.active,.mode-toggle.open button{display:inline-flex;align-items:center;}
+  .mode-toggle:not(.open) button.active::after{content:"▾";font-size:9px;margin-left:3px;opacity:.75;}
+  .viewer-header:has(.mode-toggle.open) .vh-nav .reader-btn{display:none;}   /* 칩 펼친 동안 아이콘 잠시 숨김 — 좁은 폰 한 줄 유지 */
   .reader-settings-sheet{right:10px;min-width:210px;}
   /* 바닥 바: 장황한 안내문 숨기고 버튼만 꽉 차게 — 글자 세로쪼개짐 방지 */
   .viewer-footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px;}
@@ -6836,6 +6842,12 @@ function syncModePill(){   // 헤더 모드 알약(챌린지/완독/Intl)을 cur
   document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
   document.getElementById('mode' + currentMode.charAt(0).toUpperCase() + currentMode.slice(1))?.classList.add('active');
 }
+// 모바일 모드칩: 접힘 상태 첫 탭은 펼치기만 (캡처 단계에서 가로채 setMode 오발동 방지), 펼친 뒤 탭은 선택+접힘
+document.querySelector('#viewerOverlay .mode-toggle')?.addEventListener('click', function(e){
+  if(!window.matchMedia('(max-width:900px)').matches) return;
+  if(!this.classList.contains('open')){ e.stopPropagation(); this.classList.add('open'); }
+  else this.classList.remove('open');
+}, true);
 function setMode(mode){
   if(currentBook && !currentBook.intl && mode==='intl'){
     readerToast('해외 도서는 International 모드가 제공되지 않아요');
