@@ -607,20 +607,17 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-tab.on{color:var(--text);}
 .cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
 .cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
-/* International 환영 배너: 위=소개(아이콘+문구), 구분선, 아래=언어 선택. 초광폭에서 좌우 배치의 죽은 중앙공간 제거 */
-.cl-welcome{display:flex;flex-direction:column;gap:15px;background:linear-gradient(120deg,#1b2438,#232c3f);border:1px solid rgba(232,196,107,.22);border-radius:18px;padding:20px 24px;margin:18px 2px 8px;box-shadow:0 14px 32px -14px rgba(10,14,26,.55);}
-.cl-wel-lead{display:flex;align-items:center;gap:16px;}
-.cl-welcome .globe{width:48px;height:48px;border-radius:14px;background:rgba(232,196,107,.14);border:1px solid rgba(232,196,107,.3);display:flex;align-items:center;justify-content:center;color:#e8c46b;flex:none;}
-.cl-welcome .globe .icon{width:24px;height:24px;stroke-width:1.6;}
-.cl-welcome h3{font-size:18.5px;font-weight:900;margin-bottom:3px;color:#e8c46b;letter-spacing:-0.5px;}
-.cl-welcome p{font-size:13px;color:rgba(255,255,255,.72);line-height:1.6;}
-.cl-welcome p b{color:#e8c46b;font-weight:900;}
-/* 언어 선택 줄: 구분선 위, 캡션 + 칩을 한 줄 왼쪽 정렬 */
-.cl-langpick{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-top:14px;border-top:1px solid rgba(232,196,107,.2);}
-.cl-lang-cap{font-size:11.5px;font-weight:800;letter-spacing:.01em;color:rgba(232,196,107,.85);flex:none;}
+/* International 인트로: 히어로 박스 제거 — 세계고전 탭과 같은 한 줄 소개문 + 언어칩 한 줄 (배너 무거움 해소 2026-07-23) */
+.cl-welcome{display:flex;flex-direction:column;gap:11px;margin:16px 2px 4px;}
+.cl-wel-txt{font-size:13px;color:var(--text-sub);line-height:1.6;}
+.cl-wel-txt b{color:var(--text);font-weight:800;}
+.cl-langpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.cl-lang-cap{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--text-light);flex:none;}
+.cl-lang-cap .icon{width:15px;height:15px;stroke-width:1.8;}
 .cl-langchips{display:flex;gap:7px;flex-wrap:wrap;}
-.cl-lchip{background:transparent;border:1px solid rgba(232,196,107,.4);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.78);cursor:pointer;}
-.cl-lchip.on{background:#e8c46b;color:#1b2438;border-color:#e8c46b;}
+.cl-lchip{background:var(--bg-card);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:border-color .15s,color .15s;}
+.cl-lchip:hover{border-color:var(--gold);color:var(--text);}
+.cl-lchip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);}
 .cl-card .cl-langbadge{position:absolute;top:0;left:0;z-index:2;width:0;height:0;border-style:solid;border-width:24px 24px 0 0;border-color:var(--gold) transparent transparent transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));}
 .cl-card .cl-cardlangs{margin:6px 0 1px;display:flex;gap:4px;flex-wrap:wrap;}
 .cl-card .cl-lg{font-size:9.5px;font-weight:700;color:var(--gold);background:rgba(212,169,59,.15);border-radius:5px;padding:2px 6px;}
@@ -6243,16 +6240,11 @@ function renderClassicShelves(){
     const chips = ['all',...CL_LANG_ORDER].map(l=>`<span class="cl-lchip ${_clLang===l?'on':''}" onclick="clSetLang('${l}')">${l==='all'?allLbl:KR_LANG_NAMES[l]}</span>`).join('');
     const capMap = {ko:'언어 선택',en:'Choose your language',zh:'选择语言',vi:'Chọn ngôn ngữ',ja:'言語を選ぶ'};
     const cap = capMap[_clLang]||capMap.ko;
+    const W = CL_WELCOME[_clLang]||CL_WELCOME.all;
     headBody = `<div class="cl-welcome">
-        <div class="cl-wel-lead">
-          <div class="globe">${ic('globe')}</div>
-          <div class="cl-wel-txt">
-            <h3>${(CL_WELCOME[_clLang]||CL_WELCOME.all).h}</h3>
-            <p>${(CL_WELCOME[_clLang]||CL_WELCOME.all).p}</p>
-          </div>
-        </div>
+        <div class="cl-wel-txt"><b>${W.h}</b> — ${W.p}</div>
         <div class="cl-langpick">
-          <div class="cl-lang-cap">${cap}</div>
+          <div class="cl-lang-cap">${ic('globe')}${cap}</div>
           <div class="cl-langchips">${chips}</div>
         </div>
       </div>`;
