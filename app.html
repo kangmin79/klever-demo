@@ -608,7 +608,9 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
 .cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
 /* International 인트로: 히어로 박스 제거 — 세계고전 탭과 같은 한 줄 소개문 + 언어칩 한 줄 (배너 무거움 해소 2026-07-23) */
-.cl-welcome{display:flex;flex-direction:column;gap:11px;margin:16px 2px 4px;}
+.cl-welcome{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;margin:16px 2px 4px;}
+.cl-welcome .cl-wel-txt{flex:1 1 340px;min-width:0;}
+.cl-welcome .cl-langpick{flex:none;margin-left:auto;}
 .cl-wel-txt{font-size:13px;color:var(--text-sub);line-height:1.6;}
 .cl-wel-txt b{color:var(--text);font-weight:800;}
 .cl-langpick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
