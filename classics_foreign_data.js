@@ -3101,6 +3101,23 @@ const BOOKS_CLASSICS_FOREIGN =
   "coverSrc": "./covers/gb-155.webp"
  },
  {
+  "id": "gb-583",
+  "title": "흰옷을 입은 여인",
+  "author": "윌키 콜린스",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-583.webp"
+ },
+ {
   "id": "gb-205",
   "title": "월든",
   "author": "헨리 데이비드 소로",
