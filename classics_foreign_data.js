@@ -3133,5 +3133,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-205.webp"
+ },
+ {
+  "id": "gb-2147",
+  "title": "모르그 가의 살인 — 포 작품집 1",
+  "author": "에드거 앨런 포",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-2147.webp"
  }
 ];
