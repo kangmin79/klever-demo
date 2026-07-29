@@ -2891,7 +2891,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
      books_extra 41권(g#### id)도 표시·검색 제외 상태(아래 2900번대 주석 참고). 두 파일은 repo에 보존(되돌리기 가능).
      QUEST_MVP35(1KB)만 실사용 → 아래 인라인 QUEST 폴백 배열에 실데이터 반영함. -->
 <script src="classics_kr_data.js?b=260702a"></script>
-<script src="classics_foreign_data.js?b=260729c"></script>
+<script src="classics_foreign_data.js?b=260729d"></script>
 <script src="classics_ko_titles.js?b=260719a"></script>
 <script src="classics_summaries.js?b=260710e"></script>
 <!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
@@ -6552,7 +6552,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260729c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260729d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';

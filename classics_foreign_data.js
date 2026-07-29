@@ -3218,5 +3218,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-619.webp"
+ },
+ {
+  "id": "gb-3409",
+  "title": "바체스터 타워스",
+  "author": "앤서니 트롤럽",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-3409.webp"
  }
 ];
