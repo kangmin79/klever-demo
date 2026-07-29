@@ -3184,5 +3184,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-4276.webp"
+ },
+ {
+  "id": "gb-394",
+  "title": "크랜퍼드",
+  "author": "엘리자베스 개스켈",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-394.webp"
  }
 ];
