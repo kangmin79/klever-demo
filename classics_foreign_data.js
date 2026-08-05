@@ -3269,5 +3269,22 @@ const BOOKS_CLASSICS_FOREIGN =
   "quizzes": 10,
   "progress": 0,
   "coverSrc": "./covers/gb-2860.webp"
+ },
+ {
+  "id": "gb-4599",
+  "title": "앨링턴의 작은 집",
+  "author": "앤서니 트롤럽",
+  "category": "해외문학",
+  "period": "해외",
+  "locale": "foreign",
+  "intl": false,
+  "hasBody": true,
+  "hasTrans": true,
+  "src": "Gutenberg",
+  "participants": 120,
+  "reviews": 4,
+  "quizzes": 10,
+  "progress": 0,
+  "coverSrc": "./covers/gb-4599.webp"
  }
 ];
