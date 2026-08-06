@@ -346,6 +346,43 @@ def embed_books(limit=None, target="ebook"):
     except Exception as e:
         print(f"[embed:{target}] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
 
+def covers_paper(limit=None):
+    """종이책 표지 일괄: 도서관 OPAC과 동일 소스 — /openapi/thumbnail(미문서화, 네이버 책DB 프록시).
+    ISBN 배치 50개/POST, apikey·쿠키 불필요(2026-08-06 실측). 네이버 미보유는 null 유지 → tulip-cover(알라딘 lazy) 몫."""
+    res = json.loads(sql(
+        "select ctrl, isbn from semyung_tulip where kind='paper' and isbn is not null "
+        "and cover_url is null order by ctrl desc"
+        + (f" limit {limit}" if limit else ""), timeout=300))
+    print(f"[covers-paper] 대상 {len(res):,}건 (배치 50)")
+    done = hit = 0; buf = []
+    def flush():
+        if not buf: return
+        try: sql("; ".join(buf))
+        except Exception as e: print(f"  flush 실패({len(buf)}건): {e}")
+        buf.clear()
+    for i in range(0, len(res), 50):
+        chunk = res[i:i+50]
+        payload = json.dumps([{"id": r["ctrl"], "isbn": r["isbn"], "sysdiv": "CAT", "ctrl": r["ctrl"]}
+                              for r in chunk]).encode()
+        try:
+            d = json.loads(http(f"{TULIP}/thumbnail", data=payload,
+                                headers={"Content-Type": "application/json"}, timeout=45))
+        except Exception as e:
+            print(f"  batch {i} 실패: {e} — 5초 후 계속"); time.sleep(5); continue
+        for jo in (d.get("data") or []):
+            th = jo.get("thumbnail")
+            if not th: continue
+            url = (th.get("largeUrl") or th.get("smallUrl") or "").strip()
+            if not url.startswith("http"): continue
+            buf.append(f"update semyung_tulip set cover_url={esc(url)}, updated_at=now() where ctrl={esc(jo.get('ctrl') or jo.get('id'))}")
+            hit += 1
+        if len(buf) >= 100: flush()
+        done += len(chunk)
+        if done % 5000 < 50: print(f"  {done:,}/{len(res):,} (표지 {hit:,})")
+        time.sleep(0.3)
+    flush()
+    print(f"[covers-paper] 완료 — 조회 {done:,} / 표지 채움 {hit:,} ({(hit*100//max(done,1))}%)")
+
 def inherit_old():
     """구 semyung_books → semyung_tulip 표지·줄거리 이식 (P4 삭제 전 1회, enrich 완료 후 실행).
     barcode=brcd 동일키 매칭 — 오매칭 위험 0. YES24 구 표지는 DRMContent 경로(조립 L{brcd}.jpg와 다름),
@@ -425,6 +462,7 @@ if __name__ == "__main__":
     ap.add_argument("--embed-limit", type=int)
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
     ap.add_argument("--inherit", action="store_true")
+    ap.add_argument("--covers-paper", action="store_true")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
@@ -435,4 +473,5 @@ if __name__ == "__main__":
     elif a.daily: run_daily()
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
+    elif a.covers_paper: covers_paper(a.covers_limit)
     else: ap.print_help()
