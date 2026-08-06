@@ -337,14 +337,9 @@ def embed_books(limit=None, target="ebook"):
         if done % 1000 < 100: print(f"  {done:,}/{len(res):,}")
         time.sleep(0.2)
     print(f"[embed:{target}] 완료 {done:,}건")
-    # ivfflat은 전량 적재 후 재빌드해야 centroid 품질이 나옴 (기본 maintenance_work_mem 32MB로는 부족 → 상향)
-    try:
-        print(f"[embed:{target}] ivfflat 재빌드:", sql(
-            "set maintenance_work_mem='512MB'; drop index if exists idx_tulip_emb; "
-            "create index idx_tulip_emb on semyung_tulip "
-            "using ivfflat (embedding vector_cosine_ops) with (lists=200)", timeout=600)[:100])
-    except Exception as e:
-        print(f"[embed:{target}] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
+    # 인덱스 재빌드 없음 — 부분 인덱스 2개(idx_tulip_emb_ebook=ivfflat, idx_tulip_emb_paper=HNSW)가
+    # insert 시 자동 유지됨. 초기 빌드는 pg_cron(_tulip_idx_ebook/_tulip_idx_paper)이 담당했음.
+    # (전량 재빌드가 필요해지면: 마이크로 인스턴스라 Mgmt API 120s·메모리 한계 → pg_cron + 병렬OFF 경로로)
 
 def covers_paper(limit=None):
     """종이책 표지 일괄: 도서관 OPAC과 동일 소스 — /openapi/thumbnail(미문서화, 네이버 책DB 프록시).

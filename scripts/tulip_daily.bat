@@ -26,4 +26,7 @@ rem 예산 3000 = 일한도 5000 중 tulip-cover(종이책 lazy 표지) 여유�
 python scripts\tulip_sync.py --covers-yes24 --covers-budget 3000 >> logs\tulip_daily.log 2>&1
 rem 신착 종이책 표지(네이버 책DB, OPAC과 동일 소스) — 최근 300권만 재확인
 python scripts\tulip_sync.py --covers-paper --covers-limit 300 >> logs\tulip_daily.log 2>&1
+rem 신규 도서 임베딩(embedding null만 = 하루 십수 권, 표지 단계 뒤라 알라딘 줄거리 포함)
+python scripts\tulip_sync.py --embed-ebook >> logs\tulip_daily.log 2>&1
+python scripts\tulip_sync.py --embed-paper >> logs\tulip_daily.log 2>&1
 echo ===== [%date% %time%] tulip daily 끝 (exit %errorlevel%) ===== >> logs\tulip_daily.log
