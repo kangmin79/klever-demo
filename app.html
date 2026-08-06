@@ -5157,24 +5157,28 @@ async function _smFetch(kind){
     return l.length?_smMap(l):null;
   }catch(e){ return null; }
 }
-// 신착 = semyung_new 테이블(세명대 전자책 6개월치 + 종이책 신착 OPAC, build_semyung_new*.py가 매일 갱신).
-// 전자책·종이책을 각각 별도 줄로 표시(SEMYUNG_NEW_E / SEMYUNG_NEW_P). 각자 진짜 최신순.
+// 신착 = semyung_tulip(공식 openapi 전수, tulip_sync.py --daily가 매일 갱신). P3에서 semyung_new 대체.
+// 전자책·종이책을 각각 별도 줄로 표시(SEMYUNG_NEW_E / SEMYUNG_NEW_P). 각자 등록일(reg_date) 최신순.
 function _smMapNew(b,tag){
-  const o={isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',
-    _sm:true,pubDate:b.pub_date||b.pub_year||'',tags:[tag],lib:b.detail||'',description:b.summary||''};
-  if(tag==='ebook') o._eb=b.detail; else o._pp=b.detail;
+  const brcd = tag==='ebook' ? (b.barcode||'') : ('CATTOT'+b.ctrl);
+  const detail = tag==='ebook'
+    ? (b.barcode ? smDetail(b.barcode) : '')
+    : 'https://lib.semyung.ac.kr/search/detail/CATTOT'+b.ctrl;
+  const title=(b.title||'').replace(/\s*\[전자책\]\s*/g,' ').replace(/\s+/g,' ').trim();
+  const o={isbn:'sm-'+(brcd||('EB'+b.ctrl)),t:title,a:b.author,cover:b.cover_url||'',publisher:b.publisher||'',
+    _sm:true,pubDate:b.reg_date||b.pub_year||'',tags:[tag],lib:detail,description:''};
+  if(tag==='ebook') o._eb=detail; else o._pp=detail;
   return o;
 }
 async function _smNewTable(){
   try{
-    // summary 제외(응답 339KB→129KB) — 리스트 렌더는 제목/저자/표지만 쓰고, 줄거리는 모달에서 loadDesc가 lazy 조회(semyung_new 폴백 포함)
-    const r=await fetch(`${SB_REST}/semyung_new?select=brcd,title,author,publisher,cover,detail,pub_date,pub_year,kind,isbn13&limit=400`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    if(!r.ok) return null;
-    const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
-    // 전자책=발행일순 / 종이책=입고순(reckey 내림)
-    SEMYUNG_NEW_E=rows.filter(b=>b.kind!=='종이책').sort((a,b)=>(b.pub_date||'').localeCompare(a.pub_date||'')).map(b=>_smMapNew(b,'ebook'));
-    SEMYUNG_NEW_P=rows.filter(b=>b.kind==='종이책').sort((a,b)=>(b.brcd||'').localeCompare(a.brcd||'')).map(b=>_smMapNew(b,'paper'));
+    const SEL='select=ctrl,kind,barcode,title,author,publisher,pub_year,reg_date,cover_url,isbn';
+    const q=k=>fetch(`${SB_REST}/semyung_tulip?${SEL}&kind=eq.${k}&order=reg_date.desc,ctrl.desc&limit=200`,
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}}).then(r=>r.ok?r.json():[]).catch(()=>[]);
+    const [eb,pp]=await Promise.all([q('ebook'),q('paper')]);
+    if((!Array.isArray(eb)||!eb.length)&&(!Array.isArray(pp)||!pp.length)) return null;
+    SEMYUNG_NEW_E=(eb||[]).map(b=>_smMapNew(b,'ebook'));
+    SEMYUNG_NEW_P=(pp||[]).map(b=>_smMapNew(b,'paper'));
     return SEMYUNG_NEW_P.concat(SEMYUNG_NEW_E);   // 통합(검색풀 병합용)
   }catch(e){ return null; }
 }
@@ -5245,7 +5249,7 @@ function fmtTags(b){
     if(en&&en.crema) t.push(['구독','sub']);
   }
   // 폴백: tags·deeplink·enrich 정보가 없어도 책 정체(isbn)로 형태 추정 → 배지 누락 방지.
-  //   세명대 전자도서관(semyung_books)=숫자 brcd=전자책 / 통합검색 카탈로그(semyung_catalog)=CATTOT=종이책.
+  //   semyung_tulip: 숫자 brcd(barcode)=전자책 / CATTOT{ctrl}=종이책.
   if(!t.length){
     if(/^sm-CATTOT/i.test(isbn) || b._material) t.push(['종이책','paper']);
     else if(/^sm-/.test(isbn) || b._sm || b.lib || b._smLib) t.push(['전자책','ebook']);
@@ -5942,25 +5946,20 @@ function libDetail(isbn){
   ov.classList.add('on');
   if(isPaperHold) loadHolding(reckey);
   renderDetailReviews(b.isbn, cleanT(b.t));
-  // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. 전자책=semyung_books(brcd/isbn13), 종이책=semyung_catalog(CATTOT key).
+  // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   if(!desc && b._sm && reckey) loadDesc(reckey, /^CATTOT/.test(reckey));
 }
-// 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(semyung_catalog.key), 아니면 전자책(semyung_books).
+// 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(CATTOT+ctrl), 아니면 전자책(barcode 또는 isbn).
 async function loadDesc(key, isCatalog){
   try{
     // 대상 요소를 await 전에 캡처 — 다른 책 모달로 바뀌면 이 el은 detach돼 늦은 응답이 무해해짐
     // (기존: 응답 후 id로 찾아 → A책 줄거리가 B책 모달에 쓰이던 레이스)
     const el=document.getElementById('lcdDesc'); if(!el) return;
     const url=isCatalog
-      ? `${SB_REST}/semyung_catalog?key=eq.${encodeURIComponent(key)}&select=description&limit=1`
-      : `${SB_REST}/semyung_books?or=(brcd.eq.${encodeURIComponent(key)},isbn13.eq.${encodeURIComponent(key)})&select=description&limit=1`;
+      ? `${SB_REST}/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=description&limit=1`
+      : `${SB_REST}/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=description&limit=1`;
     const r=await fetch(url,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    if(!r.ok) return; const rows=await r.json(); let d=rows&&rows[0];
-    // 신착(semyung_new) 폴백 — 리스트 fetch에서 summary를 뺐으므로 여기서 lazy 조회
-    if((!d||!d.description) && !isCatalog){
-      const r2=await fetch(`${SB_REST}/semyung_new?brcd=eq.${encodeURIComponent(key)}&select=summary&limit=1`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-      if(r2.ok){ const rows2=await r2.json(); if(rows2&&rows2[0]&&rows2[0].summary) d={description:rows2[0].summary}; }
-    }
+    if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
     if(!d||!d.description) return;
     if(!el.isConnected) return;   // 모달이 재렌더/닫힘 → 폐기
     el.textContent=d.description; el.style.display='';
@@ -9371,7 +9370,7 @@ function changeLang(lang){
 const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";  // (구) 옛 books 풀 추천 — 별이는 curate로 전환
 const US_CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";        // 별이(학생) = 사서 큐레이션과 동일 코어(세명대 실소장 의미검색)
 const US_BRAIN_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 별이 두뇌 = 의도 라우팅(책/운영정보/잡담) + 도서관 지식베이스 답변
-const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-find";     // 통합검색 브리지 = 종이책 단행본·학위논문 의미검색(semyung_catalog, CATTOT키→소장/예약)
+const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-find";     // 통합검색 브리지 = 종이책 단행본·학위논문 검색(semyung_tulip search_tulip, CATTOT키→소장/예약)
 const US_KEYWORD_RPC="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/rpc/keyword_books"; // 하이브리드 키워드(정규화 ILIKE): 벡터가 놓치는 정확 제목/저자/축약어(총균쇠·한의학) → 맨 위로
 // 논문 검색(KCI paper + 국회 nanet) 계층 제거 — 2026-07-02. 책(curate+find+keyword)만 검색.
 const US_SEARCH_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/byeoli-search";  // 별이 통합검색 단일 엔진: 책 3소스(curate+find+keyword) 병렬호출+RRF 융합+측정훅을 백엔드로 일원화(화면은 렌더만)
@@ -10121,7 +10120,7 @@ window.addEventListener('keydown', (e) => {
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
   const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
   let LAST=[];
-  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_books";
+  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_tulip";   // P3: semyung_books → semyung_tulip
   const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
   const _norm=t=>(t||'').replace(/\s+/g,'').toLowerCase();
   // 추천 결과 → 세명대 전자책 매칭(_smLib=상세 딥링크 → '바로 읽기')
@@ -10130,11 +10129,11 @@ window.addEventListener('keydown', (e) => {
     if(!cores.length) return;
     const or=cores.map(c=>'title.ilike.*'+encodeURIComponent(c.replace(/[(),*]/g,' ').trim())+'*').join(',');
     try{
-      const r=await fetch(SBR+'?or=('+or+')&select=title,detail_url&limit=80',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
+      const r=await fetch(SBR+'?kind=eq.ebook&or=('+or+')&select=title,barcode&limit=80',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
       const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return;
       results.forEach(b=>{ const c=_norm(_core(b.title)); if(!c)return;
         const hit=rows.find(x=>{const xc=_norm(_core(x.title));return xc&&(xc.includes(c)||c.includes(xc));});
-        if(hit) b._smLib=hit.detail_url; });
+        if(hit&&hit.barcode) b._smLib='https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+hit.barcode; });
     }catch(e){}
   }
   function cardHtml(b,i){
@@ -10214,7 +10213,7 @@ window.addEventListener('keydown', (e) => {
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
   let msgs=[], busy=false, opened=false, lastQ='';
   let shownKeys=new Set(), lastTopic='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제
-  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_books";
+  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_tulip";   // P3: semyung_books → semyung_tulip (현재 미사용 상수)
   const el=id=>document.getElementById(id);
   const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
   const _norm=t=>(t||'').replace(/\s+/g,'').toLowerCase();

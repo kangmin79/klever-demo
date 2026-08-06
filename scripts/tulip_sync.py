@@ -219,18 +219,22 @@ def _cover(it):
     c = (it.get("cover", "") or "").replace("\\/", "/").replace("/coversum/", "/cover200/")
     return c
 
+def _desc(it):
+    d = re.sub(r"<[^>]+>", " ", it.get("description", "") or "")
+    return re.sub(r"\s+", " ", d).strip()[:1200]
+
 def aladin_cover_isbn(isbn, order=("Book", "eBook")):
-    """ISBN 직조회 — 오매칭 없음. 전자책은 order=("eBook","Book")로 호출 절약"""
+    """ISBN 직조회 — 오매칭 없음. 전자책은 order=("eBook","Book")로 호출 절약. 반환 (cover, desc)"""
     for st in order:
         items = aladin("ItemLookUp", itemIdType="ISBN13", ItemId=isbn, SearchTarget=st)
         if items:
-            return _cover(items[0])
-    return ""
+            return _cover(items[0]), _desc(items[0])
+    return "", ""
 
 def aladin_cover_search(title, author):
-    """제목+저자 엄격매칭 — 저자 성 일치 필수(8/6 오매칭 70% 실증 교훈)"""
+    """제목+저자 엄격매칭 — 저자 성 일치 필수(8/6 오매칭 70% 실증 교훈). 반환 (cover, desc)"""
     base = clean_title(title)
-    if not base: return ""
+    if not base: return "", ""
     sn = surname(author)
     q = urllib.parse.quote((base + " " + sn).strip())
     items = aladin("ItemSearch", Query=q, QueryType="Keyword", MaxResults=5)
@@ -240,8 +244,8 @@ def aladin_cover_search(title, author):
         title_ok = tkey and (it_t.startswith(tkey) or tkey in it_t)
         author_ok = akey and akey in it_a          # 성 미일치는 무조건 탈락
         if title_ok and author_ok:
-            return _cover(it)
-    return ""  # 확신 없으면 빈손 (오답표지보다 안전)
+            return _cover(it), _desc(it)
+    return "", ""  # 확신 없으면 빈손 (오답표지보다 안전)
 
 def covers_yes24(limit=None, budget=4500):
     """YES24 전자책 표지: ①ISBN 직조회 ②엄격 제목검색. 실패는 cover_url='' 마킹(재시도 방지).
@@ -261,13 +265,14 @@ def covers_yes24(limit=None, budget=4500):
         if _aladin_calls >= budget:
             print(f"  예산 소진 — 남은 {len(res)-hit_isbn-hit_search-miss:,}건은 내일 재실행")
             break
-        cov = ""
+        cov = dsc = ""
         if r["isbn"]:
-            cov = aladin_cover_isbn(r["isbn"], order=("eBook", "Book"))
+            cov, dsc = aladin_cover_isbn(r["isbn"], order=("eBook", "Book"))
         if not cov:
-            cov = aladin_cover_search(r["title"], r["author"])
+            cov, dsc = aladin_cover_search(r["title"], r["author"])
         if cov:
-            buf.append(f"update semyung_tulip set cover_url={esc(cov)}, updated_at=now() where ctrl={esc(r['ctrl'])}")
+            extra = f", description={esc(dsc)}" if dsc else ""
+            buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
             if r["isbn"]: hit_isbn += 1
             else: hit_search += 1
         else:
@@ -280,6 +285,61 @@ def covers_yes24(limit=None, budget=4500):
         time.sleep(0.15)
     flush()
     print(f"[covers-yes24] 완료 — ISBN조회 {hit_isbn:,} + 엄격검색 {hit_search:,} 채움, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
+
+def embed_ebooks(limit=None):
+    """전자책 임베딩 재생성(P3): title+author+publisher(+description)를 text-embedding-3-small로.
+    OpenAI 키 = hwik-web/.env OPENAI_API_KEY. 100건/요청 배치, 저장은 40행/SQL."""
+    okey = None
+    envp = os.path.join(os.path.expanduser("~"), "Desktop", "hwik-web", ".env")
+    for line in open(envp, encoding="utf-8", errors="replace"):
+        m = re.match(r"\s*OPENAI_API_KEY\s*=\s*(\S+)", line)
+        if m: okey = m.group(1).strip().strip("\"'")
+    if not okey: sys.exit("OPENAI_API_KEY 없음 (hwik-web/.env)")
+    res = json.loads(sql("select ctrl, title, author, publisher, description from semyung_tulip "
+                         "where kind='ebook' and embedding is null order by ctrl"
+                         + (f" limit {limit}" if limit else "")))
+    print(f"[embed] 대상 {len(res):,}건")
+    done = 0
+    for i in range(0, len(res), 100):
+        chunk = res[i:i+100]
+        texts = []
+        for r in chunk:
+            t = re.sub(r"\s*\[전자책\]\s*", " ", r["title"] or "").strip()
+            parts = [t, r["author"] or "", r["publisher"] or ""]
+            if r.get("description"): parts.append((r["description"] or "")[:400])
+            texts.append(" / ".join(p for p in parts if p)[:1500] or "무제")
+        body = json.dumps({"model": "text-embedding-3-small", "input": texts}).encode()
+        try:
+            d = json.loads(http("https://api.openai.com/v1/embeddings", data=body, headers={
+                "Authorization": "Bearer " + okey, "Content-Type": "application/json"}, timeout=120))
+            embs = [x["embedding"] for x in d["data"]]
+        except Exception as e:
+            print(f"  임베딩 실패(batch {i}): {e} — 20초 후 재시도"); time.sleep(20)
+            try:
+                d = json.loads(http("https://api.openai.com/v1/embeddings", data=body, headers={
+                    "Authorization": "Bearer " + okey, "Content-Type": "application/json"}, timeout=120))
+                embs = [x["embedding"] for x in d["data"]]
+            except Exception as e2:
+                print(f"  batch {i} 재실패: {e2} — 건너뜀(재실행 시 회수)"); continue
+        for j in range(0, len(chunk), 40):
+            stmts = []
+            for r, emb, tx in zip(chunk[j:j+40], embs[j:j+40], texts[j:j+40]):
+                vec = "[" + ",".join("%.6f" % v for v in emb) + "]"
+                stmts.append(f"update semyung_tulip set embedding='{vec}'::vector, embed_text={esc(tx)} where ctrl={esc(r['ctrl'])}")
+            try: sql("; ".join(stmts))
+            except Exception as e: print(f"  저장 실패({len(stmts)}행): {e}")
+        done += len(chunk)
+        if done % 1000 < 100: print(f"  {done:,}/{len(res):,}")
+        time.sleep(0.2)
+    print(f"[embed] 완료 {done:,}건")
+    # ivfflat은 전량 적재 후 재빌드해야 centroid 품질이 나옴 (기본 maintenance_work_mem 32MB로는 부족 → 상향)
+    try:
+        print("[embed] ivfflat 재빌드:", sql(
+            "set maintenance_work_mem='256MB'; drop index if exists idx_tulip_emb; "
+            "create index idx_tulip_emb on semyung_tulip "
+            "using ivfflat (embedding vector_cosine_ops) with (lists=100)")[:100])
+    except Exception as e:
+        print(f"[embed] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
 
 def run_daily():
     """신착 증분: last_max_ctrl+1부터 위로, 연속 30개 빈 번호면 종료"""
@@ -339,12 +399,14 @@ if __name__ == "__main__":
     ap.add_argument("--enrich-ebook", action="store_true"); ap.add_argument("--enrich-limit", type=int)
     ap.add_argument("--covers-yes24", action="store_true"); ap.add_argument("--covers-limit", type=int)
     ap.add_argument("--covers-budget", type=int, default=4500)
+    ap.add_argument("--embed-ebook", action="store_true"); ap.add_argument("--embed-limit", type=int)
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
     elif a.enrich_ebook: enrich_ebooks(a.enrich_limit)
     elif a.covers_yes24: covers_yes24(a.covers_limit, a.covers_budget)
+    elif a.embed_ebook: embed_ebooks(a.embed_limit)
     elif a.daily: run_daily()
     elif a.set_max: set_max()
     else: ap.print_help()

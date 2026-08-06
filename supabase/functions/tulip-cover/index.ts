@@ -16,8 +16,11 @@ const ALADIN_KEY = Deno.env.get("ALADIN_TTBKEY") || "ttbbgtrfvcdewsx771056001";
 function coverOf(item: { cover?: string }): string {
   return (item.cover || "").replace(/\\\//g, "/").replace("/coversum/", "/cover200/");
 }
+function descOf(item: { description?: string }): string {
+  return (item.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 1200);
+}
 
-async function aladinByIsbn(isbn: string): Promise<string> {
+async function aladinByIsbn(isbn: string): Promise<{ cover: string; desc: string }> {
   for (const target of ["Book", "eBook"]) {
     try {
       const u = `https://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${ALADIN_KEY}` +
@@ -25,10 +28,10 @@ async function aladinByIsbn(isbn: string): Promise<string> {
       const r = await fetch(u, { signal: AbortSignal.timeout(8000) });
       const d = await r.json();
       const items = d.item || [];
-      if (items.length && coverOf(items[0])) return coverOf(items[0]);
+      if (items.length && coverOf(items[0])) return { cover: coverOf(items[0]), desc: descOf(items[0]) };
     } catch { /* 다음 타겟 */ }
   }
-  return "";
+  return { cover: "", desc: "" };
 }
 
 Deno.serve(async (req) => {
@@ -53,11 +56,11 @@ Deno.serve(async (req) => {
       if (r.cover_url) { covers[r.ctrl] = r.cover_url; continue; }
       // ''=이미 시도·실패 → 재조회 안 함 / 전자책 null은 enrich·covers-yes24 배치 몫
       if (r.cover_url === "" || r.kind !== "paper" || !r.isbn) continue;
-      const cov = await aladinByIsbn(r.isbn);
+      const { cover: cov, desc } = await aladinByIsbn(r.isbn);
       covers[r.ctrl] = cov || null;
-      await sb.from("semyung_tulip")
-        .update({ cover_url: cov, updated_at: new Date().toISOString() })
-        .eq("ctrl", r.ctrl);
+      const patch: Record<string, unknown> = { cover_url: cov, updated_at: new Date().toISOString() };
+      if (desc) patch.description = desc;   // 표지와 같은 응답에 온 줄거리도 캐시(모달 lazy 조회용)
+      await sb.from("semyung_tulip").update(patch).eq("ctrl", r.ctrl);
     }
     return new Response(JSON.stringify({ covers }), {
       headers: { ...CORS, "Content-Type": "application/json" },

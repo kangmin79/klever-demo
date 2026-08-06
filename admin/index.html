@@ -1656,11 +1656,12 @@ async function secSearch(){
   const q=el('secQ').value.trim();if(!q)return;
   el('secCandWrap').innerHTML='<div class="cur-loading">✦ 도서관 + 국중에서 찾는 중…</div>';
   const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
-  // 1) 세명대 소장 전자책(제목·저자 키워드)
+  // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip
   const smP=(async()=>{ try{
     const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
-    const r=await fetch(SB_REST+'/semyung_books?or=(title.ilike.'+p+',author.ilike.'+p+')&select=brcd,title,author,cover,detail_url,provider&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
-    const d=await r.json(); return Array.isArray(d)?d:[];
+    const r=await fetch(SB_REST+'/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const d=await r.json(); return (Array.isArray(d)?d:[]).map(b=>({brcd:b.barcode||b.ctrl,title:b.title,author:b.author,cover:b.cover_url||'',provider:b.vendor||'',
+      detail_url:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):''}));
   }catch(e){ return []; } })();
   // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
   _aiCur=null;
@@ -1683,10 +1684,11 @@ async function secSearchSemyung(){
   el('secCandWrap').innerHTML='<div class="cur-loading">✦ 세명대 전자도서관에서 찾는 중…</div>';
   try{
     const p='*'+encodeURIComponent(q)+'*';
-    const url=SB_REST+'/semyung_books?or=(title.ilike.'+p+',author.ilike.'+p+')&select=brcd,title,author,cover,detail_url,provider&limit=40';
+    const url=SB_REST+'/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=40';
     const r=await fetch(url,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     const d=await r.json();
-    SCAND=(Array.isArray(d)?d:[]).map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,prov:b.provider||''}));
+    SCAND=(Array.isArray(d)?d:[]).map(b=>({isbn:'sm-'+(b.barcode||b.ctrl),t:b.title,a:b.author||'',cover:b.cover_url||'',
+      lib:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):'',_sm:true,prov:b.vendor||''}));
     if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">세명대 소장에서 못 찾았어요. 다른 제목으로 검색해보세요.</div>';return;}
     secRenderCands('세명대 학술정보원 전자책 '+SCAND.length+'권 · + 를 눌러 담으세요');
   }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">검색 실패 — 잠시 후 다시 시도해주세요.</div>';}
@@ -1875,8 +1877,8 @@ async function aicLoadDescAdmin(b){ const e=el('aicDtDesc'); if(!e)return;
   const brcd=b.brcd||(b.isbn||'').replace(/^sm-/,''); const isbn=(b.isbn||'').replace(/^sm-/,'');
   if(!brcd&&!isbn){ e.textContent='줄거리 정보가 아직 없어요.'; return; }
   try{
-    const ors=[]; if(brcd)ors.push('brcd.eq.'+encodeURIComponent(brcd)); if(isbn&&isbn!==brcd)ors.push('isbn13.eq.'+encodeURIComponent(isbn));
-    const r=await fetch(`${SB_REST}/semyung_books?or=(${ors.join(',')})&select=description,author,publisher,pub_year&limit=1`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const ors=[]; if(brcd)ors.push('barcode.eq.'+encodeURIComponent(brcd)); if(isbn&&isbn!==brcd)ors.push('isbn.eq.'+encodeURIComponent(isbn));
+    const r=await fetch(`${SB_REST}/semyung_tulip?or=(${ors.join(',')})&select=description,author,publisher,pub_year&limit=1`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     const a=await r.json(); const row=(Array.isArray(a)&&a[0])||{};
     e.textContent=row.description||'줄거리 정보가 아직 없어요. (소장 도서 · 표지/형태로 판단해 주세요)';
     // 작가·출판사 보강(후보에 비어있으면 채움 — 모달 표시 + 담을 때 저장에도 반영)
