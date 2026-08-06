@@ -260,7 +260,7 @@ async function vectorMatch(emb: number[], count: number, onlyHeld: boolean, kdcF
   return [];
 }
 
-// 소장 큐레이션(onlyHeld) 전용: 세명대 전자책(semyung_tulip, 2.3만) 벡터검색 — P3에서 match_semyung→match_tulip 전환.
+// 소장 큐레이션(onlyHeld) 전용: 세명대 전 장서(semyung_tulip, 전자책+종이책 임베딩 ~30만) 벡터검색 — P3 전환.
 // 결과를 book_pool 후보 형태로 정규화 → 이후 GATE/dedup/toCand 파이프라인 그대로 재사용(저위험).
 async function vectorMatchSemyung(emb: number[], count: number, floor = SIM_FLOOR) {
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -272,7 +272,15 @@ async function vectorMatchSemyung(emb: number[], count: number, floor = SIM_FLOO
       if (!r.ok) { await new Promise((s) => setTimeout(s, 400 * (attempt + 1))); continue; }
       const rows = await r.json();
       if (!Array.isArray(rows)) { await new Promise((s) => setTimeout(s, 400 * (attempt + 1))); continue; }
-      return rows.filter((x: any) => (x.similarity ?? 1) >= floor).map((b: any) => ({
+      return rows.filter((x: any) => (x.similarity ?? 1) >= floor).map((b: any) => (b.kind === "paper" ? {
+        // 종이책: 소장 링크만(라이브 대출상태는 모달의 semyung-holding 몫). brcd 비움 → 크레마 조회 제외.
+        isbn13: b.isbn13 || ("cattot-" + b.brcd), brcd: "", title: b.title, author: b.author || "", publisher: b.publisher || "",
+        pub_year: b.pub_year || "", kdc_nm: "", kdc1: "", loan_count: null, cover: b.cover || "",
+        sm_paper: true, sm_paper_status: "소장", sm_paper_url: b.detail_url || "",
+        sm_ebook: false, sm_ebook_provider: "", sm_ebook_url: "",
+        crema: false, crema_url: "",
+        similarity: b.similarity,
+      } : {
         isbn13: b.isbn13 || ("sm-" + b.brcd), brcd: b.brcd, title: b.title, author: b.author || "", publisher: b.publisher || "",
         pub_year: b.pub_year || "", kdc_nm: "", kdc1: "", loan_count: null, cover: b.cover || "",
         sm_paper: false, sm_paper_status: "", sm_paper_url: "",

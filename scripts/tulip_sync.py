@@ -40,10 +40,10 @@ def http(url, data=None, headers=None, timeout=60):
     with urllib.request.urlopen(req, timeout=timeout, context=CTX) as r:
         return r.read().decode("utf-8", "replace")
 
-def sql(query):
+def sql(query, timeout=60):
     body = json.dumps({"query": query}).encode()
     return http(MGMT, data=body, headers={
-        "Authorization": "Bearer " + TOKEN, "Content-Type": "application/json"})
+        "Authorization": "Bearer " + TOKEN, "Content-Type": "application/json"}, timeout=timeout)
 
 def tulip(path, **params):
     qs = urllib.parse.urlencode(params, encoding="utf-8")
@@ -286,8 +286,13 @@ def covers_yes24(limit=None, budget=4500):
     flush()
     print(f"[covers-yes24] 완료 — ISBN조회 {hit_isbn:,} + 엄격검색 {hit_search:,} 채움, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
 
-def embed_ebooks(limit=None):
-    """전자책 임베딩 재생성(P3): title+author+publisher(+description)를 text-embedding-3-small로.
+TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)·학위논문(t)·미분류('') — 연간물/DVD/지도 제외
+    "ebook": "kind='ebook'",
+    "paper": "kind='paper' and mat_type in ('m','t','')",
+}
+
+def embed_books(limit=None, target="ebook"):
+    """임베딩 재생성(P3): title+author+publisher(+description)를 text-embedding-3-small로.
     OpenAI 키 = hwik-web/.env OPENAI_API_KEY. 100건/요청 배치, 저장은 40행/SQL."""
     okey = None
     envp = os.path.join(os.path.expanduser("~"), "Desktop", "hwik-web", ".env")
@@ -296,9 +301,9 @@ def embed_ebooks(limit=None):
         if m: okey = m.group(1).strip().strip("\"'")
     if not okey: sys.exit("OPENAI_API_KEY 없음 (hwik-web/.env)")
     res = json.loads(sql("select ctrl, title, author, publisher, description from semyung_tulip "
-                         "where kind='ebook' and embedding is null order by ctrl"
-                         + (f" limit {limit}" if limit else "")))
-    print(f"[embed] 대상 {len(res):,}건")
+                         f"where {TARGET_WHERE[target]} and embedding is null order by ctrl"
+                         + (f" limit {limit}" if limit else ""), timeout=300))
+    print(f"[embed:{target}] 대상 {len(res):,}건")
     done = 0
     for i in range(0, len(res), 100):
         chunk = res[i:i+100]
@@ -331,15 +336,15 @@ def embed_ebooks(limit=None):
         done += len(chunk)
         if done % 1000 < 100: print(f"  {done:,}/{len(res):,}")
         time.sleep(0.2)
-    print(f"[embed] 완료 {done:,}건")
+    print(f"[embed:{target}] 완료 {done:,}건")
     # ivfflat은 전량 적재 후 재빌드해야 centroid 품질이 나옴 (기본 maintenance_work_mem 32MB로는 부족 → 상향)
     try:
-        print("[embed] ivfflat 재빌드:", sql(
-            "set maintenance_work_mem='256MB'; drop index if exists idx_tulip_emb; "
+        print(f"[embed:{target}] ivfflat 재빌드:", sql(
+            "set maintenance_work_mem='512MB'; drop index if exists idx_tulip_emb; "
             "create index idx_tulip_emb on semyung_tulip "
-            "using ivfflat (embedding vector_cosine_ops) with (lists=100)")[:100])
+            "using ivfflat (embedding vector_cosine_ops) with (lists=200)", timeout=600)[:100])
     except Exception as e:
-        print(f"[embed] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
+        print(f"[embed:{target}] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
 
 def run_daily():
     """신착 증분: last_max_ctrl+1부터 위로, 연속 30개 빈 번호면 종료"""
@@ -399,14 +404,16 @@ if __name__ == "__main__":
     ap.add_argument("--enrich-ebook", action="store_true"); ap.add_argument("--enrich-limit", type=int)
     ap.add_argument("--covers-yes24", action="store_true"); ap.add_argument("--covers-limit", type=int)
     ap.add_argument("--covers-budget", type=int, default=4500)
-    ap.add_argument("--embed-ebook", action="store_true"); ap.add_argument("--embed-limit", type=int)
+    ap.add_argument("--embed-ebook", action="store_true"); ap.add_argument("--embed-paper", action="store_true")
+    ap.add_argument("--embed-limit", type=int)
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
     elif a.enrich_ebook: enrich_ebooks(a.enrich_limit)
     elif a.covers_yes24: covers_yes24(a.covers_limit, a.covers_budget)
-    elif a.embed_ebook: embed_ebooks(a.embed_limit)
+    elif a.embed_ebook: embed_books(a.embed_limit, "ebook")
+    elif a.embed_paper: embed_books(a.embed_limit, "paper")
     elif a.daily: run_daily()
     elif a.set_max: set_max()
     else: ap.print_help()
