@@ -346,6 +346,23 @@ def embed_books(limit=None, target="ebook"):
     except Exception as e:
         print(f"[embed:{target}] 인덱스 실패(검색은 seq scan으로도 동작, 나중 재시도 가능): {e}")
 
+def inherit_old():
+    """구 semyung_books → semyung_tulip 표지·줄거리 이식 (P4 삭제 전 1회, enrich 완료 후 실행).
+    barcode=brcd 동일키 매칭 — 오매칭 위험 0. YES24 구 표지는 DRMContent 경로(조립 L{brcd}.jpg와 다름),
+    표본 30/30 실이미지·GIF placeholder 0 확인(2026-08-06). 이식으로 알라딘 배치가 잔여분만으로 줄어듦."""
+    print("[inherit] 줄거리:", sql(
+        "update semyung_tulip t set description=b.description, updated_at=now() "
+        "from semyung_books b where t.barcode=b.brcd and t.kind='ebook' "
+        "and coalesce(t.description,'')='' and coalesce(b.description,'')<>''", timeout=300)[:80] or "OK")
+    print("[inherit] YES24 표지:", sql(
+        "update semyung_tulip t set cover_url=b.cover, updated_at=now() "
+        "from semyung_books b where t.barcode=b.brcd and t.vendor='yes24' "
+        "and coalesce(t.cover_url,'')='' and b.cover like 'http%'", timeout=300)[:80] or "OK")
+    # 교보 표지는 바코드 조립분이 이미 채워짐(실측 9/9) — 이식 불필요. 잔여 null은 covers-yes24(알라딘) 몫
+    res = json.loads(sql("select vendor, count(*) n, count(nullif(cover_url,'')) cv, "
+                         "count(nullif(description,'')) ds from semyung_tulip where kind='ebook' group by vendor"))
+    print("[inherit] 결과:", res)
+
 def run_daily():
     """신착 증분: last_max_ctrl+1부터 위로, 연속 30개 빈 번호면 종료"""
     st = json.loads(sql("select last_max_ctrl from semyung_sync_state where id=1"))
@@ -407,6 +424,7 @@ if __name__ == "__main__":
     ap.add_argument("--embed-ebook", action="store_true"); ap.add_argument("--embed-paper", action="store_true")
     ap.add_argument("--embed-limit", type=int)
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
+    ap.add_argument("--inherit", action="store_true")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
@@ -416,4 +434,5 @@ if __name__ == "__main__":
     elif a.embed_paper: embed_books(a.embed_limit, "paper")
     elif a.daily: run_daily()
     elif a.set_max: set_max()
+    elif a.inherit: inherit_old()
     else: ap.print_help()

@@ -22,5 +22,6 @@ goto netwait
 echo ===== [%date% %time%] tulip daily 시작 ===== >> logs\tulip_daily.log
 python scripts\tulip_sync.py --daily >> logs\tulip_daily.log 2>&1
 python scripts\tulip_sync.py --enrich-ebook >> logs\tulip_daily.log 2>&1
-python scripts\tulip_sync.py --covers-yes24 --covers-budget 1000 >> logs\tulip_daily.log 2>&1
+rem 예산 3000 = 일한도 5000 중 tulip-cover(종이책 lazy 표지) 여유분 2000 남김
+python scripts\tulip_sync.py --covers-yes24 --covers-budget 3000 >> logs\tulip_daily.log 2>&1
 echo ===== [%date% %time%] tulip daily 끝 (exit %errorlevel%) ===== >> logs\tulip_daily.log
