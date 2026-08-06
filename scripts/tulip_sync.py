@@ -349,9 +349,10 @@ def embed_books(limit=None, target="ebook"):
 def covers_paper(limit=None):
     """종이책 표지 일괄: 도서관 OPAC과 동일 소스 — /openapi/thumbnail(미문서화, 네이버 책DB 프록시).
     ISBN 배치 50개/POST, apikey·쿠키 불필요(2026-08-06 실측). 네이버 미보유는 null 유지 → tulip-cover(알라딘 lazy) 몫."""
+    # reg_date desc: 데일리에서 limit을 걸면 신착부터 — 옛 미보유분을 매일 재조회하지 않음
     res = json.loads(sql(
         "select ctrl, isbn from semyung_tulip where kind='paper' and isbn is not null "
-        "and cover_url is null order by ctrl desc"
+        "and cover_url is null order by reg_date desc, ctrl desc"
         + (f" limit {limit}" if limit else ""), timeout=300))
     print(f"[covers-paper] 대상 {len(res):,}건 (배치 50)")
     done = hit = 0; buf = []
@@ -387,14 +388,28 @@ def inherit_old():
     """구 semyung_books → semyung_tulip 표지·줄거리 이식 (P4 삭제 전 1회, enrich 완료 후 실행).
     barcode=brcd 동일키 매칭 — 오매칭 위험 0. YES24 구 표지는 DRMContent 경로(조립 L{brcd}.jpg와 다름),
     표본 30/30 실이미지·GIF placeholder 0 확인(2026-08-06). 이식으로 알라딘 배치가 잔여분만으로 줄어듦."""
-    print("[inherit] 줄거리:", sql(
-        "update semyung_tulip t set description=b.description, updated_at=now() "
-        "from semyung_books b where t.barcode=b.brcd and t.kind='ebook' "
-        "and coalesce(t.description,'')='' and coalesce(b.description,'')<>''", timeout=300)[:80] or "OK")
-    print("[inherit] YES24 표지:", sql(
-        "update semyung_tulip t set cover_url=b.cover, updated_at=now() "
-        "from semyung_books b where t.barcode=b.brcd and t.vendor='yes24' "
-        "and coalesce(t.cover_url,'')='' and b.cover like 'http%'", timeout=300)[:80] or "OK")
+    # 481MB 원본 직접 조인은 statement timeout → 필요한 컬럼만 뽑은 스테이징으로 (embedding TOAST 회피)
+    print("[inherit] 스테이징:", sql(
+        "drop table if exists _mig_books; "
+        "create table _mig_books as select brcd, nullif(description,'') description, "
+        "nullif(cover,'') cover from semyung_books; "
+        "create index on _mig_books(brcd)", timeout=300)[:80] or "OK")
+    # 23k행 일괄 UPDATE는 인덱스 갱신(GIN trgm 등) 부담으로 statement timeout → 끝자리 10분할
+    for d in "0123456789":
+        r = sql("update semyung_tulip t set description=b.description, updated_at=now() "
+                "from _mig_books b where t.barcode=b.brcd and t.kind='ebook' "
+                f"and right(t.barcode,1)='{d}' "
+                "and coalesce(t.description,'')='' and b.description is not null", timeout=300)
+        print(f"[inherit] 줄거리 {d}:", (r or "OK")[:60])
+        time.sleep(0.3)
+    for d in "0123456789":
+        r = sql("update semyung_tulip t set cover_url=b.cover, updated_at=now() "
+                "from _mig_books b where t.barcode=b.brcd and t.vendor='yes24' "
+                f"and right(t.barcode,1)='{d}' "
+                "and coalesce(t.cover_url,'')='' and b.cover like 'http%'", timeout=300)
+        print(f"[inherit] YES24 표지 {d}:", (r or "OK")[:60])
+        time.sleep(0.3)
+    print("[inherit] 스테이징 정리:", sql("drop table if exists _mig_books")[:40] or "OK")
     # 교보 표지는 바코드 조립분이 이미 채워짐(실측 9/9) — 이식 불필요. 잔여 null은 covers-yes24(알라딘) 몫
     res = json.loads(sql("select vendor, count(*) n, count(nullif(cover_url,'')) cv, "
                          "count(nullif(description,'')) ds from semyung_tulip where kind='ebook' group by vendor"))
