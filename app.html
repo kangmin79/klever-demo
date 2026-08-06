@@ -2266,6 +2266,7 @@ body.dark .hwc-row.user .hwc-msg{color:#0f172a;}
 .hwc-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,25,45,.1);}
 .hwc-cv{flex:0 0 50px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--bg-input);box-shadow:0 4px 10px rgba(20,20,45,.16);}
 .hwc-cv img{width:100%;height:100%;object-fit:cover;}
+.hwc-cv .lc-fb{font-size:8px;padding:3px;}
 .hwc-ci{flex:1;min-width:0;display:flex;flex-direction:column;}
 .hwc-read{display:inline-flex;align-items:center;gap:3px;margin-top:7px;align-self:flex-start;padding:5px 12px;border-radius:9px;background:rgba(26,41,66,.055);color:var(--primary);font-size:11px;font-weight:700;border:1px solid rgba(26,41,66,.10);transition:.14s;}
 .hwc-read::after{content:'\203A';font-size:13px;line-height:1;opacity:.65;}
@@ -10244,7 +10245,7 @@ window.addEventListener('keydown', (e) => {
     const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
     const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
     return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:''}</div>
+      <div class="hwc-cv"${b.cover?'':` style="background:${spineColor(b.title||b.t||isbn)}"`}>${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(meta)}</div>
       <div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">${usFormBadges(b)}${loan}</div>${read}</div></div>`;
   }

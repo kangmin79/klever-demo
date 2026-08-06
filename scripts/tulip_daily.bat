@@ -1,32 +1,33 @@
 @echo off
-rem 세명대 튤립 신착 데일리 (매일 03:30, 작업 스케줄러 BookstarTulipSync)
-rem %~dp0 필수 — 한글경로 침묵실패 교훈. 로그: logs\tulip_daily.log
+rem Semyung TULIP daily sync (03:30, task: BookstarTulipSync)
+rem ASCII only in this file! cmd misparses UTF-8 Korean comments -> silent exit 1 (2026-08-07)
+rem %~dp0 required (Korean path lesson). Log: logs\tulip_daily.log
 chcp 65001 >nul
 cd /d "%~dp0.."
 if not exist logs mkdir logs
 
-rem 네트워크 대기 (부팅/절전복귀 직후 Wi-Fi 미연결 대비, 최대 5분)
+rem wait for network (boot/wake Wi-Fi delay, max 5 min)
 set /a _try=0
 :netwait
 ping -n 1 lib.semyung.ac.kr >nul 2>&1
 if %errorlevel%==0 goto netok
 set /a _try+=1
 if %_try% geq 10 (
-  echo [%date% %time%] 네트워크 불가 - 포기 >> logs\tulip_daily.log
+  echo [%date% %time%] network unavailable - giving up >> logs\tulip_daily.log
   exit /b 1
 )
 timeout /t 30 /nobreak >nul
 goto netwait
 :netok
 
-echo ===== [%date% %time%] tulip daily 시작 ===== >> logs\tulip_daily.log
+echo ===== [%date% %time%] tulip daily start ===== >> logs\tulip_daily.log
 python scripts\tulip_sync.py --daily >> logs\tulip_daily.log 2>&1
 python scripts\tulip_sync.py --enrich-ebook >> logs\tulip_daily.log 2>&1
-rem 예산 3000 = 일한도 5000 중 tulip-cover(종이책 lazy 표지) 여유분 2000 남김
+rem budget 3000 of daily 5000 Aladin limit; keep 2000 for tulip-cover lazy paper covers
 python scripts\tulip_sync.py --covers-yes24 --covers-budget 3000 >> logs\tulip_daily.log 2>&1
-rem 신착 종이책 표지(네이버 책DB, OPAC과 동일 소스) — 최근 300권만 재확인
+rem new paper-book covers (Naver book DB, same source as OPAC) - recheck latest 300
 python scripts\tulip_sync.py --covers-paper --covers-limit 300 >> logs\tulip_daily.log 2>&1
-rem 신규 도서 임베딩(embedding null만 = 하루 십수 권, 표지 단계 뒤라 알라딘 줄거리 포함)
+rem embeddings for new books only (embedding null = a dozen per day; after covers so Aladin desc included)
 python scripts\tulip_sync.py --embed-ebook >> logs\tulip_daily.log 2>&1
 python scripts\tulip_sync.py --embed-paper >> logs\tulip_daily.log 2>&1
-echo ===== [%date% %time%] tulip daily 끝 (exit %errorlevel%) ===== >> logs\tulip_daily.log
+echo ===== [%date% %time%] tulip daily end (exit %errorlevel%) ===== >> logs\tulip_daily.log
