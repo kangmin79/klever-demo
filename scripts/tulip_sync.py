@@ -296,8 +296,8 @@ def covers_paper_aladin(limit=None, budget=4500):
     실패는 cover_url='' 마킹(다음날 재시도 방지, 앱은 falsy→타이포 표지)."""
     res = json.loads(sql(
         "select ctrl, title, author, isbn from semyung_tulip "
-        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by ctrl"
-        + (f" limit {limit}" if limit else "")))
+        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by ctrl desc"
+        + (f" limit {limit}" if limit else "")))   # 최근 책 우선(desc): 매칭률↑(신간은 알라딘 있음)+노출 잦은 책 먼저
     print(f"[covers-paper-aladin] 대상 {len(res):,}건 (알라딘 예산 {budget:,}회)")
     hit = 0; miss = 0; buf = []
     def flush():
