@@ -171,6 +171,8 @@ body.with-sidenav .side-nav{display:flex;}
   box-shadow:0 2px 5px rgba(20,28,50,.05),0 10px 24px -8px rgba(20,28,50,.14);
 }
 body.dark .side-node{box-shadow:0 2px 5px rgba(0,0,0,.28),0 10px 24px -8px rgba(0,0,0,.45);}
+.side-node{position:relative;}
+.side-badge{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg);}
 .side-node:hover{transform:translateY(-3px);box-shadow:0 6px 14px rgba(20,28,50,.10),0 18px 34px -10px rgba(20,28,50,.22);}
 body.dark .side-node:hover{box-shadow:0 6px 14px rgba(0,0,0,.35),0 18px 34px -10px rgba(0,0,0,.55);}
 .side-node.active{background:var(--brand-grad);box-shadow:0 8px 22px -6px rgba(56,98,220,.45);}
@@ -2597,6 +2599,13 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div id="chalGroupMy"></div>
 </section>
 
+<!-- 내 도서관 — 도서관 계정과 나의 실시간 접점(빌린 책·기다리는 책·이용 상태) -->
+<section class="page" id="page-mylib">
+  <h1 class="page-title">내 도서관</h1>
+  <p class="page-subtitle">세명대학교 학술정보원에서 빌리고 기다리는 책 — 종이책·전자책 모두</p>
+  <div id="myLibBody"></div>
+</section>
+
 <!-- ═══════════════════════════════════════════════════════════
      2-2) AI추천 (ai.html 이식 — 도서관 1,133권 자연어 추천)
      ═══════════════════════════════════════════════════════════ -->
@@ -4741,6 +4750,7 @@ function nav(page){
     if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 세명대 대출 베스트 라이브 로드(최초 1회)
     renderMyLibStatus();   // 빌린 책·기다리는 책 — 도서관 실시간, 개인연동 학생만
   }
+  if(page === 'mylib') renderMyLibStatus();
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
   }
@@ -6146,27 +6156,39 @@ const smFmt=(s)=>{ const d=smDate(s); return d?`${d.getMonth()+1}월 ${d.getDate
    도서관 홈페이지에 들어가야만 알 수 있던 것(반납일·예약 도착)을 여기서 먼저 알려준다.
    숫자·날짜는 전부 도서관 실시간 값. 추정·캐시 없음. 개인연동 안 된 이용자에겐 아예 안 보인다. */
 async function renderMyLibStatus(){
-  const el=document.getElementById('myLibStatus'); if(!el) return;
-  if(!ssoIsPersonal()){ el.innerHTML=''; return; }
+  const el=document.getElementById('myLibBody');
+  const line=document.getElementById('myLibStatus');   // 우리 도서관 상단 한 줄 요약
+  if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
-    const [ln,rv,pk,eb]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans()]);
+    const [ln,rv,pk,eb,info]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans(),smMy('info')]);
     const loans=smItems(ln), resv=smItems(rv);
     // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
     const picks=smItems(pk).filter(x=>x.loan_status==='0001');
     // 빌린 것도 기다리는 것도 없을 때 — 아무것도 안 그리면 연동이 된 건지 알 수 없다.
     // 도서관 계정이 붙었다는 신호는 남기되, 큐레이션을 가리지 않게 한 줄로.
+    // 도서관 이용 상태 — 연체 권수와 제재 여부. 예약제재는 도착 후 3일 방치 시 걸리므로 미리 보여준다.
+    const iv=(info&&info.data)||{};
+    const overdueCnt=parseInt(iv.overDueCount||0,10)||0;
+    const statusBox=`<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;font-weight:800;color:var(--primary)">이용 상태</span>
+      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:${overdueCnt?'#dc2626':'var(--text)'}">${overdueCnt}</b>권 연체</span>
+      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${parseInt(iv.loanCount||0,10)||0}</b>권 대출 중</span>
+      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${parseInt(iv.reserveCount||0,10)||0}</b>건 예약</span>
+    </div>`;
+
     if(!loans.length && !resv.length && !picks.length && !eb.length){
-      el.innerHTML=`<div class="section" style="padding-bottom:4px"><div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
+      el.innerHTML=`<div class="section">${statusBox}<div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
         <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;flex:none"></span>
         <span style="font-size:12.5px;color:var(--text-sub)">도서관 계정 연결됨 — 지금 빌리거나 기다리는 책이 없어요</span>
       </div></div>`;
+      if(line) line.innerHTML='';
+      MYLIB_BADGE=null; renderSideNav(_navPage);
       return;
     }
-
     const box=(inner)=>`<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px">${inner}</div>`;
     const head=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:0 0 7px">${t}</div>`;
-    let html='';
+    let html=statusBox;
 
     // ① 빌린 책 — 종이책+전자책을 합쳐 반납일이 급한 순으로
     const all=loans.map(x=>({kind:'paper',title:x.title,author:x.author,due:x.return_plan_date,
@@ -6229,7 +6251,29 @@ async function renderMyLibStatus(){
         </div>`)).join('');
     }
     el.innerHTML=`<div class="section" style="padding-bottom:4px">${html}</div>`;
-  }catch(e){ el.innerHTML=''; }
+
+    // ③ 사이드바 배지 + 우리 도서관 한 줄 요약 — 내 도서관에 안 들어와도 급한 건 알게 한다
+    const arrived=resv.filter(x=>(x.reservation_staus||x.reservation_status)==='0008').length;
+    const due=all.map(x=>smDday(x.due)).filter(d=>d!==null);
+    const overdue=due.filter(d=>d<0).length;
+    const soon=due.filter(d=>d>=0&&d<=3).length;
+    MYLIB_BADGE = overdue ? {color:'#dc2626', title:`${overdue}권 연체`}
+                : arrived ? {color:'#16a34a', title:'예약한 책이 도착했어요'}
+                : soon    ? {color:'#ea580c', title:'반납일이 다가와요'} : null;
+    renderSideNav(_navPage);
+    if(line){
+      const bits=[];
+      if(overdue) bits.push(`<b style="color:#dc2626">${overdue}권 연체</b>`);
+      if(arrived) bits.push(`<b style="color:#16a34a">예약한 책 도착</b>`);
+      if(!overdue&&soon) bits.push(`<b style="color:#ea580c">반납 ${soon}권 임박</b>`);
+      if(all.length) bits.push(`빌린 책 ${all.length}권`);
+      if(picks.length+resv.length) bits.push(`기다리는 책 ${picks.length+resv.length}권`);
+      line.innerHTML=bits.length?`<div class="section" style="padding-bottom:0"><div onclick="nav('mylib')" style="cursor:pointer;display:flex;gap:10px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
+        <span style="font-size:12.5px;color:var(--text-sub);flex:1">${bits.join(' · ')}</span>
+        <span style="font-size:12px;font-weight:800;color:var(--primary)">내 도서관 ›</span>
+      </div></div>`:'';
+    }
+  }catch(e){ if(el) el.innerHTML=''; }
 }
 // 내가 빌린 전자책 — 실패해도 종이책 표시는 살려야 하므로 빈 배열로 흡수
 async function smEbookLoans(){
@@ -6301,19 +6345,25 @@ function libBridgeOpen(book){
 }
 /* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 리더보드 / 검색 / 피드 / 내서재 */
 const SIDE_MENU = [
+  // 내 도서관 = 도서관 계정이 연결된 학생에게만. 연결 안 된 이용자에겐 빈 메뉴가 되므로 숨긴다.
+  {key:'mylib',  icon:'library',  label:'내 도서관',   page:'mylib', needsLib:true},
   {key:'mychal', icon:'target',   label:'마이 챌린지', page:'mychal'},
   {key:'leader', icon:'trophy',   label:'리더보드',    page:'leaderboard'},
   {key:'search', icon:'search',   label:'검색',        page:'search'},
   {key:'feed',   icon:'users',    label:'피드',        page:'feed'},
   {key:'shelf',  icon:'bookOpen', label:'내서재',      page:'mypage'},
 ];
+// 사이드바 배지 — 연체(빨강) > 예약도착(초록) 순. 들어가 보지 않아도 알게 하는 최소 알림.
+let MYLIB_BADGE=null;
 function renderSideNav(activePage){
   const el = document.getElementById('sideNav');
   if(!el) return;
-  el.innerHTML = SIDE_MENU.map(n=>{
+  el.innerHTML = SIDE_MENU.filter(n=>!n.needsLib||ssoIsPersonal()).map(n=>{
     const on = (activePage===n.page) ? ' active' : '';
+    const badge=(n.key==='mylib'&&MYLIB_BADGE)
+      ? `<span class="side-badge" style="background:${MYLIB_BADGE.color}" title="${esc(MYLIB_BADGE.title)}"></span>` : '';
     return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
-      ${ic(n.icon)}
+      ${ic(n.icon)}${badge}
       <div class="side-node-label">${esc(typeof uiT==='function'?uiT(n.label):n.label)}</div>
     </div>`;
   }).join('');
