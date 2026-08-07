@@ -2549,6 +2549,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
      우리 도서관 — 사서 큐레이션 (독립 탭)
      ═══════════════════════════════════════════════════════════ -->
 <section class="page active" id="page-ourlib">
+  <!-- 도서관과 나의 실시간 접점 — 빌린 책·기다리는 책. SSO 개인연동된 학생에게만 보임 -->
+  <div id="myLibStatus"></div>
   <div class="section" id="libCurationSec">
     <div id="libCurationGrid"></div>
   </div>
@@ -3253,26 +3255,9 @@ function renderMyShelf(){
   if(!a.length){ el.innerHTML=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;padding:26px 10px;background:var(--bg-input);border-radius:12px;line-height:1.7">아직 빌린 책이 없어요.<br><b style="color:var(--primary)">우리 도서관</b>에서 책을 빌리면 여기에 쌓이고, 다 읽으면 <b>완독 인증</b>으로 점수가 올라가요.</div>`; return; }
   const reading=a.filter(x=>x.status!=='done' && !x.returned), done=a.filter(x=>x.status==='done');
   const sub=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:14px 0 2px">${t}</div>`;
-  el.innerHTML=`<div id="myLoanBar"></div>`
-    +(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
+  // 도서관 종이책 대출현황은 '우리 도서관' 상단(renderMyLibStatus)이 전담 — 여기는 북스타 서재만
+  el.innerHTML=(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
     +(done.length?sub(`✅ 완독 ${done.length}`)+done.map(shelfCard).join(''):'');
-  renderMyLoanBar();
-}
-// 도서관 실제 대출현황(종이책) — SSO로 개인정보 연동까지 된 학생에게만. 미연동이면 아예 표시하지 않는다.
-// 숫자는 전부 도서관 시스템 실시간 값(myloan verb=info). 추정·캐시 없음.
-async function renderMyLoanBar(){
-  const bar=document.getElementById('myLoanBar'); if(!bar||!ssoIsPersonal()) return;
-  try{
-    const d=await smMy('info');
-    if(!d||!d.ok||!d.data) return;
-    const n=v=>parseInt(v||0,10)||0;
-    const loan=n(d.data.loanCount), over=n(d.data.overDueCount), resv=n(d.data.reserveCount);
-    const chip=(label,val,warn)=>`<span style="font-size:12px;color:${warn?'#dc2626':'var(--text-sub)'}"><b style="font-size:14px;color:${warn?'#dc2626':'var(--text)'}">${val}</b> ${label}</span>`;
-    bar.innerHTML=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--bg-input);border-radius:12px;padding:12px 14px;margin-bottom:4px">
-      <span style="font-size:12px;font-weight:800;color:var(--primary)">도서관 대출현황</span>
-      ${chip('권 대출 중',loan,false)}${chip('권 연체',over,over>0)}${chip('건 예약',resv,false)}
-    </div>`;
-  }catch(e){}
 }
 // 완독 인증 모달 (상세 오버레이 재사용) — 독후감 한 줄 = 완독 증명
 function shelfCertOpen(key){
@@ -4754,6 +4739,7 @@ function nav(page){
   if(page === 'ourlib') {
     setTimeout(()=>renderLibCuration(), 30);
     if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 세명대 대출 베스트 라이브 로드(최초 1회)
+    renderMyLibStatus();   // 빌린 책·기다리는 책 — 도서관 실시간, 개인연동 학생만
   }
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
@@ -6105,6 +6091,113 @@ async function smMy(action, params){
   const q=new URLSearchParams(Object.assign({action:action}, params||{}));
   const r=await fetch(SMMY_FN+'?'+q.toString(), {headers:smHeaders()});
   return await r.json();
+}
+// 도서관 XML은 결과가 1건이면 배열이 아니라 객체로 온다 — 항상 배열로 펴서 쓴다
+function smItems(d){ const it=((d||{}).data||{}).item; if(!it) return []; return Array.isArray(it)?it:[it]; }
+// 도서관 날짜는 "2026.08.24" 또는 "20260824" 두 형태로 온다
+function smDate(s){
+  const t=String(s||'').replace(/[^0-9]/g,'');
+  if(t.length!==8) return null;
+  const d=new Date(+t.slice(0,4), +t.slice(4,6)-1, +t.slice(6,8));
+  return isNaN(d) ? null : d;
+}
+// 오늘 기준 남은 일수(음수면 연체). 시각은 버리고 날짜만 비교한다.
+function smDday(s){
+  const d=smDate(s); if(!d) return null;
+  const t=new Date(); t.setHours(0,0,0,0);
+  return Math.round((d-t)/86400000);
+}
+const smFmt=(s)=>{ const d=smDate(s); return d?`${d.getMonth()+1}월 ${d.getDate()}일`:''; };
+
+/* ── 우리 도서관 상단: 빌린 책 · 기다리는 책 ──────────────────────────
+   도서관 홈페이지에 들어가야만 알 수 있던 것(반납일·예약 도착)을 여기서 먼저 알려준다.
+   숫자·날짜는 전부 도서관 실시간 값. 추정·캐시 없음. 개인연동 안 된 이용자에겐 아예 안 보인다. */
+async function renderMyLibStatus(){
+  const el=document.getElementById('myLibStatus'); if(!el) return;
+  if(!ssoIsPersonal()){ el.innerHTML=''; return; }
+  try{
+    const [ln,rv,pk]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups')]);
+    const loans=smItems(ln), resv=smItems(rv);
+    // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
+    const picks=smItems(pk).filter(x=>x.loan_status==='0001');
+    if(!loans.length && !resv.length && !picks.length){ el.innerHTML=''; return; }
+
+    const box=(inner)=>`<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px">${inner}</div>`;
+    const head=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:0 0 7px">${t}</div>`;
+    let html='';
+
+    // ① 빌린 책 — 반납일이 급한 순
+    if(loans.length){
+      const sorted=loans.slice().sort((a,b)=>(smDday(a.return_plan_date)??999)-(smDday(b.return_plan_date)??999));
+      html+=head(`빌린 책 ${loans.length}권`)+sorted.map(x=>{
+        const dd=smDday(x.return_plan_date);
+        let when,color;
+        if(dd===null){ when='반납일 정보 없음'; color='var(--text-light)'; }
+        else if(dd<0){ when=`${-dd}일 연체`; color='#dc2626'; }
+        else if(dd===0){ when='오늘까지'; color='#dc2626'; }
+        else if(dd<=3){ when=`${dd}일 남음`; color='#ea580c'; }
+        else{ when=`${smFmt(x.return_plan_date)}까지`; color='var(--text-sub)'; }
+        const rn=parseInt(x.renew_cnt||0,10)||0;
+        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
+            <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${rn?` · ${rn}회 연장함`:''}</div>
+          </div>
+          <button onclick="smRenew('${esc(x.accession_no||'')}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>
+        </div>`);
+      }).join('');
+    }
+
+    // ② 기다리는 책 — 예약(반납 대기) + 찾아줘북즈(서가 픽업)
+    if(resv.length||picks.length){
+      html+=head(`기다리는 책 ${resv.length+picks.length}권`);
+      html+=resv.map(x=>{
+        // 0008 = 예약서가비치 → 도착. 3일 내 안 찾으면 자동취소 + 1개월 예약정지라 가장 크게 알린다.
+        const arrived=(x.reservation_staus||x.reservation_status)==='0008';
+        const rank=parseInt(x.reservation_rank||0,10)||0;
+        const note=arrived
+          ? `<span style="color:#16a34a;font-weight:800">도착했어요${x.wait_date?` · ${smFmt(x.wait_date)}까지 찾아가세요`:''}</span>`
+          : `${esc(x.reservation_status_display||'예약중')}${rank?` · 내 순번 ${rank}번`:''}`;
+        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
+            <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">${note}</div>
+          </div>
+          <button onclick="smDropReserve('${esc(x.main_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+        </div>`);
+      }).join('');
+      html+=picks.map(x=>box(`<div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
+            <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">서가에서 찾는 중 · ${esc(x.receive_location||'민송도서관')}에서 수령</div>
+          </div>
+          <button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+        </div>`)).join('');
+    }
+    el.innerHTML=`<div class="section" style="padding-bottom:4px">${html}</div>`;
+  }catch(e){ el.innerHTML=''; }
+}
+async function smRenew(acc){
+  if(!acc) return;
+  const d=await smMy('renew',{accession_no:acc});
+  // 연장 실패 사유(연체·한도초과 등)는 도서관 문구를 그대로 보여준다 — 우리가 지어내지 않는다
+  readerToast(d&&d.ok ? '연장했어요' : (((d||{}).data||{}).message||'연장할 수 없어요'));
+  renderMyLibStatus();
+}
+async function smDropReserve(mainNo){
+  if(!mainNo||!confirm('예약을 취소할까요?')) return;
+  const d=await smMy('cancelReserve',{main_no:mainNo});
+  readerToast(d&&d.ok?'예약을 취소했어요':'취소하지 못했어요');
+  renderMyLibStatus();
+}
+async function smDropPickup(reqNo){
+  if(!reqNo||!confirm('신청을 취소할까요?')) return;
+  const d=await smMy('cancelPickup',{request_no:reqNo});
+  readerToast(d&&d.ok?'신청을 취소했어요':'취소하지 못했어요');
+  renderMyLibStatus();
 }
 async function smEbookBorrowOpen(brcd, w, book){
   try{
