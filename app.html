@@ -10060,6 +10060,19 @@ window.addEventListener('DOMContentLoaded', () => {
   // 모바일 GNB 축약 라벨 초기 적용 + 회전/리사이즈 대응
   try{ applyUiLang(UI_LANG); }catch(e){}
   let _gnbRz; window.addEventListener('resize', ()=>{ clearTimeout(_gnbRz); _gnbRz=setTimeout(()=>{ try{ applyUiLang(UI_LANG); }catch(e){} },200); });
+  // ── 세명대 SSO 수신 (도서관 배너/테스트폼 → sso-login Edge Fn → ?sso_uid=학번&sso_name=이름) ──
+  // 학번이 오면 그 학생으로 즉시 로그인(__SSO_STUDENT). 데모 선택창(bxOpenPicker)은 건너뜀.
+  try{
+    const _sp=new URLSearchParams(location.search);
+    const _ssoUid=_sp.get('sso_uid');
+    if(_ssoUid){
+      const _prevSid=_bxSid();   // 로그인 직전 계정(게스트/데모) — 읽던 진행 승계용
+      const _st={id:_ssoUid, name:_sp.get('sso_name')||_ssoUid, emoji:'🎓', dept:_sp.get('sso_dept')||'세명대학교'};
+      window.__SSO_STUDENT=_st; bxSetStudent(_st);
+      try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
+      history.replaceState(null,'',location.pathname+location.hash);   // 학번 URL 노출·새로고침 재적용 방지
+    }
+  }catch(e){}
   // 테스트 계정: 칩 표시 + (로그인됨)서버 결과 로딩 / (미로그인)선택창
   bxRenderAccountChip();
   const _isDash = new URLSearchParams(location.search).get('page')==='dashboard';   // 사서 대시보드 딥링크는 학생 로그인창 띄우지 않음
