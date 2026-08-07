@@ -5055,25 +5055,55 @@ function smConfirm(reckey){
     </div></div>`;
   sh.classList.add('on');
 }
+// ── 찾아줘북즈: 개인 연동이 열린 학생은 본인 명의 정식 API(openapi loanreq), 아니면 공유계정 폴백 ──
+// reckey(CATTOT000000339481) → 숫자만 뽑으면 openapi의 제어번호(000000339481)
+async function smPickupPersonal(reckey){
+  const ctrl=String(reckey).replace(/\D/g,'');
+  const h=await smMy('holding',{ctrl});
+  let list=(((h||{}).data||{}).holdings||{}).holding;
+  if(!list) return {ok:false,message:'소장 정보를 불러오지 못했어요'};
+  if(!Array.isArray(list)) list=[list];
+  const av=list.find(x=>x&&x.book_state==='대출가능');
+  if(!av) return {ok:false,message:'지금 바로 찾아드릴 수 있는 책이 없어요'};
+  const d=await smMy('pickup',{controlno:ctrl,accession_no:av.accession_no||'',main_no:av.main_no||''});
+  if(!d||!d.ok) return {ok:false,message:((d||{}).data||{}).message||'신청에 실패했어요'};
+  // 취소 버튼에 쓸 신청번호 — 신청 응답엔 없어서 현황에서 살아있는 건(0001=신청)으로 되찾는다
+  let request_no='';
+  try{
+    const l=await smMy('pickups'); let it=((l||{}).data||{}).item;
+    if(it&&!Array.isArray(it)) it=[it];
+    const live=(it||[]).find(x=>x&&x.loan_status==='0001');
+    request_no=(live&&live.request_no)||'';
+  }catch(e){}
+  return {ok:true,request_no:request_no,accession_no:av.accession_no||''};
+}
 async function smReserve(reckey){
   const btn=document.getElementById('lhResv'); if(!btn||btn.dataset.busy) return;
   const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='예약 신청 중…';
   try{
-    const r=await fetch(SMRESV_FN+'?action=reserve&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    const d=await r.json();
+    let d;
+    if(ssoIsPersonal()){ d=await smPickupPersonal(reckey); }
+    else{
+      const r=await fetch(SMRESV_FN+'?action=reserve&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      d=await r.json();
+    }
     if(d&&d.ok){
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
-      btn.innerHTML='예약 신청이 접수됐어요 · 도서관 승인 후 민송도서관 2층에서 <b>24시간 안에</b> 받으세요<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\')">예약 취소하기</span>';
+      btn.innerHTML='예약 신청이 접수됐어요 · 도서관 승인 후 민송도서관 2층에서 <b>24시간 안에</b> 받으세요<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\',\''+esc(d.request_no||'')+'\')">예약 취소하기</span>';
     }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
   }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
 }
-async function smCancel(reckey,acc){
+async function smCancel(reckey,acc,requestNo){
   const btn=document.getElementById('lhResv'); if(!btn) return;
   if(!confirm('예약을 취소할까요?')) return;
   btn.innerHTML='취소 중…';
   try{
-    const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    const d=await r.json();
+    let d;
+    if(ssoIsPersonal()&&requestNo){ d=await smMy('cancelPickup',{request_no:requestNo}); }
+    else{
+      const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      d=await r.json();
+    }
     if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 서가에서 찾아 보관해 드려요'; }
     else alert('취소에 실패했어요');
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
@@ -5098,25 +5128,46 @@ function smHoldConfirm(reckey){
     </div></div>`;
   sh.classList.add('on');
 }
+// 도서예약(반납 대기)도 동일하게 개인 명의 정식 API 우선. 대출중인 소장본에서 대표번호·소장처를 얻는다.
+async function smHoldPersonal(reckey){
+  const ctrl=String(reckey).replace(/\D/g,'');
+  const h=await smMy('holding',{ctrl});
+  let list=(((h||{}).data||{}).holdings||{}).holding;
+  if(!list) return {ok:false,message:'소장 정보를 불러오지 못했어요'};
+  if(!Array.isArray(list)) list=[list];
+  const t=list.find(x=>x&&x.book_state==='대출중'&&x.reserve_available==='Y')||list.find(x=>x&&x.reserve_available==='Y');
+  if(!t) return {ok:false,message:'지금은 예약할 수 있는 책이 없어요'};
+  const d=await smMy('reserve',{main_no:t.main_no||'',location:t.location||''});
+  if(!d||!d.ok) return {ok:false,message:((d||{}).data||{}).message||'예약에 실패했어요'};
+  return {ok:true,main_no:t.main_no||''};
+}
 async function smHold(reckey){
   const btn=document.getElementById('lhResv'); if(!btn||btn.dataset.busy) return;
   const orig=btn.innerHTML; btn.dataset.busy='1'; btn.classList.add('busy'); btn.innerHTML='예약 신청 중…';
   try{
-    const r=await fetch(SMRESV_FN+'?action=hold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    const d=await r.json();
+    let d;
+    if(ssoIsPersonal()){ d=await smHoldPersonal(reckey); }
+    else{
+      const r=await fetch(SMRESV_FN+'?action=hold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      d=await r.json();
+    }
     if(d&&d.ok){
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
-      btn.innerHTML='도서 예약이 접수됐어요 · 반납되면 <b>순번대로</b> 대출 안내를 보내드려요<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\')">예약 취소하기</span>';
+      btn.innerHTML='도서 예약이 접수됐어요 · 반납되면 <b>순번대로</b> 대출 안내를 보내드려요<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\',\''+esc(d.main_no||'')+'\')">예약 취소하기</span>';
     }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
   }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
 }
-async function smUnhold(reckey){
+async function smUnhold(reckey,mainNo){
   const btn=document.getElementById('lhResv'); if(!btn) return;
   if(!confirm('예약을 취소할까요?')) return;
   btn.innerHTML='취소 중…';
   try{
-    const r=await fetch(SMRESV_FN+'?action=unhold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    const d=await r.json();
+    let d;
+    if(ssoIsPersonal()&&mainNo){ d=await smMy('cancelReserve',{main_no:mainNo}); }
+    else{
+      const r=await fetch(SMRESV_FN+'?action=unhold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      d=await r.json();
+    }
     if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 순번대로 빌려드려요'; }
     else alert('취소에 실패했어요');
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
