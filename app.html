@@ -6149,13 +6149,14 @@ async function renderMyLibStatus(){
   const el=document.getElementById('myLibStatus'); if(!el) return;
   if(!ssoIsPersonal()){ el.innerHTML=''; return; }
   try{
-    const [ln,rv,pk]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups')]);
+    // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
+    const [ln,rv,pk,eb]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans()]);
     const loans=smItems(ln), resv=smItems(rv);
     // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
     const picks=smItems(pk).filter(x=>x.loan_status==='0001');
     // 빌린 것도 기다리는 것도 없을 때 — 아무것도 안 그리면 연동이 된 건지 알 수 없다.
     // 도서관 계정이 붙었다는 신호는 남기되, 큐레이션을 가리지 않게 한 줄로.
-    if(!loans.length && !resv.length && !picks.length){
+    if(!loans.length && !resv.length && !picks.length && !eb.length){
       el.innerHTML=`<div class="section" style="padding-bottom:4px"><div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
         <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;flex:none"></span>
         <span style="font-size:12.5px;color:var(--text-sub)">도서관 계정 연결됨 — 지금 빌리거나 기다리는 책이 없어요</span>
@@ -6167,25 +6168,34 @@ async function renderMyLibStatus(){
     const head=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:0 0 7px">${t}</div>`;
     let html='';
 
-    // ① 빌린 책 — 반납일이 급한 순
-    if(loans.length){
-      const sorted=loans.slice().sort((a,b)=>(smDday(a.return_plan_date)??999)-(smDday(b.return_plan_date)??999));
-      html+=head(`빌린 책 ${loans.length}권`)+sorted.map(x=>{
-        const dd=smDday(x.return_plan_date);
+    // ① 빌린 책 — 종이책+전자책을 합쳐 반납일이 급한 순으로
+    const all=loans.map(x=>({kind:'paper',title:x.title,author:x.author,due:x.return_plan_date,
+                             renewCnt:parseInt(x.renew_cnt||0,10)||0,acc:x.accession_no||''}))
+      .concat(eb.map(x=>({kind:'ebook',title:x.title,author:x.author,due:x.dueDate,
+                          extendable:x.extendable,loanSrmb:x.loanSrmb,brcd:x.brcd})));
+    if(all.length){
+      const sorted=all.slice().sort((a,b)=>(smDday(a.due)??999)-(smDday(b.due)??999));
+      html+=head(`빌린 책 ${all.length}권`)+sorted.map(x=>{
+        const dd=smDday(x.due);
         let when,color;
         if(dd===null){ when='반납일 정보 없음'; color='var(--text-light)'; }
         else if(dd<0){ when=`${-dd}일 연체`; color='#dc2626'; }
         else if(dd===0){ when='오늘까지'; color='#dc2626'; }
         else if(dd<=3){ when=`${dd}일 남음`; color='#ea580c'; }
-        else{ when=`${smFmt(x.return_plan_date)}까지`; color='var(--text-sub)'; }
-        const rn=parseInt(x.renew_cnt||0,10)||0;
+        else{ when=`${smFmt(x.due)}까지`; color='var(--text-sub)'; }
+        const isEb=x.kind==='ebook';
+        const kindTag=isEb?'<span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>':'';
+        const extra=isEb?'':(x.renewCnt?` · ${x.renewCnt}회 연장함`:'');
+        // 전자책은 도서관이 '연장 가능/불가'를 직접 알려주므로 그 판정을 따른다
+        const btn=isEb
+          ? (x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>`:'')
+          : `<button onclick="smRenew('${esc(x.acc)}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>`;
         return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
-            <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
-            <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${rn?` · ${rn}회 연장함`:''}</div>
-          </div>
-          <button onclick="smRenew('${esc(x.accession_no||'')}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(cleanT(x.title||''))}</div>
+            ${x.author?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author)}</div>`:''}
+            <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${extra}</div>
+          </div>${btn}
         </div>`);
       }).join('');
     }
@@ -6220,6 +6230,21 @@ async function renderMyLibStatus(){
     }
     el.innerHTML=`<div class="section" style="padding-bottom:4px">${html}</div>`;
   }catch(e){ el.innerHTML=''; }
+}
+// 내가 빌린 전자책 — 실패해도 종이책 표시는 살려야 하므로 빈 배열로 흡수
+async function smEbookLoans(){
+  if(!ssoIsPersonal()) return [];
+  try{
+    const r=await fetch(SMEBK_FN+'?action=myLoans',{headers:smHeaders()});
+    const d=await r.json();
+    return (d&&d.ok&&Array.isArray(d.items))?d.items:[];
+  }catch(e){ return []; }
+}
+async function ebExtend(loanSrmb, brcd){
+  const r=await fetch(SMEBK_FN+'?action=extend&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+  const d=await r.json();
+  readerToast(d&&d.ok?'연장했어요':((d&&d.message)||'연장할 수 없어요'));
+  renderMyLibStatus();
 }
 async function smRenew(acc){
   if(!acc) return;

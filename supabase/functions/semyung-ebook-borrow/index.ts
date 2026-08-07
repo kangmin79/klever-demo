@@ -81,13 +81,37 @@ async function doBorrow(jar: Jar, brcd: string) {
     msg: (xmlTag(xml, "msg") || "대출 실패").replace(/<br\s*\/?>/gi, " "),
   };
 }
-// 현재 대출 목록(loanSrmb) — 대출현황 페이지 반납 버튼에서 추출
-async function listLoans(jar: Jar): Promise<{ loanSrmb: string; title: string }[]> {
+// 현재 대출 목록 — 대출현황 페이지에서 추출.
+// 반납 버튼(gFnContentReturnProc)이 항목의 끝에 오고, 그 앞 구간에 그 책의 서지·날짜가 있다.
+// 그래서 '직전 버튼 이후 ~ 이번 버튼까지'를 한 항목으로 잘라 파싱한다.
+interface EbLoan { loanSrmb: string; brcd: string; title: string; author: string; loanDate: string; dueDate: string; extendable: boolean }
+async function listLoans(jar: Jar): Promise<EbLoan[]> {
   const html = await ebGet(jar, "/myLib/myBorrowList.ink");
-  const out: { loanSrmb: string; title: string }[] = [];
-  const re = /gFnContentReturnProc\('[^']*','(\d+)'\s*,\s*'([^']*)'/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) out.push({ loanSrmb: m[1], title: m[2] });
+  const out: EbLoan[] = [];
+  const re = /gFnContentReturnProc\('([^']*)','(\d+)'\s*,\s*'([^']*)'/g;
+  let m: RegExpExecArray | null, prev = 0;
+  while ((m = re.exec(html))) {
+    const raw = html.slice(prev, m.index);          // 바코드는 onclick 속성 안에 있어 태그를 지우면 사라진다
+    const block = raw.replace(/<[^>]+>/g, " ");     // 날짜·문구는 태그 지운 쪽에서 읽는다
+    prev = m.index + m[0].length;
+    const pick = (label: string) => {
+      const r = new RegExp(`${label}\\s*:?\\s*(\\d{4}-\\d{2}-\\d{2})`).exec(block);
+      return r ? r[1] : "";
+    };
+    // gFnContentReturnProc의 첫 인자는 바코드가 아니라 도서관코드(20213)다.
+    // 진짜 바코드는 표지·제목 링크의 fnContentClick(this,'001','<바코드>',…)에 있다.
+    // ⚠️ 자릿수로 훑으면 안 된다 — 첫 항목 블록엔 페이지 머리말의 JS 캐시숫자(13자리)가 섞여 그걸 집는다.
+    // (연장·반납은 loanSrmb만으로 되지만, 뷰어를 다시 열려면 바코드가 필요하다)
+    const brcd = (/fnContentClick\([^)]*?'(\d{6,13})'/.exec(raw) || [, ""])[1] || "";
+    out.push({
+      brcd, loanSrmb: m[2], title: m[3],
+      author: "",
+      loanDate: pick("대출일"),
+      dueDate: pick("반납예정일"),
+      // "연장대출 : 가능 / 불가" — 도서관 판정을 그대로 따른다(우리가 횟수로 추측하지 않는다)
+      extendable: /연장대출\s*:?\s*가능/.test(block),
+    });
+  }
   return out;
 }
 
@@ -151,6 +175,11 @@ Deno.serve(async (req) => {
     if (action === "status") {
       const body = await ebGet(jar, "/main/userBorrowStatus.json");
       return json({ ok: true, action, personal, status: JSON.parse(body || "{}") });
+    }
+
+    // 내가 빌린 전자책 — 우리 도서관 화면이 종이책과 함께 한 줄로 보여주기 위한 목록
+    if (action === "myLoans") {
+      return json({ ok: true, action, personal, items: await listLoans(jar) });
     }
 
     if (action === "returnAll") {
