@@ -5947,8 +5947,10 @@ function libDetail(isbn){
   const paperWay=(statusLabel,fallbackHref)=>{
     const wtag=`<span class="wtag">${esc(statusLabel||'소장')}</span>`;
     if(paperHoldKey){
-      return `<div class="lcd-way t-paper ok" onclick="togglePaperHold('${paperHoldKey}',this)"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar pw-ar">›</span></div>`
-        + `<div class="lcd-holding pw-hold" id="pwHold-${paperHoldKey}" style="display:none"></div>`;
+      // 종이책만 있는 책과 똑같이 소장현황(위치·청구기호·예약 버튼)을 처음부터 펼쳐 둔다.
+      // 접어두면 전자책과 같이 있는 책만 종이책 정보가 사라져 학생이 "여긴 왜 없지" 하게 된다.
+      return `<div class="lcd-way t-paper ok pw-open" onclick="togglePaperHold('${paperHoldKey}',this)"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar pw-ar">›</span></div>`
+        + `<div class="lcd-holding pw-hold loading" id="pwHold-${paperHoldKey}" data-loaded="1">우리 도서관 소장 현황을 확인하고 있어요…</div>`;
     }
     return `<a class="lcd-way t-paper ok" href="${esc(fallbackHref)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar">›</span></a>`;
   };
@@ -6011,6 +6013,8 @@ function libDetail(isbn){
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
   if(isPaperHold) loadHolding(reckey);
+  // 전자책과 같이 있는 책의 종이책 소장현황 — 기본으로 펼쳐 두므로 여기서 바로 불러온다
+  if(paperHoldKey) loadHolding(paperHoldKey, 'pwHold-'+paperHoldKey);
   renderDetailReviews(b.isbn, cleanT(b.t));
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   if(!desc && b._sm && reckey) loadDesc(reckey, /^CATTOT/.test(reckey));
