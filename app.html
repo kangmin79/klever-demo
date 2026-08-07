@@ -5965,7 +5965,7 @@ function libDetail(isbn){
           const hasEb=tags.includes('ebook'), hasPaper=tags.includes('paper'), hasSub=tags.includes('sub');
           const cremaUrl=b.cremaUrl||(en&&en.cremaUrl)||'';
           const primary = hasEb
-            ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb">소장</span><span class="ar">›</span></div>`
+            ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">소장</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
             : isPaperHold
             ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
             : hasPaper
@@ -5979,7 +5979,7 @@ function libDetail(isbn){
           return primary + (ways?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${ways}</div>`:'');
         }
         return (b.lib
-        ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb">소장</span><span class="ar">›</span></div>`
+        ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">소장</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
         : isPaperHold
         ? '' /* 종이책 소장+예약은 위 소장현황 박스에서 — 일원화 */
         : `<div class="lcd-way pw t-find" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_PAPER}</span><span class="wlabel">우리 도서관에서 찾기</span><span class="ar">›</span></div>`)
@@ -6004,6 +6004,39 @@ function libDetail(isbn){
   renderDetailReviews(b.isbn, cleanT(b.t));
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   if(!desc && b._sm && reckey) loadDesc(reckey, /^CATTOT/.test(reckey));
+  // 전자책이면 실시간 재고 — 종이책은 소장현황 박스가 이미 보여주는데 전자책만 '소장'으로만 떠 있었다
+  if(b.lib && /^\d+$/.test(reckey)) loadEbookStock(reckey);
+}
+/* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
+   못 읽으면 조용히 '소장' 그대로 둔다(틀린 숫자를 보여주느니 말을 안 하는 편이 낫다). */
+async function loadEbookStock(brcd){
+  const tag=document.getElementById('ebStockTag'), note=document.getElementById('ebStockNote');
+  if(!tag) return;
+  try{
+    const r=await fetch(SMEBK_FN+'?action=stock&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const d=await r.json();
+    if(!d||!d.ok||!tag.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
+    if(d.available){
+      tag.textContent='지금 대출 가능';
+      tag.style.color='#16a34a';
+    }else{
+      tag.textContent='대출 중';
+      tag.style.color='#dc2626';
+      const waiting=d.reserved>0?` · 앞에 ${d.reserved}명 기다리는 중`:'';
+      if(note&&note.isConnected){
+        note.innerHTML=`<div class="lcd-way t-ebook" onclick="ebReserve('${esc(brcd)}')" style="margin-top:8px">
+          <span class="wic">${SVG_EBOOK}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
+      }
+    }
+  }catch(e){}
+}
+// 전자책 예약 — 개인 계정이 있어야 순번이 내 것이 된다(공유계정으론 의미 없음)
+async function ebReserve(brcd){
+  if(!ssoIsPersonal()){ alert('도서관 계정을 연결해야 예약할 수 있어요.'); return; }
+  const r=await fetch(SMEBK_FN+'?action=reserve&brcd='+encodeURIComponent(brcd),{headers:smHeaders()});
+  const d=await r.json();
+  alert(d&&d.ok ? '예약했어요 — 반납되면 순번대로 알려드릴게요' : ((d&&(d.message||d.error))||'예약하지 못했어요'));
+  if(d&&d.ok) loadEbookStock(brcd);
 }
 // 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(CATTOT+ctrl), 아니면 전자책(barcode 또는 isbn).
 async function loadDesc(key, isCatalog){

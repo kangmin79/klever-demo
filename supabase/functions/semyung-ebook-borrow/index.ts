@@ -10,7 +10,11 @@
 //
 // GET ?action=borrow&brcd=…   → 대출 (loanSrmb·viewerUrl 반환)
 //     ?action=return&brcd=…&loanSrmb=… → 반납
+//     ?action=extend&loanSrmb=…   → 대출 연장
+//     ?action=reserve&brcd=…      → 예약 (전권 대출중일 때)
+//     ?action=cancelReserve&brcd=… → 예약 취소
 //     ?action=status              → 현재 대출 현황
+//     ?action=stock&brcd=…        → 재고(대출중/보유/예약자수) — 공개, 인증 불필요
 //     ?action=returnAll           → (공유계정 전용) 전 대출 반납
 // 인증: Authorization: Bearer <sso_token> 있으면 개인세션 시도, 없으면 공유계정
 import { sessionFromRequest } from "../_shared/sso_token.ts";
@@ -98,12 +102,34 @@ async function viewerUrlFor(jar: Jar, loanSrmb: string, brcd: string): Promise<s
   return `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`;
 }
 
+// 전자책 재고 — 상세페이지가 `[ 대출 : 0/1 예약 : 0 ]`으로 노출한다(로그인 불필요).
+// 교보가 "별도 개발"이라던 재고 API 대신 쓰는 경로. ⚠️ 정식 API가 아니라 화면 파싱이므로
+// 페이지 개편 시 깨질 수 있다 — 못 읽으면 null을 돌려주고 앱은 재고 표시를 생략한다.
+async function fetchStock(brcd: string) {
+  const r = await fetch(`${EB}/content/contentView.ink?lbryCode=${LBRY}&brcd=${brcd}`, { headers: { "User-Agent": UA } });
+  if (!r.ok) return null;
+  const html = await r.text();
+  const m = /대출\s*:\s*(\d+)\s*\/\s*(\d+)[\s\S]{0,120}?예약\s*:\s*(\d+)/.exec(html.replace(/<[^>]+>/g, " "));
+  if (!m) return null;
+  const loaned = +m[1], total = +m[2], reserved = +m[3];
+  // 버튼 문구가 도서관의 최종 판정("대출" vs "예약") — 숫자보다 이걸 우선한다
+  const btn = (/name="brwBtn"[^>]*value="([^"]*)"/.exec(html) || [, ""])[1].trim();
+  return { loaned, total, reserved, available: btn ? btn.includes("대출") : loaned < total, btn };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "borrow";
     const brcd = (url.searchParams.get("brcd") || "").replace(/[^0-9A-Za-z]/g, "");
+
+    // 재고는 공개 정보 — 로그인·세션 없이 바로 응답(게스트도 "지금 빌릴 수 있나"를 본다)
+    if (action === "stock") {
+      if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
+      const st = await fetchStock(brcd);
+      return json(st ? { ok: true, action, ...st } : { ok: false, action, error: "재고를 읽지 못했어요" });
+    }
 
     // ① 개인세션 우선 — SSO 토큰의 sid로 저장된 포털 연계값을 꺼내 학생 본인 세션 수립
     let jar: Jar | null = null;
@@ -167,11 +193,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (action === "return") {
+    if (action === "return" || action === "extend") {
       const loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
       if (!loanSrmb) return json({ ok: false, action, error: "loanSrmb 필요" }, 400);
-      const xml = await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb });
-      return json({ ok: xmlTag(xml, "result") === "True", action, personal, loanSrmb });
+      const path = action === "return" ? "/process/contentReturnProc.xml" : "/process/contentExtendProc.xml";
+      const xml = await ebPost(jar, path, { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "" });
+      return json({
+        ok: xmlTag(xml, "result") === "True", action, personal, loanSrmb,
+        message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
+      });
+    }
+
+    // 전권 대출중인 전자책 예약 — 반납되면 순번대로. 공유계정으로는 의미가 없어 개인세션만 허용.
+    if (action === "reserve" || action === "cancelReserve") {
+      if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
+      if (!personal) return json({ ok: false, action, error: "도서관 계정 연결이 필요해요" }, 409);
+      const path = action === "reserve" ? "/process/contentReserveProc.xml" : "/process/contentReserveCancelProc.xml";
+      const xml = await ebPost(jar, path, { lbryCode: LBRY, brcd, epdeBrcd: "" });
+      return json({
+        ok: xmlTag(xml, "result") === "True", action, personal,
+        message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
+      });
     }
 
     return json({ ok: false, error: "unknown action" }, 400);
