@@ -3253,8 +3253,26 @@ function renderMyShelf(){
   if(!a.length){ el.innerHTML=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;padding:26px 10px;background:var(--bg-input);border-radius:12px;line-height:1.7">아직 빌린 책이 없어요.<br><b style="color:var(--primary)">우리 도서관</b>에서 책을 빌리면 여기에 쌓이고, 다 읽으면 <b>완독 인증</b>으로 점수가 올라가요.</div>`; return; }
   const reading=a.filter(x=>x.status!=='done' && !x.returned), done=a.filter(x=>x.status==='done');
   const sub=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:14px 0 2px">${t}</div>`;
-  el.innerHTML=(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
+  el.innerHTML=`<div id="myLoanBar"></div>`
+    +(reading.length?sub(`📖 읽는 중 ${reading.length}`)+reading.map(shelfCard).join(''):'')
     +(done.length?sub(`✅ 완독 ${done.length}`)+done.map(shelfCard).join(''):'');
+  renderMyLoanBar();
+}
+// 도서관 실제 대출현황(종이책) — SSO로 개인정보 연동까지 된 학생에게만. 미연동이면 아예 표시하지 않는다.
+// 숫자는 전부 도서관 시스템 실시간 값(myloan verb=info). 추정·캐시 없음.
+async function renderMyLoanBar(){
+  const bar=document.getElementById('myLoanBar'); if(!bar||!ssoIsPersonal()) return;
+  try{
+    const d=await smMy('info');
+    if(!d||!d.ok||!d.data) return;
+    const n=v=>parseInt(v||0,10)||0;
+    const loan=n(d.data.loanCount), over=n(d.data.overDueCount), resv=n(d.data.reserveCount);
+    const chip=(label,val,warn)=>`<span style="font-size:12px;color:${warn?'#dc2626':'var(--text-sub)'}"><b style="font-size:14px;color:${warn?'#dc2626':'var(--text)'}">${val}</b> ${label}</span>`;
+    bar.innerHTML=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--bg-input);border-radius:12px;padding:12px 14px;margin-bottom:4px">
+      <span style="font-size:12px;font-weight:800;color:var(--primary)">도서관 대출현황</span>
+      ${chip('권 대출 중',loan,false)}${chip('권 연체',over,over>0)}${chip('건 예약',resv,false)}
+    </div>`;
+  }catch(e){}
 }
 // 완독 인증 모달 (상세 오버레이 재사용) — 독후감 한 줄 = 완독 증명
 function shelfCertOpen(key){
@@ -3291,7 +3309,7 @@ async function shelfReturn(key){
   if(!confirm(`「${cleanT(it.t)}」 반납할까요?`)) return;
   readerToast('반납 중…');
   try{
-    const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(it.loanSrmb),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(it.loanSrmb)+'&brcd='+encodeURIComponent(String(key).replace(/^sm-/,'')),{headers:smHeaders()});
     const d=await r.json();
     if(d&&d.ok){ it.returned=true; it.returnedTs=Date.now(); shelfSave(a); renderMyShelf(); readerToast('반납 완료 — 대출 슬롯이 비었어요'); }
     else{ readerToast('반납에 실패했어요. 잠시 후 다시 시도해 주세요'); }
@@ -6021,9 +6039,25 @@ function lcBorrow(isbn){
 }
 // 전자도서관 구매 전자책 대출 — semyung-ebook-borrow가 로그인·대출·뷰어URL 생성까지 대행, 그 URL로 이동
 const SMEBK_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook-borrow";
+const SMMY_FN ="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-my";
+// ── 세명대 개인기능 자격증명 ──
+// 토큰이 있으면 학생 본인 명의(각자 5권 한도), 없으면 서버가 공유계정으로 폴백한다.
+const SSO_TOK_KEY='bx_sso_token', SSO_PERSONAL_KEY='bx_sso_personal';
+function ssoToken(){ try{ return localStorage.getItem(SSO_TOK_KEY)||''; }catch(e){ return ''; } }
+function ssoIsPersonal(){ try{ return localStorage.getItem(SSO_PERSONAL_KEY)==='1'; }catch(e){ return false; } }
+function smHeaders(){
+  const t=ssoToken();
+  return t ? {apikey:COVER_ANON, Authorization:'Bearer '+t} : {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON};
+}
+// 종이책 개인기능 공용 호출 — 대출현황/연장/예약. 미연동(409)이면 안내 문구를 그대로 돌려준다.
+async function smMy(action, params){
+  const q=new URLSearchParams(Object.assign({action:action}, params||{}));
+  const r=await fetch(SMMY_FN+'?'+q.toString(), {headers:smHeaders()});
+  return await r.json();
+}
 async function smEbookBorrowOpen(brcd, w, book){
   try{
-    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:smHeaders()});
     const d=await r.json();
     if(d&&d.ok&&d.viewerUrl){
       if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
@@ -10069,8 +10103,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const _prevSid=_bxSid();   // 로그인 직전 계정(게스트/데모) — 읽던 진행 승계용
       const _st={id:_ssoUid, name:_sp.get('sso_name')||_ssoUid, emoji:'🎓', dept:_sp.get('sso_dept')||'세명대학교'};
       window.__SSO_STUDENT=_st; bxSetStudent(_st);
+      // 서명 세션토큰 보관 — 개인기능(대출현황·연장·예약·본인명의 전자책 대출)의 유일한 자격증명.
+      // sso_personal=1 이어야 도서관 개인정보 연동까지 열린 상태(=liid 확보). 0이면 이름만 아는 게스트.
+      try{
+        localStorage.setItem(SSO_TOK_KEY, _sp.get('sso_token')||'');
+        localStorage.setItem(SSO_PERSONAL_KEY, _sp.get('sso_personal')==='1'?'1':'0');
+      }catch(e){}
       try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
-      history.replaceState(null,'',location.pathname+location.hash);   // 학번 URL 노출·새로고침 재적용 방지
+      history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
     }
   }catch(e){}
   // 테스트 계정: 칩 표시 + (로그인됨)서버 결과 로딩 / (미로그인)선택창

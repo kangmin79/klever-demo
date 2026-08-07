@@ -1,15 +1,20 @@
 // 북스타 — 세명대 도서관 SSO(자동로그인) 접수 서버
-// 도서관 홈페이지 배너(또는 테스트 폼)가 로그인된 학생의 [학번+이름]을 POST로 보냄
-//  → 이 함수가 ①school 검증 ②Supabase 정식 계정을 학번으로 생성/조회(자산 확보)
-//    ③앱으로 리다이렉트하며 학생정보 전달 → app.html이 __SSO_STUDENT 세팅해 로그인
-//
-// 규격서(북스타_SSO_연동규격서 v0.4) '기본 단순 방식(아이티고식)' 구현.
-// ⚠️ 테스트 단계: 단순 방식은 학번+이름만으로 위조 가능(referer 확인이 유일 방어).
-//    실배포 전 보강②(HMAC 서명) 또는 Auth verifyOtp 정식세션으로 격상할 것.
+// 도서관 홈페이지 배너(또는 테스트 폼)가 로그인된 학생 정보를 POST로 보냄
+//  → ①school 검증 ②(연계값이 오면) lib 체인으로 liid 확보 ③서버 세션 저장 ④앱으로 리다이렉트
 //
 // POST (application/x-www-form-urlencoded):
-//   school=semyung.ac.kr  client_userid=<학번>  client_username=<이름>
-// 응답: 302 → https://bookstar.co.kr/app?sso_uid=<학번>&sso_name=<이름>&sso_dept=세명대학교#ourlib
+//   school=semyung.ac.kr  client_userid=<학번>  client_username=<이름>          ← 아이티고식 기본 3필드
+//   [+ school_no=<암호화> portal_user_id=<암호화>]                              ← 개인기능용 연계값(요청 예정)
+//   [+ portal_id=&portal_pw=]                                                   ← 테스트 계정 전용(운영 미사용)
+//
+// ⚠️ 학번(client_userid)은 도서관 openapi의 uid가 **아니다**(8/8 실측). openapi uid는 liid(회원번호)이며
+//    오직 lib 세션에서만 얻을 수 있다. 따라서 연계값이 없으면 개인기능(대출현황·연장·예약·전자책)은
+//    작동하지 않고 "이름만 표시되는 게스트" 상태로 진행한다. 전자책은 기존 공유계정으로 폴백.
+//
+// 응답: 302 → https://bookstar.co.kr/app?sso_uid=…&sso_name=…&sso_dept=…&sso_token=…&sso_personal=1|0#ourlib
+import { signSsoToken } from "../_shared/sso_token.ts";
+import { newSid, saveSession } from "../_shared/sso_store.ts";
+import { personalSession, portalLogin, type PortalHandoff } from "../_shared/semyung_session.ts";
 
 const ALLOWED_SCHOOL = "semyung.ac.kr";
 const APP_URL = "https://bookstar.co.kr/app";
@@ -56,35 +61,64 @@ Deno.serve(async (req) => {
 
   try {
     const ct = req.headers.get("content-type") || "";
-    let school = "", uid = "", uname = "";
+    let g: (k: string) => string;
     if (ct.includes("application/x-www-form-urlencoded") || ct.includes("multipart/form-data")) {
       const f = await req.formData();
-      school = String(f.get("school") || "").trim();
-      uid = String(f.get("client_userid") || "").trim();
-      uname = String(f.get("client_username") || "").trim();
+      g = (k) => String(f.get(k) ?? "").trim();
     } else {
-      const j = await req.json().catch(() => ({}));
-      school = String(j.school || "").trim();
-      uid = String(j.client_userid || "").trim();
-      uname = String(j.client_username || "").trim();
+      const j = await req.json().catch(() => ({} as Record<string, unknown>));
+      g = (k) => String((j as Record<string, unknown>)[k] ?? "").trim();
     }
 
-    // ① 필수값
+    // ① 필수값 ② 등록된 학교인지
+    const school = g("school"), uid = g("client_userid"), uname = g("client_username");
     if (!school || !uid) return errPage("필수 항목(학교/학번)이 누락되었습니다.");
-    // ② 등록된 학교인지
     if (school !== ALLOWED_SCHOOL) return errPage("등록되지 않은 학교입니다.");
     // 학번 형식 방어(영숫자만, 과도 길이 차단)
     const hakbun = uid.replace(/[^0-9A-Za-z]/g, "").slice(0, 32);
     if (!hakbun) return errPage("학번 형식이 올바르지 않습니다.");
-    const name = (uname || hakbun).slice(0, 40);
+    let name = (uname || hakbun).slice(0, 40);
 
-    // ③ 정식 계정 자산 확보(실패해도 로그인은 진행)
+    // ③ 개인기능 자격 — 배너가 연계값을 주면 그대로, 테스트 폼이면 포털 로그인으로 획득
+    let handoff: PortalHandoff | null = null;
+    if (g("school_no") && g("portal_user_id")) {
+      handoff = { school_no: g("school_no"), portal_user_id: g("portal_user_id") };
+    } else if (g("portal_id") && g("portal_pw")) {
+      try { handoff = await portalLogin(g("portal_id"), g("portal_pw")); }
+      catch (e) { console.error("portalLogin fail", String(e)); }
+    }
+
+    // ④ lib 체인으로 liid 확보(실패해도 로그인 자체는 진행 — 개인기능만 비활성)
+    let liid = "";
+    if (handoff) {
+      try {
+        const ps = await personalSession(handoff);
+        liid = ps.liid;
+        if (ps.name) name = ps.name.slice(0, 40); // 도서관 등록명이 더 정확
+      } catch (e) { console.error("personalSession fail", String(e)); }
+    }
+
+    // ⑤ 서버 세션 저장 — liid·연계값은 여기에만(브라우저엔 sid도 아닌 서명토큰만 나감)
+    const sid = newSid();
+    try {
+      await saveSession({
+        sid, hakbun, name,
+        liid: liid || null,
+        school_no: handoff?.school_no ?? null,
+        portal_user_id: handoff?.portal_user_id ?? null,
+      });
+    } catch (e) { console.error("saveSession fail", String(e)); }
+
+    // ⑥ 정식 계정 자산 확보(실패해도 로그인은 진행)
     try { await ensureAuthUser(hakbun, name); } catch (e) { console.error("ensureAuthUser err", String(e)); }
 
-    // ④ 앱으로 리다이렉트하며 학생정보 전달 → app.html이 __SSO_STUDENT 세팅
-    const q = new URLSearchParams({ sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교" });
-    const dest = `${APP_URL}?${q.toString()}#ourlib`;
-    return new Response(null, { status: 302, headers: { ...CORS, Location: dest } });
+    // ⑦ 앱으로 리다이렉트 → app.html이 __SSO_STUDENT 세팅
+    const q = new URLSearchParams({
+      sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교",
+      sso_token: await signSsoToken(hakbun, name, sid),
+      sso_personal: liid ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
+    });
+    return new Response(null, { status: 302, headers: { ...CORS, Location: `${APP_URL}?${q}#ourlib` } });
   } catch (e) {
     return errPage("처리 중 오류가 발생했습니다. (" + String(e).slice(0, 120) + ")", 500);
   }

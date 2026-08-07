@@ -1,14 +1,23 @@
 // 북스타 — 세명대 전자도서관 구매 전자책 "대출/반납" 라이브 대행
-// 도서관장 계정으로 서버가 로그인(전자도서관은 AES 암호화 로그인) → 대출/반납을 북스타 안에서.
-// ⚠️ 구매 전자책=동시이용 제한 + 단일 공유계정 → 데모/소수 전용. 대출 14일 점유.
-// 읽기(뷰어)는 교보/예스24 DRM 웹뷰어 — 별도(브라우저). 여기선 대출 처리 + 뷰어세션(sessionId)까지.
 //
-// GET ?action=borrow&brcd=4808954682152   → 대출 (loanSrmb 반환)
-//     ?action=return&brcd=...&loanSrmb=... → 반납
-//     ?action=status                       → 현재 대출 현황
-const EB = "https://ebook.semyung.ac.kr/elibrary-front";
+// 🎉 8/8 개편: **학생 개인세션** 방식 도입. 포털 연계값(school_no·portal_user_id)이 있으면
+//    lib → /relation/eBook → mmbrLnkg 체인으로 학생 본인 전자도서관 세션을 만들어 대출한다.
+//    mmbrLnkg가 미리가입 없이 자동 회원연계까지 해주므로 교보 회원등록 API가 필요 없다.
+//    → 각자 5권 한도·각자 대출현황. 공유계정의 "남의 대출 자동반납" 리스크 소멸.
+//
+// 폴백: 연계값이 없는 이용자(현 배너는 학번+이름만 보냄)는 기존 관장님 공유계정으로 처리.
+//    공유계정 경로는 데모/소수 전용이며 배너에 연계값이 추가되면 자연히 사라진다.
+//
+// GET ?action=borrow&brcd=…   → 대출 (loanSrmb·viewerUrl 반환)
+//     ?action=return&brcd=…&loanSrmb=… → 반납
+//     ?action=status              → 현재 대출 현황
+//     ?action=returnAll           → (공유계정 전용) 전 대출 반납
+// 인증: Authorization: Bearer <sso_token> 있으면 개인세션 시도, 없으면 공유계정
+import { sessionFromRequest } from "../_shared/sso_token.ts";
+import { loadSession } from "../_shared/sso_store.ts";
+import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, xmlTag } from "../_shared/semyung_session.ts";
+
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
-const LBRY = "20213";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -17,13 +26,9 @@ const CORS = {
 };
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { ...CORS, "content-type": "application/json" } });
-const xmlTag = (s: string, t: string) => {
-  const v = (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(s) || [, ""])[1] || "";
-  const c = /<!\[CDATA\[([\s\S]*?)\]\]>/.exec(v);
-  return (c ? c[1] : v).trim();
-};
 
-// ── 전자도서관 전용 AES (aes.js의 mysqlAES 재현): AES-128-ECB, key="freedom"+널(16B), PKCS7, 대문자 hex ──
+// ── 공유계정(폴백) 전용: 전자도서관 AES 로그인 (aes.js의 mysqlAES 재현) ──
+// AES-128-ECB, key="freedom"+널(16B), PKCS7, 대문자 hex
 async function aesHex(plain: string): Promise<string> {
   const keyBytes = new Uint8Array(16); // "freedom" + 9 null
   const ks = "freedom";
@@ -45,42 +50,26 @@ async function aesHex(plain: string): Promise<string> {
   return [...out].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
-function pickJsession(r: Response): string {
-  const arr = (r.headers as any).getSetCookie ? (r.headers as any).getSetCookie() : [];
-  for (const c of arr) { const m = /^(JSESSIONID)=([^;]+)/.exec(c); if (m) return `${m[1]}=${m[2]}`; }
-  return "";
-}
-
-async function login(): Promise<string> {
+async function sharedAccountSession(): Promise<Jar> {
   const id = Deno.env.get("SEMYUNG_LIB_ID") || "";
   const pw = Deno.env.get("SEMYUNG_LIB_PW") || "";
   if (!id || !pw) throw new Error("계정 미설정");
-  const body = new URLSearchParams({
-    mmbrId: await aesHex(id), pwd: await aesHex(pw), idSave: "false", autoLogin: "false",
-  });
+  const jar = new Jar();
   const r = await fetch(`${EB}/member/loginProcess.json`, {
     method: "POST",
     headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest", Referer: `${EB}/member/memberLogin.ink` },
-    body, redirect: "manual",
+    body: new URLSearchParams({ mmbrId: await aesHex(id), pwd: await aesHex(pw), idSave: "false", autoLogin: "false" }),
+    redirect: "manual",
   });
-  const cookie = pickJsession(r);
+  jar.absorb(r);
   const txt = await r.text();
-  if (!cookie || !/"rtnCode"\s*:\s*"T"/.test(txt)) throw new Error("전자도서관 로그인 실패");
-  return cookie;
-}
-
-async function postXml(path: string, cookie: string, fields: Record<string, string>): Promise<string> {
-  const r = await fetch(`${EB}${path}`, {
-    method: "POST",
-    headers: { "User-Agent": UA, Cookie: cookie, "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest", Referer: `${EB}/content/contentView.ink` },
-    body: new URLSearchParams(fields),
-  });
-  return new TextDecoder("utf-8").decode(await r.arrayBuffer());
+  if (!jar.has("JSESSIONID") || !/"rtnCode"\s*:\s*"T"/.test(txt)) throw new Error("전자도서관 로그인 실패");
+  return jar;
 }
 
 // 대출 1회 시도
-async function doBorrow(cookie: string, brcd: string) {
-  const xml = await postXml("/process/contentBorrowProc.xml", cookie, { lbryCode: LBRY, brcd, epdeBrcd: "", dvsnCode: "W" });
+async function doBorrow(jar: Jar, brcd: string) {
+  const xml = await ebPost(jar, "/process/contentBorrowProc.xml", { lbryCode: LBRY, brcd, epdeBrcd: "", dvsnCode: "W" });
   return {
     ok: xmlTag(xml, "result") === "True",
     loanSrmb: xmlTag(xml, "loanSrmb"),
@@ -88,25 +77,25 @@ async function doBorrow(cookie: string, brcd: string) {
     msg: (xmlTag(xml, "msg") || "대출 실패").replace(/<br\s*\/?>/gi, " "),
   };
 }
-// 현재 대출 목록(loanSrmb) — 대출현황 페이지(/myLib/myBorrowList.ink) 반납 버튼에서 추출
-async function listLoans(cookie: string): Promise<{ loanSrmb: string; title: string }[]> {
-  const r = await fetch(`${EB}/myLib/myBorrowList.ink`, { headers: { "User-Agent": UA, Cookie: cookie, Referer: `${EB}/main.ink` } });
-  const html = new TextDecoder("utf-8").decode(await r.arrayBuffer());
+// 현재 대출 목록(loanSrmb) — 대출현황 페이지 반납 버튼에서 추출
+async function listLoans(jar: Jar): Promise<{ loanSrmb: string; title: string }[]> {
+  const html = await ebGet(jar, "/myLib/myBorrowList.ink");
   const out: { loanSrmb: string; title: string }[] = [];
   const re = /gFnContentReturnProc\('[^']*','(\d+)'\s*,\s*'([^']*)'/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) out.push({ loanSrmb: m[1], title: m[2] });
   return out;
 }
-// 전 대출 반납 — 공유계정(데모) 슬롯 비우기
-async function returnAll(cookie: string): Promise<{ returned: number; items: any[] }> {
-  const loans = await listLoans(cookie);
-  const items: any[] = [];
-  for (const l of loans) {
-    const xml = await postXml("/process/contentReturnProc.xml", cookie, { lbryCode: LBRY, loanSrmb: l.loanSrmb });
-    items.push({ loanSrmb: l.loanSrmb, title: l.title, ok: xmlTag(xml, "result") === "True" });
-  }
-  return { returned: items.filter((i) => i.ok).length, items };
+
+// 뷰어 URL 발급 (토큰 내장, 쿠키 없이 단독 실행되는 교보/예스24 DRM 뷰어)
+async function viewerUrlFor(jar: Jar, loanSrmb: string, brcd: string): Promise<string> {
+  await ebPost(jar, "/process/sessionAddProc.xml", { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" });
+  const wx = await ebGet(jar, `/process/webViewerProc.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&brcd=${brcd}&epdeBrcd=&type=web`);
+  if (xmlTag(wx, "result") !== "True") return "";
+  const wvUrl = xmlTag(wx, "webViewrUrl");
+  const token = xmlTag(wx, "token").replace(/\//g, "-"); // 네이티브와 동일: '/'→'-'
+  const title = xmlTag(wx, "title");
+  return `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`;
 }
 
 Deno.serve(async (req) => {
@@ -115,58 +104,74 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "borrow";
     const brcd = (url.searchParams.get("brcd") || "").replace(/[^0-9A-Za-z]/g, "");
-    const cookie = await login();
+
+    // ① 개인세션 우선 — SSO 토큰의 sid로 저장된 포털 연계값을 꺼내 학생 본인 세션 수립
+    let jar: Jar | null = null;
+    let personal = false;
+    const ses = await sessionFromRequest(req);
+    if (ses) {
+      const row = await loadSession(ses.sid);
+      if (row?.school_no && row?.portal_user_id) {
+        try {
+          const lib = await libLoginByPortal({ school_no: row.school_no, portal_user_id: row.portal_user_id });
+          jar = await ebookSession(await fetchEbookHandoff(lib));
+          personal = true;
+        } catch (e) { console.error("personal ebook session fail", String(e)); }
+      }
+    }
+    // ② 폴백 — 관장님 공유계정(데모)
+    if (!jar) jar = await sharedAccountSession();
 
     if (action === "status") {
-      const r = await fetch(`${EB}/main/userBorrowStatus.json`, { headers: { "User-Agent": UA, Cookie: cookie } });
-      return json({ ok: true, action, status: await r.json() });
+      const body = await ebGet(jar, "/main/userBorrowStatus.json");
+      return json({ ok: true, action, personal, status: JSON.parse(body || "{}") });
     }
 
     if (action === "returnAll") {
-      return json({ ok: true, action, ...(await returnAll(cookie)) });
+      // 공유계정 슬롯 비우기 — 개인세션에서는 위험/불필요하므로 차단
+      if (personal) return json({ ok: false, error: "개인 계정에서는 지원하지 않습니다" }, 400);
+      const loans = await listLoans(jar);
+      const items: unknown[] = [];
+      for (const l of loans) {
+        const xml = await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb: l.loanSrmb });
+        items.push({ loanSrmb: l.loanSrmb, title: l.title, ok: xmlTag(xml, "result") === "True" });
+      }
+      return json({ ok: true, action, personal, returned: items.filter((i) => (i as { ok: boolean }).ok).length, items });
     }
 
-    if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
+    // 반납은 loanSrmb만으로 성립 — brcd 요구는 borrow에만.
+    // (구버전은 return에도 brcd를 요구해 앱의 반납 버튼이 400으로 실패하고 있었음)
+    if (action === "borrow" && !brcd) return json({ ok: false, error: "brcd 필요" }, 400);
 
     if (action === "borrow") {
-      let res = await doBorrow(cookie, brcd);
+      let res = await doBorrow(jar, brcd);
       let autoReturned = 0;
-      // 데모 공유계정 대출한도(5권) 초과 → 가장 오래된 1권만 반납 후 재시도(전부 반납=blind 금지: 동시 데모 보호).
-      if (!res.ok && /초과|권수|limit/i.test(res.msg)) {
-        const loans = await listLoans(cookie);
+      // 대출한도(5권) 초과 시 — 공유계정에서만 가장 오래된 1권 반납 후 재시도.
+      // 개인 계정에서는 남의 책이 아니라 본인 책이므로 함부로 반납하지 않고 안내만 한다.
+      if (!res.ok && !personal && /초과|권수|limit/i.test(res.msg)) {
+        const loans = await listLoans(jar);
         if (loans.length) {
           const oldest = loans.reduce((a, b) => Number(a.loanSrmb) <= Number(b.loanSrmb) ? a : b);
-          await postXml("/process/contentReturnProc.xml", cookie, { lbryCode: LBRY, loanSrmb: oldest.loanSrmb });
+          await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb: oldest.loanSrmb });
           autoReturned = 1;
         }
-        res = await doBorrow(cookie, brcd);
+        res = await doBorrow(jar, brcd);
       }
-      const loanSrmb = res.loanSrmb;
-      const ents = res.ents; // KB=교보 / YS=예스24
-      if (!res.ok) return json({ ok: false, action, message: res.msg, autoReturned });
-      // 뷰어 세션 발급 → 뷰어 URL 생성(토큰 내장, 쿠키 없이 단독 실행되는 교보/예스24 DRM 뷰어)
+      if (!res.ok) return json({ ok: false, action, personal, message: res.msg, autoReturned });
       let viewerUrl = "";
-      try {
-        await postXml("/process/sessionAddProc.xml", cookie, { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" });
-        const wr = await fetch(`${EB}/process/webViewerProc.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&brcd=${brcd}&epdeBrcd=&type=web`, {
-          headers: { "User-Agent": UA, Cookie: cookie, "X-Requested-With": "XMLHttpRequest" },
-        });
-        const wx = new TextDecoder("utf-8").decode(await wr.arrayBuffer());
-        if (xmlTag(wx, "result") === "True") {
-          const wvUrl = xmlTag(wx, "webViewrUrl");
-          const token = xmlTag(wx, "token").replace(/\//g, "-"); // 네이티브와 동일: '/'→'-'
-          const title = xmlTag(wx, "title");
-          viewerUrl = `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`;
-        }
-      } catch (_) { /* 뷰어URL 실패해도 대출은 유효 */ }
-      return json({ ok: true, action, loanSrmb, entsDvsnCode: ents, viewerUrl, message: "대출 완료 — 대출기간 14일, 읽고 나면 반납해 주세요" });
+      try { viewerUrl = await viewerUrlFor(jar, res.loanSrmb, brcd); }
+      catch (_) { /* 뷰어URL 실패해도 대출은 유효 */ }
+      return json({
+        ok: true, action, personal, loanSrmb: res.loanSrmb, entsDvsnCode: res.ents, viewerUrl,
+        message: "대출 완료 — 대출기간 14일, 읽고 나면 반납해 주세요",
+      });
     }
 
     if (action === "return") {
       const loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
       if (!loanSrmb) return json({ ok: false, action, error: "loanSrmb 필요" }, 400);
-      const xml = await postXml("/process/contentReturnProc.xml", cookie, { lbryCode: LBRY, loanSrmb });
-      return json({ ok: xmlTag(xml, "result") === "True", action, loanSrmb });
+      const xml = await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb });
+      return json({ ok: xmlTag(xml, "result") === "True", action, personal, loanSrmb });
     }
 
     return json({ ok: false, error: "unknown action" }, 400);
