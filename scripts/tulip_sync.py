@@ -217,6 +217,7 @@ def aladin(endpoint, **params):
 
 def _cover(it):
     c = (it.get("cover", "") or "").replace("\\/", "/").replace("/coversum/", "/cover200/")
+    if not c or "noimg" in c.lower(): return ""   # 알라딘 '표지없음' placeholder(noimg_*.gif) 제외 — 진짜 표지 아님
     return c
 
 def _desc(it):
@@ -224,9 +225,12 @@ def _desc(it):
     return re.sub(r"\s+", " ", d).strip()[:1200]
 
 def aladin_cover_isbn(isbn, order=("Book", "eBook")):
-    """ISBN 직조회 — 오매칭 없음. 전자책은 order=("eBook","Book")로 호출 절약. 반환 (cover, desc)"""
+    """ISBN 직조회 — 오매칭 없음. ISBN10(구간)/ISBN13 자동감지(옛 종이책은 10자리).
+    전자책은 order=("eBook","Book")로 호출 절약. 반환 (cover, desc)"""
+    clean = re.sub(r"[^0-9Xx]", "", isbn or "")
+    idtype = "ISBN13" if len(clean) == 13 else "ISBN"   # 알라딘: ISBN=10자리, ISBN13=13자리
     for st in order:
-        items = aladin("ItemLookUp", itemIdType="ISBN13", ItemId=isbn, SearchTarget=st)
+        items = aladin("ItemLookUp", itemIdType=idtype, ItemId=clean, SearchTarget=st)
         if items:
             return _cover(items[0]), _desc(items[0])
     return "", ""
@@ -285,6 +289,40 @@ def covers_yes24(limit=None, budget=4500):
         time.sleep(0.15)
     flush()
     print(f"[covers-yes24] 완료 — ISBN조회 {hit_isbn:,} + 엄격검색 {hit_search:,} 채움, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
+
+def covers_paper_aladin(limit=None, budget=4500):
+    """종이책 단행본 표지+설명 백필: ISBN 있고 표지 없는 것 → 알라딘 ISBN 직조회.
+    네이버(/openapi/thumbnail)에 없던 ~5.9만 보강. 표지와 함께 description도 채움.
+    실패는 cover_url='' 마킹(다음날 재시도 방지, 앱은 falsy→타이포 표지)."""
+    res = json.loads(sql(
+        "select ctrl, title, author, isbn from semyung_tulip "
+        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by ctrl"
+        + (f" limit {limit}" if limit else "")))
+    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (알라딘 예산 {budget:,}회)")
+    hit = 0; miss = 0; buf = []
+    def flush():
+        if not buf: return
+        try: sql("; ".join(buf))
+        except Exception as e: print(f"  flush 실패({len(buf)}건): {e}")
+        buf.clear()
+    for r in res:
+        if _aladin_calls >= budget:
+            print(f"  예산 소진 — 남은 {len(res)-hit-miss:,}건은 내일 재실행")
+            break
+        cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book", "eBook"))  # 종이책이니 Book 우선
+        if cov:
+            extra = f", description={esc(dsc)}" if dsc else ""
+            buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
+            hit += 1
+        else:
+            buf.append(f"update semyung_tulip set cover_url='', updated_at=now() where ctrl={esc(r['ctrl'])}")
+            miss += 1
+        if len(buf) >= 100: flush()
+        n = hit + miss
+        if n % 200 == 0: print(f"  {n:,}/{len(res):,} (채움 {hit} / 실패 {miss})")
+        time.sleep(0.15)
+    flush()
+    print(f"[covers-paper-aladin] 완료 — 채움 {hit:,}, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
 
 TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)·학위논문(t)·미분류('') — 연간물/DVD/지도 제외
     "ebook": "kind='ebook'",
@@ -473,6 +511,7 @@ if __name__ == "__main__":
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
     ap.add_argument("--inherit", action="store_true")
     ap.add_argument("--covers-paper", action="store_true")
+    ap.add_argument("--covers-paper-aladin", action="store_true")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
@@ -484,4 +523,5 @@ if __name__ == "__main__":
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
     elif a.covers_paper: covers_paper(a.covers_limit)
+    elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget)
     else: ap.print_help()

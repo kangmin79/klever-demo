@@ -23,10 +23,12 @@ goto netwait
 echo ===== [%date% %time%] tulip daily start ===== >> logs\tulip_daily.log
 python scripts\tulip_sync.py --daily >> logs\tulip_daily.log 2>&1
 python scripts\tulip_sync.py --enrich-ebook >> logs\tulip_daily.log 2>&1
-rem budget 3000 of daily 5000 Aladin limit; keep 2000 for tulip-cover lazy paper covers
-python scripts\tulip_sync.py --covers-yes24 --covers-budget 3000 >> logs\tulip_daily.log 2>&1
+rem ebook covers (YES24 leftover ~460, budget small); of daily 5000 Aladin limit
+python scripts\tulip_sync.py --covers-yes24 --covers-budget 800 >> logs\tulip_daily.log 2>&1
 rem new paper-book covers (Naver book DB, same source as OPAC) - recheck latest 300
 python scripts\tulip_sync.py --covers-paper --covers-limit 300 >> logs\tulip_daily.log 2>&1
+rem paper cover+desc backfill (Aladin ISBN10/13, random match ~64%) - gradual ~18 days, rest of daily budget
+python scripts\tulip_sync.py --covers-paper-aladin --covers-budget 3500 >> logs\tulip_daily.log 2>&1
 rem embeddings for new books only (embedding null = a dozen per day; after covers so Aladin desc included)
 python scripts\tulip_sync.py --embed-ebook >> logs\tulip_daily.log 2>&1
 python scripts\tulip_sync.py --embed-paper >> logs\tulip_daily.log 2>&1
