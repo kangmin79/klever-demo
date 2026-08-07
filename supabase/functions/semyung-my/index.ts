@@ -14,6 +14,10 @@
 //   action=preserves                     → 보존서고 신청 현황 (mypreserve verb=list)
 //   action=preserve&control_no=&accession_no=&main_no= → 보존서고 신청
 //   action=cancelPreserve&loan_req_no=…  → 보존서고 취소 (신청단계 0001만)
+//   action=pickups                       → 찾아줘북즈(서가픽업) 신청 현황 (loanreq verb=list)
+//   action=pickup&controlno=&accession_no=&main_no= → 찾아줘북즈 신청
+//   action=cancelPickup&request_no=…     → 찾아줘북즈 신청 취소
+//   action=notices                       → 개인공지 (mynotice verb=list)
 //   action=holding&ctrl=555035           → 소장·대출상태 + main_no·예약가능 (bookinfo, 예약 재료용 — 토큰 불필요)
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
@@ -142,6 +146,29 @@ Deno.serve(async (req) => {
         if (!reqNo) return json({ ok: false, error: "loan_req_no 필요" }, 400);
         params.verb = "cancel"; params.loan_req_no = reqNo; params.status = "0001"; // 신청단계만 취소 가능
       }
+    } else if (action === "pickups" || action === "pickup" || action === "cancelPickup") {
+      // 🔑 규격서에 없는 미문서 엔드포인트(8/8 발견, 신청→취소 가역 실증).
+      //   loanreq = 찾아줘북즈(대출가능 도서를 서가에서 꺼내 두는 픽업 신청).
+      //   ⚠️ 예약(myreserve)과 완전히 다른 서비스다. 예약=대출중 책 반납대기, 찾아줘북즈=대출가능 책 픽업.
+      //   응답 item의 user_id가 liid로 찍혀 나와, uid=liid임을 도서관 API 스스로 확인해 준다.
+      path = "loanreq";
+      if (action === "pickups") { params.verb = "list"; params.page = digits(p("page")) || "1"; }
+      else if (action === "pickup") {
+        // ⚠️ 철자가 섞여 있다(실측): controlno는 언더바 없음, 나머지는 있음. 임의로 통일하면 011.
+        const controlno = digits(p("controlno") || p("control_no")), accNo = alnum(p("accession_no")), mainNo = digits(p("main_no"));
+        if (!controlno || !accNo || !mainNo) return json({ ok: false, error: "controlno/accession_no/main_no 필요" }, 400);
+        params.verb = "request";
+        params.controlno = controlno.padStart(12, "0");
+        params.accession_no = accNo;
+        params.main_no = mainNo;
+        params.receive_location = digits(p("receive_location")) || "0001"; // 0001=민송도서관(현 유일 수령처)
+      } else {
+        const reqNo = digits(p("request_no"));
+        if (!reqNo) return json({ ok: false, error: "request_no 필요" }, 400);
+        params.verb = "cancel"; params.request_no = reqNo;
+      }
+    } else if (action === "notices") {
+      path = "mynotice"; params.verb = "list"; params.page = digits(p("page")) || "1"; // 개인공지(도착통보 등)
     } else return json({ ok: false, error: "unknown action" }, 400);
 
     const { data } = await api(path, params);
