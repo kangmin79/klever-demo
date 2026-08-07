@@ -6161,20 +6161,23 @@ async function renderMyLibStatus(){
   if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
-    const [ln,rv,pk,eb,info]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans(),smMy('info')]);
+    const [ln,rv,pk,eb]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans()]);
     const loans=smItems(ln), resv=smItems(rv);
     // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
     const picks=smItems(pk).filter(x=>x.loan_status==='0001');
     // 빌린 것도 기다리는 것도 없을 때 — 아무것도 안 그리면 연동이 된 건지 알 수 없다.
     // 도서관 계정이 붙었다는 신호는 남기되, 큐레이션을 가리지 않게 한 줄로.
-    // 도서관 이용 상태 — 연체 권수와 제재 여부. 예약제재는 도착 후 3일 방치 시 걸리므로 미리 보여준다.
-    const iv=(info&&info.data)||{};
-    const overdueCnt=parseInt(iv.overDueCount||0,10)||0;
+    // 이용 상태 — ⚠️ myloan info는 종이책만 센다. 그대로 쓰면 전자책 2권을 빌린 학생에게
+    //   "0권 대출 중"이라고 하면서 바로 아래엔 2권을 보여주는 모순이 생긴다.
+    //   그래서 화면에 실제로 그리는 목록으로 직접 센다 — 숫자와 목록이 항상 일치한다.
+    const overdueCnt=[...loans.map(x=>x.return_plan_date),...eb.map(x=>x.dueDate)]
+      .map(smDday).filter(d=>d!==null&&d<0).length;
+    const loanCnt=loans.length+eb.length, waitCnt=resv.length+picks.length;
     const statusBox=`<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
       <span style="font-size:12px;font-weight:800;color:var(--primary)">이용 상태</span>
       <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:${overdueCnt?'#dc2626':'var(--text)'}">${overdueCnt}</b>권 연체</span>
-      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${parseInt(iv.loanCount||0,10)||0}</b>권 대출 중</span>
-      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${parseInt(iv.reserveCount||0,10)||0}</b>건 예약</span>
+      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${loanCnt}</b>권 대출 중</span>
+      <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${waitCnt}</b>권 기다리는 중</span>
     </div>`;
 
     if(!loans.length && !resv.length && !picks.length && !eb.length){
@@ -6208,16 +6211,19 @@ async function renderMyLibStatus(){
         const isEb=x.kind==='ebook';
         const kindTag=isEb?'<span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>':'';
         const extra=isEb?'':(x.renewCnt?` · ${x.renewCnt}회 연장함`:'');
-        // 전자책은 도서관이 '연장 가능/불가'를 직접 알려주므로 그 판정을 따른다
-        const btn=isEb
-          ? (x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>`:'')
-          : `<button onclick="smRenew('${esc(x.acc)}')" style="flex:none;background:transparent;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">연장</button>`;
+        const bs='flex:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent';
+        // 전자책은 도서관이 '연장 가능/불가'를 직접 알려주므로 그 판정을 따른다.
+        // 종이책 반납은 도서관에 직접 가야 하므로 버튼을 두지 않는다 — 전자책만 여기서 반납된다.
+        const btns=isEb
+          ? (x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`:'')
+            +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${esc(cleanT(x.title||''))}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`
+          : `<button onclick="smRenew('${esc(x.acc)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`;
         return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(cleanT(x.title||''))}</div>
             ${x.author?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author)}</div>`:''}
-            <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${extra}</div>
-          </div>${btn}
+            <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${extra}${isEb?'':' · 반납은 도서관에서'}</div>
+          </div><div style="display:flex;gap:6px;flex:none">${btns}</div>
         </div>`);
       }).join('');
     }
@@ -6288,6 +6294,18 @@ async function ebExtend(loanSrmb, brcd){
   const r=await fetch(SMEBK_FN+'?action=extend&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
   const d=await r.json();
   readerToast(d&&d.ok?'연장했어요':((d&&d.message)||'연장할 수 없어요'));
+  renderMyLibStatus();
+}
+// 전자책 반납 — 반납하면 더 못 읽으므로 반드시 확인을 받는다(대출 슬롯은 즉시 비워짐)
+async function ebReturn(loanSrmb, brcd, title){
+  if(!confirm(`「${title||'이 책'}」 반납할까요?\n반납하면 더 이상 읽을 수 없어요.`)) return;
+  const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+  const d=await r.json();
+  if(d&&d.ok){
+    // 북스타 서재의 그 책도 '반납함'으로 맞춰 둔다(같은 책이 두 곳에서 다르게 보이지 않게)
+    try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.returned=true; it.returnedTs=Date.now(); shelfSave(a); } }catch(e){}
+    readerToast('반납했어요');
+  }else readerToast((d&&d.message)||'반납하지 못했어요');
   renderMyLibStatus();
 }
 async function smRenew(acc){
