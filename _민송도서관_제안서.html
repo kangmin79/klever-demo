@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세명대학교 학술정보원 독서 서비스 개선 제안 — 민송도서관</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#1a2942; --navy-d:#0f1a2e; --accent:#3a6ea5; --gold:#d4a93b; --gold-d:#a8801f;
+  --ink:#1a2942; --sub:#4a5568; --light:#6b7280; --line:#e3dfd5; --paper:#fff;
+  --serif:Georgia,'Noto Serif KR',serif;
+}
+body{font-family:'Pretendard Variable','Pretendard',-apple-system,system-ui,sans-serif;
+  background:#8b8f96;color:var(--ink);letter-spacing:-0.012em;-webkit-font-smoothing:antialiased;
+  padding:26px 0;}
+.page{
+  width:210mm;min-height:297mm;background:var(--paper);margin:0 auto 26px;
+  padding:22mm 20mm;position:relative;overflow:hidden;
+  box-shadow:0 14px 46px rgba(0,0,0,.34);
+}
+.page::after{
+  content:attr(data-pg);position:absolute;bottom:12mm;right:20mm;
+  font-size:9.5pt;color:#b6b2a8;font-family:var(--serif);letter-spacing:.06em;
+}
+.page::before{
+  content:'Bookstar · 세명대학교 학술정보원 제안';position:absolute;bottom:12mm;left:20mm;
+  font-size:8pt;color:#c8c4ba;letter-spacing:.02em;
+}
+h1,h2,h3,p,li,td,th{word-break:keep-all;}
+
+/* ── 표지 ── */
+.cover{background:linear-gradient(165deg,#16223a 0%,#1a2942 42%,#24365a 100%);color:#fff;padding:0;}
+.cover-in{position:absolute;inset:0;padding:24mm 20mm;display:flex;flex-direction:column;}
+.cv-brand{display:flex;align-items:center;gap:9px;}
+.cv-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#22a7e0 55%,#06b6d4);display:flex;align-items:center;justify-content:center;}
+.cv-mark svg{width:17px;height:17px;stroke:#fff;stroke-width:2;fill:none;stroke-linejoin:round;}
+.cv-word{font-family:var(--serif);font-size:20pt;font-weight:700;letter-spacing:-.5px;}
+.cv-mid{margin-top:auto;margin-bottom:auto;}
+.cv-eyebrow{font-family:var(--serif);font-size:10pt;letter-spacing:.24em;color:var(--gold);margin-bottom:16px;}
+.cv-title{font-family:var(--serif);font-size:29pt;font-weight:700;line-height:1.42;letter-spacing:-1px;}
+.cv-title em{font-style:normal;color:var(--gold);}
+.cv-rule{width:52px;height:2px;background:var(--gold);margin:24px 0 20px;}
+.cv-sub{font-size:12.5pt;line-height:1.85;color:#c3cee0;}
+.cv-foot{display:flex;justify-content:space-between;align-items:flex-end;font-size:10pt;color:#93a3bd;}
+.cv-foot b{display:block;color:#fff;font-size:11pt;margin-bottom:5px;font-weight:700;}
+.cv-stars{position:absolute;inset:0;pointer-events:none;}
+.cv-stars i{position:absolute;background:#fff;border-radius:50%;opacity:.35;}
+
+/* ── 공통 타이포 ── */
+.sec-no{font-family:var(--serif);font-size:10pt;letter-spacing:.2em;color:var(--gold-d);margin-bottom:9px;}
+h2{font-family:var(--serif);font-size:19pt;font-weight:700;letter-spacing:-.7px;line-height:1.42;margin-bottom:7px;}
+h2 em{font-style:normal;color:var(--accent);}
+.lede{font-size:11pt;color:var(--sub);line-height:1.8;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+h3{font-size:12pt;font-weight:800;letter-spacing:-.4px;margin:20px 0 9px;color:var(--navy);}
+h3::before{content:'';display:inline-block;width:4px;height:13px;background:var(--gold);border-radius:2px;margin-right:8px;vertical-align:-1px;}
+p{font-size:10.5pt;line-height:1.85;color:var(--sub);margin-bottom:11px;}
+p b,li b{color:var(--ink);font-weight:700;}
+ul{list-style:none;margin:10px 0 14px;}
+li{font-size:10.5pt;line-height:1.8;color:var(--sub);padding-left:15px;position:relative;margin-bottom:6px;}
+li::before{content:'';position:absolute;left:0;top:9px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
+.quote{background:#faf8f2;border-left:3px solid var(--gold);padding:14px 18px;margin:16px 0;font-size:10.5pt;line-height:1.8;color:var(--ink);}
+.quote b{color:var(--navy);}
+.note{font-size:9pt;color:var(--light);line-height:1.7;margin-top:9px;}
+
+/* ── 요약 카드 ── */
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:6px;}
+.sum{border:1px solid var(--line);border-radius:11px;padding:15px 17px;background:#fdfcf9;}
+.sum-k{font-size:8.5pt;font-weight:800;letter-spacing:.11em;color:var(--gold-d);margin-bottom:7px;}
+.sum-t{font-size:11pt;font-weight:800;line-height:1.5;color:var(--navy);margin-bottom:6px;}
+.sum-d{font-size:9.5pt;line-height:1.72;color:var(--sub);}
+.sum.dark{background:var(--navy);border-color:var(--navy);}
+.sum.dark .sum-k{color:var(--gold);}
+.sum.dark .sum-t{color:#fff;}
+.sum.dark .sum-d{color:#bccbe2;}
+
+/* ── 표 ── */
+table{width:100%;border-collapse:collapse;margin:13px 0 6px;}
+th{background:var(--navy);color:#fff;font-size:9.5pt;font-weight:700;padding:9px 12px;text-align:left;}
+th.g{color:var(--gold);}
+td{font-size:9.5pt;padding:9px 12px;border-bottom:1px solid #f0eee8;line-height:1.65;color:var(--sub);vertical-align:top;}
+td b{color:var(--ink);}
+tr:last-child td{border-bottom:none;}
+.tbl-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+
+/* ── 투트랙 도표 ── */
+.tracks{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin:16px 0 8px;}
+.trk{border-radius:13px;padding:17px 18px;border:1px solid var(--line);}
+.trk.a{background:#f4f5f7;}
+.trk.b{background:linear-gradient(160deg,#1a2942,#0f1a2e);border-color:var(--navy);color:#fff;}
+.trk-n{font-family:var(--serif);font-size:14pt;font-weight:700;letter-spacing:-.4px;margin-bottom:3px;}
+.trk.a .trk-n{color:#4b5563;}
+.trk.b .trk-n{color:var(--gold);}
+.trk-e{font-size:8pt;letter-spacing:.14em;margin-bottom:11px;}
+.trk.a .trk-e{color:#9ca3af;}
+.trk.b .trk-e{color:#8fa2c2;}
+.trk-l{font-size:9.5pt;line-height:1.95;}
+.trk.a .trk-l{color:#6b7280;}
+.trk.b .trk-l{color:#d3dcea;}
+.trk-who{margin-top:12px;padding-top:10px;font-size:8.5pt;}
+.trk.a .trk-who{border-top:1px solid #dcdad3;color:#9ca3af;}
+.trk.b .trk-who{border-top:1px solid rgba(212,169,59,.3);color:var(--gold);}
+
+/* ── 현재 홈페이지 미니 재현 ── */
+.mini{border:1px solid #d8d5cc;border-radius:8px;overflow:hidden;filter:grayscale(1);opacity:.9;margin:12px 0;}
+.mini-top{display:flex;align-items:center;gap:0;background:#f3f2ef;padding:9px 12px;border-bottom:2px solid #4b5563;}
+.mini-logo{font-family:var(--serif);font-size:9pt;font-weight:700;color:#374151;padding-right:14px;white-space:nowrap;}
+.mini-gnb{display:flex;flex:1;gap:0;}
+.mini-gnb span{flex:1;text-align:center;font-size:7.5pt;font-weight:700;color:#4b5563;padding:3px 2px;border-left:1px solid #e2e0d9;}
+.mini-tabs{display:flex;gap:1px;background:#e5e4e0;padding:8px 12px 0;}
+.mini-tabs span{font-size:7pt;font-weight:600;color:#6b7280;background:#f7f6f3;border:1px solid #d9d7d0;border-bottom:none;border-radius:4px 4px 0 0;padding:4px 9px;}
+.mini-tabs span.on{background:#fff;color:#111;}
+.mini-sb{background:#e5e4e0;padding:0 12px 10px;}
+.mini-sb div{background:#fff;border:1.5px solid #4b5563;font-size:7.5pt;color:#9ca3af;padding:5px 9px;}
+.mini-body{display:grid;grid-template-columns:1fr 1.3fr;gap:9px;padding:10px 12px 12px;background:#fff;}
+.mini-ban{background:#dde3ea;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7.5pt;color:#8b95a3;min-height:74px;text-align:center;line-height:1.5;}
+.mini-noti{border:1px solid #e5e3dc;border-radius:4px;padding:7px 9px;}
+.mini-noti b{display:block;font-size:8pt;color:#374151;margin-bottom:5px;}
+.mini-noti i{display:block;font-style:normal;font-size:7pt;color:#8d8b83;line-height:1.85;}
+
+/* ── 별마당 웹 미니 ── */
+.web{border-radius:10px;overflow:hidden;border:1px solid var(--line);margin:12px 0;position:relative;height:132px;
+  background:linear-gradient(180deg,#eef1f6,#e4e9f1);}
+.web .wall{position:absolute;top:-8px;bottom:-8px;width:118px;overflow:hidden;}
+.web .wall.l{left:0;transform:perspective(260px) rotateY(26deg);transform-origin:left center;}
+.web .wall.r{right:0;transform:perspective(260px) rotateY(-26deg);transform-origin:right center;}
+.web .row{display:flex;align-items:flex-end;gap:1.5px;height:34px;padding:0 2px;border-bottom:2px solid #b99a63;}
+.web .row img{width:auto;border-radius:1px;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.web .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(46% 62% at 50% 50%,rgba(240,243,248,.97) 0%,rgba(240,243,248,.8) 62%,transparent 100%);}
+.web .we{font-family:var(--serif);font-size:6.5pt;letter-spacing:.2em;color:var(--gold-d);}
+.web .wt{font-family:var(--serif);font-size:15pt;font-weight:700;letter-spacing:-.6px;margin-top:4px;color:var(--navy);}
+.web .wt span{color:var(--gold);}
+.web .wq{margin-top:8px;background:#fff;border-radius:99px;padding:5px 13px;font-size:7pt;color:#8b93a1;box-shadow:0 3px 10px rgba(26,41,66,.16);}
+.web .wn{margin-top:7px;display:flex;gap:14px;font-size:6.5pt;color:var(--light);}
+.web .wn b{font-family:var(--serif);font-size:9pt;color:var(--gold-d);display:block;text-align:center;}
+
+/* ── 폰 미니 ── */
+.phones{display:flex;gap:14px;align-items:flex-start;margin:14px 0 6px;}
+.ph{width:126px;flex:0 0 auto;border-radius:15px;background:#12161f;padding:4px;box-shadow:0 8px 20px -8px rgba(15,26,46,.5);}
+.ph-s{border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#1c2b47,#0e1729);height:236px;position:relative;}
+.ph-hero{height:104px;position:relative;overflow:hidden;}
+.ph-wall{position:absolute;top:-6px;bottom:-6px;width:40px;overflow:hidden;opacity:.55;}
+.ph-wall.l{left:-4px;transform:perspective(120px) rotateY(28deg);transform-origin:left center;}
+.ph-wall.r{right:-4px;transform:perspective(120px) rotateY(-28deg);transform-origin:right center;}
+.ph-wall .row{display:flex;align-items:flex-end;gap:1px;height:21px;border-bottom:1.5px solid #6b4f2a;}
+.ph-wall .row img{width:auto;}
+.ph-veil{position:absolute;inset:0;background:radial-gradient(56% 52% at 50% 46%,rgba(14,23,41,.9),rgba(14,23,41,.55) 60%,transparent);}
+.ph-hin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 8px;text-align:center;}
+.ph-e{font-family:var(--serif);font-size:4pt;letter-spacing:.18em;color:var(--gold);}
+.ph-t{font-family:var(--serif);font-size:9pt;font-weight:700;color:#fff;line-height:1.3;margin-top:3px;}
+.ph-t span{color:var(--gold);}
+.ph-q{margin-top:6px;background:rgba(255,255,255,.96);border-radius:99px;padding:3px 8px;font-size:4.5pt;color:#8b93a1;width:100%;}
+.ph-card{margin:6px 7px;border-radius:9px;padding:8px;background:linear-gradient(140deg,rgba(212,169,59,.2),rgba(212,169,59,.06));border:.5px solid rgba(212,169,59,.5);}
+.ph-ce{font-size:4.5pt;font-weight:800;letter-spacing:.1em;color:var(--gold);}
+.ph-num{display:flex;align-items:baseline;gap:3px;margin-top:3px;}
+.ph-num b{font-family:var(--serif);font-size:15pt;font-weight:700;color:var(--gold);line-height:1;}
+.ph-num i{font-style:normal;font-size:5.5pt;color:#a9b6cc;}
+.ph-bar{height:3.5px;border-radius:9px;background:rgba(255,255,255,.15);margin:6px 0 4px;overflow:hidden;}
+.ph-bar u{display:block;height:100%;width:50%;background:linear-gradient(90deg,var(--gold-d),var(--gold));}
+.ph-cs{font-size:4.5pt;color:#a9b6cc;line-height:1.6;}
+.ph-btn{display:inline-block;margin-top:5px;background:var(--gold);color:var(--navy-d);font-size:4.5pt;font-weight:800;padding:3px 7px;border-radius:99px;}
+.ph-card2{margin:0 7px;border-radius:9px;padding:7px 8px;background:rgba(255,255,255,.055);border:.5px solid rgba(212,169,59,.2);}
+.ph-loan{display:flex;align-items:center;gap:5px;}
+.ph-loan img{width:14px;height:20px;border-radius:1.5px;object-fit:cover;}
+.ph-loan div{flex:1;}
+.ph-ln{font-size:5pt;font-weight:700;color:#e8eef8;}
+.ph-ld{font-size:4pt;color:#93a3bd;margin-top:1px;}
+.ph-ld em{font-style:normal;color:#ef7a6d;font-weight:700;}
+.ph-cap{font-size:8.5pt;color:var(--sub);line-height:1.72;flex:1;}
+.ph-cap b{display:block;color:var(--navy);font-size:10pt;margin-bottom:6px;}
+
+/* ── 단계 ── */
+.steps{margin-top:12px;}
+.step{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid #f0eee8;}
+.step:last-child{border-bottom:none;}
+.st-n{width:30px;height:30px;border-radius:50%;background:var(--navy);color:var(--gold);font-family:var(--serif);
+  font-size:11pt;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.st-b{flex:1;}
+.st-t{font-size:11pt;font-weight:800;color:var(--navy);letter-spacing:-.3px;}
+.st-w{font-size:8.5pt;color:var(--gold-d);font-weight:700;margin-top:2px;}
+.st-d{font-size:9.5pt;color:var(--sub);line-height:1.75;margin-top:5px;}
+
+/* ── 요청 ── */
+.ask{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed #e5e3dc;}
+.ask:last-child{border-bottom:none;}
+.ask-i{width:22px;height:22px;border-radius:6px;background:#fff5dd;color:var(--gold-d);font-size:9pt;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-family:var(--serif);}
+.ask-t{font-size:10.5pt;font-weight:800;color:var(--navy);}
+.ask-d{font-size:9.5pt;color:var(--sub);line-height:1.7;margin-top:3px;}
+
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px;}
+.kpi div{border:1px solid var(--line);border-radius:9px;padding:11px 13px;background:#fdfcf9;}
+.kpi b{display:block;font-size:10pt;color:var(--navy);margin-bottom:4px;}
+.kpi span{font-size:9pt;color:var(--sub);line-height:1.65;}
+
+.closing{text-align:center;padding:20px 12px 0;}
+.closing .cl-r{width:44px;height:2px;background:var(--gold);margin:0 auto 20px;}
+.closing p{font-size:11.5pt;line-height:2;color:var(--sub);}
+.closing .sig{margin-top:24px;font-family:var(--serif);font-size:11pt;color:var(--gold-d);font-weight:600;}
+
+.disc{position:absolute;left:20mm;right:20mm;bottom:20mm;font-size:8pt;color:#a8a49a;line-height:1.7;
+  border-top:1px solid var(--line);padding-top:10px;}
+
+@media print{
+  body{background:#fff;padding:0;}
+  .page{margin:0;box-shadow:none;page-break-after:always;}
+  .page:last-child{page-break-after:auto;}
+  @page{size:A4;margin:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ 1. 표지 ════════ -->
+<div class="page cover">
+  <div class="cv-stars" id="cvStars"></div>
+  <div class="cover-in">
+    <div class="cv-brand">
+      <span class="cv-mark"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.9L21 11l-6.6 2.1L12 20l-2.4-6.9L3 11l6.6-2.1z"/></svg></span>
+      <span class="cv-word">Bookstar</span>
+    </div>
+    <div class="cv-mid">
+      <div class="cv-eyebrow">세명대학교 학술정보원 독서 서비스 개선 제안</div>
+      <div class="cv-title">학술정보원과 <em>민송도서관</em>,<br>두 개의 문으로</div>
+      <div class="cv-rule"></div>
+      <div class="cv-sub">
+        연구는 학술정보원이, 독서는 민송도서관이 맡습니다.<br>
+        학생이 책에 닿는 거리를 폰 화면 하나로 줄이는 제안입니다.
+      </div>
+    </div>
+    <div class="cv-foot">
+      <span><b>제안</b>Bookstar · 참나루</span>
+      <span><b>2026년 8월</b>세명대학교 학술정보원 귀중</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ 2. 한 장 요약 ════════ -->
+<div class="page" data-pg="02">
+  <div class="sec-no">SUMMARY</div>
+  <h2>한 장으로 보는 제안</h2>
+  <p class="lede">아래 다섯 가지가 이 제안의 전부입니다. 이후 페이지는 각각의 근거입니다.</p>
+
+  <div class="sumgrid">
+    <div class="sum">
+      <div class="sum-k">문제</div>
+      <div class="sum-t">학생이 도서관 홈페이지에 오지 않습니다</div>
+      <div class="sum-d">도서관이 갖춘 장서와 전자책은 충분합니다. 다만 학생이 그것을 만나는 입구가 멀고 딱딱합니다.</div>
+    </div>
+    <div class="sum">
+      <div class="sum-k">원인</div>
+      <div class="sum-t">한 사이트가 두 종류의 이용자를 동시에 섬기고 있습니다</div>
+      <div class="sum-d">연구자는 자료를 정확히 받고 떠나야 하고, 학생 독자는 머물며 발견해야 합니다. 두 요구는 정반대입니다.</div>
+    </div>
+    <div class="sum dark">
+      <div class="sum-k">제안</div>
+      <div class="sum-t">학술정보원과 민송도서관을 나눕니다</div>
+      <div class="sum-d">학술정보원은 지금 그대로 연구를 맡고, 민송도서관이 책·전자책·독서인증을 맡는 별도의 웹과 앱으로 운영됩니다.</div>
+    </div>
+    <div class="sum">
+      <div class="sum-k">근거</div>
+      <div class="sum-t">독서인증제가 이미 전교생 필수입니다</div>
+      <div class="sum-d">신입생은 졸업까지 독후감 4편을 인증해야 합니다. 학생이 찾아올 이유가 이미 학칙 안에 있습니다.</div>
+    </div>
+    <div class="sum">
+      <div class="sum-k">요청</div>
+      <div class="sum-t">예산이 아니라 자리를 부탁드립니다</div>
+      <div class="sum-d">검색 탭 한 자리, 학교 주소 하나, 신입생 오리엔테이션 10분. 개발과 운영은 저희가 맡습니다.</div>
+    </div>
+    <div class="sum">
+      <div class="sum-k">증명</div>
+      <div class="sum-t">예상 수치를 적지 않았습니다</div>
+      <div class="sum-d">근거 없는 예측 대신, 3개월 뒤 실제 이용 데이터로 증명하겠습니다. 측정 항목은 마지막 장에 있습니다.</div>
+    </div>
+  </div>
+
+  <div class="quote" style="margin-top:22px">
+    <b>이 제안의 한 문장.</b> 관공서처럼 보이는 화면으로는 학생의 독서 참여를 끌어올리기 어렵습니다.
+    학술정보원의 격식은 연구자에게 필요하니 그대로 두고, 학생이 책과 만나는 자리만 따로 만들자는 제안입니다.
+  </div>
+</div>
+
+<!-- ════════ 3. 문제 ════════ -->
+<div class="page" data-pg="03">
+  <div class="sec-no">01 · 문제 인식</div>
+  <h2>도서관 첫 화면에 <em>책이 없습니다</em></h2>
+  <p class="lede">현재 학술정보원 홈페이지 첫 화면입니다. 업무용으로는 완결적이지만, 책을 아직 정하지 못한 학생이 머물 자리가 없습니다.</p>
+
+  <div class="mini">
+    <div class="mini-top">
+      <span class="mini-logo">세명대학교 학술정보원</span>
+      <span class="mini-gnb">
+        <span>자료검색</span><span>연구지원서비스</span><span>도서관서비스</span><span>도서관안내</span><span>MY LIBRARY</span>
+      </span>
+    </div>
+    <div class="mini-tabs"><span class="on">통합검색</span><span>소장자료</span><span>전자자료</span><span>AI도서추천</span><span>YES24 크레마클럽</span></div>
+    <div class="mini-sb"><div>검색어를 입력하세요</div></div>
+    <div class="mini-body">
+      <div class="mini-ban">배너 캐러셀<br>(6종 순환)</div>
+      <div class="mini-noti">
+        <b>Notice — 일반공지</b>
+        <i>2026-2 교수와 함께하는 책읽기 특강 안내</i>
+        <i>학술정보원(도서관) 폐가제 운영 안내</i>
+        <i>하계방학 전자자료 집중 EVENT 안내</i>
+        <i>2026학년도 하계방학 학술정보원 운영 안내</i>
+        <i>하계방학 기간 중 독서인증 처리 안내</i>
+      </div>
+    </div>
+  </div>
+
+  <h3>첫 화면이 말하고 있는 것</h3>
+  <ul>
+    <li>공지 다섯 줄 가운데 <b>네 줄이 운영·행정 안내</b>입니다. 폐가제, 방학 운영시간, 처리 안내.</li>
+    <li>배경은 건물 사진입니다. 도서관이 <b>책이 아니라 자기 건물</b>을 보여주고 있습니다.</li>
+    <li>검색창에는 탭이 넷입니다. 학생은 검색을 시작하기 전에 <b>자기가 뭘 찾는지 먼저 분류</b>해야 합니다.</li>
+    <li>"무슨 책을 읽을까"라는 질문에 답하는 요소가 첫 화면에 없습니다.</li>
+  </ul>
+
+  <div class="quote">
+    이것은 홈페이지를 잘못 만들어서가 아닙니다. <b>학술 정보 기관의 홈페이지로서는 올바른 구성</b>입니다.
+    문제는 이 화면이 <b>학부생의 독서</b>까지 함께 책임지고 있다는 데 있습니다.
+  </div>
+
+  <div class="note">
+    ※ 위 재현은 2026년 8월 실제 화면을 단순화한 것입니다. 공지 제목은 게시된 원문 그대로입니다.
+  </div>
+</div>
+
+<!-- ════════ 4. 원인 ════════ -->
+<div class="page" data-pg="04">
+  <div class="sec-no">02 · 원인 분석</div>
+  <h2>한 화면이 <em>두 사람</em>을 섬길 수 없습니다</h2>
+  <p class="lede">도서관에 오는 이용자는 크게 둘이고, 두 사람이 원하는 것은 정반대입니다.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <tr><th style="width:16%">　</th><th style="width:42%">연구 이용자</th><th class="g" style="width:42%">학생 독자</th></tr>
+      <tr><td><b>누구</b></td><td>대학원생, 논문 쓰는 고학년, 교원</td><td>전 학부생</td></tr>
+      <tr><td><b>목적</b></td><td>이미 정해진 자료를 찾는다</td><td>무엇을 읽을지 아직 모른다</td></tr>
+      <tr><td><b>행동</b></td><td>목적형 — 받고 즉시 떠난다</td><td>탐색형 — 머물며 발견한다</td></tr>
+      <tr><td><b>좋은 화면</b></td><td>정확한 검색, 빠른 원문, 군더더기 없음</td><td>표지가 보이고, 추천이 있고, 읽고 싶어지는 화면</td></tr>
+      <tr><td><b>성공의 정의</b></td><td>빨리 끝나는 것</td><td>오래 머무는 것</td></tr>
+    </table>
+  </div>
+
+  <h3>그래서 지금 어떤 일이 벌어지는가</h3>
+  <p>
+    한 화면이 두 요구를 모두 만족시키려 하면 결국 <b>덜 위험한 쪽</b>으로 기웁니다.
+    연구 이용자에게 부족한 검색은 즉시 항의가 들어오지만, 학생이 책을 안 읽는 것은 <b>아무도 항의하지 않기 때문</b>입니다.
+    그 결과 화면은 점점 기능적·행정적으로 정돈되고, 독서를 위한 자리는 조금씩 밀려납니다.
+  </p>
+  <p>
+    같은 이유로, 도서관이 마련한 좋은 자산들이 학생에게 닿지 못합니다.
+    구독 전자책, AI 도서추천, 신착도서, 독서 프로그램은 전부 존재하지만 <b>메뉴 두세 단계 안쪽</b>에 있습니다.
+  </p>
+
+  <div class="quote">
+    <b>따라서 해법은 화면을 예쁘게 고치는 것이 아닙니다.</b>
+    한 화면에 두 목적을 담는 구조 자체를 나누는 것입니다.
+    연구는 지금의 격식이 맞고, 독서는 다른 온도가 필요합니다.
+  </div>
+
+  <h3>이름은 이미 나뉘어 있습니다</h3>
+  <p>
+    학술정보원 로고에는 <b>MINSONG LIBRARY</b>가 함께 적혀 있고, 웹사이트의 공식 명칭에도 <b>민송도서관</b>이 남아 있습니다.
+    새로운 브랜드를 만들자는 제안이 아니라, <b>이미 가지고 계신 두 이름을 각자의 자리에 두자</b>는 제안입니다.
+  </p>
+</div>
+
+<!-- ════════ 5. 제안 구조 ════════ -->
+<div class="page" data-pg="05">
+  <div class="sec-no">03 · 제안</div>
+  <h2>학술정보원과 민송도서관, <em>두 개의 문</em></h2>
+  <p class="lede">하나의 사이트 안에서 메뉴를 나누는 것이 아니라, 각자 자기 얼굴을 가진 두 개의 입구로 운영합니다.</p>
+
+  <div class="tracks">
+    <div class="trk a">
+      <div class="trk-n">학술정보원</div>
+      <div class="trk-e">RESEARCH · 지금 그대로</div>
+      <div class="trk-l">
+        논문 · 학위논문<br>
+        학술DB · 전자자료 A-to-Z<br>
+        연구지원 · 상호대차 · 원문복사<br>
+        시설 · 행정 · 공지
+      </div>
+      <div class="trk-who">대학원생 · 논문 쓰는 고학년 · 교원</div>
+    </div>
+    <div class="trk b">
+      <div class="trk-n">민송도서관</div>
+      <div class="trk-e">READING · 웹 + 앱 신설</div>
+      <div class="trk-l">
+        종이책 검색 · 소장 확인<br>
+        전자책 대출 · 열람<br>
+        졸업 독서인증 · 독후감<br>
+        사서 추천 · 대출 랭킹 · 고전 컬렉션<br>
+        내 대출 · 예약 · 연장
+      </div>
+      <div class="trk-who">전 학부생</div>
+    </div>
+  </div>
+
+  <h3>무엇이 어디로 가는가</h3>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th style="width:44%">현재 기능</th><th class="g" style="width:56%">제안 후</th></tr>
+      <tr><td>통합검색 · 소장자료 · AI도서추천</td><td><b>검색은 그대로 두고 결과에서 갈립니다.</b> 책을 누르면 민송도서관, 논문·학술자료는 기존 상세 페이지로</td></tr>
+      <tr><td>MY LIBRARY (대출·연장·예약·찾아줘북즈)</td><td><b>민송도서관으로 이관.</b> 모두 책에 관한 기능이며, 공식 API 연동으로 이미 동작을 확인했습니다</td></tr>
+      <tr><td>E-Book (교보 전자도서관 23,496종)</td><td><b>민송도서관 안에서 대출·반납·열람까지.</b> 본인 명의 대출 검증을 마쳤습니다</td></tr>
+      <tr><td>YES24 크레마클럽</td><td>구독 도서에 <b>"크레마에도 있습니다" 표시와 앱 연결.</b> 크레마는 웹 리더가 없어 앱에서만 열람이 가능하므로, 안내가 가능한 최대치입니다</td></tr>
+      <tr><td>독서인증제 · 우수독서후기 · 독서동아리</td><td><b>민송도서관의 중심 기능.</b> 200선 열람, 독후감 작성·제출, 진행 상황 확인을 한 화면에서</td></tr>
+      <tr><td>신착도서 · 인기도서 · 추천도서</td><td>민송도서관의 큐레이션 섹션으로. 매일 자동 갱신됩니다</td></tr>
+      <tr><td>연구지원 · 학술DB · Copy Killer · 시설 예약</td><td><b>학술정보원에 그대로 유지.</b> 변경 사항 없습니다</td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    ※ "검증·확인"으로 표기한 항목은 학술정보원 공식 OpenAPI와 학교 인증을 통해 실제 계정으로 동작을 확인한 기능입니다.
+  </div>
+</div>
+
+<!-- ════════ 6. 시안 · 웹 ════════ -->
+<div class="page" data-pg="06">
+  <div class="sec-no">04 · 시안 (1) 웹</div>
+  <h2>민송도서관 웹 — <em>첫 화면이 통째로 책</em></h2>
+  <p class="lede">아래는 디자인 방향을 보여드리기 위한 시안이며 확정안이 아닙니다. 다만 "어떤 온도의 화면인가"는 이 그림이 가장 빠르게 전달합니다.</p>
+
+  <div class="web">
+    <div class="wall l" id="wL"></div>
+    <div class="wall r" id="wR"></div>
+    <div class="mid">
+      <div class="we">SEMYUNG UNIVERSITY LIBRARY</div>
+      <div class="wt">책과 별이 만나는 곳, 우리 도서관<span>★</span></div>
+      <div class="wq">별이에게 물어보세요 — "요즘 위로가 되는 소설 있어?"</div>
+      <div class="wn">
+        <span><b>23,727</b>소장 도서</span>
+        <span><b>238</b>고전 컬렉션</span>
+        <span><b>지금 열림</b>09:00 – 22:00</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>이 화면이 하는 일</h3>
+  <ul>
+    <li><b>0.5초 안에 "책이 있는 곳"이 전달됩니다.</b> 설명이 필요 없는 서가 이미지가 그 역할을 합니다.</li>
+    <li><b>운영시간이 첫 화면에 살아 있습니다.</b> 학생이 가장 많이 묻는 정보를 안내 페이지까지 들어가지 않고 확인합니다.</li>
+    <li><b>검색창이 하나입니다.</b> 탭을 고를 필요 없이 "요즘 위로가 되는 소설"처럼 말로 물으면 됩니다.</li>
+    <li><b>서가에 놓인 책은 실제 자산입니다.</b> 저희가 직접 번역해 무료로 제공하는 한국·해외 고전 238권의 표지입니다.</li>
+  </ul>
+
+  <h3>학술정보원과의 연결</h3>
+  <p>
+    학술정보원 홈페이지에서 민송도서관으로 넘어오는 자리는 <b>검색창 옆 탭</b>을 제안드립니다.
+    현재 <b>AI도서추천</b> 탭이 이미 있으므로, 새 자리를 만들지 않고 그 자리를 채우는 방식이 가장 간단합니다.
+    시스템 변경 없이 <b>연결 주소만 바꾸면</b> 되므로 기존 시스템에 영향이 없습니다.
+  </p>
+  <p>
+    다만 연결 전에 <b>동일 검색어로 양측 결과를 비교하는 검증</b>을 먼저 수행하겠습니다.
+    검색 품질이 지금보다 나빠지는 일은 없어야 하기 때문입니다.
+  </p>
+</div>
+
+<!-- ════════ 7. 시안 · 앱 ════════ -->
+<div class="page" data-pg="07">
+  <div class="sec-no">04 · 시안 (2) 앱</div>
+  <h2>민송도서관 앱 — <em>졸업 독서인증이 중심</em></h2>
+  <p class="lede">앱의 첫 화면에는 학생이 가장 먼저 확인해야 할 것을 놓았습니다. 졸업까지 남은 독후감 편수입니다.</p>
+
+  <div class="phones">
+    <div class="ph">
+      <div class="ph-s">
+        <div class="ph-hero">
+          <div class="ph-wall l" id="pL"></div>
+          <div class="ph-wall r" id="pR"></div>
+          <div class="ph-veil"></div>
+          <div class="ph-hin">
+            <div class="ph-e">SEMYUNG UNIVERSITY LIBRARY</div>
+            <div class="ph-t">책과 별이<br>만나는 곳<span>★</span></div>
+            <div class="ph-q">별이에게 물어보세요</div>
+          </div>
+        </div>
+        <div class="ph-card">
+          <div class="ph-ce">졸업 독서인증</div>
+          <div class="ph-num"><b>2</b><i>/ 4편 완료</i></div>
+          <div class="ph-bar"><u></u></div>
+          <div class="ph-cs">졸업까지 독후감 2편 남았어요.<br>지정도서 200선에서 다음 책을 골라보세요.</div>
+          <span class="ph-btn">200선에서 고르기 →</span>
+        </div>
+        <div class="ph-card2">
+          <div class="ph-loan">
+            <img src="covers/gb-64317.webp" alt="">
+            <div><div class="ph-ln">위대한 개츠비</div><div class="ph-ld">반납 <em>D-3</em> · 연장하기</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ph-cap">
+      <b>학생이 앱을 여는 이유</b>
+      졸업 독서인증은 신입생에게 <b>독후감 4편</b>이 부과되는 필수 요건입니다.
+      지금은 200선 목록이 어디 있는지, 그 책이 서가에 있는지, 내가 몇 편을 냈는지가 흩어져 있습니다.<br><br>
+      앱은 이 세 가지를 한 화면에 모읍니다. <b>"4편 중 2편 완료"</b>가 항상 보이는 것이 학생을 다시 열게 만드는 장치입니다.<br><br>
+      그 아래로 내 대출 현황, 관심 분야 신착 알림, 사서 추천, 고전 컬렉션이 이어집니다.
+    </div>
+  </div>
+
+  <h3>알림 — 도서관만 보낼 수 있는 메시지</h3>
+  <p>
+    도서관은 매달 새 책을 들이지만 학생은 그 사실을 알지 못합니다. 신착도서 목록을 찾아 들어가는 학생이 거의 없기 때문입니다.
+    앱은 <b>"관심 분야에 새 책이 들어왔습니다"</b>를 학생 폰으로 직접 알립니다.
+    다른 어떤 독서 서비스도 <b>"당신 학교 도서관에 이 책이 들어왔다"</b>는 알림은 보낼 수 없습니다.
+  </p>
+  <p>
+    다만 무차별 발송은 앱 삭제로 이어집니다. 대출 이력과 완독 기록을 바탕으로
+    <b>학생별로 관련 있는 책만</b> 골라 알리는 것을 원칙으로 하겠습니다.
+  </p>
+
+  <div class="note">
+    ※ 위 화면은 디자인 방향 확인용 시안이며, 표시된 도서·수치·알림은 예시입니다.
+  </div>
+</div>
+
+<!-- ════════ 8. 참여 ════════ -->
+<div class="page" data-pg="08">
+  <div class="sec-no">05 · 학생 참여</div>
+  <h2>학생은 <em>어떻게</em> 오는가</h2>
+  <p class="lede">좋은 화면을 만드는 것과 학생이 오게 하는 것은 다른 문제입니다. 참여를 만드는 경로를 구분해 설계했습니다.</p>
+
+  <h3>① 설치를 만드는 힘 — 졸업요건</h3>
+  <p>
+    독서인증제는 신입생에게 <b>독후감 4편</b>, 편입생에게 2편이 부과되며 졸업인증(CHARM) 영역에 포함됩니다.
+    학생이 반드시 수행해야 하는 절차가 이미 존재한다는 뜻입니다.
+    <b>신입생 오리엔테이션에서 "독후감은 이 앱에서 제출합니다"라고 안내</b>되면,
+    설치는 권유가 아니라 절차 안내가 됩니다.
+  </p>
+  <p class="note" style="margin-bottom:14px">
+    ※ 설치를 의무화하자는 제안이 아닙니다. 제출 창구를 앱으로 두되 <b>웹 제출 경로도 함께 열어두어</b>
+    기기가 없는 학생이 불이익을 받지 않도록 하겠습니다.
+  </p>
+
+  <h3>② 머무르게 하는 힘 — 알림과 큐레이션</h3>
+  <p>
+    졸업요건은 4편으로 끝나므로 그것만으로는 학생이 계속 오지 않습니다.
+    관심 분야 신착 알림, 사서 추천, 대출 랭킹, 독서 챌린지, 고전 컬렉션 238권이
+    <b>인증을 마친 뒤에도 앱을 열 이유</b>를 만듭니다.
+  </p>
+
+  <h3>③ 캠퍼스 접점 — 광고비가 들지 않는 매체</h3>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th style="width:30%">자리</th><th style="width:70%">방식</th></tr>
+      <tr><td><b>학술정보원 홈페이지</b></td><td>검색 탭에서 민송도서관으로 연결</td></tr>
+      <tr><td><b>학교 포털 · 학사 안내</b></td><td>졸업요건 안내에 링크. 홍보물이 아니라 공식 안내로 읽힙니다</td></tr>
+      <tr><td><b>현수막 · 게시판</b></td><td>개강 첫 2주와 졸업요건 점검 시기에 집중. 문구는 한 문장으로</td></tr>
+      <tr><td><b>스티커</b></td><td>강의실 · 열람실 · 교내식당 · 셔틀. 앉아 있는 학생의 손 닿는 거리</td></tr>
+      <tr><td><b>도서 부착 QR</b></td><td>200선 지정도서에 부착. 학생이 그 책을 손에 든 순간이 가장 강한 접점입니다</td></tr>
+      <tr><td><b>검색</b></td><td>"세명대 독서인증", "독후감 200선" 등 학생이 실제로 검색하는 말</td></tr>
+    </table>
+  </div>
+  <p class="note">
+    ※ 부착물마다 서로 다른 QR을 사용해 어느 경로에서 유입되었는지 측정하겠습니다.
+    효과가 확인된 자리에만 다음 학기 자원을 쓰기 위함입니다.
+  </p>
+</div>
+
+<!-- ════════ 9. 실행 ════════ -->
+<div class="page" data-pg="09">
+  <div class="sec-no">06 · 실행 계획</div>
+  <h2>한 번에 바꾸지 <em>않습니다</em></h2>
+  <p class="lede">기존 시스템을 교체하는 제안이 아닙니다. 작은 연결부터 시작해 확인하며 넓혀가는 순서로 진행합니다.</p>
+
+  <div class="steps">
+    <div class="step">
+      <span class="st-n">1</span>
+      <div class="st-b">
+        <div class="st-t">민송도서관 웹 공개</div>
+        <div class="st-w">2026년 2학기 중</div>
+        <div class="st-d">
+          학교 서브도메인으로 민송도서관 웹을 열고, 학술정보원 검색 탭 한 자리에서 연결합니다.
+          기존 시스템은 변경되지 않으며, 연결 주소만 추가됩니다. 연결 전 검색 품질 비교 검증을 완료합니다.
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="st-n">2</span>
+      <div class="st-b">
+        <div class="st-t">이용 데이터 축적과 확인</div>
+        <div class="st-w">2026년 2학기 ~ 겨울방학</div>
+        <div class="st-d">
+          학생이 실제로 사용하는지 확인합니다. 이 기간의 데이터가 다음 단계의 판단 근거가 됩니다.
+          기대에 못 미치면 앱 개발에 착수하기 전에 방향을 수정합니다.
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="st-n">3</span>
+      <div class="st-b">
+        <div class="st-t">민송도서관 앱 출시</div>
+        <div class="st-w">2027년 3월 신입생 오리엔테이션에 맞춤</div>
+        <div class="st-d">
+          iOS · Android 앱을 출시하고 신입생 오리엔테이션에서 안내합니다.
+          이 시점이 한 해 중 전교생에게 닿을 수 있는 가장 큰 접점이므로, 개발 일정을 여기에 맞춥니다.
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <span class="st-n">4</span>
+      <div class="st-b">
+        <div class="st-t">독서인증 전 과정 이관</div>
+        <div class="st-w">2027년 1학기 이후</div>
+        <div class="st-d">
+          200선 열람부터 독후감 작성·제출·진행 확인까지 앱에서 처리합니다.
+          <b>표절 심사 등 인증 판정은 기존 절차를 그대로 유지</b>하며, 저희는 작성과 제출 단계만 맡습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote" style="margin-top:18px">
+    <b>각 단계는 되돌릴 수 있습니다.</b> 1단계는 연결 주소를 되돌리면 원상복구되고,
+    2단계에서 성과가 확인되지 않으면 3단계로 넘어가지 않습니다.
+    도서관이 감수하실 위험을 가능한 한 작게 두는 것이 이 순서의 목적입니다.
+  </div>
+</div>
+
+<!-- ════════ 10. 요청 · 측정 ════════ -->
+<div class="page" data-pg="10">
+  <div class="sec-no">07 · 요청과 증명</div>
+  <h2>예산이 아니라 <em>자리</em>를 부탁드립니다</h2>
+  <p class="lede">1단계와 2단계에서 도서관에 요청드리는 것은 다음 다섯 가지이며, 예산은 포함되어 있지 않습니다.</p>
+
+  <div class="ask"><span class="ask-i">1</span><div><div class="ask-t">검색 탭 한 자리</div><div class="ask-d">현재 AI도서추천 탭의 연결 주소 변경으로 충분합니다. 시스템 개발은 필요하지 않습니다.</div></div></div>
+  <div class="ask"><span class="ask-i">2</span><div><div class="ask-t">학교 서브도메인 한 개</div><div class="ask-d">외부 상업 주소가 아닌 학교 주소여야 학생이 공식 서비스로 인식합니다. 비용은 발생하지 않습니다.</div></div></div>
+  <div class="ask"><span class="ask-i">3</span><div><div class="ask-t">신입생 오리엔테이션 안내 시간</div><div class="ask-d">3단계 시점에 10분 내외. 독서인증 절차 안내에 포함되는 형태를 제안드립니다.</div></div></div>
+  <div class="ask"><span class="ask-i">4</span><div><div class="ask-t">앱·웹을 통한 독후감 제출 인정</div><div class="ask-d">심사와 판정은 기존 절차를 유지합니다. 제출 창구만 추가되는 형태입니다. 담당 부서와의 협의를 요청드립니다.</div></div></div>
+  <div class="ask"><span class="ask-i">5</span><div><div class="ask-t">현재 이용 통계 공유</div><div class="ask-d">대출 건수, 전자책 이용률, 독서인증 참여율의 현재 값입니다. 이것이 없으면 성과를 증명할 기준선이 없습니다.</div></div></div>
+
+  <h3 style="margin-top:26px">저희가 증명해야 할 것</h3>
+  <p>
+    이 제안서에는 <b>예상 증가율을 적지 않았습니다.</b> 현재 수치를 알지 못하는 상태에서 만든 예측은
+    근거가 없고, 근거 없는 숫자는 판단을 돕지 못하기 때문입니다.
+    대신 아래 항목을 <b>매월 집계해 공유</b>드리고, 3개월 뒤 실제 변화로 말씀드리겠습니다.
+  </p>
+
+  <div class="kpi">
+    <div><b>월간 이용 학생 수</b><span>실제로 접속한 고유 학생 수. 설치 수가 아닌 사용 수로 봅니다</span></div>
+    <div><b>도서 대출 건수 변화</b><span>종이책 대출의 전년 동기 대비 증감</span></div>
+    <div><b>전자책 이용 건수</b><span>이미 구독 중인 전자책이 실제로 열람되는 정도</span></div>
+    <div><b>독서인증 제출·완료율</b><span>학년별 진행률. 졸업요건 이행 관리에도 활용 가능합니다</span></div>
+    <div><b>신착도서 열람률</b><span>새로 들인 책이 학생에게 닿는 비율</span></div>
+    <div><b>유입 경로별 기여</b><span>QR·검색·포털 중 어느 경로가 실제로 작동했는지</span></div>
+  </div>
+
+  <div class="disc">
+    본 제안서는 Bookstar가 세명대학교 학술정보원에 드리는 제안 문서입니다. 화면 시안은 디자인 방향 확인용이며 확정안이 아닙니다.
+    시안에 표시된 도서·수치·알림은 예시이며, 실제 서비스 화면이 아닙니다.
+  </div>
+</div>
+
+<!-- ════════ 11. 맺음 ════════ -->
+<div class="page" data-pg="11">
+  <div class="sec-no">맺음말</div>
+  <h2>이미 갖추신 것을 <em>학생에게 닿게 하는 일</em></h2>
+
+  <div class="closing">
+    <div class="cl-r"></div>
+    <p>
+      도서관은 이미 충분히 갖추고 계십니다.<br>
+      23,000권이 넘는 장서, 구독 전자책, 독서인증 제도, 그리고 그것을 운영해 온 시간까지.
+    </p>
+    <p style="margin-top:18px">
+      부족한 것은 자료가 아니라 <b>학생이 그 자료에 닿는 거리</b>입니다.<br>
+      저희가 하려는 일은 새로운 것을 더하는 게 아니라,<br>
+      <b>이미 사두신 것이 학생 손에 닿게 만드는 일</b>입니다.
+    </p>
+    <p style="margin-top:18px">
+      학술정보원은 연구자에게 지금의 격식이 필요합니다.<br>
+      다만 학생이 책과 만나는 자리만큼은,<br>
+      조금 더 가볍고 따뜻해도 좋겠다는 것이 이 제안의 전부입니다.
+    </p>
+    <div class="sig">Bookstar · 참나루</div>
+  </div>
+</div>
+
+<script>
+const COVERS=['gb-64317','kr-memilkkot','gb-1342','kr-unsujoeunnal','gb-11','kr-nalgae','gb-1260','kr-gamja','gb-345','kr-sarang','gb-84','gb-2554','gb-2600','gb-768','gb-1184','gb-1023','gb-103','gb-1079','gb-1080','gb-110','gb-113','gb-120','gb-1200','gb-121','gb-1237','gb-1251','gb-131','gb-135','gb-1399','gb-1400','gb-143','gb-145','gb-1565','gb-158','gb-1597','gb-16','gb-164','gb-1666','gb-174','gb-1837','gb-203','gb-208','gb-2085','gb-21','gb-211','gb-2130','gb-2145','gb-215','gb-2160','gb-219','gb-2226','gb-2434','gb-2527','gb-2701','gb-271','gb-2833','gb-2852','gb-2874','gb-3154','gb-325','gb-3268','gb-3526','gb-36','gb-370','gb-376','gb-4217','gb-43','gb-4300','gb-4397','gb-45','gb-46','gb-468','gb-500','gb-521','gb-5225','gb-561','gb-564','gb-5658','gb-580','gb-5921','gb-597','gb-599','gb-601','gb-6593','gb-696','gb-73','gb-74','gb-76','gb-766','gb-77','gb-804','gb-82','gb-821','gb-829','gb-83','gb-86','gb-913','gb-963','gb-967','gb-968','gb-98','kr-12wol12il','kr-baettaragi','kr-bakdol','kr-beongeorisamryongi','kr-bincheo','kr-bongbyeolgi','kr-bul','kr-bulgeunsan','kr-bunnyeo','kr-chisuk','kr-daeha','kr-danjongaesa','kr-deul','kr-don','kr-donghae','kr-donghwa','kr-dusunjeong','kr-gaesalgu','kr-gasil','kr-geumeumbam','kr-gohyang','kr-gwanghwasa','kr-gwangran','kr-gwangyeomsonata','kr-gwontae','kr-gyeonghui','kr-gyuwon','kr-hongyeom','kr-huisaenghwa','kr-hwabun','kr-inganmunje','kr-jaesaeng','kr-jihachon','kr-jukeum','kr-maek','kr-mauitaeja','kr-miseuteobang','kr-mujeong','kr-mujigae','kr-mul','kr-mulrebanga','kr-myeongil','kr-noniyagi','kr-pageum','kr-piano','kr-ppong','kr-redimeideu','kr-san','kr-sanga','kr-sogeum','kr-somang','kr-ssukguksae','kr-sutalk','kr-taehyeong','kr-takryu','kr-talchulgi','kr-tarakja','kr-yujeong'];
+const cov=n=>`covers/${n}.webp`;
+function shuffled(a,seed){const r=a.slice();let s=seed;const rd=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};
+  for(let i=r.length-1;i>0;i--){const j=Math.floor(rd()*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+
+function wall(el,seed,rows,per,hMin,hVar){
+  if(!el)return;
+  const pool=shuffled(COVERS,seed);let k=0,s=seed;
+  const rd=()=>{s=(s*48271)%2147483647;return s/2147483647;};
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');row.className='row';
+    for(let i=0;i<per;i++){
+      const img=document.createElement('img');
+      img.src=cov(pool[k++%pool.length]);img.alt='';img.loading='eager';
+      img.onerror=function(){this.remove();};
+      img.style.height=(hMin+Math.floor(rd()*hVar))+'px';
+      row.appendChild(img);
+    }
+    el.appendChild(row);
+  }
+}
+wall(document.getElementById('wL'),7,5,10,24,7);
+wall(document.getElementById('wR'),42,5,10,24,7);
+wall(document.getElementById('pL'),13,6,5,15,5);
+wall(document.getElementById('pR'),29,6,5,15,5);
+
+(function(){const b=document.getElementById('cvStars');if(!b)return;let s=77;
+  const rd=()=>{s=(s*48271)%2147483647;return s/2147483647;};
+  for(let i=0;i<60;i++){const d=document.createElement('i');
+    const z=(rd()*2+0.7).toFixed(1);
+    d.style.cssText=`width:${z}px;height:${z}px;left:${(rd()*100).toFixed(1)}%;top:${(rd()*100).toFixed(1)}%;opacity:${(rd()*.4+.12).toFixed(2)}`;
+    b.appendChild(d);}})();
+</script>
+</body>
+</html>
