@@ -115,6 +115,26 @@ async function listLoans(jar: Jar): Promise<EbLoan[]> {
   return out;
 }
 
+// 내가 예약한 전자책 — 취소 버튼(gFnContentReserveCancelProc)에서 예약번호를 뽑는다.
+// 대출목록과 같은 구조: 취소 버튼이 항목 끝에 오고 그 앞 구간에 서지·순번이 있다.
+interface EbReserve { prenSrmb: string; brcd: string; title: string; rank: string }
+async function listReserves(jar: Jar): Promise<EbReserve[]> {
+  const html = await ebGet(jar, "/myLib/myReserveList.ink");
+  const out: EbReserve[] = [];
+  const re = /gFnContentReserveCancelProc\('([^']*)','(\d+)'\s*,\s*'([^']*)'/g;
+  let m: RegExpExecArray | null, prev = 0;
+  while ((m = re.exec(html))) {
+    const raw = html.slice(prev, m.index);
+    prev = m.index + m[0].length;
+    out.push({
+      prenSrmb: m[2], title: m[3],
+      brcd: (/fnContentClick\([^)]*?'(\d{6,13})'/.exec(raw) || [, ""])[1] || "",
+      rank: (/(\d+)\s*번/.exec(raw.replace(/<[^>]+>/g, " ")) || [, ""])[1] || "",
+    });
+  }
+  return out;
+}
+
 // 뷰어 URL 발급 (토큰 내장, 쿠키 없이 단독 실행되는 교보/예스24 DRM 뷰어)
 async function viewerUrlFor(jar: Jar, loanSrmb: string, brcd: string): Promise<string> {
   await ebPost(jar, "/process/sessionAddProc.xml", { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" });
@@ -136,9 +156,15 @@ async function fetchStock(brcd: string) {
   const m = /대출\s*:\s*(\d+)\s*\/\s*(\d+)[\s\S]{0,120}?예약\s*:\s*(\d+)/.exec(html.replace(/<[^>]+>/g, " "));
   if (!m) return null;
   const loaned = +m[1], total = +m[2], reserved = +m[3];
-  // 버튼 문구가 도서관의 최종 판정("대출" vs "예약") — 숫자보다 이걸 우선한다
-  const btn = (/name="brwBtn"[^>]*value="([^"]*)"/.exec(html) || [, ""])[1].trim();
-  return { loaned, total, reserved, available: btn ? btn.includes("대출") : loaned < total, btn };
+  // 버튼이 도서관의 최종 판정 — 빌릴 수 있으면 brwBtn("대출"), 전권 나갔으면 reveBtn("예약")이 뜬다.
+  // (둘은 서로 배타적으로 렌더되므로 어느 쪽이 있는지가 곧 대출 가능 여부다)
+  const btn = (/name="(?:brwBtn|reveBtn)"[^>]*value="([^"]*)"/.exec(html) || [, ""])[1].trim();
+  return {
+    loaned, total, reserved,
+    available: btn ? btn.includes("대출") : loaned < total,
+    reservable: btn === "예약",
+    btn,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -233,12 +259,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 내가 예약한 전자책 — 취소에 필요한 예약번호(prenSrmb)가 여기서만 나온다
+    if (action === "myReserves") {
+      return json({ ok: true, action, personal, items: await listReserves(jar) });
+    }
+
     // 전권 대출중인 전자책 예약 — 반납되면 순번대로. 공유계정으로는 의미가 없어 개인세션만 허용.
     if (action === "reserve" || action === "cancelReserve") {
-      if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
       if (!personal) return json({ ok: false, action, error: "도서관 계정 연결이 필요해요" }, 409);
-      const path = action === "reserve" ? "/process/contentReserveProc.xml" : "/process/contentReserveCancelProc.xml";
-      const xml = await ebPost(jar, path, { lbryCode: LBRY, brcd, epdeBrcd: "" });
+      let xml: string;
+      if (action === "reserve") {
+        if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
+        // ⚠️ dvsnCode:"W"(웹) 필수 — 빼면 조용히 실패한다(도서관 스크립트 실측)
+        xml = await ebPost(jar, "/process/contentReserveProc.xml", { lbryCode: LBRY, brcd, epdeBrcd: "", dvsnCode: "W" });
+      } else {
+        // 취소는 바코드가 아니라 예약번호로 한다. 안 주면 이 책의 예약을 목록에서 찾아 쓴다.
+        let prenSrmb = (url.searchParams.get("prenSrmb") || "").replace(/[^0-9]/g, "");
+        if (!prenSrmb) {
+          const mine = (await listReserves(jar)).find((x) => !brcd || x.brcd === brcd);
+          prenSrmb = mine?.prenSrmb || "";
+        }
+        if (!prenSrmb) return json({ ok: false, action, error: "예약 내역을 찾지 못했어요" });
+        xml = await ebPost(jar, "/process/contentReserveCancelProc.xml", { lbryCode: LBRY, prenSrmb });
+      }
       return json({
         ok: xmlTag(xml, "result") === "True", action, personal,
         message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),

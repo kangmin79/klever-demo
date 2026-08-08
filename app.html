@@ -6041,8 +6041,12 @@ async function loadEbookStock(brcd){
       tag.style.color='#dc2626';
       const waiting=d.reserved>0?` · 앞에 ${d.reserved}명 기다리는 중`:'';
       if(note&&note.isConnected){
+        // 아이콘은 위 '전자책 바로 읽기' 줄에서 그대로 빌려 쓴다.
+        // (libDetail 안의 SVG_EBOOK을 참조하면 스코프 밖이라 ReferenceError → catch가 삼켜
+        //  '대출 중'까지만 바뀌고 예약 버튼이 조용히 사라지던 버그)
+        const row=tag.closest('.lcd-way'), wic=row&&row.querySelector('.wic');
         note.innerHTML=`<div class="lcd-way t-ebook" onclick="ebReserve('${esc(brcd)}')" style="margin-top:8px">
-          <span class="wic">${SVG_EBOOK}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
+          <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
       }
     }
   }catch(e){}
@@ -6177,7 +6181,7 @@ async function renderMyLibStatus(){
   if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
-    const [ln,rv,pk,eb]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans()]);
+    const [ln,rv,pk,eb,ebrv]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans(),smEbookReserves()]);
     const loans=smItems(ln), resv=smItems(rv);
     // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
     const picks=smItems(pk).filter(x=>x.loan_status==='0001');
@@ -6196,7 +6200,7 @@ async function renderMyLibStatus(){
       <span style="font-size:12.5px;color:var(--text-sub)"><b style="color:var(--text)">${waitCnt}</b>권 기다리는 중</span>
     </div>`;
 
-    if(!loans.length && !resv.length && !picks.length && !eb.length){
+    if(!loans.length && !resv.length && !picks.length && !eb.length && !ebrv.length){
       el.innerHTML=`<div class="section">${statusBox}<div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
         <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;flex:none"></span>
         <span style="font-size:12.5px;color:var(--text-sub)">도서관 계정 연결됨 — 지금 빌리거나 기다리는 책이 없어요</span>
@@ -6245,8 +6249,15 @@ async function renderMyLibStatus(){
     }
 
     // ② 기다리는 책 — 예약(반납 대기) + 찾아줘북즈(서가 픽업)
-    if(resv.length||picks.length){
-      html+=head(`기다리는 책 ${resv.length+picks.length}권`);
+    if(resv.length||picks.length||ebrv.length){
+      html+=head(`기다리는 책 ${resv.length+picks.length+ebrv.length}권`);
+      html+=ebrv.map(x=>box(`<div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4"><span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">반납되면 순번대로 빌려드려요${x.rank?` · 내 순번 ${esc(x.rank)}번`:''}</div>
+          </div>
+          <button onclick="ebDropReserve('${esc(x.prenSrmb)}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+        </div>`)).join('');
       html+=resv.map(x=>{
         // 0008 = 예약서가비치 → 도착. 3일 내 안 찾으면 자동취소 + 1개월 예약정지라 가장 크게 알린다.
         const arrived=(x.reservation_staus||x.reservation_status)==='0008';
@@ -6305,6 +6316,22 @@ async function smEbookLoans(){
     const d=await r.json();
     return (d&&d.ok&&Array.isArray(d.items))?d.items:[];
   }catch(e){ return []; }
+}
+// 내가 예약한 전자책 — 취소에 필요한 예약번호가 여기서만 나온다
+async function smEbookReserves(){
+  if(!ssoIsPersonal()) return [];
+  try{
+    const r=await fetch(SMEBK_FN+'?action=myReserves',{headers:smHeaders()});
+    const d=await r.json();
+    return (d&&d.ok&&Array.isArray(d.items))?d.items:[];
+  }catch(e){ return []; }
+}
+async function ebDropReserve(prenSrmb){
+  if(!confirm('예약을 취소할까요?')) return;
+  const r=await fetch(SMEBK_FN+'?action=cancelReserve&prenSrmb='+encodeURIComponent(prenSrmb),{headers:smHeaders()});
+  const d=await r.json();
+  readerToast(d&&d.ok?'예약을 취소했어요':((d&&(d.message||d.error))||'취소하지 못했어요'));
+  renderMyLibStatus();
 }
 async function ebExtend(loanSrmb, brcd){
   const r=await fetch(SMEBK_FN+'?action=extend&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
