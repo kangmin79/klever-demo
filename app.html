@@ -5063,13 +5063,17 @@ async function smPickupPersonal(reckey){
   if(!av) return {ok:false,message:'지금 바로 찾아드릴 수 있는 책이 없어요'};
   const d=await smMy('pickup',{controlno:ctrl,accession_no:av.accession_no||'',main_no:av.main_no||''});
   if(!d||!d.ok) return {ok:false,message:((d||{}).data||{}).message||'신청에 실패했어요'};
-  // 취소 버튼에 쓸 신청번호 — 신청 응답엔 없어서 현황에서 살아있는 건(0001=신청)으로 되찾는다
+  // 취소 버튼에 쓸 신청번호 — 신청 응답엔 없어서 현황에서 살아있는 건(0001=신청)으로 되찾는다.
+  // ⚠️ 진행 중 신청이 여럿일 수 있다 — 첫 건을 집으면 딴 책을 취소하게 된다.
+  //    이 책(제어번호 일치)을 우선 찾고, 응답에 제어번호가 없으면 방금 만든 최신 건(번호 최대)을 쓴다.
   let request_no='';
   try{
     const l=await smMy('pickups'); let it=((l||{}).data||{}).item;
     if(it&&!Array.isArray(it)) it=[it];
-    const live=(it||[]).find(x=>x&&x.loan_status==='0001');
-    request_no=(live&&live.request_no)||'';
+    const live=(it||[]).filter(x=>x&&x.loan_status==='0001');
+    const mine=live.find(x=>String(x.control_no||x.controlno||'').replace(/\D/g,'')===ctrl)
+      || live.slice().sort((a,b)=>Number(b.request_no||0)-Number(a.request_no||0))[0];
+    request_no=(mine&&mine.request_no)||'';
   }catch(e){}
   return {ok:true,request_no:request_no,accession_no:av.accession_no||''};
 }
@@ -6182,6 +6186,18 @@ async function renderMyLibStatus(){
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
     const [ln,rv,pk,eb,ebrv]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans(),smEbookReserves()]);
+    // 토큰 만료(401)·연동 소실(409) — 이대로 두면 "연결됨·0권"이라는 거짓 화면이 된다.
+    // 개인 플래그를 내리고, 다시 배너로 로그인하라고 정직하게 알린다.
+    if(ln && ln.ok===false && (ln.needsPersonal || /로그인이 필요|만료/.test(ln.error||''))){
+      try{ localStorage.setItem(SSO_PERSONAL_KEY,'0'); }catch(e){}
+      if(el) el.innerHTML=`<div class="section"><div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#9ca3af;flex:none"></span>
+        <span style="font-size:12.5px;color:var(--text-sub)">도서관 연동이 만료됐어요 — 도서관 홈페이지 배너로 다시 로그인해 주세요</span>
+      </div></div>`;
+      if(line) line.innerHTML='';
+      MYLIB_BADGE=null; renderSideNav(_navPage);
+      return;
+    }
     const loans=smItems(ln), resv=smItems(rv);
     // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
     const picks=smItems(pk).filter(x=>x.loan_status==='0001');
@@ -6236,7 +6252,7 @@ async function renderMyLibStatus(){
         // 종이책 반납은 도서관에 직접 가야 하므로 버튼을 두지 않는다 — 전자책만 여기서 반납된다.
         const btns=isEb
           ? (x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`:'')
-            +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${esc(cleanT(x.title||''))}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`
+            +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${esc(cleanT(x.title||'').replace(/'/g,'’'))}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`
           : `<button onclick="smRenew('${esc(x.acc)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`;
         return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
@@ -6309,21 +6325,23 @@ async function renderMyLibStatus(){
   }catch(e){ if(el) el.innerHTML=''; }
 }
 // 내가 빌린 전자책 — 실패해도 종이책 표시는 살려야 하므로 빈 배열로 흡수
+// ⚠️ personal===true 확인 필수: 개인세션 수립이 실패하면 서버가 공유계정으로 폴백하는데,
+//    그 목록을 그대로 그리면 남(공유계정)의 대출이 학생 것처럼 보이고 반납 버튼까지 진짜 작동한다.
 async function smEbookLoans(){
   if(!ssoIsPersonal()) return [];
   try{
     const r=await fetch(SMEBK_FN+'?action=myLoans',{headers:smHeaders()});
     const d=await r.json();
-    return (d&&d.ok&&Array.isArray(d.items))?d.items:[];
+    return (d&&d.ok&&d.personal===true&&Array.isArray(d.items))?d.items:[];
   }catch(e){ return []; }
 }
-// 내가 예약한 전자책 — 취소에 필요한 예약번호가 여기서만 나온다
+// 내가 예약한 전자책 — 취소에 필요한 예약번호가 여기서만 나온다. personal 확인은 위와 같은 이유.
 async function smEbookReserves(){
   if(!ssoIsPersonal()) return [];
   try{
     const r=await fetch(SMEBK_FN+'?action=myReserves',{headers:smHeaders()});
     const d=await r.json();
-    return (d&&d.ok&&Array.isArray(d.items))?d.items:[];
+    return (d&&d.ok&&d.personal===true&&Array.isArray(d.items))?d.items:[];
   }catch(e){ return []; }
 }
 async function ebDropReserve(prenSrmb){

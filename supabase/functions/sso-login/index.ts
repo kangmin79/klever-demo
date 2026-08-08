@@ -99,7 +99,10 @@ Deno.serve(async (req) => {
     }
 
     // ⑤ 서버 세션 저장 — liid·연계값은 여기에만(브라우저엔 sid도 아닌 서명토큰만 나감)
+    // 저장이 실패하면 개인기능은 실제로 안 열린다(sid 행이 없으니 liid를 못 꺼냄).
+    // 그런데 sso_personal=1로 보내면 앱이 "연결됨"이라 믿는 거짓 상태가 되므로, 저장 성공까지 확인한다.
     const sid = newSid();
+    let saved = false;
     try {
       await saveSession({
         sid, hakbun, name,
@@ -107,6 +110,7 @@ Deno.serve(async (req) => {
         school_no: handoff?.school_no ?? null,
         portal_user_id: handoff?.portal_user_id ?? null,
       });
+      saved = true;
     } catch (e) { console.error("saveSession fail", String(e)); }
 
     // ⑥ 정식 계정 자산 확보(실패해도 로그인은 진행)
@@ -116,7 +120,7 @@ Deno.serve(async (req) => {
     const q = new URLSearchParams({
       sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교",
       sso_token: await signSsoToken(hakbun, name, sid),
-      sso_personal: liid ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
+      sso_personal: liid && saved ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
     });
     return new Response(null, { status: 302, headers: { ...CORS, Location: `${APP_URL}?${q}#ourlib` } });
   } catch (e) {

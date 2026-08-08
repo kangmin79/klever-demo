@@ -70,8 +70,10 @@
       <input name="portal_id" value="book" autocomplete="off">
 
       <label>포털 비밀번호 (테스트 계정)</label>
-      <input name="portal_pw" type="password" value="semyung7002" autocomplete="off">
-      <div class="hint">학술정보원이 발급한 북스타 테스트 포털계정입니다.</div>
+      <!-- ⚠️ 비밀번호를 여기에 적어두지 말 것 — 이 페이지는 누구나 볼 수 있는 공개 주소다.
+           기입해 두면 아무나 개인기능을 열어 찾아줘북즈(사서가 실물을 꺼내는 실세계 작업)까지 신청할 수 있다. -->
+      <input name="portal_pw" type="password" value="" autocomplete="off" placeholder="테스트 계정 비밀번호를 직접 입력">
+      <div class="hint">학술정보원이 발급한 북스타 테스트 포털계정입니다. 비밀번호는 직접 입력해 주세요.</div>
 
       <button type="submit">개인기능까지 열고 로그인 →</button>
     </form>
