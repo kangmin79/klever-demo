@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세명대 학술정보원 리뉴얼 시안 — Bookstar 제안</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
+<style>
+/* ═══ 토큰 — app.html 라이트 테마와 동일 계열 ═══ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --primary:#1a2942; --primary-dark:#0f1a2e; --accent:#3a6ea5;
+  --gold:#d4a93b; --gold-deep:#b8902f;
+  --brand-grad:linear-gradient(135deg,#6366f1 0%,#22a7e0 55%,#06b6d4 100%);
+  --bg:#f7f6f1; --card:#fff; --input:#f0efeb;
+  --text:#1a2942; --sub:#475569; --light:#64748b;
+  --border:#e3dfd5;
+  --serif:Georgia,'Noto Serif KR',serif;
+}
+body{font-family:'Pretendard Variable','Pretendard',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+img{max-width:100%;}
+
+/* ═══ 시안 리본 (사칭 방지 — 항상 노출) ═══ */
+.ribbon{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--primary);color:#fff;font-size:12.5px;font-weight:600;text-align:center;padding:9px 16px;letter-spacing:-0.2px;}
+.ribbon b{color:var(--gold);}
+.wrap{margin-top:38px;}
+
+/* ═══ 인트로 ═══ */
+.intro{max-width:860px;margin:0 auto;padding:72px 24px 48px;text-align:center;}
+.intro-kicker{font-family:var(--serif);font-size:13px;font-weight:600;letter-spacing:.16em;color:var(--gold-deep);margin-bottom:18px;}
+.intro h1{font-size:clamp(28px,4.5vw,44px);font-weight:800;letter-spacing:-1.4px;line-height:1.25;word-break:keep-all;}
+.intro h1 em{font-style:normal;color:var(--accent);}
+.intro p{margin-top:20px;font-size:15.5px;line-height:1.75;color:var(--sub);word-break:keep-all;}
+.intro p b{color:var(--text);}
+
+/* ═══ 섹션 라벨 (BEFORE / AFTER) ═══ */
+.stage-label{max-width:1120px;margin:56px auto 16px;padding:0 24px;display:flex;align-items:center;gap:14px;}
+.stage-pill{font-size:12px;font-weight:800;letter-spacing:.12em;padding:6px 14px;border-radius:99px;}
+.stage-pill.before{background:#e5e3db;color:#6b7280;}
+.stage-pill.after{background:var(--primary);color:var(--gold);}
+.stage-title{font-size:17px;font-weight:700;letter-spacing:-0.4px;}
+.stage-sub{font-size:13px;color:var(--light);}
+
+/* ═══ BEFORE — 현재 홈페이지 와이어프레임 (그레이스케일) ═══ */
+.before-frame{max-width:1120px;margin:0 auto;padding:0 24px;}
+.bf{border:1px solid #d6d3c9;border-radius:14px;overflow:hidden;background:#fdfdfc;filter:grayscale(1);opacity:.82;box-shadow:0 20px 50px -30px rgba(20,28,50,.25);}
+.bf-chrome{display:flex;align-items:center;gap:7px;background:#ececea;padding:10px 14px;border-bottom:1px solid #dcdad2;}
+.bf-dot{width:10px;height:10px;border-radius:50%;background:#c8c6be;}
+.bf-url{flex:1;background:#fff;border:1px solid #dcdad2;border-radius:6px;font-size:11.5px;color:#8a8880;padding:4px 12px;}
+.bf-top{display:flex;justify-content:flex-end;gap:14px;padding:8px 22px;font-size:11px;color:#9a988e;border-bottom:1px solid #eeede8;}
+.bf-gnbrow{display:flex;align-items:center;gap:0;padding:0 22px;border-bottom:2px solid #4b5563;}
+.bf-logo{font-family:var(--serif);font-weight:700;font-size:17px;color:#374151;padding:16px 26px 16px 0;white-space:nowrap;}
+.bf-gnb{display:flex;flex:1;}
+.bf-gnb-item{flex:1;text-align:center;font-size:13.5px;font-weight:700;color:#374151;padding:18px 6px;border-left:1px solid #eeede8;position:relative;}
+.bf-drop{font-size:10.5px;font-weight:500;color:#9ca3af;line-height:1.9;margin-top:7px;}
+.bf-search{background:#e8e7e2;padding:26px 22px;}
+.bf-tabs{display:flex;gap:2px;max-width:640px;margin:0 auto 10px;}
+.bf-tab{font-size:11.5px;font-weight:600;color:#6b7280;background:#f3f2ee;border:1px solid #d9d7cf;border-bottom:none;border-radius:6px 6px 0 0;padding:7px 13px;}
+.bf-tab.on{background:#fff;color:#111827;}
+.bf-searchbar{max-width:640px;margin:0 auto;display:flex;background:#fff;border:2px solid #4b5563;}
+.bf-searchbar input{flex:1;border:none;padding:11px 14px;font-size:13px;background:transparent;color:#6b7280;font-family:inherit;}
+.bf-searchbar .go{background:#4b5563;color:#fff;font-size:12.5px;font-weight:700;padding:0 22px;}
+.bf-body{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;padding:20px 22px 26px;}
+.bf-box{border:1px solid #e2e0d8;border-radius:8px;background:#fff;overflow:hidden;}
+.bf-box-h{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;color:#374151;padding:10px 13px;border-bottom:1px solid #eeede8;background:#fafaf8;}
+.bf-box-h span{font-size:10px;color:#b0aea4;font-weight:400;}
+.bf-li{font-size:11.5px;color:#6b7280;padding:8px 13px;border-bottom:1px dashed #f0efe9;display:flex;justify-content:space-between;gap:10px;}
+.bf-li i{font-style:normal;color:#b0aea4;font-size:10.5px;white-space:nowrap;}
+.bf-li:last-child{border-bottom:none;}
+.bf-quick{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+.bf-q{border:1px solid #e2e0d8;border-radius:8px;background:#fff;text-align:center;font-size:11px;font-weight:600;color:#6b7280;padding:16px 4px;}
+.bf-q .bq-ic{display:block;width:26px;height:26px;margin:0 auto 8px;border-radius:6px;background:#e5e4de;}
+.bf-caption{text-align:center;font-size:12.5px;color:#9a988e;padding:26px 20px 8px;line-height:1.7;word-break:keep-all;}
+
+/* ═══ 전환 화살표 ═══ */
+.turn{display:flex;flex-direction:column;align-items:center;gap:10px;padding:54px 20px 8px;}
+.turn-arrow{width:34px;height:34px;color:var(--gold-deep);}
+.turn-t{font-family:var(--serif);font-size:clamp(19px,2.6vw,25px);font-weight:700;letter-spacing:-0.5px;text-align:center;word-break:keep-all;}
+.turn-s{font-size:13.5px;color:var(--sub);text-align:center;word-break:keep-all;line-height:1.7;}
+
+/* ═══ AFTER — 북스타 리뉴얼 목업 ═══ */
+.after-frame{max-width:1120px;margin:0 auto;padding:0 24px 20px;}
+.af{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg);box-shadow:0 30px 70px -34px rgba(20,28,50,.4);position:relative;}
+.af-chrome{display:flex;align-items:center;gap:7px;background:#efeee9;padding:10px 14px;border-bottom:1px solid var(--border);}
+.af-chrome .bf-url{color:var(--accent);font-weight:600;}
+
+/* 헤더 — app.html Ver03 헤더 재현 */
+.af-hdr{display:flex;align-items:center;gap:26px;padding:0 26px;height:62px;background:rgba(247,246,241,.97);border-bottom:1px solid var(--border);}
+.bl-mark{width:30px;height:30px;border-radius:9px;background:var(--brand-grad);display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 4px 11px -2px rgba(56,98,220,.5);}
+.bl-mark svg{width:17px;height:17px;color:#fff;}
+.brand{display:flex;align-items:center;user-select:none;}
+.bl-word{font-family:var(--serif);font-weight:700;font-size:21px;letter-spacing:-.4px;line-height:1;}
+.bl-word span{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.bl-tag{margin-left:11px;padding-left:12px;border-left:1px solid var(--border);font-size:11px;font-weight:600;color:var(--light);line-height:1.3;}
+.af-gnb{display:flex;gap:4px;flex:1;}
+.af-gnb-item{position:relative;font-size:14px;font-weight:600;color:var(--sub);padding:8px 13px 10px;letter-spacing:-0.3px;}
+.af-gnb-item.active{color:var(--text);font-weight:700;}
+.af-gnb-item.active::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);}
+.af-hdr-me{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--sub);}
+.af-avatar{width:28px;height:28px;border-radius:50%;background:var(--brand-grad);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+
+/* 히어로 — AI 통합검색 */
+.af-hero{padding:58px 26px 46px;text-align:center;background:
+  radial-gradient(680px 240px at 50% -60px,rgba(99,102,241,.09),transparent 70%),
+  radial-gradient(520px 200px at 82% 10%,rgba(212,169,59,.10),transparent 70%);}
+.af-kicker{font-family:var(--serif);font-size:12.5px;font-weight:600;letter-spacing:.18em;color:var(--gold-deep);margin-bottom:14px;}
+.af-h1{font-family:var(--serif);font-size:clamp(24px,3.4vw,34px);font-weight:700;letter-spacing:-0.8px;word-break:keep-all;}
+.af-hero-sub{margin-top:12px;font-size:14px;color:var(--sub);word-break:keep-all;}
+.af-searchbar{max-width:620px;margin:26px auto 0;display:flex;align-items:center;background:var(--card);border:1.5px solid var(--border);border-radius:99px;padding:7px 7px 7px 24px;box-shadow:0 18px 44px -18px rgba(26,41,66,.22);}
+.af-searchbar input{flex:1;border:none;outline:none;background:transparent;font-size:15px;font-family:inherit;color:var(--text);}
+.af-searchbar input::placeholder{color:#a8a69c;}
+.af-send{width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.af-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;}
+.af-chip{font-size:12.5px;font-weight:600;color:var(--sub);background:var(--card);border:1px solid var(--border);border-radius:99px;padding:7px 14px;}
+.af-chip b{color:var(--accent);font-weight:700;}
+
+/* 내 도서관 스트립 */
+.af-sec{padding:0 26px;margin:44px 0;position:relative;}
+.af-sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+.af-sec-title{font-family:var(--serif);font-size:20px;font-weight:700;letter-spacing:-0.3px;}
+.af-sec-sub{font-size:12.5px;color:var(--light);}
+.af-sec-more{font-size:12.5px;font-weight:600;color:var(--accent);}
+.mylib{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.ml-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;box-shadow:0 8px 22px -14px rgba(20,28,50,.18);}
+.ml-num{font-size:26px;font-weight:800;letter-spacing:-1px;}
+.ml-num small{font-size:13px;font-weight:600;color:var(--light);margin-left:2px;}
+.ml-t{font-size:12.5px;font-weight:700;color:var(--sub);}
+.ml-d{font-size:11.5px;color:var(--light);line-height:1.5;word-break:keep-all;}
+.ml-d b{color:#e74c3c;font-weight:700;}
+.ml-card.cta{background:var(--primary);border-color:var(--primary);color:#fff;justify-content:center;text-align:center;}
+.ml-card.cta .ml-t{color:var(--gold);}
+.ml-card.cta .ml-d{color:#c7d2e4;}
+
+/* 사서 추천 히어로 (잡지 스타일) */
+.hero-rec{display:grid;grid-template-columns:190px 1fr;gap:26px;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 14px 36px -20px rgba(20,28,50,.25);align-items:center;}
+.cover{border-radius:8px;box-shadow:0 12px 26px -10px rgba(20,20,45,.4);aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:space-between;padding:16px 14px;color:#fff;overflow:hidden;position:relative;}
+.cover .cv-t{font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.35;word-break:keep-all;}
+.cover .cv-a{font-size:10.5px;opacity:.75;}
+.cover::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.14),transparent 40%);}
+.hr-kicker{font-family:var(--serif);font-size:12px;font-weight:600;letter-spacing:.16em;color:var(--gold-deep);margin-bottom:10px;}
+.hr-t{font-family:var(--serif);font-size:clamp(19px,2.4vw,25px);font-weight:700;letter-spacing:-0.5px;line-height:1.4;word-break:keep-all;}
+.hr-d{margin-top:12px;font-size:13.5px;line-height:1.8;color:var(--sub);word-break:keep-all;}
+.hr-meta{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
+.badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;background:var(--input);color:var(--sub);}
+.badge.av{background:rgba(46,184,114,.12);color:#1d8f56;}
+.badge.eb{background:rgba(58,110,165,.12);color:var(--accent);}
+
+/* 대출 랭킹 */
+.rank{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.rk-row{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efe9;}
+.rk-row:last-child{border-bottom:none;}
+.rk-no{font-family:var(--serif);font-size:19px;font-weight:700;color:var(--gold-deep);width:24px;text-align:center;flex:0 0 auto;}
+.rk-cv{width:34px;height:48px;border-radius:4px;flex:0 0 auto;box-shadow:0 4px 10px -4px rgba(20,20,45,.35);}
+.rk-t{font-size:13.5px;font-weight:700;flex:1;letter-spacing:-0.3px;}
+.rk-t small{display:block;font-size:11px;font-weight:500;color:var(--light);margin-top:2px;}
+.rk-delta{font-size:11px;font-weight:800;width:44px;text-align:right;}
+.rk-delta.up{color:#1d8f56;}.rk-delta.dn{color:#94a3b8;}.rk-delta.new{color:#7c3aed;}
+.rk-cnt{font-size:11.5px;color:var(--light);width:56px;text-align:right;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+
+/* 전자책 선반 */
+.shelf{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;}
+.sh-item{display:flex;flex-direction:column;gap:8px;}
+.sh-item .cover{padding:12px 10px;}
+.sh-item .cv-t{font-size:12.5px;}
+.sh-name{font-size:12px;font-weight:700;letter-spacing:-0.3px;line-height:1.4;}
+.sh-sub{font-size:10.5px;color:var(--light);}
+.sh-read{margin-top:2px;font-size:11px;font-weight:700;color:var(--accent);}
+
+/* 챌린지 카드 */
+.progs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.prog{background:var(--primary);border-radius:16px;padding:22px;color:#fff;display:flex;flex-direction:column;gap:10px;min-height:180px;position:relative;overflow:hidden;}
+.prog::after{content:'';position:absolute;right:-40px;top:-40px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(212,169,59,.28),transparent 70%);}
+.prog-eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--gold);}
+.prog-t{font-family:var(--serif);font-size:18px;font-weight:700;line-height:1.4;letter-spacing:-0.3px;}
+.prog-meta{margin-top:auto;display:flex;gap:12px;font-size:11.5px;color:#aebad0;}
+.prog-cta{font-size:12.5px;font-weight:700;color:var(--gold);}
+
+/* 공지 피드 */
+.feed{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fd{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:7px;}
+.fd-tag{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--gold-deep);}
+.fd-tag.ac{color:var(--accent);}
+.fd-t{font-size:14px;font-weight:700;letter-spacing:-0.3px;word-break:keep-all;}
+.fd-d{font-size:12px;color:var(--light);line-height:1.6;word-break:keep-all;}
+.fd-time{font-size:11px;color:#b0aea4;}
+
+/* 별이 챗봇 바 */
+.byeoli{display:flex;align-items:center;gap:18px;background:linear-gradient(115deg,#101c33,#1a2942 60%,#23375c);border-radius:18px;padding:24px 26px;color:#fff;flex-wrap:wrap;}
+.by-mark{width:44px;height:44px;border-radius:50%;background:var(--brand-grad);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;box-shadow:0 8px 20px -6px rgba(56,98,220,.6);}
+.by-t{font-family:var(--serif);font-size:17px;font-weight:700;}
+.by-s{font-size:12.5px;color:#aebad0;margin-top:4px;word-break:keep-all;}
+.by-chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.by-chip{font-size:12px;font-weight:600;color:#dbe3f0;border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:7px 13px;}
+.af-foot{border-top:1px solid var(--border);padding:22px 26px 26px;font-size:11.5px;color:var(--light);line-height:1.8;text-align:center;word-break:keep-all;}
+
+/* ═══ 매핑 태그 (토글) ═══ */
+.map-tag{display:none;position:absolute;top:-11px;left:26px;z-index:5;font-size:11px;font-weight:700;color:var(--primary);background:#fff7e0;border:1.5px dashed var(--gold);border-radius:99px;padding:5px 13px;box-shadow:0 6px 16px -8px rgba(20,28,50,.3);letter-spacing:-0.2px;}
+.map-tag b{color:var(--gold-deep);}
+body.show-map .map-tag{display:inline-block;}
+.map-toggle{position:fixed;bottom:22px;right:22px;z-index:1001;background:var(--primary);color:#fff;font-size:13px;font-weight:700;border-radius:99px;padding:13px 20px;box-shadow:0 14px 34px -10px rgba(20,28,50,.5);display:flex;align-items:center;gap:8px;}
+.map-toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);}
+body.show-map .map-toggle{background:var(--gold);color:var(--primary);}
+body.show-map .map-toggle .dot{background:var(--primary);}
+
+/* ═══ 매핑 표 ═══ */
+.map-sec{max-width:900px;margin:0 auto;padding:72px 24px 60px;}
+.map-sec h2{font-family:var(--serif);font-size:clamp(21px,3vw,27px);font-weight:700;letter-spacing:-0.6px;text-align:center;word-break:keep-all;}
+.map-sec>p{text-align:center;font-size:13.5px;color:var(--sub);margin:12px 0 34px;word-break:keep-all;line-height:1.7;}
+.map-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 14px 36px -24px rgba(20,28,50,.3);}
+.map-table th{background:var(--primary);color:#fff;font-size:12.5px;font-weight:700;text-align:left;padding:12px 16px;letter-spacing:-0.2px;}
+.map-table th:last-child{color:var(--gold);}
+.map-table td{font-size:13px;padding:12px 16px;border-top:1px solid #f0efe9;vertical-align:top;line-height:1.6;word-break:keep-all;}
+.map-table td:first-child{color:var(--sub);width:42%;}
+.map-table td b{color:var(--text);}
+.map-note{font-size:12px;color:var(--light);margin-top:14px;line-height:1.7;word-break:keep-all;}
+
+/* ═══ 마무리 ═══ */
+.closing{max-width:760px;margin:0 auto;padding:24px 24px 90px;text-align:center;}
+.closing .line{width:44px;height:2px;background:var(--gold);margin:0 auto 26px;}
+.closing p{font-size:15px;line-height:1.9;color:var(--sub);word-break:keep-all;}
+.closing p b{color:var(--text);}
+.closing .sign{margin-top:26px;font-family:var(--serif);font-size:14px;color:var(--gold-deep);font-weight:600;}
+
+@media(max-width:880px){
+  .bf-body{grid-template-columns:1fr;}
+  .bf-quick{grid-template-columns:repeat(3,1fr);}
+  .bf-gnb-item .bf-drop{display:none;}
+  .af-gnb{display:none;}
+  .mylib{grid-template-columns:repeat(2,1fr);}
+  .hero-rec{grid-template-columns:120px 1fr;padding:18px;gap:16px;}
+  .two-col{grid-template-columns:1fr;}
+  .shelf{grid-template-columns:repeat(3,1fr);}
+  .progs{grid-template-columns:1fr;}
+  .feed{grid-template-columns:1fr;}
+  .by-chips{margin-left:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="ribbon">이 페이지는 <b>리뉴얼 제안용 시안(목업)</b>입니다 — 실제 세명대학교 학술정보원 서비스가 아니며, 화면 속 수치·목록은 예시입니다</div>
+<div class="wrap">
+
+<!-- ═══════════════ 인트로 ═══════════════ -->
+<div class="intro">
+  <div class="intro-kicker">BOOKSTAR × 세명대학교 학술정보원 · 리뉴얼 제안</div>
+  <h1>도서관 홈페이지가<br><em>학생이 매일 들르는 입구</em>가 된다면</h1>
+  <p>도서관이 마련한 책과 전자책, 구독 서비스는 충분합니다. 문제는 <b>학생이 홈페이지에 들어오지 않는다</b>는 것.<br>
+  북스타는 검색·대출·전자책·독서 프로그램을 그대로 품으면서, 학생이 먼저 찾아오는 화면으로 바꾸는 제안입니다.</p>
+</div>
+
+<!-- ═══════════════ BEFORE ═══════════════ -->
+<div class="stage-label">
+  <span class="stage-pill before">BEFORE</span>
+  <div>
+    <div class="stage-title">지금의 홈페이지</div>
+    <div class="stage-sub">lib.semyung.ac.kr — 메뉴 76개, 필요한 업무는 다 있지만 "볼 일"이 없으면 올 이유가 없는 구조</div>
+  </div>
+</div>
+<div class="before-frame">
+  <div class="bf">
+    <div class="bf-chrome"><span class="bf-dot"></span><span class="bf-dot"></span><span class="bf-dot"></span><div class="bf-url">lib.semyung.ac.kr</div></div>
+    <div class="bf-top"><span>로그인</span><span>회원가입</span><span>사이트맵</span><span>English</span></div>
+    <div class="bf-gnbrow">
+      <div class="bf-logo">세명대학교 학술정보원</div>
+      <div class="bf-gnb">
+        <div class="bf-gnb-item">자료검색<div class="bf-drop">통합검색 · 소장자료 · 유형별<br>신착도서 · 인기도서</div></div>
+        <div class="bf-gnb-item">연구지원서비스<div class="bf-drop">전자자료 A-to-Z · 학술DB<br>Copy Killer · 상호대차</div></div>
+        <div class="bf-gnb-item">도서관서비스<div class="bf-drop">희망도서 · 독서인증제<br>이용자교육 · 시설이용</div></div>
+        <div class="bf-gnb-item">도서관안내<div class="bf-drop">이용시간 · 층별안내<br>규정 · 오시는 길</div></div>
+        <div class="bf-gnb-item">MY LIBRARY<div class="bf-drop">대출현황 · 예약도서<br>희망도서 신청내역</div></div>
+      </div>
+    </div>
+    <div class="bf-search">
+      <div class="bf-tabs"><span class="bf-tab on">소장자료</span><span class="bf-tab">전자자료</span><span class="bf-tab">AI도서추천</span><span class="bf-tab">크레마클럽</span></div>
+      <div class="bf-searchbar"><input value="검색어를 입력하세요" readonly><span class="go">검색</span></div>
+    </div>
+    <div class="bf-body">
+      <div class="bf-box">
+        <div class="bf-box-h">공지사항 <span>더보기 +</span></div>
+        <div class="bf-li">2026학년도 2학기 도서관 이용안내 <i>08-01</i></div>
+        <div class="bf-li">하계 방학 중 단축 운영 안내 <i>07-15</i></div>
+        <div class="bf-li">학술DB 정기 점검 안내 <i>07-10</i></div>
+        <div class="bf-li">희망도서 신청 결과 안내 <i>07-02</i></div>
+      </div>
+      <div class="bf-box">
+        <div class="bf-box-h">학술공지 <span>더보기 +</span></div>
+        <div class="bf-li">EBSCO 이용자 교육 <i>07-20</i></div>
+        <div class="bf-li">Copy Killer 업데이트 <i>07-11</i></div>
+        <div class="bf-li">RISS 서비스 안내 <i>06-28</i></div>
+        <div class="bf-li">논문작성법 특강 <i>06-20</i></div>
+      </div>
+      <div class="bf-box">
+        <div class="bf-box-h">신착도서 <span>더보기 +</span></div>
+        <div class="bf-li">신착도서 목록 (표지 슬라이드)</div>
+        <div class="bf-li">추천도서 목록</div>
+        <div class="bf-li">CHARM 인증도서</div>
+        <div class="bf-li">월별 우수 독서후기</div>
+      </div>
+      <div class="bf-quick">
+        <div class="bf-q"><span class="bq-ic"></span>대출조회</div>
+        <div class="bf-q"><span class="bq-ic"></span>희망도서</div>
+        <div class="bf-q"><span class="bq-ic"></span>전자책</div>
+        <div class="bf-q"><span class="bq-ic"></span>크레마클럽</div>
+        <div class="bf-q"><span class="bq-ic"></span>시설안내</div>
+        <div class="bf-q"><span class="bq-ic"></span>이용시간</div>
+      </div>
+    </div>
+  </div>
+  <div class="bf-caption">업무용으로는 완결적이지만, 첫 화면이 "게시판 + 메뉴 창고"라서<br>책을 아직 정하지 못한 학생, 그냥 들른 학생이 머물 자리가 없습니다.</div>
+</div>
+
+<!-- ═══════════════ 전환 ═══════════════ -->
+<div class="turn">
+  <svg class="turn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+  <div class="turn-t">같은 기능, 완전히 다른 첫인상</div>
+  <div class="turn-s">아래 화면의 모든 요소는 이미 북스타에 구현되어 있거나 도서관 공식 API로 연동이 검증된 것들입니다.<br>오른쪽 아래 <b>"기존 메뉴 매핑 보기"</b> 버튼을 누르면 어떤 메뉴가 어디로 왔는지 표시됩니다.</div>
+</div>
+
+<!-- ═══════════════ AFTER ═══════════════ -->
+<div class="stage-label">
+  <span class="stage-pill after">AFTER</span>
+  <div>
+    <div class="stage-title">북스타로 리뉴얼한 첫 화면</div>
+    <div class="stage-sub">검색 하나 · 내 대출 현황 · 사서의 목소리 · 학교의 독서 데이터가 한 화면에</div>
+  </div>
+</div>
+<div class="after-frame">
+  <div class="af">
+    <div class="af-chrome"><span class="bf-dot"></span><span class="bf-dot"></span><span class="bf-dot"></span><div class="bf-url">library.semyung.ac.kr (시안)</div></div>
+
+    <!-- 헤더 -->
+    <div class="af-hdr">
+      <div class="brand">
+        <span class="bl-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 6.9L21 11l-6.6 2.1L12 20l-2.4-6.9L3 11l6.6-2.1z"/></svg></span>
+        <span class="bl-word">Book<span>star</span></span>
+        <span class="bl-tag">세명대학교<br>학술정보원</span>
+      </div>
+      <div class="af-gnb">
+        <span class="af-gnb-item active">홈</span>
+        <span class="af-gnb-item">자료찾기</span>
+        <span class="af-gnb-item">전자책</span>
+        <span class="af-gnb-item">고전 컬렉션</span>
+        <span class="af-gnb-item">독서 챌린지</span>
+        <span class="af-gnb-item">내 도서관</span>
+      </div>
+      <div class="af-hdr-me"><span class="af-avatar">김</span>김세명 님</div>
+    </div>
+
+    <!-- 히어로: AI 통합검색 -->
+    <div class="af-hero" style="position:relative;">
+      <span class="map-tag" style="top:14px;"><b>통합검색 4개 탭 + AI도서추천</b> → 검색창 하나로</span>
+      <div class="af-kicker">✦ 모든 책은 하늘의 별</div>
+      <div class="af-h1">어떤 책을 찾고 계신가요?</div>
+      <div class="af-hero-sub">제목·저자는 물론, "요즘 지쳐서 위로가 되는 책"처럼 말로 물어봐도 찾아드려요</div>
+      <div class="af-searchbar">
+        <input value="시험 끝나고 머리 식힐 만한 소설" readonly>
+        <span class="af-send">→</span>
+      </div>
+      <div class="af-chips">
+        <span class="af-chip">소장자료 <b>29만</b></span>
+        <span class="af-chip">전자책 <b>2.3만</b></span>
+        <span class="af-chip">학위논문</span>
+        <span class="af-chip">연속간행물</span>
+        <span class="af-chip">AI 추천</span>
+      </div>
+    </div>
+
+    <!-- 내 도서관 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>MY LIBRARY</b>(대출현황·예약·찾아줘북즈) → 로그인하면 첫 화면에</span>
+      <div class="af-sec-head">
+        <div><span class="af-sec-title">내 도서관</span> <span class="af-sec-sub">— 세명대 계정으로 자동 연동</span></div>
+        <span class="af-sec-more">전체 보기 →</span>
+      </div>
+      <div class="mylib">
+        <div class="ml-card"><span class="ml-num">2<small>권</small></span><span class="ml-t">빌린 책</span><span class="ml-d">『총, 균, 쇠』 반납 <b>D-3</b> — 여기서 바로 연장</span></div>
+        <div class="ml-card"><span class="ml-num">1<small>권</small></span><span class="ml-t">기다리는 책</span><span class="ml-d">『아몬드』 예약 1순위 — 도착하면 알림</span></div>
+        <div class="ml-card"><span class="ml-num">1<small>건</small></span><span class="ml-t">찾아줘북즈</span><span class="ml-d">서가에서 꺼내 데스크에 준비해 드려요</span></div>
+        <div class="ml-card cta"><span class="ml-t">이번 학기 완독</span><span class="ml-num" style="color:#fff;">4<small style="color:#aebad0;">권</small></span><span class="ml-d">별 4개를 모았어요 — 내 서재 보기</span></div>
+      </div>
+    </div>
+
+    <!-- 사서 추천 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>추천도서 · CHARM 인증도서</b> → 사서의 목소리가 담긴 오늘의 추천</span>
+      <div class="af-sec-head">
+        <div><span class="af-sec-title">오늘의 사서 추천</span></div>
+      </div>
+      <div class="hero-rec">
+        <div class="cover" style="background:linear-gradient(160deg,#2b3a5c,#141d33);">
+          <span class="cv-t">데미안</span>
+          <span class="cv-a">헤르만 헤세</span>
+        </div>
+        <div>
+          <div class="hr-kicker">✦ 사서의 한 줄</div>
+          <div class="hr-t">"새는 알에서 나오려고 투쟁한다"<br>— 새 학기, 껍질을 깨는 당신에게</div>
+          <div class="hr-d">개강을 앞두고 마음이 복잡한 학생에게 백 년 동안 검증된 처방을 권합니다. 종이책은 2층 서가에, 전자책은 지금 바로 이 화면에서 읽을 수 있어요.</div>
+          <div class="hr-meta">
+            <span class="badge av">서가에 있음 · 2층 813.25</span>
+            <span class="badge eb">전자책 바로 읽기</span>
+            <span class="badge">완독 인증 대상</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 랭킹 + 전자책 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>인기도서(대출통계) · 전자도서관 인기목록</b> → 우리 학교의 실시간 독서 데이터로</span>
+      <div class="two-col">
+        <div>
+          <div class="af-sec-head">
+            <div><span class="af-sec-title">우리 학교 대출 랭킹</span> <span class="af-sec-sub">— 이번 달, 실제 대출 데이터</span></div>
+          </div>
+          <div class="rank">
+            <div class="rk-row"><span class="rk-no">1</span><span class="rk-cv" style="background:linear-gradient(160deg,#7c3aed,#4c1d95);"></span><span class="rk-t">불편한 편의점<small>김호연 · 소설</small></span><span class="rk-delta up">▲2</span><span class="rk-cnt">대출 41회</span></div>
+            <div class="rk-row"><span class="rk-no">2</span><span class="rk-cv" style="background:linear-gradient(160deg,#0ea5e9,#0c4a6e);"></span><span class="rk-t">물고기는 존재하지 않는다<small>룰루 밀러 · 과학</small></span><span class="rk-delta dn">▼1</span><span class="rk-cnt">대출 37회</span></div>
+            <div class="rk-row"><span class="rk-no">3</span><span class="rk-cv" style="background:linear-gradient(160deg,#f59e0b,#92400e);"></span><span class="rk-t">미움받을 용기<small>기시미 이치로 · 인문</small></span><span class="rk-delta dn">─</span><span class="rk-cnt">대출 33회</span></div>
+            <div class="rk-row"><span class="rk-no">4</span><span class="rk-cv" style="background:linear-gradient(160deg,#10b981,#064e3b);"></span><span class="rk-t">아몬드<small>손원평 · 소설</small></span><span class="rk-delta new">NEW</span><span class="rk-cnt">대출 29회</span></div>
+            <div class="rk-row"><span class="rk-no">5</span><span class="rk-cv" style="background:linear-gradient(160deg,#ef4444,#7f1d1d);"></span><span class="rk-t">코스모스<small>칼 세이건 · 과학</small></span><span class="rk-delta up">▲3</span><span class="rk-cnt">대출 26회</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="af-sec-head">
+            <div><span class="af-sec-title">지금 바로 읽는 전자책</span> <span class="af-sec-sub">— 앱 설치 없이 브라우저에서</span></div>
+          </div>
+          <div class="shelf" style="grid-template-columns:repeat(3,1fr);">
+            <div class="sh-item"><div class="cover" style="background:linear-gradient(160deg,#334155,#0f172a);"><span class="cv-t">역행자</span><span class="cv-a">자청</span></div><span class="sh-name">역행자</span><span class="sh-read">바로 읽기 →</span></div>
+            <div class="sh-item"><div class="cover" style="background:linear-gradient(160deg,#5b21b6,#2e1065);"><span class="cv-t">달러구트 꿈 백화점</span><span class="cv-a">이미예</span></div><span class="sh-name">달러구트 꿈 백화점</span><span class="sh-read">바로 읽기 →</span></div>
+            <div class="sh-item"><div class="cover" style="background:linear-gradient(160deg,#0e7490,#083344);"><span class="cv-t">세이노의 가르침</span><span class="cv-a">세이노</span></div><span class="sh-name">세이노의 가르침</span><span class="sh-read">바로 읽기 →</span></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge eb">교보 전자책 23,496종 — 이 화면에서 대출·반납</span>
+            <span class="badge">크레마클럽 구독 도서는 앱 연결 배지로 안내</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 독서 챌린지 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>독서인증제 · 우수독서후기 · 독서동아리</b> → 참여형 챌린지로</span>
+      <div class="af-sec-head">
+        <div><span class="af-sec-title">독서 챌린지</span> <span class="af-sec-sub">— 완독을 퀴즈·소감으로 인증하고 별을 모아요</span></div>
+        <span class="af-sec-more">전체 보기 →</span>
+      </div>
+      <div class="progs">
+        <div class="prog"><span class="prog-eyebrow">이번 학기 대표 챌린지</span><span class="prog-t">가을학기 12주<br>고전 완독 챌린지</span><div class="prog-meta"><span>1,247명 참여</span><span>12주</span></div><span class="prog-cta">참가하기 →</span></div>
+        <div class="prog"><span class="prog-eyebrow">2026 신입생 필수</span><span class="prog-t">신입생 필수<br>고전 챌린지</span><div class="prog-meta"><span>287명 참여</span><span>12주 필수</span></div><span class="prog-cta">참가하기 →</span></div>
+        <div class="prog"><span class="prog-eyebrow">For International Students</span><span class="prog-t">Learning Korean<br>through Classics</span><div class="prog-meta"><span>124명 참여</span><span>12개국</span></div><span class="prog-cta">참가하기 →</span></div>
+      </div>
+    </div>
+
+    <!-- 공지 피드 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>일반공지 · 학술공지 게시판</b> → 읽기 좋은 소식 피드로</span>
+      <div class="af-sec-head">
+        <div><span class="af-sec-title">도서관 소식</span></div>
+        <span class="af-sec-more">전체 보기 →</span>
+      </div>
+      <div class="feed">
+        <div class="fd"><span class="fd-tag">공지</span><span class="fd-t">2학기 도서관 이용 안내 — 평일 22시까지 열어요</span><span class="fd-d">개강 첫 주부터 열람실·서가 모두 연장 운영합니다.</span><span class="fd-time">8월 1일</span></div>
+        <div class="fd"><span class="fd-tag ac">학술</span><span class="fd-t">논문작성법 특강 — 표절 예방과 인용의 기술</span><span class="fd-d">9월 둘째 주, 신청자에 한해 Copy Killer 실습 포함.</span><span class="fd-time">7월 20일</span></div>
+      </div>
+    </div>
+
+    <!-- 별이 -->
+    <div class="af-sec">
+      <span class="map-tag"><b>이용시간·규정·오시는 길 등 안내문 20여 개</b> → 물어보면 답하는 별이로</span>
+      <div class="byeoli">
+        <span class="by-mark">✦</span>
+        <div>
+          <div class="by-t">궁금한 건 별이에게 물어보세요</div>
+          <div class="by-s">이용시간, 대출 규정, 연체·변상, 상호대차, 오시는 길 — 안내 페이지를 뒤질 필요 없이 바로 답해요</div>
+        </div>
+        <div class="by-chips">
+          <span class="by-chip">오늘 몇 시까지 해요?</span>
+          <span class="by-chip">연체하면 어떻게 되나요?</span>
+          <span class="by-chip">타대학 도서관 이용</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="af-foot">
+      본 화면은 Bookstar가 제작한 리뉴얼 제안 시안입니다 · 화면 속 도서·수치·공지는 예시 데이터입니다<br>
+      검색·대출현황·예약·전자책 대출은 학술정보원 공식 연동(OpenAPI·SSO)으로 이미 동작이 검증되었습니다
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 매핑 표 ═══════════════ -->
+<div class="map-sec">
+  <h2>기존 메뉴 76개는 어디로 갔나요</h2>
+  <p>없어지는 게 아니라 자리를 옮깁니다. 2026-08-08 기준 전체 메뉴를 실측 분류한 결과입니다.</p>
+  <table class="map-table">
+    <tr><th>지금 (lib.semyung.ac.kr)</th><th>리뉴얼 후 (Bookstar)</th></tr>
+    <tr><td>통합검색 · 소장자료 · 유형별 검색 · AI도서추천</td><td><b>검색창 하나</b> — 서지·실시간 소장 상태에 의미 기반 AI 추천까지 (공식 API, 구현 완료)</td></tr>
+    <tr><td>MY LIBRARY — 대출현황·연장·예약·찾아줘북즈</td><td><b>내 도서관</b> — 첫 화면 상단 카드 (학교 SSO 본인 명의 연동, 실증 완료)</td></tr>
+    <tr><td>E-Book (교보 전자도서관 23,496종)</td><td><b>전자책 섹션</b> — 이 화면에서 검색·대출·반납·열람까지 (본인 명의 대출 검증 완료)</td></tr>
+    <tr><td>YES24 크레마클럽</td><td>구독 도서에 <b>"크레마에도 있어요" 배지</b> + 앱 연결 (외부 앱 전용 구조라 배지 방식이 최대치)</td></tr>
+    <tr><td>신착도서 · 인기도서 · 추천도서 · CHARM 인증도서</td><td><b>사서 추천 히어로 + 대출 랭킹 + 큐레이션</b> — 매일 자동 갱신 중</td></tr>
+    <tr><td>독서인증제 · 월별 우수 독서후기 · 독서동아리</td><td><b>독서 챌린지 + 완독 인증 + 서평</b> — 퀴즈로 인증하고 별을 모으는 참여형</td></tr>
+    <tr><td>일반공지 · 학술공지 · 행사 · FAQ · QnA</td><td><b>소식 피드 + 별이(AI 사서)</b> — 게시판 대신 묻고 답하기</td></tr>
+    <tr><td>이용 안내문 20여 개 (규정·시간·오시는 길 등)</td><td><b>별이가 즉답</b> — 페이지를 찾아다닐 필요 없음</td></tr>
+    <tr><td>전자자료 A-to-Z · 학술DB · Copy Killer</td><td>기존 링크 유지 — 연구지원 메뉴로 그대로 연결 (외부 시스템)</td></tr>
+    <tr><td>시설 예약(스터디룸·VR체험관) · 모바일 신분증</td><td>기존 시스템으로 링크 연결 (별도 시스템 유지)</td></tr>
+  </table>
+  <div class="map-note">※ "구현 완료·검증 완료"로 표시한 항목은 학술정보원 공식 OpenAPI와 학교 SSO를 통해 실제 계정으로 동작을 확인한 기능입니다. 나머지는 링크 연결이므로 이관 부담이 없습니다.</div>
+</div>
+
+<!-- ═══════════════ 마무리 ═══════════════ -->
+<div class="closing">
+  <div class="line"></div>
+  <p>순서는 급하지 않습니다. 먼저 <b>부가서비스로 학생들이 쓰는 모습</b>을 보여드리고,<br>
+  이용률이 증명되면 그때 홈페이지의 얼굴을 바꾸는 논의를 시작하면 됩니다.<br>
+  이 시안은 그 마지막 그림을 미리 보여드리는 것입니다.</p>
+  <p style="margin-top:18px;"><b>도서관이 이미 산 책·전자책·구독이 학생에게 닿게 하는 것</b> — 그것이 이 리뉴얼의 전부입니다.</p>
+  <div class="sign">Bookstar · 참나루</div>
+</div>
+
+</div>
+
+<button class="map-toggle" onclick="document.body.classList.toggle('show-map')"><span class="dot"></span><span id="mtLabel">기존 메뉴 매핑 보기</span></button>
+<script>
+document.querySelector('.map-toggle').addEventListener('click',function(){
+  document.getElementById('mtLabel').textContent = document.body.classList.contains('show-map') ? '매핑 숨기기' : '기존 메뉴 매핑 보기';
+});
+</script>
+</body>
+</html>
