@@ -6002,10 +6002,10 @@ function libDetail(isbn){
             : hasPaper
             ? `<a class="lcd-way pw t-paper" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="wtag">소장</span><span class="ar">›</span></a>`
             : hasSub
-            ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
+            ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
             : '';
           const otherPaper=(hasEb&&hasPaper) ? paperWay((en&&en.paperStatus)||'소장', b._pp||opacUrl) : '';
-          const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
+          const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
           const ways=otherPaper+cremaWay;
           return primary + (ways?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${ways}</div>`:'');
         }
@@ -6016,7 +6016,7 @@ function libDetail(isbn){
         : `<div class="lcd-way pw t-find" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_PAPER}</span><span class="wlabel">우리 도서관에서 찾기</span><span class="ar">›</span></div>`)
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
-        ${en.crema ? `<a class="lcd-way t-sub" href="${esc(cremaHref(en.cremaUrl||'', b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
+        ${en.crema ? `<a class="lcd-way t-sub" href="${esc(cremaHref(en.cremaUrl||'', b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
         ${(en.paper && !isPaperHold) ? paperWay(en.paperStatus||'소장', en.paperUrl||opacUrl) : ''}
       </div>` : '');
       })()}
@@ -9996,7 +9996,7 @@ function usCardsHTML(results){
     if(b.smEbook){
       act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">바로 읽기</button>`;
     } else if(b.crema===true){
-      act=`<a class="usc-act" href="${esc(cremaHref(b.cremaUrl||'', b.title||''))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">크레마클럽에서 읽기</a>`;
+      act=`<a class="usc-act" href="${esc(cremaHref(b.cremaUrl||'', b.title||''))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">크레마클럽에서 읽기 · 앱 필요</a>`;
     } else if(b.smPaper){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
