@@ -2459,8 +2459,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <!-- 테스트 계정 선택 모달 -->
 <div class="bx-acc-overlay" id="bxAccOverlay" onclick="if(event.target===this)bxClosePicker()">
   <div class="bx-acc-modal">
-    <h3>누구로 입장할까요?</h3>
-    <p>테스트 계정을 선택하세요. 계정마다 자기 점수·소감만 보입니다. (헤더의 이름을 누르면 언제든 전환)</p>
+    <h3>세명대 계정으로 로그인</h3>
+    <p>세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.</p>
     <div class="bx-acc-list" id="bxAccList"></div>
   </div>
 </div>
@@ -5538,13 +5538,9 @@ const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 /* ═══ 테스트 계정 + 챌린지 결과 서버 저장 (bookstar_students / bookstar_challenge_results) ═══ */
 const BX_SB = SB_REST;
 const BX_H = {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON, 'content-type':'application/json'};
-const BX_STUDENTS = [
-  {id:'s1',name:'김민준',emoji:'📘',dept:'기계공학과',interests:['로봇','공학','과학']},
-  {id:'s2',name:'이서연',emoji:'🌷',dept:'심리학과',interests:['심리','마음','에세이']},
-  {id:'s3',name:'박도윤',emoji:'⚽',dept:'스포츠과학과',interests:['운동','건강','자기계발']},
-  {id:'s4',name:'최지우',emoji:'🎨',dept:'시각디자인학과',interests:['예술','디자인','창작']},
-  {id:'s5',name:'정하준',emoji:'🚀',dept:'항공우주공학과',interests:['우주','물리','미래']}
-];
+// 8/9 데모 학생 5명(s1~s5) 삭제 — DB 기록까지 전부 정리(백업: 세명대_자료/_데모학생5명_삭제전_백업_20260809.json).
+// 이제 계정은 세명대 SSO(도서관 배너)로만 생긴다. 배열은 이름/학과 보강용 폴백이라 비워서 유지.
+const BX_STUDENTS = [];
 // ── 학생 식별 단일 진입점 (SSO 연결 지점) ──
 // 세명대 SSO 붙는 날: 로그인 성공 후 window.__SSO_STUDENT = {id, name, emoji, dept} 를 세팅하면
 // bxStudent()를 쓰는 앱 전역(40여 곳)이 전부 그 학생으로 동작한다(다른 코드 무변경).
@@ -5721,11 +5717,13 @@ function bxRenderAccountChip(){
   el.innerHTML = s ? `<span style="font-size:15px;">${s.emoji||'🙂'}</span> ${esc(s.name)}` : `🙂 로그인`;
 }
 function bxOpenPicker(){
-  const list=document.getElementById('bxAccList'); const cur=bxStudent();
-  if(list) list.innerHTML = BX_STUDENTS.map(s=>`
-    <button class="bx-acc-item${cur&&cur.id===s.id?' on':''}" onclick="bxPickStudent('${s.id}')">
-      <span class="bx-acc-emoji">${s.emoji}</span><span>${esc(s.name)}</span>${cur&&cur.id===s.id?'<span class="bx-acc-cur">현재</span>':''}
-    </button>`).join('');
+  // 8/9 데모 계정 선택창 → 세명대 로그인 안내로 전환. 정식 입장 경로는
+  // [세명대 로그인 → 도서관 홈페이지 참나루 배너] 하나뿐이다(연계값은 배너로만 온다).
+  const list=document.getElementById('bxAccList');
+  if(list) list.innerHTML=`
+    <button class="bx-acc-item" onclick="window.open(SEMYUNG_LOGIN_URL,'_blank')">
+      <span class="bx-acc-emoji">🎓</span><span>세명대 로그인 하러 가기</span>
+    </button>`;
   document.getElementById('bxAccOverlay')?.classList.add('open');
 }
 function bxClosePicker(){ document.getElementById('bxAccOverlay')?.classList.remove('open'); }
@@ -10486,11 +10484,11 @@ window.addEventListener('DOMContentLoaded', () => {
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
     }
   }catch(e){}
-  // 테스트 계정: 칩 표시 + (로그인됨)서버 결과 로딩 / (미로그인)선택창
+  // 계정 칩 표시 + (로그인됨)서버 결과 로딩.
+  // 8/9 미로그인 자동 선택창 제거 — 데모 계정이 사라졌으므로 방문자는 게스트로 자유 탐색,
+  // 로그인은 헤더 칩(세명대 로그인 안내)이나 글쓰기 등 계정 필요 순간에만 권한다.
   bxRenderAccountChip();
-  const _isDash = new URLSearchParams(location.search).get('page')==='dashboard';   // 사서 대시보드 딥링크는 학생 로그인창 띄우지 않음
   if(bxStudent()){ bxLoadResultsFromDB().then(()=>{ try{ renderChalScore(); renderMyImpressions(); renderQuestMap(); }catch(e){} }); }
-  else if(!_isDash){ setTimeout(bxOpenPicker, 400); }
   // 리더 prefs / stats 복원
   loadReaderPrefs(); loadReaderStats(); if(bxStudent()) bxLoadReaderStats();
   // 레거시 klever-theme(다크 토글) → 새 prefs로 흡수
