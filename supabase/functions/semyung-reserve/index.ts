@@ -97,6 +97,14 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "reserve";
+    // 🔒 8/9 계약 전 잠금 — 공유계정(03251) 명의의 신청·취소 대행 중단.
+    //   이 함수는 인증이 없어서, 로그인 안 한 방문자도 호출만 하면 사서가 실물을 꺼내는
+    //   실세계 작업이 '03251' 이름으로 발생했다. 예약류는 학생 본인 명의(semyung-my,
+    //   SSO 개인세션)로만 — 앱은 smLoginGuide()로 세명대 로그인을 유도한다.
+    //   현황 조회(list/holdlist)는 읽기 전용이라 유지.
+    if (action !== "list" && action !== "holdlist") {
+      return json({ ok: false, action, needsLogin: true, error: "도서관 로그인이 필요합니다 — 예약은 본인 이름으로만 접수돼요" });
+    }
     const reckey = (url.searchParams.get("reckey") || "").replace(/[^A-Za-z0-9]/g, "");
     const cookie = await login();
 
