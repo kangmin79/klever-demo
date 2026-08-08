@@ -6017,9 +6017,12 @@ function libDetail(isbn){
   if(paperHoldKey) loadHolding(paperHoldKey, 'pwHold-'+paperHoldKey);
   renderDetailReviews(b.isbn, cleanT(b.t));
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
-  if(!desc && b._sm && reckey) loadDesc(reckey, /^CATTOT/.test(reckey));
-  // 전자책이면 실시간 재고 — 종이책은 소장현황 박스가 이미 보여주는데 전자책만 '소장'으로만 떠 있었다
-  if(b.lib && /^\d+$/.test(reckey)) loadEbookStock(reckey);
+  // 세명대 키(전자책 바코드=숫자 / 종이책 CATTOT)만 있으면 어느 목록에서 왔든 DB에서 보강한다.
+  // (기존: b._sm 플래그에 의존 → 큐레이션 등 일부 경로에서 저자·줄거리가 통째로 비어 보였다)
+  const isSmKey = /^\d+$/.test(reckey) || /^CATTOT/.test(reckey);
+  if(isSmKey) loadDesc(reckey, /^CATTOT/.test(reckey), b);
+  // 전자책 실시간 재고 — 태그가 실제로 그려졌는지로 판단(책 객체의 lib 유무에 의존하지 않는다)
+  if(/^\d+$/.test(reckey) && document.getElementById('ebStockTag')) loadEbookStock(reckey);
 }
 /* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
    못 읽으면 조용히 '소장' 그대로 둔다(틀린 숫자를 보여주느니 말을 안 하는 편이 낫다). */
@@ -6053,18 +6056,27 @@ async function ebReserve(brcd){
   if(d&&d.ok) loadEbookStock(brcd);
 }
 // 모달 줄거리 보강 → #lcdDesc 채움. isCatalog면 종이책(CATTOT+ctrl), 아니면 전자책(barcode 또는 isbn).
-async function loadDesc(key, isCatalog){
+async function loadDesc(key, isCatalog, book){
   try{
     // 대상 요소를 await 전에 캡처 — 다른 책 모달로 바뀌면 이 el은 detach돼 늦은 응답이 무해해짐
     // (기존: 응답 후 id로 찾아 → A책 줄거리가 B책 모달에 쓰이던 레이스)
     const el=document.getElementById('lcdDesc'); if(!el) return;
+    const auEl=document.querySelector('#lcDetail .lcd-i .au');   // 저자·출판사 줄(비어 있으면 함께 채움)
+    const sel='description,author,publisher,pub_year';
     const url=isCatalog
-      ? `${SB_REST}/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=description&limit=1`
-      : `${SB_REST}/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=description&limit=1`;
+      ? `${SB_REST}/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=${sel}&limit=1`
+      : `${SB_REST}/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=${sel}&limit=1`;
     const r=await fetch(url,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
-    if(!d||!d.description) return;
+    if(!d) return;
     if(!el.isConnected) return;   // 모달이 재렌더/닫힘 → 폐기
+    // 저자·출판사·발행년이 비어 있으면 채운다(있으면 손대지 않는다 — 목록이 더 정확할 수 있음)
+    if(auEl && auEl.isConnected && !auEl.textContent.trim()){
+      const bits=[d.author,d.publisher,d.pub_year].map(v=>String(v||'').trim()).filter(Boolean);
+      if(bits.length) auEl.textContent=bits.join(' · ');
+    }
+    if(!d.description) return;
+    if(el.textContent.trim()) return;   // 이미 줄거리가 있으면 덮지 않는다
     el.textContent=d.description; el.style.display='';
   }catch(e){}
 }
