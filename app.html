@@ -211,6 +211,41 @@ body.dark .side-node .icon{color:var(--gold);}
 /* 우리 도서관 — 밀리의 서재 스타일 멀티섹션 */
 .lc-fb{display:flex;align-items:center;justify-content:center;text-align:center;width:100%;height:100%;padding:8px;font-size:11px;font-weight:700;color:#fff;line-height:1.4;}
 .lc-star{color:var(--gold);font-weight:800;}
+/* ── 표지 없는 책 = 활자 표지(A안) ─────────────────────────────────
+   종이책 단행본의 약 30%(8만여 권)는 알라딘·네이버 어디에도 표지가 없다(대부분 80~00년대 절판 학술서).
+   "표지가 없어 비어 보이는 칸"이 아니라 "원래 이런 표지"로 읽히게 하는 게 목적.
+   크기는 container query(cqw)로 자기 폭에 맞춰 자동 — 캐러셀 썸네일부터 상세 모달까지 한 마크업으로 커버.
+   cqw 미지원 브라우저를 위해 각 규칙에 px 값을 먼저 두었다(뒤 선언을 무시하면 px가 남음). */
+.nc-a{container-type:inline-size;width:100%;height:100%;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
+  color:#fff;text-align:left;padding:13% 11% 11%;}
+.nc-a .nc-t{font-family:'Noto Serif KR',Georgia,serif;font-weight:700;line-height:1.3;letter-spacing:-.02em;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
+  text-shadow:0 1px 3px rgba(0,0,0,.18);font-size:13px;font-size:clamp(7.5px,9.6cqw,28px);}
+.nc-a.l1 .nc-t{font-size:22px;font-size:clamp(9px,16.5cqw,44px);}
+.nc-a.l2 .nc-t{font-size:18px;font-size:clamp(8.5px,13.6cqw,38px);}
+.nc-a.l3 .nc-t{font-size:15px;font-size:clamp(8px,11.2cqw,32px);}
+.nc-a.l5 .nc-t{font-size:11px;font-size:clamp(7px,8.2cqw,24px);}
+.nc-a.l6 .nc-t{font-size:10px;font-size:clamp(6.5px,7.1cqw,21px);-webkit-line-clamp:6;}
+.nc-a .nc-s{font-weight:500;opacity:.7;margin-top:.5em;line-height:1.35;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  font-size:8px;font-size:clamp(7px,5.9cqw,13px);}
+.nc-a .nc-f{opacity:.8;line-height:1.5;border-top:1px solid rgba(255,255,255,.28);padding-top:6px;
+  overflow:hidden;font-size:9px;font-size:clamp(7px,6.9cqw,12px);}
+.nc-a .nc-f b,.nc-a .nc-f i{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;}
+.nc-a .nc-f b{font-weight:700;opacity:.96;}
+.nc-a::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 15% 0%,rgba(255,255,255,.14),transparent 62%);}
+/* 아주 작은 썸네일(공유방 미니 표지 등)에선 제목만 남긴다 */
+@container (max-width:86px){
+  .nc-a{padding:9%;justify-content:center;}
+  .nc-a .nc-f,.nc-a .nc-s{display:none;}
+  .nc-a .nc-t{-webkit-line-clamp:4;}
+}
+@container (max-width:46px){   /* 리뷰 줄의 30px 미니 표지 등 */
+  .nc-a{padding:6%;}
+  .nc-a .nc-t{-webkit-line-clamp:3;letter-spacing:-.04em;line-height:1.2;}
+}
 .ml{display:flex;flex-direction:column;gap:42px;padding-bottom:20px;}
 .ml-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
 .ml-h-t{font-family:Georgia,'Noto Serif KR',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);}
@@ -533,7 +568,7 @@ body.dark .sh-btn.joined{background:transparent;color:#cdd5e6;border-color:rgba(
 /* 논문(KCI·국회)은 표지가 없음 → 빈 박스 대신 문서 아이콘 플레이스홀더(골드 톤) */
 .paper-cover{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f6eed9;color:#b58f3e;}
 .paper-cover svg{width:42%;height:42%;}
-.book-cover:has(.paper-cover){padding:0;}
+.book-cover:has(.paper-cover),.book-cover:has(.nc-a){padding:0;}
 body.dark .paper-cover{background:#3a3115;color:#d9b768;}
 .mns-badge{position:absolute;top:8px;left:8px;z-index:2;background:var(--gold);color:#1a1208;font-size:10px;font-weight:800;letter-spacing:-.2px;padding:3px 7px;border-radius:6px;box-shadow:0 3px 8px rgba(0,0,0,.18);}
 .detail-meta-chip.mns-chip{background:var(--gold);color:#1a1208;}
@@ -3245,7 +3280,7 @@ function shelfAdd(b){
   if(!a.find(x=>x.key===key)){ a.unshift({key,t:b.t||b.title||'',a:b.a||b.author||'',cover:b.cover||'',lib:b.lib||'',status:'reading',ts:Date.now()}); shelfSave(a); }
 }
 function shelfCard(x){
-  const cv=x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:'📖';
+  const cv=x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:ncCover(x);
   const right = x.status==='done'
     ? `<span style="font-size:12px;font-weight:800;color:#1d6b48;white-space:nowrap">✔ 완독${x.returned?' · 반납됨':''}</span>`
     : `<div style="display:flex;gap:6px;align-items:center;white-space:nowrap">`
@@ -4882,7 +4917,7 @@ function chalHero(c){
   const b=(c.books||[])[0]||{t:c.title};
   const face=b.cover
     ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
-    : `<div class="book-cover" style="background:${spineColor(b.t||c.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||c.title||''))}</div></div></div>`;
+    : `<div class="book-cover">${ncCover(b.t?b:{t:c.title})}</div>`;
   const m=chalMissionPlain(c.mission);
   const join=chalIsJoined(c)?`nav('mypage')`:`chalJoin('${esc(String(c.id))}')`;
   return `<div class="shelf-hero"><div class="sh-grid">
@@ -5191,9 +5226,58 @@ async function smUnhold(reckey,mainNo){
 }
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
+
+/* ═══ 표지 없는 책 = 활자 표지(A안) ═══════════════════════════════════
+   ncCover(b) 하나로 앱 전체의 '표지 없음' 자리를 통일한다. 호출부는 크기를 몰라도 된다(CSS cqw가 처리).
+   b는 화면마다 모양이 달라서(t/title, a/author, pubYear/pub_year…) 방어적으로 읽는다. */
+const NC_PAL=['#55606f','#5d4e8e','#7b5a3d','#2d6183','#2f6b55','#7a6531','#8a4560','#256f74','#8d4034','#4d5570'];
+function ncShade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const cl=v=>Math.max(0,Math.min(255,v));
+  const r=cl((n>>16)+amt), g=cl(((n>>8)&255)+amt), b=cl((n&255)+amt);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+/* 색: 청구기호(KDC) 첫 자리가 있으면 주제색, 없으면 제목 해시.
+   ※ 지금 대부분의 화면은 class_no를 안 실어와 해시로 떨어진다(색은 고르게 흩어짐).
+     검색 RPC·Edge Fn에 class_no를 추가하면 자동으로 주제색으로 승격된다. */
+function ncColor(b){
+  const c=String((b&&(b.class_no||b.call_no||b.callNo))||'').trim();
+  if(/^[0-9]/.test(c)) return NC_PAL[+c[0]];
+  const s=String((b&&(b.t||b.title))||'')+'|'+String((b&&(b.a||b.author))||'');
+  let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;
+  return NC_PAL[h%NC_PAL.length];
+}
+/* 서지 표기 잡음 제거 + 부제 분리. cleanT()는 '-'에서도 자르기 때문에 표지엔 쓰지 않는다. */
+function ncSplit(t){
+  let s=decEnt(String(t||'')).replace(/\[[^\]]*\]/g,' ').replace(/\s+/g,' ').trim();
+  let sub='';
+  const eq=s.indexOf(' = ');                       // ' = ' 뒤는 원제(영문)
+  if(eq>0){ sub=s.slice(eq+3).trim(); s=s.slice(0,eq).trim(); }
+  const co=s.indexOf(' : ');                       // ' : ' 뒤는 부제
+  if(co>0){ sub=s.slice(co+3).trim()+(sub?' / '+sub:''); s=s.slice(0,co).trim(); }
+  s=s.replace(/\s*[\/:,.]\s*$/,'').trim();
+  return {main:s||decEnt(String(t||'')).trim(),sub:sub};
+}
+function ncLenClass(n){ return n<=6?'l1':n<=10?'l2':n<=16?'l3':n<=26?'l4':n<=40?'l5':'l6'; }
+function ncCover(b){
+  b=b||{};
+  const {main,sub}=ncSplit(b.t||b.title||'');
+  const col=ncColor(b);
+  const au=authName(b);
+  const pub=String(b.publisher||'').trim();
+  const yr=String(b.pubYear||b.pub_year||b.year||'').trim().slice(0,4);
+  const foot=[pub,yr].filter(Boolean).join(' · ');
+  const bg=`linear-gradient(157deg,${ncShade(col,22)},${col} 58%,${ncShade(col,-20)})`;
+  return `<div class="nc-a ${ncLenClass(main.length)}" style="background:${bg}">`
+    + `<div><div class="nc-t">${escD(main)}</div>`
+    + (sub?`<div class="nc-s">${escD(sub)}</div>`:'')
+    + `</div>`
+    + ((au||foot)?`<div class="nc-f">${au?`<b>${escD(au)}</b>`:''}${foot?`<i>${escD(foot)}</i>`:''}</div>`:'')
+    + `</div>`;
+}
 function lcCvHTML(b){
   const cv=_gbCover(b);
-  if(!cv) return `<div class="lc-fb">${esc(b.t)}</div>`;
+  if(!cv) return ncCover(b);
   const hi=esc(hiCover(cv)), orig=esc(cv);
   return `<img src="${hi}" loading="lazy" onerror="if(this.dataset.o){this.remove()}else{this.dataset.o=1;this.src='${orig}'}">`;
 }
@@ -5344,7 +5428,7 @@ function fmtTags(b){
   return t.length?`<div class="fmt-tags">${t.map(x=>`<span class="fmt-tag fmt-${x[1]}">${x[0]}</span>`).join('')}</div>`:'';
 }
 function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
-function mlcv(cls,b){return `<div class="${cls}"${_gbCover(b)?'':` style="background:${spineColor(b.t||b.isbn||'')}"`}>${lcCvHTML(b)}</div>`;}
+function mlcv(cls,b){return `<div class="${cls}">${lcCvHTML(b)}</div>`;}   /* 표지 없으면 lcCvHTML이 ncCover(활자 표지)를 넣는다 — 뒤에 깔던 단색 배경 불필요 */
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
@@ -5406,7 +5490,7 @@ function mlShelf(b,note,cur,title){
   const cls=isCls(b);
   const face = cls ? bookCoverHTML(clOf(b))
     : (b.cover ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
-    : `<div class="book-cover" style="background:${spineColor(b.t||b.title||'책')}"><div><div class="book-cover-title">${esc(cleanT(b.t||b.title||''))}</div><div class="book-cover-author">${esc(authName(b))}</div></div></div>`);
+    : `<div class="book-cover">${ncCover(b)}</div>`);
   const bookT = esc(cls?clOf(b).title:cleanT(b.t||b.title||'추천 도서'));
   const bookA = esc(cls?(clOf(b).author||''):authorRich(b));
   const checks=[];
@@ -5981,7 +6065,7 @@ function libDetail(isbn){
   const ov=document.getElementById('lcDetail');
   ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
-      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:'<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📕</div>'}</div>
+      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:ncCover(b)}</div>
       <div class="lcd-i">${b.rank?`<div class="lcd-rank"><span class="ricon">${SVG_RANK}</span>우리 학교 대출 ${b.rank}위</div>`:''}<h2>${escD(cleanT(b.t))}</h2><div class="au">${escD(authorLine(b))}${publisher?` · ${escD(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
@@ -6928,7 +7012,7 @@ function openDetail(bookId){
   if(!ov){ nav('detail'); return; }
   const cover = b.coverSrc
     ? `<img src="${esc(b.coverSrc)}" alt="${esc(b.title)}" onerror="this.style.display='none'">`
-    : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:28px">📖</div>';
+    : ncCover(b);
   const others = BOOKS.filter(x=>x.author===b.author&&x.id!==b.id).length;
   const chips = [b.minumsa?'★ 민음사':'', b.category, b.period, b.intl?'🌏 International OK':'']
     .filter(Boolean).map(c=>`<span class="lcd-chip">${esc(c)}</span>`).join('');
@@ -10001,7 +10085,7 @@ function usCardsHTML(results){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
     return `<div class="book-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="book-cover has-img">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
+      <div class="book-cover${b.cover?' has-img':''}">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:ncCover(b)}</div>
       <div class="book-info">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}${b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:''}</div>
         <div class="book-title">${escD(b.title)}</div>
@@ -10671,7 +10755,7 @@ window.addEventListener('keydown', (e) => {
     const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
     const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
     return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="hwc-cv"${b.cover?'':` style="background:${spineColor(b.title||b.t||isbn)}"`}>${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:`<div class="lc-fb">${escD(b.title)}</div>`}</div>
+      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:ncCover(b)}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(meta)}</div>
       <div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">${usFormBadges(b)}${loan}</div>${read}</div></div>`;
   }
