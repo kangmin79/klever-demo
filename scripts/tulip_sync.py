@@ -11,7 +11,8 @@
 또는 hwik-web/.env 의 SUPABASE_ACCESS_TOKEN.
 규칙: 요청 간격 0.5초(전수)/0.3초(bookinfo), User-Agent 명시. 표지는 P2에서 별도.
 """
-import sys, io, os, re, json, time, argparse, ssl, html
+import sys, io, os, re, json, time, argparse, ssl, html, threading
+import concurrent.futures as cf
 import urllib.request, urllib.parse
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -220,6 +221,7 @@ class D4LLimit(Exception):
     """정보나루 일 한도(30,000/IP등록 시) 도달 — 루프를 깨끗이 중단시키기 위한 신호"""
 
 _d4l_calls = 0
+_call_lock = threading.Lock()      # 조회를 스레드 8개로 돌리므로 호출 카운터를 잠근다
 def _d4l_cover(u):
     """정보나루 bookImageURL 고해상도 승격.
     알라딘 CDN은 썸네일(/cover/, 중앙 18KB)로 오는데 /cover500/으로 바꾸면 87KB짜리 원본이 온다
@@ -237,7 +239,7 @@ def d4l_book(isbn):
     내용은 같은 원본 — 알라딘이 준 120권을 재조회하니 120/120 보유·111건 전문 완전일치.
     ⚠️함정: srchBooks에 isbn= 를 주면 파라미터가 무시돼 엉뚱한 책이 온다. 반드시 srchDtlList + isbn13."""
     global _d4l_calls
-    _d4l_calls += 1
+    with _call_lock: _d4l_calls += 1
     c = re.sub(r"[^0-9Xx]", "", isbn or "")
     if len(c) < 10: return "", ""
     try:
@@ -260,7 +262,7 @@ def d4l_book(isbn):
 _aladin_calls = 0
 def aladin(endpoint, **params):
     global _aladin_calls
-    _aladin_calls += 1
+    with _call_lock: _aladin_calls += 1
     params.update({"ttbkey": ALADIN_KEY, "output": "js", "Version": "20131101"})
     qs = urllib.parse.urlencode(params, encoding="utf-8")
     try:
@@ -385,51 +387,71 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
     n0 = sum(1 for r in res if r["pri"] == 0)
     print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) "
           f"/ 정보나루 예산 {d4l_budget:,} · 알라딘 예산 {budget:,}")
-    hit = miss = dhit = dmiss = 0; nsrc = asrc = 0; buf = []
-    def flush():
-        # 줄거리는 한 건이 수백 자라 100문 배치가 Mgmt API 60초를 넘긴다(2026-08-09 timeout 실측).
-        # 50문씩 쪼개고 타임아웃을 넉넉히. 실패해도 다음 배치는 계속 간다.
-        while buf:
-            part = buf[:50]; del buf[:50]
-            try: sql("; ".join(part), timeout=180)
-            except Exception as e: print(f"  flush 실패({len(part)}건): {e}")
-    for r in res:
-        if _d4l_calls >= d4l_budget and _aladin_calls >= budget:
-            print(f"  예산 소진 — 남은 건은 내일 재실행")
-            break
-        # 1순위 정보나루(줄거리 94.2%·일 30,000) → 없으면 알라딘 폴백(70~77%·일 5,000)
-        cov = dsc = ""
-        if _d4l_calls < d4l_budget:
+    hit = miss = dhit = dmiss = 0; nsrc = asrc = 0
+    limit_hit = [False]                       # 스레드에서 정보나루 한도를 만나면 세운다
+
+    def fetch_one(r):
+        """조회만 담당(스레드에서 실행). DB 쓰기는 메인 스레드가 모아서 한다."""
+        cov = dsc = src = ""
+        if not limit_hit[0] and _d4l_calls < d4l_budget:
             try:
                 cov, dsc = d4l_book(r["isbn"])
-                if cov or dsc: nsrc += 1
+                if cov or dsc: src = "n"
             except D4LLimit as e:
-                print(f"  정보나루 한도 도달({e}) — 이후는 알라딘으로")
-                d4l_budget = 0
+                limit_hit[0] = e
         if not (cov or dsc) and _aladin_calls < budget:
             # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
             # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
             cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
-            if cov or dsc: asrc += 1
-        if r["pri"] == 1:
-            # 표지는 이미 있다 — 줄거리만 채운다. 덮어쓰지 않도록 cover_url은 손대지 않는다.
-            # 실패도 ''로 남겨 내일 같은 책을 또 조회하지 않게 한다(앱은 ''를 falsy로 처리).
-            buf.append(f"update semyung_tulip set description={esc(dsc or '')}, "
-                       f"updated_at=now() where ctrl={esc(r['ctrl'])}")
-            if dsc: dhit += 1
-            else:   dmiss += 1
-        elif cov:
-            extra = f", description={esc(dsc)}" if dsc else ""
-            buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
-            hit += 1
-        else:
-            buf.append(f"update semyung_tulip set cover_url='', updated_at=now() where ctrl={esc(r['ctrl'])}")
-            miss += 1
-        if len(buf) >= 100: flush()
-        n = hit + miss + dhit + dmiss
-        if n % 500 == 0: print(f"  {n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
-        time.sleep(0.05)
-    flush()
+            if cov or dsc: src = "a"
+        return r, cov, dsc, src
+
+    def write_batch(rows):
+        """UPDATE 문 N개 대신 values 조인 1문으로 쓴다.
+        낱개 UPDATE 50문이 배치당 수 초씩 먹어 전체 시간의 3분의 1을 차지했다(2026-08-10)."""
+        p1 = [(r["ctrl"], dsc or "") for r, cov, dsc, _ in rows if r["pri"] == 1]
+        p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _ in rows if r["pri"] != 1]
+        stmts = []
+        if p1:
+            vals = ",".join(f"({esc(c)},{esc(d)})" for c, d in p1)
+            stmts.append("update semyung_tulip t set description=v.d, updated_at=now() "
+                         f"from (values {vals}) as v(c,d) where t.ctrl=v.c")
+        if p0:
+            vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in p0)
+            # 줄거리가 같이 왔으면 채우고, 없으면 기존 값을 건드리지 않는다
+            stmts.append("update semyung_tulip t set cover_url=v.u, "
+                         "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
+                         f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c")
+        for s in stmts:
+            try: sql(s, timeout=180)
+            except Exception as e: print(f"  쓰기 실패({len(rows)}건): {str(e)[:120]}")
+
+    # 조회는 네트워크 대기가 대부분이라 스레드 8개면 그만큼 빨라진다(건당 0.74s → 0.1s 수준).
+    # 배치(200) 단위로 조회→쓰기를 반복해 예산 계산과 중간 저장을 단순하게 유지한다.
+    BATCH, WORKERS = 200, 8
+    done_n = 0
+    for i in range(0, len(res), BATCH):
+        if limit_hit[0]:
+            print(f"  정보나루 한도 도달({limit_hit[0]}) — 남은 건은 내일")
+            break
+        if _d4l_calls >= d4l_budget and _aladin_calls >= budget:
+            print("  예산 소진 — 남은 건은 내일 재실행")
+            break
+        chunk = res[i:i+BATCH]
+        with cf.ThreadPoolExecutor(max_workers=WORKERS) as ex:
+            out = list(ex.map(fetch_one, chunk))
+        for r, cov, dsc, src in out:
+            if src == "n": nsrc += 1
+            elif src == "a": asrc += 1
+            if r["pri"] == 1:
+                if dsc: dhit += 1
+                else:   dmiss += 1
+            elif cov: hit += 1
+            else:     miss += 1
+        write_batch(out)
+        done_n += len(chunk)
+        if done_n % 2000 < BATCH:
+            print(f"  {done_n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
     print(f"[covers-paper-aladin] 완료 — 표지 {hit:,}(실패 {miss:,}) / 줄거리 {dhit:,}(없음 {dmiss:,}) "
           f"| 출처 정보나루 {nsrc:,} · 알라딘 {asrc:,} | 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}")
 
