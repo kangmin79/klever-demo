@@ -11,7 +11,7 @@
 또는 hwik-web/.env 의 SUPABASE_ACCESS_TOKEN.
 규칙: 요청 간격 0.5초(전수)/0.3초(bookinfo), User-Agent 명시. 표지는 P2에서 별도.
 """
-import sys, io, os, re, json, time, argparse, ssl
+import sys, io, os, re, json, time, argparse, ssl, html
 import urllib.request, urllib.parse
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -89,6 +89,16 @@ def esc(s):
     s = str(s).replace("\\", "").replace("'", "''")
     s = re.sub(r"[\x00-\x1f]", " ", s)          # 제어문자 금지 (Mgmt API 파싱)
     return "'" + s.strip() + "'"
+
+def norm_url(u):
+    """표지 URL 정규화. 유효한 http(s) 절대주소면 반환, 아니면 "".
+    네이버 프록시(/openapi/thumbnail)가 'http://https://lib.semyung...' 처럼
+    스킴을 이중으로 붙여 보내는 응답이 섞여 있다(2026-08-09 실측 147건 — 브라우저에서
+    전부 로드 실패). startswith("http")만 보면 그대로 통과하므로 여기서 잘라낸다."""
+    u = (u or "").strip()
+    while re.match(r"^https?://(https?://)", u):
+        u = re.sub(r"^https?://", "", u, count=1)
+    return u if re.match(r"^https?://[^/\s]+/", u) else ""
 
 def upsert_rows(rows):
     """페이지 전체를 한 번의 Mgmt API 요청으로 upsert (200행 인서트문 여러 개를 ;로 결합).
@@ -218,10 +228,17 @@ def aladin(endpoint, **params):
 def _cover(it):
     c = (it.get("cover", "") or "").replace("\\/", "/").replace("/coversum/", "/cover200/")
     if not c or "noimg" in c.lower(): return ""   # 알라딘 '표지없음' placeholder(noimg_*.gif) 제외 — 진짜 표지 아님
-    return c
+    return norm_url(c)
 
 def _desc(it):
     d = re.sub(r"<[^>]+>", " ", it.get("description", "") or "")
+    # HTML 엔티티 해제 — 앱은 textContent로 그리므로 &lt;책제목&gt;이 그대로 노출된다.
+    # (2026-08-09: 구 이식분 1,638건이 이 상태로 들어와 있어 일괄 정정함)
+    d = html.unescape(d)
+    # 해제로 되살아난 '진짜 HTML 태그'만 제거. <[^>]+> 로 싹 지우면 안 된다 —
+    # 책 제목의 <리버 보이> 같은 홑화살괄호까지 사라진다(실측).
+    d = re.sub(r"</?(?:b|i|u|p|br|hr|div|span|strong|em|a|img|font|ul|ol|li|h[1-6]|table|tr|td)\b[^>]*>",
+               " ", d, flags=re.I)
     return re.sub(r"\s+", " ", d).strip()[:1200]
 
 def aladin_cover_isbn(isbn, order=("Book", "eBook")):
@@ -406,8 +423,8 @@ def covers_paper(limit=None):
         for jo in (d.get("data") or []):
             th = jo.get("thumbnail")
             if not th: continue
-            url = (th.get("largeUrl") or th.get("smallUrl") or "").strip()
-            if not url.startswith("http"): continue
+            url = norm_url(th.get("largeUrl") or th.get("smallUrl") or "")
+            if not url: continue
             buf.append(f"update semyung_tulip set cover_url={esc(url)}, updated_at=now() where ctrl={esc(jo.get('ctrl') or jo.get('id'))}")
             hit += 1
         if len(buf) >= 100: flush()
