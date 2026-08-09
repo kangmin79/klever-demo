@@ -363,24 +363,25 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
     # 정렬 = 무작위(md5). ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
     # ctrl 정렬은 실패가 뭉텅이로 이어진다. 2026-08-09 실측: ctrl desc 선두 7.5% vs 무작위 50.0%.
     take = limit or int((d4l_budget + budget) * 1.05) + 50   # 예산만큼만(21만 행 전량 fetch 방지)
-    # 정렬키(ord)를 각 서브쿼리가 직접 만들어 붙인다. 바깥에서 다시 정렬하면 안쪽 순서가 날아간다.
-    base = ("select ctrl, isbn, {pri} as pri, {ord} as ord from semyung_tulip "
+    # ⚠️두 풀을 union으로 한 방에 뽑지 말 것. 16.2만 행에 lpad||md5 정렬키를 만들어 union+재정렬하면
+    #   쿼리가 15분이 지나도 안 돌아온다(2026-08-10 데일리가 여기서 멈춤). 따로 뽑으면 2.3초.
+    base = ("select ctrl, isbn, {pri} as pri from semyung_tulip "
             "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and {cond}")
-    # pri0(표지) = 무작위. ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
-    #   ctrl 정렬은 실패가 뭉텅이로 이어진다(실측: ctrl desc 선두 7.5% vs 무작위 50.0%).
-    q0 = base.format(pri=0, ord="md5(ctrl)", cond="cover_url is null") + f" order by ord limit {take}"
-    # pri1(줄거리) = 최신 발행 우선. 확보율이 발행연도에 강하게 비례(실측 120건):
-    #   2020년대 93% / 2010년대 78% / 2000년대 39% / 1990년대 0%
-    #   16.2만권 전체는 39일이지만 2010년 이후 12.7만권이 성과의 89%(10.5만건)를 차지한다
-    #   → 최신순이면 열흘이면 2020년대(약 3.8만건)가 끝나 체감이 훨씬 빠르다.
-    # pub_year는 text에 '1996-' 같은 값도 있어 4자리만 뽑고, 9999-연도로 뒤집어 오름차순 정렬키를 만든다
-    # (연도 없으면 9999 = 맨 뒤). 같은 연도 안에서는 md5로 섞는다.
-    ORD1 = ("lpad((9999 - coalesce(nullif(substring(pub_year from '[0-9]{4}'),'')::int, 0))::text, 4, '0')"
-            " || md5(ctrl)")
-    q1 = (base.format(pri=1, ord=ORD1, cond="cover_url is not null and cover_url<>'' and description is null")
-          + f" order by ord limit {take}")
-    inner = q1 if desc_only else f"({q0}) union all ({q1})"
-    res = json.loads(sql(f"select * from ({inner}) u order by pri, ord limit {take}", timeout=180))
+    def pull(pri, cond, order, n):
+        if n <= 0: return []
+        return json.loads(sql(base.format(pri=pri, cond=cond) + f" order by {order} limit {n}", timeout=120))
+    res = []
+    if not desc_only:
+        # pri0(표지) = 무작위. ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
+        #   ctrl 정렬은 실패가 뭉텅이로 이어진다(실측: ctrl desc 선두 7.5% vs 무작위 50.0%).
+        res = pull(0, "cover_url is null", "md5(ctrl)", take)
+    if len(res) < take:
+        # pri1(줄거리) = 최신 발행 우선. 확보율이 발행연도에 강하게 비례(실측 120건):
+        #   2020년대 93% / 2010년대 78% / 2000년대 39% / 1990년대 0%
+        #   2010년 이후 12.7만권이 성과의 89%를 차지 → 최신순이 체감을 크게 앞당긴다.
+        # pub_year는 text('1996-' 등)라 그대로 desc 정렬. 같은 해 안에서는 ctrl 순(md5는 비싸서 뺌).
+        res += pull(1, "cover_url is not null and cover_url<>'' and description is null",
+                    "pub_year desc nulls last, ctrl", take - len(res))
     n0 = sum(1 for r in res if r["pri"] == 0)
     print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) "
           f"/ 정보나루 예산 {d4l_budget:,} · 알라딘 예산 {budget:,}")
