@@ -3284,6 +3284,16 @@ function shelfAdd(b){
   const a=shelfLoad();
   if(!a.find(x=>x.key===key)){ a.unshift({key,t:b.t||b.title||'',a:b.a||b.author||'',cover:b.cover||'',lib:b.lib||'',status:'reading',ts:Date.now()}); shelfSave(a); }
 }
+// 빌린 전자책의 반납예정일 한 줄 — 도서관이 준 날짜 그대로.
+// 전자책 대출기간은 생각보다 짧다(실측 5일). 안 알려주면 읽던 책이 어느 날 갑자기 사라진다.
+function shelfDueLine(x){
+  if(x.status==='done'||x.returned||!x.loanSrmb||!x.dueDate) return '';
+  const d=smDday(x.dueDate);
+  if(d===null) return '';
+  const when = d<0 ? `${-d}일 지남` : d===0 ? '오늘까지' : d<=2 ? `${d}일 남음` : `${smFmt(x.dueDate)}까지`;
+  const color = d<=0 ? '#dc2626' : d<=2 ? '#ea580c' : 'var(--text-light)';
+  return `<div style="font-size:11.5px;font-weight:700;color:${color};margin-top:3px">${when}</div>`;
+}
 function shelfCard(x){
   const cv=x.cover?`<img src="${esc(hiCover(x.cover))}" onerror="this.style.display='none'">`:ncCover(x);
   const right = x.status==='done'
@@ -3296,6 +3306,7 @@ function shelfCard(x){
     <div style="flex:1;min-width:0">
       <div style="font-size:13.5px;font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(cleanT(x.t))}</div>
       <div style="font-size:11.5px;color:var(--text-light);margin-top:2px">${esc(x.a||'')}${x.status==='done'&&x.soclip?` · “${esc(x.soclip.slice(0,24))}”`:''}</div>
+      ${shelfDueLine(x)}
     </div>${right}</div>`;
 }
 function renderMyShelf(){
@@ -6624,7 +6635,7 @@ async function smEbookBorrowOpen(brcd, w, book){
     if(d&&d.ok&&d.viewerUrl){
       if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
       // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
-      try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.loanSrmb=d.loanSrmb||''; it.ents=d.entsDvsnCode||''; it.ts=Date.now(); it.returned=false; shelfSave(a); } }catch(e){}
+      try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.loanSrmb=d.loanSrmb||''; it.ents=d.entsDvsnCode||''; it.dueDate=d.dueDate||''; it.ts=Date.now(); it.returned=false; shelfSave(a); } }catch(e){}
       try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); }
     }
     else{ const msg=(d&&(d.message||d.error))||'지금은 대출할 수 없어요(동시이용 한도일 수 있어요)';

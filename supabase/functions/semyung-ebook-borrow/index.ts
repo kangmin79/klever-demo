@@ -210,9 +210,18 @@ Deno.serve(async (req) => {
       let viewerUrl = "";
       try { viewerUrl = await viewerUrlFor(jar, res.loanSrmb, brcd); }
       catch (_) { /* 뷰어URL 실패해도 대출은 유효 */ }
+      // 반납예정일은 도서관이 정한 값을 그대로 읽어 온다.
+      // ⚠️ 예전엔 "대출기간 14일"이라고 박아 뒀는데 **실측 5일**이었다(8/9: 8/9 대출 → 8/14 반납예정).
+      //    기간은 도서관 정책이라 우리가 알 수 없다 — 숫자를 짐작하지 말고 실제 날짜를 보여준다.
+      let dueDate = "";
+      try { dueDate = (await listLoans(jar)).find((l) => l.loanSrmb === res.loanSrmb)?.dueDate || ""; }
+      catch (_) { /* 못 읽으면 날짜 없이 안내 */ }
+      const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
       return json({
-        ok: true, action, personal, loanSrmb: res.loanSrmb, entsDvsnCode: res.ents, viewerUrl,
-        message: "대출 완료 — 대출기간 14일, 읽고 나면 반납해 주세요",
+        ok: true, action, personal, loanSrmb: res.loanSrmb, entsDvsnCode: res.ents, viewerUrl, dueDate,
+        message: dm
+          ? `대출 완료 — ${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요`
+          : "대출 완료 — 읽고 나면 반납해 주세요",
       });
     }
 
