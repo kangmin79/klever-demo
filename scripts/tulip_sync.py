@@ -311,10 +311,12 @@ def covers_paper_aladin(limit=None, budget=4500):
     """종이책 단행본 표지+설명 백필: ISBN 있고 표지 없는 것 → 알라딘 ISBN 직조회.
     네이버(/openapi/thumbnail)에 없던 ~5.9만 보강. 표지와 함께 description도 채움.
     실패는 cover_url='' 마킹(다음날 재시도 방지, 앱은 falsy→타이포 표지)."""
+    # 정렬 = 무작위(md5). ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
+    # ctrl 정렬은 실패가 뭉텅이로 이어진다. 2026-08-09 실측: ctrl desc 선두 표본 7.5% vs 무작위 50.0%.
     res = json.loads(sql(
         "select ctrl, title, author, isbn from semyung_tulip "
-        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by ctrl desc"
-        + (f" limit {limit}" if limit else "")))   # 최근 책 우선(desc): 매칭률↑(신간은 알라딘 있음)+노출 잦은 책 먼저
+        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by md5(ctrl)"
+        + (f" limit {limit}" if limit else "")))
     print(f"[covers-paper-aladin] 대상 {len(res):,}건 (알라딘 예산 {budget:,}회)")
     hit = 0; miss = 0; buf = []
     def flush():
@@ -326,7 +328,9 @@ def covers_paper_aladin(limit=None, budget=4500):
         if _aladin_calls >= budget:
             print(f"  예산 소진 — 남은 {len(res)-hit-miss:,}건은 내일 재실행")
             break
-        cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book", "eBook"))  # 종이책이니 Book 우선
+        # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
+        # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
+        cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
         if cov:
             extra = f", description={esc(dsc)}" if dsc else ""
             buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
