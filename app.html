@@ -17,6 +17,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- 홈 화면에 추가(A2HS) — 아이폰은 홈 화면에 설치한 경우에만 웹푸시 알림이 온다(iOS 16.4+ 제약) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#131a2e">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://gkujptyfrzqrjrvovbnc.supabase.co">
 <!-- dynamic-subset: 통짜 2.06MB woff2 대신 unicode-range 분할(실사용 글리프만 다운로드, ~1.5MB 절감). font-family 이름 동일 -->
@@ -2639,6 +2642,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <h1 class="page-title">내 도서관</h1>
   <p class="page-subtitle">세명대학교 학술정보원에서 빌리고 기다리는 책 — 종이책·전자책 모두</p>
   <div id="myLibBody"></div>
+  <!-- 알림 켜기 — 앱을 안 열어도 반납일·예약도착을 알려주는 유일한 경로 -->
+  <div id="myLibPush"></div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -6281,6 +6286,99 @@ async function smMy(action, params){
   const r=await fetch(SMMY_FN+'?'+q.toString(), {headers:smHeaders()});
   return await r.json();
 }
+/* ── 알림(웹푸시) ──────────────────────────────────────────────────
+   지금까지 반납일은 "앱을 열어야만" 알 수 있었다(사이드바 배지). 이게 그 반대편이다.
+   서버(notify-due)가 매일 아침 도서관을 대신 확인하고, 켠 사람에게만 하루 한 통 보낸다.
+   ⚠️ 아이폰은 홈 화면에 추가(A2HS)한 경우에만 웹푸시가 온다 — 그래서 안내를 따로 띄운다. */
+const PUSHREG_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/push-register";
+const VAPID_PUB="BCot9wRyajAtBdSgORnIrh26K_qWtmXFicgP5C8D8dAiswMYW7YLBQakjW3441syTPxPvTguM481_KiLZ_leFhE";
+const pushSupported=()=>('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
+// iOS는 홈 화면에 설치해야만 푸시가 된다 — 사파리 탭에서는 아무리 눌러도 안 온다
+const isIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function b64ToU8(s){
+  const pad='='.repeat((4-s.length%4)%4);
+  const raw=atob((s+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  const u=new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) u[i]=raw.charCodeAt(i);
+  return u;
+}
+async function pushReg(){ return await navigator.serviceWorker.register('/sw.js',{scope:'/'}); }
+async function pushCurrent(){
+  if(!pushSupported()) return null;
+  try{ const r=await navigator.serviceWorker.getRegistration('/'); return r?await r.pushManager.getSubscription():null; }catch(e){ return null; }
+}
+async function pushEnable(){
+  if(!pushSupported()){ alert('이 브라우저는 알림을 지원하지 않아요.'); return false; }
+  // 권한 요청은 사용자가 버튼을 누른 그 순간에만 통한다(제스처 밖에서 부르면 조용히 거부됨)
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){
+    alert(perm==='denied'
+      ? '알림이 차단돼 있어요. 브라우저 주소창의 자물쇠 → 알림 → 허용으로 바꿔 주세요.'
+      : '알림을 켜지 못했어요.');
+    return false;
+  }
+  const reg=await pushReg();
+  await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToU8(VAPID_PUB)});
+  const j=sub.toJSON();
+  const r=await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
+    body:JSON.stringify({action:'subscribe',subscription:{endpoint:j.endpoint,keys:j.keys}})});
+  const d=await r.json();
+  if(!d||!d.ok){
+    // 서버에 등록 못 했으면 브라우저 구독만 남아 "켜진 것처럼 보이는데 안 오는" 상태가 된다 — 되돌린다
+    try{ await sub.unsubscribe(); }catch(e){}
+    alert((d&&d.error)||'알림을 등록하지 못했어요.');
+    return false;
+  }
+  // 진짜로 오는지 그 자리에서 한 통 — "켰는데 오는지 모르겠다"를 없앤다
+  try{ await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
+    body:JSON.stringify({action:'test',endpoint:j.endpoint})}); }catch(e){}
+  return true;
+}
+async function pushDisable(){
+  const sub=await pushCurrent();
+  if(!sub) return true;
+  const ep=sub.endpoint;
+  try{ await sub.unsubscribe(); }catch(e){}
+  try{ await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
+    body:JSON.stringify({action:'unsubscribe',endpoint:ep})}); }catch(e){}
+  return true;
+}
+async function pushToggle(on){
+  const box=document.getElementById('myLibPush');
+  if(box) box.style.opacity='.5';
+  try{ if(on) await pushEnable(); else await pushDisable(); }
+  finally{ if(box) box.style.opacity=''; renderPushRow(); }
+}
+async function renderPushRow(){
+  const box=document.getElementById('myLibPush');
+  if(!box) return;
+  if(!ssoIsPersonal()){ box.innerHTML=''; return; }
+  const wrap=(inner)=>`<div class="section" style="padding-top:0"><div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:13px 14px">${inner}</div></div>`;
+  if(!pushSupported()){
+    box.innerHTML=wrap(`<div style="font-size:12.5px;color:var(--text-light)">이 브라우저는 알림을 지원하지 않아요.</div>`);
+    return;
+  }
+  // 아이폰: 홈 화면에 추가하기 전에는 켜도 오지 않으므로, 켜기 버튼 대신 설치 안내를 보여준다
+  if(isIOS()&&!isStandalone()){
+    box.innerHTML=wrap(`<div style="font-size:13px;font-weight:800;margin-bottom:4px">알림 받기</div>
+      <div style="font-size:12.5px;color:var(--text-sub);line-height:1.55">아이폰은 <b>홈 화면에 추가</b>한 뒤에만 알림을 받을 수 있어요.<br>
+      공유 <span style="font-family:system-ui">↑</span> → <b>홈 화면에 추가</b> → 홈에서 북스타를 열고 다시 이 화면으로 오세요.</div>`);
+    return;
+  }
+  const on=!!(await pushCurrent());
+  const denied=Notification.permission==='denied';
+  const btn=denied
+    ? `<span style="font-size:12px;color:#dc2626;font-weight:700;flex:none">브라우저에서 차단됨</span>`
+    : `<button onclick="pushToggle(${on?'false':'true'})" style="flex:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;${on?'background:transparent;color:var(--text-sub);border:1px solid var(--border)':'background:var(--primary);color:#fff;border:1px solid var(--primary)'}">${on?'끄기':'켜기'}</button>`;
+  box.innerHTML=wrap(`<div style="display:flex;gap:10px;align-items:center">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:800">반납일 알림 ${on?'<span style="font-size:11px;color:#16a34a">켜짐</span>':''}</div>
+      <div style="font-size:12.5px;color:var(--text-sub);margin-top:3px;line-height:1.5">앱을 안 열어도 <b>반납 사흘 전·하루 전·당일</b>, 연체, 예약한 책 도착을 알려드려요. 하루 한 번만 울려요.</div>
+    </div>${btn}
+  </div>`);
+}
 // 도서관 XML은 결과가 1건이면 배열이 아니라 객체로 온다 — 항상 배열로 펴서 쓴다
 function smItems(d){ const it=((d||{}).data||{}).item; if(!it) return []; return Array.isArray(it)?it:[it]; }
 // 도서관 날짜는 "2026.08.24" 또는 "20260824" 두 형태로 온다
@@ -6304,6 +6402,8 @@ const smFmt=(s)=>{ const d=smDate(s); return d?`${d.getMonth()+1}월 ${d.getDate
 async function renderMyLibStatus(){
   const el=document.getElementById('myLibBody');
   const line=document.getElementById('myLibStatus');   // 우리 도서관 상단 한 줄 요약
+  // 알림 줄은 대출 목록과 무관하게 그린다(아래 어느 경로로 빠져나가도 항상 보이도록)
+  try{ renderPushRow(); }catch(e){}
   if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다

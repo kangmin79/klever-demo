@@ -22,8 +22,7 @@
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
 
-const HOST = "https://lib.semyung.ac.kr/openapi";
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
+import { tulip as api, tulipErr as apiErr } from "../_shared/tulip_api.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -32,43 +31,6 @@ const CORS = {
 };
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { ...CORS, "content-type": "application/json" } });
-
-// ── 범용 XML→JSON (규격서에 없는 필드도 그대로 살림 — myloan list 등 실전 구조 미확정 대비) ──
-const unCdata = (s: string) => {
-  const m = /^<!\[CDATA\[([\s\S]*?)\]\]>$/.exec(s.trim());
-  return (m ? m[1] : s).trim();
-};
-function xmlToObj(xml: string): any {
-  const src = xml.replace(/<\?xml[\s\S]*?\?>/, "").trim();
-  const tagRe = /<([A-Za-z_][\w.-]*)(?:\s[^>]*)?>([\s\S]*?)<\/\1>|<([A-Za-z_][\w.-]*)(?:\s[^>]*)?\/>/g;
-  const out: Record<string, any> = {};
-  let m: RegExpExecArray | null;
-  let any = false;
-  while ((m = tagRe.exec(src))) {
-    any = true;
-    const name = m[1] || m[3];
-    const inner = m[2] ?? "";
-    const val = /<[A-Za-z_][\w.-]*(\s[^>]*)?\/?>/.test(inner) ? xmlToObj(inner) : unCdata(inner);
-    if (name in out) {
-      if (!Array.isArray(out[name])) out[name] = [out[name]];
-      out[name].push(val);
-    } else out[name] = val;
-  }
-  return any ? out : unCdata(src);
-}
-
-async function api(path: string, params: Record<string, string>): Promise<{ raw: string; data: any }> {
-  const qs = new URLSearchParams(params);
-  const r = await fetch(`${HOST}/${path}?${qs}`, { headers: { "User-Agent": UA } });
-  const raw = new TextDecoder("utf-8").decode(await r.arrayBuffer());
-  return { raw, data: xmlToObj(raw) };
-}
-
-// err 코드(011=verb 미인식 등)·성공 여부 판독 — 응답에 <err>나 <error> 있으면 실패로
-function apiErr(data: any): string {
-  const e = data?.result?.err ?? data?.result?.error ?? data?.err ?? data?.error;
-  return e ? String(e) : "";
-}
 
 const digits = (s: string) => (s || "").replace(/[^0-9]/g, "");
 const alnum = (s: string) => (s || "").replace(/[^0-9A-Za-z]/g, "");

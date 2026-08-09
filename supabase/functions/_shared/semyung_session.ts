@@ -160,6 +160,44 @@ export const xmlTag = (s: string, t: string): string => {
   return (c ? c[1] : v).trim();
 };
 
+// 현재 대출 중인 전자책 목록 — 대출현황 페이지에서 추출.
+// 반납 버튼(gFnContentReturnProc)이 항목의 끝에 오고, 그 앞 구간에 그 책의 서지·날짜가 있다.
+// 그래서 '직전 버튼 이후 ~ 이번 버튼까지'를 한 항목으로 잘라 파싱한다.
+// (대출 함수와 알림 배치가 같은 파서를 쓰도록 여기 공용으로 둔다 — 한쪽만 고쳐지는 사고 방지)
+export interface EbLoan {
+  loanSrmb: string; brcd: string; title: string; author: string;
+  loanDate: string; dueDate: string; extendable: boolean;
+}
+export async function listEbookLoans(jar: Jar): Promise<EbLoan[]> {
+  const html = await ebGet(jar, "/myLib/myBorrowList.ink");
+  const out: EbLoan[] = [];
+  const re = /gFnContentReturnProc\('([^']*)','(\d+)'\s*,\s*'([^']*)'/g;
+  let m: RegExpExecArray | null, prev = 0;
+  while ((m = re.exec(html))) {
+    const raw = html.slice(prev, m.index);          // 바코드는 onclick 속성 안에 있어 태그를 지우면 사라진다
+    const block = raw.replace(/<[^>]+>/g, " ");     // 날짜·문구는 태그 지운 쪽에서 읽는다
+    prev = m.index + m[0].length;
+    const pick = (label: string) => {
+      const r = new RegExp(`${label}\\s*:?\\s*(\\d{4}-\\d{2}-\\d{2})`).exec(block);
+      return r ? r[1] : "";
+    };
+    // gFnContentReturnProc의 첫 인자는 바코드가 아니라 도서관코드(20213)다.
+    // 진짜 바코드는 표지·제목 링크의 fnContentClick(this,'001','<바코드>',…)에 있다.
+    // ⚠️ 자릿수로 훑으면 안 된다 — 첫 항목 블록엔 페이지 머리말의 JS 캐시숫자(13자리)가 섞여 그걸 집는다.
+    // (연장·반납은 loanSrmb만으로 되지만, 뷰어를 다시 열려면 바코드가 필요하다)
+    const brcd = (/fnContentClick\([^)]*?'(\d{6,13})'/.exec(raw) || [, ""])[1] || "";
+    out.push({
+      brcd, loanSrmb: m[2], title: m[3],
+      author: "",
+      loanDate: pick("대출일"),
+      dueDate: pick("반납예정일"),
+      // "연장대출 : 가능 / 불가" — 도서관 판정을 그대로 따른다(우리가 횟수로 추측하지 않는다)
+      extendable: /연장대출\s*:?\s*가능/.test(block),
+    });
+  }
+  return out;
+}
+
 // 학생 1명 전체 체인 — 연계값 → {liid, 전자도서관 개인세션}
 export async function personalSession(h: PortalHandoff): Promise<{ liid: string; eb: Jar; name: string }> {
   const lib = await libLoginByPortal(h);

@@ -43,3 +43,24 @@ export async function loadSession(sid: string): Promise<SsoRow | null> {
   if (new Date(row.expires_at).getTime() < Date.now()) return null; // 만료
   return row as SsoRow;
 }
+
+/** 만료를 무시하고 읽는다 — 알림 발송 배치 전용.
+ *  알림을 켠 학생은 앱을 안 열어도 매일 도서관을 대신 확인해 줘야 하는데,
+ *  7일 만료를 그대로 적용하면 "일주일 안 들어오면 알림이 끊긴다"가 되어 기능이 무의미해진다.
+ *  대신 조회가 성공할 때마다 touchSession으로 만료를 밀어 준다(포털 연계값이 죽으면 조회가
+ *  실패하므로, 죽은 세션이 영원히 남지는 않는다 — push_subs.fail_count 5회면 구독이 꺼진다). */
+export async function loadSessionAny(sid: string): Promise<SsoRow | null> {
+  if (!sid) return null;
+  const r = await fetch(`${SB_URL}/rest/v1/sso_sessions?sid=eq.${encodeURIComponent(sid)}&select=*`, { headers: H });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return (Array.isArray(rows) && rows[0]) ? rows[0] as SsoRow : null;
+}
+
+/** 만료 연장 — 알림 조회가 실제로 성공했을 때만 부른다 */
+export async function touchSession(sid: string, ttlSec = 30 * 24 * 3600): Promise<void> {
+  await fetch(`${SB_URL}/rest/v1/sso_sessions?sid=eq.${encodeURIComponent(sid)}`, {
+    method: "PATCH", headers: H,
+    body: JSON.stringify({ expires_at: new Date(Date.now() + ttlSec * 1000).toISOString() }),
+  });
+}
