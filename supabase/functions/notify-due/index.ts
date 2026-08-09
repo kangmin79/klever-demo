@@ -14,18 +14,19 @@ import { listActive, markFail, markSent, type PushRow } from "../_shared/push_st
 import { loadSessionAny, touchSession } from "../_shared/sso_store.ts";
 import { listEbookLoans, personalSession } from "../_shared/semyung_session.ts";
 import { items, tulip, tulipErr } from "../_shared/tulip_api.ts";
-import { type AlertLoan, type AlertResv, buildAlert } from "../_shared/alerts.ts";
+import { type AlertLoan, type AlertPick, type AlertResv, buildAlert } from "../_shared/alerts.ts";
 import { sendPush } from "../_shared/push.ts";
 
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
 
-interface Gathered { loans: AlertLoan[]; resvs: AlertResv[]; notes: string[] }
+interface Gathered { loans: AlertLoan[]; resvs: AlertResv[]; picks: AlertPick[]; notes: string[] }
 
 /** 학생 1명의 오늘 상태를 도서관에서 읽어 온다. 일부가 실패해도 나머지로 판단한다. */
 async function gather(schoolNo: string, portalUserId: string, liidHint: string): Promise<Gathered> {
   const loans: AlertLoan[] = [];
   const resvs: AlertResv[] = [];
+  const picks: AlertPick[] = [];
   const notes: string[] = [];
 
   // 전자도서관 개인세션은 liid도 같이 준다 — 저장된 liid가 낡았을 수 있어 이 값을 우선한다
@@ -68,11 +69,33 @@ async function gather(schoolNo: string, portalUserId: string, liidHint: string):
         }
       }
     } catch (e) { notes.push("myreserve:" + String(e).slice(0, 80)); }
+
+    // 찾아줘북즈(서가 픽업) — 수령 기한 24시간이라 가장 급하다.
+    // 끝난 건(수령일·취소일이 찍힘)은 이력으로 계속 남으므로 여기서 거른다.
+    // ⚠️ 상태 코드값은 0001(예약신청)·0004(신청자취소)만 실측했고 중간 단계는 모른다.
+    //    그래서 코드로 "준비완료"를 판정하지 않고, 날짜로 진행 여부만 가린다.
+    try {
+      const { data } = await tulip("loanreq", { uid: liid, verb: "list", page: "1" });
+      const err = tulipErr(data);
+      if (err) notes.push("loanreq err " + err);
+      else {
+        for (const it of items(data?.result ?? data)) {
+          const ended = String(it.loan_date || "").trim() !== "" || String(it.cancel_date || "").trim() !== "";
+          if (ended) continue;
+          picks.push({
+            title: String(it.title || ""),
+            moved: String(it.loan_status || "") !== "0001",
+            statusName: String(it.loan_status_name || ""),
+            place: String(it.receive_location || ""),
+          });
+        }
+      }
+    } catch (e) { notes.push("loanreq:" + String(e).slice(0, 80)); }
   } else {
     notes.push("liid 없음");
   }
 
-  return { loans, resvs, notes };
+  return { loans, resvs, picks, notes };
 }
 
 Deno.serve(async (req) => {
@@ -110,18 +133,18 @@ Deno.serve(async (req) => {
       const g = await gather(ses.school_no, ses.portal_user_id, ses.liid || "");
       // force = 배선 점검용. 반납일이 임박한 책이 없는 날에도 알림이 실제로 도착하는지 확인해야 하는데,
       // 그걸 기다리려면 며칠씩 걸린다. 중복방지 키에 시각을 넣어 몇 번이고 다시 보낼 수 있게 한다.
-      const msg = buildAlert(g.loans, g.resvs) ?? (force
+      const msg = buildAlert(g.loans, g.resvs, g.picks) ?? (force
         ? {
           key: `force|${Date.now()}`, title: "알림 배선 점검",
-          body: `지금 빌린 책 ${g.loans.length}권 · 기다리는 책 ${g.resvs.length}권 — 이 알림이 보이면 정상이에요`,
+          body: `지금 빌린 책 ${g.loans.length}권 · 기다리는 책 ${g.resvs.length + g.picks.length}권 — 이 알림이 보이면 정상이에요`,
           url: "/app#mylib", tag: "bx-test",
         }
         : null);
       // 도서관 조회가 실제로 됐다는 뜻 → 세션 만료를 뒤로 민다(앱을 안 열어도 연동이 유지되게)
-      if (!dry && (g.loans.length || g.resvs.length || !g.notes.length)) await touchSession(sid);
+      if (!dry && (g.loans.length || g.resvs.length || g.picks.length || !g.notes.length)) await touchSession(sid);
 
       const line: Record<string, unknown> = {
-        sid, devices: rows.length, loans: g.loans.length, resvs: g.resvs.length,
+        sid, devices: rows.length, loans: g.loans.length, resvs: g.resvs.length, picks: g.picks.length,
         alert: msg ? { title: msg.title, body: msg.body, key: msg.key } : null,
       };
       if (g.notes.length) line.notes = g.notes;

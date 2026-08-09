@@ -3,6 +3,7 @@
 // "앱을 열어야만 아는 것"을 앱 밖으로 내보내는 규칙을 여기 한 곳에 모은다.
 // 화면(사이드바 배지·내 도서관)과 푸시가 같은 판단을 쓰도록 우선순위도 동일하게 맞췄다.
 //   연체 > 예약도착 > 반납 당일 > 내일 > 3일 전
+//   연체 > 찾아줘북즈 준비(24h 기한) > 예약도착(3일) > 반납 당일 > 내일 > 3일 전
 // 하루 한 통만 보낸다 — 급한 것 하나를 고르고 나머지는 "외 n권"으로 접는다.
 // (여러 통을 쏘면 알림을 꺼버린다. 끄면 그 뒤로는 아무것도 전할 수 없다)
 
@@ -15,6 +16,15 @@ export interface AlertResv {
   title: string;
   arrived: boolean;     // 예약서가비치(0008) = 도착
   waitDate?: string;    // 이때까지 안 찾으면 자동취소 + 예약정지
+}
+/** 찾아줘북즈(서가 픽업). 진행 중인 건만 넘어온다(끝난 건은 호출부가 거른다). */
+export interface AlertPick {
+  title: string;
+  /** 신청(0001) 단계를 벗어남 = 직원이 처리 중/완료 */
+  moved: boolean;
+  /** 도서관이 준 상태 이름 그대로("예약신청" 등). 코드를 우리가 해석하지 않는다 */
+  statusName?: string;
+  place?: string;
 }
 export interface AlertMsg {
   key: string;          // 같은 내용 재발송 방지용(날짜 포함 → 하루 한 번)
@@ -57,7 +67,7 @@ const cut = (s: string, n = 22) => {
 const andMore = (n: number) => (n > 1 ? ` 외 ${n - 1}권` : "");
 
 /** 오늘 이 학생에게 보낼 알림 하나. 보낼 게 없으면 null. */
-export function buildAlert(loans: AlertLoan[], resvs: AlertResv[], today = todayKST()): AlertMsg | null {
+export function buildAlert(loans: AlertLoan[], resvs: AlertResv[], picks: AlertPick[] = [], today = todayKST()): AlertMsg | null {
   const ymd = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
   const withD = loans
     .map((l) => ({ ...l, d: dday(l.due, today) }))
@@ -75,7 +85,21 @@ export function buildAlert(loans: AlertLoan[], resvs: AlertResv[], today = today
     };
   }
 
-  // ② 예약 도착 — 3일 안에 안 찾으면 자동취소 + 예약정지라 찾아갈 때까지 매일
+  // ② 찾아줘북즈 준비 — 수령 기한이 24시간으로 가장 짧아 예약 도착보다 먼저 알린다.
+  //    ⚠️ 상태 이름은 도서관이 준 것을 그대로 쓴다. 0002·0003을 뭐라 부르는지 모르므로
+  //       "준비 완료"라고 단정하지 않고 "상태가 바뀌었다"고만 말한다(없는 사실을 만들지 않기 위해).
+  const moved = picks.filter((p) => p.moved);
+  if (moved.length) {
+    const st = (moved[0].statusName || "").trim();
+    return {
+      key: `${ymd}|pickup|${moved.length}|${moved[0].title}|${st}`,
+      title: "신청한 책 상태가 바뀌었어요",
+      body: `「${cut(moved[0].title)}」${andMore(moved.length)}${st ? ` · ${st}` : ""}${moved[0].place ? ` · ${moved[0].place}` : ""}`,
+      url: "/app#mylib", tag: "bx-pickup",
+    };
+  }
+
+  // ③ 예약 도착 — 3일 안에 안 찾으면 자동취소 + 예약정지라 찾아갈 때까지 매일
   const arrived = resvs.filter((r) => r.arrived);
   if (arrived.length) {
     const w = arrived[0].waitDate ? ` · ${fmt(arrived[0].waitDate)}까지 찾아가세요` : "";
@@ -87,7 +111,7 @@ export function buildAlert(loans: AlertLoan[], resvs: AlertResv[], today = today
     };
   }
 
-  // ③ 반납 임박 — 당일 / 내일 / 3일 전에만. 매일 보내면 알림을 꺼버린다
+  // ④ 반납 임박 — 당일 / 내일 / 3일 전에만. 매일 보내면 알림을 꺼버린다
   for (const [d, title, when] of [
     [0, "오늘까지 반납이에요", "오늘까지"],
     [1, "내일까지 반납이에요", "내일까지"],

@@ -6432,8 +6432,13 @@ async function renderMyLibStatus(){
       return;
     }
     const loans=smItems(ln), resv=smItems(rv);
-    // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중(0001=신청)만
-    const picks=smItems(pk).filter(x=>x.loan_status==='0001');
+    // 찾아줘북즈는 취소·완료 건도 이력으로 남으므로 진행 중인 것만 고른다.
+    // ⚠️ 예전엔 loan_status==='0001'(예약신청)만 남겼는데, 직원이 책을 꺼내 상태를 다음 단계로
+    //    바꾸는 순간 목록에서 통째로 사라졌다 — 정작 "찾아가세요"가 되는 그 시점에 안 보인 것.
+    //    코드값을 다 알 수 없으므로(도서관이 0002·0003을 뭐라 쓰는지 미확인) 날짜로 판정한다:
+    //    수령일(loan_date)이나 취소일(cancel_date)이 찍히면 끝난 건, 비어 있으면 진행 중. (8/9 실측)
+    const _ended=(x)=>String(x.loan_date||'').trim()!==''||String(x.cancel_date||'').trim()!=='';
+    const picks=smItems(pk).filter(x=>!_ended(x));
     // 빌린 것도 기다리는 것도 없을 때 — 아무것도 안 그리면 연동이 된 건지 알 수 없다.
     // 도서관 계정이 붙었다는 신호는 남기되, 큐레이션을 가리지 않게 한 줄로.
     // 이용 상태 — ⚠️ myloan info는 종이책만 센다. 그대로 쓰면 전자책 2권을 빌린 학생에게
@@ -6523,14 +6528,23 @@ async function renderMyLibStatus(){
           <button onclick="smDropReserve('${esc(x.main_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
         </div>`);
       }).join('');
-      html+=picks.map(x=>box(`<div style="display:flex;gap:10px;align-items:flex-start">
+      html+=picks.map(x=>{
+        // 상태 문구는 도서관이 준 이름을 그대로 쓴다(loan_status_name: "예약신청" 등).
+        // 우리가 코드를 해석하지 않으므로 도서관이 단계를 늘려도 그대로 정확하다.
+        const ready=String(x.loan_status||'')!=='0001';   // 신청 단계를 벗어남 = 직원이 처리 시작
+        const stName=String(x.loan_status_name||'').trim();
+        const note=ready
+          ? `<span style="color:#16a34a;font-weight:800">${esc(stName||'준비 중')}</span> · ${esc(x.receive_location||'민송도서관')}에서 받으세요`
+          : `서가에서 찾는 중 · ${esc(x.receive_location||'민송도서관')}에서 수령`;
+        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
-            <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">서가에서 찾는 중 · ${esc(x.receive_location||'민송도서관')}에서 수령</div>
+            <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">${note}</div>
           </div>
           <button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
-        </div>`)).join('');
+        </div>`);
+      }).join('');
     }
     el.innerHTML=`<div class="section" style="padding-bottom:4px">${html}</div>`;
 
@@ -6539,13 +6553,17 @@ async function renderMyLibStatus(){
     const due=all.map(x=>smDday(x.due)).filter(d=>d!==null);
     const overdue=due.filter(d=>d<0).length;
     const soon=due.filter(d=>d>=0&&d<=3).length;
-    MYLIB_BADGE = overdue ? {color:'#dc2626', title:`${overdue}권 연체`}
-                : arrived ? {color:'#16a34a', title:'예약한 책이 도착했어요'}
-                : soon    ? {color:'#ea580c', title:'반납일이 다가와요'} : null;
+    // 찾아줘북즈가 신청 단계를 벗어남 = 직원이 처리 중/완료 → 24시간 안에 받아야 하므로 가장 급하다
+    const readyPick=picks.filter(x=>String(x.loan_status||'')!=='0001').length;
+    MYLIB_BADGE = overdue    ? {color:'#dc2626', title:`${overdue}권 연체`}
+                : readyPick  ? {color:'#16a34a', title:'신청한 책이 준비됐어요'}
+                : arrived    ? {color:'#16a34a', title:'예약한 책이 도착했어요'}
+                : soon       ? {color:'#ea580c', title:'반납일이 다가와요'} : null;
     renderSideNav(_navPage);
     if(line){
       const bits=[];
       if(overdue) bits.push(`<b style="color:#dc2626">${overdue}권 연체</b>`);
+      if(readyPick) bits.push(`<b style="color:#16a34a">신청한 책 준비됨</b>`);
       if(arrived) bits.push(`<b style="color:#16a34a">예약한 책 도착</b>`);
       if(!overdue&&soon) bits.push(`<b style="color:#ea580c">반납 ${soon}권 임박</b>`);
       if(all.length) bits.push(`빌린 책 ${all.length}권`);
