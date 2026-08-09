@@ -198,6 +198,9 @@ def enrich_ebooks(limit=None):
 
 # ---------- 표지 (P2) ----------
 ALADIN_KEY = os.environ.get("ALADIN_TTBKEY", "ttbbgtrfvcdewsx771056001")
+# 도서관 정보나루(국립중앙도서관). 2026-05-28 발급, 사장님 PC IP 등록됨(2026-08-09).
+# ⚠️IP 미등록 상태면 하루 500건에서 errCode=outOflimit — 수집 PC가 바뀌면 IP 재등록 필요.
+D4L_KEY = os.environ.get("D4L_AUTHKEY", "b6b219379c6c9809d2254684e51feed41837c4e034a0c36d40a54ef9253dcad9")
 
 def _norm(s):
     return re.sub(r"[\s,:·\-—~()\[\]]+", "", (s or "")).lower()
@@ -212,6 +215,47 @@ def clean_title(t):
 def surname(author):
     """MARC 저자 '토드, 안나'→'토드', '김선태'→'김선태' (성 일치 가드용)"""
     return (author or "").split(",")[0].split(";")[0].strip()
+
+class D4LLimit(Exception):
+    """정보나루 일 한도(30,000/IP등록 시) 도달 — 루프를 깨끗이 중단시키기 위한 신호"""
+
+_d4l_calls = 0
+def _d4l_cover(u):
+    """정보나루 bookImageURL 고해상도 승격.
+    알라딘 CDN은 썸네일(/cover/, 중앙 18KB)로 오는데 /cover500/으로 바꾸면 87KB짜리 원본이 온다
+    (2026-08-09 실측 10/10 성공, 우리가 쓰던 네이버 표지 69KB보다 큼).
+    ⚠️네이버 URL에도 '/cover/'가 들어가므로 알라딘일 때만 치환할 것."""
+    u = (u or "").strip()
+    if not u: return ""
+    if "aladin" in u:
+        u = u.replace("/coversum/", "/cover500/").replace("/cover200/", "/cover500/").replace("/cover/", "/cover500/")
+    return norm_url(u.replace("http://", "https://"))
+
+def d4l_book(isbn):
+    """도서관 정보나루 srchDtlList — ISBN13 정확검색. 반환 (cover, desc).
+    알라딘 대비: 줄거리 확보 94.2% vs 70~77%, 일 한도 30,000 vs 5,000 (2026-08-09 실측).
+    내용은 같은 원본 — 알라딘이 준 120권을 재조회하니 120/120 보유·111건 전문 완전일치.
+    ⚠️함정: srchBooks에 isbn= 를 주면 파라미터가 무시돼 엉뚱한 책이 온다. 반드시 srchDtlList + isbn13."""
+    global _d4l_calls
+    _d4l_calls += 1
+    c = re.sub(r"[^0-9Xx]", "", isbn or "")
+    if len(c) < 10: return "", ""
+    try:
+        d = json.loads(http(f"https://data4library.kr/api/srchDtlList?authKey={D4L_KEY}&isbn13={c}&format=json", timeout=25))
+    except Exception:
+        return "", ""
+    resp = d.get("response") or {}
+    code = str(resp.get("errCode") or "")
+    # ⚠️errCode는 '한도'만이 아니라 'ISBN에 해당하는 도서가 없습니다'(= 정상 미보유)에도 붙는다.
+    #   전부 한도로 처리하면 첫 미보유 책에서 정보나루를 통째로 꺼버린다(2026-08-09에 당함).
+    if code == "outOflimit":
+        raise D4LLimit(resp.get("error") or code)
+    if code:
+        return "", ""                       # 미보유 등 그 밖의 오류 = 조용히 빈손
+    det = resp.get("detail") or []
+    bk = (det[0] or {}).get("book") if det else None
+    if not bk: return "", ""
+    return _d4l_cover(bk.get("bookImageURL")), _desc({"description": bk.get("description")})
 
 _aladin_calls = 0
 def aladin(endpoint, **params):
@@ -307,7 +351,7 @@ def covers_yes24(limit=None, budget=4500):
     flush()
     print(f"[covers-yes24] 완료 — ISBN조회 {hit_isbn:,} + 엄격검색 {hit_search:,} 채움, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
 
-def covers_paper_aladin(limit=None, budget=4500, desc_only=False):
+def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=28000):
     """종이책 단행본 표지+설명 백필: ISBN 있고 표지 없는 것 → 알라딘 ISBN 직조회.
     네이버(/openapi/thumbnail)에 없던 ~5.9만 보강. 표지와 함께 description도 채움.
     실패는 cover_url='' 마킹(다음날 재시도 방지, 앱은 falsy→타이포 표지)."""
@@ -318,7 +362,7 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False):
     #        2010년대 78%·2020년대 93%. 표지 풀이 마르면 예산이 자동으로 이쪽으로 흐른다.
     # 정렬 = 무작위(md5). ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
     # ctrl 정렬은 실패가 뭉텅이로 이어진다. 2026-08-09 실측: ctrl desc 선두 7.5% vs 무작위 50.0%.
-    take = limit or int(budget * 1.1) + 50        # 예산만큼만 가져온다(21만 행 전량 fetch 방지)
+    take = limit or int((d4l_budget + budget) * 1.05) + 50   # 예산만큼만(21만 행 전량 fetch 방지)
     # 정렬키(ord)를 각 서브쿼리가 직접 만들어 붙인다. 바깥에서 다시 정렬하면 안쪽 순서가 날아간다.
     base = ("select ctrl, isbn, {pri} as pri, {ord} as ord from semyung_tulip "
             "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and {cond}")
@@ -338,20 +382,34 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False):
     inner = q1 if desc_only else f"({q0}) union all ({q1})"
     res = json.loads(sql(f"select * from ({inner}) u order by pri, ord limit {take}", timeout=180))
     n0 = sum(1 for r in res if r["pri"] == 0)
-    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) / 알라딘 예산 {budget:,}회")
-    hit = miss = dhit = dmiss = 0; buf = []
+    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) "
+          f"/ 정보나루 예산 {d4l_budget:,} · 알라딘 예산 {budget:,}")
+    hit = miss = dhit = dmiss = 0; nsrc = asrc = 0; buf = []
     def flush():
-        if not buf: return
-        try: sql("; ".join(buf))
-        except Exception as e: print(f"  flush 실패({len(buf)}건): {e}")
-        buf.clear()
+        # 줄거리는 한 건이 수백 자라 100문 배치가 Mgmt API 60초를 넘긴다(2026-08-09 timeout 실측).
+        # 50문씩 쪼개고 타임아웃을 넉넉히. 실패해도 다음 배치는 계속 간다.
+        while buf:
+            part = buf[:50]; del buf[:50]
+            try: sql("; ".join(part), timeout=180)
+            except Exception as e: print(f"  flush 실패({len(part)}건): {e}")
     for r in res:
-        if _aladin_calls >= budget:
+        if _d4l_calls >= d4l_budget and _aladin_calls >= budget:
             print(f"  예산 소진 — 남은 건은 내일 재실행")
             break
-        # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
-        # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
-        cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
+        # 1순위 정보나루(줄거리 94.2%·일 30,000) → 없으면 알라딘 폴백(70~77%·일 5,000)
+        cov = dsc = ""
+        if _d4l_calls < d4l_budget:
+            try:
+                cov, dsc = d4l_book(r["isbn"])
+                if cov or dsc: nsrc += 1
+            except D4LLimit as e:
+                print(f"  정보나루 한도 도달({e}) — 이후는 알라딘으로")
+                d4l_budget = 0
+        if not (cov or dsc) and _aladin_calls < budget:
+            # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
+            # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
+            cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
+            if cov or dsc: asrc += 1
         if r["pri"] == 1:
             # 표지는 이미 있다 — 줄거리만 채운다. 덮어쓰지 않도록 cover_url은 손대지 않는다.
             # 실패도 ''로 남겨 내일 같은 책을 또 조회하지 않게 한다(앱은 ''를 falsy로 처리).
@@ -368,11 +426,11 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False):
             miss += 1
         if len(buf) >= 100: flush()
         n = hit + miss + dhit + dmiss
-        if n % 200 == 0: print(f"  {n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
-        time.sleep(0.15)
+        if n % 500 == 0: print(f"  {n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
+        time.sleep(0.05)
     flush()
-    print(f"[covers-paper-aladin] 완료 — 표지 {hit:,}(실패 {miss:,}) / 줄거리 {dhit:,}(없음 {dmiss:,}), "
-          f"알라딘 호출 {_aladin_calls:,}회")
+    print(f"[covers-paper-aladin] 완료 — 표지 {hit:,}(실패 {miss:,}) / 줄거리 {dhit:,}(없음 {dmiss:,}) "
+          f"| 출처 정보나루 {nsrc:,} · 알라딘 {asrc:,} | 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}")
 
 TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)·학위논문(t)·미분류('') — 연간물/DVD/지도 제외
     "ebook": "kind='ebook'",
@@ -562,6 +620,8 @@ if __name__ == "__main__":
     ap.add_argument("--inherit", action="store_true")
     ap.add_argument("--covers-paper", action="store_true")
     ap.add_argument("--covers-paper-aladin", action="store_true")
+    ap.add_argument("--d4l-budget", type=int, default=28000,
+                    help="정보나루 일 호출 예산(IP 등록 시 한도 30,000). 0이면 알라딘만 사용")
     ap.add_argument("--desc-only", action="store_true",
                     help="표지는 있고 줄거리만 없는 풀(pri=1)만 처리 — 데일리는 표지 우선이라 이 경로가 늦게 열린다. 검증·수동실행용")
     a = ap.parse_args()
@@ -575,5 +635,5 @@ if __name__ == "__main__":
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
     elif a.covers_paper: covers_paper(a.covers_limit)
-    elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget, a.desc_only)
+    elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget, a.desc_only, a.d4l_budget)
     else: ap.print_help()
