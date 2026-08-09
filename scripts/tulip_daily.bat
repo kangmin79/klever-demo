@@ -28,8 +28,11 @@ python scripts\tulip_sync.py --covers-yes24 --covers-budget 500 >> logs\tulip_da
 rem new paper-book covers (Naver book DB, same source as OPAC) - recheck latest 300
 python scripts\tulip_sync.py --covers-paper --covers-limit 300 >> logs\tulip_daily.log 2>&1
 rem paper cover+desc backfill (Aladin ISBN10/13). 2026-08-09: random order + Book-target-only
-rem  = 1 call per book (was ~2) and 50%% hit (was 7.5%%). ~4200 books/day, pool 53.6k -> ~13 days.
-rem  500 + 4200 = 4700 of the 5000/day Aladin cap.
+rem  = 1 call per book (was ~2) and 50%% hit (was 7.5%%). 500 + 4200 = 4700 of the 5000/day cap.
+rem  Two pools, priority order, one shared budget:
+rem   pri0 no cover (53k)  -> ~50%% cover hit, 47%% of those bring a blurb. ~13 days
+rem   pri1 cover but no blurb (162k, Naver gave cover only) -> Aladin 100%% match, 70%% blurb. ~39 days
+rem  Budget flows to pri1 automatically once pri0 dries up. Manual/verify: add --desc-only
 python scripts\tulip_sync.py --covers-paper-aladin --covers-budget 4200 >> logs\tulip_daily.log 2>&1
 rem embeddings for new books only (embedding null = a dozen per day; after covers so Aladin desc included)
 python scripts\tulip_sync.py --embed-ebook >> logs\tulip_daily.log 2>&1

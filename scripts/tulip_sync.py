@@ -307,18 +307,28 @@ def covers_yes24(limit=None, budget=4500):
     flush()
     print(f"[covers-yes24] 완료 — ISBN조회 {hit_isbn:,} + 엄격검색 {hit_search:,} 채움, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
 
-def covers_paper_aladin(limit=None, budget=4500):
+def covers_paper_aladin(limit=None, budget=4500, desc_only=False):
     """종이책 단행본 표지+설명 백필: ISBN 있고 표지 없는 것 → 알라딘 ISBN 직조회.
     네이버(/openapi/thumbnail)에 없던 ~5.9만 보강. 표지와 함께 description도 채움.
     실패는 cover_url='' 마킹(다음날 재시도 방지, 앱은 falsy→타이포 표지)."""
+    # 두 개의 풀을 우선순위로 이어서 처리한다(알라딘 호출 1건당 성과가 큰 쪽 먼저).
+    #  pri=0 표지 없음(5.3만) — 알라딘 매칭 50%, 성공분의 47%가 줄거리 동반
+    #  pri=1 표지는 있는데 줄거리 없음(16.2만, 네이버 thumbnail이 표지만 준 것) — ISBN 100% 보유
+    #        2026-08-09 실측(무작위 120건): 알라딘 매칭 120/120(100%), 줄거리 확보 84(70%).
+    #        2010년대 78%·2020년대 93%. 표지 풀이 마르면 예산이 자동으로 이쪽으로 흐른다.
     # 정렬 = 무작위(md5). ctrl은 '등록 순번'이라 같이 들어온 책(일괄구매·기증)이 붙어 있어
-    # ctrl 정렬은 실패가 뭉텅이로 이어진다. 2026-08-09 실측: ctrl desc 선두 표본 7.5% vs 무작위 50.0%.
-    res = json.loads(sql(
-        "select ctrl, title, author, isbn from semyung_tulip "
-        "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and cover_url is null order by md5(ctrl)"
-        + (f" limit {limit}" if limit else "")))
-    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (알라딘 예산 {budget:,}회)")
-    hit = 0; miss = 0; buf = []
+    # ctrl 정렬은 실패가 뭉텅이로 이어진다. 2026-08-09 실측: ctrl desc 선두 7.5% vs 무작위 50.0%.
+    take = limit or int(budget * 1.1) + 50        # 예산만큼만 가져온다(21만 행 전량 fetch 방지)
+    base = ("select ctrl, isbn, {pri} as pri from semyung_tulip "
+            "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and {cond}")
+    q0 = base.format(pri=0, cond="cover_url is null") + f" order by md5(ctrl) limit {take}"
+    q1 = (base.format(pri=1, cond="cover_url is not null and cover_url<>'' and description is null")
+          + f" order by md5(ctrl) limit {take}")
+    inner = q1 if desc_only else f"({q0}) union all ({q1})"
+    res = json.loads(sql(f"select * from ({inner}) u order by pri, md5(ctrl) limit {take}", timeout=180))
+    n0 = sum(1 for r in res if r["pri"] == 0)
+    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) / 알라딘 예산 {budget:,}회")
+    hit = miss = dhit = dmiss = 0; buf = []
     def flush():
         if not buf: return
         try: sql("; ".join(buf))
@@ -326,12 +336,19 @@ def covers_paper_aladin(limit=None, budget=4500):
         buf.clear()
     for r in res:
         if _aladin_calls >= budget:
-            print(f"  예산 소진 — 남은 {len(res)-hit-miss:,}건은 내일 재실행")
+            print(f"  예산 소진 — 남은 건은 내일 재실행")
             break
         # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
         # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
         cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
-        if cov:
+        if r["pri"] == 1:
+            # 표지는 이미 있다 — 줄거리만 채운다. 덮어쓰지 않도록 cover_url은 손대지 않는다.
+            # 실패도 ''로 남겨 내일 같은 책을 또 조회하지 않게 한다(앱은 ''를 falsy로 처리).
+            buf.append(f"update semyung_tulip set description={esc(dsc or '')}, "
+                       f"updated_at=now() where ctrl={esc(r['ctrl'])}")
+            if dsc: dhit += 1
+            else:   dmiss += 1
+        elif cov:
             extra = f", description={esc(dsc)}" if dsc else ""
             buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
             hit += 1
@@ -339,11 +356,12 @@ def covers_paper_aladin(limit=None, budget=4500):
             buf.append(f"update semyung_tulip set cover_url='', updated_at=now() where ctrl={esc(r['ctrl'])}")
             miss += 1
         if len(buf) >= 100: flush()
-        n = hit + miss
-        if n % 200 == 0: print(f"  {n:,}/{len(res):,} (채움 {hit} / 실패 {miss})")
+        n = hit + miss + dhit + dmiss
+        if n % 200 == 0: print(f"  {n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
         time.sleep(0.15)
     flush()
-    print(f"[covers-paper-aladin] 완료 — 채움 {hit:,}, 실패 {miss:,}, 알라딘 호출 {_aladin_calls:,}회")
+    print(f"[covers-paper-aladin] 완료 — 표지 {hit:,}(실패 {miss:,}) / 줄거리 {dhit:,}(없음 {dmiss:,}), "
+          f"알라딘 호출 {_aladin_calls:,}회")
 
 TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)·학위논문(t)·미분류('') — 연간물/DVD/지도 제외
     "ebook": "kind='ebook'",
@@ -533,6 +551,8 @@ if __name__ == "__main__":
     ap.add_argument("--inherit", action="store_true")
     ap.add_argument("--covers-paper", action="store_true")
     ap.add_argument("--covers-paper-aladin", action="store_true")
+    ap.add_argument("--desc-only", action="store_true",
+                    help="표지는 있고 줄거리만 없는 풀(pri=1)만 처리 — 데일리는 표지 우선이라 이 경로가 늦게 열린다. 검증·수동실행용")
     a = ap.parse_args()
     if a.test: run_sweep(1, "test")
     elif a.full: run_sweep(340, "full")
@@ -544,5 +564,5 @@ if __name__ == "__main__":
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
     elif a.covers_paper: covers_paper(a.covers_limit)
-    elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget)
+    elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget, a.desc_only)
     else: ap.print_help()
