@@ -5,8 +5,11 @@
 //    mmbrLnkg가 미리가입 없이 자동 회원연계까지 해주므로 교보 회원등록 API가 필요 없다.
 //    → 각자 5권 한도·각자 대출현황. 공유계정의 "남의 대출 자동반납" 리스크 소멸.
 //
-// 폴백: 연계값이 없는 이용자(현 배너는 학번+이름만 보냄)는 기존 관장님 공유계정으로 처리.
-//    공유계정 경로는 데모/소수 전용이며 배너에 연계값이 추가되면 자연히 사라진다.
+// 🔒 8/9 개편: **공유계정 폴백 폐지**. 연계값이 없는 이용자(=도서관 계정 미연결)는
+//    대출·반납·연장·예약·대출현황 전부 거부(409 needsPersonal)하고 로그인 안내를 받는다.
+//    이유: 폴백은 관장님 계정 한 칸을 익명 방문자가 쓰는 구조라 ①관장님 실명으로 대출기록이 남고
+//    ②5칸이 차면 "가장 오래된 1권 강제 반납"이 돌아 남이 읽던 책이 끊겼다.
+//    공개는 재고(stock) 하나뿐 — "지금 빌릴 수 있나"는 로그인 없이도 보여야 하므로.
 //
 // GET ?action=borrow&brcd=…   → 대출 (loanSrmb·viewerUrl 반환)
 //     ?action=return&brcd=…&loanSrmb=… → 반납
@@ -15,8 +18,8 @@
 //     ?action=cancelReserve&brcd=… → 예약 취소
 //     ?action=status              → 현재 대출 현황
 //     ?action=stock&brcd=…        → 재고(대출중/보유/예약자수) — 공개, 인증 불필요
-//     ?action=returnAll           → (공유계정 전용) 전 대출 반납
-// 인증: Authorization: Bearer <sso_token> 있으면 개인세션 시도, 없으면 공유계정
+//     ?action=returnAll&key=…     → (관리자 전용) 공유계정에 남은 대출 전부 반납
+// 인증: Authorization: Bearer <sso_token> 필수. 없으면 stock 외 전부 409.
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, xmlTag } from "../_shared/semyung_session.ts";
@@ -181,9 +184,23 @@ Deno.serve(async (req) => {
       return json(st ? { ok: true, action, ...st } : { ok: false, action, error: "재고를 읽지 못했어요" });
     }
 
-    // ① 개인세션 우선 — SSO 토큰의 sid로 저장된 포털 연계값을 꺼내 학생 본인 세션 수립
+    // 관리자 전용 — 폴백 시절 공유계정에 남은 대출을 비우는 청소용. 키는 서버 시크릿과 대조한다.
+    // (예전엔 누구나 부를 수 있어 관장님 대출을 통째로 반납시킬 수 있었다)
+    if (action === "returnAll") {
+      const admin = Deno.env.get("SEMYUNG_ADMIN_KEY") || "";
+      if (!admin || url.searchParams.get("key") !== admin) return json({ ok: false, action, error: "권한이 없습니다" }, 403);
+      const shared = await sharedAccountSession();
+      const items: unknown[] = [];
+      for (const l of await listLoans(shared)) {
+        const xml = await ebPost(shared, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb: l.loanSrmb });
+        items.push({ loanSrmb: l.loanSrmb, title: l.title, ok: xmlTag(xml, "result") === "True" });
+      }
+      return json({ ok: true, action, returned: items.filter((i) => (i as { ok: boolean }).ok).length, items });
+    }
+
+    // 개인세션 — SSO 토큰의 sid로 저장된 포털 연계값을 꺼내 학생 본인 세션을 만든다.
+    // 여기서 못 만들면 그대로 막는다. 공유계정으로 대신 처리하지 않는다(위 헤더 주석 참고).
     let jar: Jar | null = null;
-    let personal = false;
     const ses = await sessionFromRequest(req);
     if (ses) {
       const row = await loadSession(ses.sid);
@@ -191,12 +208,16 @@ Deno.serve(async (req) => {
         try {
           const lib = await libLoginByPortal({ school_no: row.school_no, portal_user_id: row.portal_user_id });
           jar = await ebookSession(await fetchEbookHandoff(lib));
-          personal = true;
         } catch (e) { console.error("personal ebook session fail", String(e)); }
       }
     }
-    // ② 폴백 — 관장님 공유계정(데모)
-    if (!jar) jar = await sharedAccountSession();
+    if (!jar) {
+      return json({
+        ok: false, action, personal: false, needsPersonal: true,
+        error: "도서관 계정 연결이 필요해요",
+      }, 409);
+    }
+    const personal = true;
 
     if (action === "status") {
       const body = await ebGet(jar, "/main/userBorrowStatus.json");
@@ -208,37 +229,15 @@ Deno.serve(async (req) => {
       return json({ ok: true, action, personal, items: await listLoans(jar) });
     }
 
-    if (action === "returnAll") {
-      // 공유계정 슬롯 비우기 — 개인세션에서는 위험/불필요하므로 차단
-      if (personal) return json({ ok: false, error: "개인 계정에서는 지원하지 않습니다" }, 400);
-      const loans = await listLoans(jar);
-      const items: unknown[] = [];
-      for (const l of loans) {
-        const xml = await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb: l.loanSrmb });
-        items.push({ loanSrmb: l.loanSrmb, title: l.title, ok: xmlTag(xml, "result") === "True" });
-      }
-      return json({ ok: true, action, personal, returned: items.filter((i) => (i as { ok: boolean }).ok).length, items });
-    }
-
     // 반납은 loanSrmb만으로 성립 — brcd 요구는 borrow에만.
     // (구버전은 return에도 brcd를 요구해 앱의 반납 버튼이 400으로 실패하고 있었음)
     if (action === "borrow" && !brcd) return json({ ok: false, error: "brcd 필요" }, 400);
 
     if (action === "borrow") {
-      let res = await doBorrow(jar, brcd);
-      let autoReturned = 0;
-      // 대출한도(5권) 초과 시 — 공유계정에서만 가장 오래된 1권 반납 후 재시도.
-      // 개인 계정에서는 남의 책이 아니라 본인 책이므로 함부로 반납하지 않고 안내만 한다.
-      if (!res.ok && !personal && /초과|권수|limit/i.test(res.msg)) {
-        const loans = await listLoans(jar);
-        if (loans.length) {
-          const oldest = loans.reduce((a, b) => Number(a.loanSrmb) <= Number(b.loanSrmb) ? a : b);
-          await ebPost(jar, "/process/contentReturnProc.xml", { lbryCode: LBRY, loanSrmb: oldest.loanSrmb });
-          autoReturned = 1;
-        }
-        res = await doBorrow(jar, brcd);
-      }
-      if (!res.ok) return json({ ok: false, action, personal, message: res.msg, autoReturned });
+      // 한도(5권) 초과여도 자동반납은 하지 않는다 — 본인 책이므로 안내만 하고 직접 고르게 한다.
+      // (공유계정 시절의 "가장 오래된 1권 강제 반납"은 남이 읽던 책을 끊어서 8/9에 폐지)
+      const res = await doBorrow(jar, brcd);
+      if (!res.ok) return json({ ok: false, action, personal, message: res.msg });
       let viewerUrl = "";
       try { viewerUrl = await viewerUrlFor(jar, res.loanSrmb, brcd); }
       catch (_) { /* 뷰어URL 실패해도 대출은 유효 */ }
@@ -264,9 +263,8 @@ Deno.serve(async (req) => {
       return json({ ok: true, action, personal, items: await listReserves(jar) });
     }
 
-    // 전권 대출중인 전자책 예약 — 반납되면 순번대로. 공유계정으로는 의미가 없어 개인세션만 허용.
+    // 전권 대출중인 전자책 예약 — 반납되면 순번대로 (여기까지 온 요청은 이미 개인세션)
     if (action === "reserve" || action === "cancelReserve") {
-      if (!personal) return json({ ok: false, action, error: "도서관 계정 연결이 필요해요" }, 409);
       let xml: string;
       if (action === "reserve") {
         if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);

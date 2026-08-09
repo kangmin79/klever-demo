@@ -3341,6 +3341,8 @@ async function shelfReturn(key){
     const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(it.loanSrmb)+'&brcd='+encodeURIComponent(String(key).replace(/^sm-/,'')),{headers:smHeaders()});
     const d=await r.json();
     if(d&&d.ok){ it.returned=true; it.returnedTs=Date.now(); shelfSave(a); renderMyShelf(); readerToast('반납 완료 — 대출 슬롯이 비었어요'); }
+    // 도서관 계정 미연결(또는 연동 만료) — 8/9부터 전자책은 본인 명의로만 다뤄서 반납도 로그인이 필요하다
+    else if(d&&d.needsPersonal){ try{ localStorage.setItem(SSO_PERSONAL_KEY,'0'); }catch(e){} smLoginGuide('read'); }
     else{ readerToast('반납에 실패했어요. 잠시 후 다시 시도해 주세요'); }
   }catch(e){ readerToast('반납 중 오류가 났어요'); }
 }
@@ -5071,17 +5073,23 @@ const SMRESV_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-r
 // (예전엔 공유계정 폴백으로 로그인 없이도 신청됐음 — 서버 semyung-reserve도 같이 잠갔다)
 // 연계값은 도서관 홈페이지 배너를 통해서만 넘어오므로 흐름은 [세명대 로그인 → 배너 → 복귀].
 const SEMYUNG_LOGIN_URL='https://setopia.semyung.ac.kr/main/index_lib_smate.jsp';
-function smLoginGuide(){
+// mode: 'reserve'(기본, 종이책 예약) | 'read'(전자책 대출) — 마지막 줄만 상황에 맞게 바뀐다
+function smLoginGuide(mode){
+  const read = mode==='read';
+  const sub = read
+    ? '전자책은 <b>학생 본인 명의</b>로 대출돼요. 세명대 계정으로 로그인하면 내 이름으로 5권까지 빌릴 수 있어요.'
+    : '예약은 <b>학생 본인 이름</b>으로 접수돼요. 세명대 계정으로 로그인하면 바로 이용할 수 있어요.';
+  const last = read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
   let sh=document.getElementById('rsvSheet');
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
   sh.innerHTML=`<div class="rsv-card">
     <h3>도서관 로그인이 필요해요</h3>
-    <div class="rsv-sub">예약은 <b>학생 본인 이름</b>으로 접수돼요. 세명대 계정으로 로그인하면 바로 이용할 수 있어요.</div>
+    <div class="rsv-sub">${sub}</div>
     <ul class="rsv-rules">
       <li><span class="rsv-tag">1</span><span>아래 버튼으로 <b>세명대 로그인</b></span></li>
       <li><span class="rsv-tag">2</span><span>도서관 홈페이지의 <b>참나루 배너</b>를 눌러 다시 들어오기</span></li>
-      <li><span class="rsv-tag">3</span><span>돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요</span></li>
+      <li><span class="rsv-tag">3</span><span>${last}</span></li>
     </ul>
     <div class="rsv-btns">
       <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
@@ -6238,6 +6246,9 @@ function lcBorrow(isbn){
   // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
   const isEbookLoan = /^sm-/.test(b.isbn||'') && /^\d+$/.test(reckey) &&
     ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
+  // 미연동자 전자책 대출 차단(8/9) — 예전엔 공유계정(관장님)으로 대신 빌려줘서 관장님 이름으로
+  // 기록이 남고, 5칸이 차면 남이 읽던 책이 강제 반납됐다. 창을 열기 전에 막는다.
+  if(isEbookLoan && !ssoIsPersonal()){ smLoginGuide('read'); return; }
   // 대출형(isEbookLoan)은 대출 '성공 후'에 서재 기록(smEbookBorrowOpen 내) — 실패해도 '읽는 중'에 남던 버그 방지
   if(b.lib && !isEbookLoan) shelfAdd(b);   // 외부 열람형은 열기=열람 시작으로 기록('읽고 돌아오기' 루프)
   const w=window.open('','_blank');                 // 제스처 내에서 새 탭 확보(팝업차단 회피)
@@ -6503,6 +6514,13 @@ async function smEbookBorrowOpen(brcd, w, book){
   try{
     const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:smHeaders()});
     const d=await r.json();
+    // 연동 만료(토큰 7일) — 누를 땐 연동 상태였는데 서버에서 세션이 안 만들어진 경우.
+    // 공유계정으로 대신 빌려주지 않으므로 여기서 안내로 돌린다.
+    if(d&&d.needsPersonal){
+      try{ localStorage.setItem(SSO_PERSONAL_KEY,'0'); }catch(e){}
+      try{ w.close(); }catch(e){}
+      smLoginGuide('read'); return;
+    }
     if(d&&d.ok&&d.viewerUrl){
       if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
       // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
