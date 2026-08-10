@@ -89,6 +89,9 @@ def esc(s):
     if s is None: return "null"
     s = str(s).replace("\\", "").replace("'", "''")
     s = re.sub(r"[\x00-\x1f]", " ", s)          # 제어문자 금지 (Mgmt API 파싱)
+    # 짝 잃은 서로게이트(외부 응답의 깨진 유니코드)는 JSON 직렬화를 통째로 400으로 만든다
+    # (2026-08-11 데일리에서 200건 배치 2개가 HTTP 400 — 한 행 때문에 배치 전체가 죽었음)
+    s = re.sub(r"[\ud800-\udfff]", "", s)
     return "'" + s.strip() + "'"
 
 def norm_url(u):
@@ -425,23 +428,30 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
 
     def write_batch(rows):
         """UPDATE 문 N개 대신 values 조인 1문으로 쓴다.
-        낱개 UPDATE 50문이 배치당 수 초씩 먹어 전체 시간의 3분의 1을 차지했다(2026-08-10)."""
+        낱개 UPDATE 50문이 배치당 수 초씩 먹어 전체 시간의 3분의 1을 차지했다(2026-08-10).
+        실패하면 반으로 쪼개 재시도 — 깨진 행 하나 때문에 200건이 통째로 죽지 않게(2026-08-11 HTTP 400 사고)."""
         p1 = [(r["ctrl"], dsc or "") for r, cov, dsc, _ in rows if r["pri"] == 1]
         p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _ in rows if r["pri"] != 1]
-        stmts = []
-        if p1:
-            vals = ",".join(f"({esc(c)},{esc(d)})" for c, d in p1)
-            stmts.append("update semyung_tulip t set description=v.d, updated_at=now() "
-                         f"from (values {vals}) as v(c,d) where t.ctrl=v.c")
-        if p0:
-            vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in p0)
+        def run(stmt, n):
+            try: sql(stmt, timeout=180); return True
+            except Exception as e: print(f"  쓰기 실패({n}건): {str(e)[:100]}"); return False
+        def w1(pairs):
+            if not pairs: return
+            vals = ",".join(f"({esc(c)},{esc(d)})" for c, d in pairs)
+            ok = run("update semyung_tulip t set description=v.d, updated_at=now() "
+                     f"from (values {vals}) as v(c,d) where t.ctrl=v.c", len(pairs))
+            if not ok and len(pairs) > 12:
+                mid = len(pairs) // 2; w1(pairs[:mid]); w1(pairs[mid:])
+        def w0(trips):
+            if not trips: return
+            vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in trips)
             # 줄거리가 같이 왔으면 채우고, 없으면 기존 값을 건드리지 않는다
-            stmts.append("update semyung_tulip t set cover_url=v.u, "
-                         "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
-                         f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c")
-        for s in stmts:
-            try: sql(s, timeout=180)
-            except Exception as e: print(f"  쓰기 실패({len(rows)}건): {str(e)[:120]}")
+            ok = run("update semyung_tulip t set cover_url=v.u, "
+                     "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
+                     f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", len(trips))
+            if not ok and len(trips) > 12:
+                mid = len(trips) // 2; w0(trips[:mid]); w0(trips[mid:])
+        w1(p1); w0(p0)
 
     # 조회는 네트워크 대기가 대부분이라 스레드 8개면 그만큼 빨라진다(건당 0.74s → 0.1s 수준).
     # 배치(200) 단위로 조회→쓰기를 반복해 예산 계산과 중간 저장을 단순하게 유지한다.
