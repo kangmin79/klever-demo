@@ -99,6 +99,11 @@ def norm_url(u):
     u = (u or "").strip()
     while re.match(r"^https?://(https?://)", u):
         u = re.sub(r"^https?://", "", u, count=1)
+    # 경로에 공백이 섞여 오는 응답이 있다(2026-08-10 실측 2건. 한 건은 책 제목이 통째로 URL에
+    # 들어와 있었다: '.../cover500/i 지속가능한 관광의'). 호스트만 검사하면 통과해 버리고,
+    # 브라우저에선 그냥 안 뜬다 — onerror가 img를 지우므로 활자 표지로도 안 떨어지고 빈칸이 된다.
+    # 진짜 이미지 주소는 공백을 퍼센트 인코딩하므로 raw 공백이 있으면 무조건 불량이다.
+    if re.search(r"\s", u): return ""
     return u if re.match(r"^https?://[^/\s]+/", u) else ""
 
 def upsert_rows(rows):
@@ -276,6 +281,15 @@ def _cover(it):
     if not c or "noimg" in c.lower(): return ""   # 알라딘 '표지없음' placeholder(noimg_*.gif) 제외 — 진짜 표지 아님
     return norm_url(c)
 
+# 서점 상품 안내 = 책 내용이 0%인 판매 문구. 줄거리 자리에 들어가면 안 된다(2026-08-10 실측 170건).
+#  _ONLY : 이 문구가 있으면 통째로 버린다. 알라딘 수입도서 상품에 붙어 오며 71권이 같은 문장이었다
+#  _HEAD : 앞에만 붙는 템플릿. 잘라내고 뒤에 실제 소개가 남으면 그것을 쓴다
+#          (템플릿만인 99건은 버려지고, 뒤에 본문이 붙은 6건은 본문만 살아남는다)
+# ⚠️'절판·배송·이벤트·사은품' 같은 낱말은 거르지 말 것 — 130건을 눈으로 확인해 보니
+#   "오랫동안 절판되었다가 다시 펴낸 책" 처럼 멀쩡한 책소개의 일부였다.
+_JUNK_ONLY = re.compile(r"해외주문원서")
+_JUNK_HEAD = re.compile(r"^★\s*책의\s*특징\s*★.*?[-_]{10,}\s*", re.S)
+
 def _desc(it):
     d = re.sub(r"<[^>]+>", " ", it.get("description", "") or "")
     # HTML 엔티티 해제 — 앱은 textContent로 그리므로 &lt;책제목&gt;이 그대로 노출된다.
@@ -285,7 +299,10 @@ def _desc(it):
     # 책 제목의 <리버 보이> 같은 홑화살괄호까지 사라진다(실측).
     d = re.sub(r"</?(?:b|i|u|p|br|hr|div|span|strong|em|a|img|font|ul|ol|li|h[1-6]|table|tr|td)\b[^>]*>",
                " ", d, flags=re.I)
-    return re.sub(r"\s+", " ", d).strip()[:1200]
+    d = re.sub(r"\s+", " ", d).strip()
+    if _JUNK_ONLY.search(d): return ""      # 판매 안내문 — 책 내용이 없다
+    d = _JUNK_HEAD.sub("", d).strip()       # 앞에 붙은 템플릿 제거, 남은 본문만 사용
+    return d[:1200]
 
 def aladin_cover_isbn(isbn, order=("Book", "eBook")):
     """ISBN 직조회 — 오매칭 없음. ISBN10(구간)/ISBN13 자동감지(옛 종이책은 10자리).
