@@ -32,6 +32,8 @@ PROJECT = "gkujptyfrzqrjrvovbnc"
 SB = f"https://{PROJECT}.supabase.co"
 BUCKET = "covers"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 BookstarMirror/1.0"}
+# 로컬 마스터 사본(사장님 지시 8/11): 클라우드와 별개로 PC에도 실물 보관 — 재적재·재점검의 원천
+LOCAL_DIR = os.path.join(os.path.expanduser("~"), "Desktop", "북스타", "데이터", "표지")
 
 _srv = None
 def service_key():
@@ -101,10 +103,18 @@ def run(limit=None, budget=60000, kinds="paper"):
         except Exception as e:
             print(f"  DB 기록 실패({len(buf)}건): {str(e)[:100]}")
 
+    os.makedirs(LOCAL_DIR, exist_ok=True)
+
     def one(r):
         data, why = fetch_convert(r["cover_url"])
         if data is None:
             return r["ctrl"], "", why
+        # PC 사본 먼저(공짜 — 어차피 손에 든 바이트), 업로드 실패해도 로컬은 남는다
+        try:
+            with open(os.path.join(LOCAL_DIR, r["ctrl"] + ".webp"), "wb") as f:
+                f.write(data)
+        except Exception:
+            pass
         try:
             if upload(r["ctrl"], data): return r["ctrl"], r["ctrl"] + ".webp", ""
             return r["ctrl"], "", "업로드 실패"
@@ -147,6 +157,33 @@ def run(limit=None, budget=60000, kinds="paper"):
                 print(f"  {done:,}/{total_take:,} (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초 · 남은 {left:,}")
     print(f"[mirror] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
 
+def pull_storage():
+    """스토리지에는 있는데 PC에 없는 표지를 내려받아 로컬 사본을 맞춘다.
+    (로컬 저장 기능이 나중에 붙어서, 그 전에 올라간 분량 회수용 — 우리 버킷이라 빠르고 공짜)"""
+    os.makedirs(LOCAL_DIR, exist_ok=True)
+    rows = json.loads(t.sql(
+        "select cover_local from semyung_tulip where cover_local is not null and cover_local<>''",
+        timeout=120))
+    need = [r["cover_local"] for r in rows
+            if not os.path.exists(os.path.join(LOCAL_DIR, r["cover_local"]))]
+    print(f"[pull] 스토리지 {len(rows):,}장 중 로컬에 없는 것 {len(need):,}장")
+    def grab(name):
+        try:
+            req = urllib.request.Request(f"{SB}/storage/v1/object/public/{BUCKET}/{name}", headers=UA)
+            with urllib.request.urlopen(req, timeout=30, context=t.CTX) as r:
+                b = r.read()
+            if b[:4] == b"RIFF":
+                with open(os.path.join(LOCAL_DIR, name), "wb") as f: f.write(b)
+                return True
+        except Exception:
+            pass
+        return False
+    ok = 0
+    with cf.ThreadPoolExecutor(max_workers=10) as ex:
+        for good in ex.map(grab, need):
+            ok += good
+    print(f"[pull] 회수 {ok:,}/{len(need):,}")
+
 def verify(n=8):
     rows = json.loads(t.sql(
         "select ctrl, cover_local from semyung_tulip "
@@ -172,7 +209,9 @@ if __name__ == "__main__":
     ap.add_argument("--budget", type=int, default=60000)
     ap.add_argument("--kinds", default="paper")
     ap.add_argument("--verify", type=int, nargs="?", const=8)
+    ap.add_argument("--pull-storage", action="store_true")
     a = ap.parse_args()
     if a.setup: setup()
     elif a.verify is not None: verify(a.verify)
+    elif a.pull_storage: pull_storage()
     else: run(a.limit, a.budget, a.kinds)
