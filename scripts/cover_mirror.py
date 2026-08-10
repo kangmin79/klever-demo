@@ -121,7 +121,8 @@ def run(limit=None, budget=60000, kinds="paper"):
         except Exception as e:
             return r["ctrl"], "", f"업로드 {type(e).__name__}"
 
-    PAGE, BATCH = 1500, 100
+    PAGE, BATCH = 1500, 150
+    WORKERS = 24        # 실측: 10개=2.2건/초(업로드가 긴 다리). 대역폭보다 왕복 대기가 지배라 늘릴수록 붙는다
     while done < total_take:
         page = json.loads(t.sql(
             "select ctrl, cover_url from semyung_tulip "
@@ -132,7 +133,7 @@ def run(limit=None, budget=60000, kinds="paper"):
         for i in range(0, len(page), BATCH):
             chunk = page[i:i + BATCH]
             got = {}
-            ex = cf.ThreadPoolExecutor(max_workers=10)
+            ex = cf.ThreadPoolExecutor(max_workers=WORKERS)
             futs = {ex.submit(one, r): r["ctrl"] for r in chunk}
             try:
                 for f in cf.as_completed(futs, timeout=180):       # 배치 마감 3분

@@ -21,7 +21,7 @@ goto netwait
 :netok
 
 echo ===== [%date% %time%] cover mirror start ===== >> logs\cover_mirror.log
-python -u scripts\cover_mirror.py --budget 60000 >> logs\cover_mirror.log 2>&1
+python -u scripts\cover_mirror.py --budget 250000 >> logs\cover_mirror.log 2>&1
 rem local master copy: full bibliographic dump to Desktop\bookstar\data (few minutes)
 python -u scripts\local_dump.py >> logs\cover_mirror.log 2>&1
 echo ===== [%date% %time%] cover mirror end (exit %errorlevel%) ===== >> logs\cover_mirror.log
