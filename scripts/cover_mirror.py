@@ -18,12 +18,15 @@
 판정 규율(전부 겪은 것): 200 응답≠이미지 — 매직바이트(JPEG/PNG/GIF/WEBP)+2KB 미만 컷,
      noimg 플레이스홀더 컷. 변환 실패는 ''로 마킹하고 다음으로.
 """
-import sys, os, io, json, re, time, argparse, threading
+import sys, os, io, json, re, time, argparse, threading, socket, functools
 import concurrent.futures as cf
 import urllib.request, urllib.error
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tulip_sync as t
 from PIL import Image
+
+socket.setdefaulttimeout(30)                       # 어떤 소켓도 30초 이상 안 기다림
+print = functools.partial(print, flush=True)       # 스케줄 실행에서 로그가 버퍼에 갇히지 않게
 
 PROJECT = "gkujptyfrzqrjrvovbnc"
 SB = f"https://{PROJECT}.supabase.co"
@@ -80,18 +83,16 @@ def upload(ctrl, data):
         return r.status in (200, 201)
 
 def run(limit=None, budget=60000, kinds="paper"):
+    """페이지 단위(1,500)로 뽑아 처리한다.
+    ⚠️6만 행 통짜 SELECT는 Mgmt API에서 수 분 걸리고(6MB), 8/11 첫 대량 실행이 여기서
+    한참 침묵했다. cover_local이 채워지며 다음 SELECT가 자연히 다음 페이지가 된다(오프셋 불필요).
+    ⚠️응답 없는 다운로드 하나가 전체를 물고 늘어진 정지 사고(2,414에서 스톱) →
+    배치에 마감시간을 두고, 시간 내 못 끝낸 항목은 실패 처리 후 전진한다."""
     kind_cond = "kind='paper' and mat_type='m'" if kinds == "paper" else f"kind='{kinds}'"
-    take = min(limit or budget, budget)
-    rows = json.loads(t.sql(
-        "select ctrl, cover_url from semyung_tulip "
-        f"where {kind_cond} and cover_url like 'https%' and cover_local is null "
-        f"order by md5(ctrl) limit {take}", timeout=120))
-    print(f"[mirror] 대상 {len(rows):,}건 (예산 {budget:,})")
-    ok = fail = 0; done = 0; t0 = time.time()
-    buf = []          # (ctrl, local) — 성공은 'ctrl.webp', 실패는 ''
-    lock = threading.Lock()
+    total_take = min(limit or budget, budget)
+    ok = fail = done = 0; t0 = time.time()
 
-    def flush():
+    def flush(buf):
         if not buf: return
         vals = ",".join(f"({t.esc(c)},{t.esc(l)})" for c, l in buf)
         try:
@@ -99,7 +100,6 @@ def run(limit=None, budget=60000, kinds="paper"):
                   f"from (values {vals}) as v(c,l) where x.ctrl=v.c", timeout=120)
         except Exception as e:
             print(f"  DB 기록 실패({len(buf)}건): {str(e)[:100]}")
-        buf.clear()
 
     def one(r):
         data, why = fetch_convert(r["cover_url"])
@@ -111,21 +111,41 @@ def run(limit=None, budget=60000, kinds="paper"):
         except Exception as e:
             return r["ctrl"], "", f"업로드 {type(e).__name__}"
 
-    BATCH = 100
-    for i in range(0, len(rows), BATCH):
-        chunk = rows[i:i + BATCH]
-        with cf.ThreadPoolExecutor(max_workers=10) as ex:
-            out = list(ex.map(one, chunk))
-        for ctrl, local, why in out:
-            if local: ok += 1
-            else: fail += 1
-            buf.append((ctrl, local))
-        flush()
-        done += len(chunk)
-        if done % 1000 < BATCH:
-            rate = done / max(1, time.time() - t0)
-            print(f"  {done:,}/{len(rows):,} (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초")
-    print(f"[mirror] 완료 — 성공 {ok:,} / 실패 {fail:,} / {time.time()-t0:.0f}초")
+    PAGE, BATCH = 1500, 100
+    while done < total_take:
+        page = json.loads(t.sql(
+            "select ctrl, cover_url from semyung_tulip "
+            f"where {kind_cond} and cover_url like 'https%' and cover_local is null "
+            f"limit {min(PAGE, total_take - done)}", timeout=120))
+        if not page:
+            print("[mirror] 남은 대상 없음 — 전체 완료"); break
+        for i in range(0, len(page), BATCH):
+            chunk = page[i:i + BATCH]
+            got = {}
+            ex = cf.ThreadPoolExecutor(max_workers=10)
+            futs = {ex.submit(one, r): r["ctrl"] for r in chunk}
+            try:
+                for f in cf.as_completed(futs, timeout=180):       # 배치 마감 3분
+                    ctrl, local, why = f.result()
+                    got[ctrl] = local
+            except cf.TimeoutError:
+                pass                                                # 못 끝낸 놈은 아래서 실패 처리
+            # wait=False: 멈춘 스레드를 기다리지 않고 전진 (소켓 30초 컷이 뒤에서 정리)
+            ex.shutdown(wait=False, cancel_futures=True)
+            buf = []
+            for r in chunk:
+                local = got.get(r["ctrl"])
+                if local is None: local = ""                        # 마감 초과 = 실패 마킹(다음날 재시도 안 함)
+                if local: ok += 1
+                else: fail += 1
+                buf.append((r["ctrl"], local))
+            flush(buf)
+            done += len(chunk)
+            if done % 1000 < BATCH:
+                rate = done / max(1, time.time() - t0)
+                left = total_take - done
+                print(f"  {done:,}/{total_take:,} (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초 · 남은 {left:,}")
+    print(f"[mirror] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
 
 def verify(n=8):
     rows = json.loads(t.sql(
