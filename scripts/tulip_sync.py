@@ -241,7 +241,24 @@ def _d4l_cover(u):
         u = u.replace("/coversum/", "/cover500/").replace("/cover200/", "/cover500/").replace("/cover/", "/cover500/")
     return norm_url(u.replace("http://", "https://"))
 
-def d4l_book(isbn):
+def _same_book(ours, theirs):
+    """받아온 책이 우리 책과 같은지 느슨하게 대조. 확실히 다른 것만 거른다.
+    (8/11 실증: 정보나루가 ISBN에 가끔 엉뚱한 책을 답함 — 김해원 소설집에 옥타곤의 왕자.
+     반대로 한자↔한글 표기, 부제↔본제목 배치 차이는 정상이라 빡빡하면 멀쩡한 걸 버린다)"""
+    def nk(s):
+        s = re.sub(r"\[[^\]]*\]", " ", str(s or ""))
+        return re.sub(r"[^0-9A-Za-z가-힣]", "", s).lower()
+    a, b = nk(ours), nk(theirs)
+    if not a or not b: return True              # 한자뿐이라 판정 불가 → 통과(오탈락 방지)
+    if a in b or b in a: return True
+    import difflib
+    if difflib.SequenceMatcher(None, a, b).ratio() >= 0.45: return True
+    # 4글자 이상 공통 조각이 있으면 같은 책 계열로 본다
+    for i in range(len(a) - 3):
+        if a[i:i + 4] in b: return True
+    return False
+
+def d4l_book(isbn, expect_title=None):
     """도서관 정보나루 srchDtlList — ISBN13 정확검색. 반환 (cover, desc).
     알라딘 대비: 줄거리 확보 94.2% vs 70~77%, 일 한도 30,000 vs 5,000 (2026-08-09 실측).
     내용은 같은 원본 — 알라딘이 준 120권을 재조회하니 120/120 보유·111건 전문 완전일치.
@@ -265,6 +282,9 @@ def d4l_book(isbn):
     det = resp.get("detail") or []
     bk = (det[0] or {}).get("book") if det else None
     if not bk: return "", ""
+    # 제목 대조 가드 — 정보나루가 이 ISBN에 딴 책을 답하면 빈손 처리(틀린 데이터보다 없는 게 낫다)
+    if expect_title and not _same_book(expect_title, bk.get("bookname")):
+        return "", ""
     return _d4l_cover(bk.get("bookImageURL")), _desc({"description": bk.get("description")})
 
 _aladin_calls = 0
@@ -307,14 +327,17 @@ def _desc(it):
     d = _JUNK_HEAD.sub("", d).strip()       # 앞에 붙은 템플릿 제거, 남은 본문만 사용
     return d[:1200]
 
-def aladin_cover_isbn(isbn, order=("Book", "eBook")):
-    """ISBN 직조회 — 오매칭 없음. ISBN10(구간)/ISBN13 자동감지(옛 종이책은 10자리).
-    전자책은 order=("eBook","Book")로 호출 절약. 반환 (cover, desc)"""
+def aladin_cover_isbn(isbn, order=("Book", "eBook"), expect_title=None):
+    """ISBN 직조회. ISBN10(구간)/ISBN13 자동감지(옛 종이책은 10자리).
+    전자책은 order=("eBook","Book")로 호출 절약. 반환 (cover, desc)
+    expect_title 주면 제목 대조 가드(도서관 ISBN 오입력·서점 DB 오류로 딴 책이 오는 경우 차단)"""
     clean = re.sub(r"[^0-9Xx]", "", isbn or "")
     idtype = "ISBN13" if len(clean) == 13 else "ISBN"   # 알라딘: ISBN=10자리, ISBN13=13자리
     for st in order:
         items = aladin("ItemLookUp", itemIdType=idtype, ItemId=clean, SearchTarget=st)
         if items:
+            if expect_title and not _same_book(expect_title, items[0].get("title")):
+                continue
             return _cover(items[0]), _desc(items[0])
     return "", ""
 
@@ -387,7 +410,7 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
     take = limit or int((d4l_budget + budget) * 1.05) + 50   # 예산만큼만(21만 행 전량 fetch 방지)
     # ⚠️두 풀을 union으로 한 방에 뽑지 말 것. 16.2만 행에 lpad||md5 정렬키를 만들어 union+재정렬하면
     #   쿼리가 15분이 지나도 안 돌아온다(2026-08-10 데일리가 여기서 멈춤). 따로 뽑으면 2.3초.
-    base = ("select ctrl, isbn, {pri} as pri from semyung_tulip "
+    base = ("select ctrl, isbn, title, {pri} as pri from semyung_tulip "
             "where kind='paper' and mat_type='m' and isbn is not null and isbn<>'' and {cond}")
     def pull(pri, cond, order, n):
         if n <= 0: return []
@@ -415,14 +438,14 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
         cov = dsc = src = ""
         if not limit_hit[0] and _d4l_calls < d4l_budget:
             try:
-                cov, dsc = d4l_book(r["isbn"])
+                cov, dsc = d4l_book(r["isbn"], expect_title=r.get("title"))
                 if cov or dsc: src = "n"
             except D4LLimit as e:
                 limit_hit[0] = e
         if not (cov or dsc) and _aladin_calls < budget:
             # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
             # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
-            cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",))
+            cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",), expect_title=r.get("title"))
             if cov or dsc: src = "a"
         return r, cov, dsc, src
 
