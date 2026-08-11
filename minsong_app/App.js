@@ -13,9 +13,9 @@ const SB = 'https://gkujptyfrzqrjrvovbnc.supabase.co';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc';
 const H = { apikey: ANON, Authorization: 'Bearer ' + ANON };
 
-// 밀리의 구조 + 북스타의 온기 — 크림 종이 바탕, 잉크 글자, 금색 포인트 (웹 참나루와 한 가족)
+// 밀리처럼 흰 바탕(8/11 사장님) — 온기는 인증 카드의 크림·금색 포인트로만 남긴다
 const TXT = '#1f2430', SUB = '#4e5968', LIGHT = '#8b93a5', FAINT = '#b3b9c4';
-const BG = '#faf8f3', FILL = '#f1eee6', CREAM = '#f7f0dd', GOLD = '#d4a93b', GOLD_D = '#b8902f';
+const BG = '#ffffff', FILL = '#f2f3f5', CREAM = '#f7f0dd', GOLD = '#d4a93b', GOLD_D = '#b8902f';
 const BTN = '#1f2430';
 
 async function rest(q) {
@@ -467,7 +467,7 @@ function Home({ onPick, goSearch, session, goMy }) {
   return (
     <View style={{ flex: 1 }}>
     {/* 상단 흰 안개막 — 스크롤 콘텐츠가 검색창 뒤로 자연스럽게 사라진다 */}
-    <LinearGradient colors={['#faf8f3', '#faf8f3', 'rgba(250,248,243,0)']} locations={[0, 0.62, 1]}
+    <LinearGradient colors={['#ffffff', '#ffffff', 'rgba(255,255,255,0)']} locations={[0, 0.62, 1]}
       pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 96, zIndex: 9 }} />
     {/* 떠 있는 검색 — 스크롤해도 상단 고정 */}
     <View style={s.floatWrap} pointerEvents="box-none">
@@ -520,7 +520,7 @@ function Home({ onPick, goSearch, session, goMy }) {
       <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
       <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
       <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />
-      <Text style={s.foot}>개발 미리보기 v0.4 · 실데이터(세명대 학술정보원 공식 API)</Text>
+      <Text style={s.foot}>개발 미리보기 v0.5 · 실데이터(세명대 학술정보원 공식 API)</Text>
     </ScrollView>
     </View>
   );
@@ -811,8 +811,8 @@ const s = StyleSheet.create({
   floatWrap: { position: 'absolute', top: 8, left: 16, right: 16, zIndex: 10 },
   searchFloat: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff',
     borderRadius: 99, paddingVertical: 13, paddingHorizontal: 17,
-    borderWidth: 1, borderColor: '#e9e4d6',
-    shadowColor: '#3a3320', shadowOpacity: 0.2, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
+    borderWidth: 1, borderColor: '#e8eaee',
+    shadowColor: '#1a2030', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 10 },
   fchip: { backgroundColor: FILL, borderRadius: 99, paddingVertical: 7, paddingHorizontal: 14 },
   fchipT: { fontSize: 12, fontWeight: '700', color: SUB },
   searchPillQ: { flex: 1, fontSize: 13.5, color: SUB, marginLeft: 9, fontWeight: '500' },
@@ -825,7 +825,7 @@ const s = StyleSheet.create({
   certSeg: { flex: 1, height: 8, borderRadius: 99, backgroundColor: '#ebe3cc' },
   cS: { fontSize: 12.5, color: SUB, lineHeight: 19 },
   rowLink: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18,
-    borderBottomWidth: 1, borderBottomColor: '#eee9dc' },
+    borderBottomWidth: 1, borderBottomColor: '#eef0f3' },
   // 섹션
   secH: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     paddingHorizontal: 20, marginBottom: 14 },
@@ -855,7 +855,7 @@ const s = StyleSheet.create({
   desc: { color: SUB, marginTop: 18, fontSize: 13.5, lineHeight: 21 },
   cta: { backgroundColor: BTN, borderRadius: 14, padding: 15, alignItems: 'center', marginTop: 20 },
   ctaT: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#fffdf9',
+  tabBar: { flexDirection: 'row', backgroundColor: '#ffffff',
     borderTopLeftRadius: 18, borderTopRightRadius: 18,
-    shadowColor: '#3a3320', shadowOpacity: 0.16, shadowRadius: 14, shadowOffset: { width: 0, height: -5 }, elevation: 16 },
+    shadowColor: '#1a2030', shadowOpacity: 0.12, shadowRadius: 14, shadowOffset: { width: 0, height: -5 }, elevation: 16 },
 });
