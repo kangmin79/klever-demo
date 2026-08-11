@@ -21,7 +21,12 @@ goto netwait
 :netok
 
 echo ===== [%date% %time%] cover mirror start ===== >> logs\cover_mirror.log
+rem phase 1: download to PC only (fast, ~80/s). phase 2: gentle upload to cloud storage.
 python -u scripts\cover_mirror.py --budget 250000 >> logs\cover_mirror.log 2>&1
+rem recover early-uploaded covers that predate local-save (one-time, cheap no-op afterwards)
+python -u scripts\cover_mirror.py --pull-storage >> logs\cover_mirror.log 2>&1
 rem local master copy: full bibliographic dump to Desktop\bookstar\data (few minutes)
 python -u scripts\local_dump.py >> logs\cover_mirror.log 2>&1
+rem phase 2: push local files to cloud storage (slow leg, resumes via cover_pushed)
+python -u scripts\cover_mirror.py --push-storage --budget 250000 >> logs\cover_mirror.log 2>&1
 echo ===== [%date% %time%] cover mirror end (exit %errorlevel%) ===== >> logs\cover_mirror.log

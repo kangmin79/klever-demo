@@ -105,24 +105,22 @@ def run(limit=None, budget=60000, kinds="paper"):
 
     os.makedirs(LOCAL_DIR, exist_ok=True)
 
+    # ⚠️8/11 실측: 업로드를 끼우면 24병렬이 1.5건/초로 주저앉는다(스토리지가 동시성을 조임).
+    #   업로드 없이 로컬 저장까지만 하면 78건/초. → 1단계=로컬 전력 질주(이 함수),
+    #   2단계=push_storage()가 디스크에서 느긋하게 올림. cover_local = "PC에 실물 있음".
     def one(r):
         data, why = fetch_convert(r["cover_url"])
         if data is None:
             return r["ctrl"], "", why
-        # PC 사본 먼저(공짜 — 어차피 손에 든 바이트), 업로드 실패해도 로컬은 남는다
         try:
             with open(os.path.join(LOCAL_DIR, r["ctrl"] + ".webp"), "wb") as f:
                 f.write(data)
-        except Exception:
-            pass
-        try:
-            if upload(r["ctrl"], data): return r["ctrl"], r["ctrl"] + ".webp", ""
-            return r["ctrl"], "", "업로드 실패"
+            return r["ctrl"], r["ctrl"] + ".webp", ""
         except Exception as e:
-            return r["ctrl"], "", f"업로드 {type(e).__name__}"
+            return r["ctrl"], "", f"저장 실패 {type(e).__name__}"
 
-    PAGE, BATCH = 1500, 150
-    WORKERS = 24        # 실측: 10개=2.2건/초(업로드가 긴 다리). 대역폭보다 왕복 대기가 지배라 늘릴수록 붙는다
+    PAGE, BATCH = 1500, 300
+    WORKERS = 24
     while done < total_take:
         page = json.loads(t.sql(
             "select ctrl, cover_url from semyung_tulip "
@@ -157,6 +155,53 @@ def run(limit=None, budget=60000, kinds="paper"):
                 left = total_take - done
                 print(f"  {done:,}/{total_take:,} (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초 · 남은 {left:,}")
     print(f"[mirror] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
+
+def push_storage(budget=250000):
+    """2단계: PC 실물을 클라우드 스토리지로. 동시 6(스토리지가 동시성을 조여서 더 올려도 안 붙음).
+    cover_pushed로 진행 추적 — 끊겨도 이어서. 서빙 전환 전까지만 끝나면 되는 느긋한 작업."""
+    t.sql("alter table semyung_tulip add column if not exists cover_pushed timestamptz")
+    done = ok = fail = 0; t0 = time.time()
+    while done < budget:
+        page = json.loads(t.sql(
+            "select ctrl, cover_local from semyung_tulip "
+            "where cover_local is not null and cover_local<>'' and cover_pushed is null "
+            f"limit {min(1000, budget - done)}", timeout=120))
+        if not page:
+            print("[push] 남은 대상 없음 — 전체 완료"); break
+        def one(r):
+            path = os.path.join(LOCAL_DIR, r["cover_local"])
+            if not os.path.exists(path):
+                return r["ctrl"], False, "로컬 파일 없음"
+            try:
+                with open(path, "rb") as f: data = f.read()
+                return r["ctrl"], upload(r["ctrl"], data), ""
+            except Exception as e:
+                return r["ctrl"], False, type(e).__name__
+        for i in range(0, len(page), 120):
+            chunk = page[i:i + 120]
+            got = []
+            ex = cf.ThreadPoolExecutor(max_workers=6)
+            futs = [ex.submit(one, r) for r in chunk]
+            try:
+                for f in cf.as_completed(futs, timeout=300):
+                    got.append(f.result())
+            except cf.TimeoutError:
+                pass
+            ex.shutdown(wait=False, cancel_futures=True)
+            good = [c for c, o, _ in got if o]
+            for _, o, _ in got:
+                ok += o; fail += (not o)
+            if good:
+                vals = ",".join(f"({t.esc(c)})" for c in good)
+                try:
+                    t.sql("update semyung_tulip x set cover_pushed=now() "
+                          f"from (values {vals}) as v(c) where x.ctrl=v.c", timeout=120)
+                except Exception as e:
+                    print(f"  push 기록 실패: {str(e)[:80]}")
+            done += len(chunk)
+            if done % 3000 < 120:
+                print(f"  [push] {done:,} (성공 {ok:,} 실패 {fail:,}) {done/max(1,time.time()-t0):.1f}건/초")
+    print(f"[push] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
 
 def pull_storage():
     """스토리지에는 있는데 PC에 없는 표지를 내려받아 로컬 사본을 맞춘다.
@@ -211,8 +256,10 @@ if __name__ == "__main__":
     ap.add_argument("--kinds", default="paper")
     ap.add_argument("--verify", type=int, nargs="?", const=8)
     ap.add_argument("--pull-storage", action="store_true")
+    ap.add_argument("--push-storage", action="store_true")
     a = ap.parse_args()
     if a.setup: setup()
     elif a.verify is not None: verify(a.verify)
     elif a.pull_storage: pull_storage()
+    elif a.push_storage: push_storage(a.budget)
     else: run(a.limit, a.budget, a.kinds)
