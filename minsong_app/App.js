@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, ScrollView, FlatList, Image, TouchableOpacity,
-  Modal, ActivityIndicator, StyleSheet, StatusBar,
+  Modal, ActivityIndicator, StyleSheet, StatusBar, Alert, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -204,13 +204,18 @@ function RankList({ rows, onPick }) {
 }
 
 // ── 책 상세 모달 ─────────────────────────────────────────────
-function Detail({ book, onClose }) {
+// 버튼 실배선(8/11): 전자책=본인 명의 대출→교보 뷰어 / 종이책=찾아줘북즈·반납예약 (웹 app.html과 같은 openapi 체인)
+function Detail({ book, onClose, session, goLogin }) {
   const [full, setFull] = useState(null);
-  const [stock, setStock] = useState(null);
+  const [stock, setStock] = useState(null);      // 전자책 재고
+  const [holding, setHolding] = useState(null);  // 종이책 소장 현황 (anon, 로그인 전에도 보임)
   const [fmt, setFmt] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(null);        // {kind:'pickup'|'hold'|'ebook', ...취소용 번호}
   useEffect(() => {
     if (!book || book.classic) return;
-    setFull(null); setStock(null); setFmt(book.fmt || null);
+    setFull(null); setStock(null); setHolding(null); setDone(null); setBusy(false);
+    setFmt(book.fmt || null);
     if (!book.fmt) bookFormats(book.title).then(setFmt);
     rest(`ctrl=eq.${book.ctrl}&select=description,call_no,publisher,pub_year,barcode,vendor,kind`)
       .then((r) => {
@@ -220,11 +225,141 @@ function Detail({ book, onClose }) {
           fetch(`${SB}/functions/v1/semyung-ebook-borrow?action=stock&brcd=${f.barcode}`, { headers: H })
             .then((x) => x.json()).then(setStock).catch(() => {});
         }
+        if (f.kind !== 'ebook') {
+          fetch(`${SB}/functions/v1/semyung-holding?reckey=CATTOT${book.ctrl}`, { headers: H })
+            .then((x) => x.json()).then(setHolding).catch(() => {});
+        }
       }).catch(() => setFull({}));
   }, [book]);
+
+  // 로그인·개인 연동 확인 — 예약/대출은 학생 본인 이름으로만
+  const requirePersonal = () => {
+    if (!session) {
+      Alert.alert('로그인이 필요해요', '포털 아이디로 로그인하면 내 이름으로 신청됩니다.',
+        [{ text: '닫기' }, { text: '로그인하러 가기', onPress: goLogin }]);
+      return false;
+    }
+    if (!session.personal) {
+      Alert.alert('도서관 연동이 안 열렸어요', '내 서재에서 다시 로그인해 주세요.',
+        [{ text: '닫기' }, { text: '다시 로그인', onPress: goLogin }]);
+      return false;
+    }
+    return true;
+  };
+
+  // 종이책: 소장 상태를 본인 명의로 다시 확인한 뒤 → 대출가능=찾아줘북즈 / 대출중=반납예약
+  const doPaper = async () => {
+    if (!requirePersonal() || busy) return;
+    setBusy(true);
+    let list = null;
+    try {
+      const h = await myApi(session.token, 'holding', { ctrl: book.ctrl });
+      list = (((h || {}).data || {}).holdings || {}).holding;
+    } catch (e) {}
+    setBusy(false);
+    if (!list) { Alert.alert('소장 정보를 불러오지 못했어요', '잠시 후 다시 시도해 주세요.'); return; }
+    if (!Array.isArray(list)) list = [list];
+    const av = list.find((x) => x && x.book_state === '대출가능');
+    if (av) {
+      Alert.alert('찾아줘북즈로 예약할까요?',
+        `「${cleanTitle(book.title)}」을(를) 서가에서 찾아 민송도서관 2층 안내데스크에 보관해 드려요.\n\n· 도서관 승인 후 24시간 안에 받으세요\n· 예약 1인 3권 · 대출기간 14일\n· 받아가지 않으면 노쇼 — 3회면 30일간 제한`,
+        [{ text: '닫기' }, { text: '예약 신청', onPress: () => doPickup(av) }]);
+    } else {
+      const t = list.find((x) => x && x.book_state === '대출중' && x.reserve_available === 'Y')
+        || list.find((x) => x && x.reserve_available === 'Y');
+      if (!t) { Alert.alert('지금은 예약할 수 없어요', '잠시 후 다시 시도하거나 도서관에 문의해 주세요.'); return; }
+      Alert.alert('반납되면 예약해 드릴까요?',
+        `「${cleanTitle(book.title)}」은(는) 지금 대출 중이에요.\n\n· 반납되면 순번대로 대출 안내를 보내드려요\n· 안내 후 3일 안에 대출하지 않으면 자동 취소\n· 한 책당 1순위 · 예약은 3권까지`,
+        [{ text: '닫기' }, { text: '예약 신청', onPress: () => doHold(t) }]);
+    }
+  };
+  const doPickup = async (av) => {
+    setBusy(true);
+    try {
+      const d = await myApi(session.token, 'pickup',
+        { controlno: book.ctrl, accession_no: av.accession_no || '', main_no: av.main_no || '' });
+      if (!d || !d.ok) {
+        Alert.alert('예약에 실패했어요', (((d || {}).data) || {}).message || (d || {}).error || '잠시 후 다시 시도해 주세요.');
+      } else {
+        // 취소에 쓸 신청번호 — 응답엔 없어서 현황에서 이 책(제어번호 일치) 건을 되찾는다 (웹과 동일)
+        let request_no = '';
+        try {
+          const l = await myApi(session.token, 'pickups');
+          let it = ((l || {}).data || {}).item;
+          if (it && !Array.isArray(it)) it = [it];
+          const live = (it || []).filter((x) => x && x.loan_status === '0001');
+          const mine = live.find((x) => String(x.control_no || x.controlno || '').replace(/\D/g, '') === book.ctrl)
+            || live.slice().sort((a, b) => Number(b.request_no || 0) - Number(a.request_no || 0))[0];
+          request_no = (mine && mine.request_no) || '';
+        } catch (e) {}
+        setDone({ kind: 'pickup', request_no });
+      }
+    } catch (e) { Alert.alert('예약 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
+    setBusy(false);
+  };
+  const doHold = async (t) => {
+    setBusy(true);
+    try {
+      const d = await myApi(session.token, 'reserve', { main_no: t.main_no || '', location: t.location || '' });
+      if (!d || !d.ok) Alert.alert('예약에 실패했어요', (((d || {}).data) || {}).message || (d || {}).error || '잠시 후 다시 시도해 주세요.');
+      else setDone({ kind: 'hold', main_no: t.main_no || '' });
+    } catch (e) { Alert.alert('예약 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
+    setBusy(false);
+  };
+
+  // 전자책: 본인 명의 대출 → 교보 DRM 뷰어(외부 브라우저)
+  const doEbook = async () => {
+    if (!requirePersonal() || busy) return;
+    const brcd = full && full.barcode;
+    if (!brcd) { Alert.alert('전자책 정보를 불러오지 못했어요', '잠시 후 다시 시도해 주세요.'); return; }
+    setBusy(true);
+    try {
+      const r = await fetch(`${SB}/functions/v1/semyung-ebook-borrow?action=borrow&brcd=${encodeURIComponent(brcd)}`,
+        { headers: { apikey: ANON, Authorization: 'Bearer ' + session.token } });
+      const d = await r.json();
+      if (d && d.needsPersonal) {
+        setBusy(false);
+        Alert.alert('로그인이 만료됐어요', '내 서재에서 다시 로그인해 주세요.',
+          [{ text: '닫기' }, { text: '다시 로그인', onPress: goLogin }]);
+        return;
+      }
+      if (d && d.ok && d.viewerUrl) {
+        setDone({ kind: 'ebook', viewerUrl: d.viewerUrl, due: d.dueDate || '' });
+        Linking.openURL(d.viewerUrl);
+      } else {
+        Alert.alert('지금은 대출할 수 없어요', (d && (d.message || d.error)) || '동시이용 한도일 수 있어요. 잠시 후 다시 시도해 주세요.');
+      }
+    } catch (e) { Alert.alert('대출 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
+    setBusy(false);
+  };
+
+  const cancelResv = () => {
+    Alert.alert('예약을 취소할까요?', '', [
+      { text: '아니요' },
+      { text: '취소하기', onPress: async () => {
+        setBusy(true);
+        try {
+          const d = done.kind === 'pickup'
+            ? await myApi(session.token, 'cancelPickup', { request_no: done.request_no })
+            : await myApi(session.token, 'cancelReserve', { main_no: done.main_no });
+          if (d && d.ok) setDone(null);
+          else Alert.alert('취소에 실패했어요', '내 서재의 기다리는 책에서 다시 확인해 주세요.');
+        } catch (e) { Alert.alert('취소 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
+        setBusy(false);
+      } },
+    ]);
+  };
+
   if (!book) return null;
   const isClassic = !!book.classic;
   const isE = !isClassic && ((full && full.kind) || book.kind) === 'ebook';
+  const hOk = holding && holding.ok && holding.total > 0;
+  const ctaLabel = isClassic ? '바로 읽기 (다음 버전)'
+    : isE ? (session ? '대출하고 바로 읽기 — 내 이름으로' : '대출하고 바로 읽기 (로그인 필요)')
+    : hOk
+      ? (holding.available > 0 ? '서가에서 찾아 보관받기 · 찾아줘북즈' : '반납되면 순번대로 예약하기')
+      : (session ? '종이책 예약하기' : '종이책 예약하기 (로그인 필요)');
+  const ctaPress = isClassic ? onClose : isE ? doEbook : doPaper;
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.modalBack}>
@@ -245,6 +380,13 @@ function Detail({ book, onClose }) {
                     <View style={{ flexDirection: 'row', marginTop: 10, flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
                       <FmtBadges book={{ ...book, fmt: fmt || undefined }} />
                       {!isE && !!full.call_no && <Text style={[s.badge, { backgroundColor: FILL, color: LIGHT }]}>{full.call_no}</Text>}
+                      {!isE && hOk && (
+                        <Text style={[s.badge, holding.available > 0
+                          ? { backgroundColor: 'rgba(46,184,114,.12)', color: '#1d8f56' }
+                          : { backgroundColor: '#fdeceb', color: '#c0392b' }]}>
+                          {holding.available > 0 ? `대출 가능 ${holding.available}/${holding.total}` : '모두 대출 중'}
+                        </Text>
+                      )}
                       {stock && stock.ok && (
                         <Text style={[s.badge, stock.available
                           ? { backgroundColor: 'rgba(46,184,114,.12)', color: '#1d8f56' }
@@ -260,11 +402,31 @@ function Detail({ book, onClose }) {
             {isClassic && <Text style={s.desc}>북스타가 직접 번역해 무료로 제공하는 고전입니다. 도서관 소장 여부와 관계없이 바로 읽을 수 있어요.</Text>}
             {!isClassic && full && !!full.description && <Text style={s.desc}>{full.description}</Text>}
             {!isClassic && full && !full.description && <Text style={[s.desc, { color: FAINT }]}>등록된 책소개가 없습니다.</Text>}
-            <TouchableOpacity style={s.cta} onPress={onClose}>
-              <Text style={s.ctaT}>
-                {isClassic ? '바로 읽기 (다음 버전)' : isE ? '대출하고 바로 읽기 (로그인 필요)' : '꺼내놔 달라고 하기 (로그인 필요)'}
-              </Text>
-            </TouchableOpacity>
+            {done ? (
+              <View style={{ backgroundColor: 'rgba(46,184,114,.1)', borderRadius: 14, padding: 16, marginTop: 20 }}>
+                <Text style={{ color: '#1d8f56', fontWeight: '800', fontSize: 14.5 }}>
+                  {done.kind === 'ebook' ? '대출했어요 — 뷰어가 열립니다' : '예약 신청이 접수됐어요'}
+                </Text>
+                <Text style={{ color: SUB, fontSize: 12.5, marginTop: 6, lineHeight: 18 }}>
+                  {done.kind === 'pickup' ? '도서관 승인 후 민송도서관 2층 안내데스크에서 24시간 안에 받으세요.'
+                    : done.kind === 'hold' ? '반납되면 순번대로 대출 안내를 보내드려요.'
+                    : (done.due ? `반납일 ${done.due} · ` : '') + '뷰어가 안 열리면 아래를 다시 눌러 주세요.'}
+                </Text>
+                {done.kind === 'ebook' ? (
+                  <TouchableOpacity onPress={() => Linking.openURL(done.viewerUrl)} style={{ marginTop: 12 }}>
+                    <Text style={{ color: '#1d8f56', fontWeight: '700', fontSize: 13, textDecorationLine: 'underline' }}>다시 열기</Text>
+                  </TouchableOpacity>
+                ) : ((done.kind === 'pickup' ? done.request_no : done.main_no) ? (
+                  <TouchableOpacity onPress={cancelResv} style={{ marginTop: 12 }}>
+                    <Text style={{ color: LIGHT, fontSize: 13, textDecorationLine: 'underline' }}>예약 취소하기</Text>
+                  </TouchableOpacity>
+                ) : null)}
+              </View>
+            ) : (
+              <TouchableOpacity style={[s.cta, busy && { opacity: 0.6 }]} disabled={busy} onPress={ctaPress}>
+                {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.ctaT}>{ctaLabel}</Text>}
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={onClose} style={{ padding: 13, alignItems: 'center' }}>
               <Text style={{ color: LIGHT, fontSize: 13 }}>닫기</Text>
             </TouchableOpacity>
@@ -471,8 +633,10 @@ function Cert() {
 
 // ── 포털 로그인 + 내 도서관 (실배선) ────────────────────────
 // 비밀번호는 서버가 포털 확인에 1회 쓰고 버린다(저장 안 함) — sso-login 검증된 체인
-async function myApi(token, action) {
-  const r = await fetch(`${SB}/functions/v1/semyung-my?action=${action}`,
+async function myApi(token, action, params) {
+  const q = Object.entries({ action, ...(params || {}) })
+    .map(([k, v]) => `${k}=${encodeURIComponent(v == null ? '' : v)}`).join('&');
+  const r = await fetch(`${SB}/functions/v1/semyung-my?${q}`,
     { headers: { Authorization: 'Bearer ' + token } });
   return r.json();
 }
@@ -629,7 +793,8 @@ function Main() {
           );
         })}
       </View>
-      <Detail book={pick} onClose={() => setPick(null)} />
+      <Detail book={pick} onClose={() => setPick(null)} session={session}
+        goLogin={() => { setPick(null); setTab('my'); }} />
     </View>
   );
 }

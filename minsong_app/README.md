@@ -21,10 +21,15 @@ npx expo start          # Metro 서버 시작
 - 찾기: semyung-find + 전체/종이책/전자책 필터 · 상세: 표지·줄거리·전자책 실시간 재고
 - **내 서재: 포털 로그인 실배선 완료** (sso-login 검증 체인, 비번 미저장) → 이름·대출/연체/예약
   카운트·빌린 책·기다리는 책 실데이터. 테스트 계정 book/semyung7002
+- **상세에서 대출·예약 실행 배선 완료 (8/11)** — 전부 학생 본인 명의(personal 필수, 폴백 없음):
+  전자책=semyung-ebook-borrow borrow→교보 뷰어 Linking / 종이책=semyung-my holding→
+  대출가능이면 pickup(찾아줘북즈)·대출중이면 reserve(반납예약), 성공 후 취소 버튼
+  (request_no는 pickups 현황에서 제어번호 일치 건으로 되찾음 — 웹 app.html과 같은 체인).
+  종이책 소장 배지=semyung-holding(reckey=CATTOT+ctrl, anon이라 로그인 전에도 보임)
 - 전부 실데이터(semyung_tulip 32만 + Edge Fn, anon 읽기 전용)
 
 ## 다음 조각 (우선순위)
-1. 대출·예약 버튼 실행 배선 (조회는 됨 — semyung-my 신청 액션 + semyung-ebook-borrow)
+1. 대출·예약 실기기 검증 (book 계정으로 전자책 1권 대출→반납, 종이책 예약→취소 E2E)
 2. 독서인증 진행판 (CHARM 202 컬렉션 — 매칭 실측: 종이 174·전자책 77)
 3. 표지를 우리 스토리지로 전환 (`…/object/public/covers/<ctrl>.webp` 규약, 404→cover_url→활자)
 4. 사서 큐레이션 칸 / 알림은 개발 빌드 단계(Expo Go는 원격 푸시 불가)
