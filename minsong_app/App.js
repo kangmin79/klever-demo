@@ -234,11 +234,7 @@ function Detail({ book, onClose, session, goLogin }) {
 
   // 로그인·개인 연동 확인 — 예약/대출은 학생 본인 이름으로만
   const requirePersonal = () => {
-    if (!session) {
-      Alert.alert('로그인이 필요해요', '포털 아이디로 로그인하면 내 이름으로 신청됩니다.',
-        [{ text: '닫기' }, { text: '로그인하러 가기', onPress: goLogin }]);
-      return false;
-    }
+    if (!session) { goLogin(); return false; }   // 안내창 없이 바로 로그인 화면으로
     if (!session.personal) {
       Alert.alert('도서관 연동이 안 열렸어요', '내 서재에서 다시 로그인해 주세요.',
         [{ text: '닫기' }, { text: '다시 로그인', onPress: goLogin }]);
