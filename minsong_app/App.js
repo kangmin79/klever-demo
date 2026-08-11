@@ -86,6 +86,24 @@ function FmtBadges({ book, style }) {
   );
 }
 
+// ── 사서 큐레이션 (관리자 '우리 도서관'에서 저장한 칸 — 웹과 같은 library_sections를 읽는다) ──
+// 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외, 사서가 손으로 담은 칸만
+const LIVE_STYLES = ['rank', 'ebookrank', 'newlive_p', 'newlive_e'];
+async function loadCurated() {
+  const rows = await restT('library_sections',
+    'select=area,title,subtitle,style,sort_order,books,visible&order=sort_order');
+  return (rows || [])
+    .filter((s) => (s.area || '우리도서관') === '우리도서관' && s.visible !== false
+      && !LIVE_STYLES.includes(s.style) && Array.isArray(s.books) && s.books.length)
+    .map((s) => ({
+      title: s.title, subtitle: s.subtitle || '',
+      books: s.books.map((b, i) => ({
+        ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
+        title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '',
+      })),
+    }));
+}
+
 // 고전 컬렉션 (표지↔제목 검증된 쌍 — 북스타 자체 번역본)
 const CLASSICS = [
   ['gb-64317', '위대한 개츠비', '피츠제럴드'], ['kr-memilkkot', '메밀꽃 필 무렵', '이효석'],
@@ -451,6 +469,20 @@ function Home({ onPick, goSearch, session, goMy }) {
   const [pickBook, setPickBook] = useState(null);
   const [rank, setRank] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
+  const [curated, setCurated] = useState([]);
+  // 큐레이션 책 터치 → 도서관 소장 레코드로 연결해 상세(대출·예약 버튼까지) 열기
+  const pickCurated = async (b) => {
+    const m = String(b.lib || '').match(/brcd=(\d+)/);
+    let hit = null;
+    if (m) { const r = await rest(`select=ctrl,title,author,cover_url,kind&barcode=eq.${m[1]}&limit=1`); hit = r[0]; }
+    if (!hit) {
+      const probe = encodeURIComponent('*' + cleanTitle(b.title).slice(0, 8).replace(/'/g, "''") + '*');
+      const r = await rest(`select=ctrl,title,author,cover_url,kind&title=ilike.${probe}&limit=5`);
+      hit = r.find((x) => normKey(x.title) === normKey(b.title)) || r[0];
+    }
+    if (hit) onPick({ ...hit, cover_url: hit.cover_url || b.cover_url });
+    else Alert.alert('소장 정보를 찾지 못했어요', '이 책은 지금 도서관 목록과 연결되지 않았어요.');
+  };
   useEffect(() => {
     if (session) myApi(session.token, 'info').then((d) => setMyInfo(d.data || {}));
     else setMyInfo(null);
@@ -464,6 +496,7 @@ function Home({ onPick, goSearch, session, goMy }) {
         setPickBook(p);
         if (p) bookFormats(p.title).then((fmt) => setPickBook({ ...p, fmt }));
       });
+    loadCurated().then(setCurated);
     restT('semyung_loan_rank', 'select=rank,title,author,loan_count,cover,prev_rank,brcd&order=rank&limit=10')
       .then((r) => {
         const rows = r.map((b) => ({ ...b, cover_url: b.cover, ctrl: String(b.brcd || '').slice(-12), kind: 'paper' }));
@@ -523,6 +556,10 @@ function Home({ onPick, goSearch, session, goMy }) {
         </View>
       )}
 
+      {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 */}
+      {curated.map((sec) => (
+        <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books} onPick={pickCurated} />
+      ))}
       <RankList rows={rank} onPick={onPick} />
       <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
       <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
