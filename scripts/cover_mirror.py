@@ -85,122 +85,110 @@ def upload(ctrl, data):
         return r.status in (200, 201)
 
 def run(limit=None, budget=60000, kinds="paper"):
-    """페이지 단위(1,500)로 뽑아 처리한다.
-    ⚠️6만 행 통짜 SELECT는 Mgmt API에서 수 분 걸리고(6MB), 8/11 첫 대량 실행이 여기서
-    한참 침묵했다. cover_local이 채워지며 다음 SELECT가 자연히 다음 페이지가 된다(오프셋 불필요).
-    ⚠️응답 없는 다운로드 하나가 전체를 물고 늘어진 정지 사고(2,414에서 스톱) →
-    배치에 마감시간을 두고, 시간 내 못 끝낸 항목은 실패 처리 후 전진한다."""
+    """1단계 로컬 질주 — 다운로드→변환→PC 저장만. DB에는 손대지 않는다.
+    ⚠️통짜 SELECT 금지(수 분 침묵 사고) / 응답 없는 항목이 전체를 못 세우게 배치 마감."""
     kind_cond = "kind='paper' and mat_type='m'" if kinds == "paper" else f"kind='{kinds}'"
     total_take = min(limit or budget, budget)
     ok = fail = done = 0; t0 = time.time()
-
-    def flush(buf):
-        if not buf: return
-        vals = ",".join(f"({t.esc(c)},{t.esc(l)})" for c, l in buf)
-        try:
-            t.sql("update semyung_tulip x set cover_local=v.l, updated_at=now() "
-                  f"from (values {vals}) as v(c,l) where x.ctrl=v.c", timeout=120)
-        except Exception as e:
-            print(f"  DB 기록 실패({len(buf)}건): {str(e)[:100]}")
-
     os.makedirs(LOCAL_DIR, exist_ok=True)
 
-    # ⚠️8/11 실측: 업로드를 끼우면 24병렬이 1.5건/초로 주저앉는다(스토리지가 동시성을 조임).
-    #   업로드 없이 로컬 저장까지만 하면 78건/초. → 1단계=로컬 전력 질주(이 함수),
-    #   2단계=push_storage()가 디스크에서 느긋하게 올림. cover_local = "PC에 실물 있음".
+    # 🔑🔑8/11 최종 규명: 느렸던 진범은 업로드도 네이버도 아니고 **semyung_tulip UPDATE**.
+    #   임베딩 실린 행은 갱신마다 행 재작성+HNSW 인덱스 갱신 = 0.45초/행(8/10에 배운 그 함정 재등장).
+    #   300행 배치 = 135초 → read timeout까지. → 질주 중엔 DB를 아예 안 쓴다.
+    #   진행 상태 = 디스크의 파일 자체(있으면 건너뜀). 커서 = ctrl(읽기 전용 페이지).
+    #   실패 재시도 방지도 디스크로: 실패는 0바이트 파일로 남긴다(.webp 0B = 시도했으나 실패).
     def one(r):
         data, why = fetch_convert(r["cover_url"])
-        if data is None:
-            return r["ctrl"], "", why
+        path = os.path.join(LOCAL_DIR, r["ctrl"] + ".webp")
         try:
-            with open(os.path.join(LOCAL_DIR, r["ctrl"] + ".webp"), "wb") as f:
-                f.write(data)
-            return r["ctrl"], r["ctrl"] + ".webp", ""
-        except Exception as e:
-            return r["ctrl"], "", f"저장 실패 {type(e).__name__}"
+            with open(path, "wb") as f:
+                f.write(data or b"")
+            return bool(data)
+        except Exception:
+            return False
 
-    PAGE, BATCH = 1500, 300
+    PAGE = 2000
     WORKERS = 24
+    have = set(os.listdir(LOCAL_DIR))          # 이미 받은/실패 마킹된 파일명 (19만 개도 메모리 몇십 MB)
+    last = ""
     while done < total_take:
         page = json.loads(t.sql(
             "select ctrl, cover_url from semyung_tulip "
-            f"where {kind_cond} and cover_url like 'https%' and cover_local is null "
-            f"limit {min(PAGE, total_take - done)}", timeout=120))
+            f"where {kind_cond} and cover_url like 'https%' and ctrl > '{last}' "
+            f"order by ctrl limit {PAGE}", timeout=120))
         if not page:
-            print("[mirror] 남은 대상 없음 — 전체 완료"); break
-        for i in range(0, len(page), BATCH):
-            chunk = page[i:i + BATCH]
-            got = {}
-            ex = cf.ThreadPoolExecutor(max_workers=WORKERS)
-            futs = {ex.submit(one, r): r["ctrl"] for r in chunk}
-            try:
-                for f in cf.as_completed(futs, timeout=180):       # 배치 마감 3분
-                    ctrl, local, why = f.result()
-                    got[ctrl] = local
-            except cf.TimeoutError:
-                pass                                                # 못 끝낸 놈은 아래서 실패 처리
-            # wait=False: 멈춘 스레드를 기다리지 않고 전진 (소켓 30초 컷이 뒤에서 정리)
-            ex.shutdown(wait=False, cancel_futures=True)
-            buf = []
-            for r in chunk:
-                local = got.get(r["ctrl"])
-                if local is None: local = ""                        # 마감 초과 = 실패 마킹(다음날 재시도 안 함)
-                if local: ok += 1
-                else: fail += 1
-                buf.append((r["ctrl"], local))
-            flush(buf)
-            done += len(chunk)
-            if done % 1000 < BATCH:
-                rate = done / max(1, time.time() - t0)
-                left = total_take - done
-                print(f"  {done:,}/{total_take:,} (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초 · 남은 {left:,}")
+            print("[mirror] 커서 끝 — 전체 완료"); break
+        last = page[-1]["ctrl"]
+        todo = [r for r in page if (r["ctrl"] + ".webp") not in have]
+        if not todo: continue
+        got = []
+        ex = cf.ThreadPoolExecutor(max_workers=WORKERS)
+        futs = [ex.submit(one, r) for r in todo]
+        try:
+            for f in cf.as_completed(futs, timeout=240):
+                got.append(f.result())
+        except cf.TimeoutError:
+            pass
+        ex.shutdown(wait=False, cancel_futures=True)
+        for good in got:
+            ok += good; fail += (not good)
+        for r in todo: have.add(r["ctrl"] + ".webp")
+        done += len(todo)
+        if done % 2000 < len(todo):
+            rate = done / max(1, time.time() - t0)
+            print(f"  {done:,} 처리 (성공 {ok:,} 실패 {fail:,}) {rate:.1f}건/초")
     print(f"[mirror] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
 
 def push_storage(budget=250000):
-    """2단계: PC 실물을 클라우드 스토리지로. 동시 6(스토리지가 동시성을 조여서 더 올려도 안 붙음).
-    cover_pushed로 진행 추적 — 끊겨도 이어서. 서빙 전환 전까지만 끝나면 되는 느긋한 작업."""
-    t.sql("alter table semyung_tulip add column if not exists cover_pushed timestamptz")
-    done = ok = fail = 0; t0 = time.time()
-    while done < budget:
-        page = json.loads(t.sql(
-            "select ctrl, cover_local from semyung_tulip "
-            "where cover_local is not null and cover_local<>'' and cover_pushed is null "
-            f"limit {min(1000, budget - done)}", timeout=120))
-        if not page:
-            print("[push] 남은 대상 없음 — 전체 완료"); break
-        def one(r):
-            path = os.path.join(LOCAL_DIR, r["cover_local"])
-            if not os.path.exists(path):
-                return r["ctrl"], False, "로컬 파일 없음"
+    """2단계: PC 실물을 클라우드 스토리지로 (동시 8). 서빙 전환 전까지만 끝나면 되는 느긋한 작업.
+    ⚠️추적은 semyung_tulip이 아니라 **홀쭉한 별도 표 mirror_pushed(ctrl만)** —
+    본표 UPDATE는 행 재작성+HNSW 갱신으로 0.45초/행이라 그게 병목이 된다(8/11 규명).
+    좁은 표 INSERT는 싸다. 소스 = 디스크 파일 목록(0바이트 실패 마커 제외)."""
+    t.sql("create table if not exists mirror_pushed (ctrl text primary key, at timestamptz default now())")
+    pushed = set()
+    last = ""
+    while True:   # 좁은 표라 커서 페이지도 싸다
+        rows = json.loads(t.sql(
+            f"select ctrl from mirror_pushed where ctrl > '{last}' order by ctrl limit 20000", timeout=60))
+        if not rows: break
+        pushed.update(r["ctrl"] for r in rows)
+        last = rows[-1]["ctrl"]
+    files = [f for f in os.listdir(LOCAL_DIR) if f.endswith(".webp")
+             and os.path.getsize(os.path.join(LOCAL_DIR, f)) > 0]
+    todo = [f[:-5] for f in files if f[:-5] not in pushed][:budget]
+    print(f"[push] 로컬 {len(files):,}장 중 미업로드 {len(todo):,}장")
+    ok = fail = done = 0; t0 = time.time()
+
+    def one(ctrl):
+        try:
+            with open(os.path.join(LOCAL_DIR, ctrl + ".webp"), "rb") as f:
+                data = f.read()
+            return ctrl, upload(ctrl, data)
+        except Exception:
+            return ctrl, False
+
+    for i in range(0, len(todo), 200):
+        chunk = todo[i:i + 200]
+        got = []
+        ex = cf.ThreadPoolExecutor(max_workers=8)
+        futs = [ex.submit(one, c) for c in chunk]
+        try:
+            for f in cf.as_completed(futs, timeout=400):
+                got.append(f.result())
+        except cf.TimeoutError:
+            pass
+        ex.shutdown(wait=False, cancel_futures=True)
+        good = [c for c, o in got if o]
+        ok += len(good); fail += len(chunk) - len(good)
+        if good:
+            vals = ",".join(f"({t.esc(c)})" for c in good)
             try:
-                with open(path, "rb") as f: data = f.read()
-                return r["ctrl"], upload(r["ctrl"], data), ""
+                t.sql(f"insert into mirror_pushed (ctrl) values {vals} on conflict do nothing", timeout=60)
             except Exception as e:
-                return r["ctrl"], False, type(e).__name__
-        for i in range(0, len(page), 120):
-            chunk = page[i:i + 120]
-            got = []
-            ex = cf.ThreadPoolExecutor(max_workers=6)
-            futs = [ex.submit(one, r) for r in chunk]
-            try:
-                for f in cf.as_completed(futs, timeout=300):
-                    got.append(f.result())
-            except cf.TimeoutError:
-                pass
-            ex.shutdown(wait=False, cancel_futures=True)
-            good = [c for c, o, _ in got if o]
-            for _, o, _ in got:
-                ok += o; fail += (not o)
-            if good:
-                vals = ",".join(f"({t.esc(c)})" for c in good)
-                try:
-                    t.sql("update semyung_tulip x set cover_pushed=now() "
-                          f"from (values {vals}) as v(c) where x.ctrl=v.c", timeout=120)
-                except Exception as e:
-                    print(f"  push 기록 실패: {str(e)[:80]}")
-            done += len(chunk)
-            if done % 3000 < 120:
-                print(f"  [push] {done:,} (성공 {ok:,} 실패 {fail:,}) {done/max(1,time.time()-t0):.1f}건/초")
+                print(f"  push 기록 실패: {str(e)[:80]}")
+        done += len(chunk)
+        if done % 3000 < 200:
+            print(f"  [push] {done:,}/{len(todo):,} (성공 {ok:,} 실패 {fail:,}) {done/max(1,time.time()-t0):.1f}건/초")
     print(f"[push] 완료 — 성공 {ok:,} / 실패 {fail:,} / {(time.time()-t0)/60:.0f}분")
 
 def pull_storage():
