@@ -293,6 +293,7 @@ function Detail({ book, onClose, session, goLogin }) {
           request_no = (mine && mine.request_no) || '';
         } catch (e) {}
         setDone({ kind: 'pickup', request_no });
+        logEv('pickup', { book: cleanTitle(book.title), student_tag: tagOf(session.uid) });
       }
     } catch (e) { Alert.alert('예약 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
     setBusy(false);
@@ -302,7 +303,10 @@ function Detail({ book, onClose, session, goLogin }) {
     try {
       const d = await myApi(session.token, 'reserve', { main_no: t.main_no || '', location: t.location || '' });
       if (!d || !d.ok) Alert.alert('예약에 실패했어요', (((d || {}).data) || {}).message || (d || {}).error || '잠시 후 다시 시도해 주세요.');
-      else setDone({ kind: 'hold', main_no: t.main_no || '' });
+      else {
+        setDone({ kind: 'hold', main_no: t.main_no || '' });
+        logEv('hold', { book: cleanTitle(book.title), student_tag: tagOf(session.uid) });
+      }
     } catch (e) { Alert.alert('예약 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
     setBusy(false);
   };
@@ -325,8 +329,11 @@ function Detail({ book, onClose, session, goLogin }) {
       }
       if (d && d.ok && d.viewerUrl) {
         setDone({ kind: 'ebook', viewerUrl: d.viewerUrl, due: d.dueDate || '' });
+        logEv('ebook_borrow', { book: cleanTitle(book.title), student_tag: tagOf(session.uid) });
         Linking.openURL(d.viewerUrl);
       } else {
+        logEv('ebook_borrow', { ok: false, book: cleanTitle(book.title), student_tag: tagOf(session.uid),
+          detail: String((d && (d.message || d.error)) || 'unknown').slice(0, 300) });
         Alert.alert('지금은 대출할 수 없어요', (d && (d.message || d.error)) || '동시이용 한도일 수 있어요. 잠시 후 다시 시도해 주세요.');
       }
     } catch (e) { Alert.alert('대출 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
@@ -342,7 +349,11 @@ function Detail({ book, onClose, session, goLogin }) {
           const d = done.kind === 'pickup'
             ? await myApi(session.token, 'cancelPickup', { request_no: done.request_no })
             : await myApi(session.token, 'cancelReserve', { main_no: done.main_no });
-          if (d && d.ok) setDone(null);
+          if (d && d.ok) {
+            logEv(done.kind === 'pickup' ? 'cancel_pickup' : 'cancel_hold',
+              { book: cleanTitle(book.title), student_tag: tagOf(session.uid) });
+            setDone(null);
+          }
           else Alert.alert('취소에 실패했어요', '내 서재의 기다리는 책에서 다시 확인해 주세요.');
         } catch (e) { Alert.alert('취소 중 오류가 발생했어요', '네트워크를 확인해 주세요.'); }
         setBusy(false);
@@ -633,6 +644,23 @@ function Cert() {
 
 // ── 포털 로그인 + 내 도서관 (실배선) ────────────────────────
 // 비밀번호는 서버가 포털 확인에 1회 쓰고 버린다(저장 안 함) — sso-login 검증된 체인
+// ── 앱 경유 행동 로그 (익명 집계 전용 — 관리자 '민송 앱' 대시보드) ──
+// 이름·학번 원문은 보내지 않는다. 꼬리표는 단방향 해시. 실패해도 앱 동작에 영향 없음.
+function tagOf(uid) {
+  let h = 5381; const str = 'ms:' + (uid || '');
+  for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+function logEv(event, extra) {
+  try {
+    fetch(`${SB}/rest/v1/minsong_app_events`, {
+      method: 'POST',
+      headers: { ...H, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ event, ...(extra || {}) }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+
 async function myApi(token, action, params) {
   const q = Object.entries({ action, ...(params || {}) })
     .map(([k, v]) => `${k}=${encodeURIComponent(v == null ? '' : v)}`).join('&');
@@ -664,6 +692,7 @@ function LoginForm({ onLogin }) {
       if (token) {
         onLogin({ token, name: qs(r.url, 'sso_name') || uid, uid: qs(r.url, 'sso_uid'),
                   personal: qs(r.url, 'sso_personal') === '1' });
+        logEv('login', { student_tag: tagOf(qs(r.url, 'sso_uid') || uid) });
       } else setMsg('로그인에 실패했어요. 아이디와 비밀번호를 확인해 주세요.');
     } catch (e) { setMsg('연결에 실패했어요. 네트워크를 확인해 주세요.'); }
     setBusy(false);
