@@ -116,7 +116,8 @@ async function loadAreas() {
   };
   return {
     lib: pick(['우리도서관']),
-    cls: pick(['고전 컬렉션 해외', '고전 컬렉션 국내', '고전 컬렉션']),
+    clsF: pick(['고전 컬렉션 해외', '고전 컬렉션']),   // 세계고전 (웹 collection foreign 탭)
+    clsK: pick(['고전 컬렉션 국내']),                   // 한국 고전 (웹 collection modern 탭)
     intl: pick(['International']),
   };
 }
@@ -129,6 +130,8 @@ const CLASSICS = [
   ['gb-1260', '제인 에어', '샬럿 브론테'], ['kr-gamja', '감자', '김동인'],
   ['gb-345', '드라큘라', '브램 스토커'], ['kr-sarang', '사랑', '이광수'],
 ].map(([id, t, a]) => ({ ctrl: id, title: t, author: a, cover_url: `https://bookstar.co.kr/covers/${id}.webp`, classic: true }));
+const CLASSICS_F = CLASSICS.filter((b) => b.ctrl.startsWith('gb-'));   // 세계고전
+const CLASSICS_K = CLASSICS.filter((b) => b.ctrl.startsWith('kr-'));   // 한국 고전
 
 // ── 표지 (없으면 활자 표지) ──────────────────────────────────
 const NC_PAL = ['#55606f', '#5d4e8e', '#7b5a3d', '#2d6183', '#2f6b55', '#7a6531', '#8a4560', '#256f74', '#8d4034', '#4d5570'];
@@ -562,7 +565,9 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
   const [rank, setRank] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
   const [cat, setCat] = useState('lib');
-  const [areas, setAreas] = useState({ lib: EMPTY_AREA, cls: EMPTY_AREA, intl: EMPTY_AREA });
+  const [clsTab, setClsTab] = useState('foreign');   // 세계고전 내부: 세계고전 | 한국 고전 (웹과 동일)
+  const [areas, setAreas] = useState({ lib: EMPTY_AREA, clsF: EMPTY_AREA, clsK: EMPTY_AREA, intl: EMPTY_AREA });
+  const areaKey = cat === 'cls' ? (clsTab === 'foreign' ? 'clsF' : 'clsK') : cat;
   // 큐레이션 책 터치 → 도서관 소장 레코드로 연결해 상세(대출·예약 버튼까지) 열기
   const pickCurated = async (b) => {
     const m = String(b.lib || '').match(/brcd=(\d+)/);
@@ -621,9 +626,21 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
         ))}
       </ScrollView>
 
+      {/* 세계고전 내부 서브탭 — 웹 collection 페이지의 [세계고전|한국 고전] 그대로 */}
+      {cat === 'cls' && (
+        <View style={{ flexDirection: 'row', gap: 7, paddingHorizontal: 20, marginTop: 12 }}>
+          {[['foreign', '세계고전'], ['modern', '한국 고전']].map(([k, label]) => (
+            <TouchableOpacity key={k} onPress={() => setClsTab(k)}
+              style={[s.fchip, { paddingVertical: 6 }, clsTab === k && { backgroundColor: GOLD_D }]}>
+              <Text style={[s.fchipT, { fontSize: 11.5 }, clsTab === k && { color: '#fff' }]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (영역별 hero 칸, 우리도서관은 오늘의 추천 폴백) */}
       {(cat === 'lib' || cat === 'cls' || cat === 'intl') && (() => {
-        const hero = areas[cat].hero
+        const hero = areas[areaKey].hero
           || (cat === 'lib' && pickBook ? { title: '오늘의 사서 추천', note: '', book: pickBook } : null);
         if (!hero) return null;
         const open = () => hero.book.curated ? pickCurated(hero.book) : onPick(hero.book);
@@ -670,7 +687,7 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
       </View>}
 
       {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 (영역별, 고전 책은 바로 읽기) */}
-      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && areas[cat].shelves.map((sec) => (
+      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && areas[areaKey].shelves.map((sec) => (
         <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books}
           onPick={(b) => b.curated ? pickCurated(b) : onPick(b)} />
       ))}
@@ -681,7 +698,10 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
           <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
         </>
       )}
-      {cat === 'cls' && <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />}
+      {cat === 'cls' && (
+        <Rail title={clsTab === 'foreign' ? '세계고전 · 바로 읽기' : '한국 고전 · 바로 읽기'} more="300+"
+          books={clsTab === 'foreign' ? CLASSICS_F : CLASSICS_K} onPick={onPick} />
+      )}
       {cat === 'intl' && !areas.intl.hero && !areas.intl.shelves.length && (
         <Text style={{ color: FAINT, textAlign: 'center', marginTop: 46 }}>International shelf is being prepared.</Text>
       )}
