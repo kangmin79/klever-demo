@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>민송(民松) 로고 시안 — 한글·한자 어우름</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#1f2430; --sub:#4e5968; --light:#8b93a5; --cream:#faf8f3; --gold:#b8902f; --seal:#b0372e; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--cream); font-family:'Noto Sans KR',sans-serif; color:var(--ink); padding:40px 20px 80px}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-family:'Noto Serif KR',serif;font-size:26px;margin-bottom:6px}
+  .intro{color:var(--sub);font-size:13.5px;line-height:1.7;margin-bottom:34px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px}
+  .card{background:#fff;border-radius:18px;padding:26px;box-shadow:0 6px 24px rgba(30,38,55,.07)}
+  .card h3{font-size:14px;margin-bottom:4px}
+  .card p{font-size:12px;color:var(--light);line-height:1.65;margin-bottom:20px}
+  .stage{display:flex;align-items:center;justify-content:center;min-height:210px}
+  .serif{font-family:'Noto Serif KR',serif}
+
+  /* A. 장서인 — 도서관이 책에 찍는 도장 */
+  .seal{width:92px;height:92px;background:var(--seal);border-radius:14px;display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 4px rgba(255,255,255,.25), 0 4px 14px rgba(176,55,46,.28)}
+  .seal span{writing-mode:vertical-rl;font-family:'Noto Serif KR',serif;font-weight:900;font-size:34px;color:#fdf6ee;letter-spacing:6px}
+  .a-name{margin-left:20px}
+  .a-name .kr{font-family:'Noto Serif KR',serif;font-weight:900;font-size:34px;letter-spacing:2px}
+  .a-name .lib{font-size:13px;color:var(--sub);letter-spacing:8px;margin-top:6px}
+
+  /* B. 세로 문패 — 한자 큰 글자 + 한글 낙관 */
+  .b-wrap{display:flex;align-items:flex-end;gap:16px}
+  .b-hanja{writing-mode:vertical-rl;font-family:'Noto Serif KR',serif;font-weight:700;font-size:64px;letter-spacing:14px;color:var(--ink)}
+  .b-side{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .b-kr{writing-mode:vertical-rl;font-size:13px;letter-spacing:6px;color:var(--sub)}
+  .b-dot{width:30px;height:30px;background:var(--seal);border-radius:6px;display:flex;align-items:center;justify-content:center;
+    color:#fdf6ee;font-size:11px;font-weight:800;font-family:'Noto Serif KR',serif}
+
+  /* C. 겹 — 한자가 한글 뒤에 은은히 */
+  .c-wrap{position:relative;text-align:center}
+  .c-hanja{font-family:'Noto Serif KR',serif;font-weight:900;font-size:110px;color:rgba(184,144,47,.13);letter-spacing:8px;line-height:1}
+  .c-kr{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+    font-family:'Noto Serif KR',serif;font-weight:900;font-size:40px;letter-spacing:4px}
+  .c-lib{margin-top:2px;font-size:12.5px;color:var(--sub);letter-spacing:10px}
+
+  /* D. 앱 아이콘 — 밤하늘 + 소나무 + 民松 */
+  .icon{width:150px;height:150px;border-radius:34px;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#0c1330 0%,#18234a 62%,#243158 100%);box-shadow:0 10px 30px rgba(12,19,48,.35)}
+  .icon .star{position:absolute;background:#fff;border-radius:50%;opacity:.8}
+  .icon .hj{position:absolute;top:20px;right:18px;writing-mode:vertical-rl;font-family:'Noto Serif KR',serif;
+    font-weight:700;font-size:26px;letter-spacing:6px;color:#e9d9ab}
+  .icon svg{position:absolute;left:-6px;bottom:-4px}
+  .icon .kr{position:absolute;left:16px;top:18px;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.75)}
+
+  /* E. 스플래시 */
+  .splash{width:230px;height:420px;border-radius:28px;position:relative;overflow:hidden;margin:0 auto;
+    background:linear-gradient(180deg,#0b1026 0%,#141c3d 55%,#1e2a52 100%);box-shadow:0 14px 40px rgba(10,15,40,.4)}
+  .splash .star{position:absolute;background:#fff;border-radius:50%}
+  .splash .mid{position:absolute;left:0;right:0;top:34%;text-align:center}
+  .splash .hj{font-family:'Noto Serif KR',serif;font-weight:700;font-size:20px;letter-spacing:14px;color:#cdb772;text-indent:14px}
+  .splash .kr{font-family:'Noto Serif KR',serif;font-weight:900;font-size:29px;color:#f5efdd;letter-spacing:3px;margin-top:10px}
+  .splash .en{font-size:9px;letter-spacing:4px;color:rgba(255,255,255,.45);margin-top:10px}
+  .splash svg{position:absolute;left:50%;transform:translateX(-50%);bottom:26px}
+  .splash .bs{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:8.5px;color:rgba(255,255,255,.35);letter-spacing:2px}
+
+  /* F. 가로 워드마크 — 앱 홈 히어로용 */
+  .f-wrap{text-align:center}
+  .f-eye{font-size:11px;color:var(--gold);letter-spacing:6px;font-weight:800}
+  .f-eye .hj{font-family:'Noto Serif KR',serif;font-weight:700}
+  .f-kr{font-family:'Noto Serif KR',serif;font-weight:900;font-size:38px;letter-spacing:2px;margin-top:8px}
+  .f-line{width:44px;height:3px;background:var(--gold);border-radius:2px;margin:14px auto 0}
+
+  .note{margin-top:34px;background:#fff;border-radius:14px;padding:18px 20px;font-size:12.5px;color:var(--sub);line-height:1.8}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>민송(民松) — 한글·한자 어우름 시안</h1>
+  <div class="intro">
+    민송(民松)은 설립자 권영우 박사의 호 — 사람 민(民), 소나무 송(松). "사람들의 늘 푸른 소나무"라는 뜻을
+    한글과 한자가 서로 가리지 않게 여섯 가지 방식으로 어울러 봤습니다. 붉은 도장은 도서관이 책에 찍는 장서인에서 왔습니다.
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>A. 장서인 — 도장 + 한글 이름</h3>
+      <p>도서관이 소장 도서에 찍는 장서인 형식. 한자는 도장 안에, 이름은 한글이 주인.</p>
+      <div class="stage">
+        <div class="seal"><span>民松</span></div>
+        <div class="a-name">
+          <div class="kr serif">민송도서관</div>
+          <div class="lib">MINSONG LIBRARY</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>B. 세로 문패 — 한자가 주인</h3>
+      <p>현판·문패처럼 한자를 크게 세로로. 한글은 곁에 조용히, 낙관은 '책'.</p>
+      <div class="stage">
+        <div class="b-wrap">
+          <div class="b-hanja">民松</div>
+          <div class="b-side">
+            <div class="b-kr">민송도서관</div>
+            <div class="b-dot">冊</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>C. 겹 — 한자를 바탕결로</h3>
+      <p>한자를 금색 옅은 바탕결로 깔고 한글이 그 위에. 아는 사람 눈에만 한자가 읽힘.</p>
+      <div class="stage">
+        <div class="c-wrap">
+          <div class="c-hanja">民松</div>
+          <div class="c-kr">민송도서관</div>
+          <div class="c-lib">since 1991 · 세명대학교</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>D. 앱 아이콘 — 밤하늘 · 소나무 · 民松</h3>
+      <p>북스타 "모든 책은 하늘의 별" + 松. 홈 화면에서 한 번에 구분되는 어두운 아이콘.</p>
+      <div class="stage">
+        <div class="icon">
+          <div class="star" style="width:2px;height:2px;top:18px;left:44px"></div>
+          <div class="star" style="width:3px;height:3px;top:36px;left:96px"></div>
+          <div class="star" style="width:2px;height:2px;top:58px;left:30px"></div>
+          <div class="star" style="width:2px;height:2px;top:74px;left:118px;opacity:.5"></div>
+          <div class="star" style="width:2px;height:2px;top:30px;left:70px;opacity:.6"></div>
+          <div class="hj">民松</div>
+          <svg width="120" height="98" viewBox="0 0 120 98">
+            <g fill="#0a0f24">
+              <path d="M14 98 L14 74 L10 74 L26 52 L18 52 L34 30 L28 30 L44 8 L60 30 L54 30 L70 52 L62 52 L78 74 L74 74 L74 98 Z" transform="translate(-14,0) scale(1.05)"/>
+              <rect x="40" y="78" width="8" height="20"/>
+              <path d="M44 6 C60 10 74 26 76 44 C66 34 52 26 44 24 C36 26 30 30 24 38 C28 22 34 10 44 6 Z" opacity="0"/>
+            </g>
+            <g fill="#0a0f24">
+              <ellipse cx="44" cy="30" rx="26" ry="12"/>
+              <ellipse cx="30" cy="44" rx="22" ry="10"/>
+              <ellipse cx="56" cy="50" rx="24" ry="11"/>
+              <ellipse cx="40" cy="62" rx="30" ry="12"/>
+              <rect x="40" y="64" width="7" height="34" rx="2"/>
+              <path d="M47 74 C58 68 66 66 76 66 C66 72 58 76 47 78 Z"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>E. 스플래시 — 별마당 밤하늘 + 소나무</h3>
+      <p>앱이 켜질 때 2초. 별 아래 소나무 한 그루, 民松이 먼저 뜨고 한글이 받친다.</p>
+      <div class="stage">
+        <div class="splash">
+          <div class="star" style="width:2px;height:2px;top:34px;left:40px;opacity:.9"></div>
+          <div class="star" style="width:3px;height:3px;top:60px;left:170px;opacity:.8"></div>
+          <div class="star" style="width:2px;height:2px;top:90px;left:90px;opacity:.5"></div>
+          <div class="star" style="width:2px;height:2px;top:48px;left:120px;opacity:.6"></div>
+          <div class="star" style="width:2px;height:2px;top:120px;left:40px;opacity:.4"></div>
+          <div class="star" style="width:2px;height:2px;top:104px;left:196px;opacity:.7"></div>
+          <div class="mid">
+            <div class="hj">民 松</div>
+            <div class="kr">민송도서관</div>
+            <div class="en">SEMYUNG UNIV. MINSONG LIBRARY</div>
+          </div>
+          <svg width="150" height="120" viewBox="0 0 150 120">
+            <g fill="#070b1c">
+              <ellipse cx="75" cy="38" rx="34" ry="14"/>
+              <ellipse cx="56" cy="56" rx="30" ry="12"/>
+              <ellipse cx="92" cy="62" rx="32" ry="13"/>
+              <ellipse cx="72" cy="78" rx="42" ry="14"/>
+              <rect x="71" y="80" width="8" height="40" rx="2"/>
+              <path d="M79 94 C92 86 102 84 116 84 C104 92 92 96 79 98 Z"/>
+              <path d="M71 100 C60 94 52 92 40 92 C50 99 60 102 71 104 Z"/>
+            </g>
+          </svg>
+          <div class="bs">powered by BOOKSTAR</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>F. 가로 워드마크 — 앱·웹 화면 안에서</h3>
+      <p>화면 속 문패용. 한자는 눈썹 자리에 작게, 금색 밑줄은 지금 앱 카테고리 탭과 같은 언어.</p>
+      <div class="stage">
+        <div class="f-wrap">
+          <div class="f-eye"><span class="hj">民松</span> · 사람들의 늘 푸른 소나무</div>
+          <div class="f-kr">민송도서관</div>
+          <div class="f-line"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>읽는 순서 제안</b> — 학생이 매일 보는 곳(앱 화면 안)은 F처럼 조용하게, 문패(아이콘·스플래시)는 D·E처럼 분위기 있게,
+    공식 문서·제안서에는 A(장서인)가 어울립니다. B·C는 취향 갈래로 남겨둔 안입니다.<br>
+    공통 원칙: <b>한글이 이름의 주인, 한자는 뜻을 아는 사람에게 열리는 문양</b> — 학생 대부분은 한자를 못 읽으므로 한자가 정보 전달을 막으면 안 됩니다.
+  </div>
+</div>
+</body>
+</html>
