@@ -2117,8 +2117,8 @@ function drawDashCharts(stars){
 }
 
 /* ====== 민송 앱 (네이티브 앱 실측 — minsong_app_events 집계 RPC, 원본 로그는 외부 열람 불가) ====== */
-const MA_LBL={login:'로그인',ebook_borrow:'전자책 대출',pickup:'찾아줘북즈',hold:'반납예약',cancel_pickup:'픽업 취소',cancel_hold:'예약 취소'};
-const MA_COL={login:'#6366f1',ebook_borrow:'#22c55e',pickup:'#f59e0b',hold:'#ec4899',cancel_pickup:'#94a3b8',cancel_hold:'#cbd5e1'};
+const MA_LBL={login:'로그인',ebook_borrow:'전자책 대출',pickup:'찾아줘북즈',hold:'반납예약',cancel_pickup:'픽업 취소',cancel_hold:'예약 취소',charm_pick:'인증도서 담음',charm_done:'독후감 제출 기록'};
+const MA_COL={login:'#6366f1',ebook_borrow:'#22c55e',pickup:'#f59e0b',hold:'#ec4899',cancel_pickup:'#94a3b8',cancel_hold:'#cbd5e1',charm_pick:'#d4a93b',charm_done:'#b8902f'};
 let _maCharts={bar:null,cat:null};
 async function renderMsApp(){
   let d=null;
