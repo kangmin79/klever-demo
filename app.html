@@ -6101,7 +6101,7 @@ function libDetail(isbn){
   const SVG_RANK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 18v-6"/><path d="M12 18V8"/><path d="M16 18v-9"/></svg>';
   // 보조 '종이책 대출' 줄: 소장키 있으면 탭하면 소장정보 펼침(종이책만일 때와 동일 박스), 없으면 OPAC 링크 폴백
   const paperWay=(statusLabel,fallbackHref)=>{
-    const wtag=`<span class="wtag">${esc(statusLabel||'소장')}</span>`;
+    const wtag=statusLabel?`<span class="wtag">${esc(statusLabel)}</span>`:'';   // 상태 모르면 배지 생략(구 '소장' 폐기)
     if(paperHoldKey){
       // 종이책만 있는 책과 똑같이 소장현황(위치·청구기호·예약 버튼)을 처음부터 펼쳐 둔다.
       // 접어두면 전자책과 같이 있는 책만 종이책 정보가 사라져 학생이 "여긴 왜 없지" 하게 된다.
@@ -6133,21 +6133,21 @@ function libDetail(isbn){
           const hasEb=tags.includes('ebook'), hasPaper=tags.includes('paper'), hasSub=tags.includes('sub');
           const cremaUrl=b.cremaUrl||(en&&en.cremaUrl)||'';
           const primary = hasEb
-            ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">소장</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
+            ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">확인 중</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
             : isPaperHold
             ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
             : hasPaper
-            ? `<a class="lcd-way pw t-paper" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="wtag">소장</span><span class="ar">›</span></a>`
+            ? `<a class="lcd-way pw t-paper" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="ar">›</span></a>`
             : hasSub
             ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
             : '';
-          const otherPaper=(hasEb&&hasPaper) ? paperWay((en&&en.paperStatus)||'소장', b._pp||opacUrl) : '';
+          const otherPaper=(hasEb&&hasPaper) ? paperWay((en&&en.paperStatus)||'', b._pp||opacUrl) : '';
           const cremaWay=(hasSub && (hasEb||hasPaper)) ? `<a class="lcd-way t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : '';
           const ways=otherPaper+cremaWay;
           return primary + (ways?`<div class="lcd-ways"><div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>${ways}</div>`:'');
         }
         return (b.lib
-        ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">소장</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
+        ? `<div class="lcd-way t-ebook" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_EBOOK}</span><span class="wlabel">전자책 바로 읽기</span><span class="wtag eb" id="ebStockTag">확인 중</span><span class="ar">›</span></div><div id="ebStockNote"></div>`
         : isPaperHold
         ? '' /* 종이책 소장+예약은 위 소장현황 박스에서 — 일원화 */
         : `<div class="lcd-way pw t-find" onclick="lcBorrow('${b.isbn}')"><span class="wic">${SVG_PAPER}</span><span class="wlabel">우리 도서관에서 찾기</span><span class="ar">›</span></div>`)
@@ -6178,7 +6178,10 @@ function libDetail(isbn){
   const isSmKey = /^\d+$/.test(reckey) || /^CATTOT/.test(reckey);
   if(isSmKey) loadDesc(reckey, /^CATTOT/.test(reckey), b);
   // 전자책 실시간 재고 — 태그가 실제로 그려졌는지로 판단(책 객체의 lib 유무에 의존하지 않는다)
-  if(/^\d+$/.test(reckey) && document.getElementById('ebStockTag')) loadEbookStock(reckey);
+  // 용어 통일(8/12 피드백): 배지는 '지금 대출 가능'/'대출 중' 둘만. 확인할 길 없는 책은 배지 생략('소장' 폐기)
+  const _ebTag=document.getElementById('ebStockTag');
+  if(/^\d+$/.test(reckey) && _ebTag) loadEbookStock(reckey);
+  else if(_ebTag) _ebTag.remove();
 }
 /* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
    못 읽으면 조용히 '소장' 그대로 둔다(틀린 숫자를 보여주느니 말을 안 하는 편이 낫다). */
@@ -6188,7 +6191,8 @@ async function loadEbookStock(brcd){
   try{
     const r=await fetch(SMEBK_FN+'?action=stock&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
-    if(!d||!d.ok||!tag.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
+    if(!tag.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
+    if(!d||!d.ok){ tag.remove(); return; }   // 확인 실패 — 애매한 '소장' 대신 배지 생략(용어 통일)
     const row=tag.closest('.lcd-way');
     if(d.available){
       tag.textContent='지금 대출 가능';
@@ -6215,7 +6219,7 @@ async function loadEbookStock(brcd){
           <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
       }
     }
-  }catch(e){}
+  }catch(e){ try{ if(tag&&tag.isConnected) tag.remove(); }catch(_){} }   // 확인 실패 — 배지 생략
 }
 // 전자책 예약 — 개인 계정이 있어야 순번이 내 것이 된다(공유계정으론 의미 없음)
 async function ebReserve(brcd){
