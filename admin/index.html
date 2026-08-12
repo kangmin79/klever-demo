@@ -37,6 +37,14 @@ a{color:inherit;text-decoration:none}
 .navi:hover{background:var(--primary-bg);color:var(--primary)}
 .navi.on{background:var(--primary);color:#fff}
 .navi .em{font-size:15px;width:18px;text-align:center}
+/* 웹/앱 관리 모드 스위치 — 주소는 하나, 구역은 확연히 */
+.modeSwitch{display:flex;background:#eef0f5;border-radius:10px;padding:3px;margin-left:16px}
+.modeSwitch .ms{padding:6px 16px;border-radius:8px;font-size:12.5px;font-weight:800;color:var(--sub);cursor:pointer;transition:.13s}
+.modeSwitch .ms.on{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(20,30,50,.14)}
+body[data-mode=app] .modeSwitch .ms.on{color:#96731c}
+body[data-mode=app] .navi.on{background:#96731c}
+body[data-mode=app] .navi:hover{background:rgba(180,144,47,.1);color:#96731c}
+body[data-mode=app] .side{background:#fdfbf5}
 .main{flex:1;padding:26px 30px 70px;max-width:1200px}
 /* 헤더 */
 .phead{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
@@ -609,6 +617,10 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
 <div class="topbar">
   <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>Builder</small></div>
+  <div class="modeSwitch">
+    <span class="ms on" id="msWeb" onclick="setMode('web')">웹 관리</span>
+    <span class="ms" id="msApp" onclick="setMode('app')">앱 관리</span>
+  </div>
   <div class="spacer"></div>
   <div class="who"><span class="av">한</span><span>한국대학교 관리자</span>
     <span class="lo" onclick="lgOut()">로그아웃</span></div>
@@ -616,15 +628,17 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
 <div class="shell">
   <aside class="side">
-    <div class="grp">웹 관리</div>
-    <div class="navi on" onclick="go(this,'dash')"><span>대시보드</span></div>
-    <div class="navi" onclick="go(this,'stats')"><span>이용통계</span></div>
-    <div class="navi" onclick="go(this,'writings')"><span>피드관리</span></div>
-    <div class="navi" onclick="go(this,'history')"><span>운영이력</span></div>
-
-    <div style="height:20px"></div>
-    <div class="grp">앱 관리</div>
-    <div class="navi" onclick="go(this,'msapp')"><span>앱 현황</span></div>
+    <div id="sideWeb">
+      <div class="grp">민송도서관 웹</div>
+      <div class="navi on" onclick="go(this,'dash')"><span>대시보드</span></div>
+      <div class="navi" onclick="go(this,'stats')"><span>이용통계</span></div>
+      <div class="navi" onclick="go(this,'writings')"><span>피드관리</span></div>
+      <div class="navi" onclick="go(this,'history')"><span>운영이력</span></div>
+    </div>
+    <div id="sideApp" style="display:none">
+      <div class="grp">민송도서관 앱</div>
+      <div class="navi" onclick="go(this,'msapp')"><span>앱 현황</span></div>
+    </div>
 
     <div style="height:20px"></div>
     <div class="grp">콘텐츠 · 웹·앱 공용</div>
@@ -2019,6 +2033,19 @@ const COMMUNITY=[
 ];
 
 /* ====== 네비게이션 ====== */
+// 웹/앱 관리 모드 — 사이드바 메뉴가 통째로 바뀌고, 앱 모드는 금색 계열로 표시
+function setMode(m,skipGo){
+  document.body.setAttribute('data-mode',m);
+  el('sideWeb').style.display=m==='web'?'':'none';
+  el('sideApp').style.display=m==='app'?'':'none';
+  el('msWeb').classList.toggle('on',m==='web');
+  el('msApp').classList.toggle('on',m==='app');
+  try{localStorage.setItem('bs_admin_mode',m);}catch(e){}
+  if(!skipGo){
+    var first=document.querySelector(m==='web'?'#sideWeb .navi':'#sideApp .navi');
+    if(first)go(first,m==='web'?'dash':'msapp');
+  }
+}
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
   ['dash','stats','writings','make','notice','history','settings','comm','msapp'].forEach(id=>el('pg-'+id).style.display='none');
@@ -2826,6 +2853,7 @@ function renderHistory(){
 }
 
 /* ====== 초기화 ====== */
+try{ if(localStorage.getItem('bs_admin_mode')==='app') setMode('app'); }catch(e){}
 rtInit('ntBodyRich','공지 내용을 입력하세요. 위 도구로 굵게·소제목·목록·인용·링크·이미지를 넣을 수 있어요.');
 rtInit('cmBodyRich','내용을 입력하세요 (선택). 굵게·색·목록·표·링크·이미지·파일 등을 넣을 수 있어요.');
 buildNtLoc();
