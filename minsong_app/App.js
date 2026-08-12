@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SB = 'https://gkujptyfrzqrjrvovbnc.supabase.co';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc';
@@ -132,7 +133,8 @@ function Cover({ book, w, h, r = 8 }) {
 }
 
 // ── 졸업 독서인증 카드 (토스식 미션 카드 — 큰 숫자 대신 문장 + 4칸 세그먼트) ──
-function CertCard({ n = 0, hint }) {
+// n = 학생이 스스로 기록한 '제출함' 개수 (최종 승인은 포털 CHARM에서 — 우리는 표시만)
+function CertCard({ n = 0, hint, onPress }) {
   const total = 4;
   return (
     <View style={s.certBlock}>
@@ -140,7 +142,7 @@ function CertCard({ n = 0, hint }) {
         <View style={{ flex: 1 }}>
           <Text style={s.cEye}>졸업 독서인증</Text>
           <Text style={s.certTitle}>
-            독후감 4편 중 <Text style={{ color: GOLD_D }}>{n}편</Text> 썼어요
+            독후감 4편 중 <Text style={{ color: GOLD_D }}>{Math.min(n, total)}편</Text> 썼어요
           </Text>
         </View>
         <View style={s.certIcon}><Ionicons name="school" size={22} color={GOLD_D} /></View>
@@ -150,10 +152,14 @@ function CertCard({ n = 0, hint }) {
           <View key={i} style={[s.certSeg, i < n && { backgroundColor: GOLD }]} />
         ))}
       </View>
-      <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
-        <Text style={{ color: TXT, fontSize: 13.5, fontWeight: '800' }}>200선에서 첫 책 고르기</Text>
-        <Ionicons name="chevron-forward" size={15} color={TXT} style={{ marginTop: 1 }} />
-      </TouchableOpacity>
+      {!!onPress && (
+        <TouchableOpacity onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
+          <Text style={{ color: TXT, fontSize: 13.5, fontWeight: '800' }}>
+            {n > 0 ? '이어서 진행하기' : '지정도서에서 첫 책 고르기'}
+          </Text>
+          <Ionicons name="chevron-forward" size={15} color={TXT} style={{ marginTop: 1 }} />
+        </TouchableOpacity>
+      )}
       {!!hint && <Text style={[s.cS, { marginTop: 10 }]}>{hint}</Text>}
     </View>
   );
@@ -463,7 +469,7 @@ function Detail({ book, onClose, session, goLogin }) {
 }
 
 // ── 홈 ───────────────────────────────────────────────────────
-function Home({ onPick, goSearch, session, goMy }) {
+function Home({ onPick, goSearch, session, goMy, goCert, charmDone }) {
   const [fresh, setFresh] = useState([]);
   const [ebooks, setEbooks] = useState([]);
   const [pickBook, setPickBook] = useState(null);
@@ -519,7 +525,7 @@ function Home({ onPick, goSearch, session, goMy }) {
     <ScrollView contentContainerStyle={{ paddingBottom: 34, paddingTop: 78 }}>
       {/* 졸업 독서인증 — 미션 카드 */}
       <View style={{ paddingHorizontal: 20 }}>
-        <CertCard n={0} />
+        <CertCard n={charmDone} onPress={goCert} />
 
         {/* 내 도서관 — 한 줄 (박스 없음). 로그인하면 실시간 요약 */}
         <TouchableOpacity style={s.rowLink} onPress={goMy}>
@@ -564,7 +570,7 @@ function Home({ onPick, goSearch, session, goMy }) {
       <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
       <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
       <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />
-      <Text style={s.foot}>개발 미리보기 v0.5 · 실데이터(세명대 학술정보원 공식 API)</Text>
+      <Text style={s.foot}>개발 미리보기 v0.6 · 실데이터(세명대 학술정보원 공식 API)</Text>
     </ScrollView>
     </View>
   );
@@ -643,35 +649,114 @@ function Search({ onPick }) {
   );
 }
 
-// ── 인증 ─────────────────────────────────────────────────────
-function Cert() {
-  const STEPS = [
-    ['1', '지정도서 200선에서 책을 고르고'],
-    ['2', '읽은 뒤 독후감을 1,500자 이상 쓰고'],
-    ['3', '제출하면 표절 검사를 거쳐'],
-    ['4', '승인되면 1편 완료 — 4편이면 인증'],
-  ];
+// ── 인증 — CHARM 지정도서 202권 컬렉션 + 내 진행판 ──────────
+// 진행은 학생이 스스로 기록(이 폰에만 저장). 최종 제출·승인은 포털 CHARM 비전설계 — 우리는 안내만.
+// ⚠️문구에 "필수" 금지 (8/12 사장님 정정)
+const CHARM_STATES = [['pick', '읽을 책'], ['read', '다 읽음'], ['done', '제출함']];
+function CharmRow({ b, state, onOpen, onState }) {
   return (
-    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 26 }}>
-      <Text style={[s.secT, { fontSize: 22 }]}>졸업 독서인증</Text>
-      <Text style={[s.cS, { marginTop: 6 }]}>신입생은 4편, 편입생은 2편 — 졸업 요건입니다</Text>
-      <View style={{ marginTop: 6 }}>
-        <CertCard n={0} hint="포털 로그인하면 실제 진행 상황이 표시됩니다" />
+    <View style={{ paddingHorizontal: 20, paddingVertical: 9 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity onPress={() => onOpen(b)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <Text style={s.rkNum}>{b.seq}</Text>
+          <Cover book={b} w={40} h={57} r={4} />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text numberOfLines={1} style={{ color: TXT, fontSize: 13.5, fontWeight: '700' }}>{cleanTitle(b.title)}</Text>
+            <Text numberOfLines={1} style={{ color: LIGHT, fontSize: 11, marginTop: 3 }}>
+              {cleanAuthor(b.author)}{b.publisher ? ' · ' + b.publisher : ''}
+            </Text>
+            {!!b.ebook_ctrl && (
+              <Text style={{ color: GOLD_D, fontSize: 10.5, fontWeight: '800', marginTop: 4 }}>전자책 — 바로 읽기</Text>
+            )}
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onState(b.seq, state ? null : 'pick', b.title)} hitSlop={8} style={{ padding: 6 }}>
+          <Ionicons name={state ? 'bookmark' : 'bookmark-outline'} size={21} color={state ? GOLD_D : FAINT} />
+        </TouchableOpacity>
       </View>
-      <View style={{ marginTop: 26 }}>
+      {!!state && (
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, marginLeft: 24 }}>
+          {CHARM_STATES.map(([k, label]) => (
+            <TouchableOpacity key={k} onPress={() => onState(b.seq, k, b.title)}
+              style={[s.fchip, { paddingVertical: 5, paddingHorizontal: 11 }, state === k && { backgroundColor: GOLD_D }]}>
+              <Text style={[s.fchipT, { fontSize: 11 }, state === k && { color: '#fff' }]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+function Cert({ charm, setCharmState, onPick }) {
+  const [books, setBooks] = useState([]);
+  const [filter, setFilter] = useState('all');   // all | ebook | mine | '1'~'4'
+  useEffect(() => {
+    restT('charm_books', 'select=seq,area,no,title,author,publisher,ctrl,tulip_ctrl,ebook_ctrl,cover_url&order=seq&limit=210')
+      .then(setBooks);
+  }, []);
+  const doneN = Object.values(charm).filter((v) => v === 'done').length;
+  const mineN = Object.keys(charm).length;
+  // 전자책이 있으면 전자책 레코드로 상세를 연다 (바로 대출·읽기) — 없으면 종이책 레코드
+  const open = (b) => onPick(b.ebook_ctrl
+    ? { ctrl: b.ebook_ctrl, title: b.title, author: b.author, cover_url: b.cover_url, kind: 'ebook',
+        fmt: { paper: true, ebook: true, crema: false } }
+    : { ctrl: b.tulip_ctrl || b.ctrl, title: b.title, author: b.author, cover_url: b.cover_url, kind: 'paper',
+        fmt: { paper: true, ebook: false, crema: false } });
+  const shown = books.filter((b) => filter === 'all' ? true
+    : filter === 'ebook' ? !!b.ebook_ctrl
+    : filter === 'mine' ? !!charm[b.seq]
+    : b.area === Number(filter));
+  const CHIPS = [['all', '전체'], ['mine', `내가 고른 ${mineN}`], ['ebook', '전자책'],
+    ['1', '1영역'], ['2', '2영역'], ['3', '3영역'], ['4', '4영역']];
+  const head = (
+    <View style={{ paddingTop: 26 }}>
+      <View style={{ paddingHorizontal: 20 }}>
+        <Text style={[s.secT, { fontSize: 22 }]}>졸업 독서인증</Text>
+        <Text style={[s.cS, { marginTop: 6 }]}>
+          졸업인증제(CHARM인증영역)의 독서인증 — 신입생 4편 · 편입생 2편
+        </Text>
+        <View style={{ marginTop: 6 }}>
+          <CertCard n={doneN}
+            hint="진행 표시는 이 폰에 기록돼요. 최종 제출과 승인은 포털의 CHARM 비전설계에서 이뤄져요." />
+        </View>
+      </View>
+      <View style={{ marginTop: 26, paddingHorizontal: 20 }}>
         <Text style={[s.secT, { fontSize: 16 }]}>어떻게 하나요</Text>
-        {STEPS.map(([n, t]) => (
+        {[['1', '아래 지정도서에서 책을 골라 담아요 — 전자책이 있는 책은 여기서 바로 읽어요'],
+          ['2', '읽고 나서 독후감을 1,500자 이상 써요'],
+          ['3', '포털 학사행정 → CHARM 비전설계 → 독서인증관리 → 독후감상문입력에서 제출해요'],
+          ['4', '표절 검사(40% 미만)를 거쳐 승인되면 1편이 인정돼요'],
+        ].map(([n, t]) => (
           <View key={n} style={{ flexDirection: 'row', gap: 12, marginTop: 14, alignItems: 'center' }}>
             <View style={s.stepN}><Text style={{ color: SUB, fontSize: 12, fontWeight: '800' }}>{n}</Text></View>
             <Text style={{ color: SUB, fontSize: 14, flex: 1, lineHeight: 20 }}>{t}</Text>
           </View>
         ))}
       </View>
-      <View style={{ marginTop: 28 }}>
-        <Text style={[s.secT, { fontSize: 16 }]}>지정도서 200선</Text>
-        <Text style={[s.cS, { marginTop: 8 }]}>표지·소개·대출 가능 여부가 붙은 200선 목록이 다음 버전에 여기 들어옵니다. 그중 70여 권은 전자책이라 이 앱에서 바로 읽고 쓸 수 있어요.</Text>
+      <View style={{ marginTop: 30 }}>
+        <SecHead title="지정도서 202권" more={books.filter((b) => b.ebook_ctrl).length + '권은 바로 읽기'} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, paddingHorizontal: 20, marginBottom: 8 }}>
+          {CHIPS.map(([k, label]) => (
+            <TouchableOpacity key={k} onPress={() => setFilter(k)}
+              style={[s.fchip, filter === k && { backgroundColor: BTN }]}>
+              <Text style={[s.fchipT, filter === k && { color: '#fff' }]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
-    </ScrollView>
+    </View>
+  );
+  return (
+    <FlatList data={shown} keyExtractor={(b) => String(b.seq)} ListHeaderComponent={head}
+      contentContainerStyle={{ paddingBottom: 30 }}
+      ListEmptyComponent={books.length
+        ? <Text style={{ color: FAINT, textAlign: 'center', marginTop: 24 }}>
+            {filter === 'mine' ? '아직 고른 책이 없어요 — 책갈피를 눌러 담아 보세요' : '해당하는 책이 없어요'}
+          </Text>
+        : <ActivityIndicator color={LIGHT} style={{ marginTop: 30 }} />}
+      renderItem={({ item }) => (
+        <CharmRow b={item} state={charm[item.seq]} onOpen={open} onState={setCharmState} />
+      )} />
   );
 }
 
@@ -833,14 +918,32 @@ function Main() {
   const [tab, setTab] = useState('home');
   const [pick, setPick] = useState(null);
   const [session, setSession] = useState(null);   // 포털 로그인 세션 (토큰·이름)
+  // CHARM 진행판 — 학생이 스스로 기록, 이 폰에만 저장 (정본은 포털 CHARM)
+  const [charm, setCharm] = useState({});
+  useEffect(() => {
+    AsyncStorage.getItem('charm_progress')
+      .then((v) => { if (v) setCharm(JSON.parse(v)); }).catch(() => {});
+  }, []);
+  const setCharmState = (seq, state, title) => {
+    const had = charm[seq];
+    const nx = { ...charm };
+    if (!state) delete nx[seq]; else nx[seq] = state;
+    setCharm(nx);
+    AsyncStorage.setItem('charm_progress', JSON.stringify(nx)).catch(() => {});
+    const tag = session ? { student_tag: tagOf(session.uid) } : {};
+    if (state === 'pick' && !had) logEv('charm_pick', { book: cleanTitle(title || ''), ...tag });
+    if (state === 'done' && had !== 'done') logEv('charm_done', { book: cleanTitle(title || ''), ...tag });
+  };
+  const charmDone = Object.values(charm).filter((v) => v === 'done').length;
   const insets = useSafeAreaInsets();   // 기기별 시스템 바 높이 (상태바·하단 내비게이션)
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <View style={{ flex: 1, paddingTop: insets.top + 4 }}>
-        {tab === 'home' && <Home onPick={setPick} goSearch={() => setTab('search')} session={session} goMy={() => setTab('my')} />}
+        {tab === 'home' && <Home onPick={setPick} goSearch={() => setTab('search')} session={session}
+          goMy={() => setTab('my')} goCert={() => setTab('cert')} charmDone={charmDone} />}
         {tab === 'search' && <Search onPick={setPick} />}
-        {tab === 'cert' && <Cert />}
+        {tab === 'cert' && <Cert charm={charm} setCharmState={setCharmState} onPick={setPick} />}
         {tab === 'my' && <MyShelf session={session} setSession={setSession} />}
       </View>
       {/* 탭바 — 시스템 내비게이션 버튼(Ⅲ ◯ <) 위로 정확히 띄운다 */}
