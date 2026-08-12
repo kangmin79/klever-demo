@@ -1,5 +1,5 @@
-// 민송도서관 앱 v0.4 — 밀리의서재 스타일: 순백 바탕 · 테두리 없음 · 여백 구분 · 굵은 고딕
-// 실데이터: semyung_tulip 32만 장서 + semyung_loan_rank (읽기 전용 anon)
+// 민송도서관 앱 v0.8 — 참나루 웹 이식: 크림 바탕 · 세리프 히어로 · 상단 카테고리 5개
+// 실데이터: semyung_tulip 32만 장서 + library_sections/programs + community_posts (읽기 전용 anon)
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, ScrollView, FlatList, Image, TouchableOpacity,
@@ -644,10 +644,11 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
         </View>
       )}
 
-      {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (영역별 hero 칸, 우리도서관은 오늘의 추천 폴백) */}
+      {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (영역별 hero 칸) */}
+      {/* 폴백(auto)은 사서가 고른 게 아니므로 '오늘의 추천'으로만 — 사서 인용문 붙이지 않음 (가짜 표시 금지) */}
       {(cat === 'lib' || cat === 'cls' || cat === 'intl') && (() => {
         const hero = areas[areaKey].hero
-          || (cat === 'lib' && pickBook ? { title: '오늘의 사서 추천', note: '', book: pickBook } : null);
+          || (cat === 'lib' && pickBook ? { title: '오늘의 추천', note: '', book: pickBook, auto: true } : null);
         if (!hero) return null;
         const open = () => hero.book.curated ? pickCurated(hero.book) : onPick(hero.book);
         return (
@@ -663,9 +664,11 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
                 {cleanTitle(hero.book.title)}
               </Text>
               <Text style={{ color: SUB, fontSize: 13, marginTop: 7 }}>{cleanAuthor(hero.book.author)}</Text>
-              <Text style={{ color: GOLD_D, fontSize: 13, marginTop: 11, fontStyle: 'italic', lineHeight: 19 }}>
-                “{hero.note || '이 달의 추천 도서예요.'}” — 사서
-              </Text>
+              {!hero.auto && (
+                <Text style={{ color: GOLD_D, fontSize: 13, marginTop: 11, fontStyle: 'italic', lineHeight: 19 }}>
+                  “{hero.note || '이 달의 추천 도서예요.'}” — 사서
+                </Text>
+              )}
               <Text style={{ color: TXT, fontSize: 13.5, fontWeight: '800', marginTop: 13, textDecorationLine: 'underline' }}>
                 자세히 보기 →
               </Text>
@@ -693,8 +696,8 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
       </View>}
 
       {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 (영역별, 고전 책은 바로 읽기) */}
-      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && areas[areaKey].shelves.map((sec) => (
-        <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books}
+      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && areas[areaKey].shelves.map((sec, i) => (
+        <Rail key={sec.title + i} title={sec.title} more="사서 추천" books={sec.books}
           onPick={(b) => b.curated ? pickCurated(b) : onPick(b)} />
       ))}
       {cat === 'lib' && (
@@ -928,7 +931,8 @@ async function pickPopup(session, myInfo, charm) {
     'select=id,title,body,target,starts_at,ends_at&active=is.true&channel=in.(app,both)&order=created_at.desc&limit=20');
   let seen = [];
   try { seen = JSON.parse((await AsyncStorage.getItem('seen_popups')) || '[]'); } catch (e) {}
-  const today = new Date().toISOString().slice(0, 10);
+  // 한국 날짜로 비교 — toISOString은 UTC라 자정~오전 9시에 어제로 계산되는 버그 방지
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   return (rows || []).find((p) => {
     if (seen.includes(p.id)) return false;
     if (p.starts_at && today < p.starts_at) return false;
@@ -1153,7 +1157,9 @@ function Main() {
               <Text style={s.cEye}>민송도서관</Text>
               <Text style={{ fontSize: 17, fontWeight: '800', color: TXT, lineHeight: 24 }}>{popup.title}</Text>
               {!!popup.body && (
-                <Text style={{ color: SUB, fontSize: 13.5, lineHeight: 20, marginTop: 10 }}>{popup.body}</Text>
+                <ScrollView style={{ maxHeight: 280, marginTop: 10 }}>
+                  <Text style={{ color: SUB, fontSize: 13.5, lineHeight: 20 }}>{popup.body}</Text>
+                </ScrollView>
               )}
               <TouchableOpacity style={s.cta} onPress={closePopup}><Text style={s.ctaT}>확인</Text></TouchableOpacity>
             </View>

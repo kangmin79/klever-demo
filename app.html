@@ -11022,7 +11022,8 @@ window.addEventListener('keydown', (e) => {
     if(!r.ok) return;
     const rows=await r.json();
     let seen=[]; try{ seen=JSON.parse(localStorage.getItem('ms_seen_popups')||'[]'); }catch(e){}
-    const today=new Date().toISOString().slice(0,10);
+    // 한국 날짜로 비교 — toISOString은 UTC라 자정~오전 9시에 어제로 계산되는 버그 방지
+    const today=new Date(Date.now()+9*3600*1000).toISOString().slice(0,10);
     const p=(rows||[]).find(x=>{
       if(seen.includes(x.id))return false;
       if(x.starts_at&&today<x.starts_at)return false;
