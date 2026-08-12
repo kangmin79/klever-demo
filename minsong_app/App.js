@@ -116,9 +116,8 @@ async function loadAreas() {
   };
   return {
     lib: pick(['우리도서관']),
-    clsF: pick(['고전 컬렉션 해외', '고전 컬렉션']),   // 세계고전 (웹 collection foreign 탭)
-    clsK: pick(['고전 컬렉션 국내']),                   // 한국 고전 (웹 collection modern 탭)
-    intl: pick(['International']),
+    cls: pick(['고전 컬렉션 해외', '고전 컬렉션']),              // 상단 세계고전 탭 (웹 foreign)
+    intl: pick(['고전 컬렉션 국내', 'International']),           // 상단 International 탭 = 한국 고전 다국어 (웹 modern)
   };
 }
 
@@ -565,9 +564,8 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
   const [rank, setRank] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
   const [cat, setCat] = useState('lib');
-  const [clsTab, setClsTab] = useState('foreign');   // 세계고전 내부: 세계고전 | 한국 고전 (웹과 동일)
-  const [areas, setAreas] = useState({ lib: EMPTY_AREA, clsF: EMPTY_AREA, clsK: EMPTY_AREA, intl: EMPTY_AREA });
-  const areaKey = cat === 'cls' ? (clsTab === 'foreign' ? 'clsF' : 'clsK') : cat;
+  const [areas, setAreas] = useState({ lib: EMPTY_AREA, cls: EMPTY_AREA, intl: EMPTY_AREA });
+  const areaKey = cat;   // 세계고전=해외 / International=한국 고전 (웹 GNB와 동일 매핑)
   // 큐레이션 책 터치 → 도서관 소장 레코드로 연결해 상세(대출·예약 버튼까지) 열기
   const pickCurated = async (b) => {
     const m = String(b.lib || '').match(/brcd=(\d+)/);
@@ -632,18 +630,6 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
         })}
       </ScrollView>
 
-      {/* 세계고전 내부 서브탭 — 웹 collection 페이지의 [세계고전|한국 고전] 그대로 */}
-      {cat === 'cls' && (
-        <View style={{ flexDirection: 'row', gap: 7, paddingHorizontal: 20, marginTop: 12 }}>
-          {[['foreign', '세계고전'], ['modern', '한국 고전']].map(([k, label]) => (
-            <TouchableOpacity key={k} onPress={() => setClsTab(k)}
-              style={[s.fchip, { paddingVertical: 6 }, clsTab === k && { backgroundColor: GOLD_D }]}>
-              <Text style={[s.fchipT, { fontSize: 11.5 }, clsTab === k && { color: '#fff' }]}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
       {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (영역별 hero 칸) */}
       {/* 폴백(auto)은 사서가 고른 게 아니므로 '오늘의 추천'으로만 — 사서 인용문 붙이지 않음 (가짜 표시 금지) */}
       {(cat === 'lib' || cat === 'cls' || cat === 'intl') && (() => {
@@ -707,13 +693,8 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
           <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
         </>
       )}
-      {cat === 'cls' && (
-        <Rail title={clsTab === 'foreign' ? '세계고전 · 바로 읽기' : '한국 고전 · 바로 읽기'} more="300+"
-          books={clsTab === 'foreign' ? CLASSICS_F : CLASSICS_K} onPick={onPick} />
-      )}
-      {cat === 'intl' && !areas.intl.hero && !areas.intl.shelves.length && (
-        <Text style={{ color: FAINT, textAlign: 'center', marginTop: 46 }}>International shelf is being prepared.</Text>
-      )}
+      {cat === 'cls' && <Rail title="세계고전 · 바로 읽기" more="300+" books={CLASSICS_F} onPick={onPick} />}
+      {cat === 'intl' && <Rail title="한국 고전 · 바로 읽기" more="300+" books={CLASSICS_K} onPick={onPick} />}
       {cat === 'chal' && <ChalList />}
       {cat === 'comm' && <CommList />}
       <Text style={s.foot}>개발 미리보기 v0.8 · 실데이터(세명대 학술정보원 공식 API)</Text>
