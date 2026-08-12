@@ -6184,7 +6184,7 @@ function libDetail(isbn){
   else if(_ebTag) _ebTag.remove();
 }
 /* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
-   못 읽으면 조용히 '소장' 그대로 둔다(틀린 숫자를 보여주느니 말을 안 하는 편이 낫다). */
+   못 읽으면 배지를 지운다 — 틀린 숫자를 보여주느니 말을 안 하는 편이 낫다(8/12 용어 통일). */
 async function loadEbookStock(brcd){
   const tag=document.getElementById('ebStockTag'), note=document.getElementById('ebStockNote');
   if(!tag) return;
