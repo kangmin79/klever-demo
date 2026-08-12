@@ -91,11 +91,25 @@ function FmtBadges({ book, style }) {
 // ── 사서 큐레이션 (관리자에서 저장한 칸 — 웹과 같은 library_sections를 영역째 읽는다) ──
 // 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외. hero 칸은 웹처럼 각 영역 첫 화면 히어로.
 const LIVE_STYLES = ['rank', 'ebookrank', 'newlive_p', 'newlive_e'];
+// 한국 고전 표지 지도 — 책 id(kr-작가-작품)와 표지 파일명(kr-로마자)이 달라서 필요
+// (classics_kr_data.js에서 자동 생성. 지도에 없는 책은 표지 미제작 → 활자 표지 폴백)
+const KR_COVER_FLAT = '강경애-소금:sogeum|강경애-어머니와-딸:eomeoniwattal|강경애-원고료-이백-원:wongoryoibaekwon|강경애-인간-문제:inganmunje|강경애-지하촌:jihachon|강경애-파금:pageum|김남천-경영:gyeongyeong|김남천-대하:daeha|김남천-맥:maek|김남천-물:mul|김동인-K박사의-연구:kbaksauiyeongu|김동인-감자:gamja|김동인-광염소나타:gwangyeomsonata|김동인-광화사:gwanghwasa|김동인-마음이-옅은-자여:maeumiyeoteunjayeo|김동인-명문:myeongmun|김동인-무지개:mujigae|김동인-발가락이-닮았다:balgarakidalmassda|김동인-시골-황서방:sigolhwangseobang|김동인-약한-자의-슬픔:yakhanjauiseulpeum|김동인-젊은-그들:jeolmeungeudeul|김동인-죽음:jukeum|김동인-태형:taehyeong|김영랑-김영랑-시선:gimyeongrangsiseon|나도향-물레방아:mulrebanga|나도향-벙어리-삼룡이:beongeorisamryongi|나도향-별을-안거든:byeoleulangeodeun|나도향-뽕:ppong|나도향-행랑-자식:haengrangjasik|나혜석-경희:gyeonghui|나혜석-규원:gyuwon|박용철-박용철-시선:bakyongcheolsiseon|신채호-꿈하늘:kkumhaneul|신채호-용과-용의-대격전:yonggwayonguidaegyeokjeon|신채호-이순신:isunsin|오장환-오장환-시선:ojanghwansiseon|이광수-가실:gasil|이광수-단종애사:danjongaesa|이광수-마의태자:mauitaeja|이광수-무정:mujeong-el|이광수-원효대사:wonhyodaesa-el|이광수-유정:yujeong-el|이광수-이차돈의-사:ichadonuisa-el|이광수-재생:jaesaeng-el|이무영-산가:sanga|이무영-제1과-제1장:je1gwaje1jang|이무영-흙의-노예:heulkuinoye|이상-12월-12일:12wol12il|이상-권태:gwontae|이상-동해:donghae|이상-봉별기:bongbyeolgi|이상-이상-시선(오감도·거울·역단·위독):isangsiseonogamdogeoulyeokdanwidok|이상-종생기:jongsaenggi|이상-지주회시:jijuhoesi|이상화-이상화-시선:isanghwasiseon|이육사-이육사-시선:iyuksasiseon|이익상-광란:gwangran|이익상-쫓기어-가는-이들:jjochgieoganeunideul|이익상-흙의-세례:heulkuiserye|이효석-개살구:gaesalgu|이효석-노령근해:noryeonggeunhae|이효석-도시와-유령:dosiwayuryeong|이효석-돈:don|이효석-들:deul|이효석-분녀:bunnyeo|이효석-산:san|이효석-수탉:sutalk|이효석-장미-병들다:jangmibyeongdeulda|이효석-화분:hwabun|임화-임화-시선:imhwasiseon|정지용-정지용-시선:jeongjiyongsiseon|채만식-논-이야기:noniyagi|채만식-동화:donghwa|채만식-두-순정:dusunjeong|채만식-레디메이드:redimeideu|채만식-명일:myeongil|채만식-미스터-방:miseuteobang|채만식-소망:somang|채만식-쑥국새:ssukguksae|채만식-이런-처지:ireoncheoji|채만식-정자나무-있는-삽화:jeongjanamuissneunsabhwa|채만식-치숙:chisuk|채만식-탁류:takryu|채만식-태평천하:taepyeongcheonha|최서해-그믐밤:geumeumbam|최서해-기아와-살육:giawasalyuk|최서해-박돌:bakdol|최서해-큰물-진-뒤:keunmuljindwi|최서해-탈출기:talchulgi|최서해-홍염:hongyeom|한용운-한용운-시선:hanyongunsiseon|현진건-B사감:bsagam|현진건-고향:gohyang|현진건-불:bul|현진건-빈처:bincheo|현진건-술-권하는-사회:sulgwonhaneunsahoe|현진건-타락자:tarakja|현진건-피아노:piano|현진건-할머니의-죽음:halmeoniuijukeum|현진건-희생화:huisaenghwa';
+const KR_COVER = {};
+KR_COVER_FLAT.split('|').forEach((p) => {
+  const i = p.lastIndexOf(':');
+  if (i > 0) KR_COVER['kr-' + p.slice(0, i)] = 'kr-' + p.slice(i + 1);
+});
+function classicCoverFile(id) {
+  if (id.startsWith('gb-')) return id;                       // 해외는 id가 곧 파일명
+  if (KR_COVER[id]) return KR_COVER[id];                     // 한국은 지도로 변환
+  return /^[\x00-\x7F]+$/.test(id) ? id : '';                // 이미 로마자 id면 그대로, 아니면 표지 없음
+}
 function mapSecBook(b, i) {
   const id = b.id || '';
   if (/^(gb|kr)-/.test(id)) {          // 북스타 자체 고전 — 도서관 소장과 무관하게 바로 읽기
+    const file = classicCoverFile(id);
     return { ctrl: id, title: b.title || '', author: b.author || '',
-      cover_url: `https://bookstar.co.kr/covers/${id}.webp`, classic: true };
+      cover_url: file ? `https://bookstar.co.kr/covers/${file}.webp` : '', classic: true };
   }
   return { ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
     title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '' };
