@@ -638,6 +638,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <div id="sideApp" style="display:none">
       <div class="grp">민송도서관 앱</div>
       <div class="navi" onclick="go(this,'msapp')"><span>앱 현황</span></div>
+      <div class="navi" onclick="go(this,'popup')"><span>팝업 관리</span></div>
     </div>
 
     <div style="height:20px"></div>
@@ -713,6 +714,47 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
           </div></div>
       </div>
       <div class="note">기록 원칙: 정본은 도서관 시스템이고, 여기는 <b>앱을 거친 행동만</b> 셉니다. 학생 이름·학번은 저장하지 않으며(익명 꼬리표만), 원본 로그는 외부에서 읽을 수 없고 집계만 공개됩니다.</div>
+    </section>
+
+    <!-- ===== 팝업 관리 (학생이 앱·웹을 열 때 뜨는 창 — 조건 겨냥, 개인 지정 없음) ===== -->
+    <section id="pg-popup" style="display:none">
+      <div class="phead">
+        <div><h1>팝업 관리 <span class="tagpill">앱·웹 공용</span></h1>
+          <p>학생이 앱이나 웹을 열 때 뜨는 팝업 — 대상은 조건으로 겨냥합니다 (개인을 지정하지 않아요)</p></div>
+      </div>
+      <div class="db-card" style="max-width:640px">
+        <h3>새 팝업</h3>
+        <div style="display:grid;gap:10px;margin-top:12px">
+          <input class="cur-inp" id="ppTitle" maxlength="100" placeholder="제목 — 예: 전자책 23,000권이 공짜예요">
+          <textarea class="cur-inp" id="ppBody" rows="3" maxlength="1000" placeholder="내용 (선택)"></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select class="cur-inp" id="ppTarget" style="flex:1;min-width:150px">
+              <option value="all">전체 (로그인 안 해도)</option>
+              <option value="login">로그인한 학생만</option>
+              <option value="overdue">연체 있는 학생 (앱)</option>
+              <option value="charm0">독서인증 시작 전 학생 (앱)</option>
+            </select>
+            <select class="cur-inp" id="ppChannel" style="flex:1;min-width:120px">
+              <option value="both">앱 + 웹</option>
+              <option value="app">앱만</option>
+              <option value="web">웹만</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="cur-inp" type="date" id="ppFrom" style="flex:1"><span style="color:var(--light)">~</span>
+            <input class="cur-inp" type="date" id="ppTo" style="flex:1">
+            <button class="btn-primary" onclick="savePopup()">띄우기</button>
+          </div>
+        </div>
+        <div class="note">기간을 비우면 끌 때까지 계속 뜹니다. 학생 화면에는 팝업당 한 번만 뜨고, 닫으면 다시 안 보여요.</div>
+      </div>
+      <div class="db-card" style="margin-top:16px">
+        <h3>띄운 팝업</h3>
+        <div class="tblwrap" style="border:0;box-shadow:none">
+          <table class="tbl" style="min-width:0"><thead><tr><th>제목</th><th>대상</th><th>채널</th><th>기간</th><th class="num">상태</th><th class="num"></th></tr></thead>
+          <tbody id="ppList"></tbody></table>
+        </div>
+      </div>
     </section>
 
     <!-- ===== 이용통계 ===== -->
@@ -2048,11 +2090,12 @@ function setMode(m,skipGo){
 }
 function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
-  ['dash','stats','writings','make','notice','history','settings','comm','msapp'].forEach(id=>el('pg-'+id).style.display='none');
+  ['dash','stats','writings','make','notice','history','settings','comm','msapp','popup'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
   _pvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
   if(page==='dash')renderDash();
   else if(page==='msapp')renderMsApp();
+  else if(page==='popup')loadPopups();
   else if(page==='make')renderChallenges();
   else if(page==='stats')renderStats();
   else if(page==='writings')loadWritings();
@@ -2738,6 +2781,59 @@ function renderNotices(){
     <h4>${esc(n.title)}</h4><div class="nm">${esc(n.target)} · ${esc(n.period||'')} · ${esc(n.at)}</div>
     <div class="rt-view">${sanitizeHtml(n.body)}</div></div>${n.loc&&n.loc.length?`<span class="nloc">${esc(n.loc.join(' · '))}</span>`:''}</div>`).join('')
     ||'<div class="pv-empty">게시된 공지가 없어요.</div>';
+}
+
+/* ====== 팝업 관리 (minsong_popups — 학생 앱·웹이 같은 테이블을 읽는다) ====== */
+const PP_TGT={all:'전체',login:'로그인 학생',overdue:'연체 학생',charm0:'인증 시작 전'};
+const PP_CH={both:'앱+웹',app:'앱만',web:'웹만'};
+let POPUPS=[];
+async function loadPopups(){
+  try{
+    const r=await fetch(`${SB_REST}/minsong_popups?select=*&order=created_at.desc`,
+      {headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    POPUPS=r.ok?await r.json():[];
+  }catch(e){POPUPS=[];}
+  renderPopups();
+}
+function renderPopups(){
+  const btn='padding:6px 10px;font-size:12px;border-radius:8px';
+  el('ppList').innerHTML=POPUPS.length?POPUPS.map(p=>`<tr style="${p.active?'':'opacity:.45'}">
+    <td style="font-weight:600">${esc(p.title)}</td>
+    <td>${PP_TGT[p.target]||esc(p.target)}</td><td>${PP_CH[p.channel]||esc(p.channel)}</td>
+    <td>${(!p.starts_at&&!p.ends_at)?'계속':esc((p.starts_at||'')+' ~ '+(p.ends_at||''))}</td>
+    <td class="num"><button class="btn-ghost" style="${btn}" onclick="togglePopup(${p.id},${!p.active})">${p.active?'켜짐 · 끄기':'꺼짐 · 켜기'}</button></td>
+    <td class="num"><button class="btn-ghost" style="${btn}" onclick="delPopup(${p.id})">삭제</button></td></tr>`).join('')
+  :'<tr><td colspan="6" style="color:var(--light)">아직 띄운 팝업이 없어요</td></tr>';
+}
+async function savePopup(){
+  const title=el('ppTitle').value.trim();
+  if(!title){toast('제목을 적어 주세요');return;}
+  const row={title,body:el('ppBody').value.trim(),target:el('ppTarget').value,channel:el('ppChannel').value,
+    starts_at:el('ppFrom').value||null,ends_at:el('ppTo').value||null};
+  try{
+    const r=await fetch(`${SB_REST}/minsong_popups`,{method:'POST',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify(row)});
+    if(!r.ok)throw 0;
+    el('ppTitle').value='';el('ppBody').value='';el('ppFrom').value='';el('ppTo').value='';
+    toast('팝업을 띄웠어요');loadPopups();
+  }catch(e){toast('저장하지 못했어요 — 잠시 후 다시');}
+}
+async function togglePopup(id,on){
+  try{
+    await fetch(`${SB_REST}/minsong_popups?id=eq.${id}`,{method:'PATCH',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({active:on})});
+  }catch(e){}
+  loadPopups();
+}
+async function delPopup(id){
+  if(!confirm('이 팝업을 삭제할까요?'))return;
+  try{
+    await fetch(`${SB_REST}/minsong_popups?id=eq.${id}`,{method:'DELETE',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,Prefer:'return=minimal'}});
+  }catch(e){}
+  loadPopups();
 }
 
 /* ====== 커뮤니티 관리 (도서관 행사 + 자유 게시판 = community_posts) ====== */

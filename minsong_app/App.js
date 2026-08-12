@@ -779,6 +779,24 @@ function logEv(event, extra) {
   } catch (e) {}
 }
 
+// ── 관리자 팝업 (minsong_popups — 사서가 조건으로 겨냥해 띄우는 창, 팝업당 한 번만) ──
+async function pickPopup(session, myInfo, charm) {
+  const rows = await restT('minsong_popups',
+    'select=id,title,body,target,starts_at,ends_at&active=is.true&channel=in.(app,both)&order=created_at.desc&limit=20');
+  let seen = [];
+  try { seen = JSON.parse((await AsyncStorage.getItem('seen_popups')) || '[]'); } catch (e) {}
+  const today = new Date().toISOString().slice(0, 10);
+  return (rows || []).find((p) => {
+    if (seen.includes(p.id)) return false;
+    if (p.starts_at && today < p.starts_at) return false;
+    if (p.ends_at && today > p.ends_at) return false;
+    if (p.target === 'login' && !session) return false;
+    if (p.target === 'overdue' && !(myInfo && Number(myInfo.overDueCount) > 0)) return false;
+    if (p.target === 'charm0' && Object.keys(charm || {}).length > 0) return false;
+    return true;
+  }) || null;
+}
+
 async function myApi(token, action, params) {
   const q = Object.entries({ action, ...(params || {}) })
     .map(([k, v]) => `${k}=${encodeURIComponent(v == null ? '' : v)}`).join('&');
@@ -920,10 +938,32 @@ function Main() {
   const [session, setSession] = useState(null);   // 포털 로그인 세션 (토큰·이름)
   // CHARM 진행판 — 학생이 스스로 기록, 이 폰에만 저장 (정본은 포털 CHARM)
   const [charm, setCharm] = useState({});
+  const [charmReady, setCharmReady] = useState(false);
   useEffect(() => {
     AsyncStorage.getItem('charm_progress')
-      .then((v) => { if (v) setCharm(JSON.parse(v)); }).catch(() => {});
+      .then((v) => { if (v) setCharm(JSON.parse(v)); }).catch(() => {})
+      .finally(() => setCharmReady(true));
   }, []);
+  // 사서 팝업 — 진행판이 로드된 뒤에 조건을 평가한다 (charm0 오발사 방지)
+  const [popup, setPopup] = useState(null);
+  useEffect(() => {
+    if (!charmReady) return;
+    let alive = true;
+    (async () => {
+      let info = null;
+      try { if (session) { const d = await myApi(session.token, 'info'); info = d.data || {}; } } catch (e) {}
+      try { const p = await pickPopup(session, info, charm); if (alive && p) setPopup(p); } catch (e) {}
+    })();
+    return () => { alive = false; };
+  }, [session, charmReady]);
+  const closePopup = async () => {
+    try {
+      const seen = JSON.parse((await AsyncStorage.getItem('seen_popups')) || '[]');
+      seen.push(popup.id);
+      await AsyncStorage.setItem('seen_popups', JSON.stringify(seen.slice(-50)));
+    } catch (e) {}
+    setPopup(null);
+  };
   const setCharmState = (seq, state, title) => {
     const had = charm[seq];
     const nx = { ...charm };
@@ -960,6 +1000,21 @@ function Main() {
       </View>
       <Detail book={pick} onClose={() => setPick(null)} session={session}
         goLogin={() => { setPick(null); setTab('my'); }} />
+      {/* 사서 팝업 — 가운데 한 장, 확인하면 다시 안 뜸 */}
+      {popup && (
+        <Modal visible transparent animationType="fade" onRequestClose={closePopup}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(25,31,40,.55)', justifyContent: 'center', padding: 32 }}>
+            <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 22 }}>
+              <Text style={s.cEye}>민송도서관</Text>
+              <Text style={{ fontSize: 17, fontWeight: '800', color: TXT, lineHeight: 24 }}>{popup.title}</Text>
+              {!!popup.body && (
+                <Text style={{ color: SUB, fontSize: 13.5, lineHeight: 20, marginTop: 10 }}>{popup.body}</Text>
+              )}
+              <TouchableOpacity style={s.cta} onPress={closePopup}><Text style={s.ctaT}>확인</Text></TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
