@@ -40,7 +40,11 @@ rem  safe to rerun: info-naru daily quota is server-tracked, and since 2026-08-1
 rem  only stamps 'not found' on rows info-naru actually saw (no pool poisoning on rerun)
 set /a _bftry=0
 :backfill
-python -u scripts\tulip_sync.py --covers-paper-aladin --d4l-budget 28000 --covers-budget 4200 >> logs\tulip_daily.log 2>&1
+rem d4l-budget 48000 (was 28000): boss recalls old 50k/day cap; current docs say 30k.
+rem  Harmless probe - script stops gracefully at server limit (outOflimit) and since
+rem  2026-08-13 unqueried rows are never stamped 'not found'. If server allows ~50k
+rem  we gain ~20k calls/day; if 30k we lose nothing. Check log for where it stops.
+python -u scripts\tulip_sync.py --covers-paper-aladin --d4l-budget 48000 --covers-budget 4200 >> logs\tulip_daily.log 2>&1
 if %errorlevel%==0 goto backfillok
 set /a _bftry+=1
 echo [%date% %time%] backfill died - resume attempt %_bftry% of 3 >> logs\tulip_daily.log
