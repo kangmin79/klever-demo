@@ -5102,16 +5102,35 @@ function smLoginGuide(mode){
   sh.innerHTML=`<div class="rsv-card">
     <h3>도서관 로그인이 필요해요</h3>
     <div class="rsv-sub">${sub}</div>
-    <ul class="rsv-rules">
-      <li><span class="rsv-tag">1</span><span>아래 버튼으로 <b>세명대 로그인</b></span></li>
-      <li><span class="rsv-tag">2</span><span>도서관 홈페이지의 <b>참나루 배너</b>를 눌러 다시 들어오기</span></li>
-      <li><span class="rsv-tag">3</span><span>${last}</span></li>
-    </ul>
+    <div style="margin-top:14px;display:grid;gap:8px">
+      <input id="smLgId" placeholder="포털 아이디 (학번)" autocomplete="username" autocapitalize="none"
+        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
+      <input id="smLgPw" type="password" placeholder="포털 비밀번호" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')smPortalLogin()"
+        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
+      <div id="smLgMsg" style="display:none;color:#c0392b;font-size:12px">아이디와 비밀번호를 입력해 주세요.</div>
+    </div>
     <div class="rsv-btns">
       <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
-      <button class="rsv-go" onclick="window.open(SEMYUNG_LOGIN_URL,'_blank')">세명대 로그인 하러 가기</button>
+      <button class="rsv-go" onclick="smPortalLogin()">포털 아이디로 로그인</button>
+    </div>
+    <div style="font-size:11px;color:#8b93a5;margin-top:10px;line-height:1.6">
+      비밀번호는 학교 포털 확인에 한 번 쓰이고 저장하지 않아요. 로그인하면 이 페이지로 돌아오고, ${last}
     </div></div>`;
   sh.classList.add('on');
+}
+// 포털 아이디 직접 로그인 — 폼 전송이라 CORS 없음. sso-login이 세션값을 싣고 이 페이지로 302 복귀
+// (도서관 홈피 참나루 배너 설치 전에도 웹에서 본인 명의 기능을 쓸 수 있는 길 — 앱 8/11 체인과 동일)
+function smPortalLogin(pfx){
+  const idEl=document.getElementById((pfx||'sm')+'LgId'), pwEl=document.getElementById((pfx||'sm')+'LgPw');
+  const id=idEl?idEl.value.trim():'', pw=pwEl?pwEl.value:'';
+  if(!id||!pw){ const m=document.getElementById((pfx||'sm')+'LgMsg'); if(m)m.style.display='block'; return; }
+  const f=document.createElement('form'); f.method='POST';
+  f.action='https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/sso-login';
+  const add=(k,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; f.appendChild(i); };
+  add('school','semyung.ac.kr'); add('client_userid',id); add('client_username','');
+  add('portal_id',id); add('portal_pw',pw);
+  document.body.appendChild(f); f.submit();
 }
 // 예약 직전 확인 시트 — 규칙(24h 수령·3권·노쇼)을 결정 순간에 안내 + 실수 탭 방지
 function smConfirm(reckey){
@@ -5825,13 +5844,23 @@ function bxRenderAccountChip(){
   el.innerHTML = s ? `<span style="font-size:15px;">${s.emoji||'🙂'}</span> ${esc(s.name)}` : `🙂 로그인`;
 }
 function bxOpenPicker(){
-  // 8/9 데모 계정 선택창 → 세명대 로그인 안내로 전환. 정식 입장 경로는
-  // [세명대 로그인 → 도서관 홈페이지 참나루 배너] 하나뿐이다(연계값은 배너로만 온다).
+  // 8/12 포털 아이디 직접 로그인으로 전환 — 배너 설치 전에도 들어올 수 있게 (배너가 생기면 배너로도 가능)
   const list=document.getElementById('bxAccList');
   if(list) list.innerHTML=`
-    <button class="bx-acc-item" onclick="window.open(SEMYUNG_LOGIN_URL,'_blank')">
-      <span class="bx-acc-emoji">🎓</span><span>세명대 로그인 하러 가기</span>
-    </button>`;
+    <div style="display:grid;gap:8px;padding:4px 2px">
+      <input id="bxLgId" placeholder="포털 아이디 (학번)" autocomplete="username" autocapitalize="none"
+        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
+      <input id="bxLgPw" type="password" placeholder="포털 비밀번호" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')smPortalLogin('bx')"
+        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
+      <div id="bxLgMsg" style="display:none;color:#c0392b;font-size:12px">아이디와 비밀번호를 입력해 주세요.</div>
+      <button class="bx-acc-item" style="justify-content:center" onclick="smPortalLogin('bx')">
+        <span class="bx-acc-emoji">🎓</span><span>세명대 포털로 로그인</span>
+      </button>
+      <div style="font-size:11px;color:#8b93a5;line-height:1.6;text-align:center">
+        비밀번호는 학교 포털 확인에 한 번 쓰이고 저장하지 않아요.
+      </div>
+    </div>`;
   document.getElementById('bxAccOverlay')?.classList.add('open');
 }
 function bxClosePicker(){ document.getElementById('bxAccOverlay')?.classList.remove('open'); }
