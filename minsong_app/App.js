@@ -9,14 +9,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFonts, NotoSerifKR_700Bold } from '@expo-google-fonts/noto-serif-kr';
 
 const SB = 'https://gkujptyfrzqrjrvovbnc.supabase.co';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc';
 const H = { apikey: ANON, Authorization: 'Bearer ' + ANON };
 
-// 밀리처럼 흰 바탕(8/11 사장님) — 온기는 인증 카드의 크림·금색 포인트로만 남긴다
+// v0.7: 참나루 웹을 그대로 — 크림 바탕 + 세리프 히어로 (8/12 사장님 "웹을 그대로 옮겨보자")
 const TXT = '#1f2430', SUB = '#4e5968', LIGHT = '#8b93a5', FAINT = '#b3b9c4';
-const BG = '#ffffff', FILL = '#f2f3f5', CREAM = '#f7f0dd', GOLD = '#d4a93b', GOLD_D = '#b8902f';
+const BG = '#faf8f3', FILL = '#f0ede4', CREAM = '#f7f0dd', GOLD = '#d4a93b', GOLD_D = '#b8902f';
 const BTN = '#1f2430';
 
 async function rest(q) {
@@ -88,21 +89,26 @@ function FmtBadges({ book, style }) {
 }
 
 // ── 사서 큐레이션 (관리자 '우리 도서관'에서 저장한 칸 — 웹과 같은 library_sections를 읽는다) ──
-// 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외, 사서가 손으로 담은 칸만
+// 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외. hero 칸은 웹처럼 첫 화면 히어로로 분리.
 const LIVE_STYLES = ['rank', 'ebookrank', 'newlive_p', 'newlive_e'];
+function mapCuratedBooks(books) {
+  return books.map((b, i) => ({
+    ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
+    title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '',
+  }));
+}
 async function loadCurated() {
   const rows = await restT('library_sections',
     'select=area,title,subtitle,style,sort_order,books,visible&order=sort_order');
-  return (rows || [])
-    .filter((s) => (s.area || '우리도서관') === '우리도서관' && s.visible !== false
-      && !LIVE_STYLES.includes(s.style) && Array.isArray(s.books) && s.books.length)
-    .map((s) => ({
-      title: s.title, subtitle: s.subtitle || '',
-      books: s.books.map((b, i) => ({
-        ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
-        title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '',
-      })),
-    }));
+  const mine = (rows || []).filter((s) => (s.area || '우리도서관') === '우리도서관'
+    && s.visible !== false && Array.isArray(s.books) && s.books.length);
+  const h = mine.find((s) => s.style === 'hero');
+  const hero = h ? { title: h.title || '오늘의 사서 추천', note: h.subtitle || '',
+    book: mapCuratedBooks(h.books)[0] } : null;
+  const shelves = mine
+    .filter((s) => s.style !== 'hero' && !LIVE_STYLES.includes(s.style))
+    .map((s) => ({ title: s.title, subtitle: s.subtitle || '', books: mapCuratedBooks(s.books) }));
+  return { hero, shelves };
 }
 
 // 고전 컬렉션 (표지↔제목 검증된 쌍 — 북스타 자체 번역본)
@@ -468,14 +474,14 @@ function Detail({ book, onClose, session, goLogin }) {
   );
 }
 
-// ── 홈 ───────────────────────────────────────────────────────
-function Home({ onPick, goSearch, session, goMy, goCert, charmDone }) {
+// ── 홈 (참나루 웹 첫 화면 그대로 — 세리프 히어로가 주인공) ──
+function Home({ onPick, goSearch, session, goMy, serif }) {
   const [fresh, setFresh] = useState([]);
   const [ebooks, setEbooks] = useState([]);
   const [pickBook, setPickBook] = useState(null);
   const [rank, setRank] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
-  const [curated, setCurated] = useState([]);
+  const [curated, setCurated] = useState({ hero: null, shelves: [] });
   // 큐레이션 책 터치 → 도서관 소장 레코드로 연결해 상세(대출·예약 버튼까지) 열기
   const pickCurated = async (b) => {
     const m = String(b.lib || '').match(/brcd=(\d+)/);
@@ -513,7 +519,7 @@ function Home({ onPick, goSearch, session, goMy, goCert, charmDone }) {
   return (
     <View style={{ flex: 1 }}>
     {/* 상단 흰 안개막 — 스크롤 콘텐츠가 검색창 뒤로 자연스럽게 사라진다 */}
-    <LinearGradient colors={['#ffffff', '#ffffff', 'rgba(255,255,255,0)']} locations={[0, 0.62, 1]}
+    <LinearGradient colors={['#faf8f3', '#faf8f3', 'rgba(250,248,243,0)']} locations={[0, 0.62, 1]}
       pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 96, zIndex: 9 }} />
     {/* 떠 있는 검색 — 스크롤해도 상단 고정 */}
     <View style={s.floatWrap} pointerEvents="box-none">
@@ -523,10 +529,38 @@ function Home({ onPick, goSearch, session, goMy, goCert, charmDone }) {
       </TouchableOpacity>
     </View>
     <ScrollView contentContainerStyle={{ paddingBottom: 34, paddingTop: 78 }}>
-      {/* 졸업 독서인증 — 미션 카드 */}
-      <View style={{ paddingHorizontal: 20 }}>
-        <CertCard n={charmDone} onPress={goCert} />
+      {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (사서가 hero 칸에 담은 책, 없으면 오늘의 추천) */}
+      {(() => {
+        const hero = curated.hero
+          || (pickBook && { title: '오늘의 사서 추천', note: '', book: pickBook });
+        if (!hero) return null;
+        const open = () => hero.book.curated ? pickCurated(hero.book) : onPick(hero.book);
+        return (
+          <TouchableOpacity onPress={open} activeOpacity={0.85}
+            style={{ flexDirection: 'row', paddingHorizontal: 20, paddingTop: 14, alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: 14 }}>
+              <Text style={{ color: GOLD_D, fontSize: 11.5, fontWeight: '800', letterSpacing: 3 }}>
+                ✦ {hero.title}
+              </Text>
+              <Text style={serif
+                ? { fontFamily: serif, fontSize: 27, color: TXT, lineHeight: 38, marginTop: 12 }
+                : { fontSize: 26, fontWeight: '800', color: TXT, lineHeight: 36, marginTop: 12 }}>
+                {cleanTitle(hero.book.title)}
+              </Text>
+              <Text style={{ color: SUB, fontSize: 13, marginTop: 7 }}>{cleanAuthor(hero.book.author)}</Text>
+              <Text style={{ color: GOLD_D, fontSize: 13, marginTop: 11, fontStyle: 'italic', lineHeight: 19 }}>
+                “{hero.note || '이 달의 추천 도서예요.'}” — 사서
+              </Text>
+              <Text style={{ color: TXT, fontSize: 13.5, fontWeight: '800', marginTop: 13, textDecorationLine: 'underline' }}>
+                자세히 보기 →
+              </Text>
+            </View>
+            <Cover book={hero.book} w={92} h={132} r={6} />
+          </TouchableOpacity>
+        );
+      })()}
 
+      <View style={{ paddingHorizontal: 20 }}>
         {/* 내 도서관 — 한 줄 (박스 없음). 로그인하면 실시간 요약 */}
         <TouchableOpacity style={s.rowLink} onPress={goMy}>
           <View style={{ flex: 1 }}>
@@ -543,34 +577,15 @@ function Home({ onPick, goSearch, session, goMy, goCert, charmDone }) {
         </TouchableOpacity>
       </View>
 
-      {/* 오늘의 추천 — 플랫 */}
-      {pickBook && (
-        <View style={{ marginTop: 30 }}>
-          <SecHead title="오늘의 추천" more="전체" />
-          <TouchableOpacity onPress={() => onPick(pickBook)}
-            style={{ flexDirection: 'row', gap: 16, alignItems: 'center', paddingHorizontal: 20 }}>
-            <Cover book={pickBook} w={84} h={121} />
-            <View style={{ flex: 1 }}>
-              <Text style={s.pickQ}>{cleanTitle(pickBook.title)}</Text>
-              <Text numberOfLines={3} style={s.pickW}>{pickBook.description || cleanAuthor(pickBook.author)}</Text>
-              <View style={{ flexDirection: 'row', gap: 5, marginTop: 9, alignItems: 'center' }}>
-                <Text style={[s.chip, { backgroundColor: 'rgba(46,184,114,.12)', color: '#1d8f56' }]}>바로 읽기</Text>
-                <FmtBadges book={pickBook} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 */}
-      {curated.map((sec) => (
+      {curated.shelves.map((sec) => (
         <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books} onPick={pickCurated} />
       ))}
       <RankList rows={rank} onPick={onPick} />
       <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
       <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
       <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />
-      <Text style={s.foot}>개발 미리보기 v0.6 · 실데이터(세명대 학술정보원 공식 API)</Text>
+      <Text style={s.foot}>개발 미리보기 v0.7 · 실데이터(세명대 학술정보원 공식 API)</Text>
     </ScrollView>
     </View>
   );
@@ -974,14 +989,16 @@ function Main() {
     if (state === 'pick' && !had) logEv('charm_pick', { book: cleanTitle(title || ''), ...tag });
     if (state === 'done' && had !== 'done') logEv('charm_done', { book: cleanTitle(title || ''), ...tag });
   };
-  const charmDone = Object.values(charm).filter((v) => v === 'done').length;
+  // 참나루 세리프 (히어로 제목) — 로드 전엔 굵은 고딕으로 그리다가 로드되면 교체
+  const [fontsLoaded] = useFonts({ NotoSerifKR_700Bold });
+  const serif = fontsLoaded ? 'NotoSerifKR_700Bold' : null;
   const insets = useSafeAreaInsets();   // 기기별 시스템 바 높이 (상태바·하단 내비게이션)
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <View style={{ flex: 1, paddingTop: insets.top + 4 }}>
         {tab === 'home' && <Home onPick={setPick} goSearch={() => setTab('search')} session={session}
-          goMy={() => setTab('my')} goCert={() => setTab('cert')} charmDone={charmDone} />}
+          goMy={() => setTab('my')} serif={serif} />}
         {tab === 'search' && <Search onPick={setPick} />}
         {tab === 'cert' && <Cert charm={charm} setCharmState={setCharmState} onPick={setPick} />}
         {tab === 'my' && <MyShelf session={session} setSession={setSession} />}
