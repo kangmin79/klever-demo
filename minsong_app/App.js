@@ -88,27 +88,37 @@ function FmtBadges({ book, style }) {
   );
 }
 
-// ── 사서 큐레이션 (관리자 '우리 도서관'에서 저장한 칸 — 웹과 같은 library_sections를 읽는다) ──
-// 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외. hero 칸은 웹처럼 첫 화면 히어로로 분리.
+// ── 사서 큐레이션 (관리자에서 저장한 칸 — 웹과 같은 library_sections를 영역째 읽는다) ──
+// 라이브 칸(랭킹·신착)은 앱이 자체로 그리므로 제외. hero 칸은 웹처럼 각 영역 첫 화면 히어로.
 const LIVE_STYLES = ['rank', 'ebookrank', 'newlive_p', 'newlive_e'];
-function mapCuratedBooks(books) {
-  return books.map((b, i) => ({
-    ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
-    title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '',
-  }));
+function mapSecBook(b, i) {
+  const id = b.id || '';
+  if (/^(gb|kr)-/.test(id)) {          // 북스타 자체 고전 — 도서관 소장과 무관하게 바로 읽기
+    return { ctrl: id, title: b.title || '', author: b.author || '',
+      cover_url: `https://bookstar.co.kr/covers/${id}.webp`, classic: true };
+  }
+  return { ctrl: 'cur' + i + (b.isbn || ''), curated: true, lib: b.lib || '',
+    title: b.title || b.t || '', author: b.author || b.a || '', cover_url: b.cover || '' };
 }
-async function loadCurated() {
+async function loadAreas() {
   const rows = await restT('library_sections',
     'select=area,title,subtitle,style,sort_order,books,visible&order=sort_order');
-  const mine = (rows || []).filter((s) => (s.area || '우리도서관') === '우리도서관'
-    && s.visible !== false && Array.isArray(s.books) && s.books.length);
-  const h = mine.find((s) => s.style === 'hero');
-  const hero = h ? { title: h.title || '오늘의 사서 추천', note: h.subtitle || '',
-    book: mapCuratedBooks(h.books)[0] } : null;
-  const shelves = mine
-    .filter((s) => s.style !== 'hero' && !LIVE_STYLES.includes(s.style))
-    .map((s) => ({ title: s.title, subtitle: s.subtitle || '', books: mapCuratedBooks(s.books) }));
-  return { hero, shelves };
+  const ok = (rows || []).filter((s) => s.visible !== false && Array.isArray(s.books) && s.books.length);
+  const pick = (areas) => {
+    const mine = ok.filter((s) => areas.includes(s.area || '우리도서관'));
+    const h = mine.find((s) => s.style === 'hero');
+    return {
+      hero: h ? { title: h.title || '오늘의 사서 추천', note: h.subtitle || '',
+        book: h.books.map(mapSecBook)[0] } : null,
+      shelves: mine.filter((s) => s.style !== 'hero' && !LIVE_STYLES.includes(s.style))
+        .map((s) => ({ title: s.title, subtitle: s.subtitle || '', books: s.books.map(mapSecBook) })),
+    };
+  };
+  return {
+    lib: pick(['우리도서관']),
+    cls: pick(['고전 컬렉션 해외', '고전 컬렉션 국내', '고전 컬렉션']),
+    intl: pick(['International']),
+  };
 }
 
 // 고전 컬렉션 (표지↔제목 검증된 쌍 — 북스타 자체 번역본)
@@ -474,14 +484,85 @@ function Detail({ book, onClose, session, goLogin }) {
   );
 }
 
-// ── 홈 (참나루 웹 첫 화면 그대로 — 세리프 히어로가 주인공) ──
+// ── 독서 챌린지 (웹과 같은 library_programs — 사서가 발행하면 나타난다) ──
+function ChalList() {
+  const [rows, setRows] = useState(null);
+  useEffect(() => { restT('library_programs', 'select=*&order=created_at.desc&limit=30').then(setRows); }, []);
+  if (rows === null) return <ActivityIndicator color={LIGHT} style={{ marginTop: 40 }} />;
+  if (!rows.length) {
+    return (
+      <Text style={{ color: FAINT, textAlign: 'center', marginTop: 46, lineHeight: 22, fontSize: 13 }}>
+        진행 중인 챌린지가 아직 없어요.{'\n'}사서가 챌린지를 발행하면 여기에 나타납니다.
+      </Text>
+    );
+  }
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 18 }}>
+      {rows.map((c, i) => (
+        <View key={i} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <Text style={{ color: TXT, fontSize: 15, fontWeight: '800' }}>{c.title || '챌린지'}</Text>
+          {!!c.period && <Text style={{ color: LIGHT, fontSize: 12, marginTop: 4 }}>{c.period}</Text>}
+          {!!c.intro && <Text style={{ color: SUB, fontSize: 13, lineHeight: 19, marginTop: 8 }}>{c.intro}</Text>}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ── 커뮤니티 (웹과 같은 community_posts — 공지·행사·자유 게시판 읽기) ──
+const COMM_KINDS = { notice: '공지', event: '도서관 행사', free: '자유 게시판' };
+function CommList() {
+  const [rows, setRows] = useState(null);
+  const [openIdx, setOpenIdx] = useState(null);
+  useEffect(() => {
+    restT('community_posts', 'select=kind,tag,title,meta1,meta2,body&order=sort_order,created_at&limit=60').then(setRows);
+  }, []);
+  if (rows === null) return <ActivityIndicator color={LIGHT} style={{ marginTop: 40 }} />;
+  if (!rows.length) return <Text style={{ color: FAINT, textAlign: 'center', marginTop: 46 }}>아직 글이 없어요</Text>;
+  const kinds = [...new Set(rows.map((r) => r.kind))];
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 6 }}>
+      {kinds.map((k) => (
+        <View key={k} style={{ marginTop: 22 }}>
+          <Text style={[s.secT, { fontSize: 16 }]}>{COMM_KINDS[k] || k}</Text>
+          {rows.map((r, i) => r.kind === k && (
+            <TouchableOpacity key={i} onPress={() => setOpenIdx(openIdx === i ? null : i)}
+              style={{ paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#eee9dd' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+                {!!r.tag && <Text style={[s.chip, { backgroundColor: CREAM, color: GOLD_D }]}>{r.tag}</Text>}
+                <Text numberOfLines={openIdx === i ? 3 : 1}
+                  style={{ color: TXT, fontSize: 13.5, fontWeight: '700', flex: 1 }}>{r.title}</Text>
+              </View>
+              {!!(r.meta1 || r.meta2) && (
+                <Text style={{ color: LIGHT, fontSize: 11.5, marginTop: 4 }}>
+                  {[r.meta1, r.meta2].filter(Boolean).join(' · ')}
+                </Text>
+              )}
+              {openIdx === i && !!r.body && (
+                <Text style={{ color: SUB, fontSize: 13, lineHeight: 19, marginTop: 8 }}>
+                  {String(r.body).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+// ── 홈 (참나루 웹 첫 화면 그대로 — 상단 카테고리 + 세리프 히어로) ──
+const HOME_CATS = [['lib', '우리 도서관'], ['chal', '독서 챌린지'], ['cls', '세계고전'],
+  ['intl', 'International'], ['comm', '커뮤니티']];
+const EMPTY_AREA = { hero: null, shelves: [] };
 function Home({ onPick, goSearch, session, goMy, serif }) {
   const [fresh, setFresh] = useState([]);
   const [ebooks, setEbooks] = useState([]);
   const [pickBook, setPickBook] = useState(null);
   const [rank, setRank] = useState([]);
   const [myInfo, setMyInfo] = useState(null);
-  const [curated, setCurated] = useState({ hero: null, shelves: [] });
+  const [cat, setCat] = useState('lib');
+  const [areas, setAreas] = useState({ lib: EMPTY_AREA, cls: EMPTY_AREA, intl: EMPTY_AREA });
   // 큐레이션 책 터치 → 도서관 소장 레코드로 연결해 상세(대출·예약 버튼까지) 열기
   const pickCurated = async (b) => {
     const m = String(b.lib || '').match(/brcd=(\d+)/);
@@ -508,7 +589,7 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
         setPickBook(p);
         if (p) bookFormats(p.title).then((fmt) => setPickBook({ ...p, fmt }));
       });
-    loadCurated().then(setCurated);
+    loadAreas().then(setAreas);
     restT('semyung_loan_rank', 'select=rank,title,author,loan_count,cover,prev_rank,brcd&order=rank&limit=10')
       .then((r) => {
         const rows = r.map((b) => ({ ...b, cover_url: b.cover, ctrl: String(b.brcd || '').slice(-12), kind: 'paper' }));
@@ -529,10 +610,21 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
       </TouchableOpacity>
     </View>
     <ScrollView contentContainerStyle={{ paddingBottom: 34, paddingTop: 78 }}>
-      {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (사서가 hero 칸에 담은 책, 없으면 오늘의 추천) */}
-      {(() => {
-        const hero = curated.hero
-          || (pickBook && { title: '오늘의 사서 추천', note: '', book: pickBook });
+      {/* 카테고리 — 참나루 웹 상단 탭 그대로 */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 7, paddingTop: 4, paddingBottom: 4 }}>
+        {HOME_CATS.map(([k, label]) => (
+          <TouchableOpacity key={k} onPress={() => setCat(k)}
+            style={[s.fchip, { backgroundColor: cat === k ? BTN : '#efece2' }]}>
+            <Text style={[s.fchipT, cat === k && { color: '#fff' }]}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* 오늘의 사서 추천 — 참나루 웹 히어로 그대로 (영역별 hero 칸, 우리도서관은 오늘의 추천 폴백) */}
+      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && (() => {
+        const hero = areas[cat].hero
+          || (cat === 'lib' && pickBook ? { title: '오늘의 사서 추천', note: '', book: pickBook } : null);
         if (!hero) return null;
         const open = () => hero.book.curated ? pickCurated(hero.book) : onPick(hero.book);
         return (
@@ -560,7 +652,7 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
         );
       })()}
 
-      <View style={{ paddingHorizontal: 20 }}>
+      {cat === 'lib' && <View style={{ paddingHorizontal: 20 }}>
         {/* 내 도서관 — 한 줄 (박스 없음). 로그인하면 실시간 요약 */}
         <TouchableOpacity style={s.rowLink} onPress={goMy}>
           <View style={{ flex: 1 }}>
@@ -575,17 +667,27 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
           </View>
           <Ionicons name="chevron-forward" size={18} color={FAINT} />
         </TouchableOpacity>
-      </View>
+      </View>}
 
-      {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 */}
-      {curated.shelves.map((sec) => (
-        <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books} onPick={pickCurated} />
+      {/* 사서 큐레이션 — 관리자에서 저장하면 웹·앱 동시 반영 (영역별, 고전 책은 바로 읽기) */}
+      {(cat === 'lib' || cat === 'cls' || cat === 'intl') && areas[cat].shelves.map((sec) => (
+        <Rail key={sec.title} title={sec.title} more="사서 추천" books={sec.books}
+          onPick={(b) => b.curated ? pickCurated(b) : onPick(b)} />
       ))}
-      <RankList rows={rank} onPick={onPick} />
-      <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
-      <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
-      <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />
-      <Text style={s.foot}>개발 미리보기 v0.7 · 실데이터(세명대 학술정보원 공식 API)</Text>
+      {cat === 'lib' && (
+        <>
+          <RankList rows={rank} onPick={onPick} />
+          <Rail title="전자책 · 지금 바로" more="전체" books={ebooks.slice(0, 12)} onPick={onPick} />
+          <Rail title="새로 들어온 책" more="전체" books={fresh} onPick={onPick} />
+        </>
+      )}
+      {cat === 'cls' && <Rail title="고전 컬렉션 · 바로 읽기" more="300+" books={CLASSICS} onPick={onPick} />}
+      {cat === 'intl' && !areas.intl.hero && !areas.intl.shelves.length && (
+        <Text style={{ color: FAINT, textAlign: 'center', marginTop: 46 }}>International shelf is being prepared.</Text>
+      )}
+      {cat === 'chal' && <ChalList />}
+      {cat === 'comm' && <CommList />}
+      <Text style={s.foot}>개발 미리보기 v0.8 · 실데이터(세명대 학술정보원 공식 API)</Text>
     </ScrollView>
     </View>
   );
