@@ -6178,21 +6178,47 @@ function libDetail(isbn){
   const isSmKey = /^\d+$/.test(reckey) || /^CATTOT/.test(reckey);
   if(isSmKey) loadDesc(reckey, /^CATTOT/.test(reckey), b);
   // 전자책 실시간 재고 — 태그가 실제로 그려졌는지로 판단(책 객체의 lib 유무에 의존하지 않는다)
-  // 용어 통일(8/12 피드백): 배지는 '지금 대출 가능'/'대출 중' 둘만. 확인할 길 없는 책은 배지 생략('소장' 폐기)
+  // 용어 통일(8/12 피드백): 배지는 '지금 대출 가능'/'대출 중' 둘만. 확인 못 하면 배지 생략('소장' 폐기)
+  // 키가 바코드가 아니라 ISBN인 책(제철 행복류)은 소장목록에서 진짜 바코드를 찾아 재시도
   const _ebTag=document.getElementById('ebStockTag');
-  if(/^\d+$/.test(reckey) && _ebTag) loadEbookStock(reckey);
-  else if(_ebTag) _ebTag.remove();
+  if(_ebTag){
+    if(/^\d+$/.test(reckey)) loadEbookStock(reckey, b.t||'');
+    else tulipEbookBarcode(b.t||'').then(bc=>{
+      if(bc) loadEbookStock(bc, '', true);
+      else if(_ebTag.isConnected) _ebTag.remove();
+    });
+  }
 }
 /* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
    못 읽으면 배지를 지운다 — 틀린 숫자를 보여주느니 말을 안 하는 편이 낫다(8/12 용어 통일). */
-async function loadEbookStock(brcd){
+// 소장목록(semyung_tulip)에서 같은 제목의 전자책 바코드를 찾는다 — 키가 ISBN으로 들어온 책의 구명줄
+async function tulipEbookBarcode(title){
+  try{
+    const t=cleanT(title||'').slice(0,12); if(!t) return '';
+    const r=await fetch(SB_REST+'/semyung_tulip?select=title,barcode&kind=eq.ebook&limit=5&title=ilike.'+encodeURIComponent(t+'*'),
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return '';
+    const rows=await r.json();
+    const key=cleanT(title||'').replace(/\s+/g,'');
+    const hit=(Array.isArray(rows)?rows:[]).find(x=>cleanT(x.title||'').replace(/\s+/g,'').indexOf(key)===0 && x.barcode);
+    return hit?String(hit.barcode):'';
+  }catch(e){ return ''; }
+}
+async function loadEbookStock(brcd, bookTitle, _retried){
   const tag=document.getElementById('ebStockTag'), note=document.getElementById('ebStockNote');
   if(!tag) return;
   try{
     const r=await fetch(SMEBK_FN+'?action=stock&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     const d=await r.json();
     if(!tag.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
-    if(!d||!d.ok){ tag.remove(); return; }   // 확인 실패 — 애매한 '소장' 대신 배지 생략(용어 통일)
+    if(!d||!d.ok){
+      // 이 키가 진짜 바코드가 아니었을 수 있다 — 소장목록에서 바코드를 찾아 딱 한 번 재시도
+      if(bookTitle && !_retried){
+        const bc=await tulipEbookBarcode(bookTitle);
+        if(bc && bc!==String(brcd) && tag.isConnected) return loadEbookStock(bc, '', true);
+      }
+      tag.remove(); return;   // 그래도 모르면 배지 생략(용어 통일 — 틀린 말보다 침묵)
+    }
     const row=tag.closest('.lcd-way');
     if(d.available){
       tag.textContent='지금 대출 가능';
