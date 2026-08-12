@@ -6154,7 +6154,7 @@ function libDetail(isbn){
         + ((b._sm && en && (en.crema || (en.paper && !isPaperHold))) ? `<div class="lcd-ways">
         <div class="lcd-ways-h">이렇게도 읽을 수 있어요</div>
         ${en.crema ? `<a class="lcd-way t-sub" href="${esc(cremaHref(en.cremaUrl||'', b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>` : ''}
-        ${(en.paper && !isPaperHold) ? paperWay(en.paperStatus||'소장', en.paperUrl||opacUrl) : ''}
+        ${(en.paper && !isPaperHold) ? paperWay(en.paperStatus||'', en.paperUrl||opacUrl) : ''}
       </div>` : '');
       })()}
     </div>
