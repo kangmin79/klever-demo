@@ -615,15 +615,21 @@ function Home({ onPick, goSearch, session, goMy, serif }) {
       </TouchableOpacity>
     </View>
     <ScrollView contentContainerStyle={{ paddingBottom: 34, paddingTop: 78 }}>
-      {/* 카테고리 — 참나루 웹 상단 탭 그대로 */}
+      {/* 카테고리 — 밀리식 텍스트 탭 (활성=진한 글자+금색 밑줄, 비활성=회색) */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, gap: 7, paddingTop: 4, paddingBottom: 4 }}>
-        {HOME_CATS.map(([k, label]) => (
-          <TouchableOpacity key={k} onPress={() => setCat(k)}
-            style={[s.fchip, { backgroundColor: cat === k ? BTN : '#efece2' }]}>
-            <Text style={[s.fchipT, cat === k && { color: '#fff' }]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 2 }}>
+        {HOME_CATS.map(([k, label]) => {
+          const on = cat === k;
+          return (
+            <TouchableOpacity key={k} onPress={() => setCat(k)}
+              style={{ marginRight: 22, alignItems: 'center', paddingVertical: 4 }}>
+              <Text style={{ fontSize: 15.5, letterSpacing: -0.2,
+                fontWeight: on ? '800' : '600', color: on ? TXT : LIGHT }}>{label}</Text>
+              <View style={{ height: 2.5, borderRadius: 2, alignSelf: 'stretch', marginTop: 6,
+                backgroundColor: on ? GOLD_D : 'transparent' }} />
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* 세계고전 내부 서브탭 — 웹 collection 페이지의 [세계고전|한국 고전] 그대로 */}
