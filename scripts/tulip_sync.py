@@ -436,9 +436,11 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
     def fetch_one(r):
         """조회만 담당(스레드에서 실행). DB 쓰기는 메인 스레드가 모아서 한다."""
         cov = dsc = src = ""
+        ntried = False   # 정보나루가 이 행을 실제로 봤는가 — 아니면 미보유('') 도장을 찍지 않는다
         if not limit_hit[0] and _d4l_calls < d4l_budget:
             try:
                 cov, dsc = d4l_book(r["isbn"], expect_title=r.get("title"))
+                ntried = True
                 if cov or dsc: src = "n"
             except D4LLimit as e:
                 limit_hit[0] = e
@@ -447,14 +449,16 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
             # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
             cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",), expect_title=r.get("title"))
             if cov or dsc: src = "a"
-        return r, cov, dsc, src
+        return r, cov, dsc, src, ntried
 
     def write_batch(rows):
         """UPDATE 문 N개 대신 values 조인 1문으로 쓴다.
         낱개 UPDATE 50문이 배치당 수 초씩 먹어 전체 시간의 3분의 1을 차지했다(2026-08-10).
         실패하면 반으로 쪼개 재시도 — 깨진 행 하나 때문에 200건이 통째로 죽지 않게(2026-08-11 HTTP 400 사고)."""
-        p1 = [(r["ctrl"], dsc or "") for r, cov, dsc, _ in rows if r["pri"] == 1]
-        p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _ in rows if r["pri"] != 1]
+        # 빈손('')을 쓰는 건 "미보유 확정" 도장 — 정보나루가 실제로 본 행만 찍는다.
+        # 한도 도달·강제종료 후 재실행에서 조회도 못 한 책이 미보유로 오염되는 것 방지(2026-08-13)
+        p1 = [(r["ctrl"], dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] == 1 and (dsc or nt)]
+        p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] != 1 and (cov or dsc or nt)]
         def run(stmt, n):
             try: sql(stmt, timeout=180); return True
             except Exception as e: print(f"  쓰기 실패({n}건): {str(e)[:100]}"); return False
@@ -490,7 +494,7 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
         chunk = res[i:i+BATCH]
         with cf.ThreadPoolExecutor(max_workers=WORKERS) as ex:
             out = list(ex.map(fetch_one, chunk))
-        for r, cov, dsc, src in out:
+        for r, cov, dsc, src, _nt in out:
             if src == "n": nsrc += 1
             elif src == "a": asrc += 1
             if r["pri"] == 1:

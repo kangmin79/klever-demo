@@ -35,7 +35,19 @@ rem   pri0 no cover (53k)  -> ~55%% cover hit; cover500 upscale for Aladin CDN u
 rem   pri1 cover but no blurb (162k) -> newest-first, blurb ~96%%
 rem  28000 + 4200 => whole backfill in about 8 days (was 52 with Aladin only).
 rem  Manual/verify: --desc-only (pri1 only) / --d4l-budget 0 (Aladin only)
+rem resume loop: if the long backfill stage dies (kill/reboot/crash), wait 5 min and continue
+rem  safe to rerun: info-naru daily quota is server-tracked, and since 2026-08-13 the script
+rem  only stamps 'not found' on rows info-naru actually saw (no pool poisoning on rerun)
+set /a _bftry=0
+:backfill
 python -u scripts\tulip_sync.py --covers-paper-aladin --d4l-budget 28000 --covers-budget 4200 >> logs\tulip_daily.log 2>&1
+if %errorlevel%==0 goto backfillok
+set /a _bftry+=1
+echo [%date% %time%] backfill died - resume attempt %_bftry% of 3 >> logs\tulip_daily.log
+if %_bftry% geq 3 goto backfillok
+timeout /t 300 /nobreak >nul
+goto backfill
+:backfillok
 rem embeddings for new books only (embedding null = a dozen per day; after covers so Aladin desc included)
 python -u scripts\tulip_sync.py --embed-ebook >> logs\tulip_daily.log 2>&1
 python -u scripts\tulip_sync.py --embed-paper >> logs\tulip_daily.log 2>&1
