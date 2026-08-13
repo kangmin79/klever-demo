@@ -5627,10 +5627,10 @@ function mlRank(t,s,books,live){
   const sub = isLoan?'우리 학교에서 가장 많이 빌린 책 · 최근 6개월' : (live?'세명대 전자도서관에서 많이 빌린 책':s);
   const chips=(live||isLoan)?'':`<div class="ml-chips">${ML_CATS.map((c,i)=>`<span class="ml-chip${i===0?' on':''}" onclick="mlChip(this)">${esc(c)}</span>`).join('')}</div>`;
   const bar=isLoan
-    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 · 종이책 대출</span><span class="ml-rkbar-r">최근 6개월</span></div>`
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 · 종이책 대출</span></div>`
     : live
-    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 전자도서관</span><span class="ml-rkbar-r">${today} 기준</span></div>`
-    : `<div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span><span class="ml-rkbar-r">${today} 기준</span></div>`;
+    ? `<div class="ml-rkbar"><span class="ml-rkbar-l">세명대학교 학술정보원 전자도서관</span></div>`
+    : `<div class="ml-rkbar"><span class="ml-rkbar-l">일간 ▾</span></div>`;   /* 8/14 사장님 지시: 우측 '최근 6개월'·'날짜 기준' 캡션 제거 */
   return `<div>${mlHead(t,sub)}
     ${chips}
     ${bar}
@@ -7393,7 +7393,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
