@@ -22,6 +22,13 @@ goto netwait
 
 echo ===== [%date% %time%] tulip daily start ===== >> logs\tulip_daily.log
 python -u scripts\tulip_sync.py --daily >> logs\tulip_daily.log 2>&1
+rem New arrivals first: they are the very first thing a student sees in the app, but they
+rem  used to sit in the same random md5(ctrl) pool as 200k+ books and share one budget, so
+rem  on a day the big backfill ate the quota (2026-08-13) they got nothing at all.
+rem  A dozen books/day = ~30 calls, so run it FIRST while both quotas are still full.
+rem  It never stamps '' (see fresh_arrivals docstring) - a book missing from Aladin today
+rem  must stay retryable tomorrow.
+python -u scripts\tulip_sync.py --fresh >> logs\tulip_daily.log 2>&1
 python -u scripts\tulip_sync.py --enrich-ebook >> logs\tulip_daily.log 2>&1
 rem ebook covers (YES24 leftover, pool nearly empty - 0 targets on 2026-08-09); of daily 5000 Aladin limit
 python -u scripts\tulip_sync.py --covers-yes24 --covers-budget 500 >> logs\tulip_daily.log 2>&1

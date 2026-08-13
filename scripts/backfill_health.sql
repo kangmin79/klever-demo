@@ -18,7 +18,16 @@ create or replace function public._backfill_health_check() returns void
 language plpgsql as $function$
 declare
   t bigint; e bigint; u bigint; prev bigint; d bigint; v text; n text;
+  fr bigint; frc bigint; mtnull bigint;
 begin
+  -- 신착(최근 14일)이 표지를 얼마나 갖췄나. 학생이 앱 열면 제일 먼저 보는 자리라 따로 잰다.
+  select count(*), count(*) filter (where coalesce(cover_url,'') <> '')
+    into fr, frc
+    from semyung_tulip
+   where kind = 'paper' and reg_date >= to_char(current_date - interval '14 days','YYYYMMDD');
+  -- mat_type이 NULL인 종이책 = 파이프라인에서 조용히 사라지는 행(8/12 신착 10권 사고).
+  -- 0이 정상. 늘어나면 신착 삽입이 자료유형을 못 얻고 있다는 뜻이다.
+  select count(*) into mtnull from semyung_tulip where kind='paper' and mat_type is null;
   select count(*) filter (where description is not null and description <> ''),
          count(*) filter (where description = ''),
          count(*) filter (where description is null)
@@ -42,6 +51,15 @@ begin
   -- 미보유 도장이 하루에 5,000 넘게 늘면 8/13 한도 오인 사고의 재발 신호다.
   if d is not null and e > 25000 then
     v := 'RED'; n := n || ' / 미보유 도장 과다(' || e || ') — 한도 오인 재발 의심';
+  end if;
+
+  n := n || ' | 신착14일 ' || frc || '/' || fr || ' 표지';
+  -- 신착이 있는데 표지가 하나도 없으면 --fresh 단계가 죽었거나 한도에 막힌 것이다
+  if fr >= 3 and frc = 0 then
+    v := 'RED'; n := n || ' ← 신착 표지 0. --fresh 단계·API 한도 확인';
+  end if;
+  if mtnull > 0 then
+    v := 'RED'; n := n || ' / mat_type NULL ' || mtnull || '건 — 파이프라인에서 누락되는 행';
   end if;
 
   insert into semyung_backfill_health(day, desc_total, delta, no_desc, untouched, verdict, note)

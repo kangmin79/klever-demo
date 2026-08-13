@@ -228,6 +228,11 @@ def surname(author):
 class D4LLimit(Exception):
     """정보나루 일 한도(30,000/IP등록 시) 도달 — 루프를 깨끗이 중단시키기 위한 신호"""
 
+class AladinLimit(Exception):
+    """알라딘 일 한도(5,000) 도달 — errorCode=10.
+    ⚠️이걸 빈손으로 흘리면 호출부가 '미보유 확정' 도장을 찍어 책을 영구히 버린다.
+    정보나루 outOfMaxlimit 사고(19,117권)와 정확히 같은 구조라 예외로 올린다."""
+
 _d4l_calls = 0
 _call_lock = threading.Lock()      # 조회를 스레드 8개로 돌리므로 호출 카운터를 잠근다
 def _d4l_cover(u):
@@ -300,9 +305,16 @@ def aladin(endpoint, **params):
     qs = urllib.parse.urlencode(params, encoding="utf-8")
     try:
         d = json.loads(http(f"https://www.aladin.co.kr/ttb/api/{endpoint}.aspx?{qs}", timeout=25))
-        return d.get("item") or []
     except Exception:
         return []
+    # 🔴 한도 초과를 "그 책 없음"으로 오인하면 안 된다 — 정보나루 outOfMaxlimit 사고와 같은 구조.
+    #   실측(2026-08-13): {"errorCode":10, "errorMessage":"쿼리 제한횟수 일일 5천회를 초과하였습니다"}
+    #   이걸 빈손으로 흘리면 호출부가 "미보유 확정" 도장을 찍어 그 책을 영구히 버린다.
+    if str(d.get("errorCode") or "") == "10":
+        raise AladinLimit(d.get("errorMessage") or "알라딘 일일 한도 초과")
+    if d.get("errorCode"):
+        return []          # 그 밖의 오류(없는 ISBN 등) = 정상적인 빈손
+    return d.get("item") or []
 
 def _cover(it):
     c = (it.get("cover", "") or "").replace("\\/", "/").replace("/coversum/", "/cover200/")
@@ -381,10 +393,14 @@ def covers_yes24(limit=None, budget=4500):
             print(f"  예산 소진 — 남은 {len(res)-hit_isbn-hit_search-miss:,}건은 내일 재실행")
             break
         cov = dsc = ""
-        if r["isbn"]:
-            cov, dsc = aladin_cover_isbn(r["isbn"], order=("eBook", "Book"))
-        if not cov:
-            cov, dsc = aladin_cover_search(r["title"], r["author"])
+        try:
+            if r["isbn"]:
+                cov, dsc = aladin_cover_isbn(r["isbn"], order=("eBook", "Book"))
+            if not cov:
+                cov, dsc = aladin_cover_search(r["title"], r["author"])
+        except AladinLimit as e:
+            # 한도는 '이 책이 없다'가 아니다. 남은 건 손대지 말고 내일로 넘긴다
+            print(f"  알라딘 한도 도달({e}) — 남은 건은 내일"); break
         if cov:
             extra = f", description={esc(dsc)}" if dsc else ""
             buf.append(f"update semyung_tulip set cover_url={esc(cov)}{extra}, updated_at=now() where ctrl={esc(r['ctrl'])}")
@@ -437,6 +453,7 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
           f"/ 정보나루 예산 {d4l_budget:,} · 알라딘 예산 {budget:,}")
     hit = miss = dhit = dmiss = 0; nsrc = asrc = 0
     limit_hit = [False]                       # 스레드에서 정보나루 한도를 만나면 세운다
+    alimit = [None]                           # 알라딘 한도(errorCode=10)도 같이 — 빈손과 구분해야 도장 사고가 안 난다
 
     def fetch_one(r):
         """조회만 담당(스레드에서 실행). DB 쓰기는 메인 스레드가 모아서 한다."""
@@ -449,11 +466,14 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
                 if cov or dsc: src = "n"
             except D4LLimit as e:
                 limit_hit[0] = e
-        if not (cov or dsc) and _aladin_calls < budget:
+        if not (cov or dsc) and not alimit[0] and _aladin_calls < budget:
             # Book 타깃 1회만. eBook 재조회는 실측 0/111 성공 = 순수 낭비인데 예산의 절반을 먹었다
             # (미보유 ISBN이 대부분이라 '실패=2호출'이 되어 처리량이 반토막났음. 2026-08-09)
-            cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",), expect_title=r.get("title"))
-            if cov or dsc: src = "a"
+            try:
+                cov, dsc = aladin_cover_isbn(r["isbn"], order=("Book",), expect_title=r.get("title"))
+                if cov or dsc: src = "a"
+            except AladinLimit as e:
+                alimit[0] = e      # 한도는 '없음'이 아니다 — 아래 도장 판정에서 제외된다
         return r, cov, dsc, src, ntried
 
     def write_batch(rows):
@@ -512,11 +532,81 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
         if done_n % 2000 < BATCH:
             print(f"  {done_n:,}/{len(res):,} (표지 {hit}/{hit+miss} · 줄거리 {dhit}/{dhit+dmiss})")
     print(f"[covers-paper-aladin] 완료 — 표지 {hit:,}(실패 {miss:,}) / 줄거리 {dhit:,}(없음 {dmiss:,}) "
-          f"| 출처 정보나루 {nsrc:,} · 알라딘 {asrc:,} | 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}")
+          f"| 출처 정보나루 {nsrc:,} · 알라딘 {asrc:,} | 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}"
+          + (f" | ⚠️알라딘 한도: {alimit[0]}" if alimit[0] else ""))
+
+def fresh_arrivals(days=30, d4l_budget=300, budget=200, limit=500):
+    """신착 전용 표지·줄거리 조달 — 대량 백필과 **분리해서 매일 제일 먼저** 돌린다.
+
+    왜 따로 두나 (2026-08-13):
+      ① 신착은 학생이 '우리 도서관'을 열면 **제일 먼저 보는 자리**인데, 대량 백필의
+         표지 정렬이 md5(ctrl) 무작위라 수만 권 풀에 섞이면 언제 걸릴지 기약이 없었다.
+      ② 예산이 백필과 한 주머니라, 백필이 정보나루 한도(30,000)를 태운 날은 신착이 굶었다.
+         실제로 8/13이 그랬다. 그래서 자체 예산으로 **먼저** 먹고 시작한다.
+      ③ bat에서도 --daily 바로 뒤로 당겼다. 백필은 자주 죽는데(한도·강제종료) 뒤에 있으면
+         같이 죽는다. 신착은 하루 십수 권·수십 호출이라 제일 싸고 제일 먼저 끝난다.
+
+    🔴🔴 이 함수가 절대 하면 안 되는 것 = **'' 미보유 도장**.
+      대량 백필은 못 찾으면 cover_url=''/description=''를 찍어 다음날 재시도를 막는다.
+      신착에 그걸 찍으면 "어제 등록돼서 알라딘에 아직 안 올라온 책"이 **영원히** 제외된다.
+      (19,117권을 날린 8/13 사고의 뿌리가 정확히 이 도장이다.)
+      그래서 여기선 **얻은 값만 쓰고, 못 찾으면 null 그대로 둬서 내일 또 시도한다.**
+      days(기본 30)가 지나면 자연히 대량 풀로 넘어가고, 거기선 도장이 정상이다.
+    """
+    rows = json.loads(sql(
+        "select ctrl, isbn, title, coalesce(cover_url,'') cov, coalesce(description,'') dsc "
+        # mat_type is null 포함 — 신착 삽입이 자료유형을 못 얻으면 NULL로 남는데,
+        # 그걸 빼면 8/12처럼 신착이 통째로 누락된다. 여기선 관대하게 받는다(하루 십수 권이라 낭비 없음).
+        "from semyung_tulip where kind='paper' and (mat_type='m' or mat_type is null) "
+        f"and reg_date >= to_char(current_date - interval '{int(days)} days','YYYYMMDD') "
+        "and (coalesce(cover_url,'')='' or coalesce(description,'')='') "
+        f"order by reg_date desc, ctrl desc limit {int(limit)}", timeout=120))
+    noisbn = [r for r in rows if not (r.get("isbn") or "").strip()]
+    todo = [r for r in rows if (r.get("isbn") or "").strip()]
+    print(f"[fresh] 최근 {days}일 신착 중 미완성 {len(rows):,}건 "
+          f"(조달가능 {len(todo):,} · ISBN없음 {len(noisbn):,}) / 나루 {d4l_budget} · 알라딘 {budget}")
+    if not todo:
+        print("[fresh] 완료 — 채울 것 없음"); return
+
+    got, limit_hit, alimit = [], None, None
+    for r in todo:
+        need_c, need_d = not r["cov"], not r["dsc"]
+        cov = dsc = ""
+        if limit_hit is None and _d4l_calls < d4l_budget:
+            try:
+                cov, dsc = d4l_book(r["isbn"], expect_title=r.get("title"))
+            except D4LLimit as e:
+                limit_hit = e
+        # 정보나루가 필요한 걸 못 채웠을 때만 알라딘(호출 아끼기)
+        if ((need_c and not cov) or (need_d and not dsc)) and alimit is None and _aladin_calls < budget:
+            try:
+                ac, ad = aladin_cover_isbn(r["isbn"], order=("Book",), expect_title=r.get("title"))
+                cov = cov or ac; dsc = dsc or ad
+            except AladinLimit as e:
+                alimit = e
+        # 이미 있는 값은 덮지 않는다 + 빈손이면 아무것도 안 쓴다(도장 금지)
+        u = cov if need_c else ""
+        d = dsc if need_d else ""
+        if u or d: got.append((r["ctrl"], u, d))
+        time.sleep(0.1)
+
+    if got:
+        # coalesce(nullif(...)) — 빈 문자열은 무시되므로 구조적으로 도장이 찍힐 수 없다
+        vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in got)
+        sql("update semyung_tulip t set cover_url=coalesce(nullif(v.u,''), t.cover_url), "
+            "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
+            f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", timeout=180)
+    nc = sum(1 for _, u, _ in got if u); nd = sum(1 for _, _, d in got if d)
+    print(f"[fresh] 완료 — 표지 {nc:,} · 줄거리 {nd:,} 채움 / 남김(내일 재시도) {len(todo)-len(got):,} "
+          f"| 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}"
+          + (f" | ⚠️정보나루 한도: {limit_hit}" if limit_hit else "")
+          + (f" | ⚠️알라딘 한도: {alimit}" if alimit else ""))
 
 TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)·학위논문(t)·미분류('') — 연간물/DVD/지도 제외
     "ebook": "kind='ebook'",
-    "paper": "kind='paper' and mat_type in ('m','t','')",
+    # mat_type is null 포함 — 신착이 NULL로 들어오면 임베딩에서 빠져 **검색에 안 잡힌다**
+    # (8/12 신착 10권 실측). 연간물/DVD를 몇 건 더 태우는 낭비보다 검색 누락이 훨씬 나쁘다.
+    "paper": "kind='paper' and (mat_type in ('m','t','') or mat_type is null)",
 }
 
 def embed_books(limit=None, target="ebook"):
@@ -638,6 +728,28 @@ def inherit_old():
                          "count(nullif(description,'')) ds from semyung_tulip where kind='ebook' group by vendor"))
     print("[inherit] 결과:", res)
 
+def fetch_mat_type(ctrl, title):
+    """신착 행의 자료유형(LIMT01)을 **제어번호 정확일치**로 가져온다. 못 찾으면 None.
+
+    ⚠️왜 이 먼 길로 도는가 (2026-08-13, 셋 다 실측):
+      ① bookinfo(verb=all)의 `marctype`은 자료유형이 **아니다.** 학위논문(DB 't')도
+         marctype="m"으로 온다. 그대로 쓰면 틀린 값을 넣는다.
+      ② search의 `isbn` 파라미터는 못 믿는다 — 표본 6건 중 1건만 응답했다.
+      ③ 유일하게 맞는 경로 = 제목으로 검색해 **CTRL이 정확히 같은 레코드**의 LIMT01.
+         제목 유사매칭이 아니라 제어번호 동일성으로 고르므로 오매칭이 원천적으로 없다.
+    못 찾으면 추측하지 말고 None(=NULL). 대신 fresh_arrivals가 NULL도 대상에 넣으므로
+    표지·줄거리는 정상적으로 채워진다."""
+    t = re.split(r"[:/=\[]", title or "")[0].strip()
+    if not t: return None
+    try:
+        xml = tulip("search", verb="list", target="total", display="20", query=t)
+    except Exception:
+        return None
+    m = re.search(r'CTRL="' + re.escape(ctrl) + r'"(.*?)</data>', xml, re.S)
+    if not m: return None
+    v = re.search(r"LIMT01><!\[CDATA\[([^\]]*)", m.group(1))
+    return (v.group(1).strip() or None) if v else None
+
 def run_daily():
     """신착 증분: last_max_ctrl+1부터 위로, 연속 30개 빈 번호면 종료"""
     st = json.loads(sql("select last_max_ctrl from semyung_sync_state where id=1"))
@@ -663,11 +775,20 @@ def run_daily():
             kind = "ebook" if ("[전자책]" in title or "E-BOOK" in xml) else "paper"
             ctrl = "%012d" % n
             stext = " ".join(x for x in [title, au.group(1).strip() if au else "", pb.group(1).strip() if pb else ""] if x)
-            sql("insert into semyung_tulip (ctrl,kind,title,author,publisher,pub_year,isbn,reg_date,search_text) "
+            # 🔴🔴 mat_type을 빠뜨리면 이 책은 이후 **모든** 단계에서 조용히 사라진다
+            #   (2026-08-13 실측 사고): 표지·줄거리 백필은 mat_type='m'으로, 임베딩은
+            #   mat_type in ('m','t','')로 거른다. NULL은 어디에도 안 걸린다.
+            #   8/12 신착 10권이 표지·줄거리·임베딩 전부 없이 방치됐고 **검색에도 안 잡혔다.**
+            #   방학이라 신착이 없다가 처음 들어오면서 드러났다 — 조용한 누락의 전형.
+            mt = fetch_mat_type(ctrl, title)
+            sql("insert into semyung_tulip (ctrl,kind,title,author,publisher,pub_year,isbn,reg_date,mat_type,search_text) "
                 f"values ({esc(ctrl)},{esc(kind)},{esc(title)},{esc(au.group(1).strip() if au else '')},"
                 f"{esc(pb.group(1).strip() if pb else '')},{esc(py.group(1).strip() if py else '')},"
-                f"{esc(isbns[0].split()[0] if isbns else None)},{esc(ind.group(1).strip() if ind else '')},{esc(stext)}) "
-                "on conflict (ctrl) do update set title=excluded.title, updated_at=now()")
+                f"{esc(isbns[0].split()[0] if isbns else None)},{esc(ind.group(1).strip() if ind else '')},"
+                f"{esc(mt)},{esc(stext)}) "
+                # NULL로 덮어써서 멀쩡한 값을 지우는 일이 없게 coalesce
+                "on conflict (ctrl) do update set title=excluded.title, "
+                "mat_type=coalesce(excluded.mat_type, semyung_tulip.mat_type), updated_at=now()")
             found.append((n, title[:30]))
             last = n
         else:
@@ -704,6 +825,9 @@ if __name__ == "__main__":
     ap.add_argument("--covers-paper-aladin", action="store_true")
     ap.add_argument("--d4l-budget", type=int, default=28000,
                     help="정보나루 일 호출 예산(IP 등록 시 한도 30,000). 0이면 알라딘만 사용")
+    ap.add_argument("--fresh", action="store_true",
+                    help="신착 전용 표지·줄거리 조달(최근 N일). 대량 백필과 예산 분리, '' 도장 안 찍음")
+    ap.add_argument("--fresh-days", type=int, default=30)
     ap.add_argument("--desc-only", action="store_true",
                     help="표지는 있고 줄거리만 없는 풀(pri=1)만 처리 — 데일리는 표지 우선이라 이 경로가 늦게 열린다. 검증·수동실행용")
     a = ap.parse_args()
@@ -716,6 +840,8 @@ if __name__ == "__main__":
     elif a.daily: run_daily()
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
+    elif a.fresh: fresh_arrivals(a.fresh_days, a.d4l_budget if a.d4l_budget != 28000 else 300,
+                                 a.covers_budget if a.covers_budget != 4500 else 200)
     elif a.covers_paper: covers_paper(a.covers_limit)
     elif a.covers_paper_aladin: covers_paper_aladin(a.covers_limit, a.covers_budget, a.desc_only, a.d4l_budget)
     else: ap.print_help()
