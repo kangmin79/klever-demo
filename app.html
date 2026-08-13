@@ -1805,6 +1805,18 @@ body.dark .cg-head{color:#0f172a;}
 /* ── 테스트 계정 칩 + 선택 모달 ── */
 .bx-acc-chip{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;letter-spacing:-0.2px;transition:border-color .15s;}
 .bx-acc-chip:hover{border-color:var(--gold);}
+/* 급한 것 하나를 점으로 — 사이드바 배지(MYLIB_BADGE)와 같은 판정을 헤더에서도 쓴다.
+   들어가 보지 않아도 "지금 신경 쓸 게 있나"를 알게 하는 자리라서. */
+.bx-acc-dot{width:7px;height:7px;border-radius:50%;flex:none;}
+/* 계정 메뉴 — 로그인한 사람만 여는 작은 드롭다운(내 도서관·내 서재·로그아웃) */
+.bx-acc-menu{position:absolute;top:38px;right:0;min-width:186px;background:var(--bg-card,var(--bg));border:1px solid var(--border);border-radius:11px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;z-index:1300;display:none;}
+.bx-acc-menu.open{display:block;}
+.bx-acc-menu .mi{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 11px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;text-align:left;}
+.bx-acc-menu .mi:hover{background:var(--bg-input);}
+.bx-acc-menu .mi .n{font-size:12px;font-weight:800;color:var(--text-light);}
+.bx-acc-menu .sep{height:1px;background:var(--border);margin:5px 4px;}
+.bx-acc-menu .who{padding:8px 11px 4px;font-size:12px;color:var(--text-light);line-height:1.5;}
+.bx-acc-menu .who b{color:var(--text);font-size:13px;}
 .bx-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1200;}
 .bx-acc-overlay.open{display:flex;}
 .bx-acc-modal{background:var(--bg-card);border-radius:18px;padding:26px;width:min(420px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.3);}
@@ -1947,6 +1959,8 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   body.dark .gnb-item.active{background:none;color:#f1f5f9;}
   .school-tag{display:none;}
   .hdr-div{display:none;}
+  /* 학교 이름표가 빠진 자리에 계정 칩만 남는다 — 좁은 폰에서 언어·테마 버튼을 밀지 않게 조인다 */
+  .bx-acc-chip{padding:0 9px;font-size:11.5px;gap:5px;}
   .detail-layout{grid-template-columns:1fr;}
   .detail-cover{max-width:200px;margin:0 auto;}
 }
@@ -2480,7 +2494,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
-    <button class="bx-acc-chip" id="bxAccChip" onclick="bxOpenPicker()" style="display:none;">🙂 로그인</button>
+    <span style="position:relative;display:inline-flex"><button class="bx-acc-chip" id="bxAccChip" onclick="bxChipClick(event)">세명대 로그인</button><div class="bx-acc-menu" id="bxAccMenu"></div></span>
     <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대학교 학술정보원</span>
     <span class="hdr-div"></span>
     <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
@@ -5838,10 +5852,59 @@ async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더
     try{ renderSummaryCard(); }catch(e){}
   }catch(e){}
 }
+// 헤더 계정 칩 — 게스트 / 로그인 / 연동만료 세 상태를 한 자리에서 보여준다.
+// ⚠️ 8/13까지 이 칩은 display:none으로 숨겨져 있었다. 로그인해도 헤더가 그대로라
+//    학생이 자기가 로그인된 건지 알 방법이 없었다(게스트와 화면이 동일).
 function bxRenderAccountChip(){
   const el=document.getElementById('bxAccChip'); if(!el) return;
   const s=bxStudent();
-  el.innerHTML = s ? `<span style="font-size:15px;">${s.emoji||'🙂'}</span> ${esc(s.name)}` : `🙂 로그인`;
+  if(!s){ el.innerHTML='세명대 로그인'; el.title='세명대 계정으로 로그인'; return; }
+  // 로그인은 됐는데 도서관 개인연동이 끊긴 상태 — 예전엔 내 도서관까지 들어가야만 알 수 있었고,
+  // 그전까지는 예약·대출 버튼을 눌렀다가 튕기는 걸로 알게 됐다. 헤더에서 미리 알린다.
+  if(!ssoIsPersonal()){
+    el.innerHTML=`<span class="bx-acc-dot" style="background:#9ca3af"></span>${esc(s.name)} · 다시 로그인`;
+    el.title='도서관 연동이 끊겼어요 — 다시 로그인하면 대출·예약이 열립니다';
+    return;
+  }
+  const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;   // 연체·도착·반납임박 중 가장 급한 하나
+  el.innerHTML=`<span style="font-size:15px;">${s.emoji||'🎓'}</span>${esc(s.name)}`
+    + (b?`<span class="bx-acc-dot" style="background:${b.color}"></span>`:'');
+  el.title=b?b.title:(s.dept||'세명대학교');
+}
+// 칩 클릭 — 게스트·연동만료는 곧장 로그인으로, 로그인 상태면 계정 메뉴를 연다
+function bxChipClick(ev){
+  if(ev) ev.stopPropagation();
+  const s=bxStudent();
+  if(!s || !ssoIsPersonal()){ bxCloseAccMenu(); bxOpenPicker(); return; }
+  bxToggleAccMenu();
+}
+function bxRenderAccMenu(){
+  const m=document.getElementById('bxAccMenu'); if(!m) return;
+  const s=bxStudent(); if(!s){ m.innerHTML=''; return; }
+  const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;
+  m.innerHTML=`<div class="who"><b>${esc(s.name)}</b><br>${esc(s.dept||'세명대학교')}</div>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mylib')"><span>내 도서관</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>내 서재</span></button>
+    <div class="sep"></div>
+    <button class="mi" onclick="bxLogout()"><span style="color:#c0392b">로그아웃</span></button>`;
+}
+function bxToggleAccMenu(){
+  const m=document.getElementById('bxAccMenu'); if(!m) return;
+  if(m.classList.contains('open')){ bxCloseAccMenu(); return; }
+  bxRenderAccMenu(); m.classList.add('open');
+}
+function bxCloseAccMenu(){ const m=document.getElementById('bxAccMenu'); if(m) m.classList.remove('open'); }
+document.addEventListener('click', bxCloseAccMenu);   // 바깥을 누르면 닫힘(칩은 stopPropagation)
+// 로그아웃 — 도서관 열람실 공용 PC를 생각하면 없어선 안 된다(다음 사람이 남의 대출내역을 그대로 본다).
+function bxLogout(){
+  if(!confirm('로그아웃할까요?\n이 기기에서 내 도서관 정보가 지워집니다.')) return;
+  try{
+    localStorage.removeItem('bookstar-current-student');
+    localStorage.removeItem(SSO_TOK_KEY);
+    localStorage.removeItem(SSO_PERSONAL_KEY);
+  }catch(e){}
+  try{ window.__SSO_STUDENT=null; }catch(e){}
+  location.href=location.pathname;   // 부분 갱신은 이전 계정 잔여가 남는다 — 통째로 게스트 상태에서 다시 시작
 }
 function bxOpenPicker(){
   // 8/12 포털 아이디 직접 로그인으로 전환 — 배너 설치 전에도 들어올 수 있게 (배너가 생기면 배너로도 가능)
@@ -6777,6 +6840,8 @@ const SIDE_MENU = [
 // 사이드바 배지 — 연체(빨강) > 예약도착(초록) 순. 들어가 보지 않아도 알게 하는 최소 알림.
 let MYLIB_BADGE=null;
 function renderSideNav(activePage){
+  // 헤더 칩도 같은 배지를 쓴다 — 여기서 같이 갱신해야 사이드바와 헤더가 어긋나지 않는다
+  try{ bxRenderAccountChip(); }catch(e){}
   const el = document.getElementById('sideNav');
   if(!el) return;
   el.innerHTML = SIDE_MENU.filter(n=>!n.needsLib||ssoIsPersonal()).map(n=>{
@@ -7267,7 +7332,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260813a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260813b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
