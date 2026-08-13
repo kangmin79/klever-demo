@@ -636,7 +636,9 @@ Deno.serve(async (req) => {
     }
     // 구독(크레마) 표시 — 소장 큐레이션에 노출되는 세명대 책 중 미검증분만 권당 조회·캐시(표시 대상만, 캐시되면 즉시).
     //   skipCrema(별이 통합검색 융합 호출): 라이브 크레마 조회(최대 4.5s)를 건너뛴다. 캐시된 crema 값은 toCand가 이미 실어 표시됨.
-    if (onlyHeld && body.skipCrema !== true) { try { await enrichCremaForDisplayed(candidates); } catch (_) { /* 크레마 조회 실패는 결과에 영향 없음 */ } }
+    // 8/14 사장님 지시: 구독(크레마) 연동 전면 중단 — 크레마클럽 전체 데이터를 정식으로 받으면 그때 제대로 적재.
+    // 그때까지 라이브 조회·semyung_tulip 캐시 적재 금지(아래 한 줄 복원하면 재개).
+    // if (onlyHeld && body.skipCrema !== true) { try { await enrichCremaForDisplayed(candidates); } catch (_) { /* 크레마 조회 실패는 결과에 영향 없음 */ } }
     _lap("post"); _T.total = Date.now() - _s0;
     return json({ title: outTitle, subtitle: outSub, queryType: qtype, params: { tokens, degraded, timing: _T }, count: candidates.length, candidates });
   } catch (e) {
