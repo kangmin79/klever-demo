@@ -4851,7 +4851,9 @@ let CHAL_PUB=[];
 function ddayText(to){ if(!to) return ''; const end=new Date(to+'T23:59:59'); const now=new Date();
   const d=Math.ceil((end-now)/86400000); if(isNaN(d)) return ''; return d<0?'종료':d===0?'D-day':'D-'+d; }
 // 사서가 챌린지 발행 시 표지 URL을 빠뜨려도, 책 id가 gb-*면 표지 파일에서 자동 보강
-function _gbCover(b){ if(b&&b.cover) return b.cover; const id=(b&&b.id)||''; return /^gb-/.test(id)?('https://bookstar.co.kr/covers/'+id+'.webp'):''; }
+// 표지는 앱과 같은 저장소에 실려 다닌다 — 절대주소로 박으면 도메인이 바뀌는 순간 747장이 통째로 깨진다.
+// (8/13 semyung.bookstar.co.kr 분리 준비: bookstar.co.kr 하드코딩 → 상대경로)
+function _gbCover(b){ if(b&&b.cover) return b.cover; const id=(b&&b.id)||''; return /^gb-/.test(id)?('/covers/'+id+'.webp'):''; }
 // 발행 프로그램(library_programs 진행중) 60초 공유 캐시 — 우리도서관/챌린지 탭이 같은 쿼리를 각자 재fetch하던 것 통합
 let _progCache=null, _progCacheTs=0, _progCacheP=null;
 async function fetchProgramsCached(){
@@ -7330,7 +7332,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260813c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260813d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
