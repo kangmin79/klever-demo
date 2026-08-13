@@ -1976,10 +1976,12 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-body.pane-trans:not(.mob-second) .viewer-pane.left{display:block;}
   .viewer-body.pane-trans:not(.mob-second) .viewer-pane.right{display:none;}
   .pane-tabs{display:flex;}
-  /* 8/14 사장님 수정요청: 뷰어 메뉴가 나타나도 책 글자가 밀리지 않게 — 메뉴를 본문 위에 겹쳐 띄운다(밀리 방식) */
+  /* 8/14 사장님 수정요청: 뷰어 메뉴가 나타나도 책 글자가 밀리지 않게 — 메뉴를 본문 위에 겹쳐 띄운다(밀리 방식)
+     ⚠️ .immersive(읽기 모드)에서만 — 챌린지 모드는 메뉴가 상시 떠 있어 겹치면 퀴즈 첫 줄이 가려진다 */
   .viewer-shell{position:relative;}
-  .viewer-shell .viewer-header{position:absolute;top:0;left:0;right:0;z-index:40;}
-  .viewer-shell .pane-tabs{position:absolute;bottom:0;left:0;right:0;z-index:40;border-top:1px solid var(--border);}
+  .viewer-shell.immersive .viewer-header{position:absolute;top:0;left:0;right:0;z-index:40;}
+  .viewer-shell.immersive .pane-tabs{position:absolute;bottom:0;left:0;right:0;z-index:40;border-top:1px solid var(--border);}
+  .viewer-shell.immersive .reader-searchbar{position:absolute;top:0;left:0;right:0;z-index:42;}   /* 본문찾기는 헤더 자리를 대신 차지(브라우저식) */
   .toc-drawer{z-index:45;}   /* 목차·노트 서랍은 겹친 메뉴보다 위 */
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
@@ -7384,7 +7386,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -7638,11 +7640,13 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerOverlay').classList.add('open');
   // 8/14 사장님 수정요청: 모바일 읽기 화면은 열 때 메뉴 없이 본문만(밀리 방식) — 가운데 탭하면 메뉴가 나온다
   // (챌린지 모드는 퀴즈 조작이 있어 기존대로 메뉴를 보여준다 / PC도 기존대로)
+  // .immersive = 메뉴를 본문 위에 겹쳐 띄우는 읽기 모드 표식(CSS) — 챌린지는 겹치면 첫 줄이 가려져 제외
   {
     const _sh=document.querySelector('.viewer-shell');
     if(_sh){
-      if(window.innerWidth<=600 && currentMode!=='challenge') _sh.classList.add('chrome-hidden');
-      else _sh.classList.remove('chrome-hidden');
+      const _imm = window.innerWidth<=600 && currentMode!=='challenge';
+      _sh.classList.toggle('immersive', _imm);
+      _sh.classList.toggle('chrome-hidden', _imm);
     }
   }
   renderViewer();

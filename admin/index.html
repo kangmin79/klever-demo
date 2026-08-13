@@ -1869,6 +1869,18 @@ const AIC_QUICK=["위로가 필요한 학생","새 학기 새로운 시작","진
 /* 8/14 사장님 수정요청: AI 큐레이션을 세계고전·한국고전·독서챌린지에서도 — 카드 하나를 페이지 간 옮겨 쓰고 문맥만 바꾼다 */
 let AIC_CTX='lib';   // lib(우리도서관) | foreign(세계고전) | kr(한국고전) | chal(독서챌린지)
 function aicSetContext(ctx){
+  // 문맥이 바뀌면 이전 영역의 결과·대화를 비운다 — 세계고전 결과를 들고 한국고전에 담는 오염 방지
+  if(AIC_CTX!==ctx){
+    try{
+      AIC_RESULTS=[]; AIC_PICKED=new Set(); AIC_MSGS=[]; AIC_TOPIC='';
+      const r=el('aicResult'); if(r)r.classList.remove('show');
+      const t=el('aicTopic'); if(t)t.value='';
+      const th=el('aicThread'); if(th)th.innerHTML='';
+      const q=el('aicQchips'); if(q)q.innerHTML='';
+      const c=el('aiCurCard'); if(c)c.setAttribute('data-open','0');
+      const ch=el('aicChevron'); if(ch)ch.textContent='열기 ▾';
+    }catch(e){}
+  }
   AIC_CTX=ctx;
   const sub=document.querySelector('#aiCurCard .aic-bar-t span');
   const addBtn=document.querySelector('#aiCurCard .aic-addbtn');
