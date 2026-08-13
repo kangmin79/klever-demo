@@ -275,7 +275,12 @@ def d4l_book(isbn, expect_title=None):
     code = str(resp.get("errCode") or "")
     # ⚠️errCode는 '한도'만이 아니라 'ISBN에 해당하는 도서가 없습니다'(= 정상 미보유)에도 붙는다.
     #   전부 한도로 처리하면 첫 미보유 책에서 정보나루를 통째로 꺼버린다(2026-08-09에 당함).
-    if code == "outOflimit":
+    # 🔴🔴2026-08-13 사고: 실제 한도 코드는 `outOflimit`이 아니라 **`outOfMaxlimit`**이었다
+    #   ("1일 최대 호출건수는 30000건 입니다"). 철자가 안 맞아 아래 미보유 분기로 새어나갔고,
+    #   08시에 한도가 찬 뒤 4시간 동안 조회도 못 한 책 약 19,000권에 '미보유' 도장을 찍었다.
+    #   도장이 찍히면 풀에서 영구 제외되므로 조용한 데이터 손실이었다.
+    #   → 코드값을 하나씩 맞추지 말고 'limit'이 들어가면 전부 한도로 본다(미보유 코드엔 limit이 없다).
+    if "limit" in code.lower():
         raise D4LLimit(resp.get("error") or code)
     if code:
         return "", ""                       # 미보유 등 그 밖의 오류 = 조용히 빈손
