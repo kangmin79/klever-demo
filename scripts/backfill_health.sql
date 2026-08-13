@@ -19,12 +19,15 @@ language plpgsql as $function$
 declare
   t bigint; e bigint; u bigint; prev bigint; d bigint; v text; n text;
   fr bigint; frc bigint; mtnull bigint;
+  -- 🔴 current_date는 UTC다. 05:00 KST = 전날 20:00 UTC라 그대로 쓰면
+  --   어제 행을 덮어써서 '어제 대비 증가'가 영영 안 잡힌다(2026-08-14 실측 버그).
+  kst_today date := (now() at time zone 'Asia/Seoul')::date;
 begin
   -- 신착(최근 14일)이 표지를 얼마나 갖췄나. 학생이 앱 열면 제일 먼저 보는 자리라 따로 잰다.
   select count(*), count(*) filter (where coalesce(cover_url,'') <> '')
     into fr, frc
     from semyung_tulip
-   where kind = 'paper' and reg_date >= to_char(current_date - interval '14 days','YYYYMMDD');
+   where kind = 'paper' and reg_date >= to_char(kst_today - interval '14 days','YYYYMMDD');
   -- mat_type이 NULL인 종이책 = 파이프라인에서 조용히 사라지는 행(8/12 신착 10권 사고).
   -- 0이 정상. 늘어나면 신착 삽입이 자료유형을 못 얻고 있다는 뜻이다.
   select count(*) into mtnull from semyung_tulip where kind='paper' and mat_type is null;
@@ -35,7 +38,7 @@ begin
     from semyung_tulip where kind = 'paper' and mat_type = 'm';
 
   select desc_total into prev from semyung_backfill_health
-   where day < current_date order by day desc limit 1;
+   where day < kst_today order by day desc limit 1;
 
   d := case when prev is null then null else t - prev end;
 
@@ -63,7 +66,7 @@ begin
   end if;
 
   insert into semyung_backfill_health(day, desc_total, delta, no_desc, untouched, verdict, note)
-  values (current_date, t, d, e, u, v, n)
+  values (kst_today, t, d, e, u, v, n)
   on conflict (day) do update set desc_total = excluded.desc_total, delta = excluded.delta,
     no_desc = excluded.no_desc, untouched = excluded.untouched,
     verdict = excluded.verdict, note = excluded.note;
