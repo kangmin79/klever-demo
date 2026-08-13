@@ -7397,7 +7397,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -10921,6 +10921,8 @@ function toggleTheme(){
    초기화
    ═══════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
+  // 8/14: 로그인 게이트가 걸린 웹툰 페이지 목록 (복귀 리다이렉트 화이트리스트)
+  const WT_LOGIN_FILES=['webtoon_redmt.html','webtoon_demian.html','webtoon_gatsby.html','webtoon_emma.html','webtoon_unsu.html','webtoon_memil.html'];
   // 모바일 GNB 축약 라벨 초기 적용 + 회전/리사이즈 대응
   try{ applyUiLang(UI_LANG); }catch(e){}
   let _gnbRz; window.addEventListener('resize', ()=>{ clearTimeout(_gnbRz); _gnbRz=setTimeout(()=>{ try{ applyUiLang(UI_LANG); }catch(e){} },200); });
@@ -10944,13 +10946,18 @@ window.addEventListener('DOMContentLoaded', () => {
       // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
       // 고전(뷰어 게이트)이 우선 — 있으면 그 책 읽기로 바로 진입하고 도서관 책 기억은 함께 폐기
       try{
+        const _pw=localStorage.getItem('bx_sso_return_webtoon');
         const _pc=localStorage.getItem('bx_sso_return_classic');
         const _pb=localStorage.getItem('bx_sso_return_book');
+        localStorage.removeItem('bx_sso_return_webtoon');
         localStorage.removeItem('bx_sso_return_classic');
         localStorage.removeItem('bx_sso_return_book');
         const _fresh=o=>o && (!o._ts || Date.now()-o._ts < 15*60*1000);   // 15분 지난 기억은 폐기
+        const _rw=_pw?JSON.parse(_pw):null;
         const _rc=_pc?JSON.parse(_pc):null;
-        if(_rc && _rc.id && _fresh(_rc)){
+        if(_rw && _rw.f && _fresh(_rw) && WT_LOGIN_FILES.includes(_rw.f)){
+          location.replace('/'+_rw.f);   // 보려던 웹툰으로 곧장 복귀
+        }else if(_rc && _rc.id && _fresh(_rc)){
           setTimeout(()=>{ try{ openViewer(_rc.id, _rc.mode||'full'); }catch(e){} }, 450);
         }else if(_pb){
           const _rb=JSON.parse(_pb);
@@ -10960,6 +10967,19 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         }
       }catch(e){}
+    }
+  }catch(e){}
+  // ── 8/14 사장님 지시: 웹툰도 로그인 필수 — 웹툰 페이지가 미로그인 접근을 ?webtoon=파일 로 돌려보낸다 ──
+  try{
+    const _q=new URLSearchParams(location.search);
+    const _wt=_q.get('webtoon');
+    if(_wt && WT_LOGIN_FILES.includes(_wt)){   // 화이트리스트 — 열린 리다이렉트 방지
+      history.replaceState(null,'',location.pathname+location.hash);
+      if(bxStudent()){ location.replace('/'+_wt); }   // 이미 로그인 → 바로 웹툰으로
+      else{
+        try{ localStorage.setItem('bx_sso_return_webtoon', JSON.stringify({f:_wt,_ts:Date.now()})); }catch(e){}
+        setTimeout(()=>{ try{ smLoginGuide('classic'); }catch(e){} }, 300);   // 로그인 시트 — 복귀하면 위 SSO 분기가 웹툰으로 보냄
+      }
     }
   }catch(e){}
   // 계정 칩 표시 + (로그인됨)서버 결과 로딩.

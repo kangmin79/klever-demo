@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script>/* 8/14 사장님 지시: 웹툰도 세명대 로그인 필수 — 미로그인은 본채(/)로 보내 로그인 후 되돌아온다 */
+try{ if(!localStorage.getItem('bookstar-current-student')) location.replace('/?webtoon='+encodeURIComponent(location.pathname.split('/').pop())); }catch(e){ location.replace('/'); }</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>운수 좋은 날 — 웹툰 · bookstar</title>
