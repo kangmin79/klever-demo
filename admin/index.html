@@ -1472,7 +1472,7 @@ function previewSections(){
   readSecInputs();
   const rows=SECTIONS.filter(s=>aOf(s)===curArea).map((s,i)=>({slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(rows)); }catch(e){}
-  el('pvFrame').src='/app.html?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
+  el('pvFrame').src='/?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
   el('pvOv').classList.add('on');
 }
 function closePreview(){ el('pvOv').classList.remove('on'); el('pvFrame').src='about:blank'; }
@@ -1500,7 +1500,7 @@ function updatePvCap(){ const c=el('pvCap'); if(!c)return;
 function _pvOpen(){
   const p=el('livePv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
   try{ localStorage.setItem('bookstar_preview_sections',JSON.stringify(pvBuildRows())); }catch(e){}
-  el('pvLiveFrame').src='/app.html?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
+  el('pvLiveFrame').src='/?preview=1&area='+encodeURIComponent(curArea)+'&t='+Date.now();
   const cap=el('pvCap'); if(cap) cap.textContent='학생 앱 ‘'+(AREA_LABELS[curArea]||curArea)+'’ · 편집 즉시 반영';
   const btn=el('pvToggleBtn'); if(btn) btn.textContent='👁 미리보기 닫기';
   requestAnimationFrame(pvFitScale);

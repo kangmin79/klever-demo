@@ -19,7 +19,8 @@ import { personalSession, portalLogin, type PortalHandoff } from "../_shared/sem
 const ALLOWED_SCHOOL = "semyung.ac.kr";
 // 8/13 도메인 분리 — 앱은 semyung.bookstar.co.kr, bookstar.co.kr은 랜딩(회사 소개)만.
 // ⚠️ 로그인 후 돌아오는 주소라 여기가 틀리면 학생이 랜딩 페이지로 튕긴다.
-const APP_URL = "https://semyung.bookstar.co.kr/app";
+// 참나루 본체가 루트로 옮겨졌다(8/13) — /app 아니라 / 이다.
+const APP_URL = "https://semyung.bookstar.co.kr/";
 // 가상 이메일 도메인(실제 발송 안 됨) — 학번당 1계정 결정론적 매핑
 const SSO_EMAIL_DOMAIN = "sso.semyung.bookstar.internal";
 
