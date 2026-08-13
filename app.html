@@ -127,9 +127,7 @@ body.dark .bl-sub{color:var(--gold);}
 /* 실험: 오른쪽 유틸 버튼들 테두리 상자를 없애고 평범한 텍스트/아이콘으로 — 호버할 때만 은은하게 배경 표시 */
 .hdr-ctl{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;letter-spacing:-0.2px;transition:background .15s,color .15s;}
 .hdr-ctl:hover{background:var(--bg-input);color:var(--text);}
-.school-tag{height:32px;padding:0 10px;border-radius:8px;background:transparent;border:none;font-size:12px;font-weight:600;color:var(--text-sub);display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.2px;transition:background .15s;}
-.school-tag:hover{background:var(--bg-input);}
-.school-tag .icon{width:14px;height:14px;color:var(--gold);}
+/* .school-tag(세명대학교 학술정보원 이름표)는 8/13 제거 — 로고 옆 표기와 중복 */
 .lang-select{height:32px;padding:0 8px;border-radius:8px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:background .15s;}
 .lang-select:hover{background:var(--bg-input);}
 .btn-theme{height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:8px;border:none;background:transparent;color:var(--text-sub);cursor:pointer;transition:background .15s,color .15s;}
@@ -1957,7 +1955,6 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
   body.dark .gnb-item.active{background:none;color:#f1f5f9;}
-  .school-tag{display:none;}
   .hdr-div{display:none;}
   /* 학교 이름표가 빠진 자리에 계정 칩만 남는다 — 좁은 폰에서 언어·테마 버튼을 밀지 않게 조인다 */
   .bx-acc-chip{padding:0 9px;font-size:11.5px;gap:5px;}
@@ -2495,7 +2492,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <span style="position:relative;display:inline-flex"><button class="bx-acc-chip" id="bxAccChip" onclick="bxChipClick(event)">세명대 로그인</button><div class="bx-acc-menu" id="bxAccMenu"></div></span>
-    <span class="school-tag"><svg class="icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22V12h6v10"/><path d="M8 6h.01"/><path d="M12 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>세명대학교 학술정보원</span>
+    <!-- 8/13: '세명대학교 학술정보원' 이름표 제거 — 왼쪽 로고 옆 '세명대학교 독서 플랫폼'과 중복이고,
+         그 자리는 이제 계정 칩(로그인 상태)이 쓴다. -->
     <span class="hdr-div"></span>
     <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
       <option value="ko">한국어</option>
@@ -7332,7 +7330,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260813b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260813c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
