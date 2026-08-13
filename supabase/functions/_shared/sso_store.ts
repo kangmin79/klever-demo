@@ -44,6 +44,18 @@ export async function loadSession(sid: string): Promise<SsoRow | null> {
   return row as SsoRow;
 }
 
+/** 학번으로 '연계값이 살아 있는' 가장 최근 세션을 찾는다 — 테스트용 자동 진입(배너 대역) 전용.
+ *  한 번 포털 로그인으로 받아 둔 school_no·portal_user_id가 있으면 비밀번호 없이 세션을 다시 만들 수 있다.
+ *  (배너가 넘겨주는 값과 같은 것이라, 배너가 설치되면 이 경로는 필요 없어진다) */
+export async function loadLatestByHakbun(hakbun: string): Promise<SsoRow | null> {
+  if (!hakbun) return null;
+  const q = `hakbun=eq.${encodeURIComponent(hakbun)}&portal_user_id=not.is.null&order=expires_at.desc&limit=1&select=*`;
+  const r = await fetch(`${SB_URL}/rest/v1/sso_sessions?${q}`, { headers: H });
+  if (!r.ok) return null;
+  const rows = await r.json();
+  return (Array.isArray(rows) && rows[0]) ? rows[0] as SsoRow : null;
+}
+
 /** 만료를 무시하고 읽는다 — 알림 발송 배치 전용.
  *  알림을 켠 학생은 앱을 안 열어도 매일 도서관을 대신 확인해 줘야 하는데,
  *  7일 만료를 그대로 적용하면 "일주일 안 들어오면 알림이 끊긴다"가 되어 기능이 무의미해진다.

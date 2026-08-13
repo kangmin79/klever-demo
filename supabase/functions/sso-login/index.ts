@@ -13,7 +13,7 @@
 //
 // 응답: 302 → https://bookstar.co.kr/app?sso_uid=…&sso_name=…&sso_dept=…&sso_token=…&sso_personal=1|0#ourlib
 import { signSsoToken } from "../_shared/sso_token.ts";
-import { newSid, saveSession } from "../_shared/sso_store.ts";
+import { loadLatestByHakbun, newSid, saveSession } from "../_shared/sso_store.ts";
 import { personalSession, portalLogin, type PortalHandoff } from "../_shared/semyung_session.ts";
 
 const ALLOWED_SCHOOL = "semyung.ac.kr";
@@ -55,8 +55,73 @@ async function ensureAuthUser(hakbun: string, name: string): Promise<void> {
   }
 }
 
+// 연계값 → (liid 확보 → 세션 저장 → 앱으로 302) 공통 마무리.
+// 배너 POST와 테스트용 GET이 똑같은 길을 타야 "테스트에선 됐는데 배너에선 안 되네"가 안 생긴다.
+async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | null): Promise<Response> {
+  let name = nameIn;
+
+  // ④ lib 체인으로 liid 확보(실패해도 로그인 자체는 진행 — 개인기능만 비활성)
+  let liid = "";
+  if (handoff) {
+    try {
+      const ps = await personalSession(handoff);
+      liid = ps.liid;
+      if (ps.name) name = ps.name.slice(0, 40); // 도서관 등록명이 더 정확
+    } catch (e) { console.error("personalSession fail", String(e)); }
+  }
+
+  // ⑤ 서버 세션 저장 — liid·연계값은 여기에만(브라우저엔 sid도 아닌 서명토큰만 나감)
+  // 저장이 실패하면 개인기능은 실제로 안 열린다(sid 행이 없으니 liid를 못 꺼냄).
+  // 그런데 sso_personal=1로 보내면 앱이 "연결됨"이라 믿는 거짓 상태가 되므로, 저장 성공까지 확인한다.
+  const sid = newSid();
+  let saved = false;
+  try {
+    await saveSession({
+      sid, hakbun, name,
+      liid: liid || null,
+      school_no: handoff?.school_no ?? null,
+      portal_user_id: handoff?.portal_user_id ?? null,
+    });
+    saved = true;
+  } catch (e) { console.error("saveSession fail", String(e)); }
+
+  // ⑥ 정식 계정 자산 확보(실패해도 로그인은 진행)
+  try { await ensureAuthUser(hakbun, name); } catch (e) { console.error("ensureAuthUser err", String(e)); }
+
+  // ⑦ 앱으로 리다이렉트 → app.html이 __SSO_STUDENT 세팅
+  const q = new URLSearchParams({
+    sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교",
+    sso_token: await signSsoToken(hakbun, name, sid),
+    sso_personal: liid && saved ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
+  });
+  return new Response(null, { status: 302, headers: { ...CORS, Location: `${APP_URL}?${q}#ourlib` } });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  // ── 테스트용 자동 진입 = '배너를 클릭한 것처럼' ────────────────────────────
+  // GET ?dev=<SSO_DEV_KEY>&client_userid=<학번>
+  //   한 번 포털 로그인을 해 둔 학번이면, 저장된 연계값으로 세션을 다시 만들어 앱으로 돌려보낸다.
+  //   → 링크 하나 여는 것만으로 로그인된 상태로 진입. 아이디·비번 다시 안 물어본다.
+  // ⚠️ 계약 전 개발 편의 장치. 배너가 설치되면 이 블록째로 지운다.
+  //    SSO_DEV_KEY 시크릿이 없으면 완전히 비활성(기본값 없음 — 실수로 열려 있는 일 방지).
+  if (req.method === "GET") {
+    const u = new URL(req.url);
+    const devKey = Deno.env.get("SSO_DEV_KEY") || "";
+    const given = u.searchParams.get("dev") || "";
+    if (!devKey || given !== devKey) return errPage("잘못된 접근입니다.", 405);
+    const hakbun = (u.searchParams.get("client_userid") || "").replace(/[^0-9A-Za-z]/g, "").slice(0, 32);
+    if (!hakbun) return errPage("학번이 없습니다.");
+    const row = await loadLatestByHakbun(hakbun);
+    if (!row?.school_no || !row?.portal_user_id) {
+      return errPage("이 학번으로 저장된 연계값이 없습니다. 포털 아이디로 한 번만 로그인해 주세요.", 404);
+    }
+    return await issue(hakbun, (row.name || hakbun).slice(0, 40), {
+      school_no: row.school_no, portal_user_id: row.portal_user_id,
+    });
+  }
+
   if (req.method !== "POST") return errPage("잘못된 접근입니다.", 405);
 
   try {
@@ -88,41 +153,8 @@ Deno.serve(async (req) => {
       catch (e) { console.error("portalLogin fail", String(e)); }
     }
 
-    // ④ lib 체인으로 liid 확보(실패해도 로그인 자체는 진행 — 개인기능만 비활성)
-    let liid = "";
-    if (handoff) {
-      try {
-        const ps = await personalSession(handoff);
-        liid = ps.liid;
-        if (ps.name) name = ps.name.slice(0, 40); // 도서관 등록명이 더 정확
-      } catch (e) { console.error("personalSession fail", String(e)); }
-    }
-
-    // ⑤ 서버 세션 저장 — liid·연계값은 여기에만(브라우저엔 sid도 아닌 서명토큰만 나감)
-    // 저장이 실패하면 개인기능은 실제로 안 열린다(sid 행이 없으니 liid를 못 꺼냄).
-    // 그런데 sso_personal=1로 보내면 앱이 "연결됨"이라 믿는 거짓 상태가 되므로, 저장 성공까지 확인한다.
-    const sid = newSid();
-    let saved = false;
-    try {
-      await saveSession({
-        sid, hakbun, name,
-        liid: liid || null,
-        school_no: handoff?.school_no ?? null,
-        portal_user_id: handoff?.portal_user_id ?? null,
-      });
-      saved = true;
-    } catch (e) { console.error("saveSession fail", String(e)); }
-
-    // ⑥ 정식 계정 자산 확보(실패해도 로그인은 진행)
-    try { await ensureAuthUser(hakbun, name); } catch (e) { console.error("ensureAuthUser err", String(e)); }
-
-    // ⑦ 앱으로 리다이렉트 → app.html이 __SSO_STUDENT 세팅
-    const q = new URLSearchParams({
-      sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교",
-      sso_token: await signSsoToken(hakbun, name, sid),
-      sso_personal: liid && saved ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
-    });
-    return new Response(null, { status: 302, headers: { ...CORS, Location: `${APP_URL}?${q}#ourlib` } });
+    // ④~⑦ 공통 마무리(연계값 → liid → 세션 저장 → 앱으로 302)
+    return await issue(hakbun, name, handoff);
   } catch (e) {
     return errPage("처리 중 오류가 발생했습니다. (" + String(e).slice(0, 120) + ")", 500);
   }
