@@ -48,7 +48,7 @@ rem  only stamps 'not found' on rows info-naru actually saw (no pool poisoning o
 set /a _bftry=0
 :backfill
 rem 2026-08-13 ANSWERED: real cap is 30,000/day. The server itself says so:
-rem   errCode=outOfMaxlimit "1일 최대 호출건수는 30000건 입니다"
+rem   errCode=outOfMaxlimit "the daily cap is 30000 calls" (server says so in Korean)
 rem The 48000 probe backfired - the script only knew the code 'outOflimit' (different
 rem spelling!), so every post-limit reply looked like 'book not found' and ~19,000 books
 rem got stamped 'no blurb' and dropped from the pool for good. Fixed in tulip_sync.py
