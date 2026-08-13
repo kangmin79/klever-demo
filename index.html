@@ -105,12 +105,13 @@ body.dark .bl-word{color:#f1f5f9;}
 .bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
-.gnb{display:flex;gap:6px;flex:1;align-items:center;margin-left:16px;}
-.gnb-item{position:relative;display:flex;align-items:center;padding:7px 13px 9px;font-size:14px;font-weight:600;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.3px;}
+/* 8/14 사장님 지시: GNB를 밀리의서재처럼 큼직하게 (데스크톱 — 모바일은 아래 미디어쿼리가 별도 크기) */
+.gnb{display:flex;gap:18px;flex:1;align-items:center;margin-left:28px;}
+.gnb-item{position:relative;display:flex;align-items:center;padding:8px 13px 10px;font-size:19px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.5px;}
 .gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
 .gnb-item:hover{color:var(--text);}
 .gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
-.gnb-item.active{color:var(--text);font-weight:700;}
+.gnb-item.active{color:var(--text);font-weight:800;}
 .gnb-item.active::after,.gnb-item.active:hover::after{transform:scaleX(1);opacity:1;}
 /* 터치 기기: 탭 터치 후 hover 상태가 남아 유령 밑줄이 생기는 것 방지 */
 @media(hover:none){
@@ -7392,7 +7393,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
