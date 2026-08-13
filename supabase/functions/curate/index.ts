@@ -396,6 +396,63 @@ Deno.serve(async (req) => {
         refinedTopic: String(t.refinedTopic || lastUser), chips: Array.isArray(t.chips) ? t.chips.slice(0, 4).map((c: any) => String(c)) : [] });
     }
 
+    // ── 고전 풀 모드(8/14 사장님 수정요청) — 클라이언트가 준 후보 풀(북스타 고전 185+110권)에서만 고른다.
+    //    DB 의미검색 없음: 목록이 작아 LLM이 통째로 보고 고르는 편이 정확. 세계고전·한국고전 관리자 AI 큐레이션용.
+    if (Array.isArray(body.pool) && body.pool.length) {
+      const gateOk = await (async () => { try { const g = await gateRejectRaw(query); return g?.reject !== true; } catch { return true; } })();
+      if (!gateOk) {
+        return json({ offtopic: true, count: 0, candidates: [], title: "", subtitle: "",
+          message: "책 큐레이션 주제를 적어주세요. 예: '사랑과 성장', '가볍게 읽는 희곡', '방학에 읽는 장편'." });
+      }
+      let monthCount = 0;
+      if (body.titleModel === "sonnet") {   // 소장 큐레이션과 동일한 월 한도 계정
+        try { monthCount = await bumpAiUsage(new Date().toISOString().slice(0, 7)); } catch (_) { monthCount = 0; }
+        if (monthCount > MONTHLY_CAP) {
+          return json({ limited: true, monthCount, cap: MONTHLY_CAP,
+            error: `이번 달 AI 큐레이션 생성 한도(${MONTHLY_CAP}회)에 도달했어요. 다음 달 1일에 자동으로 초기화됩니다.` });
+        }
+      }
+      const pool = body.pool.slice(0, 400)
+        .map((b: any) => ({ id: String(b.id || ""), title: String(b.title || "").slice(0, 80), author: String(b.author || "").slice(0, 40), cover: String(b.cover || "").slice(0, 200) }))
+        .filter((b: any) => b.id && b.title);
+      const want = Math.min(Math.max(Number(body.count) || 12, 1), 30);
+      const listTxt = pool.map((b: any, i: number) => `${i}. ${b.title}${b.author ? " / " + b.author : ""}`).join("\n");
+      const PICK_TOOL = { name: "pick_books", description: "주제에 맞는 책을 목록 번호로 고른다",
+        input_schema: { type: "object", properties: {
+          picks: { type: "array", items: { type: "object", properties: {
+            i: { type: "number", description: "목록 번호" },
+            rel: { type: "number", description: "3=딱 맞음, 2=주제권, 1=약간만 관련" } }, required: ["i"] } } }, required: ["picks"] } };
+      const PICK_SYS = "너는 대학도서관 사서다. 학생 큐레이션 주제에 맞는 책을 아래 고전 목록에서만 고른다. 확실히 맞는 책 위주로, 관련이 약하면 rel=1로 표시. 맞는 책이 없으면 빈 배열.";
+      let picks: any[] = [];
+      try {
+        const pk = await claudeTool(PICK_SYS, `주제: ${query}\n최대 ${want}권 고르기.\n목록:\n${listTxt}`, PICK_TOOL, 1400,
+          body.titleModel === "sonnet" ? SONNET : undefined as any);
+        picks = Array.isArray(pk?.picks) ? pk.picks : [];
+      } catch (_) { picks = []; }
+      const pseen = new Set<number>();
+      const candidates: any[] = [];
+      for (const p of picks) {
+        const i = Number(p?.i);
+        if (!Number.isInteger(i) || i < 0 || i >= pool.length || pseen.has(i)) continue;
+        pseen.add(i);
+        const b = pool[i];
+        candidates.push({ id: b.id, title: b.title, author: b.author, cover: b.cover || undefined, cls: true,
+          rel: (p.rel === 1 || p.rel === 2 || p.rel === 3) ? p.rel : 3 });
+        if (candidates.length >= want + 6) break;
+      }
+      let outTitle = sani(query).slice(0, 24), outSub = "";
+      if (body.genTitle === true && candidates.length) {
+        try {
+          const booklist = candidates.slice(0, 8).map((c: any) => `- ${c.title}${c.author ? " / " + c.author : ""}`).join("\n");
+          const tp = await claudeTool(TITLE_SYS, `주제: ${query}\n선정된 책:\n${booklist}`, TITLE_TOOL, 240,
+            body.titleModel === "sonnet" ? SONNET : undefined as any);
+          if (tp?.title && String(tp.title).trim()) outTitle = String(tp.title).trim();
+          if (tp?.subtitle && String(tp.subtitle).trim()) outSub = String(tp.subtitle).trim();
+        } catch (_) { /* 제목 실패 → 주제 그대로 */ }
+      }
+      return json({ title: outTitle, subtitle: outSub, count: candidates.length, candidates, monthCount, poolMode: true });
+    }
+
     const onlyHeld = body.onlyHeld === true;
     const genTitle = body.genTitle === true;
     const withHoldings = body.holdings === true;

@@ -31,6 +31,8 @@ a{color:inherit;text-decoration:none}
 .shell{display:flex;min-height:calc(100vh - 60px)}
 .side{width:212px;flex:0 0 212px;background:var(--card);border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:60px;height:calc(100vh - 60px);overflow:auto}
 .side .grp{font-size:10.5px;font-weight:800;color:var(--light);letter-spacing:1px;margin:6px 10px 7px}
+/* 8/14 사장님 수정요청: 메뉴 구분이 잘 보이게 — 그룹 제목을 키우고 진하게 */
+.side .grp.big{font-size:13.5px;font-weight:900;color:var(--text,#1f2a44);letter-spacing:.2px}
 .side .grp.builder{font-size:14px;font-weight:800;color:#6366f1;letter-spacing:.2px;margin-top:18px}
 .side .grp .sub{display:block;font-size:10px;font-weight:600;color:var(--light);letter-spacing:0;margin-top:2px}
 .navi{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;transition:.13s;margin-bottom:3px}
@@ -48,6 +50,8 @@ body[data-mode=app] .side{background:#fdfbf5}
 .main{flex:1;padding:26px 30px 70px;max-width:1200px}
 /* 헤더 */
 .phead{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+/* 8/14 사장님 수정요청: 순서바꾸기·미리보기·저장 버튼 위치 고정 — 미리보기를 여닫아도 늘 화면 오른쪽 위 같은 자리 */
+.tool-fix{position:fixed;top:72px;right:22px;z-index:40;display:flex;gap:8px;background:var(--bg,#f7f8fb);padding:6px 8px;border-radius:12px;box-shadow:0 6px 18px -8px rgba(20,28,50,.25);border:1px solid var(--border)}
 .phead h1{font-size:23px;font-weight:800;letter-spacing:-.6px}
 .phead p{font-size:13px;color:var(--light);margin-top:5px}
 .seg{display:flex;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -594,6 +598,9 @@ body.pv-open .main{max-width:none}
 </style></head>
 <body>
 <script src="../classics_ko_titles.js"></script>
+<!-- 8/14 사장님 수정요청: 담긴 책 표지 표시 — 고전 id→표지 매핑을 앱과 같은 데이터에서 가져온다 -->
+<script src="../classics_foreign_data.js"></script>
+<script src="../classics_kr_data.js"></script>
 
 <!-- 데모 로그인 게이트 (정적 → 라이브 시 Supabase Auth+권한체크로 교체) -->
 <div id="loginGate">
@@ -632,7 +639,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 <div class="shell">
   <aside class="side">
     <div id="sideWeb">
-      <div class="grp">민송도서관 웹</div>
+      <!-- 8/14 사장님 수정요청: '민송도서관 웹' → '통계·관리' -->
+      <div class="grp big">통계·관리</div>
       <div class="navi on" onclick="go(this,'dash')"><span>대시보드</span></div>
       <div class="navi" onclick="go(this,'stats')"><span>이용통계</span></div>
       <div class="navi" onclick="go(this,'writings')"><span>피드관리</span></div>
@@ -645,7 +653,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     </div>
 
     <div style="height:20px"></div>
-    <div class="grp">콘텐츠 · 웹·앱 공용</div>
+    <!-- 8/14 사장님 수정요청: '콘텐츠 · 웹·앱 공용' → '큐레이션·프로그램' -->
+    <div class="grp big">큐레이션·프로그램</div>
     <div class="navi" onclick="goArea(this,'우리도서관')"><span>우리 도서관</span></div>
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>세계 고전</span></div>
@@ -814,6 +823,8 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
       <div class="phead"><div><h1>챌린지 만들기 <span class="tagpill">완독 측정</span></h1>
         <p>우리도서관 꾸미기처럼 — 챌린지를 카테고리 단위로 만들고, 상세내용·미션·담을 책을 정합니다. 저장하면 학생 앱에 노출</p></div>
         <button class="btn-primary" onclick="saveChallenges()">저장 →</button></div>
+      <!-- 8/14 사장님 수정요청: 독서 챌린지에도 'AI로 큐레이션 만들기' — 카드가 이 자리로 이동해 온다 -->
+      <div id="aicSlotChal"></div>
       <div id="chalList"></div>
       <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 컬렉션</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
         ※ 책은 ‘도서관 내·국중 추천·ISBN 입력’ 3가지로 담을 수 있어요. <b>저장</b>해야 학생 앱에 반영됩니다.</div>
@@ -891,7 +902,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <section id="pg-settings" style="display:none">
       <div class="phead"><div><h1><span id="setTitle">우리 도서관 꾸미기</span> <span class="tagpill">추천 도서 큐레이션</span></h1>
         <p id="setSub">학생 앱 화면을 직접 구성 — 칸 추가·삭제·이름·순서, 그리고 각 칸에 책 담기.</p></div>
-        <div style="display:flex;gap:8px"><button class="btn-ghost" onclick="openReorder()">↕ 순서 바꾸기</button>
+        <div class="tool-fix"><button class="btn-ghost" onclick="openReorder()">↕ 순서 바꾸기</button>
         <button id="pvToggleBtn" class="btn-ghost" onclick="toggleLivePreview()">👁 미리보기</button>
         <button class="btn-primary" onclick="saveSections()">저장 →</button></div></div>
       <div class="settings-wrap">
@@ -1404,6 +1415,13 @@ async function loadSections(){
 }
 // 북스타 고전 풀 (고전 컬렉션 큐레이션용 — classics 테이블)
 let CLASSICS_POOL=[];
+// 8/14 사장님 수정요청: 고전 표지 맵 — 담긴 책·후보 목록에 표지 이미지가 보이게 (앱과 동일한 covers/*.webp)
+const CLS_COVER={};
+try{
+  (typeof BOOKS_CLASSICS_FOREIGN!=='undefined'?BOOKS_CLASSICS_FOREIGN:[])
+    .concat(typeof BOOKS_CLASSICS_KR!=='undefined'?BOOKS_CLASSICS_KR:[])
+    .forEach(b=>{ if(b&&b.id&&b.coverSrc) CLS_COVER[b.id]=String(b.coverSrc).replace(/^\.\//,'/'); });
+}catch(e){}
 async function loadClassicsPool(){
   try{ const r=await fetch(`${SB_REST}/classics?select=id,title,author,origin&order=origin,id`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(r.ok){ const d=await r.json(); if(Array.isArray(d)){
@@ -1665,15 +1683,24 @@ function renderSettings(){
     ${isFix?`<div class="note" style="margin-top:12px">⚙ 자동 집계 — 책을 직접 담지 않습니다. ${vis?'지금 <b>우리 도서관에 노출 중</b>이에요.':'지금 <b>숨김</b> 상태 — 학생 앱에 안 보여요.'}</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
-        <div class="deco-list">${books.map((b,bi)=>`<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">
+        <div class="deco-list">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">
             <button class="db-rm" title="빼기" onclick="event.stopPropagation();secRemoveBook(${i},${bi})">×</button>
-            <div class="db-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
+            <div class="db-cv">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
             <div class="db-t">${esc(b.title||b.t||'제목 미상')}</div>
-          </div>`).join('')}
+          </div>`;}).join('')}
           <span class="deco-add" onclick="event.stopPropagation();secOpenPicker(${i})">+ 책<br>담기</span></div>`}
   </div>`;}).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
-  const aic=el('aiCurCard'); if(aic){ const on=curArea==='우리도서관'; aic.style.display=on?'':'none'; if(on)aicLoadUsage(); }   // AI 큐레이션(소장도서)은 우리도서관에서만 + 사용량 배지 갱신
+  // 8/14 사장님 수정요청: AI 큐레이션을 세계고전·한국고전에서도 — 영역별 문맥 설정 + 카드 제자리 복귀
+  const aic=el('aiCurCard');
+  if(aic){
+    const host=document.querySelector('#pg-settings .settings-main'); aicMount(host);
+    const ctx = curArea==='우리도서관' ? 'lib'
+      : curArea==='고전 컬렉션 해외' ? 'foreign'
+      : curArea==='고전 컬렉션 국내' ? 'kr' : '';
+    if(ctx){ aic.style.display=''; aicSetContext(ctx); aicLoadUsage(); if(ctx!=='lib'&&!CLASSICS_POOL.length) loadClassicsPool(); }
+    else aic.style.display='none';
+  }
   updatePvCap(); pvSync();
 }
 /* ── 칸별 책 담기 모달 (공유 3탭) ── */
@@ -1728,7 +1755,7 @@ function secRenderClassics(){
     const ko=b.title_ko||'';                              // 표시: 한글(영어). 한글 없으면 영어만
     const disp=ko||b.title;
     const sub=(b.author||'')+(b.origin==='foreign'?' · 해외 고전'+(ko?(' · '+b.title):''):' · 한국 고전');
-    return {id:b.id,t:disp,a:sub,cls:true};
+    return {id:b.id,t:disp,a:sub,cls:true,cover:CLS_COVER[b.id]||''};   // 8/14: 후보에도 표지
   });
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">검색 결과가 없어요.</div>';return;}
   secRenderCands('북스타 고전 '+SCAND.length+'권'+(q?(' · "'+q+'"'):''));
@@ -1839,6 +1866,27 @@ function secMakeAICuration(){
 let AIC_RESULTS=[], AIC_PICKED=new Set(), AIC_COUNT=20, AIC_MSGS=[], AIC_TOPIC='', AIC_BUSY=false, AIC_DT_I=-1;
 const AIC_GREETING="어떤 책이 필요하세요? 🙂\n주제·분위기·대상을 편하게 말씀해 주세요. 제가 의도를 파악해서 우리 도서관 소장도서로 골라드릴게요.";
 const AIC_QUICK=["위로가 필요한 학생","새 학기 새로운 시작","진로·취업 고민","사랑을 다룬 이야기","과학으로 보는 세상"];
+/* 8/14 사장님 수정요청: AI 큐레이션을 세계고전·한국고전·독서챌린지에서도 — 카드 하나를 페이지 간 옮겨 쓰고 문맥만 바꾼다 */
+let AIC_CTX='lib';   // lib(우리도서관) | foreign(세계고전) | kr(한국고전) | chal(독서챌린지)
+function aicSetContext(ctx){
+  AIC_CTX=ctx;
+  const sub=document.querySelector('#aiCurCard .aic-bar-t span');
+  const addBtn=document.querySelector('#aiCurCard .aic-addbtn');
+  const txt={
+    lib:['주제만 적으면 우리 도서관 소장도서로 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
+    foreign:['주제만 적으면 북스타 해외 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
+    kr:['주제만 적으면 북스타 한국 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
+    chal:['주제만 적으면 소장도서로 챌린지 초안을 뚝딱 만들어 드려요','이 큐레이션으로 챌린지 추가 →']
+  }[ctx]||[];
+  if(sub&&txt[0]) sub.textContent=txt[0];
+  if(addBtn&&txt[1]) addBtn.textContent=txt[1];
+}
+function aicMount(host){ const c=el('aiCurCard'); if(c&&host&&c.parentNode!==host) host.prepend(c); }
+function aicClassicPool(){   // 현재 문맥(해외/국내)의 고전 후보 풀 — curate pool 모드로 보낸다
+  const foreign=AIC_CTX==='foreign';
+  return CLASSICS_POOL.filter(b=>foreign?b.origin==='foreign':b.origin!=='foreign')
+    .map(b=>({id:b.id,title:b.title_ko||b.title,author:b.author||'',cover:CLS_COVER[b.id]||''}));
+}
 function aicToggle(){ const c=el('aiCurCard'); if(!c)return; const open=c.getAttribute('data-open')==='1';
   c.setAttribute('data-open',open?'0':'1'); const ch=el('aicChevron'); if(ch)ch.textContent=open?'열기 ▾':'닫기 ▴';
   if(!open){ if(!AIC_MSGS.length) aicReset(); setTimeout(()=>{const t=el('aicTopic'); if(t)t.focus();},80); } }
@@ -1908,15 +1956,21 @@ async function aicLoadUsage(){ const u=el('aicUsage'); if(!u)return;
 async function aicRunGenerate(topic,isRe){
   topic=(topic||AIC_TOPIC||'').trim(); if(!topic){ aicPush('ai','어떤 주제로 골라드릴까요?'); return; }
   AIC_TOPIC=topic; AIC_BUSY=true; const sb=el('aicSendBtn'); if(sb)sb.disabled=true; aicShowChips([]);
+  // 8/14: 문맥별 후보 소스 — 고전 영역은 북스타 고전 풀에서만 고른다(curate pool 모드)
+  const clsMode=(AIC_CTX==='foreign'||AIC_CTX==='kr');
+  const srcName=AIC_CTX==='foreign'?'북스타 해외 고전':AIC_CTX==='kr'?'북스타 한국 고전':'소장도서';
+  if(clsMode&&!CLASSICS_POOL.length){ loadClassicsPool(); aicPush('ai','고전 목록을 불러오는 중이에요 — 잠시 후 다시 눌러주세요.'); AIC_BUSY=false; if(sb)sb.disabled=false; return; }
   const steps=el('aicSteps'), result=el('aicResult');
-  el('aicS1').querySelector('span:last-child').innerHTML=`소장도서에서 <b>'${esc(topic)}' 후보</b>를 좁히는 중…`;
+  el('aicS1').querySelector('span:last-child').innerHTML=`${srcName}에서 <b>'${esc(topic)}' 후보</b>를 좁히는 중…`;
   steps.classList.add('show'); result.classList.remove('show');
   const ids=['aicS1','aicS2','aicS3']; ids.forEach(id=>el(id).classList.remove('done','active'));
   [0,700,1500].forEach((t,k)=>setTimeout(()=>{ ids.forEach(x=>el(x).classList.remove('active')); for(let m=0;m<k;m++)el(ids[m]).classList.add('done'); el(ids[k]).classList.add('active'); },t));
   const started=Date.now(); let j=null, err=null;
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
-      body:JSON.stringify({query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6})});
+      body:JSON.stringify(clsMode
+        ? {query:topic, pool:aicClassicPool(), genTitle:true, titleModel:'sonnet', count:(AIC_COUNT||8)+6}
+        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6})});
     j=await r.json(); if(j&&j.error)err=j.error;
   }catch(e){ err=String(e); }
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
@@ -1925,7 +1979,7 @@ async function aicRunGenerate(topic,isRe){
   if(j){ if(typeof j.monthCount==='number') aicSetUsage(j.monthCount); else aicLoadUsage(); }   // sonnet 호출은 검색 전 카운터 +1 — 성공·실패 무관 배지 갱신
   if(j&&j.limited){ aicPush('ai','🚫 '+(j.error||'이번 달 AI 큐레이션 생성 한도(500회)에 도달했어요')); return; }
   if(j&&j.offtopic){ aicPush('ai','📚 '+(j.message||'책 큐레이션 주제를 적어주세요')); return; }
-  if(err||!j||!(j.candidates||[]).length){ aicPush('ai','음… 그 주제로는 소장도서에서 책을 못 찾았어요. 조금 다르게 말씀해 주실래요?'); return; }
+  if(err||!j||!(j.candidates||[]).length){ aicPush('ai',`음… 그 주제로는 ${srcName}에서 책을 못 찾았어요. 조금 다르게 말씀해 주실래요?`); return; }
   AIC_RESULTS=j.candidates;
   // 기본 선택 = 관련도 강함(rel 3, 또는 rel 없는 응답)만 → 약한 매칭은 사서가 판단. 강한 게 없으면 전체에서 채움.
   const strongIdx=AIC_RESULTS.map((b,i)=>i).filter(i=>AIC_RESULTS[i].rel===undefined||AIC_RESULTS[i].rel>=2);   // 주제권(rel≥2) 기본 담기, rel=1만 제외
@@ -1933,7 +1987,7 @@ async function aicRunGenerate(topic,isRe){
   AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
   const weakN=AIC_RESULTS.filter(b=>b.rel===1).length;
-  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> 줄거리·작가·소장형태(전자/종이/구독)를 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>우리 도서관 소장</b>)`;
+  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> ${clsMode?'작가·시대 정보를':'줄거리·작가·소장형태(전자/종이/구독)를'} 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>${clsMode?'북스타 고전 — 바로 읽기 연결':'우리 도서관 소장'}</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
@@ -1944,6 +1998,7 @@ function aicShowChips2(items){ const q=el('aicQchips'); if(!q)return; q.innerHTM
 // 후보 상세(줄거리·작가·형태) — 사서가 내용 모르는 책도 보고 담게. 줄거리는 클릭 시 lazy 조회(클릭한 책만).
 function aicShowDetail(i){ const b=AIC_RESULTS[i]; if(!b)return; AIC_DT_I=i;
   const tags=[];
+  if(b.cls)tags.push('<span class="kw-ebook">북스타 고전</span>');   // 8/14: 고전 후보 표식
   if(b.rel===1)tags.push('<span class="kw-weak">⚠ 관련 낮음</span>');
   if(b.smEbook)tags.push('<span class="kw-ebook">전자책</span>');
   if(b.smPaper)tags.push('<span class="kw-paper">종이책</span>');
@@ -1978,21 +2033,37 @@ async function aicLoadDescAdmin(b){ const e=el('aicDtDesc'); if(!e)return;
 function aicAddSection(){
   const picks=[...AIC_PICKED].map(i=>AIC_RESULTS[i]).filter(Boolean);
   if(!picks.length){ toast('책을 1권 이상 담아주세요'); return; }
-  readSecInputs();
   const title=(el('aicTitle').value||'').trim()||'AI 추천';
   const subtitle=(el('aicSub').value||'').trim();
-  const books=picks.map(b=>{ const o={isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:''};
+  const books=picks.map(b=>{
+    // 8/14: 고전 후보는 id 참조로 저장(secAdd의 고전 담기와 동일 형태) — 앱이 id로 본문·표지를 연결한다
+    if(b.cls||/^(gb|kr)-/.test(String(b.id||''))) return {id:b.id,title:b.title,author:b.author||'',cover:b.cover||CLS_COVER[b.id]||''};
+    const o={isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:''};
     if(b.smEbook&&b.smEbookUrl){o._sm=true;o.lib=b.smEbookUrl;}
     return Object.assign(o, bkForm(b)); });   // tags(전자/종이/구독) + 링크 일괄 저장
+  const _reset=()=>{
+    el('aiCurCard').setAttribute('data-open','0'); const ch=el('aicChevron'); if(ch)ch.textContent='열기 ▾';
+    el('aicResult').classList.remove('show'); el('aicTopic').value=''; AIC_RESULTS=[]; AIC_PICKED=new Set();
+    AIC_MSGS=[]; AIC_TOPIC=''; const _th=el('aicThread'); if(_th)_th.innerHTML=''; const _q=el('aicQchips'); if(_q)_q.innerHTML='';   // 대화 초기화 → 다음 열 때 새 인사
+  };
+  // 8/14: 독서 챌린지 문맥 — 칸이 아니라 챌린지 초안으로 추가
+  if(AIC_CTX==='chal'){
+    readChalInputs();
+    const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+    const p2=n=>String(n).padStart(2,'0');
+    const from=`${y}-${p2(m+1)}-01`, to=`${y}-${p2(m+1)}-${p2(new Date(y,m+1,0).getDate())}`;
+    CHALLENGES.push({id:null,type:'소장챌린지',title,detail:subtitle,from,to,mission:{reward:'draw',quiz:false,quizN:10},books});
+    _reset(); renderChallenges();
+    toast(`✦ '${title}' 챌린지 초안이 추가됐어요 — 기간·미션 확인 후 저장하세요`);
+    return;
+  }
+  readSecInputs();
   // 고정 칸들 뒤에 새 큐레이션 칸 삽입(현재 영역)
   const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
   const lastFixed=[...idxs].reverse().find(i=>isFixed(SECTIONS[i]));
   const at=(lastFixed!=null?lastFixed+1:(idxs.length?idxs[idxs.length-1]+1:SECTIONS.length));
   SECTIONS.splice(at,0,{area:curArea,slot:'ai'+Date.now().toString(36),title,subtitle,style:'row',books});
-  // 카드 접고 결과 초기화
-  el('aiCurCard').setAttribute('data-open','0'); const ch=el('aicChevron'); if(ch)ch.textContent='열기 ▾';
-  el('aicResult').classList.remove('show'); el('aicTopic').value=''; AIC_RESULTS=[]; AIC_PICKED=new Set();
-  AIC_MSGS=[]; AIC_TOPIC=''; const _th=el('aicThread'); if(_th)_th.innerHTML=''; const _q=el('aicQchips'); if(_q)_q.innerHTML='';   // 대화 초기화 → 다음 열 때 새 인사
+  _reset();
   renderSettings(); pvSync();
   toast(`✦ '${title}' 칸으로 추가됐어요 — 저장하면 학생 앱에 반영됩니다`);
 }
@@ -2008,7 +2079,7 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(b.id&&x.id===b.id)||(x.title===b.t));
   if(idx>=0)arr.splice(idx,1);
-  else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:''});}   // 북스타 고전 참조
+  else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:b.cover||CLS_COVER[b.id]||''});}   // 북스타 고전 참조 (8/14: 표지 저장)
   else if(b._sm){arr.push(Object.assign({isbn:b.isbn,title:b.t,author:b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:true,note:''},bkForm(b)));}   // 세명대 전자책(lib=상세 딥링크) + 형태태그
   else{arr.push(Object.assign({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:'',held:b.held},bkForm(b)));if(b.isbn&&b.held!==false){LIB_INV.add(b.isbn);upsertInventory([b]);}}   // 국중책도 세명대 소장형태(전자/종이) 있으면 태그 저장
   secRenderCands(scHead);secNote();
@@ -2122,7 +2193,7 @@ function renderDash(){
     ['적립된 별','…','star',1],
     ['참여 학생','…','part',0],
     ['챌린지 완주','…','done',0],
-    ['미션 수행','…','mission',0],
+    // 8/14 사장님 수정요청: '미션 수행' 칩 삭제(불필요) — setChip('mission')은 널가드라 그대로 무해
     ['진행 중 프로그램',active,'',0],
   ].map(k=>`<div class="db-chip${k[3]?' hl':''}"><div class="v" data-k="${k[2]}">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
   renderTrafficDemo();   // 별 순위 옆 '이용 현황 · 예시' 블록 (접속·이용·클릭)
@@ -2692,11 +2763,14 @@ function renderChallenges(){
       <div class="qn"><span class="${m.reward==='rank'?'on':''}" onclick="chalSetReward(${i},'rank')">순위형 · 별 많은 순</span><span class="${m.reward==='draw'?'on':''}" onclick="chalSetReward(${i},'draw')">추첨형 · 참여 응모</span></div>
       ${chalRewardBox(c,i)}
       <div class="flabel">담긴 책 ${books.length}권</div>
-      <div class="deco-books">${books.map((b,bi)=>`<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`).join('')}
+      <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
     </div>`;
   }).join('')
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="chalAdd()">+ 새 챌린지 추가</button>`;
+  // 8/14 사장님 수정요청: 독서 챌린지에도 AI 큐레이션 카드 — 이 페이지 상단 슬롯으로 이동
+  const _slot=el('aicSlotChal');
+  if(_slot){ aicMount(_slot); const c=el('aiCurCard'); if(c){ c.style.display=''; aicSetContext('chal'); aicLoadUsage(); } }
 }
 function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}

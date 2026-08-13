@@ -368,6 +368,10 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-chip{font-size:11px;color:var(--text-sub);background:var(--bg-input);border:1px solid var(--border);border-radius:999px;padding:3px 9px;}
 .lcd-desc{font-size:12.5px;color:var(--text-sub);line-height:1.7;padding:0 24px;margin:2px 0 18px;max-height:9.5em;overflow:hidden;}
 .lcd-desc.has-sum{font-size:14px;color:var(--text);line-height:1.9;max-height:none;padding:2px 24px 4px;margin:6px 0 18px;letter-spacing:-0.1px;}
+/* 8/14 사장님 수정요청: 도서 설명 잘림 — 넘치면 하단 페이드 + '더 보기', 탭하면 전체 펼침 */
+.lcd-desc.clip{position:relative;cursor:pointer;}
+.lcd-desc.clip::after{content:'… 더 보기';position:absolute;right:24px;bottom:0;padding-left:44px;font-size:12px;font-weight:800;color:var(--primary);background:linear-gradient(90deg,transparent,var(--bg-card) 38%,var(--bg-card));}
+.lcd-desc.open{max-height:none;cursor:pointer;}
 .lcd-ways{margin-top:16px;border-top:1px solid var(--border);padding-top:14px;}
 .lcd-ways-h{font-size:10.5px;font-weight:700;color:var(--text-light);letter-spacing:.08em;text-transform:uppercase;margin:0 2px 10px;}
 .lcd-way{display:flex;align-items:center;gap:11px;text-decoration:none;font-size:13.5px;color:var(--text);background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:11px 14px;margin-bottom:8px;transition:border-color .16s,transform .12s,box-shadow .16s;}
@@ -1972,6 +1976,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-body.pane-trans:not(.mob-second) .viewer-pane.left{display:block;}
   .viewer-body.pane-trans:not(.mob-second) .viewer-pane.right{display:none;}
   .pane-tabs{display:flex;}
+  /* 8/14 사장님 수정요청: 뷰어 메뉴가 나타나도 책 글자가 밀리지 않게 — 메뉴를 본문 위에 겹쳐 띄운다(밀리 방식) */
+  .viewer-shell{position:relative;}
+  .viewer-shell .viewer-header{position:absolute;top:0;left:0;right:0;z-index:40;}
+  .viewer-shell .pane-tabs{position:absolute;bottom:0;left:0;right:0;z-index:40;border-top:1px solid var(--border);}
+  .toc-drawer{z-index:45;}   /* 목차·노트 서랍은 겹친 메뉴보다 위 */
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
   /* 리더 헤더 한 줄: 고스트 아이콘 왼쪽 + 모드칩·Aa·닫기 오른쪽 (킨들/애플북스 결 — 2줄+박스버튼 정리 2026-07-23) */
@@ -2351,7 +2360,8 @@ body.dark .hwc-loan{color:#c5a85e;}body.dark .hwc-loan b{color:#d9bd72;}
 .hwc-send:disabled{opacity:.4;cursor:default;}
 @media(max-width:900px){
   #hwcBubble{bottom:calc(78px + env(safe-area-inset-bottom));right:14px;}
-  #hwcPanel{bottom:0;right:0;left:0;width:100%;max-width:100%;height:88vh;max-height:88vh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom);}
+  /* 8/14 사장님 수정요청: 별이 클릭 즉시 전체화면 — 참나루 헤더까지 덮는다(z-index 100 위) */
+  #hwcPanel{top:0;bottom:0;right:0;left:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding-bottom:env(safe-area-inset-bottom);z-index:210;}
 }
 /* ── 추가 칸 스타일 (꾸미기 신규 템플릿) ── */
 .ml-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px;}
@@ -2489,7 +2499,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <!-- 7/2 사장님 지시: '고전 컬렉션' 드롭다운 해체 → 나란히. 세계고전=해외 / International=구 국내고전(다국어) -->
     <div class="gnb-item" data-page="collection" data-cl="foreign" onclick="navCl('foreign')">세계고전</div>
     <div class="gnb-item" data-page="collection" data-cl="modern" onclick="navCl('modern')">International</div>
-    <div class="gnb-item" data-page="community" onclick="nav('community')">커뮤니티</div>
+    <!-- 8/14 사장님 수정요청: 커뮤니티 메뉴 삭제하기로 함 (섹션 코드는 보존 — 메뉴 미노출) -->
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <span style="position:relative;display:inline-flex"><button class="bx-acc-chip" id="bxAccChip" onclick="bxChipClick(event)">세명대 로그인</button><div class="bx-acc-menu" id="bxAccMenu"></div></span>
@@ -2538,7 +2548,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
       <div class="notice-box">
         <div class="notice-title"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" style="margin-right:6px;vertical-align:-2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>공지</div>
         <ul class="notice-list">
-          <li>커뮤니티 메뉴에서 진행중인 독서 프로그램을 확인해 주세요!!!</li>
+          <li>진행중인 독서 프로그램은 도서관 공지를 확인해 주세요!!!</li>
           <li>외국인 유학생은 언어 변경을 하면 더욱 편리하게 서비스를 이용할 수 있습니다.</li>
         </ul>
       </div>
@@ -2743,7 +2753,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <div class="subtab" data-smode="nl" onclick="setSearchMode('nl')">⭐ 별이에게 물어보기</div>
   </div>
 
-  <div style="display:flex;gap:8px;align-items:stretch;max-width:720px;">
+  <!-- 8/14 사장님 수정요청: 검색창 간격 — 탭과 입력창 사이 여백 -->
+  <div style="display:flex;gap:8px;align-items:stretch;max-width:720px;margin-top:16px;">
     <input id="usSearchInput" class="search-input" style="flex:1;"
       placeholder="책 제목·저자·키워드를 입력하세요"
       oninput="usDebounce()"
@@ -3522,25 +3533,37 @@ function switchMobilePane(which){
   attachScrollListener(); updateProgress();
   if(pgEligible()){ _pg.on=false; _pg.chIdx=0; _pg.page=0; enterPageMode(); }   // 페이지 모드: 바뀐 칸으로 재조판
 }
-function updatePaneTabs(hasSecond,label){
+function updatePaneTabs(hasSecond,label,opts){
+  opts=opts||{};
   const bar=document.getElementById('paneTabs'); if(!bar) return;
   bar.style.display = hasSecond ? '' : 'none';   // 두번째 칸 없으면 탭 숨김 → 본문 전체폭
-  const s=document.getElementById('ptSecond'); if(s&&label) s.textContent=label;
-  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane==='main'));
+  const m=document.getElementById('ptMain'), s=document.getElementById('ptSecond');
+  if(m) m.textContent=opts.mainLabel||'본문';
+  if(s&&label) s.textContent=label;
+  // 8/14 사장님 수정요청: 해외고전은 [번역][원문] 순서 — 번역 탭이 왼쪽에 오도록 flex order로 자리 바꿈
+  if(m) m.style.order = opts.mainFirst===false ? 2 : 0;
+  if(s) s.style.order = 1;
+  const def=opts.defaultPane||'main';
+  document.querySelectorAll('#paneTabs .pt-btn').forEach(b=>b.classList.toggle('on', b.dataset.pane===def));
 }
-function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 항상 본문부터, 탭 라벨/표시 갱신
+function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨/표시·기본 칸 갱신
   _mobPane='main'; _mobScroll={};   // 재렌더 = 새 pane → 보관해둔 탭별 위치 무효
   const body=document.getElementById('viewerBody'); if(body) body.classList.remove('mob-second');
-  let hasSecond,label;
+  let hasSecond,label,opts={};
   if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
   else {
     hasSecond=!!c.trans;
-    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → 라벨도 '원문'
+    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → [번역][원문], 번역(main)이 기본
     const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
-    label = krSwap ? '원문' : '번역';
+    if(krSwap){ label='원문'; opts.mainLabel='번역'; }
+    else if(hasSecond){
+      // 8/14 사장님 수정요청: 해외고전은 영어 원문이 아니라 번역이 기본으로 보이게 + 용어 '본문'→'원문'
+      label='번역'; opts.mainLabel='원문'; opts.mainFirst=false; opts.defaultPane='second';
+    }
   }
-  updatePaneTabs(hasSecond,label);
+  updatePaneTabs(hasSecond,label,opts);
+  if(opts.defaultPane==='second'){ _mobPane='second'; if(body) body.classList.add('mob-second'); }
 }
 // 위치를 px가 아니라 "문단 청크 인덱스 + 그 안의 비율"로 잡음 → 글자크기를 바꿔도 읽던 자리 유지
 function _anchorBlocks(){ const el=_scrollEl(); return el?[...el.querySelectorAll('.cv-chunk, h3.ch-title')]:[]; }
@@ -3703,7 +3726,15 @@ function setupSentenceParallel(){
     vb.addEventListener('mouseover', e=>{ const s=e.target.closest('span.psent'); if(s) _sentHot(s); });
     vb.addEventListener('mouseout',  e=>{ const s=e.target.closest('span.psent'); if(s) _sentClear(); });
   } else {                                                  // 모바일: 탭
-    vb.addEventListener('click', e=>{ const s=e.target.closest('span.psent'); if(s) _sentTap(s); });
+    vb.addEventListener('click', e=>{
+      const s=e.target.closest('span.psent'); if(!s) return;
+      // 8/14: 탭 넘김 모드에서 좌/우 끝 탭은 페이지 넘김이 우선 — 문장 원문 펼침은 가운데 탭에서만
+      if(readerPrefs.pageMode){
+        const r=vb.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width;
+        if(x<0.30 || x>0.70) return;
+      }
+      _sentTap(s);
+    });
   }
   return true;
 }
@@ -5106,6 +5137,12 @@ const SMRESV_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-r
 const SEMYUNG_LOGIN_URL='https://setopia.semyung.ac.kr/main/index_lib_smate.jsp';
 // mode: 'reserve'(기본, 종이책 예약) | 'read'(전자책 대출) — 마지막 줄만 상황에 맞게 바뀐다
 function smLoginGuide(mode){
+  // 8/14 사장님 수정요청: 로그인하고 돌아왔을 때 보던 책이 다시 열리게 — 열려 있던 상세 모달의 책을 기억해 둔다
+  try{
+    const lcOn=document.getElementById('lcDetail')?.classList.contains('on');
+    if(lcOn && window._lcCurBook && window._lcCurBook.isbn)
+      localStorage.setItem('bx_sso_return_book', JSON.stringify(Object.assign({_ts:Date.now()}, window._lcCurBook)));
+  }catch(e){}
   const read = mode==='read';
   const sub = read
     ? '전자책은 <b>학생 본인 명의</b>로 대출돼요. 세명대 계정으로 로그인하면 내 이름으로 5권까지 빌릴 수 있어요.'
@@ -6146,6 +6183,7 @@ async function backfillPool(){
 }
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
+  window._lcCurBook=b;   // 8/14: 로그인 다녀오면 이 책으로 되돌아오기 위한 현재 책 기억
   // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
   const en = (b._sm && b.isbn) ? SM_ENRICH[b.isbn.replace(/^sm-/,'')] : null;
   const desc = b.description || (en&&en.desc) || '';
@@ -6232,6 +6270,7 @@ function libDetail(isbn){
     })()}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
+  lcdDescMark(document.getElementById('lcdDesc'));   // 8/14: 설명 넘치면 '더 보기' 표시(탭=펼침)
   if(isPaperHold) loadHolding(reckey);
   // 전자책과 같이 있는 책의 종이책 소장현황 — 기본으로 펼쳐 두므로 여기서 바로 불러온다
   if(paperHoldKey) loadHolding(paperHoldKey, 'pwHold-'+paperHoldKey);
@@ -6344,7 +6383,18 @@ async function loadDesc(key, isCatalog, book){
     if(!d.description) return;
     if(el.textContent.trim()) return;   // 이미 줄거리가 있으면 덮지 않는다
     el.textContent=d.description; el.style.display='';
+    lcdDescMark(el);   // 8/14: lazy 채움 뒤에도 잘림 여부 재판정
   }catch(e){}
+}
+// 8/14 사장님 수정요청: 도서 설명 잘림 — 넘칠 때만 '더 보기' 페이드, 탭하면 전체 펼침/접기 (도서관·고전 상세 공용)
+function lcdDescMark(el){
+  if(!el) return;
+  el.onclick=function(){
+    const open=el.classList.toggle('open');
+    el.classList.toggle('clip', !open && el.scrollHeight>el.clientHeight+4);
+  };
+  el.classList.remove('clip');
+  if(!el.classList.contains('open') && el.scrollHeight>el.clientHeight+4) el.classList.add('clip');
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
@@ -7317,15 +7367,16 @@ function openDetail(bookId){
         <div class="lcd-chips">${chips}</div></div>
     </div>
     <p class="lcd-desc${summary?' has-sum':''}">${esc(intro)}</p>
-    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">3가지 방식으로 읽어요</div>
+    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">이렇게 읽어요</div>
     <div class="lcd-acts">
-      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">전문 바로 읽기<span style="font-size:11px;font-weight:500;opacity:.85;margin-left:2px">· 북스타 표준 본문</span><span class="ar">›</span></div>
-      <div class="lcd-btn" onclick="closeLc();openViewer('${b.id}','challenge')">🏆 퀴즈로 깊이 읽기<span style="font-size:11px;font-weight:500;color:var(--text-sub);margin-left:2px">· 챌린지 + 한 줄 소감</span><span class="ar">›</span></div>
+      <!-- 8/14 사장님 수정요청: '전문 바로 읽기·북스타 표준 본문' → '전자책 바로 읽기'(용어 통일), '퀴즈로 깊이 읽기' 줄 삭제(챌린지는 독서 챌린지 메뉴에서만) -->
+      <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">전자책 바로 읽기<span class="ar">›</span></div>
       ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
     </div>
     <div class="lcd-src">본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
+  lcdDescMark(ov.querySelector('.lcd-desc'));   // 8/14: 고전 상세도 설명 잘림 시 '더 보기'
   renderDetailReviews(b.id, b.title);
 }
 
@@ -7333,7 +7384,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260813f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -7376,13 +7427,16 @@ function setupImmersiveTap(){
     const sel=window.getSelection();
     if(sel && sel.toString().trim().length>0) return;       // 드래그 선택 중 제외
     if(e.target.closest('a,button,mark')) return;           // 링크·버튼·하이라이트 탭은 제외
+    // 8/14 사장님 수정요청(터치 동작 정리): 끝 탭=문장 위라도 무조건 페이지 넘김 / 가운데 문장 탭=원문 보기만 / 가운데 빈 곳=메뉴 토글
+    const _onSent=e.target.closest('span.psent');
     if(readerPrefs.pageMode){                               // 탭 넘김 모드: 좌/우 구역은 즉시 페이지
       const rect=vb.getBoundingClientRect();
       const x=(e.clientX-rect.left)/rect.width;
       if(x<0.30){ readerPage(-1); return; }
       if(x>0.70){ readerPage(1);  return; }
-      // 가운데(0.30~0.70) → 아래로 떨어져 바 토글
+      // 가운데(0.30~0.70) → 문장이면 원문 보기(_sentTap 담당), 아니면 바 토글
     }
+    if(_onSent) return;                                     // 문장 탭 = 원문 보기 전용 — 메뉴는 안 올라옴
     clearTimeout(_immersiveTapTimer);
     _immersiveTapTimer=setTimeout(()=>{                      // 더블클릭이면 아래서 취소
       document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');
@@ -7582,7 +7636,15 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerTitle').textContent = b.title;
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
-  document.querySelector('.viewer-shell')?.classList.remove('chrome-hidden');   // 열 때는 항상 바 보이게
+  // 8/14 사장님 수정요청: 모바일 읽기 화면은 열 때 메뉴 없이 본문만(밀리 방식) — 가운데 탭하면 메뉴가 나온다
+  // (챌린지 모드는 퀴즈 조작이 있어 기존대로 메뉴를 보여준다 / PC도 기존대로)
+  {
+    const _sh=document.querySelector('.viewer-shell');
+    if(_sh){
+      if(window.innerWidth<=600 && currentMode!=='challenge') _sh.classList.add('chrome-hidden');
+      else _sh.classList.remove('chrome-hidden');
+    }
+  }
   renderViewer();
   // 고전 본문 비동기 확보 후 재렌더: 해외 번역 bodies(지연로드, 147권 수동 include 대체) + 원문(Supabase)
   let _reload = false;
@@ -10232,14 +10294,12 @@ function onUnifiedSearch(submit){
   // 키워드 모드 — 즉시 로컬 검색
   if(!q){ box.innerHTML=''; return; }
   const ql=q.toLowerCase();
-  const clsHits=BOOKS.filter(b=>
-    (b.title||'').toLowerCase().includes(ql) ||
-    (b.titleEn||'').toLowerCase().includes(ql) ||
-    (b.author||'').toLowerCase().includes(ql) ||
-    (b.category||'').toLowerCase().includes(ql)
-  );
+  // 8/14 사장님 수정요청: '모비딕'처럼 붙여 써도 '모비 딕'이 나오게 — 공백 제거본으로도 비교
+  const qn=ql.replace(/\s+/g,'');
+  const hit=(s)=>{ s=String(s||'').toLowerCase(); return s.includes(ql) || (qn && s.replace(/\s+/g,'').includes(qn)); };
+  const clsHits=BOOKS.filter(b=> hit(b.title) || hit(b.titleEn) || hit(b.author) || hit(b.category) );
   const libHits=(typeof libTitled==='function'?libTitled():[]).filter(b=>
-    ((b.t||b.title||'')+' '+(b.a||b.author||'')).toLowerCase().includes(ql)
+    hit((b.t||b.title||'')+' '+(b.a||b.author||''))
   );
   if(!clsHits.length && !libHits.length){
     box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">검색 결과가 없어요. 다른 키워드로 시도하거나 ⭐별이에게 물어보세요.</div>';
@@ -10860,6 +10920,19 @@ window.addEventListener('DOMContentLoaded', () => {
       }catch(e){}
       try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
+      // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
+      try{
+        const _pb=localStorage.getItem('bx_sso_return_book');
+        if(_pb){
+          localStorage.removeItem('bx_sso_return_book');
+          const _rb=JSON.parse(_pb);
+          // 15분 지난 기억은 폐기 — 로그인 안 하고 닫았다가 한참 뒤 다른 경로로 로그인했을 때 엉뚱한 책이 열리는 것 방지
+          if(_rb && _rb.isbn && (!_rb._ts || Date.now()-_rb._ts < 15*60*1000)){
+            if(!LIB_POOL.find(x=>x.isbn===_rb.isbn)) LIB_POOL.push(_rb);   // 새로고침으로 풀이 비어도 열리게 복원
+            setTimeout(()=>{ try{ libDetail(_rb.isbn); }catch(e){} }, 450);
+          }
+        }
+      }catch(e){}
     }
   }catch(e){}
   // 계정 칩 표시 + (로그인됨)서버 결과 로딩.
@@ -11114,7 +11187,9 @@ window.addEventListener('keydown', (e) => {
     opened=!opened;
     el('hwcPanel').classList.toggle('on',opened);
     el('hwcBubble').classList.toggle('hide',opened);
-    if(opened){ if(!el('hwcBody').children.length){ addBot(GREET); chipsRow(); } setTimeout(()=>el('hwcInput').focus(),60); }
+    if(opened){ if(!el('hwcBody').children.length){ addBot(GREET); chipsRow(); }
+      // 8/14: 모바일은 자동 포커스 금지 — 키보드가 바로 올라와 인사말·칩이 가려지던 문제(전체화면과 세트)
+      if(window.innerWidth>900) setTimeout(()=>el('hwcInput').focus(),60); }
   };
   window.hwcGrow=function(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,96)+'px';};
   window.hwcKey=function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();hwcSend();} };
