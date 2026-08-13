@@ -5144,16 +5144,20 @@ const SEMYUNG_LOGIN_URL='https://setopia.semyung.ac.kr/main/index_lib_smate.jsp'
 // mode: 'reserve'(기본, 종이책 예약) | 'read'(전자책 대출) — 마지막 줄만 상황에 맞게 바뀐다
 function smLoginGuide(mode){
   // 8/14 사장님 수정요청: 로그인하고 돌아왔을 때 보던 책이 다시 열리게 — 열려 있던 상세 모달의 책을 기억해 둔다
+  // (classic 게이트에서 온 호출은 제외 — 고전 복귀 기억(bx_sso_return_classic)이 따로 있고, 둘 다 저장되면 이중으로 열린다)
   try{
     const lcOn=document.getElementById('lcDetail')?.classList.contains('on');
-    if(lcOn && window._lcCurBook && window._lcCurBook.isbn)
+    if(mode!=='classic' && lcOn && window._lcCurBook && window._lcCurBook.isbn)
       localStorage.setItem('bx_sso_return_book', JSON.stringify(Object.assign({_ts:Date.now()}, window._lcCurBook)));
   }catch(e){}
   const read = mode==='read';
-  const sub = read
+  const classic = mode==='classic';   // 8/14: 고전 읽기 게이트 — 대출이 아니라 '구성원 확인' 성격의 문구
+  const sub = classic
+    ? '북스타 고전은 <b>세명대 구성원 전용</b>이에요. 세명대 계정으로 로그인하면 바로 읽을 수 있어요.'
+    : read
     ? '전자책은 <b>학생 본인 명의</b>로 대출돼요. 세명대 계정으로 로그인하면 내 이름으로 5권까지 빌릴 수 있어요.'
     : '예약은 <b>학생 본인 이름</b>으로 접수돼요. 세명대 계정으로 로그인하면 바로 이용할 수 있어요.';
-  const last = read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
+  const last = classic ? '돌아오면 <b>보던 책이 바로</b> 열려요' : read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
   let sh=document.getElementById('rsvSheet');
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
@@ -7393,7 +7397,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -7625,6 +7629,12 @@ function pgTap(clientX){
 async function openViewer(bookId, mode){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  // 8/14 사장님 지시: 고전 읽기도 세명대 로그인 필수 — 로그인하고 돌아오면 그 책이 바로 열린다
+  if(!bxStudent()){
+    try{ localStorage.setItem('bx_sso_return_classic', JSON.stringify({id:bookId, mode:mode||'full', _ts:Date.now()})); }catch(e){}
+    smLoginGuide('classic');
+    return;
+  }
   // 같은 책·같은 모드가 이미 열려 있으면(더블클릭 등) 재초기화 금지 — 독서 세션 리셋·화면 스냅백 방지
   if(currentBook && currentBook.id===bookId && currentMode===(mode||'challenge')
      && document.getElementById('viewerOverlay')?.classList.contains('open')) return;
@@ -10932,13 +10942,19 @@ window.addEventListener('DOMContentLoaded', () => {
       try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
       // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
+      // 고전(뷰어 게이트)이 우선 — 있으면 그 책 읽기로 바로 진입하고 도서관 책 기억은 함께 폐기
       try{
+        const _pc=localStorage.getItem('bx_sso_return_classic');
         const _pb=localStorage.getItem('bx_sso_return_book');
-        if(_pb){
-          localStorage.removeItem('bx_sso_return_book');
+        localStorage.removeItem('bx_sso_return_classic');
+        localStorage.removeItem('bx_sso_return_book');
+        const _fresh=o=>o && (!o._ts || Date.now()-o._ts < 15*60*1000);   // 15분 지난 기억은 폐기
+        const _rc=_pc?JSON.parse(_pc):null;
+        if(_rc && _rc.id && _fresh(_rc)){
+          setTimeout(()=>{ try{ openViewer(_rc.id, _rc.mode||'full'); }catch(e){} }, 450);
+        }else if(_pb){
           const _rb=JSON.parse(_pb);
-          // 15분 지난 기억은 폐기 — 로그인 안 하고 닫았다가 한참 뒤 다른 경로로 로그인했을 때 엉뚱한 책이 열리는 것 방지
-          if(_rb && _rb.isbn && (!_rb._ts || Date.now()-_rb._ts < 15*60*1000)){
+          if(_rb && _rb.isbn && _fresh(_rb)){
             if(!LIB_POOL.find(x=>x.isbn===_rb.isbn)) LIB_POOL.push(_rb);   // 새로고침으로 풀이 비어도 열리게 복원
             setTimeout(()=>{ try{ libDetail(_rb.isbn); }catch(e){} }, 450);
           }
