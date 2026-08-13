@@ -619,7 +619,10 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
   <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>Builder</small></div>
   <div class="modeSwitch">
     <span class="ms on" id="msWeb" onclick="setMode('web')">웹 관리</span>
-    <span class="ms" id="msApp" onclick="setMode('app')">앱 관리</span>
+    <!-- 8/13 앱 관리 숨김(사장님 지시) — 네이티브 앱을 낼지 판단 중이라 화면에서만 뺀다.
+         ⛔삭제 아님. 다시 보이려면 아래 style="display:none" 한 곳만 지우면 되고,
+         2952줄 부근의 '저장된 모드가 app이면 web으로' 강제도 같이 되돌리면 된다. -->
+    <span class="ms" id="msApp" onclick="setMode('app')" style="display:none">앱 관리</span>
   </div>
   <div class="spacer"></div>
   <div class="who"><span class="av">한</span><span>한국대학교 관리자</span>
@@ -2949,7 +2952,9 @@ function renderHistory(){
 }
 
 /* ====== 초기화 ====== */
-try{ if(localStorage.getItem('bs_admin_mode')==='app') setMode('app'); }catch(e){}
+// 8/13 앱 관리 숨김 — 예전에 앱 모드로 두고 나간 사람이 들어오면 버튼도 없는 화면에 갇힌다.
+// 저장값이 app이어도 웹 관리로 돌려놓는다. (앱 관리를 되살릴 땐 아래 한 줄을 원래대로)
+try{ if(localStorage.getItem('bs_admin_mode')==='app') setMode('web'); }catch(e){}
 rtInit('ntBodyRich','공지 내용을 입력하세요. 위 도구로 굵게·소제목·목록·인용·링크·이미지를 넣을 수 있어요.');
 rtInit('cmBodyRich','내용을 입력하세요 (선택). 굵게·색·목록·표·링크·이미지·파일 등을 넣을 수 있어요.');
 buildNtLoc();
