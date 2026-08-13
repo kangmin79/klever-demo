@@ -140,6 +140,8 @@ body.dark .bl-sub{color:var(--gold);}
    ═══════════════════════════════════════════════════════════ */
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
 .page{padding:32px 24px;display:none;container-type:inline-size;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 / container-type: 안쪽 요소들이 전체 화면폭 아닌 실제 콘텐츠 폭 기준으로 반응하게 */
+/* 8/14 사장님 지시: 넓은 화면에서 양쪽 끝 숨통 — 화면이 클수록 좌우 여백을 점진적으로(5vw, 최대 130px) */
+@media (min-width:1200px){ .page{padding-left:clamp(40px,5vw,130px);padding-right:clamp(40px,5vw,130px);} }
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
 #page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
@@ -7390,7 +7392,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260814d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
