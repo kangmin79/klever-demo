@@ -198,6 +198,23 @@ Deno.serve(async (req) => {
       return json({ ok: true, action, personal, items: await listLoans(jar) });
     }
 
+    // 이미 빌린 책 다시 열기 — 도서관 사이트의 '바로보기'에 해당.
+    // 대출 때 받은 viewerUrl은 그 순간의 세션에 묶여 있어 재사용이 안 된다. 그래서 매번 새로 만든다.
+    // ⚠️ 이게 없으면 탭을 한 번 닫는 순간 북스타 안에서 그 책을 다시 열 길이 사라진다(5일 대출인데).
+    if (action === "viewer") {
+      const loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
+      if (!loanSrmb) return json({ ok: false, action, error: "loanSrmb 필요" }, 400);
+      // 내 대출 목록에 있는 책만 연다 — 남의 대출번호를 넣어 여는 걸 막고,
+      // 이미 반납·만료된 책은 "왜 안 열리지" 대신 이유를 말해 준다.
+      const mine = (await listLoans(jar)).find((l) => l.loanSrmb === loanSrmb);
+      if (!mine) {
+        return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
+      }
+      const viewerUrl = await viewerUrlFor(jar, loanSrmb, mine.brcd || brcd);
+      if (!viewerUrl) return json({ ok: false, action, personal, message: "뷰어를 열지 못했어요. 잠시 후 다시 시도해 주세요" });
+      return json({ ok: true, action, personal, loanSrmb, viewerUrl, dueDate: mine.dueDate || "" });
+    }
+
     // 반납은 loanSrmb만으로 성립 — brcd 요구는 borrow에만.
     // (구버전은 return에도 brcd를 요구해 앱의 반납 버튼이 400으로 실패하고 있었음)
     if (action === "borrow" && !brcd) return json({ ok: false, error: "brcd 필요" }, 400);

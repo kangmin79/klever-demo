@@ -6547,16 +6547,19 @@ async function renderMyLibStatus(){
         const bs='flex:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:transparent';
         // 전자책은 도서관이 '연장 가능/불가'를 직접 알려주므로 그 판정을 따른다.
         // 종이책 반납은 도서관에 직접 가야 하므로 버튼을 두지 않는다 — 전자책만 여기서 반납된다.
+        // 전자책 버튼 순서 = 학생이 여기 오는 이유 순서. 9할은 읽으러 온다 → '이어 읽기'가 맨 앞·유일한 채운 버튼.
+        const _t=esc(cleanT(x.title||'').replace(/'/g,'’'));
         const btns=isEb
-          ? (x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`:'')
-            +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${esc(cleanT(x.title||'').replace(/'/g,'’'))}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`
+          ? `<button onclick="ebOpen('${esc(x.loanSrmb)}','${esc(x.brcd)}','${_t}')" style="${bs};background:var(--primary);color:#fff;border:1px solid var(--primary)">이어 읽기</button>`
+            +(x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`:'')
+            +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${_t}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`
           : `<button onclick="smRenew('${esc(x.acc)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`;
         return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(cleanT(x.title||''))}</div>
             ${x.author?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author)}</div>`:''}
             <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${extra}${isEb?'':' · 반납은 도서관에서'}</div>
-          </div><div style="display:flex;gap:6px;flex:none">${btns}</div>
+          </div><div style="display:flex;gap:6px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end">${btns}</div>
         </div>`);
       }).join('');
     }
@@ -6660,6 +6663,23 @@ async function ebDropReserve(prenSrmb){
   const d=await r.json();
   readerToast(d&&d.ok?'예약을 취소했어요':((d&&(d.message||d.error))||'취소하지 못했어요'));
   renderMyLibStatus();
+}
+// 빌린 전자책 이어 읽기 — 도서관 사이트의 '바로보기'. 뷰어 주소는 세션에 묶여 있어 매번 서버가 새로 만든다.
+// (대출 때 받은 주소를 저장해 뒀다 쓰면 안 열린다 — 그래서 지금까지 이어 읽을 길이 없었다)
+async function ebOpen(loanSrmb, brcd, title){
+  const w=window.open('','_blank');                 // 제스처 안에서 새 탭 확보(팝업차단 회피)
+  if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
+  try{ w.document.write(bridgeHTML({t:title||'',a:'',cover:''})); w.document.close(); }catch(e){}
+  try{
+    const r=await fetch(SMEBK_FN+'?action=viewer&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+    const d=await r.json();
+    if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } return; }
+    try{ w.close(); }catch(e){}
+    // 연동 만료 — 빈 창만 남기지 말고 다시 로그인으로 잇는다
+    if(d&&d.needsPersonal){ try{ localStorage.setItem(SSO_PERSONAL_KEY,'0'); }catch(e){} smLoginGuide('read'); return; }
+    readerToast((d&&(d.message||d.error))||'책을 열지 못했어요');
+    renderMyLibStatus();   // 반납·만료로 목록이 바뀐 경우 화면을 사실에 맞춘다
+  }catch(e){ try{ w.close(); }catch(_){} readerToast('책을 여는 중 오류가 났어요'); }
 }
 async function ebExtend(loanSrmb, brcd){
   const r=await fetch(SMEBK_FN+'?action=extend&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
@@ -7247,7 +7267,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260805a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260813a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
