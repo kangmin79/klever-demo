@@ -5108,20 +5108,85 @@ async function loadHolding(reckey, elId){
     let backDate='';
     if(!avail){ const ds=(d.copies||[]).map(x=>x.returnDate).filter(Boolean).sort(); backDate=ds[0]||''; }
     const where=(loc||call)?`<div class="lh-where">${loc?`<b>위치</b> ${loc}`:''}${call?`${loc?' · ':''}<b>청구기호</b> ${call}`:''}</div>`:'';
-    // 대출가능: 찾아줘북즈(서가 픽업) / 대출중: 반납 예약(순번 대기) — 둘 다 북스타 안에서
+    // 대출가능=찾아줘북즈(서가 픽업, 예약은 도서관 정책상 불가) / 전권 대출중=예약(반납되면 문자 안내) — 둘 다 북스타 안에서
     const resv=avail
-      ? `<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">예약하기 · 서가에서 찾아 보관해 드려요</div>`
-      : `<div class="lh-resv" id="lhResv" onclick="smHoldConfirm('${esc(reckey)}')">예약하기 · 반납되면 순번대로 빌려드려요</div>`;
+      ? `<div class="lh-resv" id="lhResv" onclick="smConfirm('${esc(reckey)}')">찾아줘북즈 신청하기 · 서가에서 찾아 2층 안내데스크에 보관해 드려요</div>`
+      : `<div class="lh-resv" id="lhResv" onclick="smHoldConfirm('${esc(reckey)}')">예약하기 · 반납되면 문자로 알려드리고 2층 안내데스크에 보관해 드려요</div>`;
     el.className='lcd-holding '+(avail?'ok':'out')+pw;
+    // 표기 통일(8/14 사장님): 어디서든 '지금 대출 가능 · n/m권' 한 방식 — 1권짜리도 1/1권으로 동일하게
     el.innerHTML = (avail
-      ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b>${d.total>1?(d.available>=d.total?` · ${d.total}권 모두`:` · ${d.available}/${d.total}권`):''}</div>`
-      : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b>${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
+      ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b> · ${d.available}/${d.total}권</div>`
+      : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b> · 0/${d.total}권${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
+    markMyHolding(reckey, d);   // 내가 이미 신청·예약한 책이면 버튼을 '취소하기' 상태로 교체
   }catch(e){
     // 조회 실패 시에만 최소 폴백(막다른 길 방지) — 도서관 상세로 직접 확인
     el.className='lcd-holding out'+pw;
     el.innerHTML='<div class="lh-line"><span class="lh-dot out"></span>소장 정보를 잠시 불러오지 못했어요</div>'
       +'<div class="lh-where"><a href="https://lib.semyung.ac.kr/search/detail/'+esc(reckey)+'" target="_blank" rel="noopener" style="color:var(--accent,#6366f1);text-decoration:underline;font-weight:600">도서관에서 직접 확인하기</a></div>';
   }
+}
+// ── 내가 기다리는 책(찾아줘북즈+예약) 캐시 — 소장 박스가 '이미 신청한 책'을 알아보게 한다 ──
+// 8/14 사장님 리포트 "신청 후에 취소가 안 되는 것 같아"의 수리: 신청 직후 그 화면에서만 취소가 보이고,
+// 모달을 닫으면 취소로 가는 길이 사라졌다. 이제 소장 박스가 매번 내 신청 여부를 확인해 취소 버튼을 상시 노출.
+let _myWaitCache=null, _myWaitTs=0;
+async function myWaiting(force){
+  if(!ssoIsPersonal()) return {picks:[],resv:[]};
+  const now=Date.now();
+  if(!force && _myWaitCache && now-_myWaitTs<30000) return _myWaitCache;
+  const [pk,rv]=await Promise.all([smMy('pickups'),smMy('reservations')]);
+  // 찾아줘북즈 이력은 취소·수령 건도 남는다 — 수령일/취소일이 비어 있는 것만 진행 중(8/9 실측)
+  const ended=x=>String(x.loan_date||'').trim()!==''||String(x.cancel_date||'').trim()!=='';
+  _myWaitCache={picks:smItems(pk).filter(x=>!ended(x)), resv:smItems(rv)}; _myWaitTs=now;
+  return _myWaitCache;
+}
+async function markMyHolding(reckey, d){
+  try{
+    if(!ssoIsPersonal()) return;
+    const ctrl=String(reckey).replace(/\D/g,'');
+    const w=await myWaiting();
+    const btn=document.getElementById('lhResv'); if(!btn||!btn.isConnected) return;
+    // ⚠️ 응답의 제어번호 필드는 ctrl_no (8/14 실측 — control_no가 아님)
+    const pk=(w.picks||[]).find(x=>String(x.ctrl_no||x.control_no||'').replace(/\D/g,'')===ctrl);
+    if(pk){
+      const cancellable=String(pk.loan_status||'')==='0001';   // 취소는 신청 단계에서만 — 직원 처리 시작 후엔 API가 안 받는다
+      btn.removeAttribute('onclick'); btn.className=btn.className.replace(/\bbusy\b/,'')+' done'; delete btn.dataset.busy;
+      btn.innerHTML='이미 찾아줘북즈를 신청한 책이에요 · '+esc(pk.loan_status_name||'신청 접수')
+        +(cancellable
+          ? '<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\'\',\''+esc(pk.request_no||'')+'\')">신청 취소하기</span>'
+          : '<br><span style="font-weight:600">도서관이 처리 중이에요 — 취소는 2층 안내데스크에 말씀해 주세요</span>');
+      return;
+    }
+    const mains=new Set((d&&d.copies||[]).map(x=>String(x.mainNo||'')).filter(Boolean));
+    const rv=(w.resv||[]).find(x=>mains.has(String(x.main_no||'')));
+    if(rv){
+      btn.removeAttribute('onclick'); btn.className=btn.className.replace(/\bbusy\b/,'')+' done'; delete btn.dataset.busy;
+      btn.innerHTML='이미 예약한 책이에요 · 반납되면 문자로 알려드려요'
+        +'<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\',\''+esc(rv.main_no||'')+'\')">예약 취소하기</span>';
+    }
+  }catch(e){}
+}
+// 제어번호 없는 종이책(검색·큐레이션 경로) → 소장목록에서 ctrl을 찾아 표준 소장 박스로 승격(표현 통일, 8/14)
+// ⚠️ 제목만 맞추면 딴 책이 잡힌다(8/6 실측 10%) — ISBN 정확 일치 우선, 제목 폴백은 저자까지 맞아야 채택.
+async function tulipPaperKey(isbn, title, author){
+  try{
+    const clean=String(isbn||'').replace(/^sm-/,'').replace(/[^0-9Xx]/g,'');
+    if(clean.length>=10){
+      const r=await fetch(SB_REST+'/semyung_tulip?select=ctrl&kind=eq.paper&isbn=eq.'+clean+'&limit=1',
+        {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].ctrl) return 'CATTOT'+String(rows[0].ctrl); }
+    }
+    const t=cleanT(title||'').slice(0,12), au=String(author||'').trim();
+    if(!t||!au) return '';
+    const r2=await fetch(SB_REST+'/semyung_tulip?select=ctrl,title,author&kind=eq.paper&limit=5&title=ilike.'+encodeURIComponent(t+'*'),
+      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r2.ok) return '';
+    const rows=await r2.json();
+    const key=cleanT(title||'').replace(/\s+/g,'');
+    const hit=(Array.isArray(rows)?rows:[]).find(x=>x.ctrl
+      && cleanT(x.title||'').replace(/\s+/g,'').indexOf(key)===0
+      && String(x.author||'').indexOf(au.slice(0,2))>=0);
+    return hit?('CATTOT'+String(hit.ctrl)):'';
+  }catch(e){ return ''; }
 }
 // 전자책+종이책 책: '종이책 대출' 줄을 탭하면 같은 소장정보(위치/청구기호/대출가능/예약)를 그 자리에서 펼침
 function togglePaperHold(reckey, row){
@@ -5202,16 +5267,16 @@ function smConfirm(reckey){
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
   sh.innerHTML=`<div class="rsv-card">
-    <h3>찾아줘북즈로 예약할까요?</h3>
+    <h3>찾아줘북즈를 신청할까요?</h3>
     <div class="rsv-sub">「${esc(title)}」을(를) 서가에서 찾아 <b>민송도서관 2층 안내데스크</b>에 보관해 드려요.</div>
     <ul class="rsv-rules">
       <li><span class="rsv-tag">수령</span><span>도서관 승인 후 <b>24시간 안에</b> 민송도서관 2층 안내데스크에서 받으세요.</span></li>
-      <li><span class="rsv-tag">한도</span><span>예약 <b>1인 3권</b>까지 · 대출기간 <b>14일</b></span></li>
-      <li><span class="rsv-tag warn">주의</span><span class="rsv-warn">받아가지 않으면 노쇼로 기록돼요. <b>3회 쌓이면 30일간</b> 예약이 제한됩니다.</span></li>
+      <li><span class="rsv-tag">한도</span><span>신청 <b>1인 3권</b>까지 · 대출기간 <b>14일</b></span></li>
+      <li><span class="rsv-tag warn">주의</span><span class="rsv-warn">받아가지 않으면 노쇼로 기록돼요. <b>3회 쌓이면 30일간</b> 이용이 제한됩니다.</span></li>
     </ul>
     <div class="rsv-btns">
       <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
-      <button class="rsv-go" onclick="document.getElementById('rsvSheet').classList.remove('on');smReserve('${esc(reckey)}')">예약 신청</button>
+      <button class="rsv-go" onclick="document.getElementById('rsvSheet').classList.remove('on');smReserve('${esc(reckey)}')">찾아줘북즈 신청</button>
     </div></div>`;
   sh.classList.add('on');
 }
@@ -5235,7 +5300,8 @@ async function smPickupPersonal(reckey){
     const l=await smMy('pickups'); let it=((l||{}).data||{}).item;
     if(it&&!Array.isArray(it)) it=[it];
     const live=(it||[]).filter(x=>x&&x.loan_status==='0001');
-    const mine=live.find(x=>String(x.control_no||x.controlno||'').replace(/\D/g,'')===ctrl)
+    // ⚠️ 제어번호 필드는 ctrl_no다(8/14 실측) — control_no로 찾으면 영영 못 맞춰 최신 건 폴백만 탔다
+    const mine=live.find(x=>String(x.ctrl_no||x.control_no||'').replace(/\D/g,'')===ctrl)
       || live.slice().sort((a,b)=>Number(b.request_no||0)-Number(a.request_no||0))[0];
     request_no=(mine&&mine.request_no)||'';
   }catch(e){}
@@ -5248,24 +5314,34 @@ async function smReserve(reckey){
     if(!ssoIsPersonal()){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; smLoginGuide(); return; }
     const d=await smPickupPersonal(reckey);
     if(d&&d.ok){
+      _myWaitCache=null;   // 방금 신청이 목록에 생겼다 — 캐시를 비워 소장 박스·내 도서관이 바로 알게
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
-      btn.innerHTML='예약 신청이 접수됐어요 · 도서관 승인 후 민송도서관 2층에서 <b>24시간 안에</b> 받으세요<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\',\''+esc(d.request_no||'')+'\')">예약 취소하기</span>';
-    }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
-  }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
+      btn.innerHTML='찾아줘북즈 신청이 접수됐어요 · 도서관 승인 후 2층 안내데스크에서 <b>24시간 안에</b> 받으세요<br><span class="lh-cancel" onclick="smCancel(\''+esc(reckey)+'\',\''+esc(d.accession_no||'')+'\',\''+esc(d.request_no||'')+'\')">신청 취소하기</span>';
+      try{ renderMyLibStatus(); }catch(e){}
+    }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'신청에 실패했어요'); }
+  }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('신청 중 오류가 발생했어요'); }
 }
 async function smCancel(reckey,acc,requestNo){
+  // 취소도 신청과 같은 본인 명의로만 — 예전의 공유계정 폴백은 남(관장님 계정)의 신청을 지울 수 있어 제거(8/14)
   const btn=document.getElementById('lhResv'); if(!btn) return;
-  if(!confirm('예약을 취소할까요?')) return;
+  if(!confirm('찾아줘북즈 신청을 취소할까요?')) return;
   btn.innerHTML='취소 중…';
   try{
-    let d;
-    if(ssoIsPersonal()&&requestNo){ d=await smMy('cancelPickup',{request_no:requestNo}); }
-    else{
-      const r=await fetch(SMRESV_FN+'?action=cancel&reckey='+encodeURIComponent(reckey)+'&accession='+encodeURIComponent(acc),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-      d=await r.json();
+    if(!ssoIsPersonal()){ smLoginGuide(); loadHolding(reckey); return; }
+    let no=requestNo;
+    if(!no){
+      // 신청번호가 없으면 내 신청 현황에서 이 책(ctrl_no 일치·신청 단계 0001)을 다시 찾는다
+      const ctrl=String(reckey).replace(/\D/g,'');
+      const w=await myWaiting(true);
+      const pk=(w.picks||[]).find(x=>String(x.loan_status||'')==='0001'&&String(x.ctrl_no||x.control_no||'').replace(/\D/g,'')===ctrl);
+      no=(pk&&pk.request_no)||'';
     }
-    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 서가에서 찾아 보관해 드려요'; }
-    else alert('취소에 실패했어요');
+    if(!no){ alert('취소할 신청을 찾지 못했어요. 도서관이 이미 처리 중이면 2층 안내데스크에 말씀해 주세요.'); loadHolding(reckey); return; }
+    const d=await smMy('cancelPickup',{request_no:no});
+    _myWaitCache=null;
+    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smConfirm('"+esc(reckey)+"')"); btn.innerHTML='찾아줘북즈 신청하기 · 서가에서 찾아 2층 안내데스크에 보관해 드려요'; }
+    else alert((((d||{}).data||{}).message)||'취소하지 못했어요 — 도서관이 이미 처리 중이면 2층 안내데스크에 말씀해 주세요');
+    try{ renderMyLibStatus(); }catch(e){}
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
 // 도서 예약(반납 대기) — 전권 대출중인 책을 반납되면 순번대로 받기
@@ -5279,7 +5355,7 @@ function smHoldConfirm(reckey){
     <h3>반납되면 예약해 드릴까요?</h3>
     <div class="rsv-sub">「${esc(title)}」은(는) 지금 대출 중이에요. 예약해 두면 <b>반납되는 대로 순번대로</b> 빌리실 수 있어요.</div>
     <ul class="rsv-rules">
-      <li><span class="rsv-tag">대출</span><span>반납되면 <b>대출 안내</b>를 보내드려요. 먼저 예약한 순서대로 진행됩니다.</span></li>
+      <li><span class="rsv-tag">안내</span><span>반납되면 <b>문자로 알려드리고</b>, 2층 안내데스크에 보관해 드려요. 먼저 예약한 순서대로 진행됩니다.</span></li>
       <li><span class="rsv-tag">기한</span><span>안내 후 <b>3일 안에</b> 대출하지 않으면 예약이 자동 취소돼요.</span></li>
       <li><span class="rsv-tag">한도</span><span>한 책당 <b>1순위</b>만 예약 가능 · 예약은 <b>3권</b>까지</span></li>
     </ul>
@@ -5309,24 +5385,26 @@ async function smHold(reckey){
     if(!ssoIsPersonal()){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; smLoginGuide(); return; }
     const d=await smHoldPersonal(reckey);
     if(d&&d.ok){
+      _myWaitCache=null;
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
-      btn.innerHTML='도서 예약이 접수됐어요 · 반납되면 <b>순번대로</b> 대출 안내를 보내드려요<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\',\''+esc(d.main_no||'')+'\')">예약 취소하기</span>';
+      btn.innerHTML='도서 예약이 접수됐어요 · 반납되면 <b>문자로 알려드리고</b> 2층 안내데스크에 보관해 드려요<br><span class="lh-cancel" onclick="smUnhold(\''+esc(reckey)+'\',\''+esc(d.main_no||'')+'\')">예약 취소하기</span>';
+      try{ renderMyLibStatus(); }catch(e){}
     }else{ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert((d&&(d.message||d.error))||'예약에 실패했어요'); }
   }catch(e){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; alert('예약 중 오류가 발생했어요'); }
 }
 async function smUnhold(reckey,mainNo){
+  // 취소도 본인 명의로만 — 공유계정 폴백 제거(8/14, smCancel과 같은 이유)
   const btn=document.getElementById('lhResv'); if(!btn) return;
   if(!confirm('예약을 취소할까요?')) return;
   btn.innerHTML='취소 중…';
   try{
-    let d;
-    if(ssoIsPersonal()&&mainNo){ d=await smMy('cancelReserve',{main_no:mainNo}); }
-    else{
-      const r=await fetch(SMRESV_FN+'?action=unhold&reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-      d=await r.json();
-    }
-    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 순번대로 빌려드려요'; }
-    else alert('취소에 실패했어요');
+    if(!ssoIsPersonal()){ smLoginGuide(); loadHolding(reckey); return; }
+    if(!mainNo){ alert('취소할 예약을 찾지 못했어요. 내 도서관에서 다시 시도해 주세요.'); loadHolding(reckey); return; }
+    const d=await smMy('cancelReserve',{main_no:mainNo});
+    _myWaitCache=null;
+    if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 문자로 알려드리고 2층 안내데스크에 보관해 드려요'; }
+    else alert((((d||{}).data||{}).message)||'취소하지 못했어요');
+    try{ renderMyLibStatus(); }catch(e){}
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
@@ -6220,7 +6298,7 @@ function libDetail(isbn){
       return `<div class="lcd-way t-paper ok pw-open" onclick="togglePaperHold('${paperHoldKey}',this)"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar pw-ar">›</span></div>`
         + `<div class="lcd-holding pw-hold loading" id="pwHold-${paperHoldKey}" data-loaded="1">우리 도서관 소장 현황을 확인하고 있어요…</div>`;
     }
-    return `<a class="lcd-way t-paper ok" href="${esc(fallbackHref)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar">›</span></a>`;
+    return `<a class="lcd-way t-paper ok" data-pwup="1" href="${esc(fallbackHref)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span>${wtag}<span class="ar">›</span></a>`;
   };
   const meta=[];
   if(b.rating!=null) meta.push(`<span class="lc-star">★</span> ${b.rating}${b.ratingCount?` · ${b.ratingCount}명`:''}`);
@@ -6249,7 +6327,7 @@ function libDetail(isbn){
             : isPaperHold
             ? '' /* 종이책 라이브 소장+예약(찾아줘북즈)은 위 소장현황 박스에서 — 북스타 안에서 일원화 */
             : hasPaper
-            ? `<a class="lcd-way pw t-paper" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="ar">›</span></a>`
+            ? `<a class="lcd-way pw t-paper" data-pwup="1" href="${esc(b._pp||opacUrl)}" target="_blank" rel="noopener"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출하기</span><span class="ar">›</span></a>`
             : hasSub
             ? `<a class="lcd-way pw t-sub" href="${esc(cremaHref(cremaUrl, b.t||''))}" target="_blank" rel="noopener"><span class="wic">${SVG_SUB}</span><span class="wlabel">크레마클럽에서 읽기 · 크레마 앱 필요</span><span class="wtag sub">무제한</span><span class="ar">›</span></a>`
             : '';
@@ -6284,6 +6362,19 @@ function libDetail(isbn){
   if(isPaperHold) loadHolding(reckey);
   // 전자책과 같이 있는 책의 종이책 소장현황 — 기본으로 펼쳐 두므로 여기서 바로 불러온다
   if(paperHoldKey) loadHolding(paperHoldKey, 'pwHold-'+paperHoldKey);
+  // 표현 통일(8/14 사장님): 제어번호를 모르는 종이책은 '종이책 대출하기' 링크로만 보였다 —
+  // 소장목록에서 ctrl을 찾으면(ISBN 우선, 제목 폴백은 저자 일치 필수) 같은 소장 박스로 교체한다. 못 찾으면 링크 유지.
+  const _pwup=ov.querySelector('[data-pwup]');
+  if(_pwup && !isPaperHold && !paperHoldKey){
+    tulipPaperKey(b.isbn, b.t, authorLine(b)).then(k=>{
+      if(!k || !_pwup.isConnected) return;
+      const wrap=document.createElement('div');
+      wrap.innerHTML=`<div class="lcd-way t-paper ok pw-open" onclick="togglePaperHold('${k}',this)"><span class="wic">${SVG_PAPER}</span><span class="wlabel">종이책 대출</span><span class="ar pw-ar">›</span></div>`
+        +`<div class="lcd-holding pw-hold loading" id="pwHold-${k}" data-loaded="1">우리 도서관 소장 현황을 확인하고 있어요…</div>`;
+      _pwup.replaceWith(...wrap.childNodes);
+      loadHolding(k, 'pwHold-'+k);
+    });
+  }
   renderDetailReviews(b.isbn, cleanT(b.t));
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   // 세명대 키(전자책 바코드=숫자 / 종이책 CATTOT)만 있으면 어느 목록에서 왔든 DB에서 보강한다.
@@ -6720,15 +6811,19 @@ async function renderMyLibStatus(){
         const ready=String(x.loan_status||'')!=='0001';   // 신청 단계를 벗어남 = 직원이 처리 시작
         const stName=String(x.loan_status_name||'').trim();
         const note=ready
-          ? `<span style="color:#16a34a;font-weight:800">${esc(stName||'준비 중')}</span> · ${esc(x.receive_location||'민송도서관')}에서 받으세요`
-          : `서가에서 찾는 중 · ${esc(x.receive_location||'민송도서관')}에서 수령`;
+          ? `<span style="color:#16a34a;font-weight:800">${esc(stName||'준비 중')}</span> · ${esc(x.receive_location||'민송도서관')} 2층 안내데스크에서 받으세요`
+          : `서가에서 찾는 중 · ${esc(x.receive_location||'민송도서관')} 2층 안내데스크에서 수령`;
+        // 취소는 신청 단계(0001)에서만 통한다 — 처리 시작 후엔 버튼 대신 안내(눌러도 실패하는 버튼을 두지 않는다, 8/14)
+        const cancelBtn=ready
+          ? `<span style="flex:none;font-size:11.5px;color:var(--text-light);align-self:center">취소는 데스크에</span>`
+          : `<button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>`;
         return box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
             <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">${note}</div>
           </div>
-          <button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+          ${cancelBtn}
         </div>`);
       }).join('');
     }
@@ -6833,13 +6928,16 @@ async function smRenew(acc){
 async function smDropReserve(mainNo){
   if(!mainNo||!confirm('예약을 취소할까요?')) return;
   const d=await smMy('cancelReserve',{main_no:mainNo});
-  readerToast(d&&d.ok?'예약을 취소했어요':'취소하지 못했어요');
+  _myWaitCache=null;
+  // 실패 사유는 도서관 문구를 그대로 — "취소하지 못했어요"만으론 학생이 다음 행동을 모른다
+  readerToast(d&&d.ok?'예약을 취소했어요':((((d||{}).data||{}).message)||'취소하지 못했어요'));
   renderMyLibStatus();
 }
 async function smDropPickup(reqNo){
-  if(!reqNo||!confirm('신청을 취소할까요?')) return;
+  if(!reqNo||!confirm('찾아줘북즈 신청을 취소할까요?')) return;
   const d=await smMy('cancelPickup',{request_no:reqNo});
-  readerToast(d&&d.ok?'신청을 취소했어요':'취소하지 못했어요');
+  _myWaitCache=null;
+  readerToast(d&&d.ok?'신청을 취소했어요':((((d||{}).data||{}).message)||'취소하지 못했어요 — 도서관이 처리 중이면 2층 안내데스크에 말씀해 주세요'));
   renderMyLibStatus();
 }
 async function smEbookBorrowOpen(brcd, w, book){
