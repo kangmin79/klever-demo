@@ -632,7 +632,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <span class="ms" id="msApp" onclick="setMode('app')" style="display:none">앱 관리</span>
   </div>
   <div class="spacer"></div>
-  <div class="who"><span class="av">한</span><span>한국대학교 관리자</span>
+  <div class="who"><span class="av">한</span><span>세명대학교 학술정보원</span>
     <span class="lo" onclick="lgOut()">로그아웃</span></div>
 </div>
 
@@ -666,7 +666,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
     <!-- ===== 대시보드 ===== -->
     <section id="pg-dash">
       <div class="phead">
-        <div><h1>대시보드 <span class="tagpill">한국대학교 관리자</span></h1>
+        <div><h1>대시보드 <span class="tagpill">세명대학교 학술정보원</span></h1>
           <p>독서 챌린지 측정 현황을 한눈에</p></div>
         <div class="seg">
           <button onclick="setRange(this,'week')">주간</button>
@@ -684,7 +684,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
       <!-- 별 순위 리더보드 + 이용 현황(예시) -->
       <div class="db-row">
         <div class="db-card"><h3>⭐ 별 순위 <span class="db-sub2">TOP 10 · 실제 적립</span></h3><div id="dbRank"></div></div>
-        <div class="db-card"><h3>이용 현황 <span class="db-demo">예시 · 도입 시 실제 집계</span></h3><div class="db-kpi-grid" id="dbKpi"></div></div>
+        <div class="db-card"><h3>이용 현황 <span class="db-sub2">정식 오픈 후 집계</span></h3><div class="db-kpi-grid" id="dbKpi"></div></div>
       </div>
 
       <!-- 차트: 일자별 미션 + 미션 종류별 (실데이터) -->
@@ -695,7 +695,7 @@ try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGa
 
       <!-- 프로그램별 참여 현황 -->
       <div class="db-card">
-        <h3>프로그램별 참여 현황 <span class="db-demo">예시 · 접속·이용 건수</span></h3>
+        <h3>프로그램별 참여 현황 <span class="db-sub2">발행물 기준</span></h3>
         <div class="tblwrap" style="border:0;box-shadow:none">
           <table class="tbl" style="min-width:0"><thead><tr><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead>
           <tbody id="dashProg"></tbody></table>
@@ -2097,25 +2097,10 @@ function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   secRenderCands(scHead);secNote();
 }
 
-/* ====== 데모 데이터 (PPT 예시 기반) — 대시보드·통계용 stats 포함 ====== */
-const DEMO_PROGRAMS=[
- {id:'p1',type:'큐레이션',title:'6월 도서관 추천 도서',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['사서가 주목한 책'],
-  visits:1690,uses:1500,minutes:null,intro:'6월에 읽기 좋은 책을 모았어요',
-  books:[{t:'불편한 편의점',a:'김호연 · 나무옆의자',isbn:'9791161571188',cover:'https://image.aladin.co.kr/product/26942/84/cover/k582730818_1.jpg'},
-         {t:'오늘도 행복할꺼야?',a:'정문정',isbn:'',cover:''},{t:'안중근 열사 이야기',a:'',isbn:'',cover:''}]},
- {id:'p2',type:'고전챌린지',title:'고전에서 배우는 삶의 지혜',status:'진행중',from:'2026-03-01',to:'2026-06-30',
-  loc:['이달의 책'],visits:1340,uses:1340,minutes:60,intro:'서양 고전 요약본을 읽고 퀴즈에 도전하세요',mission:{quiz:true,quizN:5,review:true,question:false},
-  books:[{t:'돈키호테',a:'세르반테스',isbn:'',cover:''},{t:'햄릿',a:'셰익스피어',isbn:'',cover:''},{t:'로빈슨 크루소',a:'대니얼 디포',isbn:'',cover:''}]},
- {id:'p3',type:'큐레이션',title:'나는 이래서 도서관이 좋다',status:'진행중',from:'2026-05-01',to:'2026-07-31',loc:['하루 15분, 핵심만'],
-  visits:840,uses:630,minutes:null,intro:'도서관을 사랑하는 마음을 담은 책들',books:[{t:'도서관의 삶, 책들의 운명',a:'',isbn:'',cover:''}]},
- {id:'p4',type:'고전챌린지',title:'AI가 고전에 질문을 던지다',status:'진행중',from:'2026-06-01',to:'2026-07-31',loc:['AI와 함께 읽는 책'],
-  visits:2500,uses:7895,minutes:90,intro:'AI와 함께 고전을 깊이 읽는 챌린지',mission:{quiz:true,quizN:7,review:true,question:true},
-  books:[{t:'군주론',a:'마키아벨리',isbn:'',cover:''},{t:'국부론',a:'애덤 스미스',isbn:'',cover:''}]},
- {id:'p5',type:'소장챌린지',title:'5월 심리학과 독서 챌린지',status:'종료',from:'2026-05-01',to:'2026-05-31',loc:['사서가 주목한 책'],
-  visits:980,uses:1120,minutes:null,intro:'심리학과 추천도서 완독 챌린지',mission:{quiz:true,quizN:5,review:true,question:false},
-  books:[{t:'미움받을 용기',a:'기시미 이치로',isbn:'',cover:''}]},
-];
-let PROGRAMS=DEMO_PROGRAMS.slice();
+/* ====== 8/14 데모 숫자 전면 제거 (사장님 "실제 데이터가 아닌 것 같은데") ======
+   PPT 예시 기반 가짜 프로그램·접속·클릭 수치는 진단서의 "실측만" 원칙과 정면 충돌이라 걷어냈다.
+   이제 이 화면의 모든 숫자는 서버 발행물·실측 로그에서만 나오고, 없으면 빈 상태로 정직하게 보인다. */
+let PROGRAMS=[];   // 서버(library_programs) 발행물만 — loadServerPrograms가 채운다
 // 서버(library_programs)의 실제 발행물을 불러와 데모 앞에 합침
 async function loadServerPrograms(){
   try{
@@ -2125,40 +2110,17 @@ async function loadServerPrograms(){
     const mapped=rows.map(x=>({id:x.id,type:x.type,title:x.title,status:x.status,from:x.start_date||'',to:x.end_date||'',
       loc:x.location?[x.location]:[],visits:0,uses:0,minutes:x.type==='고전챌린지'?0:null,intro:x.intro||'',
       mission:x.mission||undefined,books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
-    PROGRAMS=mapped.concat(DEMO_PROGRAMS);
+    PROGRAMS=mapped;   // 데모 병합 제거(8/14) — 발행한 것만 보인다
     if(el('pg-dash').style.display!=='none')renderDash();
     if(el('pg-history').style.display!=='none')renderHistory();
   }catch(e){}
 }
-/* 이용자별 (PPT slide4) */
-const USERS=[
- {id:'C336122',uses:41,review:10,quiz:80,question:10,total:85,minutes:20},
- {id:'nayuta16',uses:101,review:null,quiz:null,question:null,total:null,minutes:60},
- {id:'hs1',uses:33,review:12,quiz:95,question:0,total:90,minutes:75},
- {id:'reader_kim',uses:64,review:8,quiz:88,question:10,total:92,minutes:50},
- {id:'lib_lee',uses:52,review:10,quiz:76,question:10,total:84,minutes:35},
-];
-/* 도서별 (PPT slide4) */
-const BOOKS_STAT=[
- {t:'지적 대화를 위한 넓고 얕은 지식',uses:521,minutes:null},
- {t:'불행은 어떻게 질병으로 이어지는가',uses:23,minutes:350},
- {t:'패션, 영화를 스타일링하다',uses:21,minutes:null},
- {t:'돈키호테',uses:340,minutes:90},
- {t:'군주론',uses:298,minutes:120},
-];
-/* 월별 (PPT slide4) */
-const MONTHLY=[
- {m:'2026-01',visits:1690,uses:1500},{m:'2026-02',visits:1340,uses:1340},{m:'2026-03',visits:840,uses:630},
- {m:'2026-04',visits:1180,uses:1290},{m:'2026-05',visits:1620,uses:2240},{m:'2026-06',visits:2500,uses:7895},
-];
-let NOTICES=[
- {title:'여름방학 도서관 운영시간 안내',target:'전교생',period:'6.1 ~ 8.31',loc:['이달의 책'],body:'여름방학 동안 평일 09:00~18:00 운영합니다. 주말은 휴관입니다.',at:'2026-06-01'},
- {title:'고전 챌린지 우수자 시상 안내',target:'챌린지 참여자',period:'6.15 ~ 6.30',loc:['AI와 함께 읽는 책'],body:'6월 고전 챌린지 퀴즈 점수 우수자에게 도서관 포인트를 드립니다.',at:'2026-05-28'},
-];
-const COMMUNITY=[
- {title:'이달의 독서 모임 — 한강 작가 특집',by:'국어국문 독서동아리',at:'2026-05-20',members:24},
- {title:'고전 함께 읽기 오픈채팅',by:'한국대 책벗',at:'2026-05-12',members:58},
-];
+/* 이용자별·도서별·월별 데모 표 제거(8/14) — 정식 오픈 후 실집계로 채운다 */
+const USERS=[];
+const BOOKS_STAT=[];
+const MONTHLY=[];
+let NOTICES=[];        // 서버(library_notices)만 — loadNotices가 채운다
+const COMMUNITY=[];    // 데모 모임 목록 제거
 
 /* ====== 네비게이션 ====== */
 // 웹/앱 관리 모드 — 사이드바 메뉴가 통째로 바뀌고, 앱 모드는 금색 계열로 표시
@@ -2212,18 +2174,17 @@ function renderDash(){
   loadRealStats();       // 배너 실측정 칩 + 리더보드 + 차트 (실데이터)
 }
 
-/* 이용 현황 (예시 데이터 — 도입 시 실제 집계로 대체) */
+/* 이용 현황 — 가짜 예시 숫자(접속×2.3=클릭 같은 공식) 전면 제거(8/14).
+   웹 접속·클릭 집계는 측정 장치가 붙는 정식 오픈 후 시작 — 그때까지는 없다고 정직하게 말한다. */
 function renderTrafficDemo(){
-  const m=RANGE_MULT[RANGE];
-  const totV=PROGRAMS.reduce((a,p)=>a+(p.visits||0),0), totU=PROGRAMS.reduce((a,p)=>a+(p.uses||0),0);
-  el('dbKpi').innerHTML=[
-    ['접속자수',Math.round(totV*m)],['이용건수',Math.round(totU*m)],
-    ['클릭수',Math.round(totU*m*2.3)],['이용시간(분)',Math.round(totU*m*0.6)]
-  ].map(k=>`<div class="db-kpi"><div class="v">${nf(k[1])}</div><div class="l">${k[0]}</div><div class="a">예시</div></div>`).join('');
-  // 프로그램별 표 (접속·이용은 예시)
-  el('dashProg').innerHTML=PROGRAMS.slice().sort((a,b)=>(b.uses||0)-(a.uses||0)).map(p=>`<tr>
+  el('dbKpi').innerHTML=`<div style="grid-column:1/-1;color:var(--sub);font-size:12.5px;line-height:1.8;padding:14px 6px">
+    아직 집계가 없어요 — 배너 오픈과 함께 접속·이용 집계가 시작됩니다.<br>
+    지금 실측되는 것: 왼쪽 <b>별 적립</b>, 아래 <b>미션 수행</b>, 민송 앱 메뉴의 <b>앱 이용</b>.</div>`;
+  const rows=PROGRAMS.slice();
+  el('dashProg').innerHTML=rows.length?rows.map(p=>`<tr>
     <td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
-    <td class="num">${nf(Math.round((p.visits||0)*m))}</td><td class="num">${nf(Math.round((p.uses||0)*m))}</td></tr>`).join('');
+    <td class="num"><span class="muted">—</span></td><td class="num"><span class="muted">—</span></td></tr>`).join('')
+  :`<tr><td colspan="4" style="color:var(--light);text-align:center;padding:22px">아직 발행된 프로그램이 없어요 — 큐레이션·챌린지를 발행하면 여기에 나타납니다.</td></tr>`;
 }
 
 /* ====== 실시간 측정 (실제 데이터 — bookstar_stars/totals/enroll) ====== */
@@ -2378,33 +2339,35 @@ function renderStats(){
   buildStatMonths();
   initStatTabs();
   const kind=el('stKind').value;
+  // 데모 표 제거 후의 빈 상태(8/14) — 없는 숫자는 없다고 말한다
+  const stEmpty=n=>`<tr><td colspan="${n}" style="color:var(--light);text-align:center;padding:28px">아직 집계된 데이터가 없어요 — 정식 오픈 후 학생 이용이 여기에 집계됩니다.</td></tr>`;
   let html='',note='';
   if(statTab==='prog'){
     const rows=PROGRAMS.filter(p=>!kind||(kind==='챌린지'?p.type.includes('챌린지'):p.type==='큐레이션'));
     html=`<thead><tr><th class="ctr">번호</th><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      rows.map((p,i)=>`<tr><td class="ctr">${i+1}</td><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
-        <td class="num">${nf(p.visits)}</td><td class="num">${nf(p.uses)}</td>
-        <td class="num">${p.minutes!=null?nf(p.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
-    note='※ 이용시간은 <b>북스타 고전 컬렉션 도서</b>에만 집계됩니다. 소장도서 프로그램은 “—”.';
+      (rows.length?rows.map((p,i)=>`<tr><td class="ctr">${i+1}</td><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
+        <td class="num"><span class="muted">—</span></td><td class="num"><span class="muted">—</span></td>
+        <td class="num"><span class="muted">—</span></td></tr>`).join(''):stEmpty(6))+`</tbody>`;
+    note='접속·이용·이용시간 집계는 정식 오픈 후 시작됩니다.';
   }else if(statTab==='month'){
     const rows=MONTHLY.filter(r=>inRange(r.m));
     html=`<thead><tr><th>월</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead><tbody>`+
-      rows.map(r=>`<tr><td style="font-weight:600">${r.m.replace('-','년 ')}월</td><td class="num">${nf(r.visits)}</td><td class="num">${nf(r.uses)}</td></tr>`).join('')+`</tbody>`;
+      (rows.length?rows.map(r=>`<tr><td style="font-weight:600">${r.m.replace('-','년 ')}월</td><td class="num">${nf(r.visits)}</td><td class="num">${nf(r.uses)}</td></tr>`).join(''):stEmpty(3))+`</tbody>`;
     note='선택한 기간 내 월별 합계입니다.';
   }else if(statTab==='user'){
     html=`<thead><tr><th class="ctr">번호</th><th>아이디</th><th class="num">이용건수</th><th class="num">한줄서평</th><th class="num">퀴즈점수</th><th class="num">질문점수</th><th class="num">합계점수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      USERS.map((u,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:700">${esc(u.id)}</td><td class="num">${nf(u.uses)}</td>
+      (USERS.length?USERS.map((u,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:700">${esc(u.id)}</td><td class="num">${nf(u.uses)}</td>
         <td class="num">${u.review!=null?u.review:'<span class="muted">—</span>'}</td>
         <td class="num">${u.quiz!=null?u.quiz:'<span class="muted">—</span>'}</td>
         <td class="num">${u.question!=null?u.question:'<span class="muted">—</span>'}</td>
         <td class="num"><b>${u.total!=null?u.total:'<span class="muted">—</span>'}</b></td>
-        <td class="num">${u.minutes!=null?nf(u.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
-    note='프로그램마다 평가 항목이 달라 빈 칸이 생길 수 있어요. <b>합계점수</b>로 우수 이용자를 선정해 포인트·시상에 활용하세요.';
+        <td class="num">${u.minutes!=null?nf(u.minutes):'<span class="muted">—</span>'}</td></tr>`).join(''):stEmpty(8))+`</tbody>`;
+    note='프로그램마다 평가 항목이 달라 빈 칸이 생길 수 있어요.';
   }else{
     const rows=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses);
     html=`<thead><tr><th class="ctr">번호</th><th>도서명</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      rows.map((b,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:600">${esc(b.t)}</td><td class="num">${nf(b.uses)}</td>
-        <td class="num">${b.minutes!=null?nf(b.minutes):'<span class="muted">—</span>'}</td></tr>`).join('')+`</tbody>`;
+      (rows.length?rows.map((b,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:600">${esc(b.t)}</td><td class="num">${nf(b.uses)}</td>
+        <td class="num">${b.minutes!=null?nf(b.minutes):'<span class="muted">—</span>'}</td></tr>`).join(''):stEmpty(4))+`</tbody>`;
     note='도서별 이용 현황입니다. 이용시간은 고전 컬렉션 도서만 집계됩니다.';
   }
   el('statTbl').innerHTML=html; el('statNote').innerHTML=note;
@@ -3021,19 +2984,20 @@ function initHisTabs(){el('hisTabs').innerHTML=HIS_TABS.map(t=>`<button class="t
 function setHisTab(t){hisTab=t;renderHistory();}
 function renderHistory(){
   initHisTabs();let html='';
+  const hEmpty=(n,msg)=>`<tr><td colspan="${n}" style="color:var(--light);text-align:center;padding:28px">${msg}</td></tr>`;
   if(hisTab==='큐레이션'||hisTab==='챌린지'){
     const rows=PROGRAMS.filter(p=>hisTab==='큐레이션'?p.type==='큐레이션':p.type.includes('챌린지'));
     html=`<thead><tr><th>구분</th><th>프로그램</th><th>기간</th><th>위치</th><th class="ctr">상태</th><th class="num">이용건수</th></tr></thead><tbody>`+
-      rows.map(p=>`<tr><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
+      (rows.length?rows.map(p=>`<tr><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
         <td>${p.from} ~ ${p.to}</td><td style="font-size:12px;color:var(--sub)">${esc((p.loc||[]).map(locLabel).join(', '))}</td>
         <td class="ctr"><span class="gtag ${p.status==='진행중'?'cur':p.status==='예정'?'chal':'clas'}">${p.status}</span></td>
-        <td class="num">${nf(p.uses)}</td></tr>`).join('')+`</tbody>`;
+        <td class="num"><span class="muted">—</span></td></tr>`).join(''):hEmpty(6,'아직 발행 이력이 없어요.'))+`</tbody>`;
   }else if(hisTab==='커뮤니티'){
     html=`<thead><tr><th>모임/채널</th><th>개설자</th><th>개설일</th><th class="num">멤버</th></tr></thead><tbody>`+
-      COMMUNITY.map(c=>`<tr><td style="font-weight:600">${esc(c.title)}</td><td>${esc(c.by)}</td><td>${esc(c.at)}</td><td class="num">${nf(c.members)}명</td></tr>`).join('')+`</tbody>`;
+      (COMMUNITY.length?COMMUNITY.map(c=>`<tr><td style="font-weight:600">${esc(c.title)}</td><td>${esc(c.by)}</td><td>${esc(c.at)}</td><td class="num">${nf(c.members)}명</td></tr>`).join(''):hEmpty(4,'아직 커뮤니티 기록이 없어요.'))+`</tbody>`;
   }else{
     html=`<thead><tr><th>제목</th><th>대상</th><th>기간</th><th>발행일</th></tr></thead><tbody>`+
-      NOTICES.map(n=>`<tr><td style="font-weight:600">${esc(n.title)}</td><td>${esc(n.target)}</td><td>${esc(n.period||'')}</td><td>${esc(n.at)}</td></tr>`).join('')+`</tbody>`;
+      (NOTICES.length?NOTICES.map(n=>`<tr><td style="font-weight:600">${esc(n.title)}</td><td>${esc(n.target)}</td><td>${esc(n.period||'')}</td><td>${esc(n.at)}</td></tr>`).join(''):hEmpty(4,'아직 발행한 공지가 없어요.'))+`</tbody>`;
   }
   el('hisTbl').innerHTML=html;
 }
