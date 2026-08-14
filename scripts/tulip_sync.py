@@ -64,7 +64,11 @@ def parse_search(xml):
         if not ctrl: continue
         title = cdata(inner, "DISP01")
         if not title: continue
-        isbn = cdata(inner, "DISP08")
+        # DISP08은 'ISBN : 가격' MARC 표시형이라 콜론 꼬리가 붙어 올 수 있다
+        # (8/13 신착 2건이 '9791170614043:'로 저장된 사고). 숫자 토큰만 추출한다.
+        raw = cdata(inner, "DISP08")
+        m = re.search(r"\d[\d\-Xx]{8,}", raw)
+        isbn = re.sub(r"[^\dXx]", "", m.group(0)) if m else ""
         if not re.search(r"\d{9}", isbn): isbn = ""
         out.append({
             "ctrl": ctrl.group(1),
