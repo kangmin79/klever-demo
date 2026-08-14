@@ -14,6 +14,12 @@
 <meta property="og:url" content="https://semyung.bookstar.co.kr/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://semyung.bookstar.co.kr/og.png">
+<!-- 표지 이미지 호스트 사전 연결(8/14) — 첫 표지가 뜨기까지의 DNS·TLS 시간을 미리 지불 -->
+<link rel="preconnect" href="https://gkujptyfrzqrjrvovbnc.supabase.co">
+<link rel="preconnect" href="https://bookthumb-phinf.pstatic.net">
+<link rel="preconnect" href="https://shopping-phinf.pstatic.net">
+<link rel="preconnect" href="https://image.aladin.co.kr">
+<link rel="preconnect" href="https://ebook.semyung.ac.kr">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
@@ -4986,7 +4992,7 @@ function chalJoinBtn(c,cls){
 function chalHero(c){
   const b=(c.books||[])[0]||{t:c.title};
   const face=b.cover
-    ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
+    ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" decoding="async" data-t="${esc(cleanT(b.t||c.title||''))}" data-a="${esc(String(b.a||''))}" onerror="ncSwap(this)"></div>`
     : `<div class="book-cover">${ncCover(b.t?b:{t:c.title})}</div>`;
   const m=chalMissionPlain(c.mission);
   const join=chalIsJoined(c)?`nav('mypage')`:`chalJoin('${esc(String(c.id))}')`;
@@ -5461,11 +5467,34 @@ function ncCover(b){
     + ((au||foot)?`<div class="nc-f">${au?`<b>${escD(au)}</b>`:''}${foot?`<i>${escD(foot)}</i>`:''}</div>`:'')
     + `</div>`;
 }
+/* ── 표지 로딩 공용 체인 (8/14 사장님 "버그 없이 빨리 뜨게") ─────────────────
+   ① 종이책(sm-CATTOT…)은 자체 미러(Storage 600px WEBP, 18.8만 장) 우선 — 외부 핫링크보다 빠르고 차단 위험 0
+   ② 실패하면 원 표지(네이버/알라딘/세명대) → 고화질 → 원본 순으로 재시도
+   ③ 전부 실패하면 활자 표지(ncCover)로 — 예전엔 this.remove()로 빈칸이 남았다(알려진 버그 수리) */
+const CV_MIRROR='https://gkujptyfrzqrjrvovbnc.supabase.co/storage/v1/object/public/covers/';
+function ncSwap(img){
+  try{
+    const host=img.parentNode;
+    if(host&&host.classList) host.classList.remove('has-img');
+    img.outerHTML=ncCover({t:img.dataset.t||'',a:img.dataset.a||''});
+  }catch(e){ try{ img.remove(); }catch(_){} }
+}
+function cvErr(img){
+  try{
+    const alts=JSON.parse(img.dataset.alt||'[]');
+    if(alts.length){ img.dataset.alt=JSON.stringify(alts.slice(1)); img.src=alts[0]; return; }
+  }catch(e){}
+  ncSwap(img);
+}
 function lcCvHTML(b){
   const cv=_gbCover(b);
-  if(!cv) return ncCover(b);
-  const hi=esc(hiCover(cv)), orig=esc(cv);
-  return `<img src="${hi}" loading="lazy" onerror="if(this.dataset.o){this.remove()}else{this.dataset.o=1;this.src='${orig}'}">`;
+  const m=String((b&&b.isbn)||'').match(/^sm-CATTOT(\d+)$/);
+  const srcs=[];
+  if(m) srcs.push(CV_MIRROR+m[1]+'.webp');
+  if(cv){ const hi=hiCover(cv); srcs.push(hi); if(hi!==cv) srcs.push(cv); }
+  if(!srcs.length) return ncCover(b);
+  const t=esc(cleanT(b.t||b.title||'')), a=esc(String(b.a||b.author||''));
+  return `<img src="${esc(srcs[0])}" data-alt="${esc(JSON.stringify(srcs.slice(1)))}" data-t="${t}" data-a="${a}" loading="lazy" decoding="async" onerror="cvErr(this)">`;
 }
 let LIB_POOL=[];
 const LIB_SAMPLE=['9788936434267','9791161571188','9791165341909','9791188862290','9788936434120','9788998441012','9788936434595','9788937473401'];
@@ -5675,7 +5704,7 @@ function classicPick(n,off){ if(typeof BOOKS==='undefined')return []; const p=BO
 function mlShelf(b,note,cur,title){
   const cls=isCls(b);
   const face = cls ? bookCoverHTML(clOf(b))
-    : (b.cover ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" onerror="this.closest('.book-cover').classList.remove('has-img');this.remove();"></div>`
+    : (b.cover ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" decoding="async" data-t="${esc(cleanT(b.t||b.title||''))}" data-a="${esc(String(b.a||b.author||''))}" onerror="ncSwap(this)"></div>`
     : `<div class="book-cover">${ncCover(b)}</div>`);
   const bookT = esc(cls?clOf(b).title:cleanT(b.t||b.title||'추천 도서'));
   const bookA = esc(cls?(clOf(b).author||''):authorRich(b));
@@ -6311,7 +6340,7 @@ function libDetail(isbn){
   const ov=document.getElementById('lcDetail');
   ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
-      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" onerror="this.style.display='none'">`:ncCover(b)}</div>
+      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" decoding="async" data-t="${esc(cleanT(b.t||''))}" data-a="${esc(String(b.a||b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}</div>
       <div class="lcd-i">${b.rank?`<div class="lcd-rank"><span class="ricon">${SVG_RANK}</span>우리 학교 대출 ${b.rank}위</div>`:''}<h2>${escD(cleanT(b.t))}</h2><div class="au">${escD(authorLine(b))}${publisher?` · ${escD(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
@@ -7360,7 +7389,7 @@ function genreOfBook(b){
 
 function loanCardHTML(b){
   const coverInner = b.cover
-    ? `<div class="book-cover has-img"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none';"></div>`
+    ? `<div class="book-cover has-img"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>`
     : `<div class="book-cover style-${(Math.abs((b.title||'').charCodeAt(0))%8)+1}"><div><div class="book-cover-title">${esc(b.title)}</div><div class="book-cover-author">${esc(b.author)}</div></div></div>`;
   const loanTxt = b.loan ? `대출 ${parseInt(b.loan).toLocaleString()}회` : '';
   const link = b.detail ? `window.open('${esc(b.detail)}','_blank')` : `alert('도서관 소장 조회는 로그인 후 이용 가능합니다.')`;
@@ -10572,7 +10601,7 @@ function usCardsHTML(results){
       act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">소장·예약 보기</button>`;
     }
     return `<div class="book-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" data-isbn="${esc(isbn)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="book-cover${b.cover?' has-img':''}">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0">`:ncCover(b)}</div>
+      <div class="book-cover${b.cover?' has-img':''}">${b.cover?`<img src="${esc(b.cover)}" loading="lazy" decoding="async" data-t="${esc(cleanT(b.title||''))}" data-a="${esc(String(b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}</div>
       <div class="book-info">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">${usFormBadges(b)}${b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:''}</div>
         <div class="book-title">${escD(b.title)}</div>
@@ -11177,7 +11206,7 @@ window.addEventListener('keydown', (e) => {
     const star=b.rating!=null?`<span class="air-star">★</span> ${f5(b.rating)}`:'';
     const loan=b.loan_count?`  ·  대출 ${man(b.loan_count)}`:'';
     return `<div class="air-card" onclick="airOpen(${i})">
-      <div class="air-cv"><img src="${esc(b.cover)}" loading="lazy" onerror="this.style.opacity=0"></div>
+      <div class="air-cv"><img src="${esc(b.cover)}" loading="lazy" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>
       <div class="air-bd"><h3>${esc(b.title)}</h3><div class="air-au">${esc(b.author)}</div>
         <div class="air-meta">${star}${loan}</div>
         ${b.reason?`<div class="air-why">${esc(b.reason)}</div>`:''}
@@ -11208,7 +11237,7 @@ window.addEventListener('keydown', (e) => {
     const loan=b.loan_count?`  |  대출 ${man(b.loan_count)}`:'';
     const page=b.pages?`  |  ${b.pages}쪽`:'';
     const kws=(b.keywords||[]).slice(0,5);
-    document.getElementById('airSheet').innerHTML=`<div class="air-stop"><div class="air-scv"><img src="${esc(b.cover)}" onerror="this.style.opacity=0"></div>
+    document.getElementById('airSheet').innerHTML=`<div class="air-stop"><div class="air-scv"><img src="${esc(b.cover)}" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>
       <div style="flex:1"><h2>${esc(b.title)}</h2><div class="air-sau">${esc(b.author)} · ${esc(b.publisher||'')} · ${b.pub_year||''}</div>
       <div class="air-smeta">${star}${loan}${page}</div></div></div>
       ${b.reason?`<div class="air-swhy">${esc(b.reason)}</div>`:''}
@@ -11281,7 +11310,7 @@ window.addEventListener('keydown', (e) => {
     const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
     const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
     return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" onerror="this.style.opacity=0">`:ncCover(b)}</div>
+      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" decoding="async" data-t="${esc(cleanT(b.title||''))}" data-a="${esc(String(b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}</div>
       <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(meta)}</div>
       <div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">${usFormBadges(b)}${loan}</div>${read}</div></div>`;
   }
