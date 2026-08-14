@@ -4905,9 +4905,15 @@ async function fetchProgramsCached(){
   if(_progCacheP) return _progCacheP;
   _progCacheP=(async()=>{
     try{
-      const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+      const r=await fetch(`${SB_REST}/library_programs?select=*&status=neq.${encodeURIComponent('종료')}&order=created_at.desc`,
         {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-      if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)){ _progCache=rows; _progCacheTs=Date.now(); } }
+      if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)){
+        // status 컬럼은 관리자 저장 시점의 스냅샷이라 시작일이 와도 '예정'에 머문다(자동 갱신 없음).
+        // 날짜가 유일한 진실 — 오늘이 기간 안인 것만 노출(시작일에 자동 등장, 종료일 지나면 자동 퇴장).
+        // toISOString()은 UTC라 저녁에 하루 밀린다 — 로컬 날짜로 조립(신호등 UTC 사고와 동일 계열).
+        const d=new Date(), t=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        _progCache=rows.filter(x=>(!x.start_date||x.start_date<=t)&&(!x.end_date||t<=x.end_date));
+        _progCacheTs=Date.now(); } }
     }catch(e){}
     finally{ _progCacheP=null; }
     return _progCache;
