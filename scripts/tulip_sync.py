@@ -15,7 +15,9 @@ import sys, io, os, re, json, time, argparse, ssl, html, threading
 import concurrent.futures as cf
 import urllib.request, urllib.parse
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+# line_buffering=True — 이 재래핑이 -u를 무력화해 8KB 찰 때까지 로그가 침묵했다
+# (8/15 실측: DB는 시간당 5,600행 갱신 중인데 로그는 2시간40분 무소식 → 죽은 걸로 오인)
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", line_buffering=True)
 
 CTX = ssl.create_default_context(); CTX.check_hostname = False; CTX.verify_mode = ssl.CERT_NONE
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36 BookstarSync/1.0"
