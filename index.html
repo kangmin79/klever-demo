@@ -2640,7 +2640,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <input id="rvmBookInput" placeholder="책 제목을 입력하세요" style="display:none;width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;box-sizing:border-box;margin-bottom:12px">
     <div class="rvm-stars" id="rvmStars"></div>
     <textarea id="rvmBody" placeholder="이 책을 읽고 느낀 점을 자유롭게 남겨주세요. (다른 학생들과 공유됩니다)"></textarea>
-    <label class="rvm-chk"><input type="checkbox" id="rvmVerified" checked> 완독했어요 — <b>✔ 완독 인증</b> 배지가 붙어요</label>
+    <!-- '완독 인증' 자가 체크 삭제(8/14) — 배지는 자가신고가 아니라 측정(완독·퀴즈)에서만 나와야 한다 -->
     <div class="rvm-foot">
       <button class="btn-outline" onclick="closeReviewModal()">취소</button>
       <button class="rv-writebtn" onclick="submitReview()">등록</button>
@@ -5217,12 +5217,15 @@ function smLoginGuide(mode){
   }catch(e){}
   const read = mode==='read';
   const classic = mode==='classic';   // 8/14: 고전 읽기 게이트 — 대출이 아니라 '구성원 확인' 성격의 문구
+  const review = mode==='review';     // 8/14: 서평도 본인 이름으로만
   const sub = classic
     ? '북스타 고전은 <b>세명대 구성원 전용</b>이에요. 세명대 계정으로 로그인하면 바로 읽을 수 있어요.'
     : read
     ? '전자책은 <b>학생 본인 명의</b>로 대출돼요. 세명대 계정으로 로그인하면 내 이름으로 5권까지 빌릴 수 있어요.'
+    : review
+    ? '서평은 <b>학생 본인 이름</b>으로 올라가요. 세명대 계정으로 로그인하면 바로 쓸 수 있어요.'
     : '예약은 <b>학생 본인 이름</b>으로 접수돼요. 세명대 계정으로 로그인하면 바로 이용할 수 있어요.';
-  const last = classic ? '돌아오면 <b>보던 책이 바로</b> 열려요' : read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
+  const last = classic ? '돌아오면 <b>보던 책이 바로</b> 열려요' : read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : review ? '돌아와서 쓰면 <b>내 이름으로</b> 올라가요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
   let sh=document.getElementById('rsvSheet');
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
@@ -10161,12 +10164,13 @@ async function renderDetailReviews(bookId,bookTitle){
 // 서평 작성 모달
 let rvCtx={bookId:'',bookTitle:'',rating:5};
 function openReviewModal(bookId,bookTitle){
+  // 서평도 본인 이름으로만(8/14) — 미로그인 등록은 '김민서/한국대학교' 데모 잔재로 저장되던 구멍
+  if(!ssoIsPersonal()){ smLoginGuide('review'); return; }
   rvCtx={bookId:bookId||'',bookTitle:bookTitle||'',rating:5};
   const hasBook=!!(bookId||bookTitle);
   document.getElementById('rvmBook').textContent=hasBook&&bookTitle?`『${bookTitle}』`:'';
   const inp=document.getElementById('rvmBookInput'); inp.style.display=hasBook?'none':'block'; inp.value='';
   document.getElementById('rvmBody').value='';
-  document.getElementById('rvmVerified').checked=true;
   rvSetStars(5);
   document.getElementById('rvModal').classList.add('on');
 }
@@ -10180,7 +10184,8 @@ async function submitReview(){
   const inp=document.getElementById('rvmBookInput');
   if(inp&&inp.style.display!=='none'){ rvCtx.bookTitle=inp.value.trim(); rvCtx.bookId=rvCtx.bookId||('t-'+(inp.value.trim()||'책')); }
   if(!rvCtx.bookTitle){ alert('책 제목을 입력해주세요.'); return; }
-  const row={school:'한국대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,reviewer:readerName(),rating:rvCtx.rating,body:body,verified:document.getElementById('rvmVerified').checked,lang:'ko'};
+  // verified는 항상 false로 저장 — 인증 배지는 완독·퀴즈 측정이 붙는 날부터(자가신고 금지, 8/14)
+  const row={school:'세명대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,reviewer:readerName(),rating:rvCtx.rating,body:body,verified:false,lang:'ko'};
   try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
     if(!r.ok){ alert('등록 실패 ('+r.status+')'); return; }
   }catch(e){ alert('등록 실패 — 연결 확인'); return; }
