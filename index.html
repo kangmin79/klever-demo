@@ -1991,7 +1991,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-shell.immersive .viewer-header{position:absolute;top:0;left:0;right:0;z-index:40;}
   .viewer-shell.immersive .pane-tabs{position:absolute;bottom:0;left:0;right:0;z-index:40;border-top:1px solid var(--border);}
   .viewer-shell.immersive .reader-searchbar{position:absolute;top:0;left:0;right:0;z-index:42;}   /* 본문찾기는 헤더 자리를 대신 차지(브라우저식) */
-  .toc-drawer{z-index:45;}   /* 목차·노트 서랍은 겹친 메뉴보다 위 */
+  /* (삭제) .toc-drawer{z-index:45} — 소스 뒤의 기본 규칙(z:5)에 캐스케이드로 덮여 죽은 규칙이었음. .open{z:50}가 담당 */
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   .quest-grid{grid-template-columns:repeat(3,1fr);}
   /* 리더 헤더 한 줄: 고스트 아이콘 왼쪽 + 모드칩·Aa·닫기 오른쪽 (킨들/애플북스 결 — 2줄+박스버튼 정리 2026-07-23) */
@@ -2083,7 +2083,7 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
   position:absolute;top:0;left:0;bottom:0;width:300px;background:var(--bg-card);border-right:1px solid var(--border);
   transform:translateX(-100%);transition:transform 0.25s ease;z-index:5;display:flex;flex-direction:column;
 }
-.toc-drawer.open{transform:translateX(0);z-index:30;}   /* 자동숨김 헤더(peek, z-index:20)가 내려와도 목차 X 버튼을 덮지 않게 위로 */
+.toc-drawer.open{transform:translateX(0);z-index:50;}   /* 몰입 헤더(z:40)·자동숨김 헤더(z:20) 어느 쪽보다도 위 — 서랍 제목줄·✕가 가리면 못 닫는다 */
 .toc-head{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;}
 .toc-list{flex:1;overflow-y:auto;padding:8px 0;}
 .toc-item{padding:10px 18px;font-size:13px;color:var(--text-sub);cursor:pointer;border-left:3px solid transparent;}
@@ -2145,6 +2145,12 @@ body.dark .viewer-pane span.psent.ps-hot{background:rgba(212,169,59,0.32);}
   border-radius:6px;font-size:14px;line-height:1.7;color:var(--text-sub);
   font-family:'Noto Serif KR',serif;}
 body.dark .viewer-pane .sent-reveal{background:linear-gradient(to right, var(--gold,#d4a93b) 3px, rgba(212,169,59,0.14) 3px);}
+/* 페이지모드 문장탭 번역 바 — 인라인 삽입은 다단 조판을 흔들어 하단 고정으로 표시 */
+.pg-sent-reveal{position:fixed;left:12px;right:12px;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:260;
+  padding:10px 14px 10px 17px;max-height:38vh;overflow-y:auto;
+  background:linear-gradient(to right, var(--gold,#d4a93b) 3px, var(--bg-card) 3px);
+  border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.18);
+  font-size:14px;line-height:1.7;color:var(--text-sub);font-family:'Noto Serif KR',serif;}
 /* 평행 하이라이트 — 원문에 형광펜 치면 번역쪽 같은 문단에 골드 마커 (은은하게, pp-on보다 약함) */
 .viewer-pane p.hl-pair{box-shadow:inset 3px 0 0 rgba(212,169,59,.65);background:rgba(212,169,59,.06);padding-left:8px;margin-left:-11px;border-radius:3px;}
 body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
@@ -3753,6 +3759,7 @@ function _sentSpans(pi,sg){ return document.querySelectorAll('span.psent[data-pi
 function _sentClear(){
   document.querySelectorAll('span.psent.ps-hot').forEach(x=>x.classList.remove('ps-hot'));
   document.querySelectorAll('.viewer-pane .sent-reveal').forEach(x=>x.remove());
+  document.querySelectorAll('.pg-sent-reveal').forEach(x=>x.remove());   // 페이지모드 하단 번역 바
 }
 function _sentHot(s){   // PC: 같은 pi/sg 양쪽 칸 강조
   _sentClear();
@@ -3772,6 +3779,22 @@ function _sentTap(s){   // 모바일: 강조 + 반대 언어 인라인 펼침(�
   const rev=document.createElement('span'); rev.className='sent-reveal'; rev.textContent=other;
   s.insertAdjacentElement('afterend', rev);
   rev.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+function _sentTapPaged(s){   // 페이지모드: 인라인 삽입은 다단 조판(페이지 수)을 흔들어 하단 고정 바로 표시
+  const opened = s.classList.contains('ps-hot');
+  _sentClear();
+  if(opened) return;
+  const grp = (BODIES_SENT[currentBook.id]||[])[+s.dataset.pi];
+  const g = grp && grp[+s.dataset.sg];
+  if(!g) return;
+  const src = _pgSourcePane();                             // 조판 원본 칸 기준 반대 언어 (스크롤 모드와 동일 규칙)
+  const inLeft = !!(src && src.classList.contains('left'));
+  const other = inLeft ? (g[1]||'') : (g[0]||'');
+  if(!other) return;
+  s.classList.add('ps-hot');
+  const bar=document.createElement('div'); bar.className='pg-sent-reveal'; bar.textContent=other;
+  bar.onclick=_sentClear;
+  document.getElementById('pagedView')?.appendChild(bar);
 }
 
 let _parallelOn=false, _suppressSync=false, _parallelBound=false, _suppressTimer=null;
@@ -3887,14 +3910,18 @@ function syncPairMarks(){
   const left=document.querySelector('.viewer-pane.left');
   const right=document.querySelector('.viewer-pane.right');
   if(!left||!right) return;
-  const pis=new Set();
-  left.querySelectorAll('mark.hl[data-hlts]').forEach(mk=>{
-    const p=mk.closest('p[data-pi]'); if(p) pis.add(p.dataset.pi);
-  });
-  pis.forEach(pi=>{
-    const R=right.querySelector('p[data-pi="'+pi+'"]');
-    if(R) R.classList.add('hl-pair');
-  });
+  // 양방향: 어느 칸의 형광펜이든 반대 칸 같은 문단에 골드 마커 (형광펜이 이미 있는 문단은 생략)
+  const mirror=(from,to)=>{
+    const pis=new Set();
+    from.querySelectorAll('mark.hl[data-hlts]').forEach(mk=>{
+      const p=mk.closest('p[data-pi]'); if(p) pis.add(p.dataset.pi);
+    });
+    pis.forEach(pi=>{
+      const R=to.querySelector('p[data-pi="'+pi+'"]');
+      if(R && !R.querySelector('mark.hl')) R.classList.add('hl-pair');
+    });
+  };
+  mirror(left,right); mirror(right,left);
 }
 function _clearParallel(){ document.querySelectorAll('.viewer-pane p.pp-on').forEach(p=>p.classList.remove('pp-on')); }
 function onParallelClick(e){
@@ -4021,19 +4048,20 @@ document.addEventListener('keydown', ()=>{ if(_viewerOpen()) v4Activity(); }, tr
 
 /* 하이라이트 (완독 모드에서만) — 위치 앵커(장+문단+글자위치) 저장 → 다시 열어도 복원 */
 function setupHighlightHandlers(){
-  document.addEventListener('mouseup', (e) => {
+  const maybeShow = (tgt) => {
     const popup = document.getElementById('hlPopup');
     if(!popup) return;
-    const tgt = (e.target && e.target.closest) ? e.target : null;   // target이 요소가 아닐 수 있음(document 등)
     if(tgt && (tgt.closest('#hlPopup') || tgt.closest('.hl-note-box'))) return;   // 팝업·메모박스 조작 중엔 유지
+    if(!tgt && document.getElementById('hlNoteBox')) return;   // 터치 보강 경로: 메모 입력 중엔 건드리지 않음
     if(currentMode !== 'full'){ popup.style.display = 'none'; return; }
     const sel = window.getSelection();
     const text = sel ? sel.toString().trim() : '';
     if(!text || text.length < 2){ popup.style.display = 'none'; _lastSelectionRange = null; return; }
     if(sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
-    const left = document.querySelector('.viewer-pane.left');
-    if(!left || !left.contains(range.startContainer)) return;
+    // 원문·번역 어느 칸이든 허용 (모바일 기본 탭=번역이라 left 한정이면 대부분 경로에서 죽음). AI챗 칸만 제외
+    const pane0 = _elOf(range.startContainer)?.closest('#viewerBody .viewer-pane');
+    if(!pane0 || pane0.classList.contains('bx-pane')) return;
     _lastSelectionRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
     popup.style.display = 'flex';
@@ -4041,7 +4069,15 @@ function setupHighlightHandlers(){
     const px = rect.left + rect.width/2 - popup.offsetWidth/2;
     popup.style.left = Math.max(8, Math.min(px, window.innerWidth - popup.offsetWidth - 8)) + 'px';
     popup.style.top  = Math.max(8, rect.top - 44) + 'px';
-  });
+  };
+  document.addEventListener('mouseup', (e) => maybeShow((e.target && e.target.closest) ? e.target : null));
+  // iOS·안드로이드 롱프레스 선택은 mouseup이 안정적으로 오지 않음 → 터치 기기만 selectionchange로 보강
+  if(window.matchMedia && matchMedia('(hover:none)').matches){
+    let _selT = null;
+    document.addEventListener('selectionchange', () => {
+      clearTimeout(_selT); _selT = setTimeout(() => maybeShow(null), 400);
+    });
+  }
   // 본문 형광펜 클릭 → 메모 보기·수정·지우기 / 박스 밖 클릭 → 닫기
   document.addEventListener('click', (e) => {
     const tgt = (e.target && e.target.closest) ? e.target : null;
@@ -4098,7 +4134,8 @@ function addHighlight(fromNote){
   const ch = (sec && pane) ? [...pane.querySelectorAll('.chapter-anchor')].indexOf(sec) : -1;
   const pi = (ch >= 0 ? [...sec.querySelectorAll('p')] : [...(pane || document).querySelectorAll('p')]).indexOf(p);
   if(!readerStats.highlights[currentBook.id]) readerStats.highlights[currentBook.id] = [];
-  const entry = {text, ts, anc: {ch, p: pi, off}};
+  // pn: 어느 칸의 앵커인지 (l=원문/좌, r=번역/우) — 복원·점프 때 같은 칸에 되그림. 옛 기록(pn 없음)=l
+  const entry = {text, ts, anc: {ch, p: pi, off, pn: (pane && pane.classList.contains('right')) ? 'r' : 'l'}};
   readerStats.highlights[currentBook.id].push(entry);
   saveReaderStats();
   if(!fromNote) readerToast('✦ 하이라이트 저장 — 독서노트에서 확인');
@@ -4114,16 +4151,24 @@ function addNote(){
   if(!entry) return;
   openNoteBox(entry.ts, rect.left + rect.width/2, rect.bottom);
 }
-/* 다시 열 때 형광펜 복원 (완독 모드 좌측 칸) */
+/* 다시 열 때 형광펜 복원 (완독 모드 — 각 앵커가 기록된 칸에 되그림) */
 function restoreHighlights(){
   if(!currentBook || currentMode !== 'full') return;
   const hls = readerStats.highlights[currentBook.id] || [];
   if(!hls.length) return;
-  const pane = document.querySelector('.viewer-pane.left');
-  if(!pane || pane.querySelector('mark.hl[data-hlts]')) return;   // 칸 없음·이미 복원됨
-  const secs = [...pane.querySelectorAll('.chapter-anchor')];
+  const panes = {l: document.querySelector('.viewer-pane.left'),
+                 r: document.querySelector('.viewer-pane.right:not(.bx-pane)')};
+  if(!panes.l && !panes.r) return;
+  if((panes.l && panes.l.querySelector('mark.hl[data-hlts]')) ||
+     (panes.r && panes.r.querySelector('mark.hl[data-hlts]'))) return;   // 이미 복원됨
+  const secsOf = {};
   hls.forEach(h => {
     if(!h.anc) return;   // 옛 기록(위치 정보 없음): 독서노트 목록에서만 보임
+    const key = h.anc.pn === 'r' ? 'r' : 'l';
+    const pane = panes[key];
+    if(!pane) return;
+    if(!secsOf[key]) secsOf[key] = [...pane.querySelectorAll('.chapter-anchor')];
+    const secs = secsOf[key];
     const scope = (h.anc.ch >= 0 && secs[h.anc.ch]) ? secs[h.anc.ch] : pane;
     const ps = [...scope.querySelectorAll('p')];
     const p = ps[h.anc.p];
@@ -4208,7 +4253,8 @@ function hlJump(ts){
   if(!h.anc){ readerToast('옛 기록이라 위치 정보가 없어요'); return; }
   const d = document.getElementById('notesDrawer');
   if(window.innerWidth <= 600 && d?.classList.contains('open')) toggleNotes();
-  if(window.innerWidth <= 600 && _mobPane !== 'main') switchMobilePane('main');   // 형광펜은 본문(좌측) 칸에 있음
+  const _hlPn = (h.anc.pn === 'r') ? 'r' : 'l';   // 형광펜이 기록된 칸으로 탭 전환
+  if(window.innerWidth <= 600){ const want = _hlPn === 'r' ? 'second' : 'main'; if(_mobPane !== want) switchMobilePane(want); }
   if(_pg.on){   // 페이지 모드: 해당 장으로 간 뒤 형광펜이 있는 페이지 계산
     showChapter(Math.max(0, h.anc.ch), 0);
     requestAnimationFrame(() => {
@@ -4220,19 +4266,20 @@ function hlJump(ts){
     });
     return;
   }
-  const pane = document.querySelector('.viewer-pane.left');
+  const pane = document.querySelector(_hlPn === 'r' ? '.viewer-pane.right:not(.bx-pane)' : '.viewer-pane.left');
   const mk = pane ? pane.querySelector(`mark.hl[data-hlts="${h.ts}"]`) : null;
   if(!mk){ readerToast('본문에서 위치를 찾지 못했어요'); return; }
-  const el = _scrollEl();
+  const el = pane;   // 형광펜이 있는 칸을 직접 스크롤 (반대 칸은 동기 스크롤이 따라옴)
   if(el){
     const top = mk.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop - 90;
     el.scrollTo({top: Math.max(0, top), behavior: 'smooth'});
   }
   _hlFlash(mk);
-  // 정렬책: 번역쪽 같은 문단도 잠깐 강조
+  // 정렬책: 반대 칸 같은 문단도 잠깐 강조
   if(_parallelOn){
     const p = mk.closest('p[data-pi]');
-    const R = p ? document.querySelector('.viewer-pane.right p[data-pi="' + p.dataset.pi + '"]') : null;
+    const oppSel = _hlPn === 'r' ? '.viewer-pane.left' : '.viewer-pane.right';
+    const R = p ? document.querySelector(oppSel + ' p[data-pi="' + p.dataset.pi + '"]') : null;
     if(R){ R.classList.add('pp-on'); setTimeout(() => R.classList.remove('pp-on'), 1600); }
   }
 }
@@ -4258,11 +4305,15 @@ function closeSearch(){
   clearSearchHits();
 }
 function clearSearchHits(){
+  const had=_searchHits.length;
   document.querySelectorAll('.viewer-pane mark.search-hit').forEach(m=>{
     const t = document.createTextNode(m.textContent); m.replaceWith(t);
   });
   document.querySelectorAll('.viewer-pane').forEach(p=>p.normalize());
   _searchHits=[]; _searchIdx=-1;
+  if(had && typeof _pg!=='undefined' && _pg.on){   // 페이지모드: 클론에 남은 검색 표시 제거(재조판)
+    _pg.chapters=buildPagedChapters(); showChapter(_pg.chIdx,_pg.page);
+  }
 }
 function runSearch(dir){
   const q = document.getElementById('searchInput').value.trim();
@@ -4272,7 +4323,9 @@ function runSearch(dir){
     moveSearch(dir); return;
   }
   clearSearchHits();
-  const pane = document.querySelector('.viewer-pane.left') || document.querySelector('.viewer-pane');
+  // 페이지모드는 조판 원본 칸에서 검색해야 클론(화면)에 표시가 실린다. 스크롤 모드는 기존대로 좌측 우선
+  const pane = (typeof _pg!=='undefined' && _pg.on ? _pgSourcePane() : null)
+             || document.querySelector('.viewer-pane.left') || document.querySelector('.viewer-pane');
   if(!pane) return;
   const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
   const walker = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT, {
@@ -4298,6 +4351,7 @@ function runSearch(dir){
   });
   _searchHits=[...pane.querySelectorAll('mark.search-hit')];
   _searchIdx = _searchHits.length ? 0 : -1;
+  if(typeof _pg!=='undefined' && _pg.on && _searchHits.length) _pg.chapters=buildPagedChapters();   // 클론에 표시 반영
   highlightCurrentHit();
   document.getElementById('searchCount').textContent = _searchHits.length ? `1 / ${_searchHits.length}` : '결과 없음';
 }
@@ -4310,7 +4364,28 @@ function moveSearch(dir){
 function highlightCurrentHit(){
   _searchHits.forEach(m=>m.classList.remove('current'));
   const cur=_searchHits[_searchIdx];
-  if(cur){ cur.classList.add('current'); cur.scrollIntoView({behavior:'smooth',block:'center'}); }
+  if(!cur) return;
+  cur.classList.add('current');
+  if(typeof _pg!=='undefined' && _pg.on){
+    // 페이지모드: 원본 칸은 숨겨져 scrollIntoView가 무의미 → 히트가 있는 장으로 조판 후 그 페이지로 점프
+    const pane=_pgSourcePane();
+    const secs=pane?[...pane.querySelectorAll('.chapter-anchor')]:[];
+    const sec=cur.closest('.chapter-anchor');
+    const ch=(sec&&secs.length)?Math.max(0,secs.indexOf(sec)):0;
+    showChapter(ch,0);
+    requestAnimationFrame(()=>{
+      const mks=[...document.querySelectorAll('#pagedFlow mark.search-hit')];
+      const inSec=sec?[...sec.querySelectorAll('mark.search-hit')]:_searchHits;
+      const k=inSec.indexOf(cur);
+      const mk=(k>=0&&mks[k])||mks[0];
+      if(!mk) return;
+      mks.forEach(m=>m.classList.remove('current')); mk.classList.add('current');
+      const pg=Math.max(0,Math.min(_pg.count-1,Math.floor((mk.offsetLeft+2)/(_pg.colW+_pg.gap))));
+      _pg.page=pg; applyPageTransform(); updatePagedInfo(); pgSave();
+    });
+    return;
+  }
+  cur.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
 /* ── 독서노트 + 책갈피 패널 ── */
@@ -7664,7 +7739,8 @@ function setupImmersiveTap(){
 
 /* ═══════════ 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼) ═══════════ */
 let _pg={on:false, chapters:[], chIdx:0, page:0, count:1, colW:0, colH:0, gap:36, padX:20, padY:24};
-function pgEligible(){ return !!readerPrefs.pageMode && window.innerWidth<=600; }
+// 완독 모드 한정 — 챌린지에서 발동하면 퀴즈 pane이 정적 클론으로 조판돼 입력·제출이 죽는다 (8/15 리뷰)
+function pgEligible(){ return !!readerPrefs.pageMode && window.innerWidth<=600 && currentMode==='full'; }
 function _pgSourcePane(){   // 페이지로 조판할 원본 칸 (모바일 선택 탭 기준 — 숨겨져 있어도 outerHTML 읽음)
   const left=document.querySelector('.viewer-pane.left');
   const right=document.querySelector('.viewer-pane.right');
@@ -7728,6 +7804,17 @@ function applyPagedFont(){
   const flow=document.getElementById('pagedFlow'); if(!flow) return;
   flow.style.setProperty('--reader-fs', FONT_SIZES[readerPrefs.fontSizeIdx]+'px');
   flow.style.setProperty('--reader-lh', LINE_HEIGHTS[readerPrefs.lineHeightIdx]);
+  // 서체·배경·여백도 스크롤 모드와 동일하게 (8/15: 페이지모드에서 Aa 설정 절반이 안 먹던 문제)
+  flow.style.setProperty('--reader-ff', (READER_FONTS[readerPrefs.fontIdx]||READER_FONTS[0]).ff);
+  flow.style.fontFamily = readerPrefs.fontIdx>0 ? 'var(--reader-ff)' : '';   // 기본 서체는 장르별 조판 유지
+  const pv=document.getElementById('pagedView');
+  const bgc=READER_BGS.find(b=>b.id===readerPrefs.bg);
+  if(pv){
+    if(bgc && bgc.bg){ pv.style.background=bgc.bg; pv.style.color=bgc.fg||''; }
+    else { pv.style.background=''; pv.style.color=''; }
+  }
+  if(typeof PAD_X!=='undefined' && PAD_X[readerPrefs.padXIdx]!=null) _pg.padX=PAD_X[readerPrefs.padXIdx];
+  if(typeof PAD_Y!=='undefined' && PAD_Y[readerPrefs.padYIdx]!=null) _pg.padY=PAD_Y[readerPrefs.padYIdx];
 }
 function layoutPaged(){
   const clip=document.getElementById('pagedClip'), flow=document.getElementById('pagedFlow');
@@ -7760,6 +7847,7 @@ function showChapter(chIdx, page){
 }
 function pgGo(dir){
   if(!_pg.on) return;
+  _sentClear();   // 페이지 넘기면 열린 번역 바 닫기
   const np=_pg.page+dir;
   if(np<0){ if(_pg.chIdx>0) showChapter(_pg.chIdx-1,'last'); return; }
   if(np>=_pg.count){ if(_pg.chIdx<_pg.chapters.length-1) showChapter(_pg.chIdx+1,0); return; }
@@ -7806,12 +7894,12 @@ function setupPagedGestures(){
     const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
     if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4){ pgGo(dx<0?1:-1); return; }   // 스와이프
     if(moved) return;
-    pgTap(t.clientX);                                                                   // 탭
+    pgTap(t.clientX, e.target);                                                         // 탭
   },{passive:true});
   pv.addEventListener('click',e=>{                  // 비터치(데스크톱 미리보기)용
     if(_pgTouchActive) return;
     if(_pgIgnore(e)) return;
-    pgTap(e.clientX);
+    pgTap(e.clientX, e.target);
   });
 }
 function _pgIgnore(e){
@@ -7821,13 +7909,16 @@ function _pgIgnore(e){
   if(sel && sel.toString().trim().length>0) return true;    // 드래그 선택 중
   return false;
 }
-function pgTap(clientX){
+function pgTap(clientX, tgt){
   const pv=document.getElementById('pagedView'); if(!pv) return;
   const r=pv.getBoundingClientRect();
   const fx=(clientX-r.left)/r.width;
   if(fx<0.30){ pgGo(-1); return; }                          // 좌 30% = 이전
   if(fx>0.70){ pgGo(1);  return; }                          // 우 30% = 다음
-  document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');  // 가운데 = 바 토글
+  const s = tgt && tgt.closest ? tgt.closest('#pagedFlow span.psent') : null;
+  if(s){ _sentTapPaged(s); return; }                        // 가운데 문장 = 번역 바 (스크롤 모드의 문장탭과 동일 역할)
+  _sentClear();
+  document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');  // 가운데 빈곳 = 바 토글
 }
 
 async function openViewer(bookId, mode){
@@ -8207,8 +8298,10 @@ function renderViewer(){
     renderSceneChallenge(CHALLENGE_SCENES[currentBook.id], body, info);
   } else if(currentMode === 'challenge'){
     // 챌린지 좌측: classic/foreign은 풀이/번역, modern은 원문 / 우측: 참여 챌린지 미션(별 적립)
-    const leftBody = (currentBook.locale === 'modern' ? C().orig : C().trans)
-                     || ph(L.placeholderTrans);
+    // 한국고전 평행(KR_SENT) 주입 후엔 trans=외국어(zh 등) → 본문 칸은 한국어(side0=orig)를 쓴다 (8/15: 챌린지에 중국어 뜨던 버그)
+    const _krSent = currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
+    const leftBody = (_krSent ? C().orig : (currentBook.locale === 'modern' ? C().orig : C().trans))
+                     || ph(_krSent ? L.placeholderOrig : L.placeholderTrans);
     renderMissionPanel(body, info, leftBody, L);
   } else if(currentMode === 'full'){
     info.innerHTML = '완독 모드 · 전권 일반 전자책 · <b>장당 +30 점수</b>';
@@ -10130,15 +10223,19 @@ function renderMyBooks(){
   const el = document.getElementById('myBooks');
   if(!el) return;
   const mine = (typeof myReadBooks==='function') ? myReadBooks() : BOOKS.filter(b=>b.progress>0);
-  el.innerHTML = mine.map(b=>`
+  el.innerHTML = mine.map(b=>{
+    const c=_chalRead(b.id)||{};   // 실데이터 — 가짜 랜덤 독서시간 제거 (8/15)
+    const sub = (c.read_pct||0)>0 ? `완독율 ${Math.floor(c.read_pct)}%`
+              : (c.read_sec||0)>0 ? `독서 ${Math.max(1,Math.round(c.read_sec/60))}분` : '읽기 시작';
+    return `
     <div class="book-card" onclick="openDetail('${b.id}')">
       ${bookCoverHTML(b)}
       <div class="book-info">
         <div class="book-title">${esc(b.title)}</div>
-        <div class="book-author">독서 시간 ${(Math.random()*3+0.5).toFixed(1)}h</div>
+        <div class="book-author">${sub}</div>
       </div>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -10318,35 +10415,31 @@ async function renderMyReviews(){
 let _myRead=null;
 function myReadBooks(){
   if(_myRead) return _myRead;
-  let r=BOOKS.filter(b=>b.progress>0);
-  if(r.length<8){   // 데모: 장르가 다양하게 섞이도록 대표 read-set 구성
-    const byCat={}; BOOKS.forEach(b=>{(byCat[b.category]=byCat[b.category]||[]).push(b);});
-    const picked=r.slice(), seen=new Set(r.map(b=>b.id));
-    Object.keys(byCat).forEach(c=>{ const arr=byCat[c]; for(let i=0;i<3&&i<arr.length;i++){ if(!seen.has(arr[i].id)){picked.push(arr[i]);seen.add(arr[i].id);} } });
-    r=picked.slice(0,14);
-  }
+  // 실데이터만: 읽기 기록(완독율·독서시간)이 있는 책 — 데모 패딩(장르 섞어 14권 채우기) 제거 (8/15 가짜숫자 정리)
+  const r=BOOKS.filter(b=>{ const c=_chalRead(b.id); return (b.progress>0) || !!(c && ((c.read_pct||0)>0 || (c.read_sec||0)>0)); });
   _myRead=r; return r;
 }
 async function myAvgRating(){
   const list=await rvFetch(`select=rating&reviewer=eq.${encodeURIComponent(readerName())}`);
-  if(!list.length) return 4.3;
+  if(!list.length) return 0;   // 서평 없으면 0 → 표시부에서 '-' 처리 (가짜 4.3 금지)
   return list.reduce((a,b)=>a+(b.rating||0),0)/list.length;
 }
 async function renderSummaryCard(){
   const host=document.getElementById('summaryCard'); if(!host) return;
-  const books=myReadBooks().length;
+  // 전부 실데이터 — 가짜 폴백(14.5h·streak 7·정답률 86%) 제거 (8/15). 완독=완독율 90% 이상(인증 기준과 동일)
+  const done=BOOKS.filter(b=>{const c=_chalRead(b.id); return !!(c&&(c.read_pct||0)>=90);}).length;
   const avg=await myAvgRating();
-  const hours=(readerStats.readingTime&&readerStats.readingTime.total)?(readerStats.readingTime.total/60):14.5;
-  const streak=(readerStats.streak&&readerStats.streak.count)||7;
-  host.dataset.books=books; host.dataset.avg=avg.toFixed(1); host.dataset.hours=hours.toFixed(1);
+  const hours=(readerStats.readingTime&&readerStats.readingTime.total)?(readerStats.readingTime.total/60):0;
+  const streak=(readerStats.streak&&readerStats.streak.count)||0;
+  host.dataset.books=done; host.dataset.avg=avg?avg.toFixed(1):'-'; host.dataset.hours=hours.toFixed(1); host.dataset.streak=streak;
   host.innerHTML=`
     <div class="ss-kicker">✦ 2026-1학기 독서 결산</div>
     <div class="ss-name">${esc(readerName())} 님</div>
     <div class="ss-period">세명대학교 학술정보원 · bookstar</div>
     <div class="ss-grid">
-      <div class="ss-cell"><div class="ss-num">${books}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
-      <div class="ss-cell"><div class="ss-num">${avg.toFixed(1)}</div><div class="ss-lbl">평균 별점</div></div>
-      <div class="ss-cell"><div class="ss-num">86<span class="u">%</span></div><div class="ss-lbl">퀴즈 정답률</div></div>
+      <div class="ss-cell"><div class="ss-num">${done}<span class="u">권</span></div><div class="ss-lbl">완독</div></div>
+      <div class="ss-cell"><div class="ss-num">${avg?avg.toFixed(1):'-'}</div><div class="ss-lbl">평균 별점</div></div>
+      <div class="ss-cell"><div class="ss-num">${streak}<span class="u">일</span></div><div class="ss-lbl">연속 독서</div></div>
       <div class="ss-cell"><div class="ss-num">${hours.toFixed(1)}<span class="u">h</span></div><div class="ss-lbl">독서 시간</div></div>
     </div>
     <div class="ss-foot"><div class="ss-brand">book<span>star</span></div>
@@ -10361,7 +10454,7 @@ function shareSummary(){
   x.fillStyle='#c9b88a'; x.font='bold 34px Georgia'; x.fillText('✦ 2026-1학기 독서 결산', W/2, 175);
   x.fillStyle='#fff'; x.font='bold 76px sans-serif'; x.fillText(readerName()+' 님', W/2, 285);
   x.fillStyle='#c4ccdd'; x.font='30px sans-serif'; x.fillText('세명대학교 학술정보원 · bookstar', W/2, 345);
-  const cells=[[(d.books||'0')+'권','완독'],[d.avg||'4.3','평균 별점'],['86%','퀴즈 정답률'],[(d.hours||'14.5')+'h','독서 시간']];
+  const cells=[[(d.books||'0')+'권','완독'],[d.avg||'-','평균 별점'],[(d.streak||'0')+'일','연속 독서'],[(d.hours||'0.0')+'h','독서 시간']];
   const cw=480,ch=230,gap=40,sx=(W-cw*2-gap)/2,sy=455;
   cells.forEach((cell,i)=>{ const col=i%2,row=(i/2)|0,cx=sx+col*(cw+gap),cy=sy+row*(ch+gap);
     roundRect(x,cx,cy,cw,ch,24); x.fillStyle='rgba(255,255,255,.09)'; x.fill();
@@ -10404,8 +10497,7 @@ function _dk(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'
 function renderStreakCal(){
   const host=document.getElementById('streakCal'); if(!host) return;
   const real=(readerStats.readingTime&&readerStats.readingTime.days)||{};
-  const demo=Object.keys(real).length<6;
-  const minsOf=k=>{ if(real[k]) return real[k]; if(demo){ const r=_seed('cal'+k)(); return r>0.45?Math.round(r*90):0; } return 0; };
+  const minsOf=k=>real[k]||0;   // 실데이터만 — 가짜 잔디(시드 난수) 제거 (8/15)
   const today=new Date(); today.setHours(0,0,0,0);
   const start=new Date(today); start.setDate(start.getDate()-7*16+1); start.setDate(start.getDate()-start.getDay());
   const weeks=[]; let cur=[]; let active=0;
