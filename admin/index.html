@@ -1615,14 +1615,20 @@ async function saveSections(){
       headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify(rows)});
     if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
+    // 삭제된 칸 서버 정리 — 실패한 slot은 추적 목록에 남겨 다음 저장 때 자동 재시도 (유령 칸 방지)
     const cur=new Set(SECTIONS.map(s=>s.slot));
+    const delFail=[];
     for(const slot of ORIG_SLOTS.filter(x=>!cur.has(x))){
-      await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('한국대학교')}&slot=eq.${encodeURIComponent(slot)}`,
-        {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+      try{
+        const dr=await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('한국대학교')}&slot=eq.${encodeURIComponent(slot)}`,
+          {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+        if(!dr.ok) delFail.push(slot);
+      }catch(_){ delFail.push(slot); }
     }
-    ORIG_SLOTS=SECTIONS.map(s=>s.slot);
-    LOCATIONS=SECTIONS.map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();
-    toast('저장 완료 — 학생 앱 우리도서관에 반영됩니다');
+    ORIG_SLOTS=SECTIONS.map(s=>s.slot).concat(delFail);
+    LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);buildNtLoc();if(MK.type)buildLoc();
+    if(delFail.length) toast('저장은 됐지만 지운 칸 '+delFail.length+'개가 서버에서 안 지워졌어요 — 잠시 후 다시 저장해주세요');
+    else toast('저장 완료 — 학생 앱 ‘'+(AREA_LABELS[curArea]||curArea)+'’에 반영됩니다');
   }catch(e){toast('저장 실패 — 연결 확인');}
 }
 // ── 칸 드래그&드롭 순서 변경 (↑↓ 버튼과 병행) ──
@@ -2776,11 +2782,17 @@ async function saveChallenges(){
       if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
     }
     // 새로 올린 뒤 기존 챌린지 행 삭제(중복 방지) — 목록 전체 교체 방식
+    // 삭제 실패 감지: 실패하면 옛 행이 남아 학생 앱에 챌린지가 중복 노출되므로 반드시 알림 (재저장하면 스스로 회복)
+    let chalDelFail=false;
     if(ORIG_CHAL_IDS.length){
-      await fetch(`${SB_REST}/library_programs?id=in.(${ORIG_CHAL_IDS.map(encodeURIComponent).join(',')})`,
-        {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+      try{
+        const dr=await fetch(`${SB_REST}/library_programs?id=in.(${ORIG_CHAL_IDS.map(encodeURIComponent).join(',')})`,
+          {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+        if(!dr.ok) chalDelFail=true;
+      }catch(_){ chalDelFail=true; }
     }
-    toast('저장 완료 — 학생 앱에 반영됩니다');
+    if(chalDelFail) toast('저장은 됐지만 이전 챌린지 정리가 실패했어요 — 중복으로 보이면 다시 저장해주세요');
+    else toast('저장 완료 — 학생 앱에 반영됩니다');
     await loadChallenges(); loadServerPrograms();
   }catch(e){toast('저장 실패 — 연결 확인');}
 }

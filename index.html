@@ -6248,6 +6248,7 @@ if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
   _pvLoadPub();   // 발행 프로그램 로드 → 로드 후 자동 재렌더(앱과 동일 화면)
   // 관리자 '꾸미기' 실시간 미리보기 — 부모창이 보낸 SECTIONS로 즉시 재렌더(새로고침 없음)
   window.addEventListener('message',function(e){
+    if(e.origin!==location.origin) return;   // 같은 도메인(관리자 iframe 부모)만 허용
     var d=e.data; if(!d||d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
     try{ _pvRender(d.sections); }catch(err){}
   });
