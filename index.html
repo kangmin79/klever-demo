@@ -4877,6 +4877,7 @@ function nav(page){
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
+    if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 검색 직행 시에도 도서관 라이브 풀 로드(기존엔 ourlib 진입 시에만)
   }
   if(page === 'feed') {
     _feedItems=[];   // 방문할 때마다 최신 글 다시 로드
@@ -10473,22 +10474,52 @@ function onUnifiedSearch(submit){
   const libHits=(typeof libTitled==='function'?libTitled():[]).filter(b=>
     hit((b.t||b.title||'')+' '+(b.a||b.author||''))
   );
-  if(!clsHits.length && !libHits.length){
-    box.innerHTML='<div style="padding:40px;text-align:center;color:var(--text-light);">검색 결과가 없어요. 다른 키워드로 시도하거나 ⭐별이에게 물어보세요.</div>';
-    return;
-  }
   let html='';
   if(clsHits.length){
     html+=`<div class="us-section-label">📚 북스타 고전 <span style="color:var(--text-light);font-weight:600;">${clsHits.length}</span></div>`;
     html+=`<div class="book-grid" style="margin-bottom:28px;">${clsHits.slice(0,24).map(b=>usCard(b,'cls')).join('')}</div>`;
     if(clsHits.length>24) html+=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;margin:-16px 0 24px;">상위 24권만 표시 — 키워드를 더 구체적으로 입력해 보세요</div>`;
   }
-  if(libHits.length){
-    html+=`<div class="us-section-label">🏛 우리 도서관 소장 <span style="color:var(--text-light);font-weight:600;">${libHits.length}</span></div>`;
-    html+=`<div class="book-grid">${libHits.slice(0,24).map(b=>usCard(b,'lib')).join('')}</div>`;
-    if(libHits.length>24) html+=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;margin-top:8px;">상위 24권만 표시 — 키워드를 더 구체적으로 입력해 보세요</div>`;
-  }
+  // 우리 도서관 소장 = 로컬 풀(베스트·신착·큐레이션) 즉시 표시 + 전체 장서(semyung_tulip 31.9만) 서버검색이 뒤이어 합류
+  html+=`<div id="usLibSec"${libHits.length?'':' style="display:none"'}>
+    <div class="us-section-label">🏛 우리 도서관 소장 <span id="usLibCnt" style="color:var(--text-light);font-weight:600;">${libHits.length||''}</span></div>
+    <div class="book-grid" id="usLibGrid">${libHits.slice(0,24).map(b=>usCard(b,'lib')).join('')}</div>
+  </div>`;
+  html+=`<div id="usNoHit" style="${(clsHits.length||libHits.length)?'display:none;':''}padding:40px;text-align:center;color:var(--text-light);">도서관 장서 검색 중…</div>`;
   box.innerHTML=html;
+  usTulipSearch(q, libHits);
+}
+
+// 키워드 탭 → 세명대 전체 장서(semyung_tulip) 서버 검색.
+//   search_norm = 제목+저자에서 공백·기호 제거한 정규화 컬럼(gin_trgm 인덱스 있음) — 질의도 같은 규칙으로 정규화해 ilike.
+let _usTulipSeq=0;
+async function usTulipSearch(q, localLib){
+  const seq=++_usTulipSeq;
+  const norm=(q||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+  const els=()=>({sec:document.getElementById('usLibSec'), grid:document.getElementById('usLibGrid'), cnt:document.getElementById('usLibCnt'), no:document.getElementById('usNoHit')});
+  const noHitMsg='검색 결과가 없어요. 다른 키워드로 시도하거나 ⭐별이에게 물어보세요.';
+  if(norm.length<2){ const {no}=els(); if(no&&no.style.display!=='none') no.textContent=noHitMsg; return; }
+  let rows=[];
+  try{
+    const r=await fetch(`${SB_REST}/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,cover_url,viewer_url&search_norm=ilike.${encodeURIComponent('*'+norm+'*')}&limit=48`,{headers:BX_H});
+    if(r.ok){ const a=await r.json(); if(Array.isArray(a)) rows=a; }
+  }catch(e){}
+  if(seq!==_usTulipSeq) return;                        // 그 사이 새 입력 — 늦은 응답 폐기
+  const seen=new Set((localLib||[]).map(b=>String(b.isbn||'')).filter(Boolean));
+  rows=rows.filter(t=>!t.isbn || !seen.has(String(t.isbn)));
+  rows.sort((x,y)=>((x.kind==='ebook')?0:1)-((y.kind==='ebook')?0:1) || (x.title||'').length-(y.title||'').length);   // 전자책 먼저, 짧은 제목(정확 일치 근접) 먼저
+  const {sec,grid,cnt,no}=els();
+  if(!rows.length){ if(no&&no.style.display!=='none') no.textContent=noHitMsg; return; }
+  const books=rows.slice(0,24).map(t=>curateToLibBook({
+    isbn:t.isbn||('sm-'+t.ctrl), title:String(t.title||'').replace(/\s*\[전자책\]\s*/g,' ').trim(),
+    author:t.author||'', cover:t.cover_url||'', publisher:t.publisher||'', year:t.pub_year||'',
+    smEbook:t.kind==='ebook', smPaper:t.kind==='paper',
+    smEbookUrl:t.viewer_url||'', brcd:t.ctrl||''
+  }));
+  if(grid) grid.insertAdjacentHTML('beforeend', books.map(b=>usCard(b,'lib')).join(''));
+  if(cnt) cnt.textContent=String((localLib||[]).length+rows.length)+(rows.length>=48?'+':'');
+  if(sec) sec.style.display='';
+  if(no) no.style.display='none';
 }
 
 // curate 후보(세명대 실소장 23,727 의미검색 결과) → 앱 공용 book 객체로 정규화 + LIB_POOL 등재
@@ -10842,6 +10873,16 @@ function nextGrade(t){t=+t||0;for(const[n,m]of GRADE_TIERS){if(t<m)return{name:n
 function gradeFloor(t){t=+t||0;let f=0;for(const[,m]of GRADE_TIERS){if(t>=m)f=m;}return f;}
 let _feedTab='rec', _feedType='all', _feedItems=[];
 let _myFollows=new Set(), _likeCount={}, _myLikes=new Set();
+// 학생 이름·이모지 서버 캐시 — BX_STUDENTS는 빈 폴백 배열이라(5850) 피드·프로필 이름이 전부 '학생'으로 나오던 버그 수리
+let _bxNameMap=null;
+async function _bxNames(){
+  if(_bxNameMap) return _bxNameMap;
+  const m={};
+  try{ const r=await fetch(`${BX_SB}/bookstar_students?select=id,name,emoji`,{headers:BX_H});
+    if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>{ m[x.id]={name:x.name||'학생', emoji:x.emoji||'🙂'}; }); } }catch(e){}
+  _bxNameMap=m;
+  return m;
+}
 async function loadFeedSocial(){
   const me=_bxSid();
   _myFollows=new Set(); _likeCount={}; _myLikes=new Set();
@@ -10889,7 +10930,7 @@ function _feedSpread(sorted){
   return out;
 }
 function feedCard(it,i){
-  const s=BX_STUDENTS.find(z=>z.id===it.sid) || {name:'학생', emoji:'🙂'};
+  const s=(_bxNameMap&&_bxNameMap[it.sid]) || BX_STUDENTS.find(z=>z.id===it.sid) || {name:'학생', emoji:'🙂'};
   const b=_bookById(it.book_id);
   const title=b?b.title:(it.book_id||'');
   const author=b?(b.author||''):'';
@@ -10947,7 +10988,7 @@ async function renderFeed(){
   const box=document.getElementById('feedBody'); if(!box) return;
   if(!_feedItems.length){
     box.innerHTML=_feedHead()+'<div class="feed-empty">피드를 불러오는 중…</div>';
-    await Promise.all([loadFeedItems(), loadFeedSocial()]);
+    await Promise.all([loadFeedItems(), loadFeedSocial(), _bxNames()]);
   } else if(!renderFeed._rf){
     // 캐시 즉시 표시 + 뒤에서 최신분 갱신(글 남기고 바로 피드 와도 반영) — 내용이 달라졌을 때만 다시 그림
     renderFeed._rf=Promise.all([loadFeedItems(), loadFeedSocial()]).then(()=>{
@@ -11001,7 +11042,7 @@ async function profileFollow(btn,sid){
   }catch(e){ revert(); }
 }
 async function openStudentProfile(sid){
-  const s=BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
+  const s=(await _bxNames())[sid] || BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
   let ov=document.getElementById('bxProfileOv');
   if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
   ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
