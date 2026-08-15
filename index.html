@@ -2583,12 +2583,11 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
         </div>
 
         <div class="program-card" onclick="enrollProgram('freshman')">
-          <div class="program-eyebrow">2026 신입생 필수</div>
-          <div class="program-title">신입생 필수<br>고전 챌린지</div>
+          <div class="program-eyebrow">2026 신입생</div>
+          <div class="program-title">신입생<br>고전 챌린지</div>
           <div class="program-desc">대학 첫 1학기, 매주 1권. 12주에 12권. 졸업까지 가장 큰 자산이 될 12권 독서 인증.</div>
           <div class="program-meta">
-            <span class="program-meta-item">287명 참여</span>
-            <span class="program-meta-item">12주 필수</span>
+            <span class="program-meta-item">12주 과정</span>
           </div>
           <div class="program-cta">참가하기 →</div>
         </div>
@@ -10519,7 +10518,7 @@ function renderStreakCal(){
    기타
    ═══════════════════════════════════════════════════════════ */
 function enrollProgram(key){
-  const names = {champion:'고전 챔피언 프로그램', freshman:'2026 신입생 필수 챌린지', intl:'Learning Korean through Korean Classics'};
+  const names = {champion:'고전 챔피언 프로그램', freshman:'2026 신입생 고전 챌린지', intl:'Learning Korean through Korean Classics'};
   alert(`✅ ${names[key]} 참가 완료!\n\n내서재 → 챌린지 메뉴에서 진행률을 확인하세요.`);
   nav('mypage');
 }
