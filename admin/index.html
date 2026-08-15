@@ -611,15 +611,24 @@ body.pv-open .main{max-width:none}
     <input id="lgPw" type="password" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')lgTry()" autofocus>
     <button onclick="lgTry()">로그인</button>
     <div class="lg-err" id="lgErr"></div>
-    <div class="lg-demo">데모 비밀번호 · <b>bookstar</b></div>
   </div>
 </div>
 <script>
-function lgTry(){var v=(document.getElementById('lgPw').value||'').trim();
-  if(v==='bookstar'){try{sessionStorage.setItem('bs_admin','1');}catch(e){}document.getElementById('loginGate').style.display='none';}
-  else{document.getElementById('lgErr').textContent='비밀번호가 올바르지 않습니다.';}}
-function lgOut(){try{sessionStorage.removeItem('bs_admin');}catch(e){}var g=document.getElementById('loginGate');g.style.display='flex';document.getElementById('lgPw').value='';document.getElementById('lgErr').textContent='';}
-try{if(sessionStorage.getItem('bs_admin')==='1')document.getElementById('loginGate').style.display='none';}catch(e){}
+// 로그인 = admin-save Edge Function의 ADMIN_SECRET 검증 (2026-08-15 RLS 잠금 — 하드코딩 비번 제거)
+// 통과한 비밀번호는 세션에 보관돼 이후 모든 저장 요청의 시크릿으로 쓰인다
+async function lgTry(){var v=(document.getElementById('lgPw').value||'').trim();
+  if(!v){document.getElementById('lgErr').textContent='비밀번호를 입력해주세요.';return;}
+  document.getElementById('lgErr').textContent='확인 중…';
+  try{
+    var r=await fetch(SB_PROJ+'/functions/v1/admin-save',{method:'POST',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'},
+      body:JSON.stringify({op:'ping',secret:v})});
+    if(r.ok){try{sessionStorage.setItem('bs_admin_secret',v);}catch(e){}
+      document.getElementById('loginGate').style.display='none';document.getElementById('lgErr').textContent='';}
+    else{document.getElementById('lgErr').textContent='비밀번호가 올바르지 않습니다.';}
+  }catch(e){document.getElementById('lgErr').textContent='연결 실패 — 잠시 후 다시 시도해주세요.';}}
+function lgOut(){try{sessionStorage.removeItem('bs_admin_secret');sessionStorage.removeItem('bs_admin');}catch(e){}var g=document.getElementById('loginGate');g.style.display='flex';document.getElementById('lgPw').value='';document.getElementById('lgErr').textContent='';}
+try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginGate').style.display='none';}catch(e){}
 </script>
 
 <div class="topbar">
@@ -1026,6 +1035,14 @@ const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
 const SB_PROJ="https://gkujptyfrzqrjrvovbnc.supabase.co";
 const RT_BUCKET="notice-images";
+// 큐레이션 쓰기 프록시 — library_sections·library_programs는 anon 쓰기 정책이 잠겨 이 함수만 쓸 수 있다 (2026-08-15)
+const ADMIN_FN=SB_PROJ+"/functions/v1/admin-save";
+function adminSecret(){try{return sessionStorage.getItem('bs_admin_secret')||'';}catch(e){return '';}}
+function adminSave(payload){
+  return fetch(ADMIN_FN,{method:'POST',
+    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'},
+    body:JSON.stringify(Object.assign({secret:adminSecret()},payload))});
+}
 
 /* ===== 리치 텍스트 에디터 (자체 contenteditable, 의존성 0) — 공지/커뮤니티 공용 ===== */
 // 허용 태그 화이트리스트 (sanitize 기준) — 공지·커뮤니티 본문에서 쓰는 것만
@@ -1611,17 +1628,14 @@ async function saveSections(){
   readSecInputs();
   const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{
-    const r=await fetch(`${SB_REST}/library_sections?on_conflict=school,slot`,{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify(rows)});
-    if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
+    const r=await adminSave({op:'sections_upsert',rows});
+    if(!r.ok){toast(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');return;}
     // 삭제된 칸 서버 정리 — 실패한 slot은 추적 목록에 남겨 다음 저장 때 자동 재시도 (유령 칸 방지)
     const cur=new Set(SECTIONS.map(s=>s.slot));
     const delFail=[];
     for(const slot of ORIG_SLOTS.filter(x=>!cur.has(x))){
       try{
-        const dr=await fetch(`${SB_REST}/library_sections?school=eq.${encodeURIComponent('한국대학교')}&slot=eq.${encodeURIComponent(slot)}`,
-          {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+        const dr=await adminSave({op:'sections_delete',school:'한국대학교',slot});
         if(!dr.ok) delFail.push(slot);
       }catch(_){ delFail.push(slot); }
     }
@@ -2619,10 +2633,8 @@ async function finishMake(){
     books:MK.books.map(b=>({isbn:b.isbn||'',title:b.t,author:b.a||'',cover:b.cover||'',note:b.note||''}))};
   let saved=null;
   try{
-    const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=representation'},
-      body:JSON.stringify(row)});
-    if(r.ok) saved=(await r.json())[0];
+    const r=await adminSave({op:'programs_insert',rows:[row]});
+    if(r.ok) saved=((await r.json()).rows||[])[0];
   }catch(e){}
   PROGRAMS.unshift({id:(saved&&saved.id)||'c'+Date.now().toString(36),type:MK.type,title:MK.title,status,from:MK.from,to:MK.to,
     loc:MK.loc.slice(),visits:0,uses:0,minutes:MK.type==='고전챌린지'?0:null,intro:MK.intro,
@@ -2776,18 +2788,15 @@ async function saveChallenges(){
       const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(b=>({id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
-      const r=await fetch(`${SB_REST}/library_programs`,{method:'POST',
-        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify(rows)});
-      if(!r.ok){toast('저장 실패 ('+r.status+')');return;}
+      const r=await adminSave({op:'programs_insert',rows});
+      if(!r.ok){toast(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');return;}
     }
     // 새로 올린 뒤 기존 챌린지 행 삭제(중복 방지) — 목록 전체 교체 방식
     // 삭제 실패 감지: 실패하면 옛 행이 남아 학생 앱에 챌린지가 중복 노출되므로 반드시 알림 (재저장하면 스스로 회복)
     let chalDelFail=false;
     if(ORIG_CHAL_IDS.length){
       try{
-        const dr=await fetch(`${SB_REST}/library_programs?id=in.(${ORIG_CHAL_IDS.map(encodeURIComponent).join(',')})`,
-          {method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+        const dr=await adminSave({op:'programs_delete',ids:ORIG_CHAL_IDS});
         if(!dr.ok) chalDelFail=true;
       }catch(_){ chalDelFail=true; }
     }
