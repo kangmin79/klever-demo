@@ -2517,12 +2517,12 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <!-- 8/13: '세명대학교 학술정보원' 이름표 제거 — 왼쪽 로고 옆 '세명대학교 독서 플랫폼'과 중복이고,
          그 자리는 이제 계정 칩(로그인 상태)이 쓴다. -->
     <span class="hdr-div"></span>
-    <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
-      <option value="ko">한국어</option>
-      <option value="en">English</option>
-      <option value="zh">中文</option>
-      <option value="vi">Tiếng Việt</option>
-      <option value="ja">日本語</option>
+    <select class="lang-select" id="langSelect" onchange="changeLang(this.value)" aria-label="언어 선택 · Language">
+      <option value="ko" lang="ko">한국어</option>
+      <option value="en" lang="en">English</option>
+      <option value="zh" lang="zh">中文</option>
+      <option value="vi" lang="vi">Tiếng Việt</option>
+      <option value="ja" lang="ja">日本語</option>
     </select>
     <button class="btn-theme" id="themeBtn" onclick="toggleTheme()" aria-label="테마"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
   </div>
@@ -2531,8 +2531,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <!-- 테스트 계정 선택 모달 -->
 <div class="bx-acc-overlay" id="bxAccOverlay" onclick="if(event.target===this)bxClosePicker()">
   <div class="bx-acc-modal">
-    <h3>세명대 계정으로 로그인</h3>
-    <p>세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.</p>
+    <h3 id="bxAccModalH">세명대 계정으로 로그인</h3>
+    <p id="bxAccModalP">세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.</p>
     <div class="bx-acc-list" id="bxAccList"></div>
   </div>
 </div>
@@ -6025,11 +6025,12 @@ async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더
 function bxRenderAccountChip(){
   const el=document.getElementById('bxAccChip'); if(!el) return;
   const s=bxStudent();
-  if(!s){ el.innerHTML='세명대 로그인'; el.title='세명대 계정으로 로그인'; return; }
+  const _t=(k)=>(typeof uiT==='function'?uiT(k):k);   // 다국어 (uiT 정의 전 호출 대비 가드)
+  if(!s){ el.innerHTML=esc(_t('세명대 로그인')); el.title=_t('세명대 계정으로 로그인'); return; }
   // 로그인은 됐는데 도서관 개인연동이 끊긴 상태 — 예전엔 내 도서관까지 들어가야만 알 수 있었고,
   // 그전까지는 예약·대출 버튼을 눌렀다가 튕기는 걸로 알게 됐다. 헤더에서 미리 알린다.
   if(!ssoIsPersonal()){
-    el.innerHTML=`<span class="bx-acc-dot" style="background:#9ca3af"></span>${esc(s.name)} · 다시 로그인`;
+    el.innerHTML=`<span class="bx-acc-dot" style="background:#9ca3af"></span>${esc(s.name)} · ${esc(_t('다시 로그인'))}`;
     el.title='도서관 연동이 끊겼어요 — 다시 로그인하면 대출·예약이 열립니다';
     return;
   }
@@ -6049,11 +6050,12 @@ function bxRenderAccMenu(){
   const m=document.getElementById('bxAccMenu'); if(!m) return;
   const s=bxStudent(); if(!s){ m.innerHTML=''; return; }
   const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;
+  const _t=(k)=>(typeof uiT==='function'?uiT(k):k);
   m.innerHTML=`<div class="who"><b>${esc(s.name)}</b><br>${esc(s.dept||'세명대학교')}</div>
-    <button class="mi" onclick="bxCloseAccMenu();nav('mylib')"><span>내 도서관</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
-    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>내 서재</span></button>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mylib')"><span>${esc(_t('내 도서관'))}</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>${esc(_t('내 서재'))}</span></button>
     <div class="sep"></div>
-    <button class="mi" onclick="bxLogout()"><span style="color:#c0392b">로그아웃</span></button>`;
+    <button class="mi" onclick="bxLogout()"><span style="color:#c0392b">${esc(_t('로그아웃'))}</span></button>`;
 }
 function bxToggleAccMenu(){
   const m=document.getElementById('bxAccMenu'); if(!m) return;
@@ -7213,15 +7215,19 @@ function renderClassicShelves(){
   if(!host || typeof BOOKS==='undefined') return;
   const fN = BOOKS.filter(b=>b.locale==='foreign').length;
   const kN = BOOKS.filter(b=>b.locale==='modern').length;
-  if(!fN && !kN){ host.innerHTML='<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">불러오는 중…</div>'; return; }
+  if(!fN && !kN){ host.innerHTML=`<div style="text-align:center;color:var(--text-light);font-size:13.5px;padding:40px 0">${uiT('불러오는 중…')}</div>`; return; }
   const foreign = _clTab==='foreign';
+  // 탭 라벨·권수 단위 다국어 (비한국어 모드에선 영문 부제와 겹치지 않게 권수만)
+  const _cnt={en:' books',zh:'本',vi:' cuốn',ja:'冊'};
+  const _fSub = UI_LANG==='ko' ? `WORLD CLASSICS · ${fN}권` : `${fN}${_cnt[UI_LANG]||'권'}`;
+  const _kSub = UI_LANG==='ko' ? `KOREAN CLASSICS · 다국어 · ${kN}권` : `KOREAN CLASSICS · ${kN}${_cnt[UI_LANG]||'권'}`;
   const tabs = `<div class="cl-tabs">
-      <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">세계고전 <span class="en">WORLD CLASSICS · ${fN}권</span></button>
-      <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">International <span class="en">KOREAN CLASSICS · 다국어 · ${kN}권</span></button>
+      <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">${uiT('세계고전')} <span class="en">${_fSub}</span></button>
+      <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">International <span class="en">${_kSub}</span></button>
     </div>`;
   let headBody;
   if(foreign){
-    headBody = `<div class="cl-intro">세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.</div>`;
+    headBody = `<div class="cl-intro">${CL_FOREIGN_INTRO[UI_LANG]||CL_FOREIGN_INTRO.ko}</div>`;
   } else {
     // 언어 전환 = 우상단 헤더 드롭다운 단일화 (페이지 내 칩 제거 2026-07-23). 소개문에서 우상단으로 안내.
     const hintMap = {ko:'우측 상단에서 언어를 선택하세요.',en:'Choose your language at the top right.',zh:'请在右上角选择语言。',vi:'Chọn ngôn ngữ ở góc trên bên phải.',ja:'右上で言語を選べます。'};
@@ -7239,7 +7245,9 @@ function renderClassicShelves(){
   // 탭별 사서 큐레이션(해외/국내 각각) 렌더
   renderAreaCuration('collectionCuration', CL_AREA[_clTab]);
 }
-function clSetTab(t){ _clTab=t; if(t!=='modern'){ _clLang='all'; applyUiLang('ko'); } renderClassicShelves(); _gnbClSync(); }
+// 8/15: 탭 이동 시 언어 강제 리셋 제거 — 영어 고른 유학생이 세계고전 누르면 전체 UI가 한국어로 돌아가던 문제.
+// 언어는 헤더 드롭다운의 전역 선택으로 유지. 세계고전 콘텐츠는 clT()가 _clTab 가드로 알아서 한국어 표시.
+function clSetTab(t){ _clTab=t; renderClassicShelves(); _gnbClSync(); }
 // 페이지 내 탭 전환 시 GNB(세계고전/International) 밑줄도 현재 권역으로 동기화
 function _gnbClSync(){
   const pg=document.getElementById('page-collection');
@@ -7247,19 +7255,43 @@ function _gnbClSync(){
   document.querySelectorAll('.gnb-item[data-page="collection"]').forEach(el=>
     el.classList.toggle('active', el.dataset.cl===(_clTab==='modern'?'modern':'foreign')));
 }
-// 상단 네비(세계고전/International) → 권역 설정 후 고전 컬렉션 페이지로
-function navCl(t){ _clTab=t; if(t!=='modern'){ _clLang='all'; applyUiLang('ko'); } nav('collection'); }
+// 상단 네비(세계고전/International) → 권역 설정 후 고전 컬렉션 페이지로 (언어 리셋 없음 — clSetTab 주석 참조)
+function navCl(t){ _clTab=t; nav('collection'); }
 // ── International 언어 전환: 칩 클릭 시 GNB·사이드바·줄제목·장르서가·책제목까지 일괄 전환 ──
 // UI 크롬(GNB·사이드바) 고정 문구 사전. 그 외 페이지 콘텐츠(우리도서관 큐레이션 등)는 한국어 유지.
 const UI_I18N={
   en:{'우리 도서관':'Our Library','독서 챌린지':'Reading Challenge','세계고전':'World Classics','커뮤니티':'Community',
-      '마이 챌린지':'My Challenge','리더보드':'Leaderboard','검색':'Search','피드':'Feed','내서재':'My Library'},
+      '마이 챌린지':'My Challenge','리더보드':'Leaderboard','검색':'Search','피드':'Feed','내서재':'My Bookshelf',
+      '내 도서관':'My Library','내 서재':'My Bookshelf','로그아웃':'Log out','세명대 로그인':'Semyung Login',
+      '다시 로그인':'Log in again','세명대 계정으로 로그인':'Log in with your Semyung account','불러오는 중…':'Loading…'},
   zh:{'우리 도서관':'我们的图书馆','독서 챌린지':'阅读挑战','세계고전':'世界古典','커뮤니티':'社区',
-      '마이 챌린지':'我的挑战','리더보드':'排行榜','검색':'搜索','피드':'动态','내서재':'我的书架'},
+      '마이 챌린지':'我的挑战','리더보드':'排行榜','검색':'搜索','피드':'动态','내서재':'我的书架',
+      '내 도서관':'我的图书馆','내 서재':'我的书架','로그아웃':'退出登录','세명대 로그인':'世明大学登录',
+      '다시 로그인':'重新登录','세명대 계정으로 로그인':'使用世明大学账号登录','불러오는 중…':'加载中…'},
   vi:{'우리 도서관':'Thư viện của chúng ta','독서 챌린지':'Thử thách đọc sách','세계고전':'Kinh điển thế giới','커뮤니티':'Cộng đồng',
-      '마이 챌린지':'Thử thách của tôi','리더보드':'Bảng xếp hạng','검색':'Tìm kiếm','피드':'Bảng tin','내서재':'Tủ sách của tôi'},
+      '마이 챌린지':'Thử thách của tôi','리더보드':'Bảng xếp hạng','검색':'Tìm kiếm','피드':'Bảng tin','내서재':'Tủ sách của tôi',
+      '내 도서관':'Thư viện của tôi','내 서재':'Tủ sách của tôi','로그아웃':'Đăng xuất','세명대 로그인':'Đăng nhập Semyung',
+      '다시 로그인':'Đăng nhập lại','세명대 계정으로 로그인':'Đăng nhập bằng tài khoản Semyung','불러오는 중…':'Đang tải…'},
   ja:{'우리 도서관':'私たちの図書館','독서 챌린지':'読書チャレンジ','세계고전':'世界古典','커뮤니티':'コミュニティ',
-      '마이 챌린지':'マイチャレンジ','리더보드':'リーダーボード','검색':'検索','피드':'フィード','내서재':'マイ本棚'},
+      '마이 챌린지':'マイチャレンジ','리더보드':'リーダーボード','검색':'検索','피드':'フィード','내서재':'マイ本棚',
+      '내 도서관':'マイ図書館','내 서재':'マイ本棚','로그아웃':'ログアウト','세명대 로그인':'世明大ログイン',
+      '다시 로그인':'再ログイン','세명대 계정으로 로그인':'世明大アカウントでログイン','불러오는 중…':'読み込み中…'},
+};
+// 로그인 안내 모달(정적 HTML) 다국어 — applyUiLang()이 h3/p를 갈아끼움
+const LOGIN_MODAL_I18N={
+  ko:{h:'세명대 계정으로 로그인', p:'세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.'},
+  en:{h:'Log in with your Semyung account', p:'Log in on the Semyung portal, then click the <b>Chamnaru banner</b> on the library homepage — you will be logged in automatically. You can still browse books freely without logging in.'},
+  zh:{h:'使用世明大学账号登录', p:'先登录世明大学门户，再点击图书馆主页的<b>참나루（Chamnaru）横幅</b>，即可自动登录。不登录也可以自由浏览图书。'},
+  vi:{h:'Đăng nhập bằng tài khoản Semyung', p:'Đăng nhập cổng thông tin Semyung, sau đó nhấn <b>banner Chamnaru</b> trên trang chủ thư viện — bạn sẽ được đăng nhập tự động. Không đăng nhập vẫn có thể tự do xem sách.'},
+  ja:{h:'世明大アカウントでログイン', p:'世明大ポータルにログインした後、図書館ホームページの<b>チャムナル（참나루）バナー</b>を押すと自動でログインされます。ログインしなくても本は自由に見られます。'},
+};
+// 세계고전 탭 인트로 다국어 (마크업 포함)
+const CL_FOREIGN_INTRO={
+  ko:'세계 명작을 <b>한국어로 쉽게</b> — 작가가 던지는 질문을 퀴즈로 풀고, 한 줄 소감을 남기며 가볍게 고전에 다가가요.',
+  en:'World classics, <b>made easy in Korean</b> — answer each author\'s questions as quizzes, leave a one-line impression, and get closer to the classics.',
+  zh:'世界名著，<b>用韩语轻松读</b>——把作家抛出的问题当作小测验来解，留下一句感想，轻松走近古典。',
+  vi:'Danh tác thế giới, <b>đọc dễ dàng bằng tiếng Hàn</b> — giải những câu hỏi của tác giả qua quiz, để lại một dòng cảm nhận và đến gần hơn với kinh điển.',
+  ja:'世界の名作を<b>韓国語でやさしく</b>——作家が投げかける問いをクイズで解き、一行の感想を残して、気軽に古典に近づきましょう。',
 };
 let UI_LANG='ko';
 function uiT(ko){ return (UI_I18N[UI_LANG]||{})[ko]||ko; }
@@ -7268,6 +7300,11 @@ const UI_GNB_SHORT={'우리 도서관':'도서관','독서 챌린지':'챌린지
 function applyUiLang(l){
   UI_LANG=(l&&UI_I18N[l])?l:'ko';
   const _ls=document.getElementById('langSelect'); if(_ls&&_ls.value!==UI_LANG)_ls.value=UI_LANG;   // 헤더 드롭다운 표시값 동기화
+  document.documentElement.lang=UI_LANG;   // 화면낭독기·브라우저 자동번역이 현재 언어를 알도록
+  // 로그인 안내 모달(정적 HTML) 문구 교체
+  const _lm=LOGIN_MODAL_I18N[UI_LANG]||LOGIN_MODAL_I18N.ko;
+  const _mh=document.getElementById('bxAccModalH'); if(_mh) _mh.textContent=_lm.h;
+  const _mp=document.getElementById('bxAccModalP'); if(_mp) _mp.innerHTML=_lm.p;
 
   const mob=window.matchMedia('(max-width:900px)').matches;
   document.querySelectorAll('.gnb-item').forEach(el=>{
@@ -7287,47 +7324,71 @@ const CL_I18N={
 en:{
  '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'Your First Step into Korea','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'Short and easy — the gentlest way into Korean literature',
  '[유학생] 변하지 않는 마음':'Feelings That Never Change','설렘도 그리움도, 결국 같은 마음':'Longing and love — the same heart everywhere',
- '다시, 처음처럼':'Again, Like the First Time','익숙한 제목 아네, 아직 읽지 않은 이야기':"Familiar titles, stories you haven't read yet",
+ '다시, 처음처럼':'Again, Like the First Time','익숙한 제목이네, 아직 읽지 않은 이야기':"Familiar titles, stories you haven't read yet",
  '[유학생] 오래 사랑받는 이름들':'Names Loved for Generations','시간이 지나도 빛나는, 그 이름들과의 만남':'Meet the names that shine through time',
  '무너지지 않는 마음':"Hearts That Don't Break",'흔들려도 끝내 무너지지 않은 마음들':'Shaken, but never broken',
  '[유학생] 한국이라는 마음':'The Heart of Korea','한 걸음 더 가까이, 이 나라의 안쪽으로':'One step closer to the inside of this country',
  '문장이 머무는 자리':'Where Sentences Stay','짧은 한 줄이 오래 남는 순간':'When one short line lingers',
- '[유학생] 스스로를 택한 여자들':'Women Who Chose Themselves','누구의 눈치도 보지 안고, 자기 삶을':'Living their own lives, on their own terms',
+ '[유학생] 스스로를 택한 여자들':'Women Who Chose Themselves','누구의 눈치도 보지 않고, 자기 삶을':'Living their own lives, on their own terms',
  '소설':'Fiction','시':'Poetry','철학·사상':'Philosophy & Thought','그 외 고전':'More Classics',
- '한 편의 이야기로 시대를 읽다':'Reading an era through a single story','짧은 행에 담긴 깊은 울림':'Deep resonance in short lines','생각하는 법을 배우는 고전':'Classics that teach you how to think'},
+ '한 편의 이야기로 시대를 읽다':'Reading an era through a single story','짧은 행에 담긴 깊은 울림':'Deep resonance in short lines','생각하는 법을 배우는 고전':'Classics that teach you how to think',
+ '이상하게 끌리는 문장들':'Strangely Captivating Sentences','이상의 소설과 시를 직접 읽으며, 해체와 실험 속에서 나만의 문체 감각을 찾아보세요.':"Read Yi Sang's fiction and poetry firsthand, and find your own sense of style amid deconstruction and experiment.",
+ '웃음 뒤에 칼이 있다':'A Blade Behind the Laughter','시대의 모순을 정면으로 겨눈 작가들의 날 선 문장들—웃기지만 결코 가볍지 않은 이야기들이 기다리고 있어요.':'Sharp-edged sentences aimed straight at the contradictions of their era — funny, but never light.',
+ '닿지 못한 마음들':'Hearts That Never Reached','사랑했지만 끝내 엇갈렸던 사람들의 이야기—그 애틋하고 쓸쓸한 감정의 결을 따라가 보세요.':'Stories of people who loved but kept missing each other — follow the tender, lonely grain of those feelings.',
+ '우리가 살아낸 자리':'The Places We Lived Through','강경애와 나혜석, 시대의 틈새에서 자신의 언어로 삶을 새긴 두 여성 작가의 목소리를 만나보세요.':'Meet Kang Kyeong-ae and Na Hye-sok — two women writers who carved their lives in their own words, in the cracks of their era.',
+ '사람으로 읽는 역사':'History Read Through People','왕도, 장군도, 승려도 결국 한 사람이었다 — 인물의 삶 속으로 걸어 들어가 역사를 온몸으로 느껴보세요.':'Kings, generals, monks — all of them, in the end, one person. Step into their lives and feel history firsthand.',
+ '굶주림이 사람을 만든다':'Hunger Makes the Human','배고픔 앞에서 인간은 무엇을 선택하는가 — 강경애·김동인·최서해의 날카로운 시선으로 읽는 결핍의 심리학.':'What do people choose in the face of hunger? The psychology of deprivation, through the sharp eyes of Kang Kyeong-ae, Kim Tong-in, and Choe Seo-hae.'},
 zh:{
  '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'初次翻开，最亲近的韩国','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'短小易读，走进韩国文学最轻松的第一步',
  '[유학생] 변하지 않는 마음':'不变的心','설렘도 그리움도, 결국 같은 마음':'心动与思念，终究是同一种心情',
- '다시, 처음처럼':'再一次，像初见','익숙한 제목 아네, 아직 읽지 않은 이야기':'熟悉的书名，还未读过的故事',
+ '다시, 처음처럼':'再一次，像初见','익숙한 제목이네, 아직 읽지 않은 이야기':'熟悉的书名，还未读过的故事',
  '[유학생] 오래 사랑받는 이름들':'被长久喜爱的名字','시간이 지나도 빛나는, 그 이름들과의 만남':'与历久弥新的名字相遇',
  '무너지지 않는 마음':'不会倒下的心','흔들려도 끝내 무너지지 않은 마음들':'纵然动摇，终未倒下的心',
  '[유학생] 한국이라는 마음':'名为韩国的心','한 걸음 더 가까이, 이 나라의 안쪽으로':'再近一步，走进这个国家的内心',
  '문장이 머무는 자리':'文字停留的地方','짧은 한 줄이 오래 남는 순간':'短短一行，久久难忘',
- '[유학생] 스스로를 택한 여자들':'选择了自己的女性','누구의 눈치도 보지 안고, 자기 삶을':'不看任何人的眼色，活出自己的人生',
+ '[유학생] 스스로를 택한 여자들':'选择了自己的女性','누구의 눈치도 보지 않고, 자기 삶을':'不看任何人的眼色，活出自己的人生',
  '소설':'小说','시':'诗歌','철학·사상':'哲学·思想','그 외 고전':'其他古典',
- '한 편의 이야기로 시대를 읽다':'以一个故事读懂一个时代','짧은 행에 담긴 깊은 울림':'短句中蕴含的深沉回响','생각하는 법을 배우는 고전':'学会思考的古典'},
+ '한 편의 이야기로 시대를 읽다':'以一个故事读懂一个时代','짧은 행에 담긴 깊은 울림':'短句中蕴含的深沉回响','생각하는 법을 배우는 고전':'学会思考的古典',
+ '이상하게 끌리는 문장들':'莫名被吸引的句子','이상의 소설과 시를 직접 읽으며, 해체와 실험 속에서 나만의 문체 감각을 찾아보세요.':'直接阅读李箱的小说与诗歌，在解体与实验中找到属于自己的文体感觉。',
+ '웃음 뒤에 칼이 있다':'笑声背后藏着刀','시대의 모순을 정면으로 겨눈 작가들의 날 선 문장들—웃기지만 결코 가볍지 않은 이야기들이 기다리고 있어요.':'直面时代矛盾的作家们的锋利文字——好笑却绝不轻浮的故事在等着你。',
+ '닿지 못한 마음들':'未能抵达的心意','사랑했지만 끝내 엇갈렸던 사람들의 이야기—그 애틋하고 쓸쓸한 감정의 결을 따라가 보세요.':'相爱却终究错过的人们的故事——请随那份深切而孤寂的情感一路前行。',
+ '우리가 살아낸 자리':'我们活过的地方','강경애와 나혜석, 시대의 틈새에서 자신의 언어로 삶을 새긴 두 여성 작가의 목소리를 만나보세요.':'姜敬爱与罗蕙锡——在时代的夹缝中用自己的语言镌刻人生的两位女性作家的声音。',
+ '사람으로 읽는 역사':'以人读史','왕도, 장군도, 승려도 결국 한 사람이었다 — 인물의 삶 속으로 걸어 들어가 역사를 온몸으로 느껴보세요.':'君王、将军、僧侣，终究都是一个人——走进人物的人生，用全身感受历史。',
+ '굶주림이 사람을 만든다':'饥饿造就人','배고픔 앞에서 인간은 무엇을 선택하는가 — 강경애·김동인·최서해의 날카로운 시선으로 읽는 결핍의 심리학.':'在饥饿面前，人会做出怎样的选择——透过姜敬爱、金东仁、崔曙海的锐利目光解读匮乏的心理学。'},
 vi:{
  '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'Bước đầu đến với Hàn Quốc','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'Ngắn gọn, dễ đọc — bước khởi đầu nhẹ nhàng vào văn học Hàn Quốc',
  '[유학생] 변하지 않는 마음':'Những cảm xúc không đổi thay','설렘도 그리움도, 결국 같은 마음':'Rung động hay nhớ nhung, cuối cùng vẫn là một tấm lòng',
- '다시, 처음처럼':'Một lần nữa, như lần đầu','익숙한 제목 아네, 아직 읽지 않은 이야기':'Tựa sách quen thuộc, câu chuyện bạn chưa từng đọc',
+ '다시, 처음처럼':'Một lần nữa, như lần đầu','익숙한 제목이네, 아직 읽지 않은 이야기':'Tựa sách quen thuộc, câu chuyện bạn chưa từng đọc',
  '[유학생] 오래 사랑받는 이름들':'Những cái tên được yêu mến lâu dài','시간이 지나도 빛나는, 그 이름들과의 만남':'Gặp gỡ những cái tên tỏa sáng theo thời gian',
  '무너지지 않는 마음':'Những trái tim không gục ngã','흔들려도 끝내 무너지지 않은 마음들':'Dao động nhưng không bao giờ sụp đổ',
  '[유학생] 한국이라는 마음':'Tấm lòng mang tên Hàn Quốc','한 걸음 더 가까이, 이 나라의 안쪽으로':'Thêm một bước, vào sâu bên trong đất nước này',
  '문장이 머무는 자리':'Nơi câu văn ở lại','짧은 한 줄이 오래 남는 순간':'Một dòng ngắn đọng lại thật lâu',
- '[유학생] 스스로를 택한 여자들':'Những người phụ nữ chọn chính mình','누구의 눈치도 보지 안고, 자기 삶을':'Sống cuộc đời của mình, không e dè ai',
+ '[유학생] 스스로를 택한 여자들':'Những người phụ nữ chọn chính mình','누구의 눈치도 보지 않고, 자기 삶을':'Sống cuộc đời của mình, không e dè ai',
  '소설':'Tiểu thuyết','시':'Thơ','철학·사상':'Triết học & Tư tưởng','그 외 고전':'Các tác phẩm khác',
- '한 편의 이야기로 시대를 읽다':'Đọc cả một thời đại qua một câu chuyện','짧은 행에 담긴 깊은 울림':'Âm vang sâu lắng trong những dòng thơ ngắn','생각하는 법을 배우는 고전':'Những tác phẩm dạy ta cách suy nghĩ'},
+ '한 편의 이야기로 시대를 읽다':'Đọc cả một thời đại qua một câu chuyện','짧은 행에 담긴 깊은 울림':'Âm vang sâu lắng trong những dòng thơ ngắn','생각하는 법을 배우는 고전':'Những tác phẩm dạy ta cách suy nghĩ',
+ '이상하게 끌리는 문장들':'Những câu văn cuốn hút đến lạ','이상의 소설과 시를 직접 읽으며, 해체와 실험 속에서 나만의 문체 감각을 찾아보세요.':'Đọc trực tiếp tiểu thuyết và thơ của Yi Sang, tìm cảm quan văn phong của riêng bạn giữa sự phá cách và thử nghiệm.',
+ '웃음 뒤에 칼이 있다':'Lưỡi dao sau tiếng cười','시대의 모순을 정면으로 겨눈 작가들의 날 선 문장들—웃기지만 결코 가볍지 않은 이야기들이 기다리고 있어요.':'Những câu văn sắc bén nhắm thẳng vào mâu thuẫn của thời đại — hài hước nhưng không hề nhẹ tênh.',
+ '닿지 못한 마음들':'Những tấm lòng không chạm tới nhau','사랑했지만 끝내 엇갈렸던 사람들의 이야기—그 애틋하고 쓸쓸한 감정의 결을 따라가 보세요.':'Chuyện về những người yêu nhau nhưng mãi lỡ nhịp — hãy lần theo những cung bậc cảm xúc da diết và cô đơn ấy.',
+ '우리가 살아낸 자리':'Nơi chúng ta đã sống trọn','강경애와 나혜석, 시대의 틈새에서 자신의 언어로 삶을 새긴 두 여성 작가의 목소리를 만나보세요.':'Gặp gỡ Kang Kyeong-ae và Na Hye-sok — hai nhà văn nữ khắc ghi cuộc đời bằng ngôn ngữ của chính mình giữa khe hở của thời đại.',
+ '사람으로 읽는 역사':'Đọc lịch sử qua con người','왕도, 장군도, 승려도 결국 한 사람이었다 — 인물의 삶 속으로 걸어 들어가 역사를 온몸으로 느껴보세요.':'Vua chúa, tướng lĩnh hay thiền sư, rốt cuộc đều là con người — hãy bước vào cuộc đời họ và cảm nhận lịch sử bằng cả trái tim.',
+ '굶주림이 사람을 만든다':'Cái đói làm nên con người','배고픔 앞에서 인간은 무엇을 선택하는가 — 강경애·김동인·최서해의 날카로운 시선으로 읽는 결핍의 심리학.':'Trước cơn đói, con người lựa chọn điều gì — tâm lý học của sự thiếu thốn qua ánh nhìn sắc sảo của Kang Kyeong-ae, Kim Tong-in và Choe Seo-hae.'},
 ja:{
  '[유학생] 처음 펼치기 좋은, 가장 가까운 한국':'初めてひらく、いちばん身近な韓国','짧고 쉬워서, 한국 문학으로 들어서는 가장 편안한 첫걸음':'短くてやさしい、韓国文学への心地よい第一歩',
  '[유학생] 변하지 않는 마음':'変わらない心','설렘도 그리움도, 결국 같은 마음':'ときめきも恋しさも、結局おなじ心',
- '다시, 처음처럼':'もう一度、初めてのように','익숙한 제목 아네, 아직 읽지 않은 이야기':'なじみのタイトル、まだ読んでいない物語',
+ '다시, 처음처럼':'もう一度、初めてのように','익숙한 제목이네, 아직 읽지 않은 이야기':'なじみのタイトル、まだ読んでいない物語',
  '[유학생] 오래 사랑받는 이름들':'長く愛される名前たち','시간이 지나도 빛나는, 그 이름들과의 만남':'時を超えて輝く、その名前との出会い',
  '무너지지 않는 마음':'くじけない心','흔들려도 끝내 무너지지 않은 마음들':'揺れても、ついに崩れなかった心',
  '[유학생] 한국이라는 마음':'韓国という心','한 걸음 더 가까이, 이 나라의 안쪽으로':'もう一歩近く、この国の内側へ',
  '문장이 머무는 자리':'文章がとどまる場所','짧은 한 줄이 오래 남는 순간':'短い一行が長く残る瞬間',
- '[유학생] 스스로를 택한 여자들':'自分を選んだ女性たち','누구의 눈치도 보지 안고, 자기 삶을':'誰の顔色もうかがわず、自分の人生を',
+ '[유학생] 스스로를 택한 여자들':'自分を選んだ女性たち','누구의 눈치도 보지 않고, 자기 삶을':'誰の顔色もうかがわず、自分の人生を',
  '소설':'小説','시':'詩','철학·사상':'哲学・思想','그 외 고전':'そのほかの古典',
- '한 편의 이야기로 시대를 읽다':'一つの物語で時代を読む','짧은 행에 담긴 깊은 울림':'短い行にこもる深い響き','생각하는 법을 배우는 고전':'考える方法を学ぶ古典'},
+ '한 편의 이야기로 시대를 읽다':'一つの物語で時代を読む','짧은 행에 담긴 깊은 울림':'短い行にこもる深い響き','생각하는 법을 배우는 고전':'考える方法を学ぶ古典',
+ '이상하게 끌리는 문장들':'不思議と惹かれる文章たち','이상의 소설과 시를 직접 읽으며, 해체와 실험 속에서 나만의 문체 감각을 찾아보세요.':'李箱の小説と詩を直接読みながら、解体と実験の中で自分だけの文体感覚を見つけてみましょう。',
+ '웃음 뒤에 칼이 있다':'笑いの奥に刃がある','시대의 모순을 정면으로 겨눈 작가들의 날 선 문장들—웃기지만 결코 가볍지 않은 이야기들이 기다리고 있어요.':'時代の矛盾に正面から切り込んだ作家たちの鋭い文章——笑えるのに決して軽くない物語が待っています。',
+ '닿지 못한 마음들':'届かなかった心','사랑했지만 끝내 엇갈렸던 사람들의 이야기—그 애틋하고 쓸쓸한 감정의 결을 따라가 보세요.':'愛しながらもすれ違った人々の物語——切なく寂しい感情の襞をたどってみてください。',
+ '우리가 살아낸 자리':'私たちが生き抜いた場所','강경애와 나혜석, 시대의 틈새에서 자신의 언어로 삶을 새긴 두 여성 작가의 목소리를 만나보세요.':'姜敬愛と羅蕙錫——時代の狭間で自分の言葉で人生を刻んだ二人の女性作家の声に出会ってください。',
+ '사람으로 읽는 역사':'人で読む歴史','왕도, 장군도, 승려도 결국 한 사람이었다 — 인물의 삶 속으로 걸어 들어가 역사를 온몸으로 느껴보세요.':'王も将軍も僧侶も、結局は一人の人間だった——人物の人生に歩み入り、歴史を全身で感じてみましょう。',
+ '굶주림이 사람을 만든다':'飢えが人をつくる','배고픔 앞에서 인간은 무엇을 선택하는가 — 강경애·김동인·최서해의 날카로운 시선으로 읽는 결핍의 심리학.':'空腹を前に人は何を選ぶのか——姜敬愛・金東仁・崔曙海の鋭い視線で読む欠乏の心理学。'},
 };
 // International(국내 탭) 문자열 번역 — 사전에 없으면 한국어 그대로
 function clT(ko){ if(_clTab!=='modern'||_clLang==='all') return ko; return (CL_I18N[_clLang]||{})[ko]||ko; }
@@ -10379,6 +10440,7 @@ function changeLang(lang){
     if(typeof KR_LANG!=='undefined') KR_LANG=lang;
     _clLang=lang; loadKrTitles();
   }
+  try{ localStorage.setItem('bookstar_lang', lang); }catch(e){}   // 새로고침해도 언어 유지 — 대상이 한국어 서툰 유학생이라 필수
   if(document.getElementById('page-collection')?.classList.contains('active')) renderClassicShelves();
 }
 
@@ -11115,8 +11177,12 @@ function toggleTheme(){
 window.addEventListener('DOMContentLoaded', () => {
   // 8/14: 로그인 게이트가 걸린 웹툰 페이지 목록 (복귀 리다이렉트 화이트리스트)
   const WT_LOGIN_FILES=['webtoon_redmt.html','webtoon_demian.html','webtoon_gatsby.html','webtoon_emma.html','webtoon_unsu.html','webtoon_memil.html'];
-  // 모바일 GNB 축약 라벨 초기 적용 + 회전/리사이즈 대응
-  try{ applyUiLang(UI_LANG); }catch(e){}
+  // 모바일 GNB 축약 라벨 초기 적용 + 회전/리사이즈 대응. 저장된 언어(bookstar_lang)가 있으면 그 언어로 복원
+  try{
+    const _sl=localStorage.getItem('bookstar_lang');
+    if(_sl && _sl!=='ko' && UI_I18N[_sl]) changeLang(_sl);
+    else applyUiLang(UI_LANG);
+  }catch(e){ try{ applyUiLang(UI_LANG); }catch(_){} }
   let _gnbRz; window.addEventListener('resize', ()=>{ clearTimeout(_gnbRz); _gnbRz=setTimeout(()=>{ try{ applyUiLang(UI_LANG); }catch(e){} },200); });
   // ── 세명대 SSO 수신 (도서관 배너/테스트폼 → sso-login Edge Fn → ?sso_uid=학번&sso_name=이름) ──
   // 학번이 오면 그 학생으로 즉시 로그인(__SSO_STUDENT). 데모 선택창(bxOpenPicker)은 건너뜀.
