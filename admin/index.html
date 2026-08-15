@@ -2335,8 +2335,7 @@ function wrCard(w){
       <button class="wr-hide" onclick="wrHide(${w.id})">숨기기</button></div></div>`;
 }
 async function wrPatch(id,body){
-  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'};
-  try{ await fetch(`${SB_REST}/bookstar_writings?id=eq.${id}`,{method:'PATCH',headers:{...H,Prefer:'return=minimal'},body:JSON.stringify(body)}); }catch(e){}
+  try{ await adminSave({op:'writings_patch',id,patch:body}); }catch(e){}
 }
 async function wrFeature(id,v){ await wrPatch(id,{featured:v}); const w=WRITINGS.find(x=>x.id===id); if(w)w.featured=v; renderWritings(); }
 async function wrHide(id){ if(!confirm('이 글을 숨길까요? (학생 화면엔 영향 없고, 사서 목록에서만 가려져요)'))return; await wrPatch(id,{hidden:true}); const w=WRITINGS.find(x=>x.id===id); if(w)w.hidden=true; renderWritings(); }
@@ -2493,9 +2492,7 @@ async function loadInventory(){
 async function upsertInventory(books){
   const rows=books.filter(b=>b.isbn).map(b=>({school:'한국대학교',isbn:b.isbn,title:b.t||b.title||'',author:b.a||b.author||'',cover:b.cover||'',rating:(b.rating!=null?b.rating:null),loan:(b.loan||null)}));
   if(!rows.length)return;
-  try{ await fetch(`${SB_REST}/library_books?on_conflict=school,isbn`,{method:'POST',
-    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify(rows)}); rows.forEach(r=>LIB_INV.add(r.isbn)); }catch(e){}
+  try{ const r=await adminSave({op:'books_upsert',rows}); if(r.ok) rows.forEach(x=>LIB_INV.add(x.isbn)); }catch(e){}
 }
 
 function pickType(t){
@@ -2839,9 +2836,7 @@ async function publishNotice(){
   if(rtEmpty('ntBodyRich')){toast('공지 내용을 입력해주세요');return;}
   const row={school:'한국대학교',title,target:el('ntTarget').value.trim()||'전교생',period:ntPeriodStr(),location:ntLocSel.join(','),body};
   try{
-    const r=await fetch(`${SB_REST}/library_notices`,{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify(row)});
+    const r=await adminSave({op:'notices_insert',row});
     if(!r.ok){toast('발행 실패 ('+r.status+')');return;}
   }catch(e){toast('발행 실패 — 연결 확인');return;}
   closeNtPublish();
@@ -2884,9 +2879,7 @@ async function savePopup(){
   const row={title,body:el('ppBody').value.trim(),target:el('ppTarget').value,channel:el('ppChannel').value,
     starts_at:el('ppFrom').value||null,ends_at:el('ppTo').value||null};
   try{
-    const r=await fetch(`${SB_REST}/minsong_popups`,{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify(row)});
+    const r=await adminSave({op:'popups_insert',row});
     if(!r.ok)throw 0;
     el('ppTitle').value='';el('ppBody').value='';el('ppFrom').value='';el('ppTo').value='';
     toast('팝업을 띄웠어요');loadPopups();
@@ -2894,17 +2887,14 @@ async function savePopup(){
 }
 async function togglePopup(id,on){
   try{
-    await fetch(`${SB_REST}/minsong_popups?id=eq.${id}`,{method:'PATCH',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify({active:on})});
+    await adminSave({op:'popups_patch',id,patch:{active:on}});
   }catch(e){}
   loadPopups();
 }
 async function delPopup(id){
   if(!confirm('이 팝업을 삭제할까요?'))return;
   try{
-    await fetch(`${SB_REST}/minsong_popups?id=eq.${id}`,{method:'DELETE',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,Prefer:'return=minimal'}});
+    await adminSave({op:'popups_delete',id});
   }catch(e){}
   loadPopups();
 }
@@ -2958,7 +2948,7 @@ async function renderCommReviews(){
 }
 async function delReview(id){
   if(!confirm('이 서평을 삭제할까요? (부적절 신고 처리)'))return;
-  try{ await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}}); }catch(e){}
+  try{ await adminSave({op:'reviews_delete',id}); }catch(e){}
   renderCommReviews(); toast('서평을 삭제했어요');
 }
 let _commEditId=null;
@@ -2982,9 +2972,9 @@ async function saveCommPost(){
   try{
     let r;
     if(editing){
-      r=await fetch(`${SB_REST}/community_posts?id=eq.${editing}`,{method:'PATCH',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+      r=await adminSave({op:'comm_patch',id:editing,row});
     }else{
-      r=await fetch(`${SB_REST}/community_posts`,{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(Object.assign({school:'한국대학교'},row))});
+      r=await adminSave({op:'comm_insert',row:Object.assign({school:'한국대학교'},row)});
     }
     if(!r.ok){toast((editing?'수정':'게시')+' 실패 ('+r.status+')');return;}
   }catch(e){toast((editing?'수정':'게시')+' 실패 — 연결 확인');return;}
@@ -2993,7 +2983,7 @@ async function saveCommPost(){
 }
 async function delCommPost(id){
   if(!confirm('이 글을 삭제할까요?'))return;
-  try{ await fetch(`${SB_REST}/community_posts?id=eq.${id}`,{method:'DELETE',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}}); }catch(e){}
+  try{ await adminSave({op:'comm_delete',id}); }catch(e){}
   await loadCommPosts(); toast('삭제했어요');
 }
 

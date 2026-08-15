@@ -69,5 +69,60 @@ Deno.serve(async (req) => {
     return J({ ok: r.ok, status: r.status }, r.ok ? 200 : 500);
   }
 
+  // ── 2026-08-15 계약 전 잠금 2차: 관리자 콘텐츠 테이블 확장 ──
+  // 공통: id 기반 단건 PATCH/DELETE (patch는 op별 허용 컬럼만 통과 — secret 검증 뒤의 이중 방어)
+  const patchById = async (table: string, id: unknown, patch: Record<string, unknown>) => {
+    const r = await fetch(`${REST}/${table}?id=eq.${encodeURIComponent(String(id))}`, {
+      method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' }, body: JSON.stringify(patch),
+    });
+    return J({ ok: r.ok, status: r.status }, r.ok ? 200 : 500);
+  };
+  const deleteById = async (table: string, id: unknown) => {
+    const r = await fetch(`${REST}/${table}?id=eq.${encodeURIComponent(String(id))}`, {
+      method: 'DELETE', headers: H,
+    });
+    return J({ ok: r.ok, status: r.status }, r.ok ? 200 : 500);
+  };
+  const insertRow = async (table: string, row: unknown) => {
+    if (!row || typeof row !== 'object') return J({ error: 'row required' }, 400);
+    const r = await fetch(`${REST}/${table}`, {
+      method: 'POST', headers: { ...H, Prefer: 'return=minimal' }, body: JSON.stringify(row),
+    });
+    return J({ ok: r.ok, status: r.status }, r.ok ? 200 : 500);
+  };
+  const pick = (src: unknown, keys: string[]) => {
+    const o = (src && typeof src === 'object') ? src as Record<string, unknown> : {};
+    const out: Record<string, unknown> = {};
+    for (const k of keys) if (k in o) out[k] = o[k];
+    return out;
+  };
+
+  if (op === 'notices_insert') return insertRow('library_notices', body.row);
+
+  if (op === 'books_upsert') {
+    const rows = body.rows;
+    if (!Array.isArray(rows) || !rows.length) return J({ error: 'rows required' }, 400);
+    const r = await fetch(`${REST}/library_books?on_conflict=school,isbn`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows),
+    });
+    return J({ ok: r.ok, status: r.status }, r.ok ? 200 : 500);
+  }
+
+  if (op === 'popups_insert') return insertRow('minsong_popups', body.row);
+  if (op === 'popups_patch') return patchById('minsong_popups', body.id, pick(body.patch, ['active']));
+  if (op === 'popups_delete') return deleteById('minsong_popups', body.id);
+
+  if (op === 'comm_insert') return insertRow('community_posts', body.row);
+  if (op === 'comm_patch')
+    return patchById('community_posts', body.id, pick(body.row, ['kind', 'tag', 'title', 'meta1', 'meta2', 'body']));
+  if (op === 'comm_delete') return deleteById('community_posts', body.id);
+
+  if (op === 'reviews_delete') return deleteById('reviews', body.id);
+
+  // 학생 글 모더레이션: featured/hidden만 (본문 text는 관리자도 이 경로로 수정 불가)
+  if (op === 'writings_patch') return patchById('bookstar_writings', body.id, pick(body.patch, ['featured', 'hidden']));
+
   return J({ error: 'unknown op' }, 400);
 });
