@@ -2,3 +2,8 @@
 # 로컬 전용 세명대 동기화(서비스롤 키 포함 — 절대 커밋 금지)
 _semyung_sync.bat
 logs/
+
+# 8/17 정리: 파이썬 캐시·로컬 실험 스크립트
+__pycache__/
+scripts/__pycache__/
+_scratch/

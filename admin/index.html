@@ -2232,7 +2232,7 @@ function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
   secRenderCands(scHead);secNote();
 }
 
-/* ====== 8/14 데모 숫자 전면 제거 (사장님 "실제 데이터가 아닌 것 같은데") ======
+/* ====== 발행물 로드 (8/14 데모 숫자 전면 제거 → 8/17 옛 통계 코드 삭제, 통계는 파일 끝 '통계·관리 5화면' 구역) ======
    PPT 예시 기반 가짜 프로그램·접속·클릭 수치는 진단서의 "실측만" 원칙과 정면 충돌이라 걷어냈다.
    이제 이 화면의 모든 숫자는 서버 발행물·실측 로그에서만 나오고, 없으면 빈 상태로 정직하게 보인다. */
 let PROGRAMS=[];   // 서버(library_programs) 발행물만 — loadServerPrograms가 채운다
@@ -2243,7 +2243,7 @@ async function loadServerPrograms(){
     if(!r.ok)return;
     const rows=await r.json(); if(!Array.isArray(rows))return;
     const mapped=rows.map(x=>({id:x.id,type:x.type,title:x.title,status:x.status,from:x.start_date||'',to:x.end_date||'',
-      loc:x.location?[x.location]:[],visits:0,uses:0,minutes:x.type==='고전챌린지'?0:null,intro:x.intro||'',
+      loc:x.location?[x.location]:[],intro:x.intro||'',
       mission:x.mission||undefined,books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
     PROGRAMS=mapped;   // 데모 병합 제거(8/14) — 발행한 것만 보인다
     if(el('pg-dash').style.display!=='none')renderDash();
@@ -2251,11 +2251,7 @@ async function loadServerPrograms(){
   }catch(e){}
 }
 /* 이용자별·도서별·월별 데모 표 제거(8/14) — 정식 오픈 후 실집계로 채운다 */
-const USERS=[];
-const BOOKS_STAT=[];
-const MONTHLY=[];
 let NOTICES=[];        // 서버(library_notices)만 — loadNotices가 채운다
-const COMMUNITY=[];    // 데모 모임 목록 제거
 
 /* ====== 네비게이션 ====== */
 // 웹/앱 관리 모드 — 사이드바 메뉴가 통째로 바뀌고, 앱 모드는 금색 계열로 표시
@@ -2291,87 +2287,6 @@ function go(elm,page){
 }
 // 좌측 'bookstar Builder' — 영역별 꾸미기 진입
 function goArea(elm,area){ try{readSecInputs();}catch(e){} _pvFocusSlot=null; curArea=area; go(elm,'settings'); }
-
-/* ====== 대시보드 ====== */
-let RANGE='month';
-const RANGE_MULT={week:0.25,month:1,term:4.1};
-function setRange(b,r){RANGE=r;document.querySelectorAll('#pg-dash .seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderDash();}
-function renderDash(){
-  const active=PROGRAMS.filter(p=>p.status==='진행중').length;
-  // 배너: 실측정 중심 (별·참여·완주·미션은 loadRealStats에서 채움, 진행 프로그램은 즉시)
-  el('dbBanner').innerHTML=[
-    ['적립된 별','…','star',1],
-    ['참여 학생','…','part',0],
-    ['챌린지 완주','…','done',0],
-    // 8/14 사장님 수정요청: '미션 수행' 칩 삭제(불필요) — setChip('mission')은 널가드라 그대로 무해
-    ['진행 중 프로그램',active,'',0],
-  ].map(k=>`<div class="db-chip${k[3]?' hl':''}"><div class="v" data-k="${k[2]}">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('');
-  renderTrafficDemo();   // 별 순위 옆 '이용 현황 · 예시' 블록 (접속·이용·클릭)
-  loadRealStats();       // 배너 실측정 칩 + 리더보드 + 차트 (실데이터)
-}
-
-/* 이용 현황 — 가짜 예시 숫자(접속×2.3=클릭 같은 공식) 전면 제거(8/14).
-   웹 접속·클릭 집계는 측정 장치가 붙는 정식 오픈 후 시작 — 그때까지는 없다고 정직하게 말한다. */
-function renderTrafficDemo(){
-  el('dbKpi').innerHTML=`<div style="grid-column:1/-1;color:var(--sub);font-size:12.5px;line-height:1.8;padding:14px 6px">
-    아직 집계가 없어요 — 배너 오픈과 함께 접속·이용 집계가 시작됩니다.<br>
-    지금 실측되는 것: 왼쪽 <b>별 적립</b>, 아래 <b>미션 수행</b>, 민송 앱 메뉴의 <b>앱 이용</b>.</div>`;
-  const rows=PROGRAMS.slice();
-  el('dashProg').innerHTML=rows.length?rows.map(p=>`<tr>
-    <td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
-    <td class="num"><span class="muted">—</span></td><td class="num"><span class="muted">—</span></td></tr>`).join('')
-  :`<tr><td colspan="4" style="color:var(--light);text-align:center;padding:22px">아직 발행된 프로그램이 없어요 — 큐레이션·챌린지를 발행하면 여기에 나타납니다.</td></tr>`;
-}
-
-/* ====== 실시간 측정 (실제 데이터 — bookstar_stars/totals/enroll) ====== */
-const BX_NAMES={s1:'김민준',s2:'이서연',s3:'박도윤',s4:'최지우',s5:'정하준'};
-const MISSION_ACTS=new Set(['quiz','oneline','question','review','essay','underline','recommend']);
-const GRADE_EMOJI={'라이징스타':'💫','스타':'⭐','빅스타':'🌟','슈퍼스타':'✨','레전드':'👑'};
-async function loadRealStats(){
-  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
-  let totals=[], enroll=[], stars=[];
-  const ids=Object.keys(BX_NAMES);   // 데모 학생(demo1 등) 제외 — 진짜 테스트 학생만
-  try{ const r=await fetch(`${SB_REST}/bookstar_student_totals?student_id=in.(${ids.join(',')})&order=total_stars.desc&select=student_id,total_stars,grade`,{headers:H}); if(r.ok) totals=await r.json(); }catch(e){}
-  try{ const r=await fetch(`${SB_REST}/bookstar_challenge_enroll?student_id=in.(${ids.join(',')})&select=challenge_id,student_id,status`,{headers:H}); if(r.ok) enroll=await r.json(); }catch(e){}
-  try{ const r=await fetch(`${SB_REST}/bookstar_stars?student_id=in.(${ids.join(',')})&select=activity,created_at`,{headers:H}); if(r.ok) stars=await r.json(); }catch(e){}
-  if(!Array.isArray(totals))totals=[]; if(!Array.isArray(enroll))enroll=[]; if(!Array.isArray(stars))stars=[];
-  // bookstar_stars엔 challenge_join/done 같은 라이프사이클 이벤트도 섞임 → 진짜 미션만
-  const missions=stars.filter(s=>MISSION_ACTS.has(s.activity));
-  const sumStars=totals.reduce((a,t)=>a+(t.total_stars||0),0);
-  const partStudents=new Set(enroll.map(e=>e.student_id));
-  const doneCount=enroll.filter(e=>e.status==='done').length;
-  // 배너 실측정 칩 갱신
-  const setChip=(k,v)=>{const n=document.querySelector(`#dbBanner .db-chip .v[data-k="${k}"]`); if(n)n.textContent=nf(v);};
-  setChip('star',sumStars); setChip('part',partStudents.size); setChip('done',doneCount); setChip('mission',missions.length);
-  // 별 순위 리더보드 (실데이터)
-  const mx=Math.max(1,...totals.map(t=>t.total_stars||0));
-  el('dbRank').innerHTML = totals.length ? totals.slice(0,10).map((t,i)=>`<div class="db-rbar">
-    <div class="rno ${i<3?'t':''}">${i+1}</div><div class="rnm">${esc(BX_NAMES[t.student_id]||t.student_id)}</div>
-    <div class="rtk"><i style="width:${Math.round((t.total_stars||0)/mx*100)}%"></i></div><div class="rvl">⭐${nf(t.total_stars||0)}</div></div>`).join('')
-    : `<div class="ph-sub" style="padding:18px 2px">아직 적립된 별이 없어요.<br>학생이 챌린지 미션을 수행하면 여기에 순위가 쌓입니다.</div>`;
-  drawDashCharts(missions);  // 일자별 미션 + 미션 종류별 (실데이터, 라이프사이클 제외)
-}
-/* ====== 대시보드 차트 (Chart.js · 실데이터) ====== */
-let _dashCharts={bar:null,cat:null};
-function drawDashCharts(stars){
-  if(typeof Chart==='undefined') return;
-  stars=Array.isArray(stars)?stars:[];
-  try{ if(_dashCharts.bar)_dashCharts.bar.destroy(); if(_dashCharts.cat)_dashCharts.cat.destroy(); }catch(e){}
-  // 미션 종류별 (activity 집계)
-  const LBL={quiz:'퀴즈',oneline:'한 줄 소감',question:'질문',review:'서평',essay:'독후감',underline:'핵심 문장',recommend:'책 추천'};
-  const COL={quiz:'#6366f1',oneline:'#22c55e',question:'#f59e0b',review:'#ec4899',essay:'#06b6d4',underline:'#8b5cf6',recommend:'#f9844a'};
-  const byAct={}; stars.forEach(s=>{const a=s.activity||'기타'; byAct[a]=(byAct[a]||0)+1;});
-  const mix=Object.keys(byAct).sort((a,b)=>byAct[b]-byAct[a]).map(k=>[LBL[k]||k,byAct[k],COL[k]||'#94a3b8']);
-  if(el('dbCatTot')) el('dbCatTot').textContent=mix.reduce((a,x)=>a+x[1],0);
-  if(el('dbCat')) _dashCharts.cat=new Chart(el('dbCat'),{type:'doughnut',data:{labels:mix.map(x=>x[0]),datasets:[{data:mix.map(x=>x[1]),backgroundColor:mix.map(x=>x[2]),borderWidth:0,borderRadius:8,spacing:4,hoverOffset:6}]},options:{cutout:'72%',plugins:{legend:{display:false}},maintainAspectRatio:false}});
-  if(el('dbCatLeg')) el('dbCatLeg').innerHTML=mix.length?mix.map(x=>`<span><i style="background:${x[2]}"></i>${x[0]} ${x[1]}</span>`).join(''):'<span class="muted">아직 미션 기록이 없어요</span>';
-  // 일자별 미션 수행 (created_at 집계, 최근 14일)
-  const byDay={}; stars.forEach(s=>{const d=(s.created_at||'').slice(0,10); if(d)byDay[d]=(byDay[d]||0)+1;});
-  const days=Object.keys(byDay).sort().slice(-14);
-  const labels=days.map(d=>{const p=d.split('-');return (+p[1])+'/'+(+p[2]);});
-  const counts=days.map(d=>byDay[d]);
-  if(el('dbBar')) _dashCharts.bar=new Chart(el('dbBar'),{type:'bar',data:{labels:labels,datasets:[{data:counts,backgroundColor:'#6366f1',borderRadius:8,barThickness:18,maxBarThickness:22}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#eef0f5'},ticks:{precision:0,color:'#aeb3cc'}},x:{grid:{display:false},ticks:{color:'#aeb3cc'}}},maintainAspectRatio:false}});
-}
 
 /* ====== 민송 앱 (네이티브 앱 실측 — minsong_app_events 집계 RPC, 원본 로그는 외부 열람 불가) ====== */
 const MA_LBL={login:'로그인',ebook_borrow:'전자책 대출',pickup:'찾아줘북즈',hold:'반납예약',cancel_pickup:'픽업 취소',cancel_hold:'예약 취소',charm_pick:'인증도서 담음',charm_done:'독후감 제출 기록'};
@@ -2412,176 +2327,9 @@ async function renderMsApp(){
     :`<tr><td colspan="4" style="color:var(--light);text-align:center;padding:22px">아직 기록이 없어요</td></tr>`;
 }
 
-/* ====== 학생 글 ====== */
+/* ====== 학생 글 — 공용 선언 (화면 코드는 파일 끝 '통계·관리 5화면' 구역) ====== */
 let WRITINGS=[];
-const ACT_NAMES={oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',underline:'핵심 문장',recommend:'책 추천'};
 const ACT_STAR={oneline:5,question:5,review:10,essay:50,underline:5,recommend:5};
-async function loadWritings(){
-  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?order=created_at.desc&select=*`,{headers:H}); if(r.ok)WRITINGS=await r.json(); }catch(e){}
-  if(!Array.isArray(WRITINGS))WRITINGS=[];
-  const chSel=el('wrCh');
-  if(chSel){ const ids=[...new Set(WRITINGS.map(w=>w.challenge_id).filter(Boolean))];
-    const title=id=>{const p=PROGRAMS.find(x=>String(x.id)===String(id));return p?p.title:id;};
-    chSel.innerHTML='<option value="">전체 챌린지</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(title(id))}</option>`).join(''); }
-  const tySel=el('wrTy');
-  if(tySel){ const ts=[...new Set(WRITINGS.map(w=>w.activity))];
-    tySel.innerHTML='<option value="">전체 미션</option>'+ts.map(t=>`<option value="${t}">${ACT_NAMES[t]||t}</option>`).join(''); }
-  renderWritings();
-}
-function renderWritings(){
-  const fch=el('wrCh')?el('wrCh').value:'', fty=el('wrTy')?el('wrTy').value:'', sort=el('wrSort')?el('wrSort').value:'new';
-  let rows=WRITINGS.filter(w=>!w.hidden && (!fch||String(w.challenge_id)===fch) && (!fty||w.activity===fty));
-  if(sort==='feat') rows=rows.slice().sort((a,b)=>(b.featured?1:0)-(a.featured?1:0));
-  if(el('wrCount'))el('wrCount').textContent=`총 ${rows.length}건`;
-  el('wrBody').innerHTML = rows.length ? `<div class="wr-grid">`+rows.map(wrCard).join('')+`</div>`
-    : `<div class="note" style="text-align:center;padding:44px">아직 제출된 글이 없어요.<br>학생이 챌린지에서 소감·서평을 작성하면 여기에 모입니다.</div>`;
-}
-function wrCard(w){
-  const name=BX_NAMES[w.student_id]||w.student_id;
-  const act=ACT_NAMES[w.activity]||w.activity;
-  const date=(w.created_at||'').slice(0,10);
-  return `<div class="wr-card${w.featured?' feat':''}">
-    <div class="wr-top"><span class="wr-name">${esc(name)}</span>
-      <span class="wr-badge">${esc(act)} ⭐${ACT_STAR[w.activity]||''}</span>
-      <span class="wr-date">${esc(date)}</span></div>
-    <div class="wr-text">${esc(w.text)}</div>
-    <div class="wr-act">
-      <button class="wr-feat${w.featured?' on':''}" onclick="wrFeature(${w.id},${w.featured?'false':'true'})">${w.featured?'★ 우수작':'☆ 우수작 선정'}</button>
-      <button class="wr-hide" onclick="wrHide(${w.id})">숨기기</button></div></div>`;
-}
-async function wrPatch(id,body){
-  try{ await adminSave({op:'writings_patch',id,patch:body}); }catch(e){}
-}
-async function wrFeature(id,v){ await wrPatch(id,{featured:v}); const w=WRITINGS.find(x=>x.id===id); if(w)w.featured=v; renderWritings(); }
-async function wrHide(id){ if(!confirm('이 글을 숨길까요? (학생 화면엔 영향 없고, 사서 목록에서만 가려져요)'))return; await wrPatch(id,{hidden:true}); const w=WRITINGS.find(x=>x.id===id); if(w)w.hidden=true; renderWritings(); }
-
-/* ====== 이용통계 ====== */
-const STAT_TABS=[['프로그램별','prog'],['월별','month'],['이용자별','user'],['도서별','book']];
-let statTab='prog';
-function initStatTabs(){el('statTabs').innerHTML=STAT_TABS.map(t=>`<button class="tab ${t[1]===statTab?'on':''}" onclick="setStatTab('${t[1]}')">${t[0]} 건수</button>`).join('');}
-function setStatTab(t){statTab=t;initStatTabs();renderStats();}
-function inRange(ym){const f=el('stFrom').value,t=el('stTo').value;return (!f||ym>=f)&&(!t||ym<=t);}
-// 기간 선택을 깔끔한 드롭다운(연·월)으로 — 브라우저 기본 month 달력 대체
-function buildStatMonths(){
-  const from=el('stFrom'), to=el('stTo'); if(!from||!to||from.options.length) return;
-  const opts=[];
-  for(let y=2025;y<=2026;y++) for(let mo=1;mo<=12;mo++){ const v=y+'-'+String(mo).padStart(2,'0'); opts.push(`<option value="${v}">${y}년 ${mo}월</option>`); }
-  from.innerHTML=opts.join(''); to.innerHTML=opts.join('');
-  from.value='2026-01'; to.value='2026-06';
-}
-function renderStats(){
-  buildStatMonths();
-  initStatTabs();
-  const kind=el('stKind').value;
-  // 데모 표 제거 후의 빈 상태(8/14) — 없는 숫자는 없다고 말한다
-  const stEmpty=n=>`<tr><td colspan="${n}" style="color:var(--light);text-align:center;padding:28px">아직 집계된 데이터가 없어요 — 정식 오픈 후 학생 이용이 여기에 집계됩니다.</td></tr>`;
-  let html='',note='';
-  if(statTab==='prog'){
-    const rows=PROGRAMS.filter(p=>!kind||(kind==='챌린지'?p.type.includes('챌린지'):p.type==='큐레이션'));
-    html=`<thead><tr><th class="ctr">번호</th><th>구분</th><th>프로그램</th><th class="num">접속건수</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      (rows.length?rows.map((p,i)=>`<tr><td class="ctr">${i+1}</td><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
-        <td class="num"><span class="muted">—</span></td><td class="num"><span class="muted">—</span></td>
-        <td class="num"><span class="muted">—</span></td></tr>`).join(''):stEmpty(6))+`</tbody>`;
-    note='접속·이용·이용시간 집계는 정식 오픈 후 시작됩니다.';
-  }else if(statTab==='month'){
-    const rows=MONTHLY.filter(r=>inRange(r.m));
-    html=`<thead><tr><th>월</th><th class="num">접속건수</th><th class="num">이용건수</th></tr></thead><tbody>`+
-      (rows.length?rows.map(r=>`<tr><td style="font-weight:600">${r.m.replace('-','년 ')}월</td><td class="num">${nf(r.visits)}</td><td class="num">${nf(r.uses)}</td></tr>`).join(''):stEmpty(3))+`</tbody>`;
-    note='선택한 기간 내 월별 합계입니다.';
-  }else if(statTab==='user'){
-    html=`<thead><tr><th class="ctr">번호</th><th>아이디</th><th class="num">이용건수</th><th class="num">한줄서평</th><th class="num">퀴즈점수</th><th class="num">질문점수</th><th class="num">합계점수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      (USERS.length?USERS.map((u,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:700">${esc(u.id)}</td><td class="num">${nf(u.uses)}</td>
-        <td class="num">${u.review!=null?u.review:'<span class="muted">—</span>'}</td>
-        <td class="num">${u.quiz!=null?u.quiz:'<span class="muted">—</span>'}</td>
-        <td class="num">${u.question!=null?u.question:'<span class="muted">—</span>'}</td>
-        <td class="num"><b>${u.total!=null?u.total:'<span class="muted">—</span>'}</b></td>
-        <td class="num">${u.minutes!=null?nf(u.minutes):'<span class="muted">—</span>'}</td></tr>`).join(''):stEmpty(8))+`</tbody>`;
-    note='프로그램마다 평가 항목이 달라 빈 칸이 생길 수 있어요.';
-  }else{
-    const rows=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses);
-    html=`<thead><tr><th class="ctr">번호</th><th>도서명</th><th class="num">이용건수</th><th class="num">이용시간(분)</th></tr></thead><tbody>`+
-      (rows.length?rows.map((b,i)=>`<tr><td class="ctr">${i+1}</td><td style="font-weight:600">${esc(b.t)}</td><td class="num">${nf(b.uses)}</td>
-        <td class="num">${b.minutes!=null?nf(b.minutes):'<span class="muted">—</span>'}</td></tr>`).join(''):stEmpty(4))+`</tbody>`;
-    note='도서별 이용 현황입니다. 이용시간은 고전 컬렉션 도서만 집계됩니다.';
-  }
-  el('statTbl').innerHTML=html; el('statNote').innerHTML=note;
-  drawStatChart();
-}
-/* ====== 이용통계 배너 칩 + 차트 (panze) ====== */
-let _statChart=null;
-function statChip(label,val,sub){return `<div class="db-chip${sub&&sub.hl?' hl':''}"><div class="v">${val}${sub&&sub.delta?` <small>${sub.delta}</small>`:''}</div><div class="l">${label}</div></div>`;}
-function drawStatChart(){
-  const kind=el('stKind').value;
-  const cap=el('statBannerCap'), banner=el('statBanner'), tit=el('statChartTit');
-  // 팔레트 (panze 톤)
-  const C={accent:'#3a6ea5',gold:'#d4a93b',blue:'#2563c9',good:'#2e7d57',grid:'#eef0f5',tick:'#aeb3cc'};
-  let chips='',chart=null;
-  if(statTab==='prog'){
-    const rows=PROGRAMS.filter(p=>!kind||(kind==='챌린지'?p.type.includes('챌린지'):p.type==='큐레이션'));
-    const tV=rows.reduce((a,p)=>a+(p.visits||0),0), tU=rows.reduce((a,p)=>a+(p.uses||0),0);
-    const active=rows.filter(p=>p.status==='진행중').length;
-    if(cap)cap.textContent='프로그램 전체';
-    chips=statChip('프로그램 수',nf(rows.length))+statChip('접속건수 합계',nf(tV))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('진행 중',nf(active));
-    if(tit)tit.textContent='프로그램별 이용·접속 건수';
-    const top=rows.slice().sort((a,b)=>(b.uses||0)-(a.uses||0)).slice(0,8);
-    chart={type:'bar',data:{labels:top.map(p=>p.title),datasets:[
-      {label:'이용건수',data:top.map(p=>p.uses||0),backgroundColor:C.accent,borderRadius:6,barPercentage:.7},
-      {label:'접속건수',data:top.map(p=>p.visits||0),backgroundColor:C.gold,borderRadius:6,barPercentage:.7}]},
-      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:11,boxHeight:11,font:{size:11},color:'#6b7088'}}},
-        scales:{y:{grid:{color:C.grid},ticks:{color:C.tick}},x:{grid:{display:false},ticks:{color:C.tick,font:{size:10},maxRotation:0,callback:function(v){const s=this.getLabelForValue(v);return s.length>6?s.slice(0,6)+'…':s;}}}},maintainAspectRatio:false}};
-  }else if(statTab==='month'){
-    const rows=MONTHLY.filter(r=>inRange(r.m));
-    const tV=rows.reduce((a,r)=>a+r.visits,0), tU=rows.reduce((a,r)=>a+r.uses,0);
-    const avgU=rows.length?Math.round(tU/rows.length):0;
-    const peak=rows.slice().sort((a,b)=>b.uses-a.uses)[0];
-    if(cap)cap.textContent='선택한 기간 합계';
-    chips=statChip('접속건수 합계',nf(tV))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('월 평균 이용',nf(avgU))+statChip('최다 이용 월',peak?peak.m.slice(5)+'월':'—');
-    if(tit)tit.textContent='월별 접속·이용 추이';
-    chart={type:'line',data:{labels:rows.map(r=>r.m.slice(5)+'월'),datasets:[
-      {label:'이용건수',data:rows.map(r=>r.uses),borderColor:C.accent,backgroundColor:'rgba(58,110,165,.12)',fill:true,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:C.accent},
-      {label:'접속건수',data:rows.map(r=>r.visits),borderColor:C.gold,backgroundColor:'transparent',fill:false,tension:.35,borderWidth:2.5,pointRadius:3,pointBackgroundColor:C.gold}]},
-      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:11,boxHeight:11,font:{size:11},color:'#6b7088'}}},
-        scales:{y:{grid:{color:C.grid},ticks:{color:C.tick}},x:{grid:{display:false},ticks:{color:C.tick}}},maintainAspectRatio:false}};
-  }else if(statTab==='user'){
-    const tU=USERS.reduce((a,u)=>a+(u.uses||0),0);
-    const scored=USERS.filter(u=>u.total!=null);
-    const avgT=scored.length?Math.round(scored.reduce((a,u)=>a+u.total,0)/scored.length):0;
-    const best=scored.slice().sort((a,b)=>b.total-a.total)[0];
-    if(cap)cap.textContent='이용자 현황';
-    chips=statChip('이용자 수',nf(USERS.length))+statChip('이용건수 합계',nf(tU))+statChip('평균 합계점수',nf(avgT),{hl:1})+statChip('최고점',best?nf(best.total)+'점':'—');
-    if(tit)tit.textContent='이용자별 합계점수 순위';
-    const top=scored.slice().sort((a,b)=>b.total-a.total).slice(0,8);
-    chart={type:'bar',data:{labels:top.map(u=>u.id),datasets:[{label:'합계점수',data:top.map(u=>u.total),backgroundColor:top.map((_,i)=>i<3?C.gold:C.accent),borderRadius:6,barPercentage:.65}]},
-      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick}},y:{grid:{display:false},ticks:{color:C.tick,font:{size:11}}}},maintainAspectRatio:false}};
-  }else{
-    const rows=BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses);
-    const tU=rows.reduce((a,b)=>a+b.uses,0);
-    if(cap)cap.textContent='도서 이용 현황';
-    chips=statChip('도서 수',nf(rows.length))+statChip('이용건수 합계',nf(tU),{hl:1})+statChip('최다 이용 도서',rows[0]?(rows[0].t.length>10?rows[0].t.slice(0,10)+'…':rows[0].t):'—')+statChip('최다 이용건수',rows[0]?nf(rows[0].uses):'—');
-    if(tit)tit.textContent='도서별 이용건수 순위';
-    const top=rows.slice(0,8);
-    chart={type:'bar',data:{labels:top.map(b=>b.t),datasets:[{label:'이용건수',data:top.map(b=>b.uses),backgroundColor:top.map((_,i)=>i<3?C.gold:C.accent),borderRadius:6,barPercentage:.65}]},
-      options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick}},y:{grid:{display:false},ticks:{color:C.tick,font:{size:10.5},callback:function(v){const s=this.getLabelForValue(v);return s.length>14?s.slice(0,14)+'…':s;}}}},maintainAspectRatio:false}};
-  }
-  if(banner)banner.innerHTML=chips;
-  if(typeof Chart==='undefined'||!el('statChart'))return;
-  try{ if(_statChart)_statChart.destroy(); }catch(e){}
-  _statChart=new Chart(el('statChart'),chart);
-}
-function downloadExcel(){
-  let rows=[],name='';
-  if(statTab==='prog'){name='이용통계_프로그램별';rows.push(['번호','구분','프로그램','접속건수','이용건수','이용시간(분)']);
-    PROGRAMS.forEach((p,i)=>rows.push([i+1,(p.type==='큐레이션'?'큐레이션':p.type==='고전챌린지'?'고전챌린지':'챌린지'),p.title,p.visits,p.uses,p.minutes!=null?p.minutes:'']));}
-  else if(statTab==='month'){name='이용통계_월별';rows.push(['월','접속건수','이용건수']);MONTHLY.filter(r=>inRange(r.m)).forEach(r=>rows.push([r.m,r.visits,r.uses]));}
-  else if(statTab==='user'){name='이용통계_이용자별';rows.push(['번호','아이디','이용건수','한줄서평','퀴즈점수','질문점수','합계점수','이용시간(분)']);
-    USERS.forEach((u,i)=>rows.push([i+1,u.id,u.uses,u.review==null?'':u.review,u.quiz==null?'':u.quiz,u.question==null?'':u.question,u.total==null?'':u.total,u.minutes==null?'':u.minutes]));}
-  else{name='이용통계_도서별';rows.push(['번호','도서명','이용건수','이용시간(분)']);BOOKS_STAT.slice().sort((a,b)=>b.uses-a.uses).forEach((b,i)=>rows.push([i+1,b.t,b.uses,b.minutes==null?'':b.minutes]));}
-  const csv='﻿'+rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',')).join('\r\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download=name+'.csv';a.click();URL.revokeObjectURL(url);
-  toast('엑셀(CSV) 파일을 내려받았어요');
-}
 
 /* ====== 프로그램 만들기 ====== */
 const CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";
@@ -3103,32 +2851,6 @@ async function delCommPost(id){
   await loadCommPosts(); toast('삭제했어요');
 }
 
-/* ====== 히스토리 ====== */
-// 8/14 사장님 확인: 학생 앱 커뮤니티 삭제에 맞춰 이력에서도 커뮤니티·공지글 탭 제거(렌더 코드는 보존 — 복구 가능)
-const HIS_TABS=[['큐레이션','큐레이션'],['챌린지','챌린지']];
-let hisTab='큐레이션';
-function initHisTabs(){el('hisTabs').innerHTML=HIS_TABS.map(t=>`<button class="tab ${t[1]===hisTab?'on':''}" onclick="setHisTab('${t[1]}')">${t[0]}</button>`).join('');}
-function setHisTab(t){hisTab=t;renderHistory();}
-function renderHistory(){
-  initHisTabs();let html='';
-  const hEmpty=(n,msg)=>`<tr><td colspan="${n}" style="color:var(--light);text-align:center;padding:28px">${msg}</td></tr>`;
-  if(hisTab==='큐레이션'||hisTab==='챌린지'){
-    const rows=PROGRAMS.filter(p=>hisTab==='큐레이션'?p.type==='큐레이션':p.type.includes('챌린지'));
-    html=`<thead><tr><th>구분</th><th>프로그램</th><th>기간</th><th>위치</th><th class="ctr">상태</th><th class="num">이용건수</th></tr></thead><tbody>`+
-      (rows.length?rows.map(p=>`<tr><td>${gtag(p.type)}</td><td style="font-weight:600">${esc(p.title)}</td>
-        <td>${p.from} ~ ${p.to}</td><td style="font-size:12px;color:var(--sub)">${esc((p.loc||[]).map(locLabel).join(', '))}</td>
-        <td class="ctr"><span class="gtag ${p.status==='진행중'?'cur':p.status==='예정'?'chal':'clas'}">${p.status}</span></td>
-        <td class="num"><span class="muted">—</span></td></tr>`).join(''):hEmpty(6,'아직 발행 이력이 없어요.'))+`</tbody>`;
-  }else if(hisTab==='커뮤니티'){
-    html=`<thead><tr><th>모임/채널</th><th>개설자</th><th>개설일</th><th class="num">멤버</th></tr></thead><tbody>`+
-      (COMMUNITY.length?COMMUNITY.map(c=>`<tr><td style="font-weight:600">${esc(c.title)}</td><td>${esc(c.by)}</td><td>${esc(c.at)}</td><td class="num">${nf(c.members)}명</td></tr>`).join(''):hEmpty(4,'아직 커뮤니티 기록이 없어요.'))+`</tbody>`;
-  }else{
-    html=`<thead><tr><th>제목</th><th>대상</th><th>기간</th><th>발행일</th></tr></thead><tbody>`+
-      (NOTICES.length?NOTICES.map(n=>`<tr><td style="font-weight:600">${esc(n.title)}</td><td>${esc(n.target)}</td><td>${esc(n.period||'')}</td><td>${esc(n.at)}</td></tr>`).join(''):hEmpty(4,'아직 발행한 공지가 없어요.'))+`</tbody>`;
-  }
-  el('hisTbl').innerHTML=html;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    통계·관리 5화면 — 측정 로그 v2 (2026-08-17)
    원천: bookstar_events(+writings·stars·enroll) → admin-save stats_* op(service role) → 이 화면.
@@ -3177,7 +2899,7 @@ function xlsxDownload(name, sheets){   // sheets=[{name, rows:[[...],...]}]
 const NOTE3=[['조회는 상세페이지 살펴 본 건수'],['이용은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)'],['활동은 한줄소감, 한줄질문, 서평 작성 건수']];
 
 /* ══════════ 1. 대시보드 ══════════ */
-RANGE='month'; let DASH=null;   // RANGE는 옛 코드의 전역 let 재사용
+let RANGE='month'; let DASH=null;
 function setRange(b,r){ RANGE=r; document.querySelectorAll('#pg-dash .seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); renderDash(); }
 async function renderDash(){
   const [f,t]=presetRange(RANGE);
@@ -3210,7 +2932,7 @@ function downloadDashExcel(){
 }
 
 /* ══════════ 2. 이용통계 ══════════ */
-statTab='book'; let STATS=null;   // statTab 전역 재사용
+let statTab='book'; let STATS=null;
 function initStatDates(){ if(el('stDateFrom')&&!el('stDateFrom').value){ const [f,t]=presetRange('term'); el('stDateFrom').value=f; el('stDateTo').value=t; } }
 function setStatRange(b,k){ document.querySelectorAll('#stSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const [f,t]=presetRange(k); el('stDateFrom').value=f; el('stDateTo').value=t; }
 function setStatTab(k){ statTab=k; const map={book:'statBook',user:'statUser',detail:'statDetail'}; for(const key in map) el(map[key]).style.display=(key===k?'':'none');
@@ -3313,7 +3035,7 @@ function downloadChDetailExcel(){
 }
 
 /* ══════════ 4. 학생 글 ══════════ */
-WRITINGS=[]; let FEEDV=null;   // WRITINGS 전역 재사용
+let FEEDV=null;   // WRITINGS 선언은 위 '학생 글' 구역
 function initFeedDates(){ if(el('fdFrom')&&!el('fdFrom').value){ const [f,t]=presetRange('d30'); el('fdFrom').value=f; el('fdTo').value=t; } }
 function setFeedRange(b,k){ document.querySelectorAll('#fdSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const [f,t]=presetRange(k); el('fdFrom').value=f; el('fdTo').value=t; }
 async function loadWritings(){

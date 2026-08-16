@@ -5897,7 +5897,6 @@ function millieHTML(secs,classicMode){
     const st=s.style||'row';
     out+='</div><div class="bx-org" data-origin="'+((st==='rank'||st==='ebookrank')?'ranking':'curation')+'" data-origin-id="'+esc(String(s.slot||''))+'">';
     if(s.visible===false) return;   // 사서가 '노출 끄기' 한 고정 칸은 우리 도서관에 안 보임
-    if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
     if(st==='ebookrank'){ if(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length) out+=mlRank(s.title,s.subtitle,SEMYUNG_BEST_LIVE.slice(0,12),true); return; }   // 전자책 인기(순위만, 전자도서관)
     if(st==='newlive_p'){ const nb=(SEMYUNG_NEW_P&&SEMYUNG_NEW_P.length)?SEMYUNG_NEW_P:(SEMYUNG_NEW_LIVE||[]).filter(b=>b.tags&&b.tags.includes('paper')); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 종이책 신착(입고순)
@@ -7774,7 +7773,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260817a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260817b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -10416,7 +10415,7 @@ loadCommunityPosts();
    검증 서평 (reviews) — 완독·인증 서평 공유 (마이페이지·커뮤니티·책 상세)
    ═══════════════════════════════════════════════════════════ */
 const RV_FLAG={ko:'🇰🇷',en:'🇺🇸',vi:'🇻🇳',zh:'🇨🇳',ja:'🇯🇵'};
-function readerName(){ try{ const s=(typeof bxStudent==='function')&&bxStudent(); if(s&&s.name) return s.name; return localStorage.getItem('bookstar_reader')||'김민서'; }catch(e){ return '김민서'; } }
+function readerName(){ try{ const s=(typeof bxStudent==='function')&&bxStudent(); if(s&&s.name) return s.name; return localStorage.getItem('bookstar_reader')||'학생'; }catch(e){ return '학생'; } }   // 8/17 데모 이름('김민서') 잔재 제거
 function rvStars(n){ n=n||0; let s=''; for(let i=1;i<=5;i++) s+=`<span style="color:${i<=n?'#f5a623':'#d8d8d8'}">★</span>`; return s; }
 function rvCover(r){
   const cb=(typeof BOOKS!=='undefined')&&BOOKS.find(x=>x.id===r.book_id);
