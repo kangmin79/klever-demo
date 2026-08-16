@@ -258,6 +258,7 @@ body.dark .side-node .icon{color:var(--gold);}
   .nc-a .nc-t{-webkit-line-clamp:3;letter-spacing:-.04em;line-height:1.2;}
 }
 .ml{display:flex;flex-direction:column;gap:42px;padding-bottom:20px;}
+.bx-org{display:contents}   /* 측정 출처 래퍼 — 레이아웃에 상자 없음 */
 .ml-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
 .ml-h-t{font-family:Georgia,'Noto Serif KR',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);}
 .ml-h-s{font-size:13px;color:var(--text-light);margin-top:5px;}
@@ -2623,7 +2624,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div id="collectionCuration"></div>
 
   <div class="section">
-    <div id="classicShelves"></div>
+    <div id="classicShelves" data-origin="classics"></div>
   </div>
 </section>
 
@@ -2640,7 +2641,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 </section>
 
 <!-- 도서 상세 모달 (전역 — 모든 페이지에서 사용) -->
-<div id="lcDetail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
+<div id="lcDetail" data-origin="detail" onclick="if(event.target.id==='lcDetail')closeLc()"><div class="lcd"></div></div>
 
 <!-- 커뮤니티 상세 모달 (독서 프로그램) -->
 <div id="commModal" onclick="if(event.target.id==='commModal')closeCommModal()">
@@ -2671,7 +2672,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <p class="page-subtitle">사서가 운영하는 챌린지에 참여하고, 퀴즈·소감으로 완독을 인증하세요</p>
 
   <!-- 사서가 만든 챌린지 (library_programs · 진행중) — 우리 도서관 밀리식 레이아웃 -->
-  <div id="chalLive"><div class="chal-empty">불러오는 중…</div></div>
+  <div id="chalLive" data-origin="challenge"><div class="chal-empty">불러오는 중…</div></div>
 
 </section>
 
@@ -2784,10 +2785,10 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   </div>
   <div id="usChips" style="margin-top:12px;display:none;flex-wrap:wrap;gap:7px;"></div>
 
-  <div id="usResults" style="margin-top:24px;"></div>
+  <div id="usResults" style="margin-top:24px;" data-origin="search" data-origin-id="main"></div>
 </section>
 
-<section class="page" id="page-feed">
+<section class="page" id="page-feed" data-origin="feed">
   <!-- 제목/설명 제거(2026-06-23): 좌측 네비 '피드'와 중복 -->
   <div id="feedBody"></div>
 </section>
@@ -2805,7 +2806,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div id="dashboardBody" style="margin-top:20px;"></div>
 </section>
 
-<section class="page" id="page-mypage">
+<section class="page" id="page-mypage" data-origin="mypage">
   <!-- 페이지 제목/설명 제거(2026-06-23): 좌측 네비 '내서재'와 중복 → 첫 그룹이 상단 -->
 
   <!-- ① 내 활동 그룹 (프로필 6스탯 + 별 내역·등급 + 내 기록) — 실데이터 -->
@@ -3967,6 +3968,7 @@ function bumpStreak(){
 function readerSessionStart(){ _readerSessionStart = Date.now(); bumpStreak(); }
 function readerSessionEnd(){
   if(!_readerSessionStart) return;
+  try{ bxReadAcc(Math.min((Date.now()-_readerSessionStart)/1000, 90*60), (typeof currentBook!=='undefined'?currentBook:null)); }catch(e){}   // 측정: 읽은 초 누적(닫을 때 1줄)
   // 한 번에 세는 시간은 최대 90분으로 상한 — 탭을 켜둔 채 자리를 비운 경우 과대 집계 방지
   const mins = Math.min(Math.round((Date.now() - _readerSessionStart) / 60000), 90);
   if(mins > 0){
@@ -4521,6 +4523,7 @@ function certPromptSubmit(bookId){
   if(v.length<5){ readerToast('소감을 5자 이상 적어 주세요'); return; }
   const next=_chalMerge(bookId, {impression:v, submitted:true});
   bxUpsertResult(bookId, next);
+  bxEvent('activity',{sub:'oneline', book:bxBookByKey(bookId), ref_table:'bookstar_challenge_results', ref_id:_bxSid()+'|'+bookId, meta:{len:v.length, via:'cert'}});   // 측정: 활동(완독 인증 소감)
   document.getElementById('bsCertPrompt')?.remove();
   const b=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===bookId):null;
   bsCelebrate({
@@ -5129,7 +5132,7 @@ function renderChalCards(){
           ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
           : '';
         const desc=c.intro?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
-        return `<div class="cl-shelf">${chalRowHead(c)}${desc}${row}</div>`;
+        return `<div class="cl-shelf" data-origin="challenge" data-origin-id="${esc(String(c.id))}">${chalRowHead(c)}${desc}${row}</div>`;
       }).join('')
     + `</div>`;
   g.innerHTML=`<div class="ml">${out}</div>`;
@@ -5407,6 +5410,7 @@ async function smReserve(reckey){
   try{
     if(!ssoIsPersonal()){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; smLoginGuide(); return; }
     const d=await smPickupPersonal(reckey);
+    bxEvent('link',{sub:'pickup', book:window._lcCurBook, item_type:'paper', item_key:reckey, ok:!!(d&&d.ok), meta:{request_no:(d&&d.request_no)||'', msg:(d&&!d.ok)?String(d.message||d.error||'').slice(0,120):''}});   // 측정: 이용(종이책 연결=신청까지)
     if(d&&d.ok){
       _myWaitCache=null;   // 방금 신청이 목록에 생겼다 — 캐시를 비워 소장 박스·내 도서관이 바로 알게
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
@@ -5478,6 +5482,7 @@ async function smHold(reckey){
   try{
     if(!ssoIsPersonal()){ btn.innerHTML=orig; btn.classList.remove('busy'); delete btn.dataset.busy; smLoginGuide(); return; }
     const d=await smHoldPersonal(reckey);
+    bxEvent('link',{sub:'hold', book:window._lcCurBook, item_type:'paper', item_key:reckey, ok:!!(d&&d.ok), meta:{msg:(d&&!d.ok)?String(d.message||'').slice(0,120):''}});   // 측정: 이용(종이책 연결=예약)
     if(d&&d.ok){
       _myWaitCache=null;
       btn.removeAttribute('onclick'); btn.className='lh-resv done';
@@ -5886,9 +5891,11 @@ function millieHTML(secs,classicMode){
   // 종이책 대출 랭킹(횟수+변동). 전자책 인기는 ebookrank 줄에서 별도 표시.
   const liveRank=(SEMYUNG_LOANRANK&&SEMYUNG_LOANRANK.length)?SEMYUNG_LOANRANK.slice(0,12):null;
   const rank=liveRank||[...P].sort((a,b)=>(b.loan||0)-(a.loan||0)).slice(0,12);
-  let out='';
+  // 측정 출처: 칸(slot)마다 display:contents 래퍼로 감싸 클릭 시 '어느 큐레이션에서 열었나'를 남긴다(bxEvent origin). 빈 래퍼는 상자가 없어 간격에 영향 없음.
+  let out='<div class="bx-org">';
   secs.forEach((s,i)=>{
     const st=s.style||'row';
+    out+='</div><div class="bx-org" data-origin="'+((st==='rank'||st==='ebookrank')?'ranking':'curation')+'" data-origin-id="'+esc(String(s.slot||''))+'">';
     if(s.visible===false) return;   // 사서가 '노출 끄기' 한 고정 칸은 우리 도서관에 안 보임
     if(s.slot==='ai') return;   // 삭제된 'AI와 함께 읽는 책' 슬롯만 숨김 (style='ai'는 정상 사용 가능)
     if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
@@ -5922,7 +5929,7 @@ function millieHTML(secs,classicMode){
     else if(st==='coll') out+=mlColl(s.title,s.subtitle,books);
     else out+=mlRow(s.title,s.subtitle,books);
   });
-  return `<div class="ml">${out}</div>`;
+  return `<div class="ml">${out}</div></div>`;   // 마지막 bx-org 래퍼 닫기 + .ml 닫기
 }
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 
@@ -5942,6 +5949,95 @@ function bxStudent(){
 }
 function bxSetStudent(s){ try{ localStorage.setItem('bookstar-current-student', JSON.stringify(s)); }catch(e){} }
 function _bxSid(){ const s=bxStudent(); return s?s.id:'guest'; }
+
+/* ═══ 측정 로그 v2 — bookstar_events (2026-08-17) · 설계: klever_demo/_측정로그_설계_20260817.md ═══
+   관리자 5화면(접속·조회·이용·활동·경로·출처)의 유일한 원천. 추가 전용(anon INSERT만), 실패해도 앱 동작엔 영향 없음.
+   kind: visit 접속 / view 상세 조회 / read 고전 읽기(뷰어 닫을 때 1줄) / link 도서관 연결(찾아줘북즈·예약·전자책대출·크레마·OPAC) / activity 글쓰기 */
+const BX_EV_URL = SB_REST+'/bookstar_events';
+function _bxSess(){ try{ let s=sessionStorage.getItem('bx_sess'); if(!s){ s='s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('bx_sess',s); } return s; }catch(e){ return 'nosess'; } }
+// 출처(origin): 클릭한 요소의 가장 가까운 [data-origin] 조상에서 읽는다 — 호출처 15곳을 하나하나 안 고치기 위한 위임 방식
+window._bxOrigin=null;
+document.addEventListener('click', e=>{
+  try{
+    const t=e.target; if(!t||!t.closest) return;
+    const el=t.closest('[data-origin]');
+    if(el) window._bxOrigin={origin:el.getAttribute('data-origin')||'unknown', id:el.getAttribute('data-origin-id')||'', ts:Date.now()};
+    // 상세 모달 안의 외부 링크(크레마·OPAC)는 <a>라 JS 훅이 없다 → 여기서 링크 이벤트로 기록
+    const a=t.closest('#lcDetail a[href]');
+    if(a){
+      const b=window._lcCurBook||null;
+      if(a.classList.contains('t-sub')) bxEvent('link',{sub:'crema_open', book:b, item_type:'ebook'});
+      else if(a.classList.contains('t-paper')||a.hasAttribute('data-pwup')) bxEvent('link',{sub:'opac_open', book:b, item_type:'paper'});
+    }
+  }catch(_){}
+}, true);
+function _bxOriginNow(){ const o=window._bxOrigin; return (o && Date.now()-o.ts<4000) ? o : {origin:'unknown',id:''}; }
+// 책 객체 → 유형(paper·ebook·foreign·korean·external)·키·제목. 사장님 화면 '유형' 4종의 근거.
+function bxItemOf(b){
+  if(!b) return {item_type:'none',item_key:'',item_title:''};
+  const id=String(b.id||'');
+  if(/^(gb|kr)-/.test(id)){
+    const c=(typeof clOf==='function')?clOf(b):b;
+    return {item_type:id.indexOf('gb-')===0?'foreign':'korean', item_key:id, item_title:cleanT(c.title||b.t||b.title||'')};
+  }
+  const isbn=String(b.isbn||''); const rk=isbn.replace(/^sm-/,''); const tags=b.tags||[];
+  let t='external';
+  if(tags.includes('ebook')) t='ebook';
+  else if(tags.includes('paper')) t='paper';
+  else if(tags.includes('sub')) t='ebook';
+  else if(/^sm-CATTOT/i.test(isbn) || (b._material && /^sm-/.test(isbn))) t='paper';   // fmtTags()와 같은 판정
+  else if(/^sm-/.test(isbn) || b._sm || b.lib || b._smLib) t='ebook';
+  return {item_type:t, item_key:(/^sm-/.test(isbn)?rk:isbn), item_title:cleanT(b.t||b.title||'')};
+}
+function bxBookByKey(key){
+  key=String(key||'');
+  try{ if(typeof BOOKS!=='undefined'){ const c=BOOKS.find(x=>x.id===key); if(c) return c; } }catch(e){}
+  try{ if(typeof LIB_POOL!=='undefined'){ const l=LIB_POOL.find(x=>x.isbn===key||x.isbn==='sm-'+key); if(l) return l; } }catch(e){}
+  return /^(gb|kr)-/.test(key)?{id:key}:{isbn:key};
+}
+let _bxLastView={key:'',ts:0};
+function bxEvent(kind, o){
+  try{
+    o=o||{};
+    const it = o.book ? bxItemOf(o.book) : {item_type:'none',item_key:'',item_title:''};
+    if(o.item_type) it.item_type=o.item_type;
+    if(o.item_key)  it.item_key=String(o.item_key);
+    if(o.item_title) it.item_title=String(o.item_title);
+    if(kind==='view'){   // 같은 책 30초 안 재열림(더블클릭·재렌더)은 1건
+      const k=it.item_type+':'+it.item_key; if(k===_bxLastView.key && Date.now()-_bxLastView.ts<30000) return; _bxLastView={key:k,ts:Date.now()};
+    }
+    const org = o.origin ? {origin:o.origin, id:o.origin_id||''} : _bxOriginNow();
+    let pid = o.program_id;
+    if(pid===undefined){ try{ const c=(o.book&&typeof chalForBook==='function')?chalForBook(o.book):null; pid=c?String(c.id):null; }catch(e){ pid=null; } }
+    const row={ school_id:(typeof CH_SCHOOL!=='undefined'?CH_SCHOOL:'hankuk'), student_id:_bxSid(), session_id:_bxSess(),
+      kind:kind, sub:o.sub||null, item_type:it.item_type||'none', item_key:it.item_key||null, item_title:(it.item_title||'').slice(0,200)||null,
+      origin:org.origin||'unknown', origin_id:(org.id||'').slice(0,120)||null, program_id:pid||null,
+      ref_table:o.ref_table||null, ref_id:o.ref_id?String(o.ref_id).slice(0,200):null,
+      ok:o.ok!==false, seconds:(o.seconds!=null?Math.max(0,Math.round(o.seconds)):null), meta:o.meta||{} };
+    fetch(BX_EV_URL,{method:'POST',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify(row),keepalive:!!o.beacon}).catch(()=>{});
+  }catch(e){}
+}
+// 접속(visit): 탭당 1회. guest도 남기되 '접속 학생' 집계는 학번만 센다.
+function bxVisitOnce(){
+  try{ const k='bx_visit_'+_bxSid(); if(sessionStorage.getItem(k)) return; sessionStorage.setItem(k,'1'); }catch(e){}
+  bxEvent('visit',{origin:'direct', sub:(bxStudent()?'student':'guest')});
+}
+// 고전 읽기(read): 뷰어가 열려 있는 동안 readerSessionEnd()가 초를 누적, 닫을 때(또는 탭 이탈) 1줄로 보냄.
+let _bxReadSec=0, _bxReadBook=null;
+function bxReadAcc(sec, book){ if(sec>0){ _bxReadSec+=sec; _bxReadBook=book||_bxReadBook; } }
+function bxReadFlush(beacon){
+  if(!_bxReadBook || _bxReadSec<=0){ _bxReadSec=0; return; }
+  const b=_bxReadBook, s=_bxReadSec; _bxReadSec=0; _bxReadBook=null;
+  bxEvent('read',{sub:'session', book:b, seconds:s, origin:'reader', meta:{mode:(typeof currentMode!=='undefined'?currentMode:'')}, beacon:!!beacon});
+}
+// 활동 자동 미인정 규칙(설계 §4) — 학생 화면 문구와 동일. 통과 못 하면 {ok:false, reason, msg}
+function bxWriteCheck(v, kind, min){
+  const s=String(v||'').trim(); const flat=s.replace(/\s/g,'');
+  if(min && s.length<min) return {ok:false, reason:'min', msg:min+'자 이상 적어 주세요.'};
+  if(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/.test(s) || /https?:\/\/|www\./i.test(s) || /[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(s)) return {ok:false, reason:'contact', msg:'연락처·링크가 들어간 글은 인정되지 않아요.'};
+  if(flat.length>=5 && new Set(flat).size<=3) return {ok:false, reason:'repeat', msg:'같은 글자만 반복한 글은 인정되지 않아요.'};
+  return {ok:true};
+}
 // 로컬 독서기록(챌린지 캐시·참여목록)을 한 계정 → 다른 계정으로 이관·병합. SSO 방식과 무관한 순수 로컬 유틸.
 // 데모: 게스트로 읽다 로그인 시 진행이 안 날아가게. SSO 후에도 동일 함수로 재사용 가능.
 function _migrateChalRecords(fromId, toId){
@@ -6039,7 +6135,7 @@ function _rsFlushNow(){   // 탭 종료·화면 이탈 시 대기 중(1.5초 디
     {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},keepalive:true,
      body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
 }
-window.addEventListener('pagehide', ()=>{ try{ if(_viewerOpen()) readerSessionEnd(); }catch(e){} _rsFlushNow(); });
+window.addEventListener('pagehide', ()=>{ try{ if(_viewerOpen()) readerSessionEnd(); }catch(e){} try{ bxReadFlush(true); }catch(e){} _rsFlushNow(); });
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) _rsFlushNow(); });
 function _rsMergeServer(sv){               // 서버 데이터 ⊕ 로컬 (다기기 안전: 맵 합집합, 읽은시간 최댓값, 하이라이트·책갈피는 원소 단위)
   if(!sv||typeof sv!=='object') return;
@@ -6399,6 +6495,7 @@ async function backfillPool(){
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
   window._lcCurBook=b;   // 8/14: 로그인 다녀오면 이 책으로 되돌아오기 위한 현재 책 기억
+  bxEvent('view',{book:b});   // 측정: 조회(상세 열림)
   // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
   const en = (b._sm && b.isbn) ? SM_ENRICH[b.isbn.replace(/^sm-/,'')] : null;
   const desc = b.description || (en&&en.desc) || '';
@@ -6676,6 +6773,7 @@ function lcBorrow(isbn){
     return;
   }
   const dest = b.lib || semyungLink(cleanT(b.t||b.title||''));
+  bxEvent('link',{sub:(b.lib?'ext_open':'opac_open'), book:b});   // 측정: 이용(외부 뷰어/통합검색으로 넘김)
   if(!w){ window.open(dest,'_blank','noopener'); return; }
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
   setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);   // 북스타 브리지 → 실제 뷰어/통합검색
@@ -7070,6 +7168,7 @@ async function smEbookBorrowOpen(brcd, w, book){
       try{ w.close(); }catch(e){}
       smLoginGuide('read'); return;
     }
+    bxEvent('link',{sub:'ebook_borrow', book:book, item_type:'ebook', item_key:brcd, ok:!!(d&&d.ok&&d.viewerUrl), meta:{ents:(d&&d.entsDvsnCode)||'', msg:(d&&!d.ok)?String(d.message||d.error||'').slice(0,120):''}});   // 측정: 이용(전자책 연결=대출)
     if(d&&d.ok&&d.viewerUrl){
       if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
       // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
@@ -7099,6 +7198,7 @@ function libBridgeOpen(book){
     b=hit||{t:book.title||book.t||'', cover:book.cover||'', a:book.author||book.a||'', lib:null};
   }
   const dest=b.lib||semyungLink(cleanT(b.t||''));
+  bxEvent('link',{sub:(b.lib?'ext_open':'opac_open'), book:Object.assign({},b,{isbn:book.isbn||''}), item_type:(b.lib?'ebook':'external'), origin:'search', origin_id:'byeoli'});   // 측정: 별이 추천→도서관
   if(b.lib) shelfAdd(b);   // 소장 전자책 열람만 '읽는 중' 기록 (lib 확보 = _smLib 딥링크 or 풀 매칭)
   const w=window.open('','_blank');
   if(!w){ window.open(dest,'_blank','noopener'); return; }
@@ -7633,6 +7733,7 @@ function renderBookGrid(targetId, filterIntl){
 function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
+  bxEvent('view',{book:b});   // 측정: 조회(고전 상세 열림)
   // 체감 속도↑: 상세 보는 동안 '전문 바로읽기' 본문을 백그라운드로 미리 당겨옴(await 안 함, 클릭 시 즉시 표시)
   try{
     if(bookId.startsWith('gb-')) ensureClassicBody(bookId);          // Supabase 원문+번역 데움(대용량 JS는 번역 없을 때만 openViewer에서)
@@ -7673,7 +7774,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260814h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260817a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -7935,6 +8036,7 @@ async function openViewer(bookId, mode){
   if(currentBook && currentBook.id !== bookId
      && document.getElementById('viewerOverlay')?.classList.contains('open')){
     saveScrollPos(); readerSessionEnd();
+    try{ bxReadFlush(false); }catch(e){}   // 측정: 이전 책 읽기 세션 정산
     if(_scrollSaveTimer){ clearTimeout(_scrollSaveTimer); _scrollSaveTimer=null; }   // 이전 책의 대기 디바운스가 새 책 위치를 덮는 것 방지
     if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   }
@@ -8397,7 +8499,7 @@ function mpMissionCard(x){
   if(x.kind==='write'){
     return `<div class="mp-card">
       <div class="mp-t">${x.icon} ${esc(x.t)} <span class="mp-v">제출 ⭐${x.star}</span></div>
-      <div class="mp-s">${esc(x.ph||'')} (${x.min}자 이상)</div>
+      <div class="mp-s">${esc(x.ph||'')} (${x.min}자 이상 · 연락처·링크·같은 글자 반복은 인정되지 않아요)</div>
       <textarea class="mp-ta" id="mp_ta_${x.k}" placeholder="여기에 적어 주세요"></textarea>
       <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpSubmitWrite('${x.k}',${x.min})">제출</button>
         <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
@@ -8721,7 +8823,8 @@ function mpRevealQuiz(q,it,correct,right,restored,pickOrig){
 async function mpSubmitWrite(k,min){
   if(!_mpCtx) return;
   const ta=document.getElementById('mp_ta_'+k); const v=((ta&&ta.value)||'').trim();
-  if(v.length<min){ alert(min+'자 이상 적어 주세요.'); if(ta) ta.focus(); return; }
+  const chk=bxWriteCheck(v,k,min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복) — 별 없음·저장 없음
+  if(!chk.ok){ alert(chk.msg); if(ta) ta.focus(); bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ok:false, meta:{reason:chk.reason,len:v.length}}); return; }
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
   const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
   if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
@@ -8729,6 +8832,7 @@ async function mpSubmitWrite(k,min){
     fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
        body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v})}).catch(()=>{});
+    bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
     if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
 }
@@ -9098,6 +9202,7 @@ function chatSubmitImpression(){
   if(v.length < 5){ readerToast('소감을 5자 이상 적어 줘!'); return; }
   const first = !_sc.submitted;
   _sc.impression = v; _sc.submitted = true; _scSave();
+  if(first) bxEvent('activity',{sub:'oneline', book:currentBook, ref_table:'bookstar_challenge_results', ref_id:_bxSid()+'|'+currentBook.id, meta:{len:v.length, via:'chat'}});   // 측정: 활동(채팅 소감)
   if(first) addScore(50, '한 줄 소감', CHALLENGE_SCENES[currentBook.id].bookTitle);
   renderViewer(); _bxScrollBottom();
   try{ renderQuestMap(); renderChalScore(); renderMyImpressions(); }catch(e){}
@@ -9672,6 +9777,7 @@ function submitSceneImpression(){
   if(v.length < 5){ readerToast('소감을 5자 이상 적어 주세요'); return; }
   const firstSubmit = !_sc.submitted;
   _sc.impression = v; _sc.submitted = true; _scSave();
+  if(firstSubmit) bxEvent('activity',{sub:'oneline', book:currentBook, ref_table:'bookstar_challenge_results', ref_id:_bxSid()+'|'+currentBook.id, meta:{len:v.length, via:'scene'}});   // 측정: 활동(장면 챌린지 소감)
   const sc = CHALLENGE_SCENES[currentBook.id];
   const total = sc.scenes.reduce((s,x)=>s+x.quiz.length, 0);
   const okCnt = Object.values(_sc.ans).filter(a=>a.ok).length;
@@ -9699,6 +9805,7 @@ function closeViewer(){
   if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
   saveScrollPos();
   readerSessionEnd();
+  try{ bxReadFlush(false); }catch(e){}   // 측정: 이번 읽기 세션 1줄
   stopTTS();
   closeSearch();
   closeNoteBox();
@@ -10386,14 +10493,18 @@ function rvSetStars(n){ rvCtx.rating=n;
 async function submitReview(){
   const body=document.getElementById('rvmBody').value.trim();
   if(!body){ alert('서평 내용을 입력해주세요.'); return; }
+  const _chk=bxWriteCheck(body,'review',0); if(!_chk.ok){ alert(_chk.msg); return; }   // 연락처·링크·반복 글 차단(측정 설계 §4)
   const inp=document.getElementById('rvmBookInput');
   if(inp&&inp.style.display!=='none'){ rvCtx.bookTitle=inp.value.trim(); rvCtx.bookId=rvCtx.bookId||('t-'+(inp.value.trim()||'책')); }
   if(!rvCtx.bookTitle){ alert('책 제목을 입력해주세요.'); return; }
   // verified는 항상 false로 저장 — 인증 배지는 완독·퀴즈 측정이 붙는 날부터(자가신고 금지, 8/14)
   const row={school:'세명대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,reviewer:readerName(),rating:rvCtx.rating,body:body,verified:false,lang:'ko'};
-  try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+  let _rvId='';
+  try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=representation'},body:JSON.stringify(row)});
     if(!r.ok){ alert('등록 실패 ('+r.status+')'); return; }
+    try{ const j=await r.json(); _rvId=(Array.isArray(j)&&j[0]&&j[0].id)?String(j[0].id):''; }catch(e){}
   }catch(e){ alert('등록 실패 — 연결 확인'); return; }
+  bxEvent('activity',{sub:'review', book:bxBookByKey(rvCtx.bookId), item_title:rvCtx.bookTitle, ref_table:'reviews', ref_id:_rvId||('rv:'+_bxSid()+'|'+rvCtx.bookId), ok:body.length>=100, meta:{len:body.length, reason:(body.length<100?'min':'')}});   // 측정: 활동(상시 서평, 100자 미만은 미인정)
   closeReviewModal();
   if(document.getElementById('lcdReviews')) renderDetailReviews(rvCtx.bookId,rvCtx.bookTitle);
   if(document.getElementById('page-mypage').classList.contains('active')) renderMyReviews();
@@ -11317,6 +11428,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }catch(e){}
     }
   }catch(e){}
+  try{ bxVisitOnce(); }catch(e){}   // 측정: 접속(탭당 1회, 학생 확정 후)
   // ── 8/14 사장님 지시: 웹툰도 로그인 필수 — 웹툰 페이지가 미로그인 접근을 ?webtoon=파일 로 돌려보낸다 ──
   try{
     const _q=new URLSearchParams(location.search);
@@ -11461,7 +11573,7 @@ window.addEventListener('keydown', (e) => {
 
 <!-- ═══ 플로팅 AI 사서 챗봇 ═══ -->
 <button id="hwcBubble" onclick="hwcToggle()" aria-label="사서 별이에게 물어보기"><span class="hwc-dot"></span><span class="bx-star">⭐</span></button>
-<div id="hwcPanel" role="dialog" aria-label="AI 사서 챗봇">
+<div id="hwcPanel" role="dialog" aria-label="AI 사서 챗봇" data-origin="search" data-origin-id="float">
   <div class="hwc-head">
     <div class="hwc-ava">⭐</div>
     <div class="hwc-htxt"><b>별이</b><span>오늘은 어떤 책을 찾으세요?</span></div>
