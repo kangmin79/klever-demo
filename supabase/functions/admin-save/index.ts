@@ -124,5 +124,23 @@ Deno.serve(async (req) => {
   // 학생 글 모더레이션: featured/hidden만 (본문 text는 관리자도 이 경로로 수정 불가)
   if (op === 'writings_patch') return patchById('bookstar_writings', body.id, pick(body.patch, ['featured', 'hidden']));
 
+  // ── 측정 로그 v2 (2026-08-17, 설계: klever_demo/_측정로그_설계_20260817.md) ──
+  // 집계 함수는 anon 실행 권한이 없다 → 여기서 service role로만 호출. 학번이 든 개인 로그라 이 경로가 유일한 읽기 창구.
+  const rpc = async (fn: string, args: Record<string, unknown>) => {
+    const r = await fetch(`${REST}/rpc/${fn}`, { method: 'POST', headers: H, body: JSON.stringify(args) });
+    const txt = await r.text();
+    if (!r.ok) return J({ error: 'rpc failed', fn, status: r.status, detail: txt.slice(0, 300) }, 500);
+    return new Response(txt, { status: 200, headers: { ...CORS, 'content-type': 'application/json' } });
+  };
+  const S = (v: unknown, d = '') => (v == null ? d : String(v));
+  const school = S(body.school, 'hankuk');
+  if (op === 'stats_overview')  return rpc('bs_stats_overview',  { p_school: school, p_from: S(body.from), p_to: S(body.to) });
+  if (op === 'stats_usage')     return rpc('bs_stats_usage',     { p_school: school, p_from: S(body.from), p_to: S(body.to), p_type: S(body.type), p_path: S(body.path) });
+  if (op === 'stats_challenges') return rpc('bs_stats_challenges', { p_school: school });
+  if (op === 'stats_challenge_detail') return rpc('bs_stats_challenge_detail', { p_school: school, p_program: S(body.program) });
+  if (op === 'stats_curation')  return rpc('bs_stats_curation',  { p_school: school, p_from: S(body.from), p_to: S(body.to) });
+  // 학생 글 숨김/복구 = "안 쓴 것" (글 hidden + 이벤트 voided + 별 회수/원복을 한 트랜잭션으로)
+  if (op === 'writings_hide')   return rpc('bs_writing_hide',    { p_school: school, p_student: S(body.student_id), p_activity: S(body.activity), p_book: S(body.book_id), p_hidden: !!body.hidden });
+
   return J({ error: 'unknown op' }, 400);
 });
