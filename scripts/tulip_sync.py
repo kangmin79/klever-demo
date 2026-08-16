@@ -460,8 +460,16 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
         # pub_year는 text('1996-' 등)라 그대로 desc 정렬. 같은 해 안에서는 ctrl 순(md5는 비싸서 뺌).
         res += pull(1, "cover_url is not null and cover_url<>'' and description is null",
                     "pub_year desc nulls last, ctrl", take - len(res))
-    n0 = sum(1 for r in res if r["pri"] == 0)
-    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0:,}) "
+    if len(res) < take:
+        # pri2(2026-08-17 신설) = 표지 '미보유 도장'(cover_url='')인데 줄거리는 한 번도 안 물어본 책 — 3.1만 권 사각지대.
+        #   pri0에서 표지 조회가 빈손이면 ''가 찍혔고, pri1은 cover_url<>'' 조건이라 영영 안 잡혔다.
+        #   8/16 실측: 도장 종이책 표본 100 → 알라딘에 표지 53건 존재(8/13 한도 사고 등 조회 실패가 도장으로 굳음).
+        #   표지·줄거리 둘 다 다시 묻고, 정보나루가 실제로 본 행만 줄거리 ''(미보유) 도장 → 다음날 재조회 없음.
+        #   ⚠️최신순만 쓰면 외서(eng/ger 1.8만, 국내 API에 없음)가 앞에 몰린다(실측 400건 줄거리 0) → 한국어 먼저.
+        res += pull(2, "cover_url='' and description is null",
+                    "(lang='kor') desc, pub_year desc nulls last, ctrl", take - len(res))
+    n0 = sum(1 for r in res if r["pri"] == 0); n2 = sum(1 for r in res if r["pri"] == 2)
+    print(f"[covers-paper-aladin] 대상 {len(res):,}건 (표지 {n0:,} + 줄거리 {len(res)-n0-n2:,} + 도장재조회 {n2:,}) "
           f"/ 정보나루 예산 {d4l_budget:,} · 알라딘 예산 {budget:,}")
     hit = miss = dhit = dmiss = 0; nsrc = asrc = 0
     limit_hit = [False]                       # 스레드에서 정보나루 한도를 만나면 세운다
@@ -495,7 +503,9 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
         # 빈손('')을 쓰는 건 "미보유 확정" 도장 — 정보나루가 실제로 본 행만 찍는다.
         # 한도 도달·강제종료 후 재실행에서 조회도 못 한 책이 미보유로 오염되는 것 방지(2026-08-13)
         p1 = [(r["ctrl"], dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] == 1 and (dsc or nt)]
-        p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] != 1 and (cov or dsc or nt)]
+        p0 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] == 0 and (cov or dsc or nt)]
+        # pri2: 표지는 얻은 것만 갱신(빈손이면 기존 '' 도장 유지), 줄거리는 얻으면 채우고 정보나루가 봤는데 빈손이면 '' 도장
+        p2 = [(r["ctrl"], cov or "", dsc or "") for r, cov, dsc, _, nt in rows if r["pri"] == 2 and (cov or dsc or nt)]
         def run(stmt, n):
             try: sql(stmt, timeout=180); return True
             except Exception as e: print(f"  쓰기 실패({n}건): {str(e)[:100]}"); return False
@@ -515,7 +525,16 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
                      f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", len(trips))
             if not ok and len(trips) > 12:
                 mid = len(trips) // 2; w0(trips[:mid]); w0(trips[mid:])
-        w1(p1); w0(p0)
+        def w2(trips):
+            if not trips: return
+            vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in trips)
+            # 표지: 새로 얻었을 때만 교체(빈손이면 기존 '' 도장 유지). 줄거리: 값 그대로('' = 미보유 도장, 재조회 종료)
+            ok = run("update semyung_tulip t set cover_url=coalesce(nullif(v.u,''), t.cover_url), "
+                     "description=v.d, updated_at=now() "
+                     f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", len(trips))
+            if not ok and len(trips) > 12:
+                mid = len(trips) // 2; w2(trips[:mid]); w2(trips[mid:])
+        w1(p1); w0(p0); w2(p2)
 
     # 조회는 네트워크 대기가 대부분이라 스레드 8개면 그만큼 빨라진다(건당 0.74s → 0.1s 수준).
     # 배치(200) 단위로 조회→쓰기를 반복해 예산 계산과 중간 저장을 단순하게 유지한다.
@@ -535,6 +554,11 @@ def covers_paper_aladin(limit=None, budget=4500, desc_only=False, d4l_budget=280
             if src == "n": nsrc += 1
             elif src == "a": asrc += 1
             if r["pri"] == 1:
+                if dsc: dhit += 1
+                else:   dmiss += 1
+            elif r["pri"] == 2:            # 도장 재조회: 표지·줄거리 둘 다 센다
+                if cov: hit += 1
+                else:   miss += 1
                 if dsc: dhit += 1
                 else:   dmiss += 1
             elif cov: hit += 1

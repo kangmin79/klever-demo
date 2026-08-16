@@ -26,9 +26,8 @@ python -u scripts\cover_mirror.py --budget 250000 >> logs\cover_mirror.log 2>&1
 rem 2026-08-16: ebooks too (new arrivals only after first full run; ~23k done). then rescue dead originals via ISBN.
 python -u scripts\cover_mirror.py --kinds ebook --budget 30000 >> logs\cover_mirror.log 2>&1
 python -u scripts\cover_rescue.py --kinds ebook >> logs\cover_mirror.log 2>&1
-rem 2026-08-16: paper books stamped 'no cover' but Aladin has one (sample 53/100). budget 700 = Aladin 5000 - dawn backfill 4200.
-rem   ~4,200 candidates left -> ~6 days; auto-finishes faster once the dawn backfill ends (~8/19).
-python -u scripts\cover_recheck_stamped.py --budget 700 >> logs\cover_mirror.log 2>&1
+rem 2026-08-17: stamped-cover recheck moved into the dawn backfill (tulip_sync pri2 pool: data4library first,
+rem   then Aladin) - cover_recheck_stamped.py retired from daily to avoid double Aladin spend. Script kept for manual use.
 rem recover early-uploaded covers that predate local-save (one-time, cheap no-op afterwards)
 python -u scripts\cover_mirror.py --pull-storage >> logs\cover_mirror.log 2>&1
 rem local master copy: full bibliographic dump to Desktop\bookstar\data (few minutes)
