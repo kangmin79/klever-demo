@@ -731,8 +731,8 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <div class="db-chips" id="dbBanner">
           <div class="db-chip hl"><div class="v" data-u="chOpen">…</div><div class="l">운영중인 챌린지</div></div>
           <div class="db-chip"><div class="v" data-u="chDone">…</div><div class="l">완료된 챌린지</div></div>
-          <div class="db-chip"><div class="v" data-u="part">…</div><div class="l">참여 학생</div></div>
-          <div class="db-chip"><div class="v" data-u="done">…</div><div class="l">완주 학생</div></div>
+          <div class="db-chip"><div class="v" data-u="part">…</div><div class="l">참가 학생 · 1건이라도</div></div>
+          <div class="db-chip"><div class="v" data-u="done">…</div><div class="l">완주 학생 · 책 전부</div></div>
           <div class="db-chip"><div class="v" data-u="star">…</div><div class="l">적립된 별</div></div>
         </div>
       </div>
@@ -844,7 +844,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
       <div class="db-card" id="statBook">
         <h3>도서별 <span class="db-sub2" id="statBookCap">조회가 많은 순 · 상위 10권</span></h3>
         <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:50px">번호</th><th style="width:110px">유형</th><th>도서명</th><th style="text-align:right;width:110px">조회</th><th style="text-align:right;width:110px">이용</th><th style="text-align:right;width:110px">활동</th></tr></thead><tbody id="statTbl"></tbody></table></div>
-        <p class="note"><b>조회</b>는 상세페이지 살펴 본 건수<br><b>이용</b>은 종이책·전자책은 넘겨준 건수, 고전은 북스타에서 읽은 건수<br><b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수 · 화면엔 10권, 전부는 엑셀</p>
+        <p class="note"><b>조회</b>는 상세페이지 살펴 본 건수<br><b>이용</b>은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)<br><b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수 · 화면엔 10권, 전부는 엑셀</p>
       </div>
       <div class="db-card" id="statUser" style="display:none">
         <h3>학생별 <span class="tagpill gold">시상용</span></h3>
@@ -871,7 +871,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           <button class="btn-excel" onclick="downloadChSumExcel()">⤓ 요약 엑셀 다운로드</button>
         </div>
         <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:250px">챌린지</th><th style="width:150px">기간</th><th style="text-align:right;width:80px">담긴 책</th><th style="text-align:right;width:70px">참가</th><th style="text-align:right;width:105px">완주</th><th style="text-align:right;width:95px">미션 수행</th><th style="width:210px">시상</th></tr></thead><tbody id="chTblSum"><tr><td colspan="7" style="text-align:center;color:var(--light);padding:22px">불러오는 중…</td></tr></tbody></table></div>
-        <p class="note"><b>참가</b> — 그 챌린지에서 <b>1건이라도 한 학생 수</b>(글 또는 퀴즈). 신청만 하고 손대지 않은 학생은 잡히지 않습니다.<br><b>완주</b> — 켠 미션을 담긴 책 전부에 마친 학생 수(앱의 완주 판정과 같음).<br><b>미션 수행</b> — 인정된 글 + 퀴즈를 푼 책 수. 글자 수 미달·숨김 글은 세지 않습니다.<br><b>요약 엑셀</b>은 학번이 없어 회의·보고에 돌려도 되고, <b>상세 엑셀</b>은 학번이 든 시상 심사용입니다.<br><b>시상</b> — 순위형은 별 많은 순, 추첨형은 뽑을 인원과 <b>응모 자격을 갖춘 인원(완주)</b>을 함께 봅니다.</p>
+        <p class="note"><b>참가</b> — 그 챌린지에서 <b>1건이라도 한 학생 수</b>(글 또는 퀴즈). 신청만 하고 손대지 않은 학생은 잡히지 않습니다.<br><b>완주</b> — 담긴 책 <b>전부</b>에서 켠 미션을 <b>전부</b> 마친 학생 수(책 1권 단위인 앱의 ⭐30 완주 보너스와는 별개).<br><b>미션 수행</b> — 인정된 글 + 퀴즈를 푼 책 수. 글자 수 미달·숨김 글은 세지 않습니다.<br><b>요약 엑셀</b>은 학번이 없어 회의·보고에 돌려도 되고, <b>상세 엑셀</b>은 학번이 든 시상 심사용입니다.<br><b>시상</b> — 순위형은 별 많은 순, 추첨형은 뽑을 인원과 <b>응모 자격을 갖춘 인원(완주)</b>을 함께 봅니다.</p>
       </div>
       <div class="db-card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
@@ -1009,7 +1009,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <div class="db-card">
           <h3>끝난 챌린지 <span class="db-sub2">한 줄 = 챌린지 하나</span></h3>
           <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:120px">구분</th><th>챌린지</th><th style="width:190px">기간</th><th style="width:120px">미션</th><th style="text-align:right;width:70px">참가</th><th style="text-align:right;width:70px">완주</th></tr></thead><tbody id="hsTblCh"></tbody></table></div>
-          <p class="note"><b>여기 오는 것</b> — 종료일이 지난 챌린지입니다. 최근에 끝난 순으로 놓입니다. <b>참가</b>는 1건이라도 한 학생 수, <b>완주</b>는 켠 미션을 담긴 책 전부에 마친 학생 수입니다. 챌린지 통계와 같은 기준입니다.</p>
+          <p class="note"><b>여기 오는 것</b> — 종료일이 지난 챌린지입니다. 최근에 끝난 순으로 놓입니다. <b>참가</b>는 1건이라도 한 학생 수, <b>완주</b>는 담긴 책 전부에서 켠 미션을 전부 마친 학생 수입니다. 챌린지 통계와 같은 기준입니다.</p>
         </div>
       </div>
       <div id="hsCur" style="display:none">
@@ -1017,7 +1017,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <div class="db-card">
           <h3>큐레이션 칸별 실적 <span class="db-sub2">한 줄 = 칸 하나 · 이번 학기</span></h3>
           <div class="tblwrap"><table class="tbl"><thead><tr><th>큐레이션</th><th style="width:150px">영역</th><th style="text-align:right;width:80px">담긴 책</th><th style="text-align:right;width:80px">조회</th><th style="text-align:right;width:80px">이용</th></tr></thead><tbody id="hsTblCur"></tbody></table></div>
-          <p class="note"><b>조회</b>는 상세페이지를 살펴본 건수, <b>이용</b>은 종이책·전자책은 넘겨준 건수, 고전은 북스타에서 읽은 건수입니다. 이용통계와 같은 말입니다. 「무엇을 걸었더니 얼마나 봤나」를 되짚어 다음 큐레이션을 정할 때 씁니다.</p>
+          <p class="note"><b>조회</b>는 상세페이지를 살펴본 건수, <b>이용</b>은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)입니다. 이용통계와 같은 말입니다. 「무엇을 걸었더니 얼마나 봤나」를 되짚어 다음 큐레이션을 정할 때 씁니다.</p>
         </div>
       </div>
     </section>
