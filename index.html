@@ -2631,8 +2631,9 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
      우리 도서관 — 사서 큐레이션 (독립 탭)
      ═══════════════════════════════════════════════════════════ -->
 <section class="page active" id="page-ourlib">
-  <!-- 도서관과 나의 실시간 접점 — 빌린 책·기다리는 책. SSO 개인연동된 학생에게만 보임 -->
-  <div id="myLibStatus"></div>
+  <!-- 8/16 사용자 지시: 상단 '반납 임박·빌린 책' 요약 배너 삭제 (#myLibStatus div 제거).
+       급한 소식은 사이드바 '내 도서관' 배지(MYLIB_BADGE)가 계속 알린다. 상세는 내 도서관 페이지. -->
+
   <div class="section" id="libCurationSec">
     <div id="libCurationGrid"></div>
   </div>
@@ -6965,19 +6966,8 @@ async function renderMyLibStatus(){
                 : arrived    ? {color:'#16a34a', title:'예약한 책이 도착했어요'}
                 : soon       ? {color:'#ea580c', title:'반납일이 다가와요'} : null;
     renderSideNav(_navPage);
-    if(line){
-      const bits=[];
-      if(overdue) bits.push(`<b style="color:#dc2626">${overdue}권 연체</b>`);
-      if(readyPick) bits.push(`<b style="color:#16a34a">신청한 책 준비됨</b>`);
-      if(arrived) bits.push(`<b style="color:#16a34a">예약한 책 도착</b>`);
-      if(!overdue&&soon) bits.push(`<b style="color:#ea580c">반납 ${soon}권 임박</b>`);
-      if(all.length) bits.push(`빌린 책 ${all.length}권`);
-      if(picks.length+resv.length) bits.push(`기다리는 책 ${picks.length+resv.length}권`);
-      line.innerHTML=bits.length?`<div class="section" style="padding-bottom:0"><div onclick="nav('mylib')" style="cursor:pointer;display:flex;gap:10px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
-        <span style="font-size:12.5px;color:var(--text-sub);flex:1">${bits.join(' · ')}</span>
-        <span style="font-size:12px;font-weight:800;color:var(--primary)">내 도서관 ›</span>
-      </div></div>`:'';
-    }
+    // 8/16 사용자 지시: 우리 도서관 상단 한 줄 요약 배너 삭제 — #myLibStatus div가 없어져 line은 null.
+    // 급한 신호는 위 MYLIB_BADGE(사이드바 배지)로 유지.
   }catch(e){ if(el) el.innerHTML=''; }
 }
 // 내가 빌린 전자책 — 실패해도 종이책 표시는 살려야 하므로 빈 배열로 흡수
