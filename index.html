@@ -5554,6 +5554,8 @@ function ncCover(b){
 }
 /* ── 표지 로딩 공용 체인 (8/14 사장님 "버그 없이 빨리 뜨게") ─────────────────
    ① 종이책(sm-CATTOT…)은 자체 미러(Storage 600px WEBP, 18.8만 장) 우선 — 외부 핫링크보다 빠르고 차단 위험 0
+      8/16 전자책도 미러 우선(sm-<barcode> → covers/<barcode>.webp, 2.3만 장 별칭) — 세명대 전자도서관이 표지 파일을
+      지우면(자존감 수업 404 실측) 같이 잃던 핫링크 의존 제거. 로컬키(sm-EB…)·순수 ISBN은 미러 조립 불가 → ②로.
    ② 실패하면 원 표지(네이버/알라딘/세명대) → 고화질 → 원본 순으로 재시도
    ③ 전부 실패하면 활자 표지(ncCover)로 — 예전엔 this.remove()로 빈칸이 남았다(알려진 버그 수리) */
 const CV_MIRROR='https://gkujptyfrzqrjrvovbnc.supabase.co/storage/v1/object/public/covers/';
@@ -5573,9 +5575,12 @@ function cvErr(img){
 }
 function lcCvHTML(b){
   const cv=_gbCover(b);
-  const m=String((b&&b.isbn)||'').match(/^sm-CATTOT(\d+)$/);
+  const key=String((b&&b.isbn)||'');
+  const m=key.match(/^sm-CATTOT(\d+)$/);
+  const e=!m&&key.match(/^sm-(?!EB)([0-9A-Za-z_-]+)$/);   // 전자책 barcode (sm-EB<ctrl>는 로컬 임시키 — 미러 없음)
   const srcs=[];
   if(m) srcs.push(CV_MIRROR+m[1]+'.webp');
+  else if(e) srcs.push(CV_MIRROR+e[1]+'.webp');
   if(cv){ const hi=hiCover(cv); srcs.push(hi); if(hi!==cv) srcs.push(cv); }
   if(!srcs.length) return ncCover(b);
   const t=esc(cleanT(b.t||b.title||'')), a=esc(String(b.a||b.author||''));
