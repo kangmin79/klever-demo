@@ -141,6 +141,8 @@ Deno.serve(async (req) => {
   if (op === 'stats_curation')  return rpc('bs_stats_curation',  { p_school: school, p_from: S(body.from), p_to: S(body.to) });
   // 학생 글 숨김/복구 = "안 쓴 것" (글 hidden + 이벤트 voided + 별 회수/원복을 한 트랜잭션으로)
   if (op === 'writings_hide')   return rpc('bs_writing_hide',    { p_school: school, p_student: S(body.student_id), p_activity: S(body.activity), p_book: S(body.book_id), p_hidden: !!body.hidden });
+  // 독자 서평(reviews, 빌린 책 서평) 숨김/복구 — 별 없음(글 hidden + 이벤트 voided만). 8/17 학생 글 화면에 합류
+  if (op === 'reviews_hide')    return rpc('bs_review_hide',     { p_id: Number(body.id), p_hidden: !!body.hidden });
 
   return J({ error: 'unknown op' }, 400);
 });

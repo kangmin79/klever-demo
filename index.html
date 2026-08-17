@@ -10198,7 +10198,7 @@ async function renderLeaderList(){
 
   const rows = ranked.map((t,i)=>{
     const rank=i+1, sid=t.student_id;
-    const nm=nameMap[sid]||'이름 없는 친구';
+    const nm=sid===meId?(nameMap[sid]||(me&&me.name)||'나'):(nameMap[sid]?pubName(nameMap[sid]):'이름 없는 친구');   // 남은 실명 아닌 가린 이름(8/17), 본인 줄만 실명
     const grade=t.grade||gradeOf(t.total_stars);
     const done=doneMap[sid]||0, week=weekMap[sid]||0;
     const topCls = rank<=3 ? `top${rank}` : '', meCls = sid===meId ? 'me' : '';
@@ -10353,7 +10353,7 @@ function setCommunityTab(el, tab){
 async function renderCommunityReviews(){
   const host=document.getElementById('communityContent');
   host.innerHTML='<div class="rv-empty">불러오는 중…</div>';
-  const list=await rvFetch('select=*&order=verified.desc,likes.desc,created_at.desc&limit=50');
+  const list=await rvFetch('select=*&hidden=eq.false&order=verified.desc,likes.desc,created_at.desc&limit=50');   // 사서가 숨긴 서평 제외(8/17)
   host.innerHTML=`<div style="font-size:12.5px;color:var(--text-light);margin-bottom:12px">
       완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>이 모이는 곳이에요.
       서평은 <b>내 도서관의 빌린 책</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
@@ -10416,6 +10416,10 @@ loadCommunityPosts();
    ═══════════════════════════════════════════════════════════ */
 const RV_FLAG={ko:'🇰🇷',en:'🇺🇸',vi:'🇻🇳',zh:'🇨🇳',ja:'🇯🇵'};
 function readerName(){ try{ const s=(typeof bxStudent==='function')&&bxStudent(); if(s&&s.name) return s.name; return localStorage.getItem('bookstar_reader')||'학생'; }catch(e){ return '학생'; } }   // 8/17 데모 이름('김민서') 잔재 제거
+// 공개 화면 표시 이름(8/17) — 다른 학생 눈에 보이는 자리(피드·프로필·랭킹·서평)는 실명 대신 가운데를 가린다: 강동욱→강*욱, 김민→김*, 남궁민수→남*수.
+// PUB_NAME_MASK=false 로 바꾸면 전부 실명으로 되돌아간다(정책 결정 전 기본값=가림). 서평(reviews.reviewer)은 저장 자체를 가린 이름으로 한다.
+const PUB_NAME_MASK=true;
+function pubName(n){ n=String(n||'').trim(); if(!PUB_NAME_MASK||!n) return n||'학생'; if(n.length<=1||n==='학생'||n==='회원'||n==='익명') return n; if(n.length===2) return n[0]+'*'; return n[0]+'*'.repeat(n.length-2)+n[n.length-1]; }
 function rvStars(n){ n=n||0; let s=''; for(let i=1;i<=5;i++) s+=`<span style="color:${i<=n?'#f5a623':'#d8d8d8'}">★</span>`; return s; }
 function rvCover(r){
   const cb=(typeof BOOKS!=='undefined')&&BOOKS.find(x=>x.id===r.book_id);
@@ -10430,7 +10434,7 @@ function rvCard(r){
     ${rvCover(r)}
     <div class="rv-main">
     <div class="rv-head">
-      <span class="rv-who">${esc(r.reviewer)}</span>
+      <span class="rv-who">${esc(pubName(r.reviewer))}</span>
       ${r.verified?'<span class="rv-badge">✔ 완독 인증</span>':'<span class="rv-badge rv-reading">읽는 중</span>'}
       ${r.lang&&r.lang!=='ko'?`<span class="rv-lang">${RV_FLAG[r.lang]||'🌐'} ${String(r.lang).toUpperCase()}</span>`:''}
       <span class="rv-stars">${rvStars(r.rating)}</span>
@@ -10457,7 +10461,7 @@ async function likeReview(id,elm){
 // 책 상세 모달 안에 서평 영역
 async function renderDetailReviews(bookId,bookTitle){
   const host=document.getElementById('lcdReviews'); if(!host) return;
-  const list=await rvFetch(`select=*&book_id=eq.${encodeURIComponent(bookId)}&order=verified.desc,likes.desc,created_at.desc`);
+  const list=await rvFetch(`select=*&book_id=eq.${encodeURIComponent(bookId)}&hidden=eq.false&order=verified.desc,likes.desc,created_at.desc`);   // 숨긴 서평 제외
   const avg=list.length?(list.reduce((a,b)=>a+(b.rating||0),0)/list.length).toFixed(1):null;
   // 쓰기 버튼은 여기(책 상세) 두지 않는다(8/14 사장님) — 빌리기도 전에 서평을 쓰게 되는 위치.
   // 서평 쓰기는 '내 도서관 > 빌린 책'에서만: 대출 사실이 곧 "읽었다"의 최소 증거다.
@@ -10497,7 +10501,8 @@ async function submitReview(){
   if(inp&&inp.style.display!=='none'){ rvCtx.bookTitle=inp.value.trim(); rvCtx.bookId=rvCtx.bookId||('t-'+(inp.value.trim()||'책')); }
   if(!rvCtx.bookTitle){ alert('책 제목을 입력해주세요.'); return; }
   // verified는 항상 false로 저장 — 인증 배지는 완독·퀴즈 측정이 붙는 날부터(자가신고 금지, 8/14)
-  const row={school:'세명대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,reviewer:readerName(),rating:rvCtx.rating,body:body,verified:false,lang:'ko'};
+  // 8/17: 학번(student_id)으로 본인 식별, reviewer 는 가린 이름으로 저장(테이블이 anon 읽기라 실명을 아예 안 남긴다). hidden 은 사서가 admin-save 로만 바꾼다.
+  const row={school:'세명대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,student_id:_bxSid(),reviewer:pubName(readerName()),rating:rvCtx.rating,body:body,verified:false,lang:'ko'};
   let _rvId='';
   try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=representation'},body:JSON.stringify(row)});
     if(!r.ok){ alert('등록 실패 ('+r.status+')'); return; }
@@ -10511,9 +10516,9 @@ async function submitReview(){
 }
 // 마이페이지 — 내 서평 + 친구 서평
 async function renderMyReviews(){
-  const me=readerName();
-  const all=await rvFetch('select=*&order=created_at.desc&limit=60');
-  const mine=all.filter(r=>r.reviewer===me), others=all.filter(r=>r.reviewer!==me).slice(0,8);
+  const me=_bxSid();
+  const all=await rvFetch('select=*&hidden=eq.false&order=created_at.desc&limit=60');
+  const mine=all.filter(r=>r.student_id===me), others=all.filter(r=>r.student_id!==me).slice(0,8);
   const mh=document.getElementById('myReviews'); if(mh) mh.innerHTML=mine.length?mine.map(rvCard).join(''):'<div class="rv-empty">아직 작성한 서평이 없어요. 책을 읽고 서평을 남겨보세요!</div>';
   const oh=document.getElementById('peerReviews'); if(oh) oh.innerHTML=others.length?others.map(rvCard).join(''):'<div class="rv-empty">아직 다른 학생의 서평이 없어요.</div>';
 }
@@ -10527,7 +10532,7 @@ function myReadBooks(){
   _myRead=r; return r;
 }
 async function myAvgRating(){
-  const list=await rvFetch(`select=rating&reviewer=eq.${encodeURIComponent(readerName())}`);
+  const list=await rvFetch(`select=rating&student_id=eq.${encodeURIComponent(_bxSid())}&hidden=eq.false`);
   if(!list.length) return 0;   // 서평 없으면 0 → 표시부에서 '-' 처리 (가짜 4.3 금지)
   return list.reduce((a,b)=>a+(b.rating||0),0)/list.length;
 }
@@ -10595,7 +10600,7 @@ async function renderSuperlatives(){
   const set=myReadBooks();
   const top=(key)=>{const m={};set.forEach(b=>{const k=b[key];if(k)m[k]=(m[k]||0)+1;});const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0];return e?e[0]:'-';};
   let fav=(set[0]&&(set[0].title))||'-';
-  try{ const mine=await rvFetch(`select=book_title,rating&reviewer=eq.${encodeURIComponent(readerName())}&order=rating.desc,created_at.desc&limit=1`); if(mine&&mine[0]&&mine[0].book_title) fav=mine[0].book_title; }catch(e){}
+  try{ const mine=await rvFetch(`select=book_title,rating&student_id=eq.${encodeURIComponent(_bxSid())}&hidden=eq.false&order=rating.desc,created_at.desc&limit=1`); if(mine&&mine[0]&&mine[0].book_title) fav=mine[0].book_title; }catch(e){}
   const cards=[['완독',set.length+'권'],['올해의 작가',top('author')],['최다 장르',top('category')],['최애 책',fav]];
   host.innerHTML='<div class="supl">'+cards.map(c=>`<div class="supl-c"><div class="supl-k">${esc(c[0])}</div><div class="supl-v">${esc(c[1])}</div></div>`).join('')+'</div>';
 }
@@ -11215,7 +11220,7 @@ function feedCard(it,i){
   return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
       <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${s.emoji||'🙂'}</div>
-      <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(s.name)}${it.featured?' <span style="color:var(--gold)">★</span>':''}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
+      <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(isMe?s.name:pubName(s.name))}${it.featured?' <span style="color:var(--gold)">★</span>':''}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
       ${followBtn}
     </div>
     ${content}
@@ -11307,7 +11312,7 @@ async function openStudentProfile(sid){
   const s=(await _bxNames())[sid] || BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
   let ov=document.getElementById('bxProfileOv');
   if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
-  ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
+  ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(sid===_bxSid()?s.name:pubName(s.name))}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
   ov.classList.add('on'); document.body.style.overflow='hidden';
   // stale 가드: 최신 호출만 렌더 (기존: A 프로필 늦은 응답이 B 모달을 통째로 덮어쓰던 레이스)
   const token = (openStudentProfile._t = {});
@@ -11345,7 +11350,7 @@ async function openStudentProfile(sid){
   }).join('') : `<div class="feed-empty">아직 남긴 글이 없어요.</div>`;
   ov.querySelector('.bxp').innerHTML=`
     <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
-      <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(s.name)}</div>
+      <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(me===sid?s.name:pubName(s.name))}</div>
       <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}세명대학교 학술정보원</div>
       <div class="bxp-fl"><span>팔로워 <b id="bxpFollowers">${followers}</b></span><span>팔로잉 <b>${followingN}</b></span></div>
       ${me===sid?'':`<button class="bxp-followbtn${iFollow?' on':''}" onclick="profileFollow(this,'${esc(sid)}')">${iFollow?'팔로잉':'팔로우'}</button>`}</div>

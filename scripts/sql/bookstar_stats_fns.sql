@@ -187,6 +187,25 @@ begin
   return jsonb_build_object('ok', v_ok, 'hidden', p_hidden);
 end $$;
 
+-- ── 독자 서평(reviews = 빌린 책 서평) 숨김/복구 (2026-08-17 적용 완료) ──
+-- reviews 에 hidden(bool, default false)·student_id(text) 컬럼 추가. anon 은 hidden SELECT/INSERT 만(UPDATE 불가 → 사서만 바꿈).
+-- 같은 날 anon/authenticated 의 reviews DELETE·TRUNCATE·TRIGGER·REFERENCES 테이블 권한 회수(정책 없이 열려 있던 잔재).
+-- 별 없음: 글 hidden + 이벤트 voided 만.
+alter table public.reviews add column if not exists hidden boolean not null default false;
+alter table public.reviews add column if not exists student_id text;
+grant select(hidden), select(student_id), insert(student_id) on public.reviews to anon, authenticated;
+revoke delete, truncate, trigger, references on public.reviews from anon, authenticated;
+create or replace function public.bs_review_hide(p_id bigint, p_hidden boolean)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare v_ok boolean;
+begin
+  update reviews set hidden=p_hidden where id=p_id; v_ok:=found;
+  update bookstar_events set voided=p_hidden where ref_table='reviews' and ref_id=p_id::text;
+  return jsonb_build_object('ok', v_ok);
+end $$;
+revoke all on function public.bs_review_hide(bigint,boolean) from public, anon, authenticated;
+grant execute on function public.bs_review_hide(bigint,boolean) to service_role;
+
 -- 권한: anon/authenticated 실행 금지 (service role만)
 revoke all on function public.bs_stats_overview(text,timestamptz,timestamptz) from public, anon, authenticated;
 revoke all on function public.bs_stats_usage(text,timestamptz,timestamptz,text,text) from public, anon, authenticated;

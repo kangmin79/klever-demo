@@ -906,13 +906,13 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         </div>
         <div class="toolbar" style="margin-bottom:0">
           <span class="st-lb">종류</span>
-          <select id="fdMs"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기</option></select>
+          <select id="fdMs"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기(챌린지)</option><option value="rv">독자 서평(빌린 책)</option></select>
           <span class="st-lb" style="margin-left:8px">보기</span>
           <select id="fdView"><option value="on">보이는 글</option><option value="off">숨긴 글</option></select>
           <button class="btn-primary" style="margin-left:8px" onclick="loadWritings()">조회</button>
         </div>
       </div>
-      <div class="st-warn"><b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면에서 글이 내려가고, 준 별도 회수됩니다. 잘못 눌렀으면 「보기」를 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br>연락처·링크·같은 글자 반복·글자 수 미달 글은 <b>제출 단계에서 자동으로 걸러져</b> 여기 오지 않습니다.</div>
+      <div class="st-warn"><b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면(피드·프로필·책 상세)에서 글이 내려가고, 준 별도 회수됩니다. 잘못 눌렀으면 「보기」를 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br>연락처·링크·같은 글자 반복·글자 수 미달 글은 <b>제출 단계에서 자동으로 걸러져</b> 여기 오지 않습니다. 욕설·비방 같은 <b>내용 판단은 자동으로 하지 않으니</b> 사서가 훑어보고 정합니다.<br><b>독자 서평(빌린 책)</b>은 별이 없어 숨겨도 별 회수는 없습니다. 학생 화면에는 이름이 <b>강*욱</b>처럼 가려져 나갑니다.</div>
       <div class="db-card">
         <h3>학생 글 <span class="db-sub2">한 줄 = 학생이 쓴 글 1건</span></h3>
         <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:110px">학번</th><th style="width:105px">날짜</th><th style="width:100px">종류</th><th style="width:160px">도서명</th><th>쓴 내용</th><th style="width:150px">처리</th></tr></thead><tbody id="fdTbl"></tbody></table></div>
@@ -2859,7 +2859,7 @@ async function delCommPost(id){
    ═══════════════════════════════════════════════════════════════════════════ */
 const ST_SCHOOL='hankuk';   // 학생 앱 CH_SCHOOL과 동일 (세명대 표기 정리는 별도)
 const TYPE_KO={paper:'종이책',ebook:'전자책',foreign:'해외고전',korean:'국내고전',external:'외부참조',none:'—'};
-const ACT_KO={oneline:'한 줄 소감',question:'한 줄 질문',review:'서평 쓰기',essay:'독후감',underline:'핵심 문장',recommend:'책 추천'};
+const ACT_KO={oneline:'한 줄 소감',question:'한 줄 질문',review:'서평 쓰기',essay:'독후감',underline:'핵심 문장',recommend:'책 추천',rv:'독자 서평'};   // rv = reviews 테이블(빌린 책 서평, 별 없음)
 const pad2=n=>String(n).padStart(2,'0');
 const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
 const kst=(s)=>s+'T00:00:00+09:00';                 // 날짜(YYYY-MM-DD) → 그날 0시 KST
@@ -3043,8 +3043,15 @@ async function loadWritings(){
   const f=el('fdFrom').value, t=el('fdTo').value; if(!f||!t||f>t){ toast('기간을 확인해 주세요'); return; }
   el('fdTbl').innerHTML=stEmpty(6,'불러오는 중…');
   const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}&order=created_at.desc&select=*`,{headers:H}); WRITINGS=r.ok?await r.json():[]; }catch(e){ WRITINGS=[]; }
+  const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&${rng}&order=created_at.desc&select=*`,{headers:H}); WRITINGS=r.ok?await r.json():[]; }catch(e){ WRITINGS=[]; }
   if(!Array.isArray(WRITINGS))WRITINGS=[];
+  // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
+  try{ const r=await fetch(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,{headers:H});
+    const rv=r.ok?await r.json():[];
+    if(Array.isArray(rv)) rv.forEach(x=>WRITINGS.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null,featured:false}));
+    WRITINGS.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  }catch(e){}
   FEEDV={from:f,to:t}; renderWritings();
 }
 function bookTitleOf(id){ id=String(id||'');
@@ -3056,29 +3063,33 @@ function renderWritings(){
   const rows=WRITINGS.filter(w=>(view==='on'?!w.hidden:!!w.hidden)&&(!ms||w.activity===ms));
   const LIMIT=10;
   el('fdTbl').innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
-    const tag=w.hidden?`<span class="chip bad">숨김 · 별 −${ACT_STAR[w.activity]||0}</span>`:'';
+    const isRv=w.activity==='rv';
+    const tag=w.hidden?`<span class="chip bad">${isRv?'숨김':`숨김 · 별 −${ACT_STAR[w.activity]||0}`}</span>`:'';
     const ch=w.challenge_id?(PROGRAMS.find(p=>String(p.id)===String(w.challenge_id))||{}).title:'';
-    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(bookTitleOf(w.book_id))}${ch?`<br><span class="db-sub2">${esc(ch)}</span>`:''}</td>
+    const bt=isRv?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
+    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(bt)}${ch?`<br><span class="db-sub2">${esc(ch)}</span>`:''}</td>
       <td><div class="fd-txt">${w.hidden?'숨긴 글입니다':esc(w.text)}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
-      <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide(${w.id})">${w.hidden?'다시 보이기':'숨기기'}</button>
-          ${w.hidden?'':`<button class="btn-ghost" style="padding:6px 11px;font-size:12px;margin-left:4px;${w.featured?'color:var(--gold);border-color:var(--gold)':''}" onclick="wrFeature(${w.id},${w.featured?'false':'true'})">${w.featured?'★ 우수작':'☆'}</button>`}</td></tr>`; }).join('')
+      <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide('${esc(String(w.id))}')">${w.hidden?'다시 보이기':'숨기기'}</button>
+          ${(w.hidden||isRv)?'':`<button class="btn-ghost" style="padding:6px 11px;font-size:12px;margin-left:4px;${w.featured?'color:var(--gold);border-color:var(--gold)':''}" onclick="wrFeature(${w.id},${w.featured?'false':'true'})">${w.featured?'★ 우수작':'☆'}</button>`}</td></tr>`; }).join('')
     : stEmpty(6,'이 기간에 '+(view==='on'?'쓴 글이':'숨긴 글이')+' 없어요.');
   el('fdCut').innerHTML = rows.length ? `이 기간에 <b>${rows.length}건</b> 가운데 <b>${Math.min(rows.length,LIMIT)}건</b>만 보입니다. <b>전부는 엑셀로 받으시면 됩니다.</b>` : '';
 }
 async function wrToggleHide(id){
-  const w=WRITINGS.find(x=>x.id===id); if(!w) return;
-  const to=!w.hidden;
-  if(to && !confirm('이 글을 숨길까요? 학생 화면에서 내려가고, 이 글로 받은 별도 회수됩니다.')) return;
-  try{ const r=await adminSave({op:'writings_hide', school:ST_SCHOOL, student_id:w.student_id, activity:w.activity, book_id:w.book_id, hidden:to});
+  const w=WRITINGS.find(x=>String(x.id)===String(id)); if(!w) return;
+  const to=!w.hidden, isRv=w.activity==='rv';
+  if(to && !confirm(isRv?'이 서평을 숨길까요? 학생 화면(책 상세·서평 목록)에서 내려갑니다.':'이 글을 숨길까요? 학생 화면에서 내려가고, 이 글로 받은 별도 회수됩니다.')) return;
+  try{ const r=await adminSave(isRv
+        ? {op:'reviews_hide', id:w.rv_id, hidden:to}
+        : {op:'writings_hide', school:ST_SCHOOL, student_id:w.student_id, activity:w.activity, book_id:w.book_id, hidden:to});
     const j=r.ok?await r.json():null; if(!j||!j.ok) throw new Error((j&&j.error)||('HTTP '+r.status));
-    w.hidden=to; renderWritings(); toast(to?'숨겼어요 (별 회수)':'다시 보이게 했어요 (별 복구)'); }
+    w.hidden=to; renderWritings(); toast(isRv?(to?'숨겼어요':'다시 보이게 했어요'):(to?'숨겼어요 (별 회수)':'다시 보이게 했어요 (별 복구)')); }
   catch(e){ toast('처리하지 못했어요 — '+String(e.message||e)); }
 }
-async function wrFeature(id,v){ try{ await adminSave({op:'writings_patch',id,patch:{featured:v}}); }catch(e){} const w=WRITINGS.find(x=>x.id===id); if(w)w.featured=v; renderWritings(); }
+async function wrFeature(id,v){ try{ await adminSave({op:'writings_patch',id,patch:{featured:v}}); }catch(e){} const w=WRITINGS.find(x=>String(x.id)===String(id)); if(w)w.featured=v; renderWritings(); }
 function downloadFeedExcel(){
   if(!FEEDV){ toast('먼저 [조회]를 눌러 주세요'); return; }
   const rows=[[fmtRange(FEEDV.from,FEEDV.to)],[],['학번','날짜','종류','도서명','챌린지','쓴 내용','숨김'],
-    ...WRITINGS.map(w=>[w.student_id,(w.created_at||'').slice(0,10),ACT_KO[w.activity]||w.activity,bookTitleOf(w.book_id),w.challenge_id?((PROGRAMS.find(p=>String(p.id)===String(w.challenge_id))||{}).title||''):'',w.text,w.hidden?'숨김':''])];
+    ...WRITINGS.map(w=>[w.student_id,(w.created_at||'').slice(0,10),ACT_KO[w.activity]||w.activity,w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id),w.challenge_id?((PROGRAMS.find(p=>String(p.id)===String(w.challenge_id))||{}).title||''):'',w.text,w.hidden?'숨김':''])];
   xlsxDownload('북스타_학생글_'+FEEDV.from+'_'+FEEDV.to, [{name:'학생 글',rows:rows}]);
 }
 
