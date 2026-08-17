@@ -143,6 +143,13 @@ Deno.serve(async (req) => {
   if (op === 'writings_hide')   return rpc('bs_writing_hide',    { p_school: school, p_student: S(body.student_id), p_activity: S(body.activity), p_book: S(body.book_id), p_hidden: !!body.hidden });
   // 독자 서평(reviews, 빌린 책 서평) 숨김/복구 — 별 없음(글 hidden + 이벤트 voided만). 8/17 학생 글 화면에 합류
   if (op === 'reviews_hide')    return rpc('bs_review_hide',     { p_id: Number(body.id), p_hidden: !!body.hidden });
+  // ── v4 (2026-08-17 저녁, 시안 감사 후속) ──
+  // 챌린지 [결과 확정 → 운영이력]: 종료 챌린지의 참가·완주·명단을 그 시점 그대로 얼림 (bookstar_challenge_fixed)
+  if (op === 'ch_fix')          return rpc('bs_ch_fix_result',   { p_school: school, p_program: S(body.program) });
+  if (op === 'ch_fixed_list')   return rpc('bs_ch_fixed_list',   { p_school: school });
+  if (op === 'ch_fixed_get')    return rpc('bs_ch_fixed_get',    { p_school: school, p_program: S(body.program) });
+  // 운영이력 '끝난 큐레이션' = library_sections_history(트리거 자동 기록) + 그 기간 조회·이용
+  if (op === 'stats_curation_history') return rpc('bs_stats_curation_history', { p_school: school });
 
   return J({ error: 'unknown op' }, 400);
 });
