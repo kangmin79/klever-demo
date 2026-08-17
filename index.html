@@ -7773,7 +7773,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260817b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260817c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -9333,7 +9333,7 @@ const AG_ACTGRP={
   attend:['출석·방문','#7c6f9c'], visit:['출석·방문','#7c6f9c'],
   reading:['독서·기타','#64748b'], photo:['독서·기타','#64748b'], recommend:['독서·기타','#64748b'], underline:['독서·기타','#64748b'], comment:['독서·기타','#64748b']
 };
-// 8/17: 범례엔 실제로 지급 코드가 있는 항목만 — attend(출석 5)·visit(방문 1)은 docx 배점표엔 있지만 "출석"의 정의(하루 1회? 무엇을 하면?)가 없어 지급 코드 자체가 없다. 정의 확정 후 지급 코드와 함께 다시 넣을 것(별표만 넣으면 학생에게 거짓 약속).
+// 8/17: 범례엔 실제로 지급 코드가 있는 항목만. attend(출석)는 8/17 저녁 정의 확정(도서관 로그인→배너 진입 = 출석, 하루 1번 ⭐1, SSO 수신부에서 지급) → 범례 복귀. visit(방문 1)은 여전히 정의·지급 코드 없음(범례 제외).
 const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','challenge_join','challenge_done'];   // (참고용 — 실제 범례는 아래 _mis/_evt 두 묶음으로 그린다)
 const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
@@ -9385,7 +9385,9 @@ async function renderActivityGroup(){
   const _lab=a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`;
   const _mis=['quiz','quiz_done','oneline','question','review'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
   const _evt=['challenge_join','challenge_done'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
-  const earn=`<b>챌린지 미션</b> ${_mis}${_evt?` &nbsp;/&nbsp; <b>챌린지</b> ${_evt}`:''}`;
+  // 출석 ⭐1 (8/17 정의 확정: 도서관 로그인 후 배너로 들어온 날, 하루 1번) — 지급 코드는 SSO 수신부(award_activity attend day:날짜)
+  const _att=(rateMap.attend!=null)?`${_lab('attend')} <span style="color:var(--light);font-weight:500">(도서관 로그인 후 배너로 들어온 날, 하루 1번)</span>`:'';
+  const earn=`<b>챌린지 미션</b> ${_mis}${_evt?` &nbsp;/&nbsp; <b>챌린지</b> ${_evt}`:''}${_att?` &nbsp;/&nbsp; <b>출석</b> ${_att}`:''}`;
   // 등급 안내
   const curIdx=GRADE_TIERS.findIndex(t=>t[0]===grade);
   const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; const on=t[0]===grade; const cls=on?' on':(i<curIdx?' done':' future'); return `<div class="ag-tier${cls}"><div class="te">${GRADE_EMO[t[0]]||'⭐'}</div><div class="tn">${t[0]}</div><div class="tr">${rng}</div>${on?'<div class="tnow">현재</div>':''}</div>`; }).join('');
@@ -11423,6 +11425,10 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(SSO_PERSONAL_KEY, _sp.get('sso_personal')==='1'?'1':'0');
       }catch(e){}
       try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
+      // 출석 ⭐1 (8/17 사장님 정의): 학교 도서관에 로그인한 뒤 배너를 눌러 북스타로 들어온 날 = 출석. 하루 1번(ref='day:날짜' — award_activity가 학번·활동·ref 중복을 막는다).
+      // 배점은 서버 bookstar_star_rates.attend(=1)가 진짜 출처. 학생 화면 범례에도 같은 값이 뜬다.
+      try{ const _d=new Date(), _day=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
+        mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_ssoUid,p_activity:'attend',p_ref:'day:'+_day}).catch(()=>{}); }catch(e){}
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
       // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
       // 고전(뷰어 게이트)이 우선 — 있으면 그 책 읽기로 바로 진입하고 도서관 책 기억은 함께 폐기
