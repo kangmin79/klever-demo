@@ -630,6 +630,7 @@ tr.hid .fd-txt{color:var(--light);font-style:italic}
 #chalPv .pv-phone{overflow:auto;background:#fbfaf6}
 .cpv{font-family:var(--sans);color:#1a2942;padding:22px 20px 40px;--cpv-line:#e6e1d6;--cpv-sub:#5d5240}
 .cpv-nav{display:flex;gap:18px;font-size:13px;font-weight:700;color:#8b8a86;border-bottom:1px solid var(--cpv-line);padding:0 2px 12px;margin-bottom:22px}
+.cpv-intro{margin:-6px 2px 18px;line-height:1.5;word-break:keep-all}.cpv-intro-m{font-size:13.5px;font-weight:700;color:#1a1a1a}.cpv-intro-s{font-size:12px;color:#6b6a66;margin-top:2px}
 .cpv-nav span.on{color:#1a2942;border-bottom:2px solid #1a2942;padding-bottom:12px;margin-bottom:-13px}
 .cpv-hero{border-bottom:1px solid var(--cpv-line);padding:4px 0 26px;margin-bottom:22px;display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:center}
 .cpv-kicker{font-size:10.5px;letter-spacing:3px;font-weight:800;color:#b8902f;text-transform:uppercase;padding-bottom:9px;border-bottom:1px solid rgba(184,144,47,.35);display:inline-block}
@@ -947,7 +948,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <p class="note">
           <b>참가</b>는 그 챌린지에서 1건이라도 한 학생 수, <b>완주</b>는 담긴 책 전부에 켠 미션이 찍힌 학생 수입니다.<br>
           <b>완료 판정</b> — 글쓰기 미션은 글자 수를 넘겨야 하고, 퀴즈는 응시를 마쳐야 합니다. 글자 수 미달은 미완료입니다.<br>
-          <b>퀴즈만 켠 챌린지</b>는 학생이 쓴 글이 없어 「쓴 내용」 칸이 빕니다.
+          <b>퀴즈</b>는 쓴 글이 없어 「쓴 내용」 칸에 맞힌 문항 수(예: 퀴즈 8/10)가 대신 들어갑니다.
         </p>
       </div>
       <div class="st-warn">
@@ -2782,21 +2783,22 @@ function toggleChalPreview(){ const p=el('chalPv'); if(p&&p.classList.contains('
 function chalPvAutoOpen(){ if(window.innerWidth>=1180){ const p=el('chalPv'); if(p&&!p.classList.contains('on')) chalPvOpen(); } }   // 우리도서관 autoOpenPreview 와 동일 기준
 function chalPvSync(){ const p=el('chalPv'); if(!p||!p.classList.contains('on')) return; clearTimeout(_chalPvTimer); _chalPvTimer=setTimeout(chalPvRender,150); }
 const cpvMD=d=>{ if(!d) return ''; const p=String(d).split('-'); return p.length>=3?(+p[1])+'/'+(+p[2]):''; };
-const cpvDday=to=>{ if(!to) return ''; const n=Math.ceil((new Date(to+'T00:00:00')-new Date(ymd(new Date())+'T00:00:00'))/86400000); return n>0?'D-'+n:(n===0?'D-Day':''); };
+const cpvDday=to=>{ if(!to) return ''; const n=Math.ceil((new Date(to+'T23:59:59')-new Date())/86400000); return n>0?'D-'+n:''; };   // 학생 앱 ddayText와 같은 식(종료 당일=D-1)
 const cpvMission=c=>{ const m=chalMission(c); const a=CH_MISSIONS.filter(x=>m[x.k]).map(x=>x.k==='quiz'?'퀴즈 10문항':x.t); return a.join(' · ')||'-'; };
 const cpvSub=c=>{ const m=cpvMission(c), per=[cpvMD(c.from),cpvMD(c.to)].filter(Boolean).join(' ~ '); const parts=[(c.books||[]).length+'권']; if(m&&m!=='-') parts.push(m); if(per) parts.push(per);
   const dd=cpvDday(c.to); return esc(parts.join(' · '))+(dd?' · <span class="cpv-dday">'+esc(dd)+'</span>':''); };
 const cpvLive=c=>{ const t=ymd(new Date()); return (!c.from||c.from<=t)&&(!c.to||t<=c.to); };   // 학생 앱: 오늘이 기간 안인 것만 노출
 const cpvOffWhy=c=>{ const t=ymd(new Date()); return c.from&&c.from>t?'학생에겐 '+esc(c.from)+'부터 보여요':'종료 — 학생에겐 안 보여요'; };
 const cpvCover=(b,fallbackT)=>{ const cv=b&&(b.cover||(b.id&&CLS_COVER[b.id]))||''; const t=(b&&(b.title||b.t))||fallbackT||'';
-  return cv?`<div class="cpv-cover"><img src="${esc(cv)}" alt="" onerror="this.parentNode.textContent='${esc(t).replace(/'/g,'')}'"></div>`:`<div class="cpv-cover">${esc(t)}</div>`; };
+  return cv?`<div class="cpv-cover"><img src="${esc(cv)}" alt="" data-t="${esc(t)}" onerror="this.parentNode.textContent=this.dataset.t"></div>`:`<div class="cpv-cover">${esc(t)}</div>`; };
 function chalPvRender(){
   const host=el('chalPvBody'); if(!host) return;
   readChalInputs();
   const list=CHALLENGES.slice();
   const heroC=list.find(c=>c.featured)||null;              // 사서가 '이달의 챌린지'로 지정한 하나만 히어로(자동 히어로 없음)
   const rows=heroC?list.filter(c=>c!==heroC):list;
-  let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>고전 컬렉션</span><span>커뮤니티</span></div>`;
+  let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>세계고전</span><span>International</span></div>`
+    +`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하면 별이 쌓여요</div></div>`;   // 8/17 학생 앱 탭 설명 2줄 미러
   if(!list.length){ host.innerHTML=out+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
   if(heroC){ const b=(heroC.books||[])[0]||null; const m=cpvMission(heroC); const off=!cpvLive(heroC);
     out+=`<div class="cpv-hero cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(heroC)}</span>`:''}
@@ -2819,7 +2821,7 @@ function chalPvRender(){
     </div>`; });
   host.innerHTML=out;
 }
-function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
+function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
 function chalSetFeatured(i){readChalInputs();const on=!CHALLENGES[i].featured;CHALLENGES.forEach(c=>c.featured=false);CHALLENGES[i].featured=on;renderChallenges();}   // 라디오식: 하나만 '이달의 챌린지'(다시 누르면 해제)
@@ -3131,7 +3133,7 @@ function downloadDashExcel(btn){
   return withBusy(btn, async()=>{
     const d=await statsOp('stats_overview',{from:kst(f), to:kst(nextDay(t))});
     const per=[fmtRange(f,t)], sheets=[];
-    if(on.includes('pkSum'))  sheets.push({name:'요약',rows:[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3]});
+    if(on.includes('pkSum'))  sheets.push({name:'요약',rows:[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3,['유형별 시트는 외부참조(세명대 미소장 책)를 빼고 세므로 이 요약의 합과 다를 수 있습니다']]});
     if(on.includes('pkSrc')){ const bt=(d.by_type||[]).filter(r=>r.type!=='external'&&r.type!=='none');   // 시안: 외부참조(세명대 미소장)는 담지 않음 → 합계도 네 줄 기준
       const sum=k=>bt.reduce((a,r)=>a+(+r[k]||0),0);
       sheets.push({name:'유형별',rows:[per,[],['유형','조회','이용','활동'],...bt.map(r=>[TYPE_KO[r.type]||r.type,r.views,r.uses,r.acts]),['합계',sum('views'),sum('uses'),sum('acts')],[],...NOTE3]}); }
@@ -3301,17 +3303,20 @@ async function loadWritings(){
   el('fdTbl').innerHTML=stEmpty(6,'불러오는 중…');
   const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
   const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
-  let list=[];
+  let list=[], failed=false;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 실패 표시
   // 챌린지 밖에서 쓴 글만(challenge_id 없음) — 시안: 챌린지 글은 여기 없음
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,{headers:H}); const a=r.ok?await r.json():[]; if(Array.isArray(a)) list=a; }catch(e){}
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,{headers:H}); if(!r.ok) failed=true; const a=r.ok?await r.json():[]; if(Array.isArray(a)) list=a; }catch(e){ failed=true; }
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
   try{ const r=await fetch(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,{headers:H});
+    if(!r.ok) failed=true;
     const rv=r.ok?await r.json():[];
     if(Array.isArray(rv)) rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null,featured:false}));
-  }catch(e){}
-  if(seq!==_wrSeq) return;   // 그 사이 다른 기간 요청이 나갔으면 버림
+  }catch(e){ failed=true; }
+  if(seq!==_wrSeq) return false;   // 그 사이 다른 기간 요청이 나갔으면 버림
   list.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  WRITINGS=list; FEEDV={from:f,to:t}; renderWritings();
+  WRITINGS=list; FEEDV=failed?null:{from:f,to:t}; renderWritings();
+  if(failed){ const tb=el('fdTbl'); if(tb&&!list.length) tb.innerHTML=stEmpty(6,'불러오지 못했어요 — 잠시 후 다시 시도해 주세요'); }
+  return !failed;
 }
 const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
 const wrShort=w=>{ const min=WR_MIN[w.activity]; return !!(min && String(w.text||'').trim().length<min); };   // 글자 수 미달(미인정)
@@ -3352,7 +3357,7 @@ function downloadFeedExcel(btn){
   const [f,t]=rangeOf('fdFrom','fdTo'); if(!rangeOk(f,t)) return;
   if(!ck('pkFeed')){ fdSum(); toast('받을 자료를 골라 주세요'); return; }
   return withBusy(btn, async()=>{
-    if(!FEEDV||FEEDV.from!==f||FEEDV.to!==t){ await loadWritings(); }
+    if(!FEEDV||FEEDV.from!==f||FEEDV.to!==t){ const ok=await loadWritings(); if(ok===false){ toast('불러오지 못했어요 — 잠시 후 다시 시도해 주세요'); return; } }
     const ms=el('fdMs')?el('fdMs').value:'';
     const list=WRITINGS.filter(w=>!ms||w.activity===ms);
     const rows=[[fmtRange(f,t)+(ms?' · 종류: '+(ACT_KO[ms]||ms):'')],[],['학번','날짜','종류','도서명','쓴 내용','숨김'],
@@ -3389,9 +3394,11 @@ const hsFileName=(f,t)=>'북스타_운영이력_'+f+'_'+t;
 // 목록·엑셀 원천 로드(챌린지 = stats_challenges, 큐레이션 = stats_curation_history). 한 번 받으면 재사용, force 면 다시
 async function hsLoad(force){
   const jobs=[];
-  if(force||!CHS.length) jobs.push(loadChs().catch(()=>{}));
-  if(force||!HSHIST) jobs.push(statsOp('stats_curation_history').then(h=>{ HSHIST=Array.isArray(h)?h:[]; }).catch(()=>{ if(!HSHIST) HSHIST=[]; }));
+  let failed=false;
+  if(force||!CHS.length) jobs.push(loadChs().catch(()=>{ failed=true; }));
+  if(force||!HSHIST) jobs.push(statsOp('stats_curation_history').then(h=>{ HSHIST=Array.isArray(h)?h:[]; }).catch(()=>{ failed=true; if(!HSHIST) HSHIST=[]; }));
   await Promise.all(jobs);
+  return !failed;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 호출부가 판단
 }
 async function renderHistory(){ initHsDates(); hsSum(); const tb=el('hsTbl'); if(tb&&!HSHIST) tb.innerHTML=stEmpty(4,'불러오는 중…'); await hsLoad(true); renderHist(); }
 // '3. 지난 목록' — 구분·이름·기간·미션/위치, 최근 끝난 순 10줄, 숫자 없음. 체크 안 한 종류는 목록에서도 뺀다(시안 renderHist)
@@ -3409,7 +3416,8 @@ function downloadHistExcel(btn){
   const [f,t]=rangeOf('hsFrom','hsTo'); if(!rangeOk(f,t)) return;
   const a=ck('pkHsCh'), b=ck('pkHsCur'); if(!a&&!b){ hsSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
   return withBusy(btn, async()=>{
-    await hsLoad(false);
+    const ok=await hsLoad(false);
+    if(ok===false){ toast('불러오지 못했어요 — 잠시 후 다시 시도해 주세요'); return; }
     const {ch,cur}=hsInRange(); const per=[fmtRange(f,t)+' (종료일 기준)'], sheets=[];
     if(a) sheets.push({name:'챌린지 이력',rows:[per,[],['구분','이름','시작','종료','미션','시상','참가','완주'],...ch.map(c=>[chType(c.type),c.title,c.start_date||'',c.end_date||'',chMissionLabel(c.mission),chRewardText(c),c.part_v,c.done_v])]});
     if(b) sheets.push({name:'큐레이션 이력',rows:[per,[],['이름','시작','끝','위치','담긴 책','조회','이용'],...cur.map(r=>[r.title||'',fmtD(r.started_at),fmtD(r.ended_at),AREA_LABELS[r.area]||r.area||'',r.books_n!=null?r.books_n:'',r.views,r.uses])]});
