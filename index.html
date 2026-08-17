@@ -8569,7 +8569,7 @@ async function mpLoadQuiz(m){
   { const arr=new Array(10).fill(''); let has=false;
     items.forEach(it=>{ if(it.anchor&&it.scene_no>=1&&it.scene_no<=10){ arr[it.scene_no-1]=it.anchor; has=true; } });
     if(has) _scnDbAnchors=arr; }
-  _mpCtx.quizCount=items.length;
+  _mpCtx.quizCount=items.length; _mpCtx.quizIds=items.map(it=>it.id);
   box.innerHTML=''; box.classList.remove('mp-step-on'); _mpStep=null;
   items.forEach((it,qi)=>{
     const shuffled=_mpShuffle(it.opts.map((t,oi)=>({t,orig:oi})));
@@ -8806,7 +8806,20 @@ async function mpAnswer(el,q,it){
   _mpCtx.ans[it.id]={ok:right, pick:chosen};
   mpSaveProgress();
   mpRenderProgress();
+  mpCheckQuizDone();
   mpCheckComplete();
+}
+// 퀴즈 완주 ⭐10 (설계 §3: "책 퀴즈 전부 풀면 완료 10" — 정답 여부 무관, 이 책의 문항을 전부 답하면 1회). 8/17까지 범례에만 있고 지급 코드가 없던 항목.
+// 서버 on conflict(student,activity,ref) 로 멱등 → 다시 열어도 중복 지급 없음.
+async function mpCheckQuizDone(){
+  if(!_mpCtx || _mpCtx.quizDone) return;
+  const ids=_mpCtx.quizIds||[]; if(!ids.length) return;
+  if(!ids.every(id=>_mpCtx.ans && _mpCtx.ans[id])) return;
+  _mpCtx.quizDone=true;
+  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:'quiz_done',p_ref:'book:'+_mpCtx.bookId});
+  if(res&&res.ok){ if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
+    try{ readerToast&&readerToast('퀴즈 완주 +⭐10'); }catch(e){} }
+  else _mpCtx.quizDone=false;
 }
 function mpRevealQuiz(q,it,correct,right,restored,pickOrig){
   q.querySelectorAll('.mp-opt').forEach(x=>{ x.classList.add('mp-lock');
@@ -9320,7 +9333,8 @@ const AG_ACTGRP={
   attend:['출석·방문','#7c6f9c'], visit:['출석·방문','#7c6f9c'],
   reading:['독서·기타','#64748b'], photo:['독서·기타','#64748b'], recommend:['독서·기타','#64748b'], underline:['독서·기타','#64748b'], comment:['독서·기타','#64748b']
 };
-const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','attend','challenge_join','challenge_done'];
+// 8/17: 범례엔 실제로 지급 코드가 있는 항목만 — attend(출석 5)·visit(방문 1)은 docx 배점표엔 있지만 "출석"의 정의(하루 1회? 무엇을 하면?)가 없어 지급 코드 자체가 없다. 정의 확정 후 지급 코드와 함께 다시 넣을 것(별표만 넣으면 학생에게 거짓 약속).
+const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','challenge_join','challenge_done'];   // (참고용 — 실제 범례는 아래 _mis/_evt 두 묶음으로 그린다)
 const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
 const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
@@ -9367,7 +9381,11 @@ async function renderActivityGroup(){
   const grpRows=grpKeys.map(lab=>{ const g=grp[lab]; const w=Math.max(4,Math.round(g.cum/maxCum*100)); return `<div class="ag-arow"><div class="ag-arow-top"><span class="ag-dot" style="background:${g.color}"></span><span class="ag-aname">${esc(lab)}</span><b class="ag-ayear">${g.year}</b><span class="ag-acum">${g.cum.toLocaleString()}</span></div><div class="ag-abar"><i style="width:${w}%;background:${g.color}"></i></div></div>`; }).join('');
   // 별 버는 법 (star_rates = 진짜 출처)
   const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
-  const earn=AG_EARN_ORDER.filter(a=>rateMap[a]!=null).map(a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`).join(' · ');
+  // 미션(퀴즈·글) 별은 챌린지 안에서만 나온다 — 내 도서관 '빌린 책' 서평(상시)은 별 없음. 범례에 그 구분을 적어 "서평 썼는데 별이 없다"는 오해 방지(8/17)
+  const _lab=a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`;
+  const _mis=['quiz','quiz_done','oneline','question','review'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
+  const _evt=['challenge_join','challenge_done'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
+  const earn=`<b>챌린지 미션</b> ${_mis}${_evt?` &nbsp;/&nbsp; <b>챌린지</b> ${_evt}`:''}`;
   // 등급 안내
   const curIdx=GRADE_TIERS.findIndex(t=>t[0]===grade);
   const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; const on=t[0]===grade; const cls=on?' on':(i<curIdx?' done':' future'); return `<div class="ag-tier${cls}"><div class="te">${GRADE_EMO[t[0]]||'⭐'}</div><div class="tn">${t[0]}</div><div class="tr">${rng}</div>${on?'<div class="tnow">현재</div>':''}</div>`; }).join('');
