@@ -18,7 +18,7 @@ create or replace function public._backfill_health_check() returns void
 language plpgsql as $function$
 declare
   t bigint; e bigint; u bigint; prev bigint; d bigint; v text; n text;
-  fr bigint; frc bigint; mtnull bigint;
+  fr bigint; frc bigint; mtnull bigint; q bigint;
   -- 🔴 current_date는 UTC다. 05:00 KST = 전날 20:00 UTC라 그대로 쓰면
   --   어제 행을 덮어써서 '어제 대비 증가'가 영영 안 잡힌다(2026-08-14 실측 버그).
   kst_today date := (now() at time zone 'Asia/Seoul')::date;
@@ -42,18 +42,28 @@ begin
 
   d := case when prev is null then null else t - prev end;
 
-  -- 기준: 실측 페이스가 일 15,000~17,750이었다. 정보나루 한도(30,000)를 온전히 쓰면
-  -- 최소 한 자리 수 천 권은 늘어야 정상. 3,000 미만이면 뭔가 새고 있는 것이다.
-  if d is null then           v := 'GREEN'; n := '첫 측정 — 내일부터 증감 비교';
-  elsif d >= 8000 then        v := 'GREEN'; n := '정상 페이스';
-  elsif d >= 3000 then        v := 'YELLOW'; n := '느림 — 한도·쓰기실패 확인';
-  else                        v := 'RED';
-                              n := '거의 안 늘었다. tulip_daily.log에서 한도 도달·쓰기 실패·강제종료 확인할 것';
-  end if;
+  -- 8/18: 남은 '조회 가능' 대상(ISBN 있고 아직 안 물어본 것). 이게 바닥나면 증가폭이 주는 게 정상이라
+  --   페이스 규칙(아래)을 적용하면 매일 RED 오탐이 난다(8/18 실측: 한국어 92% 완료 상태에서 delta 6,377 → RED).
+  select count(*) into q from semyung_tulip
+   where kind = 'paper' and mat_type = 'm' and description is null and coalesce(isbn,'') <> '';
 
-  -- 미보유 도장이 하루에 5,000 넘게 늘면 8/13 한도 오인 사고의 재발 신호다.
-  if d is not null and e > 25000 then
-    v := 'RED'; n := n || ' / 미보유 도장 과다(' || e || ') — 한도 오인 재발 의심';
+  if q < 2000 then
+    -- 마무리 단계: 채울 수 있는 책은 다 채움. 남은 미보유는 ISBN 없음(조회 불가)·국내 API에 없는 외서.
+    v := 'GREEN'; n := '마무리 — 채울 수 있는 책은 다 채움(조회 대상 ' || q || '권 남음, 오늘 +' || coalesce(d,0) || ')';
+  else
+    -- 기준: 실측 페이스가 일 15,000~17,750이었다. 정보나루 한도(30,000)를 온전히 쓰면
+    -- 최소 한 자리 수 천 권은 늘어야 정상. 3,000 미만이면 뭔가 새고 있는 것이다.
+    if d is null then           v := 'GREEN'; n := '첫 측정 — 내일부터 증감 비교';
+    elsif d >= 8000 then        v := 'GREEN'; n := '정상 페이스';
+    elsif d >= 3000 then        v := 'YELLOW'; n := '느림 — 한도·쓰기실패 확인';
+    else                        v := 'RED';
+                                n := '거의 안 늘었다. tulip_daily.log에서 한도 도달·쓰기 실패·강제종료 확인할 것';
+    end if;
+    -- 미보유 도장이 하루에 5,000 넘게 늘면 8/13 한도 오인 사고의 재발 신호다.
+    if d is not null and e > 25000 then
+      v := 'RED'; n := n || ' / 미보유 도장 과다(' || e || ') — 한도 오인 재발 의심';
+    end if;
+    n := n || ' (조회 대상 ' || q || '권 남음)';
   end if;
 
   n := n || ' | 신착14일 ' || frc || '/' || fr || ' 표지';
