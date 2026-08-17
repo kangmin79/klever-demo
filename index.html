@@ -211,6 +211,13 @@ body.dark .side-node .icon{color:var(--gold);}
   .side-node.active .icon,.side-node.active .side-node-label{color:var(--primary);}
   body.dark .side-node.active .icon,body.dark .side-node.active .side-node-label{color:var(--gold);}
   .side-node-label{font-size:9px;}
+  /* 8/17 사장님 수정요청(교보 전자책 모바일처럼): 스크롤 내리면 헤더(로고·메뉴)가 위로 올라가 사라지고, 올리면 다시 나온다.
+     본문(.main)이 헤더 아래가 아니라 화면 전체를 쓰고 헤더는 그 위에 겹쳐 뜬다 → 헤더가 숨으면 그 자리까지 본문이 보인다. */
+  .main{height:100vh;height:100dvh;margin-top:0;padding-top:var(--header-h);}
+  .header{transition:transform .24s ease;will-change:transform;}
+  body.hdr-hide .header{transform:translateY(-100%);}
+  /* 하단 탭바(.side-nav) 높이만큼 페이지 바닥 여백 — 마지막 줄이 탭바 뒤에 가려 잘려 보이던 것 */
+  .page{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
 }
 .page-title{font-size:30px;font-weight:800;letter-spacing:-0.9px;margin-bottom:8px;}
 .page-title,.page-subtitle,.section-title,.ml-h-t,.ml-h-s{word-break:keep-all;} /* 한글 단어 중간 줄바꿈 방지 */
@@ -660,6 +667,12 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .cl-tab.on{color:var(--text);}
 .cl-tab.on::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--gold);border-radius:3px;}
 .cl-intro{font-size:13px;color:var(--text-sub);line-height:1.6;margin:16px 2px 2px;}
+/* 8/17 사장님 수정요청: 메인 메뉴 4탭(우리 도서관·독서 챌린지·세계고전·International) 상단 설명 2줄 — 윗줄 메인, 아랫줄 보조 */
+.pg-intro{margin:6px 2px 22px;line-height:1.55;word-break:keep-all;}
+.pg-intro .pi-main{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+.pg-intro .pi-sub{font-size:13px;color:var(--text-sub);margin-top:3px;letter-spacing:-0.2px;}
+@media(max-width:640px){.pg-intro{margin:2px 2px 16px;}.pg-intro .pi-main{font-size:14px;}.pg-intro .pi-sub{font-size:12.5px;}}
+body.preview-mode .pg-intro{display:none !important;}
 /* International 인트로: 한 줄 소개문만 — 언어 전환은 우상단 헤더 드롭다운 단일화 (2026-07-23) */
 .cl-welcome{margin:16px 2px 4px;}
 .cl-wel-txt{font-size:13px;color:var(--text-sub);line-height:1.6;}
@@ -1979,6 +1992,16 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .detail-cover{max-width:200px;margin:0 auto;}
 }
 @media (max-width:600px){
+  /* 8/17 사장님 수정요청: 폰 통합검색 결과가 책 1권으로 화면을 다 채우던 것 → 밀리식 3열 그리드 */
+  #page-search .book-grid{grid-template-columns:repeat(3,1fr);gap:10px;}
+  #page-search .book-card{border-radius:9px;}
+  #page-search .book-info{padding:7px 8px 9px;}
+  #page-search .book-title{font-size:11.5px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;}
+  #page-search .book-author{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #page-search .bt-tag{font-size:9px;padding:1px 5px;margin-bottom:3px;}
+  #page-search .book-cover{padding:8px;}
+  #page-search .book-cover-title{font-size:11px;}
+  #page-search .book-cover-author{font-size:9px;margin-top:4px;}
   .viewer-body{grid-template-columns:1fr;}
   .viewer-pane{padding:22px 18px;}
   .viewer-pane.right{display:none;}                          /* 기본: 본문(left)만 전체폭 */
@@ -1996,6 +2019,14 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-shell.immersive .reader-searchbar{position:absolute;top:0;left:0;right:0;z-index:42;}   /* 본문찾기는 헤더 자리를 대신 차지(브라우저식) */
   /* (삭제) .toc-drawer{z-index:45} — 소스 뒤의 기본 규칙(z:5)에 캐스케이드로 덮여 죽은 규칙이었음. .open{z:50}가 담당 */
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
+  /* 8/17 사장님 수정요청(폰 챌린지 = 본문 아래 퀴즈, 한 화면 스크롤): 본문/퀴즈 탭 전환 대신 두 칸을 위아래로 쌓고 몸통이 스크롤 */
+  .viewer-body.chal-stack{display:block;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;}
+  .viewer-body.chal-stack .viewer-pane.left,.viewer-body.chal-stack .viewer-pane.right{display:block !important;overflow:visible;height:auto;min-height:0;}
+  .viewer-body.chal-stack .viewer-pane.left{border-right:0;border-bottom:1px solid var(--border);}
+  .viewer-body.chal-stack .viewer-pane.right{padding-bottom:110px;}   /* 바닥 '챌린지 닫기' 바(스크롤 올리면 뜸)에 마지막 문항이 안 가리게 */
+  .viewer-body.chal-stack .viewer-pane.right > .viewer-pane-label{display:none;}   /* "오른쪽 — 챌린지 미션" 라벨은 위아래 배치에선 뜻이 안 맞음 */
+  /* 8/17: 뷰어 메뉴는 스크롤 방향으로 — 위로 올리면 헤더·바닥이 본문 위에 겹쳐 뜨고, 내리면 사라짐(챌린지 바닥 바 포함) */
+  .viewer-shell.immersive .viewer-footer{position:absolute;bottom:0;left:0;right:0;z-index:40;}
   .quest-grid{grid-template-columns:repeat(3,1fr);}
   /* 리더 헤더 한 줄: 고스트 아이콘 왼쪽 + 모드칩·Aa·닫기 오른쪽 (킨들/애플북스 결 — 2줄+박스버튼 정리 2026-07-23) */
   .viewer-header{flex-wrap:nowrap;gap:2px;padding:7px 8px;align-items:center;}
@@ -2040,7 +2071,7 @@ body.dark .quiz-fb.ok{background:rgba(80,200,140,.16);color:#6fd9a6;}
 body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
 @keyframes fbIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
 /* 축하 모달 (완료·인증 alert 대체) — 네이비/흰카드/골드 */
-.bs-cele{position:fixed;inset:0;z-index:140;background:rgba(12,18,38,.55);display:flex;align-items:center;justify-content:center;animation:fbIn .2s ease;}
+.bs-cele{position:fixed;inset:0;z-index:260;/* 8/17: 뷰어(.viewer-overlay z200) 위에 떠야 폰에서도 마지막 퀴즈 직후 완주 축하가 보인다 (전엔 140이라 뷰어 뒤에 숨어 닫아야 보였음) */background:rgba(12,18,38,.55);display:flex;align-items:center;justify-content:center;animation:fbIn .2s ease;}
 .bs-cele-card{width:min(330px,86vw);background:var(--bg-card);border-radius:18px;padding:28px 24px 20px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35);}
 .bs-cele-badge{width:54px;height:54px;border-radius:50%;background:var(--gold);color:#1a1208;font-size:26px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
 .bs-cele-title{font-size:17px;font-weight:800;line-height:1.4;color:var(--text);}
@@ -2196,7 +2227,7 @@ body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
 mark.hl.hl-flash{animation:hlFlash 1.4s ease;}
 @keyframes hlFlash{0%,55%{background:rgba(212,169,59,0.85);}100%{background:rgba(212,169,59,0.32);}}
 /* 메모 입력·형광펜 메뉴 (prompt 대체 인라인 박스) */
-.hl-note-box{position:fixed;z-index:130;width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 32px rgba(0,0,0,0.18);padding:10px;}
+.hl-note-box{position:fixed;z-index:270;/* 8/17 사장님 수정요청(메모 창 안 뜸): 뷰어(.viewer-overlay z200) 뒤에 숨던 것 → 위로 */width:260px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 32px rgba(0,0,0,0.18);padding:10px;}
 .hl-note-box textarea{width:100%;min-height:64px;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box;font-family:inherit;background:var(--bg-input);color:var(--text);}
 .hl-note-box .hnb-note{font-size:12.5px;color:var(--text);line-height:1.55;padding:2px 2px 8px;}
 .hl-note-box .hnb-row{display:flex;gap:6px;justify-content:flex-end;margin-top:8px;}
@@ -2635,6 +2666,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <!-- 8/16 사용자 지시: 상단 '반납 임박·빌린 책' 요약 배너 삭제 (#myLibStatus div 제거).
        급한 소식은 사이드바 '내 도서관' 배지(MYLIB_BADGE)가 계속 알린다. 상세는 내 도서관 페이지. -->
 
+  <!-- 8/17 사장님 수정요청: 메뉴 하단 설명 2줄 -->
+  <div class="pg-intro"><div class="pi-main">우리 도서관이 소장한 종이책·전자책을 한곳에서 찾아, 바로 신청해요</div><div class="pi-sub">종이책은 찾아줘북즈·예약을 하면 안내데스크에서 받고, 전자책은 대출해서 바로 읽어요</div></div>
   <div class="section" id="libCurationSec">
     <div id="libCurationGrid"></div>
   </div>
@@ -2668,8 +2701,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
      2-1) 도서 큐레이션 (AI 추천)
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-curation">
-  <h1 class="page-title">독서 챌린지</h1>
-  <p class="page-subtitle">사서가 운영하는 챌린지에 참여하고, 퀴즈·소감으로 완독을 인증하세요</p>
+  <!-- 8/17 사장님 수정요청: 큰 제목(GNB와 중복) 대신 메뉴 하단 설명 2줄 -->
+  <div class="pg-intro"><div class="pi-main">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="pi-sub">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하면 별이 쌓여요</div></div>
 
   <!-- 사서가 만든 챌린지 (library_programs · 진행중) — 우리 도서관 밀리식 레이아웃 -->
   <div id="chalLive" data-origin="challenge"><div class="chal-empty">불러오는 중…</div></div>
@@ -3539,6 +3572,16 @@ function _scrollEl(){   // 현재 화면에 보이는(스크롤되는) 칸 — P
   if(_vis(right)) return right;
   return left;
 }
+// 폰 챌린지 쌓기 모드(장면카드 위·퀴즈 아래, 몸통 스크롤)인지 — 8/17
+function _chalStacked(){ const b=document.getElementById('viewerBody'); return !!(b && window.innerWidth<=600 && b.classList.contains('chal-stack')); }
+// 쌓기 모드 켜기 — 장면카드 있는 책에서 mpLoadQuiz가 호출. 본문/퀴즈·수행 탭을 없애고 두 칸을 모두 펼친다
+function _chalStackApply(){
+  const body=document.getElementById('viewerBody'); if(!body || currentMode!=='challenge') return;
+  body.classList.add('chal-stack'); body.classList.remove('mob-second'); _mobPane='main';
+  const bar=document.getElementById('paneTabs'); if(bar) bar.style.display='none';
+  // 메뉴는 읽기 화면과 같은 스크롤 방식(위로 올리면 뜨고 내리면 숨음) — 처음엔 숨김
+  const sh=document.querySelector('.viewer-shell'); if(sh){ sh.classList.add('immersive'); sh.classList.add('chrome-hidden'); }
+}
 // ── 모바일 1단 + 본문/번역(퀴즈) 탭 전환 ──
 let _mobPane='main', _mobScroll={};   // 탭별 스크롤 위치 보관 — display:none이 scrollTop을 파기하므로 직접 복원
 function switchMobilePane(which){
@@ -3570,6 +3613,9 @@ function updatePaneTabs(hasSecond,label,opts){
 function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨/표시·기본 칸 갱신
   _mobPane='main'; _mobScroll={};   // 재렌더 = 새 pane → 보관해둔 탭별 위치 무효
   const body=document.getElementById('viewerBody'); if(body) body.classList.remove('mob-second');
+  // 8/17 사장님 수정요청: 폰 챌린지는 장면카드(핵심문장·배경설명) 아래 퀴즈가 이어지는 한 화면 스크롤(.chal-stack).
+  //   장면카드가 있는 책만(mpLoadQuiz가 확인한 뒤 _chalStackApply) — 장면카드 없는 책은 왼쪽이 소설 전문이라 쌓으면 퀴즈가 수십만 px 아래로 가서 기존 탭 방식 유지.
+  if(body) body.classList.remove('chal-stack');
   let hasSecond,label,opts={};
   if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
@@ -4071,9 +4117,16 @@ function setupHighlightHandlers(){
     const rect = range.getBoundingClientRect();
     popup.style.display = 'flex';
     // 먼저 표시해 실제 폭을 잰 뒤 좌우 클램프 — 좁은 화면에서 오른쪽 잘림 방지
-    const px = rect.left + rect.width/2 - popup.offsetWidth/2;
-    popup.style.left = Math.max(8, Math.min(px, window.innerWidth - popup.offsetWidth - 8)) + 'px';
-    popup.style.top  = Math.max(8, rect.top - 44) + 'px';
+    // 8/17 사장님 수정요청(폰에서 우리 메뉴가 '복사·공유·웹 검색' 뒤에 숨음): 폰은 선택 문장 바로 위(브라우저 기본 툴바 자리)를 피해
+    //   화면 맨 위 가운데에 띄운다. 브라우저 기본 툴바·구글 검색 바 자체는 웹에서 끌 수 없음.
+    if(window.innerWidth<=600){
+      popup.style.left = Math.max(6, (window.innerWidth - popup.offsetWidth)/2) + 'px';
+      popup.style.top  = '10px';
+    } else {
+      const px = rect.left + rect.width/2 - popup.offsetWidth/2;
+      popup.style.left = Math.max(8, Math.min(px, window.innerWidth - popup.offsetWidth - 8)) + 'px';
+      popup.style.top  = Math.max(8, rect.top - 44) + 'px';
+    }
   };
   document.addEventListener('mouseup', (e) => maybeShow((e.target && e.target.closest) ? e.target : null));
   // iOS·안드로이드 롱프레스 선택은 mouseup이 안정적으로 오지 않음 → 터치 기기만 selectionchange로 보강
@@ -4088,6 +4141,8 @@ function setupHighlightHandlers(){
     const tgt = (e.target && e.target.closest) ? e.target : null;
     const mk = tgt && tgt.closest('mark.hl');
     if(mk && mk.dataset.hlts){ hlMarkMenu(mk, e.clientX, e.clientY); return; }
+    // 8/17 사장님 수정요청(메모 창 안 뜸): [메모] 버튼 클릭이 문서까지 버블돼 방금 연 메모박스를 곧바로 닫던 것 → 팝업 안 클릭은 제외
+    if(tgt && tgt.closest('#hlPopup')) return;
     if(!(tgt && tgt.closest('.hl-note-box'))) closeNoteBox();
   });
 }
@@ -4194,7 +4249,7 @@ function openNoteBox(ts, x, y){
   box.innerHTML = `<textarea id="hlNoteText" placeholder="이 문장에 메모 남기기…">${h.note ? esc(h.note) : ''}</textarea>
     <div class="hnb-row"><button class="hnb-cancel" onclick="closeNoteBox()">취소</button>
     <button class="hnb-save" onclick="saveNoteBox(${ts})">저장</button></div>`;
-  document.body.appendChild(box);
+  _fsHost().appendChild(box);   // 8/17: 화면 꽉 채우기(fullscreen) 중에도 보이게
   const bw = 260;
   box.style.left = Math.min(window.innerWidth - bw - 8, Math.max(8, (x || 80) - bw/2)) + 'px';
   box.style.top  = Math.min(window.innerHeight - 170, Math.max(8, (y || 80) + 8)) + 'px';
@@ -4231,7 +4286,7 @@ function hlMarkMenu(mk, x, y){
   box.innerHTML = `${h.note ? `<div class="hnb-note">📝 ${esc(h.note)}</div>` : ''}
     <div class="hnb-row"><button class="hnb-cancel" onclick="hlDelete(${ts})">형광펜 지우기</button>
     <button class="hnb-save" onclick="openNoteBox(${ts},${Math.round(x)},${Math.round(y)})">${h.note ? '메모 수정' : '메모 추가'}</button></div>`;
-  document.body.appendChild(box);
+  _fsHost().appendChild(box);
   const bw = 260;
   box.style.left = Math.min(window.innerWidth - bw - 8, Math.max(8, (x || 80) - bw/2)) + 'px';
   box.style.top  = Math.min(window.innerHeight - 130, Math.max(8, (y || 80) + 10)) + 'px';
@@ -5157,7 +5212,7 @@ function chalJoin(id){
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
   const arr=joinedChals();
   if(arr.some(x=>String(x.id)===String(c.id))){
-    alert(`이미 참여 중인 챌린지예요.\n내서재 Quest Map에서 진행하세요.`); nav('mypage'); return;
+    alert(`이미 참여 중인 챌린지예요.\n마이 챌린지에서 진행하세요.`); nav('mypage'); return;
   }
   arr.push({ id:c.id, type:c.type||'', title:c.title, to:c.to||'', mission:c.mission||null,
     books:(c.books||[]).map(b=>({id:b.id||'', t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
@@ -5170,7 +5225,7 @@ function chalJoin(id){
        body:JSON.stringify({student_id:_stu.id, challenge_id:String(c.id), status:'joined'})}).catch(()=>{});
     mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_stu.id,p_activity:'challenge_join',p_ref:String(c.id)}).catch(()=>{});
   }
-  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 내서재 Quest Map에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
+  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 마이 챌린지에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
   nav('mypage');
 }
 function chalQuit(cid){
@@ -5814,7 +5869,7 @@ function mlShelf(b,note,cur,title){
       <div class="sh-kicker">✦ ${esc(title||'오늘의 사서 추천')}</div>
       <div class="sh-title">${bookT}</div>
       <div class="sh-sub">${bookA}</div>
-      <div class="sh-quote">“${esc(note||'이 달의 추천 도서예요.')}”<span> — 사서</span></div>
+      ${note?`<div class="sh-quote">“${esc(note)}”<span> — 사서</span></div>`:''}
       ${checks.length?`<div class="sh-meta">${checks.map(c=>`<span>${esc(c)}</span>`).join('')}</div>`:''}
       <button class="sh-btn" onclick="${click}">자세히 보기 →</button>
     </div>
@@ -7301,6 +7356,25 @@ function playSideNavEntrance(){
   if(document.readyState !== 'loading') bind();
   document.addEventListener('DOMContentLoaded', bind);
 })();
+/* 8/17 사장님 수정요청: 폰에서 스크롤 내리면 헤더 숨김·올리면 표시 (교보 전자책 모바일 방식). CSS body.hdr-hide */
+(function(){
+  let lastY=0, acc=0, bound=null;
+  function onScroll(){
+    if(window.innerWidth>900){ document.body.classList.remove('hdr-hide'); return; }
+    const y=bound.scrollTop, dy=y-lastY; lastY=y;
+    if(!dy) return;
+    acc = (acc>0)===(dy>0) ? acc+dy : dy;
+    if(dy<0 && (acc<=-24 || y<=0)) document.body.classList.remove('hdr-hide');
+    else if(dy>0 && acc>=24 && y>60) document.body.classList.add('hdr-hide');
+  }
+  function bind(){
+    const m=document.querySelector('.main');
+    if(m && m!==bound){ bound=m; lastY=m.scrollTop; m.addEventListener('scroll', onScroll, {passive:true}); }
+  }
+  if(document.readyState!=='loading') bind();
+  document.addEventListener('DOMContentLoaded', bind);
+  window.addEventListener('resize', ()=>{ if(window.innerWidth>900) document.body.classList.remove('hdr-hide'); });
+})();
 
 /* ═══════════════════════════════════════════════════════════
    홈 / 컬렉션 큐레이션 렌더
@@ -7397,16 +7471,15 @@ function renderClassicShelves(){
       <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">${uiT('세계고전')} <span class="en">${_fSub}</span></button>
       <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">International <span class="en">${_kSub}</span></button>
     </div>`;
+  // 8/17 사장님 수정요청: 메뉴 하단 설명 2줄(윗줄 메인·아랫줄 보조). 기존 cl-intro/cl-welcome 한 줄 소개문은 이걸로 대체.
+  // International 아랫줄은 학생이 고른 언어(헤더 드롭다운 UI_LANG)로 — 한국어 모드면 영어(시안 그대로).
   let headBody;
   if(foreign){
-    headBody = `<div class="cl-intro">${CL_FOREIGN_INTRO[UI_LANG]||CL_FOREIGN_INTRO.ko}</div>`;
+    headBody = `<div class="pg-intro"><div class="pi-main">세계 고전을 원문과 번역으로 함께 읽어요</div><div class="pi-sub">대출이나 예약 없이 언제든 바로 읽고, 다 읽으면 완독으로 남아요</div></div>`;
   } else {
-    // 언어 전환 = 우상단 헤더 드롭다운 단일화 (페이지 내 칩 제거 2026-07-23). 소개문에서 우상단으로 안내.
-    const hintMap = {ko:'우측 상단에서 언어를 선택하세요.',en:'Choose your language at the top right.',zh:'请在右上角选择语言。',vi:'Chọn ngôn ngữ ở góc trên bên phải.',ja:'右上で言語を選べます。'};
-    const W = CL_WELCOME[_clLang]||CL_WELCOME.all;
-    headBody = `<div class="cl-welcome">
-        <div class="cl-wel-txt"><b>${W.h}</b> — ${W.p} <span class="cl-wel-hint">${ic('globe')}${hintMap[_clLang]||hintMap.ko}</span></div>
-      </div>`;
+    const subMap = {ko:'Read Korean classics with a translation in your own language', en:'Read Korean classics with a translation in your own language', zh:'用你的母语译文阅读韩国古典文学', vi:'Đọc văn học kinh điển Hàn Quốc cùng bản dịch bằng ngôn ngữ của bạn', ja:'あなたの母語の翻訳と一緒に韓国古典を読みましょう'};
+    const lang = (typeof UI_LANG!=='undefined' && subMap[UI_LANG]) ? UI_LANG : (subMap[_clLang]?_clLang:'ko');
+    headBody = `<div class="pg-intro"><div class="pi-main">한국 고전을 모국어 번역과 함께 읽으며 한국어와 한국 문화를 배워요</div><div class="pi-sub" lang="${lang==='ko'?'en':lang}">${subMap[lang]}</div></div>`;
   }
   // 탭(모바일만 노출) + (국내)배너/인트로 = 페이지 최상단(clHead). 책 줄 = 사서 큐레이션 아래.
   // 데스크톱은 큰 권역 제목 없이 인트로/배너만 — 상단 네비 드롭다운이 권역을 알려줌(중복 제거)
@@ -7773,7 +7846,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260817c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260818a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -7826,12 +7899,45 @@ function setupImmersiveTap(){
       // 가운데(0.30~0.70) → 문장이면 원문 보기(_sentTap 담당), 아니면 바 토글
     }
     if(_onSent) return;                                     // 문장 탭 = 원문 보기 전용 — 메뉴는 안 올라옴
+    // 8/17 사장님 수정요청: 스크롤 모드에선 빈 곳을 터치해도 메뉴가 올라오지 않는다(문장 터치=번역/원문과 충돌).
+    //   메뉴는 아래 scroll 감시가 스크롤 방향으로 띄우고 숨긴다. 탭 넘김 모드만 가운데 탭 토글 유지(스크롤이 없어 대체 수단이 없음).
+    if(!readerPrefs.pageMode) return;
     clearTimeout(_immersiveTapTimer);
     _immersiveTapTimer=setTimeout(()=>{                      // 더블클릭이면 아래서 취소
       document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');
     },230);
   });
   vb.addEventListener('dblclick',()=>{ clearTimeout(_immersiveTapTimer); });
+  // 8/17: 스크롤 방향으로 메뉴 표시 — 위로 올리면 뜨고(chrome-hidden 해제), 내리면 사라짐. 칸(.viewer-pane)·몸통(.chal-stack) 어느 쪽이 스크롤돼도 캡처
+  vb.addEventListener('scroll',(e)=>{
+    if(window.innerWidth>600 || readerPrefs.pageMode) return;
+    const sh=document.querySelector('.viewer-shell'); if(!sh || !sh.classList.contains('immersive')) return;
+    const el=e.target; if(!el || typeof el.scrollTop!=='number') return;
+    if(el._chrIgnoreUntil && Date.now()<el._chrIgnoreUntil){ el._chrY=el.scrollTop; return; }   // 코드가 움직인 스크롤(문항 전환 등)은 무시
+    const y=el.scrollTop, last=(el._chrY==null)?y:el._chrY; el._chrY=y;
+    const dy=y-last; if(!dy) return;
+    el._chrAcc = ((el._chrAcc||0)>0)===(dy>0) ? (el._chrAcc||0)+dy : dy;   // 같은 방향으로 누적, 방향 바뀌면 리셋
+    if(dy<0 && (el._chrAcc<=-28 || y<=0)) sh.classList.remove('chrome-hidden');
+    else if(dy>0 && el._chrAcc>=28 && y>40) sh.classList.add('chrome-hidden');
+  }, true);
+  // 맨 위에서 손가락을 아래로 끌면(더 올릴 스크롤이 없어도) 메뉴 표시 — 짧은 화면·첫 화면에서 갇히지 않게
+  let _tY=null;
+  vb.addEventListener('touchstart',(e)=>{ _tY=(e.touches&&e.touches[0])?e.touches[0].clientY:null; },{passive:true});
+  vb.addEventListener('touchmove',(e)=>{
+    if(_tY==null || window.innerWidth>600 || readerPrefs.pageMode) return;
+    const y=(e.touches&&e.touches[0])?e.touches[0].clientY:null; if(y==null) return;
+    if(y-_tY>40){ const sc=e.target.closest ? (e.target.closest('.viewer-pane, .viewer-body')||vb) : vb;
+      const top=(sc.scrollTop||0)<=0 && (vb.scrollTop||0)<=0;
+      if(top){ document.querySelector('.viewer-shell.immersive')?.classList.remove('chrome-hidden'); _tY=null; } }
+  },{passive:true});
+}
+// 스크롤할 내용이 없으면(짧은 장면·문항) 메뉴를 숨긴 채 두면 닫을 길이 없다 → 그때는 메뉴를 보여 둔다 (8/17)
+function _chromeAutoCheck(){
+  if(window.innerWidth>600) return;
+  const sh=document.querySelector('.viewer-shell.immersive'); if(!sh) return;
+  const vb=document.getElementById('viewerBody'); if(!vb) return;
+  const el=_chalStacked()?vb:_scrollEl(); if(!el) return;
+  if(el.scrollHeight<=el.clientHeight+8) sh.classList.remove('chrome-hidden');
 }
 
 /* ═══════════ 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼) ═══════════ */
@@ -8048,9 +8154,11 @@ async function openViewer(bookId, mode){
   document.getElementById('viewerTitle').textContent = b.title;
   document.getElementById('viewerAuthor').textContent = '— ' + b.author;
   document.getElementById('viewerOverlay').classList.add('open');
-  // 8/14 사장님 수정요청: 모바일 읽기 화면은 열 때 메뉴 없이 본문만(밀리 방식) — 가운데 탭하면 메뉴가 나온다
-  // (챌린지 모드는 퀴즈 조작이 있어 기존대로 메뉴를 보여준다 / PC도 기존대로)
-  // .immersive = 메뉴를 본문 위에 겹쳐 띄우는 읽기 모드 표식(CSS) — 챌린지는 겹치면 첫 줄이 가려져 제외
+  // 8/14 사장님 수정요청: 모바일 읽기 화면은 열 때 메뉴 없이 본문만(밀리 방식)
+  // 8/17 사장님 수정요청: 메뉴는 탭이 아니라 스크롤 방향으로 — 위로 올리면 뜨고 내리면 사라짐(setupImmersiveTap의 scroll 감시).
+  //   챌린지도 같은 방식(퀴즈 화면도 동일 적용) — 단, 장면카드 있는 책이 쌓기(.chal-stack)로 바뀔 때 _chalStackApply가 켠다.
+  //   (장면카드 없는 책은 본문/퀴즈 탭 방식이라 메뉴가 상시 — 겹치면 퀴즈 첫 줄이 가려짐)
+  // .immersive = 메뉴를 본문 위에 겹쳐 띄우는 표식(CSS)
   {
     const _sh=document.querySelector('.viewer-shell');
     if(_sh){
@@ -8431,6 +8539,7 @@ function renderViewer(){
     `;
   }
   _setupMobilePanes(_c || {});   // 장면챌린지 모드는 c 미계산(라벨 분기가 c를 안 봄)
+  setTimeout(_chromeAutoCheck, 400);   // 8/17: 스크롤할 내용이 없으면 메뉴를 보여 둠
   if(!setupSentenceParallel()) setupParallel();   // 문장정렬 책=문장 단위, 아니면 기존 문단 단위
   scheduleAlign(); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(scheduleAlign);   // A안: 좌우 문단 수평 정렬(웹폰트 로드 후 재정렬)
   // 바닥 액션: 장 이동(◀이전/다음▶) 버튼 제거 — 스크롤·탭넘김·목차(☰)가 이미 담당, 모바일 세로 한 줄 회수
@@ -8447,7 +8556,7 @@ function renderViewer(){
       : (currentMode === 'full')
       ? ''
       : (currentMode === 'challenge')
-      ? `<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`
+      ? `<button class="viewer-action primary" onclick="closeViewer()">챌린지 닫기 →</button>`
       : `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
     const ft = acts.closest('.viewer-footer');
     if(ft) ft.style.display = acts.innerHTML ? '' : 'none';
@@ -8547,8 +8656,12 @@ function mpMarkDone(k){
   if(b) b.disabled=true; if(d) d.style.display='inline'; if(ta) ta.readOnly=true;
 }
 function _mpShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+// 8/17 사장님 수정요청(이전/다음이 두 개 보임): 같은 책으로 mpLoadQuiz가 겹쳐 두 번 돌면(패널 재렌더 등)
+//   먼저 시작한 쪽이 await 뒤에 낡은 items로 _mpStepInit을 한 번 더 호출해 네비가 2개 쌓였다 → 순번 토큰으로 낡은 호출 폐기
+let _mpLoadSeq=0;
 async function mpLoadQuiz(m){
   const box=document.getElementById('mpQuizBox'); if(!box) return;
+  const _seq=++_mpLoadSeq;
   const _bid=currentBook&&currentBook.id;   // 레이스 가드용 — fetch 대기 중 책 전환 감지
   const qt=CH_QMAP[m.quizType]||''; const lv=m.quizLevel||'';
   if(!qt){ box.innerHTML='<div class="mp-load">퀴즈 유형이 설정되지 않았어요.</div>'; return; }
@@ -8562,7 +8675,7 @@ async function mpLoadQuiz(m){
     if(lv){ const r=await fetch(`${base}&level=eq.${encodeURIComponent(lv)}`,{headers:BX_H}); if(r.ok) items=await r.json(); }
     if(!Array.isArray(items)||!items.length){ const r2=await fetch(base,{headers:BX_H}); if(r2.ok) items=await r2.json(); }
   }catch(e){}
-  if(!currentBook || currentBook.id!==_bid || !box.isConnected) return;   // 책 전환/재렌더됨 — 낡은 응답 폐기(B 컨텍스트 오염 방지)
+  if(_seq!==_mpLoadSeq || !currentBook || currentBook.id!==_bid || !box.isConnected) return;   // 책 전환/재렌더/겹친 호출 — 낡은 응답 폐기(B 컨텍스트 오염 방지)
   if(Array.isArray(items)&&items.length){ const seen=new Set(); items=items.filter(it=>{ if(seen.has(it.scene_no))return false; seen.add(it.scene_no); return true; }).slice(0,n); }
   if(!Array.isArray(items)||!items.length){ box.innerHTML='<div class="mp-load">이 책의 퀴즈가 아직 준비되지 않았어요.</div>'; return; }
   // DB 앵커(장면별 본문 정확일치 문장) 수집 → 하드코딩 SCENE_ANCHORS 없는 책도 좌측 본문 점프+형광펜
@@ -8584,9 +8697,13 @@ async function mpLoadQuiz(m){
     else q.querySelectorAll('.mp-opt').forEach(el=>{ el.onclick=()=>mpAnswer(el,q,it); });
   });
   await _mpFetchScenes();   // DB 장면카드(핵심문장+배경설명) 로드 → 있으면 카드모드
-  if(!currentBook || currentBook.id!==_bid) return;   // 장면카드 대기 중 책 전환 — 중단
-  if(_mpStepMode()) _mpStepInit(box, items);   // 카드모드: 왼쪽=인용구+배경설명
+  if(_seq!==_mpLoadSeq || !currentBook || currentBook.id!==_bid || !box.isConnected) return;   // 장면카드 대기 중 책 전환/겹친 호출 — 중단
+  if(_mpStepMode()){
+    if(window.innerWidth<=600) _chalStackApply();   // 8/17: 폰은 장면카드 아래 퀴즈 한 화면 스크롤
+    _mpStepInit(box, items);   // 카드모드: 왼쪽=인용구+배경설명
+  }
   else _scnSetupSync();   // 왼쪽 본문 ↔ 오른쪽 퀴즈 장면 동기화(앵커 있는 책만)
+  setTimeout(_chromeAutoCheck, 300);
 }
 /* ═══ DB 퀴즈 ↔ 왼쪽 본문 동기화 — 장면별 자동 점프·형광펜 (앵커: 본문 정확 일치 문장) ═══ */
 const SCENE_ANCHORS = {
@@ -8718,6 +8835,7 @@ function _scnSetupSync(retries){
   if(_scnIO){ _scnIO.disconnect(); _scnIO=null; }
   _scnCur=-1; _scnMarkP=null;
   if(!_scnAnchors()) return;
+  if(_chalStacked()) return;   // 폰 쌓기 모드: 본문·퀴즈가 한 스크롤이라 자동 점프하면 퀴즈가 화면 밖으로 튐 → 동기화 안 함 (8/17)
   const right=document.querySelector('.viewer-pane.right');
   const box=document.getElementById('mpQuizBox');
   if(!right || !box) return;
@@ -8758,7 +8876,8 @@ function _mpStepInit(box, items){
   if(left) left.innerHTML='<div class="viewer-pane-label">결정적 장면</div><div id="mpSceneBox" class="mp-scene"></div>';
   // 카드모드엔 본문 장(章)이 안 보이므로 바닥의 장 이동(◀이전/다음▶) 버튼 제거 — 미션 닫기만 남김
   const acts=document.getElementById('viewerActions');
-  if(acts) acts.innerHTML=`<button class="viewer-action primary" onclick="closeViewer()">미션 닫기 →</button>`;
+  if(acts) acts.innerHTML=`<button class="viewer-action primary" onclick="closeViewer()">챌린지 닫기 →</button>`;
+  box.querySelectorAll('.mp-step-nav').forEach(n=>n.remove());   // 8/17: 재초기화 시 네비 중복 방지(마지막 방어선)
   const nav=document.createElement('div'); nav.className='mp-step-nav'; nav.id='mpStepNav';
   nav.innerHTML=`<button class="mp-step-btn" id="mpStepPrev" onclick="mpStepGo(-1)">◀ 이전</button>`
     +`<span class="mp-step-count"><b id="mpStepCur">1</b> / ${items.length}</span>`
@@ -8778,6 +8897,8 @@ function _mpStepShow(i){
   if(next){ const last=(i>=qs.length-1); next.disabled=last; next.textContent=last?'마지막 문제':'다음 ▶'; }
   const right=document.querySelector('.viewer-pane.right'); if(right) right.scrollTop=0;
   _mpRenderScene(+qs[i].dataset.scene||1);   // 왼쪽 장면 카드 갱신
+  // 폰 쌓기 모드: 문항이 바뀌면 새 장면(위)부터 읽도록 몸통을 맨 위로 (8/17)
+  if(_chalStacked()){ const vb=document.getElementById('viewerBody'); if(vb){ vb._chrIgnoreUntil=Date.now()+900; vb.scrollTo({top:0,behavior:'smooth'}); } setTimeout(_chromeAutoCheck, 300); }
 }
 function _mpRenderScene(sn){
   const box=document.getElementById('mpSceneBox'); if(!box) return;
@@ -8903,7 +9024,7 @@ async function mpCheckComplete(){
        body:JSON.stringify({student_id:_mpCtx.student, challenge_id:_mpCtx.chId, status:'done', done_at:new Date().toISOString()})});
   }catch(e){}
   mpRenderProgress();
-  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 모든 미션 완료','완주 보너스 <b>+⭐30</b>','내서재에서 모은 별을 확인하세요']}); }
+  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['완주 보너스 <b>+⭐30</b>','내서재에서 모은 별을 확인하세요']}); }
   catch(e){ readerToast&&readerToast('🏅 챌린지 완주! +⭐30'); }
 }
 
@@ -10762,16 +10883,17 @@ function onUnifiedSearch(submit){
     hit((b.t||b.title||'')+' '+(b.a||b.author||''))
   );
   let html='';
+  // 8/17 사장님 수정요청: 우리 도서관 소장이 위, 북스타 고전은 아래
+  // 우리 도서관 소장 = 로컬 풀(베스트·신착·큐레이션) 즉시 표시 + 전체 장서(semyung_tulip 31.9만) 서버검색이 뒤이어 합류
+  html+=`<div id="usLibSec" style="margin-bottom:28px;${libHits.length?'':'display:none;'}">
+    <div class="us-section-label">🏛 우리 도서관 소장 <span id="usLibCnt" style="color:var(--text-light);font-weight:600;">${libHits.length||''}</span></div>
+    <div class="book-grid us-grid" id="usLibGrid">${libHits.slice(0,24).map(b=>usCard(b,'lib')).join('')}</div>
+  </div>`;
   if(clsHits.length){
     html+=`<div class="us-section-label">📚 북스타 고전 <span style="color:var(--text-light);font-weight:600;">${clsHits.length}</span></div>`;
-    html+=`<div class="book-grid" style="margin-bottom:28px;">${clsHits.slice(0,24).map(b=>usCard(b,'cls')).join('')}</div>`;
+    html+=`<div class="book-grid us-grid" style="margin-bottom:28px;">${clsHits.slice(0,24).map(b=>usCard(b,'cls')).join('')}</div>`;
     if(clsHits.length>24) html+=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;margin:-16px 0 24px;">상위 24권만 표시 — 키워드를 더 구체적으로 입력해 보세요</div>`;
   }
-  // 우리 도서관 소장 = 로컬 풀(베스트·신착·큐레이션) 즉시 표시 + 전체 장서(semyung_tulip 31.9만) 서버검색이 뒤이어 합류
-  html+=`<div id="usLibSec"${libHits.length?'':' style="display:none"'}>
-    <div class="us-section-label">🏛 우리 도서관 소장 <span id="usLibCnt" style="color:var(--text-light);font-weight:600;">${libHits.length||''}</span></div>
-    <div class="book-grid" id="usLibGrid">${libHits.slice(0,24).map(b=>usCard(b,'lib')).join('')}</div>
-  </div>`;
   html+=`<div id="usNoHit" style="${(clsHits.length||libHits.length)?'display:none;':''}padding:40px;text-align:center;color:var(--text-light);">도서관 장서 검색 중…</div>`;
   box.innerHTML=html;
   usTulipSearch(q, libHits);

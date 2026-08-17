@@ -603,7 +603,7 @@ body.pv-open .main{max-width:none}
 .db-secth{font-size:15px;font-weight:800;color:var(--primary);margin:28px 0 12px}
 .db-card.sky{background:linear-gradient(180deg,#f0f7fe,#e6f0fb);border-color:#c9dcf1;box-shadow:0 12px 30px rgba(58,110,165,.10)}
 .db-card.sky h3{color:var(--accent)}
-.st-lb{font-size:12.5px;font-weight:700;color:var(--sub);min-width:56px}
+.st-lb{font-size:12.5px;font-weight:700;color:var(--sub);min-width:46px}
 .st-warn{background:#fdf6e6;border:1px solid #f0e2bd;border-radius:12px;padding:13px 16px;margin-bottom:16px;font-size:12px;color:#7a5f19;line-height:1.7}
 .st-warn b{color:#5f4a12}
 .chip{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap}
@@ -617,6 +617,53 @@ body.pv-open .main{max-width:none}
 tr.hid td{background:#faf8f6}
 tr.hid .fd-txt{color:var(--light);font-style:italic}
 .tbl td.ctr{text-align:center}
+/* ── 2026-08-17 사장님 시안(북스타_관리자_엑셀 다운로드 방식_2026.08.17.html) "새로 추가할 CSS" — 5화면 = 기간·항목 고르고 엑셀로 받는 화면 ── */
+.pk{display:flex;gap:11px;align-items:flex-start;padding:13px 15px;border:1px solid var(--border);border-radius:13px;margin-bottom:10px;cursor:pointer;background:var(--card)}
+.pk.on{border-color:#c9dcf1;background:#f7fbff}
+.pk input{margin-top:3px;width:16px;height:16px;accent-color:var(--primary)}
+.pk-t{font-size:13.5px;font-weight:800;color:var(--primary);margin-bottom:3px}
+.pk-d{font-size:12px;color:var(--sub);line-height:1.65}
+.st-sum{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 15px;margin-top:14px;font-size:12.5px;color:var(--sub);line-height:1.8}
+.st-sum b{color:var(--primary)}
+.btn-excel:disabled{opacity:.55;cursor:wait}
+/* ── 독서 챌린지 빌더 오른쪽 미리보기(학생 '독서 챌린지' 탭 인라인 렌더 — 학생 앱 CSS 축약본) ── */
+#chalPv .pv-phone{overflow:auto;background:#fbfaf6}
+.cpv{font-family:var(--sans);color:#1a2942;padding:22px 20px 40px;--cpv-line:#e6e1d6;--cpv-sub:#5d5240}
+.cpv-nav{display:flex;gap:18px;font-size:13px;font-weight:700;color:#8b8a86;border-bottom:1px solid var(--cpv-line);padding:0 2px 12px;margin-bottom:22px}
+.cpv-nav span.on{color:#1a2942;border-bottom:2px solid #1a2942;padding-bottom:12px;margin-bottom:-13px}
+.cpv-hero{border-bottom:1px solid var(--cpv-line);padding:4px 0 26px;margin-bottom:22px;display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:center}
+.cpv-kicker{font-size:10.5px;letter-spacing:3px;font-weight:800;color:#b8902f;text-transform:uppercase;padding-bottom:9px;border-bottom:1px solid rgba(184,144,47,.35);display:inline-block}
+.cpv-title{font-family:Georgia,'Noto Serif KR',serif;font-weight:700;font-size:30px;line-height:1.12;letter-spacing:-.4px;color:#2a2118;margin:14px 0 8px;word-break:keep-all}
+.cpv-sub{font-size:12.5px;color:#7a6b54;margin-bottom:12px}
+.cpv-dday{color:var(--accent);font-weight:800}
+.cpv-quote{font-family:Georgia,'Noto Serif KR',serif;font-style:italic;font-size:14px;line-height:1.6;color:var(--cpv-sub);max-width:420px}
+.cpv-quote span{color:#a08b63;font-weight:700;font-style:normal;font-size:12px}
+.cpv-meta{margin-top:10px;font-size:11.5px;color:#8a7a5f;font-weight:700}
+.cpv-hbtn{display:inline-block;margin-top:16px;color:#2a2118;border-bottom:1.5px solid #2a2118;padding-bottom:2px;font-weight:700;font-size:12.5px}
+.cpv-stage{position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:210px;padding-bottom:22px}
+.cpv-side{position:absolute;left:0;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:10px;letter-spacing:3px;color:#ad9c7c;font-weight:700}
+.cpv-book3d{position:relative;z-index:2;transform:perspective(1200px) rotateY(-20deg);filter:drop-shadow(12px 16px 16px rgba(50,38,24,.4))}
+.cpv-book3d::before{content:"";position:absolute;left:0;top:0;bottom:0;width:11px;background:linear-gradient(90deg,rgba(0,0,0,.30),rgba(0,0,0,0));border-radius:3px 0 0 3px;z-index:3}
+.cpv-cover{width:118px;height:172px;border-radius:3px 7px 7px 3px;overflow:hidden;background:linear-gradient(160deg,#4a5b7a,#1a2942);color:#fff;display:flex;align-items:flex-end;padding:10px;font-size:12px;font-weight:800;line-height:1.3;word-break:keep-all}
+.cpv-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.cpv-shadow{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:110px;height:12px;background:radial-gradient(ellipse,rgba(40,30,15,.38),transparent 70%);filter:blur(3px);z-index:1}
+.cpv-lhead{font-size:15px;font-weight:800;letter-spacing:-.3px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.cpv-ltag{font-size:10.5px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:3px 8px;border-radius:7px}
+.cpv-row{margin-bottom:26px;position:relative}
+.cpv-row.off{opacity:.5}
+.cpv-off{position:absolute;right:0;top:0;font-size:10.5px;font-weight:800;color:#9a5b12;background:rgba(212,140,40,.16);padding:3px 8px;border-radius:7px}
+.cpv-rhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.cpv-type{display:inline-block;font-size:10.5px;font-weight:800;color:var(--accent);background:rgba(58,110,165,.12);padding:3px 8px;border-radius:7px;margin-bottom:6px}
+.cpv-type.classic{color:#9a5b12;background:rgba(212,140,40,.16)}
+.cpv-rt{font-family:Georgia,'Noto Serif KR',serif;font-size:18px;font-weight:700;letter-spacing:-.3px;color:#1a2942;line-height:1.3;word-break:keep-all}
+.cpv-rs{font-size:12px;color:#7a6b54;margin-top:4px}
+.cpv-join{flex:none;font-size:11.5px;font-weight:800;color:#fff;background:var(--primary);padding:8px 13px;border-radius:9px;white-space:nowrap;margin-top:22px}
+.cpv-desc{font-size:12.5px;line-height:1.6;color:var(--cpv-sub);margin:0 0 12px}
+.cpv-books{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.cpv-bk{flex:0 0 auto;width:82px}
+.cpv-bk .cpv-cover{width:82px;height:120px;border-radius:6px;box-shadow:0 8px 18px -8px rgba(20,20,45,.35);font-size:10.5px;padding:7px}
+.cpv-bk-t{margin-top:7px;font-size:11.5px;font-weight:700;color:#1a2942;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cpv-empty{text-align:center;color:#8b8a86;font-size:12.5px;padding:44px 0;line-height:1.7}
 </style></head>
 <body>
 <script src="../classics_ko_titles.js"></script>
@@ -694,51 +741,54 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
 
   <main class="main">
 
-    <!-- ===== 대시보드 (2026-08-17 측정 로그 v2 — 사장님 8/16 시안 구조. 원천=bookstar_events, admin-save stats_overview) ===== -->
+    <!-- ===== 대시보드 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 화면에 숫자를 두지 않고 기간·항목을 골라 엑셀로. 원천=admin-save stats_overview) ===== -->
     <section id="pg-dash">
       <div class="phead">
         <div><h1>대시보드 <span class="tagpill">세명대학교 학술정보원</span></h1>
-          <p>도서관 이용 현황을 한눈에</p></div>
-        <div style="display:flex;gap:9px;align-items:center">
-          <div class="seg">
-            <button onclick="setRange(this,'week')">주간</button>
-            <button class="on" onclick="setRange(this,'month')">이번 달</button>
-            <button onclick="setRange(this,'term')">이번 학기</button>
-          </div>
-          <button class="btn-excel" onclick="downloadDashExcel()">⤓ 엑셀 다운로드</button>
-        </div>
+          <p>기간을 정해 도서관 이용 현황을 엑셀로 받습니다</p></div>
       </div>
-      <div class="db-banner">
-        <div class="db-bh">한눈에 보기 <span id="dbRangeCap">도서관 이용 현황 · 기간 안</span></div>
-        <div class="db-chips" id="dbUse">
-          <div class="db-chip hl"><div class="v" data-u="visitors">…</div><div class="l">접속 학생</div></div>
-          <div class="db-chip"><div class="v" data-u="views">…</div><div class="l">조회</div></div>
-          <div class="db-chip"><div class="v" data-u="use">…</div><div class="l">이용</div></div>
-          <div class="db-chip"><div class="v" data-u="act">…</div><div class="l">활동</div></div>
+      <div class="db-card">
+        <h3>1. 언제 것을 받을까요 <span class="db-sub2">기간</span></h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <div class="seg">
+            <button onclick="setRange(this,'w')">이번 주</button>
+            <button onclick="setRange(this,'m')">이번 달</button>
+            <button class="on" onclick="setRange(this,'t')">이번 학기</button>
+          </div>
+          <input type="date" id="dbFrom" onchange="dbSum()">
+          <span style="color:var(--light);font-size:13px">~</span>
+          <input type="date" id="dbTo" onchange="dbSum()">
         </div>
       </div>
       <div class="db-card">
-        <h3>유형별로 나눠 보기 <span class="db-sub2">종이책 · 전자책 · 해외고전 · 국내고전</span></h3>
-        <div class="tblwrap">
-          <table class="tbl"><thead><tr><th style="width:220px">유형</th><th style="text-align:right">조회</th><th style="text-align:right">이용</th><th style="text-align:right">활동</th></tr></thead>
-          <tbody id="dashSrc"><tr><td colspan="4" style="text-align:center;color:var(--light);padding:22px">불러오는 중…</td></tr></tbody></table>
+        <h3>2. 무엇을 받을까요 <span class="db-sub2">엑셀 한 개 안에 고른 것만 시트로 들어갑니다</span></h3>
+        <label class="pk on" id="pkSum"><input type="checkbox" checked onchange="dbSum()">
+          <div><div class="pk-t">요약 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">기간 안의 <b>접속 학생 · 조회 · 이용 · 활동</b> 네 숫자. 연간 실적 보고에 쓰는 자료입니다.</div></div></label>
+        <label class="pk on" id="pkSrc"><input type="checkbox" checked onchange="dbSum()">
+          <div><div class="pk-t">유형별 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d"><b>종이책 · 전자책 · 해외고전 · 국내고전</b> 네 줄 × 조회 · 이용 · 활동.
+            어느 쪽이 읽히는지 봅니다. (외부참조는 담지 않습니다 — 세명대가 가지고 있지 않은 책입니다)</div></div></label>
+        <label class="pk on" id="pkChSt"><input type="checkbox" checked onchange="dbSum()">
+          <div><div class="pk-t">챌린지 현황 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">운영중인 챌린지 · 완료된 챌린지 · 참여 학생 · 완주 학생 · 적립된 별.</div></div></label>
+        <label class="pk on" id="pkRank"><input type="checkbox" checked onchange="dbSum()">
+          <div><div class="pk-t">별 순위 <span class="chip done">학번 있음 · 시상용</span></div>
+          <div class="pk-d">별을 많이 모은 학생 순위. <b>시상 대상</b>을 고를 때 씁니다.</div></div></label>
+        <div class="st-sum" id="dbSumLine"></div>
+        <div style="margin-top:14px">
+          <button class="btn-excel" id="dbXlsBtn" style="font-size:14.5px;padding:13px 22px" onclick="downloadDashExcel(this)">⤓ 엑셀 다운로드</button>
         </div>
-        <p class="note"><b>조회</b>는 상세페이지 살펴 본 건수<br><b>이용</b>은 종이책·전자책은 넘겨준 건수(종이책은 <b>신청까지</b> — 실제 대출은 도서관 시스템 기록), 고전은 북스타에서 읽은 건수(1분 이상)<br><b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수</p>
+        <p class="note">
+          <b>조회</b>는 상세페이지 살펴 본 건수<br>
+          <b>이용</b>은 종이책·전자책은 넘겨준 건수, 고전은 북스타에서 읽은 건수<br>
+          <b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수<br>
+          각 시트 맨 윗줄에 <b>기간 한 줄</b>이 들어갑니다. 파일만 열어도 무슨 숫자인지 알 수 있어야 합니다.
+        </p>
       </div>
-      <div class="db-secth">독서 챌린지</div>
-      <div class="db-banner">
-        <div class="db-bh">챌린지 현황</div>
-        <div class="db-chips" id="dbBanner">
-          <div class="db-chip hl"><div class="v" data-u="chOpen">…</div><div class="l">운영중인 챌린지</div></div>
-          <div class="db-chip"><div class="v" data-u="chDone">…</div><div class="l">완료된 챌린지</div></div>
-          <div class="db-chip"><div class="v" data-u="part">…</div><div class="l">참가 학생 · 1건이라도</div></div>
-          <div class="db-chip"><div class="v" data-u="done">…</div><div class="l">완주 학생 · 책 전부</div></div>
-          <div class="db-chip"><div class="v" data-u="star">…</div><div class="l">적립된 별</div></div>
-        </div>
-      </div>
-      <div class="db-card sky">
-        <h3>⭐ 별 순위 TOP 10 <span class="db-sub2">실제 적립 · 기간 안</span></h3>
-        <div id="dbRank"><div class="ph-sub">불러오는 중…</div></div>
+      <div class="st-warn">
+        <b>오늘 것은 아직 다 안 들어와 있습니다.</b>
+        읽기 기록은 학생이 뷰어를 닫아야 한 줄로 쌓입니다. 같은 날이라도 받는 시각에 따라 숫자가 조금씩 달라질 수 있습니다.
       </div>
     </section>
 
@@ -808,118 +858,164 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
       </div>
     </section>
 
-    <!-- ===== 이용통계 (2026-08-17 측정 로그 v2 — admin-save stats_usage) ===== -->
+    <!-- ===== 이용통계 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 기간·조건·시트를 고르고 [엑셀 다운로드] 한 번. 원천=admin-save stats_usage) ===== -->
     <section id="pg-stats" style="display:none">
       <div class="phead">
         <div><h1>이용통계 <span class="tagpill">세명대학교 학술정보원</span></h1>
-          <p>기간을 정해 뽑아 보고, 엑셀로 내려받아 시상·구입 검토에 씁니다</p></div>
-        <button class="btn-excel" onclick="downloadStatsExcel()">⤓ 엑셀 다운로드</button>
+          <p>기간과 조건을 정해 엑셀로 받습니다</p></div>
       </div>
       <div class="db-card">
-        <h3>조회 조건</h3>
-        <div class="toolbar">
-          <span class="st-lb">기간</span>
+        <h3>1. 언제 것을 받을까요 <span class="db-sub2">기간</span></h3>
+        <div class="toolbar" style="margin-bottom:0">
           <div class="seg" id="stSeg">
             <button onclick="setStatRange(this,'today')">오늘</button>
             <button onclick="setStatRange(this,'d7')">최근 7일</button>
             <button onclick="setStatRange(this,'d30')">최근 30일</button>
             <button class="on" onclick="setStatRange(this,'term')">이번 학기</button>
           </div>
-          <input type="date" id="stDateFrom"><span style="color:var(--light);font-size:13px">~</span><input type="date" id="stDateTo">
+          <input type="date" id="stDateFrom" onchange="statSum()">
+          <span style="color:var(--light);font-size:13px">~</span>
+          <input type="date" id="stDateTo" onchange="statSum()">
         </div>
+      </div>
+      <div class="db-card">
+        <h3>2. 어떤 것만 볼까요 <span class="db-sub2">비워 두면 전부 담깁니다</span></h3>
         <div class="toolbar" style="margin-bottom:0">
           <span class="st-lb">유형</span>
-          <select id="stSrc"><option value="">전체</option><option value="paper">종이책</option><option value="ebook">전자책</option><option value="foreign">해외고전</option><option value="korean">국내고전</option></select>
-          <span class="st-lb" style="margin-left:8px">경로</span>
-          <select id="stPath"><option value="">전체</option><option value="상시">상시</option><option value="챌린지">챌린지</option></select>
-          <button class="btn-primary" style="margin-left:8px" onclick="renderStats()">조회</button>
+          <select id="stSrc" onchange="statSum()"><option value="">전체</option><option value="paper">종이책</option><option value="ebook">전자책</option><option value="foreign">해외고전</option><option value="korean">국내고전</option></select>
+          <span class="st-lb" style="margin-left:14px">경로</span>
+          <!-- 로그의 [챌린지ID]가 비어 있으면 상시, 값이 있으면 챌린지입니다 -->
+          <select id="stPath" onchange="statSum()"><option value="">전체</option><option value="상시">상시</option><option value="챌린지">챌린지</option></select>
         </div>
       </div>
-      <div class="st-warn"><b>오늘 것은 아직 다 안 들어와 있습니다.</b> 읽기 기록은 학생이 뷰어를 닫아야 한 줄로 쌓이므로, <b>지금 읽고 있는 중인 내역은 집계되지 않습니다.</b> 같은 날이라도 조회하는 시각에 따라 숫자가 조금씩 달라질 수 있습니다.</div>
-      <div class="tabs" id="statTabs">
-        <button class="tab on" onclick="setStatTab('book')">도서별</button>
-        <button class="tab" onclick="setStatTab('user')">학생별</button>
-        <button class="tab" onclick="setStatTab('detail')">상세통계</button>
+      <div class="db-card">
+        <h3>3. 무엇을 받을까요 <span class="db-sub2">엑셀 한 개 안에 고른 것만 시트로 들어갑니다</span></h3>
+        <label class="pk on" id="pkBook"><input type="checkbox" checked onchange="statSum()">
+          <div><div class="pk-t">도서별 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">책마다 <b>조회 · 이용 · 활동</b>이 몇 건인지. 어떤 책이 읽혔는지 보고 <b>구입 검토</b>에 씁니다.</div></div></label>
+        <label class="pk on" id="pkUser"><input type="checkbox" checked onchange="statSum()">
+          <div><div class="pk-t">학생별 <span class="chip done">학번 있음 · 시상용</span></div>
+          <div class="pk-d">학생마다 <b>조회 · 이용 · 활동 · 별</b>. <b>우수 이용자 시상</b> 대상을 고를 때 씁니다.<br>
+            검색어와 별이에게 물은 내용은 담기지 않습니다.</div></div></label>
+        <label class="pk on" id="pkDetail"><input type="checkbox" checked onchange="statSum()">
+          <div><div class="pk-t">상세통계 <span class="chip done">학번 있음 · 시상용</span></div>
+          <div class="pk-d">한 줄이 <b>누가 · 언제 · 무슨 책을 · 어떻게</b>입니다 (학번 · 날짜 · 유형 · 도서명 · 이용 방식).
+            시상 심사에서 근거로 쓰는 자료입니다.</div></div></label>
+        <div class="st-sum" id="stSum"></div>
+        <div style="margin-top:14px">
+          <button class="btn-excel" style="font-size:14.5px;padding:13px 22px" onclick="downloadStatsExcel(this)">⤓ 엑셀 다운로드</button>
+        </div>
+        <p class="note">
+          <b>이용 방식</b> — 종이책·전자책은 <b>연결</b>(도서관으로 넘겨준 것), 고전은 <b>읽기</b>(북스타에서 읽은 것).<br>
+          각 시트 맨 윗줄에 <b>기간 한 줄</b>이 들어갑니다. <b>이름은 없고 학번만</b> 있습니다.
+        </p>
       </div>
-      <div class="db-card" id="statBook">
-        <h3>도서별 <span class="db-sub2" id="statBookCap">조회가 많은 순 · 상위 10권</span></h3>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:50px">번호</th><th style="width:110px">유형</th><th>도서명</th><th style="text-align:right;width:110px">조회</th><th style="text-align:right;width:110px">이용</th><th style="text-align:right;width:110px">활동</th></tr></thead><tbody id="statTbl"></tbody></table></div>
-        <p class="note"><b>조회</b>는 상세페이지 살펴 본 건수<br><b>이용</b>은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)<br><b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수 · 화면엔 10권, 전부는 엑셀</p>
-      </div>
-      <div class="db-card" id="statUser" style="display:none">
-        <h3>학생별 <span class="tagpill gold">시상용</span></h3>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:50px">번호</th><th style="width:150px">학번</th><th style="text-align:right">조회</th><th style="text-align:right">이용</th><th style="text-align:right">활동</th><th style="text-align:right">별</th></tr></thead><tbody id="statTblUser"></tbody></table></div>
-        <p class="note">이 탭은 <b>우수 이용자 선정과 시상</b>에만 씁니다. 그래서 학생별로 펼쳐 보입니다.<br><b>학번만 보여 주고, 학생이 무엇을 검색했는지·별이에게 무엇을 물었는지는 보여 주지 않습니다.</b> 그 내용은 집계로만 봅니다 — 사서가 개인을 들여다보는 화면이 되면 학생에게는 감시로 느껴집니다.<br>화면엔 상위 10명, 전부는 엑셀.</p>
-      </div>
-      <div class="db-card" id="statDetail" style="display:none">
-        <h3>상세통계 <span class="tagpill gold">시상용</span></h3>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:120px">학번</th><th style="width:110px">날짜</th><th style="width:110px">유형</th><th>도서명</th><th style="width:100px">이용 방식</th><th style="width:80px">경로</th></tr></thead><tbody id="statTblDetail"></tbody></table></div>
-        <p class="note">한 줄이 <b>「누가 · 언제 · 무슨 책을 · 어떻게」</b>입니다.<br><b>이용 방식</b> — 종이책·전자책은 <b>연결</b>(도서관으로 넘겨준 것), 고전은 <b>읽기</b>(북스타에서 읽은 것). 종이책을 「읽었다」로 오해할 일이 없도록 갈라 적습니다.<br><b>조회는 담지 않습니다.</b> 학생이 무엇에 관심 있었는지만 드러나고 시상 심사와는 상관이 없습니다. 활동(소감·질문·서평)도 여기에는 담지 않습니다 — 몇 건 썼는지는 「학생별」 탭에 있습니다.<br><b>이름은 없고 학번만 있습니다.</b> 화면엔 최근 50줄, 전부는 엑셀.</p>
+      <div class="st-warn">
+        <b>오늘 것은 아직 다 안 들어와 있습니다.</b>
+        읽기 기록은 학생이 뷰어를 닫아야 한 줄로 쌓입니다.<br>
+        <b>챌린지별 통계는 여기 없습니다</b> — 「챌린지 통계」에서 챌린지를 골라 받습니다.
       </div>
     </section>
 
-    <!-- ===== 챌린지 통계 (2026-08-17 신설 — admin-save stats_challenges / stats_challenge_detail) ===== -->
+    <!-- ===== 챌린지 통계 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 챌린지를 골라 요약(전체 1파일)·상세(고른 챌린지 1파일)로. 원천=admin-save stats_challenges / stats_challenge_detail.
+         8/17 시안: [결과 확정] 명단 얼리기 UI 제거 — "시상 명단은 받은 그 파일이 증거". chFix·loadFixed·chFixCell·chFixedExcel 함수는 보존, UI에서만 안 부름) ===== -->
     <section id="pg-chstat" style="display:none">
       <div class="phead">
         <div><h1>챌린지 통계 <span class="tagpill">세명대학교 학술정보원</span></h1>
-          <p>만든 챌린지가 지금 어떻게 되고 있는지 보고, 엑셀로 내려받아 시상 심사에 씁니다</p></div>
-      </div>
-      <div class="st-warn"><b>오늘 것은 아직 다 안 들어와 있습니다.</b> 학생이 미션을 마쳐야 한 줄로 쌓이므로, <b>지금 읽고 있는 중인 내역은 집계되지 않습니다.</b> 같은 날이라도 조회하는 시각에 따라 숫자가 조금씩 달라질 수 있습니다.<br><b>시상 전에는 끝난 챌린지의 [결과 확정]을 눌러 명단을 얼려 두세요</b> — 화면 숫자는 지금 다시 센 값이라 시간이 지나면 달라질 수 있습니다.</div>
-      <div class="db-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-          <h3 style="margin:0">요약 <span class="db-sub2">한 줄 = 챌린지 하나 · 숫자는 그 챌린지 기간 전체 기준</span></h3>
-          <button class="btn-excel" onclick="downloadChSumExcel()">⤓ 요약 엑셀 다운로드</button>
-        </div>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:250px">챌린지</th><th style="width:150px">기간</th><th style="text-align:right;width:80px">담긴 책</th><th style="text-align:right;width:70px">참가</th><th style="text-align:right;width:105px">완주</th><th style="text-align:right;width:95px">미션 수행</th><th style="width:210px">시상</th></tr></thead><tbody id="chTblSum"><tr><td colspan="7" style="text-align:center;color:var(--light);padding:22px">불러오는 중…</td></tr></tbody></table></div>
-        <p class="note"><b>참가</b> — 그 챌린지에서 <b>1건이라도 한 학생 수</b>(글 또는 퀴즈). 신청만 하고 손대지 않은 학생은 잡히지 않습니다.<br><b>완주</b> — 담긴 책 <b>전부</b>에서 켠 미션을 <b>전부</b> 마친 학생 수(책 1권 단위인 앱의 ⭐30 완주 보너스와는 별개).<br><b>미션 수행</b> — 인정된 글 + 퀴즈를 푼 책 수. 글자 수 미달·숨김 글은 세지 않습니다.<br><b>요약 엑셀</b>은 학번이 없어 회의·보고에 돌려도 되고, <b>상세 엑셀</b>은 학번이 든 시상 심사용입니다.<br><b>시상</b> — 순위형은 별 많은 순, 추첨형은 뽑을 인원과 <b>응모 자격을 갖춘 인원</b>을 함께 봅니다(자격은 챌린지 만들 때 고른 대로 — 미션 전체 완료=완주 수, 미션 1개 이상=참가 수). 자격자가 뽑을 인원보다 적으면 추첨이 성립하지 않습니다.<br>화면에는 <b>최근 시작한 챌린지 10개</b>까지 보입니다. 그보다 많으면 <b>「요약 엑셀」</b>에서 전부 봅니다.<br>끝난 챌린지는 <b>[결과 확정]</b>을 눌러 그때의 참가·완주·학생별 명단을 <b>「운영이력」</b>에 얼려 둡니다. 시상 뒤에 학생이 글을 지워도 그때 명단이 변하지 않아야 하기 때문입니다. 확정은 한 번만 됩니다.</p>
+          <p>챌린지를 골라 운영 현황을 엑셀로 받습니다</p></div>
       </div>
       <div class="db-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-          <h3 style="margin:0">상세 <span class="tagpill gold">시상용</span> <span class="db-sub2">한 줄 = 학생 × 담긴 책 1권 · 안 한 책도 「—」로 남습니다</span></h3>
-          <button class="btn-excel" onclick="downloadChDetailExcel()">⤓ 상세 엑셀 다운로드</button>
+        <h3>1. 어느 챌린지를 받을까요 <span class="db-sub2">상세는 한 번에 한 챌린지씩 받습니다</span></h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <select id="chPick" style="min-width:380px" onchange="chSum()"><option value="">불러오는 중…</option></select>
         </div>
-        <div class="toolbar"><span class="st-lb">챌린지</span><select id="chPick" style="min-width:340px" onchange="renderChDetail()"></select></div>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:110px">학번</th><th style="text-align:right;width:70px">진척</th><th style="width:180px">도서명</th><th style="width:60px">완료</th><th>쓴 내용</th><th style="width:110px">참여한 날짜</th><th style="width:110px">완료한 날짜</th></tr></thead><tbody id="chTblDetail"></tbody></table></div>
-        <p class="note" id="chCut" style="margin-top:10px;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--sub)"></p>
-        <p class="note" id="chNote"></p>
+      </div>
+      <div class="db-card">
+        <h3>2. 무엇을 받을까요 <span class="db-sub2">고른 것에 따라 파일이 하나 또는 둘입니다</span></h3>
+        <label class="pk on" id="pkChSum"><input type="checkbox" checked onchange="chSum()">
+          <div><div class="pk-t">요약 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">한 줄 = 챌린지 하나 — <b>담긴 책 · 참가 · 완주 · 미션 수행 · 시상 방식</b>.
+            <b>모든 챌린지</b>가 한 장에 담깁니다. 학번이 없어 회의·보고에 그대로 돌려도 됩니다.</div></div></label>
+        <label class="pk on" id="pkChDet"><input type="checkbox" checked onchange="chSum()">
+          <div><div class="pk-t">상세 <span class="chip done">학번 있음 · 시상용</span></div>
+          <div class="pk-d">한 줄 = <b>학생 × 담긴 책 1권</b> — 학번 · 진척 · 도서명 · 완료 · 쓴 내용 · 참여한 날짜 · 완료한 날짜.<br>
+            <b>안 한 책도 「—」로 줄이 남습니다.</b> 그래야 「5권 중 3권」이 확인됩니다. <b>위에서 고른 챌린지 하나</b>만 담깁니다.</div></div></label>
+        <div class="st-sum" id="chSumLine"></div>
+        <div style="margin-top:14px">
+          <button class="btn-excel" style="font-size:14.5px;padding:13px 22px" onclick="downloadChExcel(this)">⤓ 엑셀 다운로드</button>
+        </div>
+        <p class="note">
+          <b>참가</b>는 그 챌린지에서 1건이라도 한 학생 수, <b>완주</b>는 담긴 책 전부에 켠 미션이 찍힌 학생 수입니다.<br>
+          <b>완료 판정</b> — 글쓰기 미션은 글자 수를 넘겨야 하고, 퀴즈는 응시를 마쳐야 합니다. 글자 수 미달은 미완료입니다.<br>
+          <b>퀴즈만 켠 챌린지</b>는 학생이 쓴 글이 없어 「쓴 내용」 칸이 빕니다.
+        </p>
+      </div>
+      <div class="st-warn">
+        <b>시상 명단은 받은 그 파일이 증거입니다.</b> 챌린지가 끝나면 <b>시상하기 직전에</b> 받아 도서관 공용 폴더에 보관하세요.
+        나중에 받으면 그 사이 학생이 글을 지웠거나 사서가 글을 숨겨 <b>값이 달라져 있을 수 있습니다.</b>
       </div>
     </section>
 
-    <!-- ===== 학생 글 (2026-08-17 — 표 형식·기간 조회·숨김=별 회수, admin-save writings_hide) ===== -->
+    <!-- ===== 피드관리 = 학생 글 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 기간·종류를 정해 엑셀 1장, 아래에 '부적절한 글 숨기기' 최근 10건만. 숨김=별 회수, admin-save writings_hide / reviews_hide) ===== -->
     <section id="pg-writings" style="display:none">
       <div class="phead">
         <div><h1>학생 글 <span class="tagpill">세명대학교 학술정보원</span></h1>
-          <p>기간을 정해 학생이 쓴 글을 훑어보고, 부적절한 글은 숨깁니다</p></div>
-        <button class="btn-excel" onclick="downloadFeedExcel()">⤓ 엑셀 다운로드</button>
+          <p>기간을 정해 엑셀로 받고, 부적절한 글은 아래에서 숨깁니다</p></div>
       </div>
       <div class="db-card">
-        <h3>조회 조건</h3>
+        <h3>1. 언제 것을 받을까요 <span class="db-sub2">기간 · 종류</span></h3>
         <div class="toolbar">
-          <span class="st-lb">기간</span>
           <div class="seg" id="fdSeg">
-            <button onclick="setFeedRange(this,'today')">오늘</button>
             <button onclick="setFeedRange(this,'d7')">최근 7일</button>
             <button class="on" onclick="setFeedRange(this,'d30')">최근 30일</button>
-            <button onclick="setFeedRange(this,'term')">이번 학기</button>
+            <button onclick="setFeedRange(this,'t')">이번 학기</button>
           </div>
-          <input type="date" id="fdFrom"><span style="color:var(--light);font-size:13px">~</span><input type="date" id="fdTo">
+          <input type="date" id="fdFrom" onchange="fdSum();loadWritings()">
+          <span style="color:var(--light);font-size:13px">~</span>
+          <input type="date" id="fdTo" onchange="fdSum();loadWritings()">
         </div>
         <div class="toolbar" style="margin-bottom:0">
           <span class="st-lb">종류</span>
-          <select id="fdMs" onchange="if(FEEDV)renderWritings()"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기</option><option value="rv">독자 서평(빌린 책)</option></select>
-          <span class="st-lb" style="margin-left:8px">경로</span>
-          <select id="fdPath" onchange="if(FEEDV)renderWritings()"><option value="">전체</option><option value="free">상시</option><option value="ch">챌린지</option></select>
-          <span class="st-lb" style="margin-left:8px">보기</span>
-          <select id="fdView" onchange="if(FEEDV)renderWritings()"><option value="on">보이는 글</option><option value="off">숨긴 글</option></select>
-          <button class="btn-primary" style="margin-left:8px" onclick="loadWritings()">조회</button>
+          <select id="fdMs" onchange="fdSum();renderWritings()"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기</option><option value="rv">독자 서평(빌린 책)</option></select>
         </div>
       </div>
-      <div class="st-warn"><b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면(피드·프로필·책 상세)에서 글이 내려가고, 준 별도 회수됩니다. 잘못 눌렀으면 「보기」를 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br><b>챌린지에서 쓴 글도 여기 모입니다</b> — 숨기기(별 회수)는 이 화면에서만 할 수 있습니다. 「경로」를 <b>상시</b>로 두면 챌린지 밖에서 쓴 글만, <b>챌린지</b>로 두면 챌린지 글만 봅니다. 미션 진척은 「챌린지 통계 › 상세」에서 봅니다.<br>연락처·링크·같은 글자 반복·글자 수 미달 글은 <b>제출 단계에서 자동으로 걸러져</b> 여기 오지 않습니다. 욕설·비방 같은 <b>내용 판단은 자동으로 하지 않으니</b> 사서가 훑어보고 정합니다.<br><b>독자 서평(빌린 책)</b>은 별이 없어 숨겨도 별 회수는 없습니다. 학생 화면에는 이름이 <b>강*욱</b>처럼 가려져 나갑니다.</div>
       <div class="db-card">
-        <h3>학생 글 <span class="db-sub2">한 줄 = 학생이 쓴 글 1건</span></h3>
-        <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:110px">학번</th><th style="width:105px">날짜</th><th style="width:100px">종류</th><th style="width:160px">도서명</th><th>쓴 내용</th><th style="width:150px">처리</th></tr></thead><tbody id="fdTbl"></tbody></table></div>
-        <p class="note" id="fdCut" style="margin-top:10px;padding:9px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--sub)"></p>
-        <p class="note"><b>이름은 없고 학번만 있습니다.</b> 화면엔 10줄, 더 보고 싶으면 <b>기간을 좁히거나 엑셀</b>로 받으시면 됩니다.</p>
+        <h3>2. 무엇을 받을까요</h3>
+        <label class="pk on" id="pkFeed"><input type="checkbox" checked onchange="fdSum()">
+          <div><div class="pk-t">학생 글 목록 <span class="chip done">학번 · 글 전문 있음</span></div>
+          <div class="pk-d">학번 · 날짜 · 종류 · 도서명 · <b>쓴 내용</b> · 숨김 여부.
+            학생이 쓴 문장이 그대로 들어갑니다 — <b>도서관 밖으로 내보내지 마세요.</b></div></div></label>
+        <div class="st-sum" id="fdSumLine"></div>
+        <div style="margin-top:14px">
+          <button class="btn-excel" style="font-size:14.5px;padding:13px 22px" onclick="downloadFeedExcel(this)">⤓ 엑셀 다운로드</button>
+        </div>
+      </div>
+      <div class="st-warn">
+        <b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면에서 글이 내려가고, 준 별도 회수됩니다.
+        잘못 눌렀으면 「보기」를 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br>
+        <b>챌린지에서 쓴 글은 여기 없습니다</b> — 「챌린지 통계」에서 봅니다. 여기는 <b>챌린지 밖에서 쓴 글</b>만 모입니다.
+      </div>
+      <div class="db-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+          <h3 style="margin:0">3. 부적절한 글 숨기기 <span class="db-sub2">최근 10건 · 한 줄 = 글 1건</span></h3>
+          <select id="fdView" onchange="renderWritings()" style="font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--card);border-radius:9px;padding:8px 11px;color:var(--text)">
+            <option value="on">보이는 글</option><option value="off">숨긴 글</option>
+          </select>
+        </div>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr>
+              <th style="width:110px">학번</th><th style="width:105px">날짜</th><th style="width:100px">종류</th>
+              <th style="width:160px">도서명</th><th>쓴 내용</th><th style="width:105px">처리</th>
+            </tr></thead>
+            <tbody id="fdTbl"></tbody>
+          </table>
+        </div>
+        <p class="note">
+          최근 <b>10건</b>만 보입니다. 더 보려면 <b>기간을 좁히거나 엑셀</b>로 받으세요. 「더 보기」는 두지 않습니다.<br>
+          <b>「미인정 · 글자 수 미달」</b>이 붙은 글은 애초에 완료로 안 친 글이라 숨길 필요가 없습니다.
+          이름은 없고 <b>학번만</b> 있습니다.
+        </p>
       </div>
     </section>
 
@@ -927,12 +1023,24 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
     <section id="pg-make" style="display:none">
       <div class="phead"><div><h1>챌린지 만들기 <span class="tagpill">완독 측정</span></h1>
         <p>우리도서관 꾸미기처럼 — 챌린지를 카테고리 단위로 만들고, 상세내용·미션·담을 책을 정합니다. 저장하면 학생 앱에 노출</p></div>
-        <button class="btn-primary" onclick="saveChallenges()">저장 →</button></div>
-      <!-- 8/14 사장님 수정요청: 독서 챌린지에도 'AI로 큐레이션 만들기' — 카드가 이 자리로 이동해 온다 -->
-      <div id="aicSlotChal"></div>
-      <div id="chalList"></div>
-      <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 컬렉션</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
-        ※ 책은 ‘도서관 내·국중 추천·ISBN 입력’ 3가지로 담을 수 있어요. <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+        <!-- 8/17 사장님 수정요청: 우리 도서관 빌더와 같은 3버튼(순서 바꾸기·미리보기·저장) + 오른쪽 학생 화면 미리보기 -->
+        <div class="tool-fix"><button class="btn-ghost" onclick="openReorder('chal')">↕ 순서 바꾸기</button>
+        <button id="chalPvBtn" class="btn-ghost" onclick="toggleChalPreview()">👁 미리보기</button>
+        <button class="btn-primary" onclick="saveChallenges()">저장 →</button></div></div>
+      <div class="settings-wrap">
+        <div class="settings-main">
+          <!-- 8/14 사장님 수정요청: 독서 챌린지에도 'AI로 큐레이션 만들기' — 카드가 이 자리로 이동해 온다 -->
+          <div id="aicSlotChal"></div>
+          <div id="chalList"></div>
+          <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 컬렉션</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
+            ※ 책은 ‘통합검색·ISBN 입력’(고전 컬렉션 챌린지는 ‘북스타 고전’)으로 담을 수 있어요. 순서는 상단 <b>↕ 순서 바꾸기</b>나 카드의 ↑↓로 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+        </div>
+        <!-- 학생 화면 '독서 챌린지' 탭 미리보기 — 학생 앱은 챌린지 미리보기 모드가 없어(우리도서관은 iframe ?preview=1) 편집 중인 CHALLENGES 로 인라인 렌더 -->
+        <aside class="settings-pv" id="chalPv">
+          <div class="pv-phone"><div id="chalPvBody" class="cpv"></div></div>
+          <div class="pv-phone-cap">학생 앱 ‘독서 챌린지’ 탭 · 편집 즉시 반영 (저장 전 모습)</div>
+        </aside>
+      </div>
     </section>
 
     <!-- ===== 공지글 작성 (네이버 블로그식 글쓰기 + 발행 패널) ===== -->
@@ -996,36 +1104,59 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
       </div>
     </section>
 
-    <!-- ===== 운영이력 (2026-08-17 — 끝난 챌린지 + 큐레이션 칸별 조회·이용) ===== -->
+    <!-- ===== 운영이력 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 끝난 챌린지·큐레이션을 기간으로 골라 엑셀 1개 2시트, 아래 '지난 목록' 10줄(숫자 없음).
+         확정 명단 표시/[명단 엑셀] UI 제거 — chFixedExcel·loadFixed 함수 보존, UI에서만 안 부름) ===== -->
     <section id="pg-history" style="display:none">
       <div class="phead">
-        <div><h1>운영이력 <span class="tagpill">세명대학교 학술정보원</span></h1><p>언제 무슨 큐레이션·챌린지를 했는지 모아 둡니다</p></div>
-        <button class="btn-excel" onclick="downloadHistExcel()">⤓ 엑셀 다운로드</button>
+        <div><h1>운영이력 <span class="tagpill">세명대학교 학술정보원</span></h1>
+          <p>언제 무슨 큐레이션·챌린지를 했는지 모아 두고, 엑셀로 받습니다</p></div>
       </div>
-      <div class="tabs" id="hsTabs">
-        <button class="tab" onclick="setHsTab('cur')">큐레이션</button>
-        <button class="tab on" onclick="setHsTab('ch')">챌린지</button>
-      </div>
-      <div id="hsCh">
-        <div class="st-warn"><b>시상 명단은 「챌린지 통계」에서 [결과 확정]을 누른 그때의 값으로 얼려 둡니다.</b> 확정된 챌린지는 여기서 <b>[명단 엑셀]</b>로 그 명단을 받을 수 있고, 나중에 학생이 글을 지워도 변하지 않습니다.<br><b>확정하지 않은 챌린지</b>의 참가·완주는 <b>지금 다시 센 값</b>이라 시간이 지나면 달라질 수 있습니다 — 시상 전에 꼭 확정하세요.<br><b>진행중인 챌린지는 여기 없습니다</b> — 「챌린지 통계」에서 봅니다.</div>
-        <div class="db-card">
-          <h3>끝난 챌린지 <span class="db-sub2">한 줄 = 챌린지 하나</span></h3>
-          <div class="tblwrap"><table class="tbl"><thead><tr><th style="width:110px">구분</th><th>챌린지</th><th style="width:190px">기간</th><th style="width:110px">미션</th><th style="text-align:right;width:70px">참가</th><th style="text-align:right;width:70px">완주</th><th style="width:150px">결과 확정</th></tr></thead><tbody id="hsTblCh"></tbody></table></div>
-          <p class="note"><b>여기 오는 것</b> — 종료일이 지난 챌린지입니다. 최근에 끝난 순으로 놓입니다.<br><b>참가</b>는 1건이라도 한 학생 수, <b>완주</b>는 담긴 책 전부에서 켠 미션을 전부 마친 학생 수입니다. 챌린지 통계와 같은 기준입니다.<br>학번은 이 화면에 없습니다. 학생별 내용은 <b>「챌린지 통계 › 상세」</b>(진행 중·미확정)나 <b>[명단 엑셀]</b>(확정본)에서 봅니다.</p>
+      <div class="db-card">
+        <h3>1. 언제 것을 받을까요 <span class="db-sub2">기간 — 종료일이 이 안에 들어오는 것만</span></h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <div class="seg" id="hsSeg">
+            <button onclick="setHsRange(this,'t')">이번 학기</button>
+            <button class="on" onclick="setHsRange(this,'y')">최근 1년</button>
+            <button onclick="setHsRange(this,'a')">전체</button>
+          </div>
+          <input type="date" id="hsFrom" onchange="hsSum();renderHist()">
+          <span style="color:var(--light);font-size:13px">~</span>
+          <input type="date" id="hsTo" onchange="hsSum();renderHist()">
         </div>
       </div>
-      <div id="hsCur" style="display:none">
-        <div class="st-warn"><b>내렸거나 바뀐 큐레이션</b>이 모입니다. 지금 걸려 있는 큐레이션은 「우리 도서관」에서 봅니다.<br>칸을 바꾸거나 내리면 시작·끝 날짜가 자동으로 기록됩니다(2026-08-17부터). 그 전에 바뀐 큐레이션은 남아 있지 않습니다.</div>
-        <div class="db-card">
-          <h3>끝난 큐레이션 <span class="db-sub2">한 줄 = 큐레이션 하나</span></h3>
-          <div class="tblwrap"><table class="tbl"><thead><tr><th>큐레이션</th><th style="width:190px">기간</th><th style="width:130px">위치</th><th style="text-align:right;width:80px">담긴 책</th><th style="text-align:right;width:80px">조회</th><th style="text-align:right;width:80px">이용</th></tr></thead><tbody id="hsTblCurHist"></tbody></table></div>
-          <p class="note"><b>조회</b>는 상세페이지를 살펴본 건수, <b>이용</b>은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)입니다. 이용통계와 같은 말입니다.<br>「무엇을 걸었더니 얼마나 봤나」를 나중에 되짚어 다음 큐레이션을 정할 때 씁니다. 숫자는 그 큐레이션이 걸려 있던 기간 안의 값입니다.</p>
+      <div class="db-card">
+        <h3>2. 무엇을 받을까요 <span class="db-sub2">엑셀 한 개 안에 고른 것만 시트로 들어갑니다</span></h3>
+        <label class="pk on" id="pkHsCh"><input type="checkbox" checked onchange="hsSum();renderHist()">
+          <div><div class="pk-t">챌린지 이력 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">끝난 챌린지 — 구분 · 이름 · 기간 · 미션 · <b>참가 · 완주</b>.</div></div></label>
+        <label class="pk on" id="pkHsCur"><input type="checkbox" checked onchange="hsSum();renderHist()">
+          <div><div class="pk-t">큐레이션 이력 <span class="chip end">학번 없음</span></div>
+          <div class="pk-d">내렸거나 기간이 끝난 큐레이션 — 이름 · 기간 · 위치 · 담긴 책 · <b>조회 · 이용</b>.
+            무엇을 걸었더니 얼마나 봤나를 되짚어 다음 큐레이션을 정할 때 씁니다.</div></div></label>
+        <div class="st-sum" id="hsSumLine"></div>
+        <div style="margin-top:14px">
+          <button class="btn-excel" style="font-size:14.5px;padding:13px 22px" onclick="downloadHistExcel(this)">⤓ 엑셀 다운로드</button>
         </div>
-        <div class="db-card">
-          <h3>지금 걸린 칸 실적 <span class="db-sub2">한 줄 = 칸 하나 · 이번 학기</span></h3>
-          <div class="tblwrap"><table class="tbl"><thead><tr><th>큐레이션</th><th style="width:150px">위치</th><th style="text-align:right;width:80px">담긴 책</th><th style="text-align:right;width:80px">조회</th><th style="text-align:right;width:80px">이용</th></tr></thead><tbody id="hsTblCur"></tbody></table></div>
-          <p class="note">지금 걸려 있는 칸이 <b>이번 학기 안</b>에 얼마나 보였는지입니다. 참고용 — 큐레이션을 바꾸면 윗표(끝난 큐레이션)로 옮겨 갑니다.</p>
+      </div>
+      <div class="st-warn">
+        <b>시상 명단은 여기 없습니다.</b> 챌린지가 끝나면 <b>「챌린지 통계」에서 상세 엑셀을 받아</b> 도서관 폴더에 보관하세요.
+        이 화면의 참가·완주는 <b>지금 다시 센 값</b>이라 시간이 지나면 달라질 수 있습니다.
+      </div>
+      <div class="db-card">
+        <h3>3. 지난 목록 <span class="db-sub2">최근 끝난 순 · 10줄</span></h3>
+        <div class="tblwrap">
+          <table class="tbl">
+            <thead><tr>
+              <th style="width:110px">구분</th><th>이름</th>
+              <th style="width:190px">기간</th><th style="width:120px">미션 · 위치</th>
+            </tr></thead>
+            <tbody id="hsTbl"></tbody>
+          </table>
         </div>
+        <p class="note">
+          숫자(참가·완주·조회·이용)는 <b>엑셀에만</b> 담습니다. 이 목록은 <b>언제 무엇을 했는지</b>만 확인하는 자리입니다.<br>
+          학번은 이 화면에 없습니다.
+        </p>
       </div>
     </section>
 
@@ -1595,10 +1726,15 @@ function setSecOrder(i,val){readSecInputs();
 }
 function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);renderSettings();}
 /* ── 순서 바꾸기 모드 (제목만 컴팩트 목록 — 스크롤 없이 한눈에 정렬) ── */
-function _areaSecs(){ return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
-function _applyAreaOrder(items){ let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=items[k++]; }); }   // 현재 영역 칸만 재배열, 다른 영역 위치 보존
-function openReorder(){ readSecInputs(); renderReorderList(); el('reOv').classList.add('on'); }
-function closeReorder(){ el('reOv').classList.remove('on'); renderSettings(); }
+// 8/17: 같은 모달을 독서 챌린지 빌더도 쓴다 — _reMode 'sec'(우리도서관·고전 칸) | 'chal'(CHALLENGES 순서)
+let _reMode='sec';
+function _areaSecs(){ if(_reMode==='chal') return CHALLENGES.map((s,i)=>({s,i})); return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
+function _applyAreaOrder(items){ if(_reMode==='chal'){ CHALLENGES.splice(0,CHALLENGES.length,...items); return; }
+  let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=items[k++]; }); }   // 현재 영역 칸만 재배열, 다른 영역 위치 보존
+function openReorder(mode){ _reMode=(mode==='chal')?'chal':'sec'; if(_reMode==='chal') readChalInputs(); else readSecInputs();
+  const h=document.querySelector('#reOv .sec-h h3'); if(h) h.textContent=_reMode==='chal'?'챌린지 순서 바꾸기':'칸 순서 바꾸기';
+  renderReorderList(); el('reOv').classList.add('on'); }
+function closeReorder(){ el('reOv').classList.remove('on'); if(_reMode==='chal') renderChallenges(); else renderSettings(); }
 function renderReorderList(){
   const items=_areaSecs();
   el('reList').innerHTML=items.map((o,k)=>{
@@ -1882,7 +2018,7 @@ function secApplyTab(){const q=el('secQ');
   else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='sm'){q.placeholder='세명대 전자도서관 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">세명대 학술정보원 전자책에서 검색해 담아요.<br>담은 책은 학생 앱에서 ‘전자책 바로 읽기’로 연결됩니다.</div>';}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
-  else{q.placeholder='제목·저자 또는 자연어 (예: 시험 끝 머리 식히는 책)';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='<div class="book-empty">말하듯 적거나 제목을 넣으면, <b>세명대 소장</b>과 <b>국중 전체</b>에서 한 번에 찾아드려요.<br>세명대 소장 책이 위에, 미소장 책은 아래에 표시됩니다.</div>';}
+  else{q.placeholder='제목·저자 또는 자연어 (예: 시험 끝 머리 식히는 책)';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='<div class="book-empty">말하듯 적거나 제목을 넣으면 <b>세명대 소장 책</b>과 <b>미소장 책</b>을 한 번에 찾아드려요.<br>세명대 소장 책이 위에, 미소장 책은 아래에 표시됩니다.</div>';}
   q.value='';secNote();
 }
 function secRenderClassics(){
@@ -1903,7 +2039,7 @@ function secRenderClassics(){
   secRenderCands('북스타 고전 '+SCAND.length+'권'+(q?(' · "'+q+'"'):''));
 }
 function secRenderLib(){const q=(el('secQ').value||'').trim();const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;SCAND=list.slice(0,40);
-  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 담으면 여기에 쌓입니다.</div>';return;}
+  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘통합검색’이나 ‘ISBN 입력’으로 담으면 여기에 쌓입니다.</div>';return;}
   secRenderCands('우리 도서관 소장 '+SCAND.length+'권');}
 async function secSearch(){
   if(scTab==='cls'){secRenderClassics();return;}
@@ -1912,7 +2048,7 @@ async function secSearch(){
   if(scTab==='isbn'){return secLookupISBN();}
   // ── 통합검색: 자연어/제목 → 세명대 소장 + 국중 전체 병렬 → 병합(소장 우선, 미소장 표시) ──
   const q=el('secQ').value.trim();if(!q)return;
-  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 도서관 + 국중에서 찾는 중…</div>';
+  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 세명대 소장 책과 미소장 책을 함께 찾는 중…</div>';
   const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
   // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip
   const smP=(async()=>{ try{
@@ -1933,7 +2069,7 @@ async function secSearch(){
   const natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||'',smEbook:b.smEbook,smEbookProvider:b.smEbookProvider||'',smEbookUrl:b.smEbookUrl||''}));
   SCAND=[...smCand,...natCand];   // 세명대 소장 먼저, 미소장(국중) 뒤
   if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다른 말로 검색해보세요.</div>';return;}
-  secRenderCands(`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 국중 ${natCand.length}`);
+  secRenderCands(`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 미소장 ${natCand.length}`);
 }
 async function secSearchSemyung(){
   const raw=(el('secQ').value||'').trim();
@@ -2091,7 +2227,7 @@ function aicBuildGrid(){
     if(b.smPaper)bd.push('<span class="kw-paper">종이</span>');
     if(b.smEbook)bd.push('<span class="kw-ebook">전자'+(b.smEbookProvider?'·'+esc(b.smEbookProvider):'')+'</span>');
     if(b.crema)bd.push('<span class="kw-sub">구독</span>');   // 크레마클럽(YES24 무제한구독) — curate가 표시 대상만 권당 확인
-    if(b.loan)bd.push('<span class="kw-loan">🔥 국중인기 '+Number(b.loan).toLocaleString()+'</span>');   // 국중(정보나루) 대출수 — 검증된 인기도서
+    if(b.loan)bd.push('<span class="kw-loan">🔥 전국 대출 '+Number(b.loan).toLocaleString()+'</span>');   // 국중(정보나루) 대출수 — 검증된 인기도서
     const cv=b.cover?`<img class="cv" src="${esc(b.cover)}" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv" style="background:linear-gradient(135deg,#7b6ef2,#9b6ef0)"></div>`;
     return `<div class="aic-bk ${on?'on':''}${weak?' weak':''}" onclick="aicShowDetail(${i})" title="눌러서 줄거리·정보 보기"><span class="ck" onclick="event.stopPropagation();aicToggleBook(${i})" title="담기/빼기">✓</span>${cv}<div class="bi"><div class="bt">${esc(b.title)}</div><div class="ba">${esc(b.author||'')}</div><div class="bk-kw">${bd.join('')}</div></div></div>`;
   }).join('');
@@ -2157,7 +2293,7 @@ function aicShowDetail(i){ const b=AIC_RESULTS[i]; if(!b)return; AIC_DT_I=i;
   if(b.smEbook)tags.push('<span class="kw-ebook">전자책</span>');
   if(b.smPaper)tags.push('<span class="kw-paper">종이책</span>');
   if(b.crema)tags.push('<span class="kw-sub">구독</span>');
-  if(b.loan)tags.push('<span class="kw-loan">🔥 국중인기 '+Number(b.loan).toLocaleString()+'</span>');
+  if(b.loan)tags.push('<span class="kw-loan">🔥 전국 대출 '+Number(b.loan).toLocaleString()+'</span>');
   const meta=[b.author,b.publisher,b.year].filter(Boolean).join(' · ');
   el('aicDtBody').innerHTML=`<div class="aic-dt-top">
       <div class="aic-dt-cv">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
@@ -2253,8 +2389,7 @@ async function loadServerPrograms(){
       loc:x.location?[x.location]:[],intro:x.intro||'',
       mission:x.mission||undefined,books:(x.books||[]).map(b=>({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''}))}));
     PROGRAMS=mapped;   // 데모 병합 제거(8/14) — 발행한 것만 보인다
-    if(el('pg-dash').style.display!=='none')renderDash();
-    if(el('pg-history').style.display!=='none')renderHistory();
+    if(el('pg-writings').style.display!=='none'&&typeof renderWritings==='function'&&WRITINGS.length)renderWritings();   // 도서명(bookTitleOf) 보강용 재렌더
   }catch(e){}
 }
 /* 이용자별·도서별·월별 데모 표 제거(8/14) — 정식 오픈 후 실집계로 채운다 */
@@ -2278,14 +2413,15 @@ function go(elm,page){
   document.querySelectorAll('.navi').forEach(n=>n.classList.remove('on'));elm.classList.add('on');
   ['dash','stats','chstat','writings','make','notice','history','settings','comm','msapp','popup'].forEach(id=>el('pg-'+id).style.display='none');
   el('pg-'+page).style.display='';
-  _pvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
-  if(page==='dash')renderDash();
+  _pvClose(); chalPvClose();  // 다른 페이지로 가면 미리보기 닫기(.main 폭 복원)
+  // 8/17 시안(엑셀 다운로드 방식): 통계 5화면은 들어가도 집계를 안 부른다 — 기간·항목 골라 [엑셀 다운로드]가 곧 조회. 목록이 필요한 화면(챌린지 select·학생 글 10건·지난 목록)만 로드
+  if(page==='dash'){ initDashDates(); dbSum(); }
   else if(page==='msapp')renderMsApp();
   else if(page==='popup')loadPopups();
-  else if(page==='make')renderChallenges();
-  else if(page==='stats'){ initStatDates(); if(!STATS) statsIdle(); }   // 시안: 「조회」를 눌러야 표가 나온다(대시보드는 열자마자, 이 화면은 뽑는 화면)
+  else if(page==='make'){ renderChallenges(); chalPvAutoOpen(); }
+  else if(page==='stats'){ initStatDates(); statSum(); }
   else if(page==='chstat')renderChStat();
-  else if(page==='writings')loadWritings();
+  else if(page==='writings'){ initFeedDates(); fdSum(); loadWritings(); }
   else if(page==='history')renderHistory();
   else if(page==='notice'){renderNotices();loadNotices();}
   else if(page==='comm'){renderComm();loadCommPosts();}
@@ -2402,7 +2538,7 @@ function renderLib(){
   const q=(el('mkQ').value||'').trim();
   const list=q?LIB_BOOKS.filter(b=>(b.t+' '+b.a).includes(q)):LIB_BOOKS;
   CAND=list.slice(0,40);
-  if(!CAND.length){el('candWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘국중 추천’이나 ‘ISBN 입력’으로 책을 담으면 여기에 쌓입니다.</div>';return;}
+  if(!CAND.length){el('candWrap').innerHTML='<div class="book-empty">아직 우리 도서관에 담긴 책이 없어요.<br>‘통합검색’이나 ‘ISBN 입력’으로 책을 담으면 여기에 쌓입니다.</div>';return;}
   renderCand('우리 도서관 소장 '+CAND.length+'권');
 }
 // 위치 칩은 제목을 보여주되 slot(고정 ID)을 저장 → 카테고리 이름 바꿔도 연결 유지
@@ -2432,14 +2568,14 @@ async function searchBooks(){
   if(bookTab==='lib'){renderLib();return;}
   if(bookTab==='isbn'){return lookupISBN();}
   const q=el('mkQ').value.trim();if(!q)return;picks={};
-  el('candWrap').innerHTML='<div class="cur-loading">✦ 국중에서 후보 도서를 가져오는 중…</div>';
+  el('candWrap').innerHTML='<div class="cur-loading">✦ 후보 도서를 가져오는 중…</div>';
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
     const d=await r.json();
     CAND=(d.candidates||[]).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating}));
     if(d.title&&!el('mkTitle').value.trim()){el('mkTitle').value=d.title;syncPreview();}
     if(!CAND.length){el('candWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다르게 입력해보세요.</div>';return;}
-    renderCand('국중 추천 '+CAND.length+'권 · 정보나루 실시간');
+    renderCand('추천 도서 '+CAND.length+'권 · 전국 도서관 대출 데이터 실시간');
   }catch(e){CAND=DEMO_CAND.slice();renderCand('대체 후보 '+CAND.length+'권 (연결 재시도 가능)');}
 }
 async function lookupISBN(){
@@ -2608,15 +2744,15 @@ function renderChallenges(){
         <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="chalDel(${i})">삭제</button>
       </div>
       <div class="row2">
-        <div><div class="flabel">제목</div><input class="cur-inp" id="ch_t_${i}" value="${esc(c.title)}"></div>
+        <div><div class="flabel">제목</div><input class="cur-inp" id="ch_t_${i}" value="${esc(c.title)}" oninput="chalPvSync()"></div>
         <div><div class="flabel">종류</div><select class="cur-inp" id="ch_type_${i}" onchange="readChalInputs();renderChallenges()">
           <option value="소장챌린지" ${!isClassic?'selected':''}>소장자료 챌린지</option>
           <option value="고전챌린지" ${isClassic?'selected':''}>고전 컬렉션 챌린지</option></select></div>
       </div>
       <div class="flabel">상세내용 — 학생에게 보일 설명</div>
-      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요">${esc(c.detail||'')}</textarea>
-      <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}"></div>
-        <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}"></div></div>
+      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요" oninput="chalPvSync()">${esc(c.detail||'')}</textarea>
+      <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}" onchange="chalPvSync()"></div>
+        <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}" onchange="chalPvSync()"></div></div>
       <div class="flabel">미션 — 완독 측정 <span style="font-weight:400;color:var(--light)">켠 미션 ${cnt}개 · 원하는 만큼 선택</span></div>
       <div class="mission">${missCells}</div>
       ${quizCfg}
@@ -2632,6 +2768,56 @@ function renderChallenges(){
   // 8/14 사장님 수정요청: 독서 챌린지에도 AI 큐레이션 카드 — 이 페이지 상단 슬롯으로 이동
   const _slot=el('aicSlotChal');
   if(_slot){ aicMount(_slot); const c=el('aiCurCard'); if(c){ c.style.display=''; aicSetContext('chal'); aicLoadUsage(); } }
+  chalPvSync();
+}
+/* ── 8/17 사장님 수정요청: 독서 챌린지 빌더 오른쪽 미리보기 = 학생 앱 '독서 챌린지' 탭(이달의 챌린지 히어로 + 진행 중인 챌린지 목록)
+   학생 앱(루트 index.html)엔 챌린지 preview 모드가 없어(우리도서관은 ?preview=1 iframe+postMessage) 여기서 renderChalCards()·chalHero()의 구조를 그대로 인라인 렌더한다.
+   학생 앱 규칙 미러: featured 하나만 히어로·히어로는 아래 목록에서 제외·기간(시작~종료) 안인 것만 노출·미션 표기 '퀴즈 10문항 · 한 줄 소감 …'·부제 'N권 · 미션 · 6/1 ~ 6/30 · D-12' ── */
+let _chalPvTimer=null;
+function chalPvOpen(){ const p=el('chalPv'); if(!p) return; p.classList.add('on'); document.body.classList.add('pv-open');
+  const b=el('chalPvBtn'); if(b) b.textContent='👁 미리보기 닫기'; chalPvRender(); }
+function chalPvClose(){ const p=el('chalPv'); if(!p) return; p.classList.remove('on'); document.body.classList.remove('pv-open');
+  const b=el('chalPvBtn'); if(b) b.textContent='👁 미리보기'; }
+function toggleChalPreview(){ const p=el('chalPv'); if(p&&p.classList.contains('on')) chalPvClose(); else chalPvOpen(); }
+function chalPvAutoOpen(){ if(window.innerWidth>=1180){ const p=el('chalPv'); if(p&&!p.classList.contains('on')) chalPvOpen(); } }   // 우리도서관 autoOpenPreview 와 동일 기준
+function chalPvSync(){ const p=el('chalPv'); if(!p||!p.classList.contains('on')) return; clearTimeout(_chalPvTimer); _chalPvTimer=setTimeout(chalPvRender,150); }
+const cpvMD=d=>{ if(!d) return ''; const p=String(d).split('-'); return p.length>=3?(+p[1])+'/'+(+p[2]):''; };
+const cpvDday=to=>{ if(!to) return ''; const n=Math.ceil((new Date(to+'T00:00:00')-new Date(ymd(new Date())+'T00:00:00'))/86400000); return n>0?'D-'+n:(n===0?'D-Day':''); };
+const cpvMission=c=>{ const m=chalMission(c); const a=CH_MISSIONS.filter(x=>m[x.k]).map(x=>x.k==='quiz'?'퀴즈 10문항':x.t); return a.join(' · ')||'-'; };
+const cpvSub=c=>{ const m=cpvMission(c), per=[cpvMD(c.from),cpvMD(c.to)].filter(Boolean).join(' ~ '); const parts=[(c.books||[]).length+'권']; if(m&&m!=='-') parts.push(m); if(per) parts.push(per);
+  const dd=cpvDday(c.to); return esc(parts.join(' · '))+(dd?' · <span class="cpv-dday">'+esc(dd)+'</span>':''); };
+const cpvLive=c=>{ const t=ymd(new Date()); return (!c.from||c.from<=t)&&(!c.to||t<=c.to); };   // 학생 앱: 오늘이 기간 안인 것만 노출
+const cpvOffWhy=c=>{ const t=ymd(new Date()); return c.from&&c.from>t?'학생에겐 '+esc(c.from)+'부터 보여요':'종료 — 학생에겐 안 보여요'; };
+const cpvCover=(b,fallbackT)=>{ const cv=b&&(b.cover||(b.id&&CLS_COVER[b.id]))||''; const t=(b&&(b.title||b.t))||fallbackT||'';
+  return cv?`<div class="cpv-cover"><img src="${esc(cv)}" alt="" onerror="this.parentNode.textContent='${esc(t).replace(/'/g,'')}'"></div>`:`<div class="cpv-cover">${esc(t)}</div>`; };
+function chalPvRender(){
+  const host=el('chalPvBody'); if(!host) return;
+  readChalInputs();
+  const list=CHALLENGES.slice();
+  const heroC=list.find(c=>c.featured)||null;              // 사서가 '이달의 챌린지'로 지정한 하나만 히어로(자동 히어로 없음)
+  const rows=heroC?list.filter(c=>c!==heroC):list;
+  let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>고전 컬렉션</span><span>커뮤니티</span></div>`;
+  if(!list.length){ host.innerHTML=out+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
+  if(heroC){ const b=(heroC.books||[])[0]||null; const m=cpvMission(heroC); const off=!cpvLive(heroC);
+    out+=`<div class="cpv-hero cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(heroC)}</span>`:''}
+      <div><div class="cpv-kicker">✦ 이달의 챌린지</div>
+        <div class="cpv-title">${esc(heroC.title||'')}</div>
+        <div class="cpv-sub">${cpvSub(heroC)}</div>
+        <div class="cpv-quote">“${esc(heroC.detail||'사서가 운영하는 독서 챌린지예요.')}”<span> — 우리 학교 사서</span></div>
+        ${m&&m!=='-'?`<div class="cpv-meta">${esc(m)}</div>`:''}
+        <span class="cpv-hbtn">참여하기 →</span></div>
+      <div class="cpv-stage"><div class="cpv-side">독서 챌린지</div><div class="cpv-shadow"></div><div class="cpv-book3d">${cpvCover(b,heroC.title)}</div></div>
+    </div>`; }
+  out+=`<div class="cpv-lhead">진행 중인 챌린지 <span class="cpv-ltag">우리 학교 사서 운영</span></div>`;
+  if(!rows.length) out+=`<div class="cpv-empty" style="padding:22px 0">‘이달의 챌린지’ 말고 다른 챌린지가 없어요.</div>`;
+  rows.forEach(c=>{ const off=!cpvLive(c), isC=c.type==='고전챌린지', books=c.books||[];
+    out+=`<div class="cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(c)}</span>`:''}
+      <div class="cpv-rhead"><div><span class="cpv-type${isC?' classic':''}">${isC?'고전 컬렉션':'소장자료'}</span>
+        <div class="cpv-rt">${esc(c.title||'')}</div><div class="cpv-rs">${cpvSub(c)}</div></div><span class="cpv-join">참여하기 →</span></div>
+      ${c.detail?`<div class="cpv-desc">${esc(c.detail)}</div>`:''}
+      ${books.length?`<div class="cpv-books">${books.map(b=>`<div class="cpv-bk">${cpvCover(b,'')}<div class="cpv-bk-t">${esc(b.title||b.t||'')}</div></div>`).join('')}</div>`:''}
+    </div>`; });
+  host.innerHTML=out;
 }
 function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:'2026-06-01',to:'2026-06-30',mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
@@ -2859,10 +3045,12 @@ async function delCommPost(id){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   통계·관리 5화면 — 측정 로그 v2 (2026-08-17)
-   원천: bookstar_events(+writings·stars·enroll) → admin-save stats_* op(service role) → 이 화면.
-   설계 문서: klever_demo/_측정로그_설계_20260817.md · 사장님 시안: Desktop/북스타_관리자_5화면_2026.08.16.html
-   같은 이름의 옛 함수(renderDash·renderStats·loadWritings·renderHistory 등)를 여기서 덮어쓴다(뒤에 선언된 함수가 이김).
+   통계·관리 5화면 — 측정 로그 v2 (2026-08-17) → 8/17 오후 사장님 시안 '엑셀 다운로드 방식'으로 재구성
+   원천: bookstar_events(+writings·stars·enroll) → admin-save stats_* op(service role) → 엑셀.
+   설계 문서: klever_demo/_측정로그_설계_20260817.md · 사장님 시안: Desktop/북스타_관리자_엑셀 다운로드 방식_2026.08.17.html
+   원칙: 화면에 집계 숫자·표·차트·순위를 두지 않는다("이용자도 없는데 한눈에 보여주는 건 안 된다"). 각 화면 = 1.언제(기간) → 2.무엇을(시트 체크) → 요약 줄 → [엑셀 다운로드] → note → 경고.
+   예외 = 피드관리의 글 목록 10건(숨기기 작업용)·운영이력의 지난 목록 10줄(숫자 없음).
+   같은 이름의 옛 함수(loadWritings·renderHistory 등)를 여기서 덮어쓴다(뒤에 선언된 함수가 이김).
    ═══════════════════════════════════════════════════════════════════════════ */
 const ST_SCHOOL='hankuk';   // 학생 앱 CH_SCHOOL과 동일 (세명대 표기 정리는 별도)
 const TYPE_KO={paper:'종이책',ebook:'전자책',foreign:'해외고전',korean:'국내고전',external:'외부참조',none:'—'};
@@ -2875,12 +3063,16 @@ const nextDay=(s)=>{const d=new Date(s+'T00:00:00'); d.setDate(d.getDate()+1); r
 function termRange(){ const t=new Date(); const y=t.getFullYear(), m=t.getMonth()+1;
   if(m>=3&&m<=8) return [y+'-03-01', y+'-08-31'];
   return m>=9 ? [y+'-09-01', (y+1)+'-02-28'] : [(y-1)+'-09-01', y+'-02-28']; }
+// 기간 프리셋 → [from,to]. to는 언제나 오늘(시안: dbTo=TODAY). 8/17 시안 키 추가: w(이번 주 월요일부터)·m(이번 달)·t(이번 학기)·y(최근 1년)·a(전체)
 function presetRange(k){ const t=new Date(); const to=ymd(t);
   if(k==='today') return [to,to];
   if(k==='week'||k==='d7'){ const d=new Date(t); d.setDate(d.getDate()-6); return [ymd(d),to]; }
+  if(k==='w'){ const d=new Date(t); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return [ymd(d),to]; }   // 이번 주 = 이번 주 월요일 ~ 오늘
   if(k==='d30'){ const d=new Date(t); d.setDate(d.getDate()-29); return [ymd(d),to]; }
-  if(k==='month') return [t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-01', to];
-  return termRange(); }
+  if(k==='month'||k==='m') return [t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-01', to];
+  if(k==='y'){ const d=new Date(t); d.setFullYear(d.getFullYear()-1); d.setDate(d.getDate()+1); return [ymd(d),to]; }
+  if(k==='a') return ['2020-01-01',to];
+  return [termRange()[0], to]; }   // term/t: 학기 시작 ~ 오늘
 async function statsOp(op, extra){
   const r=await adminSave(Object.assign({op:op, school:ST_SCHOOL}, extra||{}));
   if(!r.ok){ let t=''; try{ t=await r.text(); }catch(e){} throw new Error('stats '+op+' '+r.status+' '+t.slice(0,120)); }
@@ -2905,68 +3097,78 @@ function xlsxDownload(name, sheets){   // sheets=[{name, rows:[[...],...]}]
 }
 const NOTE3=[['조회는 상세페이지 살펴 본 건수'],['이용은 종이책·전자책은 넘겨준 건수(종이책은 신청까지), 고전은 북스타에서 읽은 건수(1분 이상)'],['활동은 한줄소감, 한줄질문, 서평 작성 건수']];
 
-/* ══════════ 1. 대시보드 ══════════ */
-let RANGE='month'; let DASH=null;
-function setRange(b,r){ RANGE=r; document.querySelectorAll('#pg-dash .seg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); renderDash(); }
-async function renderDash(){
-  const [f,t]=presetRange(RANGE);
-  const cap=el('dbRangeCap'); if(cap) cap.textContent='도서관 이용 현황 · '+f+' ~ '+t;
-  const setU=(k,v)=>{ const n=document.querySelector(`#pg-dash .v[data-u="${k}"]`); if(n) n.innerHTML=v; };
-  try{
-    const d=await statsOp('stats_overview',{from:kst(f), to:kst(nextDay(t))});
-    DASH={from:f,to:t,d:d};
-    setU('visitors', nf(d.visitors)+'<small>명</small>'); setU('views', nf(d.views)+'<small>건</small>'); setU('use', nf(d.uses)+'<small>건</small>'); setU('act', nf(d.acts)+'<small>건</small>');
-    const bt=d.by_type||[];
-    el('dashSrc').innerHTML = bt.map(r=>`<tr><td><b>${TYPE_KO[r.type]||r.type}</b></td><td class="n">${nf(r.views)}</td><td class="n">${nf(r.uses)}</td><td class="n">${nf(r.acts)}</td></tr>`).join('')
-      + `<tr class="sum"><td>합계</td><td class="n">${nf(d.views)}</td><td class="n">${nf(d.uses)}</td><td class="n">${nf(d.acts)}</td></tr>`;
-    setU('chOpen', nf(d.ch_open)); setU('chDone', nf(d.ch_done)); setU('part', nf(d.ch_part)); setU('done', nf(d.ch_fin)); setU('star', nf(d.stars));
-    const rk=d.rank||[]; const mx=Math.max(1,...rk.map(x=>x.stars||0));
-    el('dbRank').innerHTML = rk.length ? rk.map((x,i)=>`<div class="db-rbar"><div class="rno ${i<3?'t':''}">${i+1}</div><div class="rnm">${esc(x.student_id)}</div><div class="rtk"><i style="width:${Math.round((x.stars||0)/mx*100)}%"></i></div><div class="rvl">⭐${nf(x.stars)}</div></div>`).join('')
-      : `<div class="ph-sub">이 기간에 적립된 별이 없어요.<br>학생이 챌린지 미션을 수행하면 여기에 순위가 쌓입니다.</div>`;
-  }catch(e){
-    ['visitors','views','use','act','chOpen','chDone','part','done','star'].forEach(k=>setU(k,'—'));
-    el('dashSrc').innerHTML=stErr(4,e); el('dbRank').innerHTML=`<div class="ph-sub">집계를 불러오지 못했어요.</div>`;
-  }
-}
-function downloadDashExcel(){
-  if(!DASH){ toast('먼저 대시보드가 불러와져야 해요'); return; }
-  const d=DASH.d, per=[fmtRange(DASH.from,DASH.to)];
-  const s1=[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3];
-  const s2=[per,[],['유형','조회','이용','활동'],...(d.by_type||[]).map(r=>[TYPE_KO[r.type]||r.type,r.views,r.uses,r.acts]),['합계',d.views,d.uses,d.acts],[],...NOTE3];
-  const s3=[per,[],['운영중인 챌린지','완료된 챌린지','참가 학생','완주 학생','적립된 별'],[d.ch_open,d.ch_done,d.ch_part,d.ch_fin,d.stars]];   // 화면 칩 라벨과 용어 통일(참가)
-  const s4=[per,[],['순위','학번','별'],...(d.rank||[]).map((x,i)=>[i+1,x.student_id,x.stars])];
-  xlsxDownload('북스타_대시보드_시상용_'+DASH.from+'_'+DASH.to, [{name:'요약',rows:s1},{name:'유형별',rows:s2},{name:'챌린지 현황',rows:s3},{name:'별 순위',rows:s4}]);
+/* ── 8/17 시안 공통: 세그 선택·체크카드(.pk)·요약 줄(.st-sum)·버튼 잠금 ── */
+function segOn(b){ if(!b||!b.parentNode) return; b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+function ck(id){ const p=el(id); const i=p&&p.querySelector('input'); return !!(i&&i.checked); }
+function mark(id){ const p=el(id); if(!p) return false; const on=ck(id); p.classList.toggle('on',on); return on; }   // 체크 상태 → 카드 테두리(.on) 동기 + 값 반환
+const NEED_PICK='<b style="color:var(--bad)">받을 자료를 하나 이상 골라 주세요.</b>';
+const rangeOf=(fid,tid)=>{ const f=el(fid)?el(fid).value:'', t=el(tid)?el(tid).value:''; return [f,t]; };
+const rangeOk=(f,t)=>{ if(!f||!t||f>t){ toast('기간을 확인해 주세요'); return false; } return true; };
+// 엑셀 버튼: 집계 받아오는 동안 잠그고 문구 바꿈(두 번 눌러 두 번 받는 사고 방지)
+async function withBusy(btn, fn){
+  const old=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='집계를 받아오는 중…'; }
+  try{ await fn(); }catch(e){ toast('집계를 불러오지 못했어요 — '+String(e&&e.message||e)); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=old; } }
 }
 
-/* ══════════ 2. 이용통계 ══════════ */
-let statTab='book'; let STATS=null;
-function initStatDates(){ if(el('stDateFrom')&&!el('stDateFrom').value){ const [f,t]=presetRange('term'); el('stDateFrom').value=f; el('stDateTo').value=t; } }
-function statsIdle(){ const m='조건을 정하고 [조회]를 눌러 주세요.'; el('statTbl').innerHTML=stEmpty(6,m); el('statTblUser').innerHTML=stEmpty(6,m); el('statTblDetail').innerHTML=stEmpty(6,m); }
-function setStatRange(b,k){ document.querySelectorAll('#stSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const [f,t]=presetRange(k); el('stDateFrom').value=f; el('stDateTo').value=t; }
-function setStatTab(k){ statTab=k; const map={book:'statBook',user:'statUser',detail:'statDetail'}; for(const key in map) el(map[key]).style.display=(key===k?'':'none');
-  document.querySelectorAll('#statTabs .tab').forEach((x,i)=>x.className='tab'+(['book','user','detail'][i]===k?' on':'')); }
-async function renderStats(){
-  initStatDates();
-  const f=el('stDateFrom').value, t=el('stDateTo').value, ty=el('stSrc').value, pa=el('stPath').value;
-  if(!f||!t||f>t){ toast('기간을 확인해 주세요'); return; }
-  el('statTbl').innerHTML=stEmpty(6,'불러오는 중…'); el('statTblUser').innerHTML=stEmpty(6,'불러오는 중…'); el('statTblDetail').innerHTML=stEmpty(6,'불러오는 중…');
-  try{
-    const d=await statsOp('stats_usage',{from:kst(f), to:kst(nextDay(t)), type:ty, path:pa});
-    STATS={from:f,to:t,type:ty,path:pa,d:d};
-    const books=d.books||[], stu=d.students||[], det=d.detail||[];
-    el('statTbl').innerHTML = books.length ? books.slice(0,10).map((b,i)=>`<tr><td>${i+1}</td><td>${TYPE_KO[b.item_type]||b.item_type}</td><td>${esc(b.title||b.item_key)}</td><td class="n">${nf(b.views)}</td><td class="n">${nf(b.uses)}</td><td class="n">${nf(b.acts)}</td></tr>`).join('') : stEmpty(6,'이 조건에 기록이 없어요.');
-    if(el('statBookCap')) el('statBookCap').textContent='조회가 많은 순 · 상위 10권'+(books.length>10?' (전체 '+books.length+'권은 엑셀)':'');
-    el('statTblUser').innerHTML = stu.length ? stu.slice(0,10).map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.student_id)}</td><td class="n">${nf(s.views)}</td><td class="n">${nf(s.uses)}</td><td class="n">${nf(s.acts)}</td><td class="n">${nf(s.stars)}</td></tr>`).join('') : stEmpty(6,'이 조건에 기록이 없어요.');
-    el('statTblDetail').innerHTML = det.length ? det.slice(0,50).map(r=>`<tr><td>${esc(r.student_id)}</td><td>${esc(r.date)}</td><td>${TYPE_KO[r.type]||r.type}</td><td>${esc(r.title||'')}</td><td>${esc(r.way)}</td><td>${esc(r.path)}</td></tr>`).join('') : stEmpty(6,'이 조건에 이용 기록이 없어요.');
-  }catch(e){ el('statTbl').innerHTML=stErr(6,e); el('statTblUser').innerHTML=stErr(6,e); el('statTblDetail').innerHTML=stErr(6,e); }
+/* ══════════ 1. 대시보드 — 기간·시트 고르고 엑셀 (stats_overview) ══════════ */
+function initDashDates(){ if(el('dbFrom')&&!el('dbFrom').value){ const [f,t]=presetRange('t'); el('dbFrom').value=f; el('dbTo').value=t; } }
+function setRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('dbFrom').value=f; el('dbTo').value=t; dbSum(); }
+const DB_PK=[['pkSum','요약'],['pkSrc','유형별'],['pkChSt','챌린지 현황'],['pkRank','별 순위']];
+function dbPicked(){ return DB_PK.filter(x=>mark(x[0])).map(x=>x[0]); }
+function dbSum(){
+  initDashDates();
+  const [f,t]=rangeOf('dbFrom','dbTo'); const on=dbPicked(); const id9=on.includes('pkRank');
+  const e=el('dbSumLine'); if(!e) return;
+  if(!on.length){ e.innerHTML=NEED_PICK; return; }
+  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b><br>엑셀 한 개 · 시트 <b>'+on.length+'장</b> — '+DB_PK.filter(x=>on.includes(x[0])).map(x=>x[1]).join(' · ')
+    +(id9?' <span class="chip done">학번 있음</span>':'')+'<br>파일 이름 &nbsp;<b>'+esc(dbFileName(f,t,id9))+'</b>';
 }
-function downloadStatsExcel(){
-  if(!STATS){ toast('먼저 [조회]를 눌러 주세요'); return; }
-  const d=STATS.d, per=[fmtRange(STATS.from,STATS.to)+(STATS.type?' · 유형: '+TYPE_KO[STATS.type]:'')+(STATS.path?' · 경로: '+STATS.path:'')];
-  const s1=[per,[],['번호','유형','도서명','조회','이용','활동'],...(d.books||[]).map((b,i)=>[i+1,TYPE_KO[b.item_type]||b.item_type,b.title||b.item_key,b.views,b.uses,b.acts]),[],...NOTE3];
-  const s2=[per,[],['번호','학번','조회','이용','활동','별'],...(d.students||[]).map((s,i)=>[i+1,s.student_id,s.views,s.uses,s.acts,s.stars])];
-  const s3=[per,[],['학번','날짜','유형','도서명','이용 방식','경로'],...(d.detail||[]).map(r=>[r.student_id,r.date,TYPE_KO[r.type]||r.type,r.title||'',r.way,r.path])];
-  xlsxDownload('북스타_이용통계_시상용_'+STATS.from+'_'+STATS.to, [{name:'도서별',rows:s1},{name:'학생별 합계',rows:s2},{name:'상세통계',rows:s3}]);
+const dbFileName=(f,t,id9)=>'북스타_대시보드_'+(id9?'시상용_':'')+f+'_'+t+'.xlsx';
+function downloadDashExcel(btn){
+  const [f,t]=rangeOf('dbFrom','dbTo'); if(!rangeOk(f,t)) return;
+  const on=dbPicked(); if(!on.length){ dbSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
+  return withBusy(btn, async()=>{
+    const d=await statsOp('stats_overview',{from:kst(f), to:kst(nextDay(t))});
+    const per=[fmtRange(f,t)], sheets=[];
+    if(on.includes('pkSum'))  sheets.push({name:'요약',rows:[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3]});
+    if(on.includes('pkSrc')){ const bt=(d.by_type||[]).filter(r=>r.type!=='external'&&r.type!=='none');   // 시안: 외부참조(세명대 미소장)는 담지 않음 → 합계도 네 줄 기준
+      const sum=k=>bt.reduce((a,r)=>a+(+r[k]||0),0);
+      sheets.push({name:'유형별',rows:[per,[],['유형','조회','이용','활동'],...bt.map(r=>[TYPE_KO[r.type]||r.type,r.views,r.uses,r.acts]),['합계',sum('views'),sum('uses'),sum('acts')],[],...NOTE3]}); }
+    if(on.includes('pkChSt')) sheets.push({name:'챌린지 현황',rows:[per,[],['운영중인 챌린지','완료된 챌린지','참여 학생','완주 학생','적립된 별'],[d.ch_open,d.ch_done,d.ch_part,d.ch_fin,d.stars]]});
+    if(on.includes('pkRank')) sheets.push({name:'별 순위',rows:[per,[],['순위','학번','별'],...(d.rank||[]).map((x,i)=>[i+1,x.student_id,x.stars])]});
+    xlsxDownload(dbFileName(f,t,on.includes('pkRank')).replace(/\.xlsx$/,''), sheets);
+  });
+}
+
+/* ══════════ 2. 이용통계 — 기간·유형·경로·시트 고르고 엑셀 (stats_usage). 시안: 탭/표/[조회] 없음, 엑셀 버튼이 곧 조회 ══════════ */
+function initStatDates(){ if(el('stDateFrom')&&!el('stDateFrom').value){ const [f,t]=presetRange('t'); el('stDateFrom').value=f; el('stDateTo').value=t; } }
+function setStatRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('stDateFrom').value=f; el('stDateTo').value=t; statSum(); }
+const ST_PK=[['pkBook','도서별'],['pkUser','학생별'],['pkDetail','상세통계']];
+function stPicked(){ return ST_PK.filter(x=>mark(x[0])).map(x=>x[0]); }
+const selText=id=>{ const s=el(id); return (s&&s.selectedOptions&&s.selectedOptions[0])?s.selectedOptions[0].text:'전체'; };
+function statSum(){
+  initStatDates();
+  const [f,t]=rangeOf('stDateFrom','stDateTo'); const on=stPicked(); const id9=on.includes('pkUser')||on.includes('pkDetail');
+  const e=el('stSum'); if(!e) return;
+  if(!on.length){ e.innerHTML=NEED_PICK; return; }
+  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b> · 유형 <b>'+esc(selText('stSrc'))+'</b> · 경로 <b>'+esc(selText('stPath'))+'</b><br>'
+    +'엑셀 한 개 · 시트 <b>'+on.length+'장</b> — '+ST_PK.filter(x=>on.includes(x[0])).map(x=>x[1]).join(' · ')
+    +(id9?' <span class="chip done">학번 있음</span>':'')+'<br>파일 이름 &nbsp;<b>'+esc(stFileName(f,t,id9))+'</b>';
+}
+const stFileName=(f,t,id9)=>'북스타_이용통계_'+(id9?'시상용_':'')+f+'_'+t+'.xlsx';
+function downloadStatsExcel(btn){
+  const [f,t]=rangeOf('stDateFrom','stDateTo'); if(!rangeOk(f,t)) return;
+  const on=stPicked(); if(!on.length){ statSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
+  const ty=el('stSrc').value, pa=el('stPath').value;
+  return withBusy(btn, async()=>{
+    const d=await statsOp('stats_usage',{from:kst(f), to:kst(nextDay(t)), type:ty, path:pa});
+    const per=[fmtRange(f,t)+(ty?' · 유형: '+(TYPE_KO[ty]||ty):'')+(pa?' · 경로: '+pa:'')], sheets=[];
+    if(on.includes('pkBook'))   sheets.push({name:'도서별',rows:[per,[],['번호','유형','도서명','조회','이용','활동'],...(d.books||[]).map((b,i)=>[i+1,TYPE_KO[b.item_type]||b.item_type,b.title||b.item_key,b.views,b.uses,b.acts]),[],...NOTE3]});
+    if(on.includes('pkUser'))   sheets.push({name:'학생별',rows:[per,[],['번호','학번','조회','이용','활동','별'],...(d.students||[]).map((s,i)=>[i+1,s.student_id,s.views,s.uses,s.acts,s.stars])]});
+    if(on.includes('pkDetail')) sheets.push({name:'상세통계',rows:[per,[],['학번','날짜','유형','도서명','이용 방식','경로'],...(d.detail||[]).map(r=>[r.student_id,r.date,TYPE_KO[r.type]||r.type,r.title||'',r.way,r.path])]});
+    xlsxDownload(stFileName(f,t,on.includes('pkUser')||on.includes('pkDetail')).replace(/\.xlsx$/,''), sheets);
+  });
 }
 
 /* ══════════ 3. 챌린지 통계 ══════════ */
@@ -2981,7 +3183,8 @@ const chRewardText=(c)=>{ const m=c.mission||{}; return m.reward==='draw' ? '추
 const chReward=(c)=>{ const m=c.mission||{}; if(m.reward==='draw'){ const e=chEligible(c); return chRewardText(c)+'<br><span class="db-sub2">응모 자격('+e.label+') '+nf(e.n)+'명'+(e.n<(m.drawCount||0)?' — 뽑을 인원보다 적음':'')+'</span>'; } return chRewardText(c); };
 const chType=(t)=>String(t||'').indexOf('고전')>=0?'고전 컬렉션 챌린지':'소장자료 챌린지';
 const chEnded=(c)=>!!(c.end_date && c.end_date<ymd(new Date()));
-// 결과 확정(얼린 값) — 챌린지 id → {fixed_at, summary}. 챌린지 통계·운영이력이 함께 씀 (8/17 시안 감사 C2)
+// 결과 확정(얼린 값) — 챌린지 id → {fixed_at, summary}.
+// ⚠ 8/17 시안('엑셀 다운로드 방식'): 결과확정 UI 제거, 함수 보존 — 아래 loadFixed·fixedChip·chFixCell·chFix·chFixedExcel 은 화면 어디서도 부르지 않는다(백엔드 op ch_fix/ch_fixed_*는 그대로).
 let FIXED={};
 async function loadFixed(){ try{ const a=await statsOp('ch_fixed_list'); FIXED={}; (Array.isArray(a)?a:[]).forEach(x=>{ FIXED[String(x.challenge_id)]=x; }); }catch(e){ FIXED={}; } }
 const fixedChip=(c)=>{ const f=FIXED[String(c.id)]; return f?`<span class="chip done" title="${esc(String(f.fixed_at||'').slice(0,19).replace('T',' '))}">확정 ${esc(String(f.fixed_at||'').slice(5,10))}</span>`:''; };
@@ -2993,27 +3196,55 @@ async function chFix(id){
     toast(r.already?'이미 확정된 챌린지예요':'결과를 확정했어요 — 운영이력에서 명단 엑셀을 받을 수 있어요'); await loadFixed(); renderChStat(); }
   catch(e){ toast('확정하지 못했어요 — '+String(e.message||e)); }
 }
+// 챌린지 상태 글자(select 옵션용 — chStatus는 chip HTML)
+const chStatusText=(c)=>{ const today=ymd(new Date()); if(c.end_date && c.end_date<today) return '종료'; if(c.start_date && c.start_date>today) return '예정'; return '운영중'; };
+// 셀렉트 옵션 = `제목 · 종류 · N권 · 운영중/종료` (시안). 챌린지 목록(CHS)은 stats_challenges 한 번으로 받고 운영이력도 같이 쓴다
+async function loadChs(){ const a=await statsOp('stats_challenges'); CHS=Array.isArray(a)?a:[]; return CHS; }
 async function renderChStat(){
-  el('chTblSum').innerHTML=stEmpty(7,'불러오는 중…');
+  const sel=el('chPick'); if(!sel) return;
+  sel.innerHTML='<option value="">불러오는 중…</option>'; chSum();
   try{
-    [CHS]=await Promise.all([statsOp('stats_challenges'), loadFixed()]);
-    if(!Array.isArray(CHS)) CHS=[];
-    const rows=CHS.slice(0,10);
-    el('chTblSum').innerHTML = rows.length ? rows.map(c=>`<tr>
-      <td><b>${esc(c.title)}</b><br><span class="db-sub2">${chType(c.type)} · ${chMissionLabel(c.mission)}</span></td>
-      <td>${esc(c.start_date||'')}<br>~ ${esc((c.end_date||'').slice(5))} ${chStatus(c)}</td>
-      <td class="n">${nf(c.books_n)}권</td><td class="n">${nf(c.part)}</td>
-      <td class="n">${nf(c.done)} <span style="color:var(--light)">(${c.part?Math.round(c.done/c.part*100):0}%)</span></td>
-      <td class="n">${nf(c.missions)}</td><td>${chReward(c)}${chFixCell(c)}</td></tr>`).join('') : stEmpty(7,'아직 만든 챌린지가 없어요.');
-    const sel=el('chPick'); if(sel){ const cur=sel.value; sel.innerHTML=CHS.map(c=>`<option value="${esc(c.id)}">${esc(c.title)} · ${chType(c.type)} (${c.books_n}권)</option>`).join(''); if(cur&&CHS.some(c=>c.id===cur)) sel.value=cur; }
-    renderChDetail();
-  }catch(e){ el('chTblSum').innerHTML=stErr(7,e); }
+    await loadChs();
+    const cur=sel.value;
+    sel.innerHTML = CHS.length ? CHS.map(c=>`<option value="${esc(c.id)}">${esc(c.title)} · ${chType(c.type).replace(' 챌린지','')} · ${nf(c.books_n)}권 · ${chStatusText(c)}</option>`).join('') : '<option value="">아직 만든 챌린지가 없어요</option>';
+    if(cur&&CHS.some(c=>String(c.id)===cur)) sel.value=cur;
+  }catch(e){ sel.innerHTML='<option value="">챌린지 목록을 불러오지 못했어요</option>'; toast('챌린지 목록을 불러오지 못했어요 — '+String(e&&e.message||e)); }
+  chSum();
+}
+function chSum(){
+  const sel=el('chPick'), e=el('chSumLine'); if(!sel||!e) return;
+  const s=mark('pkChSum'), d=mark('pkChDet');
+  if(!s&&!d){ e.innerHTML=NEED_PICK; return; }
+  const c=CHS.find(x=>String(x.id)===sel.value)||null, today=ymd(new Date());
+  const optText=(sel.value&&sel.selectedOptions&&sel.selectedOptions[0])?sel.selectedOptions[0].text:'';
+  let h='고른 챌린지 &nbsp;<b>'+esc(optText||'—')+'</b><br>';
+  h+='받는 파일 <b>'+((s?1:0)+(d?1:0))+'개</b><br>';
+  if(s) h+='· 요약 &nbsp;<b>'+esc(chSumFileName(today))+'.xlsx</b> <span class="chip end">전체 챌린지</span><br>';
+  if(d) h+='· 상세 &nbsp;<b>'+esc(chDetFileName(c,today))+'.xlsx</b> <span class="chip done">학번 있음</span>';
+  e.innerHTML=h;
+}
+const chSumFileName=(today)=>'북스타_챌린지통계_요약_'+today;
+const chDetFileName=(c,today)=>'북스타_챌린지통계_상세_시상용_'+(c?chFileTitle(c):'챌린지')+'_'+today;
+// [엑셀 다운로드] — 요약 체크=전체 챌린지 1파일, 상세 체크=고른 챌린지 1파일(학번 있음). 둘 다면 파일 둘
+function downloadChExcel(btn){
+  const s=ck('pkChSum'), d=ck('pkChDet');
+  if(!s&&!d){ chSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
+  const pid=el('chPick')?el('chPick').value:'';
+  if(d&&!pid){ toast('상세를 받으려면 챌린지를 골라 주세요'); return; }
+  return withBusy(btn, async()=>{
+    if(!CHS.length) await loadChs();
+    const today=ymd(new Date());
+    let dd=null;
+    if(d){ dd=await statsOp('stats_challenge_detail',{program:pid}); CHD=dd; if(!dd||!dd.program){ toast('이 챌린지의 상세를 불러오지 못했어요'); dd=null; } }
+    if(s) downloadChSumExcel();   // 파일 1 — 전체 챌린지 요약(학번 없음)
+    if(dd) xlsxDownload(chDetFileName(dd.program,today), [{name:'상세',rows:chMatrixRows(dd,'기준일: '+today)}]);   // 파일 2 — 고른 챌린지 상세(학번 있음). 브라우저가 '여러 파일 다운로드' 허용을 물을 수 있음
+  });
 }
 function downloadChSumExcel(){
   if(!CHS.length){ toast('불러온 챌린지가 없어요'); return; }
-  const rows=[['기준일: '+ymd(new Date())],[],['챌린지','구분','미션','시작','종료','담긴 책','참가','완주','완주율(%)','미션 수행','시상 방식','응모 자격','결과 확정'],
-    ...CHS.map(c=>{ const m=c.mission||{}, e=chEligible(c), f=FIXED[String(c.id)]; return [c.title,chType(c.type),chMissionLabel(c.mission),c.start_date||'',c.end_date||'',c.books_n,c.part,c.done,c.part?Math.round(c.done/c.part*100):0,c.missions,chRewardText(c).replace('<br>',' '),m.reward==='draw'?(e.label+' '+e.n+'명'):'',f?String(f.fixed_at||'').slice(0,10):'']; })];
-  xlsxDownload('북스타_독서챌린지_요약_'+ymd(new Date()), [{name:'요약',rows:rows}]);
+  const rows=[['기준일: '+ymd(new Date())],[],['챌린지','구분','미션','시작','종료','담긴 책','참가','완주','완주율(%)','미션 수행','시상 방식','응모 자격'],
+    ...CHS.map(c=>{ const m=c.mission||{}, e=chEligible(c); return [c.title,chType(c.type),chMissionLabel(c.mission),c.start_date||'',c.end_date||'',c.books_n,c.part,c.done,c.part?Math.round(c.done/c.part*100):0,c.missions,chRewardText(c).replace('<br>',' '),m.reward==='draw'?(e.label+' '+e.n+'명'):'']; })];
+  xlsxDownload(chSumFileName(ymd(new Date())), [{name:'요약',rows:rows}]);
 }
 // 상세 행렬(학생 × 담긴 책) — 화면·상세 엑셀·운영이력 확정본 엑셀이 같은 계산을 쓴다
 function chBuildMatrix(d){
@@ -3038,34 +3269,9 @@ function chMatrixRows(d, headLine){
   list.forEach(x=>{ books.forEach(b=>{ const bb=x.s.books[bkey(b.key)]; const ok=doneBook(bb); rows.push([x.sid,x.cnt,(x.cnt===books.length&&books.length>0)?'완주':'',b.title||b.key,ok?'○':'—',bb?bb.text.join(' / '):'',x.s.first||'',ok&&bb?(bb.at||''):'']); }); });
   return rows;
 }
-async function renderChDetail(){
-  const pid=el('chPick')?el('chPick').value:''; CHD=null;
-  if(!pid){ el('chTblDetail').innerHTML=stEmpty(7,'챌린지를 고르면 학생별 진척이 펼쳐집니다.'); el('chCut').innerHTML=''; el('chNote').innerHTML=''; return; }
-  el('chTblDetail').innerHTML=stEmpty(7,'불러오는 중…');
-  try{
-    const d=await statsOp('stats_challenge_detail',{program:pid});
-    CHD=d;
-    const {books,list,need,m,doneBook,bkey}=chBuildMatrix(d);
-    const LIMIT=10, nb=Math.max(1,books.length); const show=list.slice(0, Math.max(1, Math.floor(LIMIT/nb)));
-    let html='';
-    show.forEach(x=>{ const full=(x.cnt===books.length&&books.length>0);
-      books.forEach((b,i)=>{ const bb=x.s.books[bkey(b.key)]; const ok=doneBook(bb);
-        html+='<tr>';
-        if(i===0){ html+=`<td class="stu" rowspan="${nb}"><b>${esc(x.sid)}</b>${full?'<br><span class="chip done">완주</span>':''}</td><td class="stu n" rowspan="${nb}"><b>${x.cnt}권</b></td>`; }
-        html+=`<td>${esc(b.title||b.key)}</td>`+(ok?'<td class="ok" style="text-align:center">○</td>':'<td class="no" style="text-align:center">—</td>')+`<td>${bb?esc(bb.text.join(' / ')):''}</td>`;
-        if(i===0){ html+=`<td class="stu" rowspan="${nb}" style="text-align:center">${esc(x.s.first||'')}</td>`; }
-        html+=`<td style="text-align:center;color:${ok?'var(--text)':'var(--light)'}">${ok&&bb?esc(bb.at||''):''}</td></tr>`; }); });
-    el('chTblDetail').innerHTML = html || stEmpty(7,'아직 이 챌린지에서 활동한 학생이 없어요.');
-    el('chCut').innerHTML = list.length ? `참가 <b>${list.length}명</b> 가운데 진척 많은 순 <b>상위 ${show.length}명</b>만 보입니다 (${show.length*nb}줄). <b>전부는 「상세 엑셀」에 있습니다</b> — ${list.length}명 × ${nb}권 = ${list.length*nb}줄.` : '';
-    el('chNote').innerHTML = `<b>진척</b>은 담긴 책 ${books.length}권 가운데 <b>켠 미션(${chMissionLabel(m)})을 다 마친 권수</b>입니다. 학생은 진척 많은 순으로 놓입니다.<br><b>참여한 날짜</b>는 이 챌린지에서 처음 활동한 날(없으면 참여 신청일), <b>완료한 날짜</b>는 그 책의 미션을 마친 날입니다.<br><b>글자 수 미달로 인정 안 된 글은 완료로 치지 않습니다.</b> 챌린지 완주 판정과 같은 기준입니다.<br>${m.quiz&&!m.oneline&&!m.question&&!m.review&&!m.essay?'<b>이 챌린지의 미션은 퀴즈 풀기라 학생이 쓴 글이 없습니다 — 「쓴 내용」 칸에 퀴즈 결과(정답/문항)가 대신 들어갑니다.</b><br>':'「쓴 내용」은 학생이 쓴 문장 그대로입니다.<br>'}<b>이름은 없고 학번만 있습니다.</b>`;
-  }catch(e){ el('chTblDetail').innerHTML=stErr(7,e); }
-}
-const chFileTitle=(p)=>String((p&&p.title)||'').replace(/[\\/:*?"<>|\s]+/g,'');
-function downloadChDetailExcel(){
-  if(!CHD||!CHD.program){ toast('먼저 챌린지를 골라 주세요'); return; }
-  xlsxDownload('북스타_독서챌린지_상세_시상용_'+chFileTitle(CHD.program)+'_'+ymd(new Date()), [{name:'상세',rows:chMatrixRows(CHD,'기준일: '+ymd(new Date()))}]);
-}
-// 운영이력 [명단 엑셀] — 확정 시점에 얼린 detail로 만든다(지금 다시 세지 않음)
+// (8/17 시안: 상세 표 renderChDetail·downloadChDetailExcel 제거 — 상세는 downloadChExcel이 stats_challenge_detail → chMatrixRows 로 바로 엑셀)
+const chFileTitle=(p)=>String((p&&p.title)||'').replace(/[\\/:*?"<>|,·\s]+/g,'');   // 파일명 안전 + 시안 예('AI다음나의자리')처럼 쉼표·가운뎃점도 뺌
+// (보존·미사용) 운영이력 [명단 엑셀] — 확정 시점에 얼린 detail로 만든다(지금 다시 세지 않음). 8/17 시안: 결과확정 UI 제거, 함수 보존
 async function chFixedExcel(id){
   try{ const f=await statsOp('ch_fixed_get',{program:id}); if(!f||!f.detail){ toast('확정본이 없어요'); return; }
     const at=String(f.fixed_at||'').slice(0,10);
@@ -3073,45 +3279,60 @@ async function chFixedExcel(id){
   }catch(e){ toast('확정본을 불러오지 못했어요 — '+String(e.message||e)); }
 }
 
-/* ══════════ 4. 학생 글 ══════════ */
+/* ══════════ 4. 피드관리(학생 글) — 기간·종류 정해 엑셀 1장 + '부적절한 글 숨기기' 최근 10건 ══════════
+   8/17 시안: 여기는 챌린지 밖에서 쓴 글만(challenge_id 없는 bookstar_writings + reviews 독자 서평). 챌린지 글은 「챌린지 통계」 상세 엑셀에서. */
 let FEEDV=null;   // WRITINGS 선언은 위 '학생 글' 구역
+let _wrSeq=0;     // 기간을 연달아 바꿔도 마지막 응답만 화면에(경합 방지)
+const WR_MIN={oneline:5,question:5,review:100};   // 학생 앱 CH_MISSIONS min 과 동일 — 글자 수 미달 = 미인정(별 없음). 옛 글엔 저장돼 있을 수 있어 화면에서 표시
 function initFeedDates(){ if(el('fdFrom')&&!el('fdFrom').value){ const [f,t]=presetRange('d30'); el('fdFrom').value=f; el('fdTo').value=t; } }
-function setFeedRange(b,k){ document.querySelectorAll('#fdSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const [f,t]=presetRange(k); el('fdFrom').value=f; el('fdTo').value=t; }
+function setFeedRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('fdFrom').value=f; el('fdTo').value=t; fdSum(); loadWritings(); }
+function fdSum(){
+  initFeedDates();
+  const [f,t]=rangeOf('fdFrom','fdTo'); const e=el('fdSumLine'); if(!e) return;
+  if(!mark('pkFeed')){ e.innerHTML='<b style="color:var(--bad)">받을 자료를 골라 주세요.</b>'; return; }
+  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b> · 종류 <b>'+esc(selText('fdMs'))+'</b><br>엑셀 한 개 · 시트 <b>1장</b> — 학생 글 목록 '
+    +'<span class="chip done">학번 · 글 전문 있음</span><br>파일 이름 &nbsp;<b>'+esc(fdFileName(f,t))+'.xlsx</b>';
+}
+const fdFileName=(f,t)=>'북스타_학생글_'+f+'_'+t;
 async function loadWritings(){
   initFeedDates();
-  const f=el('fdFrom').value, t=el('fdTo').value; if(!f||!t||f>t){ toast('기간을 확인해 주세요'); return; }
+  const f=el('fdFrom').value, t=el('fdTo').value; if(!f||!t||f>t){ return; }
+  const seq=++_wrSeq;
   el('fdTbl').innerHTML=stEmpty(6,'불러오는 중…');
   const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
   const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&${rng}&order=created_at.desc&select=*`,{headers:H}); WRITINGS=r.ok?await r.json():[]; }catch(e){ WRITINGS=[]; }
-  if(!Array.isArray(WRITINGS))WRITINGS=[];
+  let list=[];
+  // 챌린지 밖에서 쓴 글만(challenge_id 없음) — 시안: 챌린지 글은 여기 없음
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,{headers:H}); const a=r.ok?await r.json():[]; if(Array.isArray(a)) list=a; }catch(e){}
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
   try{ const r=await fetch(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,{headers:H});
     const rv=r.ok?await r.json():[];
-    if(Array.isArray(rv)) rv.forEach(x=>WRITINGS.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null,featured:false}));
-    WRITINGS.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+    if(Array.isArray(rv)) rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null,featured:false}));
   }catch(e){}
-  FEEDV={from:f,to:t}; renderWritings();
+  if(seq!==_wrSeq) return;   // 그 사이 다른 기간 요청이 나갔으면 버림
+  list.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  WRITINGS=list; FEEDV={from:f,to:t}; renderWritings();
 }
+const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
+const wrShort=w=>{ const min=WR_MIN[w.activity]; return !!(min && String(w.text||'').trim().length<min); };   // 글자 수 미달(미인정)
 function bookTitleOf(id){ id=String(id||'');
   try{ if(/^gb-/.test(id)&&typeof CLASSICS_KO!=='undefined'&&CLASSICS_KO[id]) return CLASSICS_KO[id]; }catch(e){}
   try{ if(/^kr-/.test(id)&&typeof BOOKS_CLASSICS_KR!=='undefined'){ const b=BOOKS_CLASSICS_KR.find(x=>x.id===id); if(b&&b.title) return b.title; } }catch(e){}
   for(const p of PROGRAMS){ for(const b of (p.books||[])){ if(b.isbn===id||b.isbn==='sm-'+id||('sm-'+(b.isbn||''))===id) return b.t||b.title||id; } } return id; }
+// '3. 부적절한 글 숨기기' — 최근 10건만(시안: 「더 보기」 없음). 종류(fdMs)·보기(fdView) 필터
 function renderWritings(){
-  const ms=el('fdMs').value, view=el('fdView').value, pa=el('fdPath')?el('fdPath').value:'';
-  const rows=WRITINGS.filter(w=>(view==='on'?!w.hidden:!!w.hidden)&&(!ms||w.activity===ms)&&(!pa||(pa==='ch'?!!w.challenge_id:!w.challenge_id)));
+  const tb=el('fdTbl'); if(!tb) return;
+  const ms=el('fdMs')?el('fdMs').value:'', view=el('fdView')?el('fdView').value:'on';
+  const rows=WRITINGS.filter(w=>(view==='on'?!w.hidden:!!w.hidden)&&(!ms||w.activity===ms));
   const LIMIT=10;
-  el('fdTbl').innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
+  tb.innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
     const isRv=w.activity==='rv';
-    const tag=w.hidden?`<span class="chip bad">${isRv?'숨김':`숨김 · 별 −${ACT_STAR[w.activity]||0}`}</span>`:'';
-    const ch=w.challenge_id?(PROGRAMS.find(p=>String(p.id)===String(w.challenge_id))||{}).title:'';
-    const bt=isRv?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
-    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(bt)}${ch?`<br><span class="db-sub2">${esc(ch)}</span>`:''}</td>
+    const tag=w.hidden?`<span class="chip bad">${isRv?'숨김':`숨김 · 별 −${ACT_STAR[w.activity]||0}`}</span>`
+                     :(wrShort(w)?'<span class="chip end">미인정 · 글자 수 미달</span>':'');
+    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}</td>
       <td><div class="fd-txt">${w.hidden?'숨긴 글입니다':esc(w.text)}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
-      <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide('${esc(String(w.id))}')">${w.hidden?'다시 보이기':'숨기기'}</button>
-          ${(w.hidden||isRv)?'':`<button class="btn-ghost" style="padding:6px 11px;font-size:12px;margin-left:4px;${w.featured?'color:var(--gold);border-color:var(--gold)':''}" onclick="wrFeature(${w.id},${w.featured?'false':'true'})">${w.featured?'★ 우수작':'☆'}</button>`}</td></tr>`; }).join('')
-    : stEmpty(6,'이 기간에 '+(view==='on'?'쓴 글이':'숨긴 글이')+' 없어요.');
-  el('fdCut').innerHTML = rows.length ? `이 기간에 <b>${rows.length}건</b> 가운데 <b>${Math.min(rows.length,LIMIT)}건</b>만 보입니다. <b>전부는 엑셀로 받으시면 됩니다.</b>` : '';
+      <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide('${esc(String(w.id))}')">${w.hidden?'다시 보이기':'숨기기'}</button></td></tr>`; }).join('')
+    : stEmpty(6,FEEDV?'해당하는 글이 없어요.':'불러오는 중…');
 }
 async function wrToggleHide(id){
   const w=WRITINGS.find(x=>String(x.id)===String(id)); if(!w) return;
@@ -3124,51 +3345,76 @@ async function wrToggleHide(id){
     w.hidden=to; renderWritings(); toast(isRv?(to?'숨겼어요':'다시 보이게 했어요'):(to?'숨겼어요 (별 회수)':'다시 보이게 했어요 (별 복구)')); }
   catch(e){ toast('처리하지 못했어요 — '+String(e.message||e)); }
 }
+// (보존·미사용) 우수작 표시 — 8/17 시안 목록엔 ★ 버튼 없음
 async function wrFeature(id,v){ try{ await adminSave({op:'writings_patch',id,patch:{featured:v}}); }catch(e){} const w=WRITINGS.find(x=>String(x.id)===String(id)); if(w)w.featured=v; renderWritings(); }
-function downloadFeedExcel(){
-  if(!FEEDV){ toast('먼저 [조회]를 눌러 주세요'); return; }
-  const rows=[[fmtRange(FEEDV.from,FEEDV.to)],[],['학번','날짜','종류','도서명','챌린지','쓴 내용','숨김'],
-    ...WRITINGS.map(w=>[w.student_id,(w.created_at||'').slice(0,10),ACT_KO[w.activity]||w.activity,w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id),w.challenge_id?((PROGRAMS.find(p=>String(p.id)===String(w.challenge_id))||{}).title||''):'',w.text,w.hidden?'숨김':''])];
-  xlsxDownload('북스타_학생글_'+FEEDV.from+'_'+FEEDV.to, [{name:'학생 글',rows:rows}]);
+// [엑셀 다운로드] — 기간(fdFrom~fdTo)·종류(fdMs) 조건의 학생 글 전부 1장. 화면 목록(10건)과 달리 숨긴 글도 '숨김' 표시로 함께
+function downloadFeedExcel(btn){
+  const [f,t]=rangeOf('fdFrom','fdTo'); if(!rangeOk(f,t)) return;
+  if(!ck('pkFeed')){ fdSum(); toast('받을 자료를 골라 주세요'); return; }
+  return withBusy(btn, async()=>{
+    if(!FEEDV||FEEDV.from!==f||FEEDV.to!==t){ await loadWritings(); }
+    const ms=el('fdMs')?el('fdMs').value:'';
+    const list=WRITINGS.filter(w=>!ms||w.activity===ms);
+    const rows=[[fmtRange(f,t)+(ms?' · 종류: '+(ACT_KO[ms]||ms):'')],[],['학번','날짜','종류','도서명','쓴 내용','숨김'],
+      ...list.map(w=>[w.student_id,(w.created_at||'').slice(0,10),ACT_KO[w.activity]||w.activity,wrTitle(w),w.text,w.hidden?'숨김':''])];
+    xlsxDownload(fdFileName(f,t), [{name:'학생 글 목록',rows:rows}]);
+  });
 }
 
-/* ══════════ 5. 운영이력 ══════════ */
-let hsTab='ch'; let HSCUR=null; let HSHIST=null;
-function setHsTab(k){ hsTab=k; el('hsCur').style.display=(k==='cur'?'':'none'); el('hsCh').style.display=(k==='ch'?'':'none');
-  document.querySelectorAll('#hsTabs .tab').forEach((x,i)=>x.className='tab'+(['cur','ch'][i]===k?' on':'')); renderHistory(); }
-// 끝난 챌린지 목록: 확정된 것은 얼린 값(summary.part/done), 아니면 지금 다시 센 값
+/* ══════════ 5. 운영이력 — 끝난 챌린지·큐레이션을 기간(종료일 기준)으로 골라 엑셀 1개 2시트 + '지난 목록' 10줄(숫자 없음) ══════════
+   8/17 시안: 진행중·지금 걸린 칸 실적(stats_curation)·확정 명단 [명단 엑셀] 은 두지 않는다. 시상 명단은 「챌린지 통계」 상세 엑셀. */
+let HSHIST=null;   // stats_curation_history (끝난 큐레이션 — 트리거 자동 기록, 8/17부터)
+const fmtD=(s)=>String(s||'').slice(0,10);
+function initHsDates(){ if(el('hsFrom')&&!el('hsFrom').value){ const [f,t]=presetRange('y'); el('hsFrom').value=f; el('hsTo').value=t; } }
+function setHsRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('hsFrom').value=f; el('hsTo').value=t; hsSum(); renderHist(); }
+// 끝난 챌린지: 종료일이 지난 것(지금 다시 센 값). FIXED 는 8/17 시안 이후 비어 있어(로드 안 함) 항상 현재 값
 function hsEndedList(){ const today=ymd(new Date());
   return CHS.filter(c=>c.end_date&&c.end_date<today).sort((a,b)=>String(b.end_date).localeCompare(String(a.end_date)))
     .map(c=>{ const f=FIXED[String(c.id)]; const s=f&&f.summary||null; return Object.assign({}, c, {part_v:s?s.part:c.part, done_v:s?s.done:c.done, fixed:!!f, fixed_at:f?String(f.fixed_at||'').slice(0,10):''}); }); }
-const fmtD=(s)=>String(s||'').slice(0,10);
-async function renderHistory(){
-  if(hsTab==='ch'){
-    el('hsTblCh').innerHTML=stEmpty(7,'불러오는 중…');
-    try{ if(!CHS.length) CHS=await statsOp('stats_challenges'); await loadFixed();
-      const ended=hsEndedList();
-      el('hsTblCh').innerHTML = ended.length ? ended.map(c=>`<tr><td><span class="chip end">${chType(c.type).replace(' 챌린지','')}</span></td><td><b>${esc(c.title)}</b><br><span class="db-sub2">${chRewardText(c)}</span></td><td>${esc(c.start_date||'')} ~ ${esc(c.end_date||'')}</td><td>${chMissionLabel(c.mission)}</td><td class="n">${nf(c.part_v)}</td><td class="n">${nf(c.done_v)}</td><td>${c.fixed?`<span class="chip done">확정 ${esc(c.fixed_at.slice(5))}</span><br><button class="btn-ghost" style="padding:5px 10px;font-size:11.5px;margin-top:5px" onclick="chFixedExcel('${esc(String(c.id))}')">명단 엑셀</button>`:'<span class="db-sub2">미확정 — 지금 다시 센 값</span>'}</td></tr>`).join('') : stEmpty(7,'아직 끝난 챌린지가 없어요.');
-    }catch(e){ el('hsTblCh').innerHTML=stErr(7,e); }
-  }else{
-    // ① 끝난 큐레이션(이력 — 트리거 자동 기록, 8/17부터)  ② 지금 걸린 칸의 이번 학기 실적(보조)
-    el('hsTblCurHist').innerHTML=stEmpty(6,'불러오는 중…'); el('hsTblCur').innerHTML=stEmpty(5,'불러오는 중…');
-    try{ const h=await statsOp('stats_curation_history'); HSHIST=Array.isArray(h)?h:[];
-      el('hsTblCurHist').innerHTML = HSHIST.length ? HSHIST.map(r=>`<tr><td><b>${esc(r.title||('(제목 없는 칸) '+r.slot))}</b></td><td>${esc(fmtD(r.started_at))} ~ ${esc(fmtD(r.ended_at))}</td><td>${esc(r.area||'')}</td><td class="n">${r.books_n!=null?nf(r.books_n)+'권':'—'}</td><td class="n">${nf(r.views)}</td><td class="n">${nf(r.uses)}</td></tr>`).join('') : stEmpty(6,'아직 끝난 큐레이션이 없어요. 칸을 바꾸거나 내리면 그때부터 여기 쌓입니다.');
-    }catch(e){ el('hsTblCurHist').innerHTML=stErr(6,e); }
-    try{ const [f,t]=termRange(); const d=await statsOp('stats_curation',{from:kst(f), to:kst(nextDay(t))}); HSCUR={from:f,to:t,d:d};
-      const rows=Array.isArray(d)?d:[];
-      el('hsTblCur').innerHTML = rows.length ? rows.map(r=>`<tr><td><b>${esc(r.title||('(제목 없는 칸) '+r.slot))}</b><br><span class="db-sub2">칸: ${esc(r.slot)}</span></td><td>${esc(r.area||'')}</td><td class="n">${r.books_n!=null?nf(r.books_n)+'권':'—'}</td><td class="n">${nf(r.views)}</td><td class="n">${nf(r.uses)}</td></tr>`).join('') : stEmpty(5,'이번 학기 큐레이션 칸에서 일어난 조회·이용이 아직 없어요.');
-    }catch(e){ el('hsTblCur').innerHTML=stErr(5,e); }
-  }
+// 기간 안에 끝난 것만(종료일 기준)
+function hsInRange(){ const [f,t]=rangeOf('hsFrom','hsTo');
+  const ch=hsEndedList().filter(c=>{ const d=fmtD(c.end_date); return (!f||d>=f)&&(!t||d<=t); });
+  const cur=(HSHIST||[]).filter(r=>{ const d=fmtD(r.ended_at); return d&&(!f||d>=f)&&(!t||d<=t); }).sort((a,b)=>String(b.ended_at||'').localeCompare(String(a.ended_at||'')));
+  return {ch,cur}; }
+function hsSum(){
+  initHsDates();
+  const [f,t]=rangeOf('hsFrom','hsTo'); const a=mark('pkHsCh'), b=mark('pkHsCur'), on=[];
+  if(a) on.push('챌린지 이력'); if(b) on.push('큐레이션 이력');
+  const e=el('hsSumLine'); if(!e) return;
+  if(!on.length){ e.innerHTML=NEED_PICK; return; }
+  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b> 안에 끝난 것<br>엑셀 한 개 · 시트 <b>'+on.length+'장</b> — '+on.join(' · ')
+    +' <span class="chip end">학번 없음</span><br>파일 이름 &nbsp;<b>'+esc(hsFileName(f,t))+'.xlsx</b>';
 }
-function downloadHistExcel(){
-  if(hsTab==='ch'){ const today=ymd(new Date()); const ended=hsEndedList();   // 화면과 같은 순서(최근 끝난 순)·같은 값(확정본 우선)
-    if(!ended.length){ toast('끝난 챌린지가 없어요'); return; }
-    xlsxDownload('북스타_운영이력_챌린지_'+today, [{name:'끝난 챌린지',rows:[['기준일: '+today],[],['구분','챌린지','시작','종료','미션','시상','참가','완주','결과 확정'],...ended.map(c=>[chType(c.type),c.title,c.start_date||'',c.end_date||'',chMissionLabel(c.mission),chRewardText(c),c.part_v,c.done_v,c.fixed?c.fixed_at:'미확정(지금 값)'])]}]);
-  }else{ if(!HSCUR&&!HSHIST){ toast('먼저 큐레이션 탭을 불러와 주세요'); return; }
-    const sheets=[{name:'끝난 큐레이션',rows:[['기준일: '+ymd(new Date())],[],['큐레이션','시작','끝','위치','담긴 책','조회','이용'],...(HSHIST||[]).map(r=>[r.title||'',fmtD(r.started_at),fmtD(r.ended_at),r.area||'',r.books_n!=null?r.books_n:'',r.views,r.uses])]}];
-    if(HSCUR) sheets.push({name:'지금 걸린 칸 실적',rows:[[fmtRange(HSCUR.from,HSCUR.to)],[],['큐레이션','칸','영역','담긴 책','조회','이용'],...(HSCUR.d||[]).map(r=>[r.title||'',r.slot,r.area||'',r.books_n!=null?r.books_n:'',r.views,r.uses])]});
-    xlsxDownload('북스타_운영이력_큐레이션_'+ymd(new Date()), sheets);
-  }
+const hsFileName=(f,t)=>'북스타_운영이력_'+f+'_'+t;
+// 목록·엑셀 원천 로드(챌린지 = stats_challenges, 큐레이션 = stats_curation_history). 한 번 받으면 재사용, force 면 다시
+async function hsLoad(force){
+  const jobs=[];
+  if(force||!CHS.length) jobs.push(loadChs().catch(()=>{}));
+  if(force||!HSHIST) jobs.push(statsOp('stats_curation_history').then(h=>{ HSHIST=Array.isArray(h)?h:[]; }).catch(()=>{ if(!HSHIST) HSHIST=[]; }));
+  await Promise.all(jobs);
+}
+async function renderHistory(){ initHsDates(); hsSum(); const tb=el('hsTbl'); if(tb&&!HSHIST) tb.innerHTML=stEmpty(4,'불러오는 중…'); await hsLoad(true); renderHist(); }
+// '3. 지난 목록' — 구분·이름·기간·미션/위치, 최근 끝난 순 10줄, 숫자 없음. 체크 안 한 종류는 목록에서도 뺀다(시안 renderHist)
+function renderHist(){
+  const tb=el('hsTbl'); if(!tb) return;
+  const a=ck('pkHsCh'), b=ck('pkHsCur'); const {ch,cur}=hsInRange();
+  const items=[];
+  if(a) ch.forEach(c=>items.push({end:fmtD(c.end_date), kind:chType(c.type).replace(' 챌린지',''), name:c.title, term:fmtD(c.start_date)+' ~ '+fmtD(c.end_date), sub:chMissionLabel(c.mission)}));
+  if(b) cur.forEach(r=>items.push({end:fmtD(r.ended_at), kind:'큐레이션', name:r.title||('(제목 없는 칸) '+r.slot), term:fmtD(r.started_at)+' ~ '+fmtD(r.ended_at), sub:AREA_LABELS[r.area]||r.area||''}));
+  items.sort((x,y)=>String(y.end).localeCompare(String(x.end)));
+  tb.innerHTML = items.length ? items.slice(0,10).map(x=>`<tr><td><span class="chip end">${esc(x.kind)}</span></td><td><b>${esc(x.name)}</b></td><td>${esc(x.term)}</td><td class="db-sub2">${esc(x.sub)}</td></tr>`).join('')
+    : stEmpty(4,(a||b)?'이 기간에 끝난 것이 없어요.':'고른 자료가 없어요.');
+}
+function downloadHistExcel(btn){
+  const [f,t]=rangeOf('hsFrom','hsTo'); if(!rangeOk(f,t)) return;
+  const a=ck('pkHsCh'), b=ck('pkHsCur'); if(!a&&!b){ hsSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
+  return withBusy(btn, async()=>{
+    await hsLoad(false);
+    const {ch,cur}=hsInRange(); const per=[fmtRange(f,t)+' (종료일 기준)'], sheets=[];
+    if(a) sheets.push({name:'챌린지 이력',rows:[per,[],['구분','이름','시작','종료','미션','시상','참가','완주'],...ch.map(c=>[chType(c.type),c.title,c.start_date||'',c.end_date||'',chMissionLabel(c.mission),chRewardText(c),c.part_v,c.done_v])]});
+    if(b) sheets.push({name:'큐레이션 이력',rows:[per,[],['이름','시작','끝','위치','담긴 책','조회','이용'],...cur.map(r=>[r.title||'',fmtD(r.started_at),fmtD(r.ended_at),AREA_LABELS[r.area]||r.area||'',r.books_n!=null?r.books_n:'',r.views,r.uses])]});
+    xlsxDownload(hsFileName(f,t), sheets);
+  });
 }
 
 /* ====== 초기화 ====== */
@@ -3178,7 +3424,7 @@ try{ if(localStorage.getItem('bs_admin_mode')==='app') setMode('web'); }catch(e)
 rtInit('ntBodyRich','공지 내용을 입력하세요. 위 도구로 굵게·소제목·목록·인용·링크·이미지를 넣을 수 있어요.');
 rtInit('cmBodyRich','내용을 입력하세요 (선택). 굵게·색·목록·표·링크·이미지·파일 등을 넣을 수 있어요.');
 buildNtLoc();
-renderDash();
+initDashDates(); dbSum();   // 8/17 시안: 첫 화면(대시보드)은 집계를 부르지 않고 기간·시트 요약 줄만
 renderChallenges();
 loadSections();
 loadServerPrograms();
