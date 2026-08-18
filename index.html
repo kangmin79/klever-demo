@@ -511,6 +511,8 @@ body.dark .rsv-warn{color:#fca5a5;}
 #lcdReviews .rvh b{font-size:14px;}
 #lcdReviews .rv-writebtn{margin-left:auto;font-size:12.5px;padding:8px 13px;}
 .lcd-acts{padding:0 24px 18px;display:flex;flex-direction:column;gap:9px;}
+#ebStockNote:empty,#ebSimilar:empty{display:none;}   /* 8/19 빈 자리표시 div가 flex gap을 두 번 먹지 않게 */
+#ebSimilar .ebsim{margin-top:0;}
 .lcd-btn{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--bg-card);color:var(--text);}
 .lcd-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 .lcd-btn .ar{margin-left:auto;opacity:.6;}
@@ -6677,6 +6679,7 @@ function libDetail(isbn){
         ${(en.paper && !isPaperHold) ? paperWay(en.paperStatus||'', en.paperUrl||opacUrl) : ''}
       </div>` : '');
       })()}
+      <div id="ebSimilar"></div>
     </div>
     <div class="lcd-src">${(()=>{
       const tags=b.tags||null;
@@ -6721,6 +6724,9 @@ function libDetail(isbn){
       if(bc) loadEbookStock(bc, '', true);
       else if(_ebTag.isConnected) _ebTag.remove();
     });
+  }else if(isPaperHold){
+    // 8/19 항상 추천: 종이책 상세에도 같은 장르 전자책 3권(제어번호로 분류를 읽음) — 종이책→전자책 즉시읽기 흐름
+    loadSimilarEbooks('', b.t||'', {ctrl:reckey.replace(/^CATTOT/,''), avail:true});
   }
 }
 /* 전자책 실시간 재고 — 전자도서관이 상세화면에 노출하는 [대출 n/m · 예약 k]를 그대로 가져온다.
@@ -6760,6 +6766,7 @@ async function loadEbookStock(brcd, bookTitle, _retried){
       // 예약이 취소되는 등으로 다시 대출 가능해졌으면 원래의 '대출' 클릭으로 복원
       if(row&&row.dataset.borrowOnclick){ row.setAttribute('onclick',row.dataset.borrowOnclick); delete row.dataset.borrowOnclick; }
       if(note&&note.isConnected) note.innerHTML='';
+      loadSimilarEbooks(brcd, bookTitle, {avail:true});   // 8/19 항상 추천: 대출 가능일 때도 "같은 장르 · 바로 읽을 수 있는 다른 책"(주 액션 아래)
     }else{
       tag.textContent='대출 중';
       tag.style.color='#dc2626';
@@ -6776,9 +6783,8 @@ async function loadEbookStock(brcd, bookTitle, _retried){
         //  '대출 중'까지만 바뀌고 예약 버튼이 조용히 사라지던 버그)
         const wic=row&&row.querySelector('.wic');
         note.innerHTML=`<div class="lcd-way t-ebook" onclick="ebReserve('${esc(brcd)}')" style="margin-top:8px">
-          <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>
-          <div id="ebSimilar"></div>`;
-        loadSimilarEbooks(brcd, bookTitle);   // 추천 v2(8/18): 예약은 1순위, 그 아래 "같은 장르 · 지금 바로 읽을 수 있는" 3권
+          <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
+        loadSimilarEbooks(brcd, bookTitle, {avail:false});   // 추천 v2(8/18): 예약은 1순위, 그 아래 "같은 장르 · 지금 바로 읽을 수 있는" 3권
       }
     }
   }catch(e){ try{ if(tag&&tag.isConnected) tag.remove(); }catch(_){} }   // 확인 실패 — 배지 생략
@@ -6787,24 +6793,38 @@ async function loadEbookStock(brcd, bookTitle, _retried){
 //   "같은 장르(KDC) · 인기 · 지금 바로 읽을 수 있는" 3권. 줄거리 유사도 아님(급류를 찾은 학생은 '요즘 다들 읽는 소설'을 원한 것).
 //   서버(curate similar 모드)가 재고까지 확인해 대출 가능한 것만 준다. 카드 클릭 = 바로 대출(lcBorrow). 측정: data-origin="similar" →
 //   클릭 위임이 origin을 잡아 ebook_borrow 링크 이벤트에 origin=similar로 남는다(추천→대출 전환을 관리자 엑셀에서).
-async function loadSimilarEbooks(brcd, bookTitle){
+// 8/19 항상 추천으로 확장: 대출 가능일 때(avail:true)도, 종이책 상세(ctrl)에서도 같은 자리에 "같은 장르 전자책 3권". 문구만 상태별로 다르다.
+//   부하: 서버가 도서관 재고를 최대 24권 찌르므로 같은 책은 sessionStorage 10분 캐시(서버에도 10분 캐시).
+async function loadSimilarEbooks(brcd, bookTitle, opts){
   const box=document.getElementById('ebSimilar'); if(!box) return;
+  opts=opts||{};
+  const key=String(brcd||'')+'|'+String(opts.ctrl||'')+'|'+String(bookTitle||'').slice(0,40);
+  if(box.dataset.for===key) return;   // 재고 재확인 등으로 두 번 불려도 한 번만
+  box.dataset.for=key;
+  const heading = opts.ctrl ? '같은 장르 전자책 — 지금 바로 읽을 수 있어요'
+    : opts.avail ? '같은 장르 — 지금 바로 읽을 수 있는 다른 책'
+    : '기다리는 동안 — 같은 장르, 지금 바로 읽을 수 있어요';
   try{
-    const r=await fetch(US_CURATE_FN,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({similar:{brcd:String(brcd||''), title:bookTitle||'', count:3}})});
-    const d=await r.json();
+    const ck='ebsim:'+key; let d=null;
+    try{ const c=JSON.parse(sessionStorage.getItem(ck)||'null'); if(c&&c.t&&Date.now()-c.t<600000) d=c.d; }catch(e){}
+    if(!d){
+      const r=await fetch(US_CURATE_FN,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json'},
+        body:JSON.stringify({similar:{brcd:String(brcd||''), ctrl:String(opts.ctrl||''), title:bookTitle||'', count:3}})});
+      d=await r.json();
+      try{ if(d&&d.count) sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),d})); }catch(e){}
+    }
     if(!box.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
     const list=(d&&Array.isArray(d.candidates))?d.candidates.filter(c=>c&&c.isbn&&c.title):[];
-    if(!list.length){ box.remove(); return; }   // 대체재 없으면 조용히(예약 CTA만 남음)
+    if(!list.length){ box.innerHTML=''; return; }   // 대체재 없으면 조용히(주 액션만 남음)
     list.forEach(c=>{ curateToLibBook(c); US_CLICKMAP[String(c.isbn||'')]=c; });
-    box.innerHTML=`<div class="ebsim" data-origin="similar" data-origin-id="${esc(String(brcd||''))}">
-      <div class="ebsim-h">기다리는 동안 — 같은 장르, 지금 바로 읽을 수 있어요</div>
+    box.innerHTML=`<div class="ebsim" data-origin="similar" data-origin-id="${esc(String(brcd||opts.ctrl||''))}">
+      <div class="ebsim-h">${heading}</div>
       <div class="ebsim-row">${list.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,'');
-        return `<div class="ebsim-card" onclick="event.stopPropagation();ebSimOpen('${esc(isbn)}','${esc(String(brcd||''))}')" title="${esc(cleanT(c.title||''))}">
+        return `<div class="ebsim-card" onclick="event.stopPropagation();ebSimOpen('${esc(isbn)}','${esc(String(brcd||opts.ctrl||''))}')" title="${esc(cleanT(c.title||''))}">
           <div class="ebsim-cv">${c.cover?`<img src="${esc(c.cover)}" loading="lazy" decoding="async" data-t="${esc(cleanT(c.title||''))}" data-a="${esc(String(c.author||''))}" onerror="ncSwap(this)">`:ncCover(c)}</div>
           <div class="ebsim-t">${escD(cleanT(c.title||''))}</div><div class="ebsim-a">${escD(c.author||'')}</div>
           <div class="ebsim-go">지금 대출 가능</div></div>`; }).join('')}</div></div>`;
-  }catch(e){ try{ if(box&&box.isConnected) box.remove(); }catch(_){} }
+  }catch(e){ try{ if(box&&box.isConnected) box.innerHTML=''; }catch(_){} }
 }
 // 대체 추천 카드 클릭 → 바로 대출하지 않고 그 책의 상세(표지·설명·재고)로 이동, 거기서 '전자책 바로 읽기'로 대출(사용자 지시 8/18).
 //   상세 모달(#lcDetail)에 data-origin=similar를 남겨 이후 대출 이벤트가 origin=similar로 기록되게 한다(4초 클릭창 밖에서도 측정 유지).

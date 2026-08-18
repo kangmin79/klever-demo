@@ -24,6 +24,8 @@ const MODEL = "claude-haiku-4-5";
 const SONNET = "claude-sonnet-4-6";   // 제목·부제 카피라이팅 전용(품질↑) — 라우팅/검색은 Haiku 유지
 const EMB_MODEL = "text-embedding-3-small";
 const LIMIT_DEF = 24;
+const SIM_CACHE = new Map<string, { t: number; body: any }>();   // similar 모드 결과 캐시(8/19 항상 추천 → 도서관 서버 재고 조회 절약)
+const SIM_TTL = 10 * 60 * 1000;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -390,6 +392,11 @@ Deno.serve(async (req) => {
       const t0 = Date.now();
       const want = Math.min(Math.max(Number(body.similar.count) || 3, 1), 6);
       const brcd = String(body.similar.brcd || "").replace(/[^0-9A-Za-z]/g, "");
+      const ctrl = String(body.similar.ctrl || "").replace(/[^0-9A-Za-z]/g, "");   // 8/19: 종이책 제어번호(CATTOT 뒤 숫자) — 종이책 상세에서도 같은 장르 전자책 추천
+      // 8/19 항상 추천(대출 가능일 때도) → 열 때마다 도서관 서버 재고를 찌르지 않도록 10분 캐시(아이솔레이트 메모리, 결과 있을 때만)
+      const cacheKey = `${brcd}|${ctrl}|${want}|${String(body.similar.title || "").slice(0, 40)}`;
+      const cached = SIM_CACHE.get(cacheKey);
+      if (cached && Date.now() - cached.t < SIM_TTL) return json({ ...cached.body, cached: true, tookMs: Date.now() - t0 });
       const hdr = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "content-type": "application/json" };
       const get = (u: string) => fetch(u, { headers: hdr }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
       // 시리즈·판본 대표 1권 키: 부제(:) 앞 본제목 → 권차(". 2", "v.3", "제2권", "(상)") 제거 → 공백·구두점 제거
@@ -400,6 +407,7 @@ Deno.serve(async (req) => {
         .replace(/[\s\-·,.'"’“”()（）]/g, "").toLowerCase();
       let src: any = null;
       if (brcd) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&barcode=eq.${encodeURIComponent(brcd)}&limit=1`))[0] || null;
+      if (!src && ctrl) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.paper&ctrl=eq.${encodeURIComponent(ctrl)}&limit=1`))[0] || null;
       if (!src && body.similar.title) {   // 바코드로 못 찾으면 제목 핵심부로 1회(구 바코드 형식 등)
         const core = sani(String(body.similar.title)).split(/\s*[:\-(\[]/)[0].trim();
         if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&title=ilike.*${encodeURIComponent(core)}*&limit=1`))[0] || null;
@@ -432,8 +440,10 @@ Deno.serve(async (req) => {
         smEbook: true, smEbookProvider: b.vendor || "", smEbookUrl: `https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd=${b.brcd}`,
         brcd: String(b.brcd), crema: false, cremaUrl: "", _avail: true, _stock: { loaned: s.loaned, total: s.total }, _source: "similar", _kind: "ebook",
       }));
-      return json({ similar: true, count: candidates.length, candidates,
-        source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked, tookMs: Date.now() - t0 });
+      const out = { similar: true, count: candidates.length, candidates,
+        source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked };
+      if (candidates.length) { if (SIM_CACHE.size > 500) SIM_CACHE.clear(); SIM_CACHE.set(cacheKey, { t: Date.now(), body: out }); }
+      return json({ ...out, tookMs: Date.now() - t0 });
     }
 
     const query = body.query;
