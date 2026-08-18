@@ -6562,6 +6562,7 @@ async function backfillPool(){
 }
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
+  try{ const _ov=document.getElementById('lcDetail'); if(_ov){ _ov.removeAttribute('data-origin'); _ov.removeAttribute('data-origin-id'); } }catch(e){}   // 대체추천(ebSimOpen)이 남긴 origin 표식 초기화
   window._lcCurBook=b;   // 8/14: 로그인 다녀오면 이 책으로 되돌아오기 위한 현재 책 기억
   bxEvent('view',{book:b});   // 측정: 조회(상세 열림)
   // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
@@ -6762,11 +6763,17 @@ async function loadSimilarEbooks(brcd, bookTitle){
     box.innerHTML=`<div class="ebsim" data-origin="similar" data-origin-id="${esc(String(brcd||''))}">
       <div class="ebsim-h">기다리는 동안 — 같은 장르, 지금 바로 읽을 수 있어요</div>
       <div class="ebsim-row">${list.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,'');
-        return `<div class="ebsim-card" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')" title="${esc(cleanT(c.title||''))}">
+        return `<div class="ebsim-card" onclick="event.stopPropagation();ebSimOpen('${esc(isbn)}','${esc(String(brcd||''))}')" title="${esc(cleanT(c.title||''))}">
           <div class="ebsim-cv">${c.cover?`<img src="${esc(c.cover)}" loading="lazy" decoding="async" data-t="${esc(cleanT(c.title||''))}" data-a="${esc(String(c.author||''))}" onerror="ncSwap(this)">`:ncCover(c)}</div>
           <div class="ebsim-t">${escD(cleanT(c.title||''))}</div><div class="ebsim-a">${escD(c.author||'')}</div>
-          <div class="ebsim-go">지금 바로 읽기</div></div>`; }).join('')}</div></div>`;
+          <div class="ebsim-go">지금 대출 가능</div></div>`; }).join('')}</div></div>`;
   }catch(e){ try{ if(box&&box.isConnected) box.remove(); }catch(_){} }
+}
+// 대체 추천 카드 클릭 → 바로 대출하지 않고 그 책의 상세(표지·설명·재고)로 이동, 거기서 '전자책 바로 읽기'로 대출(사용자 지시 8/18).
+//   상세 모달(#lcDetail)에 data-origin=similar를 남겨 이후 대출 이벤트가 origin=similar로 기록되게 한다(4초 클릭창 밖에서도 측정 유지).
+function ebSimOpen(isbn, fromBrcd){
+  libDetail(isbn);
+  try{ const ov=document.getElementById('lcDetail'); if(ov){ ov.setAttribute('data-origin','similar'); ov.setAttribute('data-origin-id',String(fromBrcd||'')); } }catch(e){}
 }
 // 전자책 예약 — 개인 계정이 있어야 순번이 내 것이 된다(공유계정으론 의미 없음)
 async function ebReserve(brcd){
@@ -7885,7 +7892,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260818c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260818d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
