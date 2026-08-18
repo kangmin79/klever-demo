@@ -58,11 +58,15 @@ def main():
     print("최근6개월 %d권 (지난달 대비, NEW %d)" % (len(cur), sum(1 for r in cur if r["brcd"] not in prev_rank)))
 
     nocov = 0
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     for r in cur:
         r["isbn13"], r["cover"] = aladin(r["title"])
         r["kind"] = "종이책"; r["period_days"] = WINDOW
         r["prev_rank"] = prev_rank.get(r["brcd"])  # None = NEW
         r["detail"] = "https://lib.semyung.ac.kr/search/detail/" + r["brcd"]
+        # merge-duplicates 업서트는 payload에 없는 컬럼은 안 건드린다 — updated_at을 안 보내면
+        # 이미 있던 brcd(대부분)는 8/4 최초 삽입 시각에 영원히 멈춰 있어 "갱신이 죽었나" 오판하게 된다(8/19 발견).
+        r["updated_at"] = now_iso
         if not r["cover"]:
             nocov += 1
         time.sleep(0.12)
