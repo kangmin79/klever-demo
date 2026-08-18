@@ -153,7 +153,7 @@ body.dark .bl-sub{color:var(--gold);}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
 #page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
 /* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
-#page-collection{padding-top:64px;}
+/* #page-collection padding-top 64px 삭제(8/18 사장님 요청): 소개글 위치를 우리도서관·독서챌린지(.page 32px)와 동일하게 */
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
 body.with-sidenav .page#page-detail{padding-left:24px;}
 
@@ -342,6 +342,15 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .ml-rkbar-l{font-size:13px;font-weight:700;color:var(--text);cursor:pointer;}
 .ml-rkbar-r{font-size:12px;color:var(--text-light);}
 .ml-rgrid{display:grid;grid-template-columns:1fr;gap:24px 40px;}
+/* 모바일 랭킹(8/18 사장님 요청): 밀리처럼 3권씩 한 열, 옆으로 넘겨 보기 — 세로 12줄 대신 4열×3권 가로 스크롤 */
+@media(max-width:559px){
+  .ml-rgrid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(3,auto);grid-auto-columns:84%;gap:16px 18px;
+    overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:2px 0 6px;}
+  .ml-rgrid::-webkit-scrollbar{display:none;}
+  .ml-rgrid .ml-rkc{scroll-snap-align:start;}
+  .ml-rgrid .ml-rkc-cv{width:70px;}
+}
 @media(min-width:560px){.ml-rgrid{grid-template-columns:1fr 1fr;}}
 @media(min-width:1000px){.ml-rgrid{grid-template-columns:1fr 1fr 1fr 1fr;}}
 .ml-rkc{display:flex;gap:14px;cursor:pointer;align-items:flex-start;}
@@ -2208,7 +2217,9 @@ body.dark .viewer-pane p.hl-pair{background:rgba(212,169,59,.12);}
 }
 .hl-popup button{padding:6px 10px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text);background:var(--bg-input);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}   /* nowrap: 모바일에서 "하이라이/트" 줄바꿈 깨짐 방지 */
 .hl-popup button:hover{background:var(--primary-bg);}
-@media (max-width:600px){ .hl-popup{padding:5px;gap:3px;} .hl-popup button{padding:6px 7px;font-size:11.5px;gap:4px;} }   /* 좁은 화면: 4버튼 한 줄 유지 */
+@media (max-width:600px){ .hl-popup{padding:5px;gap:3px;} .hl-popup button{padding:6px 7px;font-size:11.5px;gap:4px;} }
+/* 폰: 선택 툴바를 화면 하단 고정(8/18) — 위쪽 브라우저 기본 메뉴(복사·공유…)와 분리 */
+.hl-popup.hl-popup-bottom{top:auto !important;bottom:calc(14px + env(safe-area-inset-bottom));z-index:6100;box-shadow:0 8px 28px rgba(0,0,0,.22);}   /* 좁은 화면: 4버튼 한 줄 유지 */
 
 /* 독서 통계 칩 */
 .reader-stats{display:inline-flex;gap:10px;align-items:center;font-size:11px;color:var(--text-sub);}
@@ -3025,7 +3036,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <label class="qc-bi" id="qcBiWrap"><input type="checkbox" id="qcBi" onchange="renderQuoteCard()"> 원문·번역 함께 담기</label>
     <div class="qc-actions">
       <button class="qc-btn primary" onclick="saveQuoteCard()">📥 이미지 저장</button>
-      <button class="qc-btn" id="qcShareBtn" onclick="shareQuoteCard()">↗ 공유</button>
+      <!-- '공유' 버튼 삭제(8/18 사장님 요청) — 이미지 저장만. shareQuoteCard()는 남겨둠(미사용) -->
     </div>
   </div>
 </div>
@@ -4133,10 +4144,13 @@ function setupHighlightHandlers(){
     // 먼저 표시해 실제 폭을 잰 뒤 좌우 클램프 — 좁은 화면에서 오른쪽 잘림 방지
     // 8/17 사장님 수정요청(폰에서 우리 메뉴가 '복사·공유·웹 검색' 뒤에 숨음): 폰은 선택 문장 바로 위(브라우저 기본 툴바 자리)를 피해
     //   화면 맨 위 가운데에 띄운다. 브라우저 기본 툴바·구글 검색 바 자체는 웹에서 끌 수 없음.
+    // 8/18 사장님 수정요청: 폰에서는 화면 '맨 아래' 가운데에 고정(브라우저 기본 툴바는 선택 문장 위에 뜨므로 아래에 두면 안 겹침)
     if(window.innerWidth<=600){
+      popup.classList.add('hl-popup-bottom');
       popup.style.left = Math.max(6, (window.innerWidth - popup.offsetWidth)/2) + 'px';
-      popup.style.top  = '10px';
+      popup.style.top  = 'auto';
     } else {
+      popup.classList.remove('hl-popup-bottom');
       const px = rect.left + rect.width/2 - popup.offsetWidth/2;
       popup.style.left = Math.max(8, Math.min(px, window.innerWidth - popup.offsetWidth - 8)) + 'px';
       popup.style.top  = Math.max(8, rect.top - 44) + 'px';
@@ -4842,7 +4856,7 @@ function openQuoteCard(){
   document.getElementById('qcBi').checked=false;
   document.getElementById('qcThemes').innerHTML=QC_THEMES.map(t=>
     `<span class="qc-theme${t.id===_qc.theme?' on':''}" data-t="${t.id}" title="${t.label}" style="background:linear-gradient(135deg,${t.bg[0]},${t.bg[1]})" onclick="setQuoteTheme('${t.id}')"></span>`).join('');
-  document.getElementById('qcShareBtn').style.display=(navigator.canShare&&navigator.share)?'':'none';
+  { const _sb=document.getElementById('qcShareBtn'); if(_sb) _sb.style.display='none'; }   // 공유 버튼 삭제(8/18)
   document.getElementById('qcOverlay').classList.add('open');
   renderQuoteCard();
 }
@@ -6179,6 +6193,7 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
         submitted:!!(cur.submitted||x.submitted),
         read_pct:Math.max(cur.read_pct||0, x.read_pct||0),
         read_sec:Math.max(cur.read_sec||0, x.read_sec||0),   // 완독율 v4: 독서시간도 다기기 최댓값 병합
+        quiz_total:(x.quiz_total||cur.quiz_total||0),   // 미션 패널 퀴즈 문항수(카드 '퀴즈 n/N')
         ts:Date.now()
       }));
     });
@@ -7892,7 +7907,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260818d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260818e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -8682,6 +8697,7 @@ async function mpHydrate(ch, m, stu){
     }catch(e){} })(),
   ]);
   if(!currentBook || currentBook.id!==_bid || _mpCtx.bookId!==_bid) return;   // 책 전환됨 — 낡은 하이드레이트 중단
+  _mpMirrorLocal();   // 서버에 있던 시도 기록을 로컬 카드 캐시에도(8/18)
   mpRefreshTotal(stu.id);
   chalActiveMissions(m).forEach(x=>{
     if(x.kind==='quiz') return;
@@ -8974,6 +8990,7 @@ async function mpAnswer(el,q,it){
   // 진행 기록(정답·오답 모두 = "풀었음") → 서버 저장 + 진행바 + 완료체크
   _mpCtx.ans[it.id]={ok:right, pick:chosen};
   mpSaveProgress();
+  _mpMirrorLocal();   // 8/18 사장님 수정요청(귀향 퀴즈 3개 풀고 닫으면 카드가 0/0): 내 챌린지 카드는 로컬 캐시만 읽으므로 여기에도 기록
   mpRenderProgress();
   mpCheckQuizDone();
   mpCheckComplete();
@@ -9055,7 +9072,18 @@ async function mpSaveProgress(){
     await fetch(`${SB_REST}/bookstar_challenge_results?on_conflict=student_id,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
        body:JSON.stringify({student_id:_mpCtx.student, book_id:_mpCtx.bookId, challenge_id:_mpCtx.chId,
-         ans:_mpCtx.ans, quiz_total:_mpCtx.quizCount, updated_at:new Date().toISOString()})});
+         ans:_mpCtx.ans, quiz_total:_mpCtx.quizCount,
+         quiz_ok:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length, score:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length*10,   // 8/18: 완료 목록·관리자도 같은 숫자를 보게
+         updated_at:new Date().toISOString()})});
+  }catch(e){}
+}
+// 미션 패널(DB 퀴즈) 진행을 로컬 캐시에 미러 — 내 챌린지 카드(_chalBookScore/_chalBookState)는 로컬만 읽는다.
+//   ans 키는 퀴즈 항목 UUID(장면 챌린지의 'si-qi'와 다르지만 카드는 값의 ok만 센다), 문항수는 quiz_total로 저장.
+function _mpMirrorLocal(extra){
+  try{
+    if(!_mpCtx||!_mpCtx.bookId) return;
+    const cur=_chalRead(_mpCtx.bookId)||{};
+    _chalMerge(_mpCtx.bookId, Object.assign({ ans:Object.assign({}, cur.ans||{}, _mpCtx.ans||{}), quiz_total:(_mpCtx.quizCount||cur.quiz_total||0) }, extra||{}));
   }catch(e){}
 }
 // 모든 미션 수행 시: 완주 보너스(⭐30, 멱등) + enroll done + 축하
@@ -9064,6 +9092,7 @@ async function mpCheckComplete(){
   const {done,total}=mpProgress();
   if(!(total>0 && done>=total)) return;
   _mpCtx.complete=true;
+  _mpMirrorLocal({mp_done:true});   // 내 챌린지 카드 '완료 ✓'(8/18)
   const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:'challenge_done',p_ref:_mpCtx.chId});
   if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
   try{
@@ -10004,6 +10033,7 @@ function closeViewer(){
   if(document.fullscreenElement) document.exitFullscreen?.();
   document.querySelector('.viewer-shell')?.classList.remove('maxed');
   document.getElementById('viewerOverlay').classList.remove('open');
+  try{ if(typeof renderQuestMap==='function') renderQuestMap(); }catch(e){}   // 8/18: '챌린지 닫기' 직후 내 챌린지 카드(퀴즈 n/N·점수) 즉시 반영
 }
 
 function finishChallenge(){
@@ -10176,7 +10206,7 @@ function _chalBookState(bookId){
   try{
     const sv = _chalRead(bookId);
     if(!sv) return 'none';
-    if(sv.submitted) return 'done';
+    if(sv.submitted || sv.mp_done) return 'done';   // mp_done = 미션 패널 챌린지 완주(8/18)
     if(sv.ans && Object.keys(sv.ans).length) return 'progress';
   }catch(e){}
   return 'none';
@@ -10188,9 +10218,11 @@ function _chalBookScore(bookId){
     if(!sv) return null;
     const arr = Object.values(sv.ans||{});
     const ok = arr.filter(a=>a.ok).length;
+    // 문항수: 장면 챌린지(하드코딩 3권)는 CHALLENGE_SCENES, DB 퀴즈(미션 패널) 책은 quiz_total(8/18 — 없으면 '0/0'으로 보이던 버그)
     const total = (typeof CHALLENGE_SCENES!=='undefined' && CHALLENGE_SCENES[bookId])
-      ? CHALLENGE_SCENES[bookId].scenes.reduce((s,x)=>s+x.quiz.length,0) : 0;
-    return {answered:arr.length, ok, total, pts: ok*10 + (sv.submitted?50:0), submitted:!!sv.submitted};
+      ? CHALLENGE_SCENES[bookId].scenes.reduce((s,x)=>s+x.quiz.length,0) : (sv.quiz_total||arr.length||0);
+    if(!arr.length && !sv.submitted && !sv.mp_done) return null;   // 시도 기록이 없으면 '아직 시작 안 함'(빈 0/0 대신)
+    return {answered:arr.length, ok, total, pts: ok*10 + (sv.submitted?50:0), submitted:!!(sv.submitted||sv.mp_done)};
   }catch(e){ return null; }
 }
 function _matchBookByTitle(t){
