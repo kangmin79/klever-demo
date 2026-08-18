@@ -381,6 +381,15 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 #lcDetail{position:fixed;inset:0;background:rgba(15,20,35,.55);display:none;z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
 #lcDetail.on{display:flex;}
 .lcd{position:relative;background:var(--bg-card);width:100%;max-width:430px;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.42);max-height:90vh;overflow-y:auto;}
+/* 8/19 폰: 좌우 20px 여백 + 둥근 카드가 길쭉해 보임 → 화면 폭 꽉 채우는 바텀시트(밀리·리디 방식). 데스크톱은 그대로 */
+@media (max-width:600px){
+  #lcDetail{padding:0;align-items:flex-end;}
+  .lcd{max-width:none;border-radius:20px 20px 0 0;max-height:92dvh;box-shadow:0 -12px 40px rgba(0,0,0,.28);padding-bottom:env(safe-area-inset-bottom);animation:lcdUp .26s cubic-bezier(.2,.8,.2,1);}
+  .lcd::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--border);margin:10px auto 0;}
+  .lcd-top{padding-top:14px;}
+  .lcd-x{top:14px;}
+}
+@keyframes lcdUp{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
 .lcd-x{position:absolute;top:12px;right:16px;font-size:24px;color:var(--text-light);cursor:pointer;z-index:3;line-height:1;}
 .lcd-top{display:flex;gap:16px;padding:26px 24px 20px;}
 .lcd-cv{flex:0 0 98px;width:98px;height:140px;border-radius:9px;overflow:hidden;background:var(--bg-input);box-shadow:0 10px 24px rgba(20,20,45,.26);}
