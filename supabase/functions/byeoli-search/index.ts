@@ -67,6 +67,8 @@ const seriesKey = (t: string) => String(t || "").replace(/\[[^\]]*\]/g, " ").spl
   .replace(/\s*(?:v\.|vol\.?|제)?\s*\d+\s*(?:권|부|편)?\s*$/i, "")
   .replace(/\s*[.．]\s*\d{1,2}\s+.*$/, "")   // 중간 권차 "설득의 심리학 . 2  Yes를…" → "설득의 심리학"
   .replace(/[\s\-·,.'"’“”()（）]/g, "").toLowerCase();
+// 저자 첫 토큰(3.7 시리즈dedup과 동일 규칙) — 동명이서(같은 제목·다른 저자) 과병합 방지용 dedup 키 성분.
+const authKey = (a: string) => String(a || "").split(/[,\s;/]+/)[0].replace(/[^가-힣a-z0-9]/gi, "").toLowerCase();
 
 // ── 공통 후보 스키마 매퍼(클라 *ToCand를 서버로 이전 — 화면은 이제 매핑 안 함) ──
 // curate 후보는 이미 카드 형태(toCand) → 통과시키며 표식만 부착.
@@ -154,8 +156,12 @@ function rrfFuse(pulls: Pulled[], cfg: typeof CONFIG) {
   for (const p of pulls) {
     const w = cfg.weights[p.name] ?? 1.0;
     p.items.forEach((cand, rank) => {
-      const key = normT(cand.title);
-      if (!key) return;
+      const tKey = normT(cand.title);
+      if (!tKey) return;
+      // 저자 키까지 섞는다(8/19 fix) — 제목만으로 합치면 동명이서(같은 제목·다른 저자)가 한 카드로 뭉개져
+      //   대표 카드의 제목·저자는 A책인데 병합된 smEbookUrl/brcd는 B책 것이 붙는 사고가 난다.
+      //   3.7 시리즈dedup은 이미 저자 키를 쓰는데(과병합 방지 목적 명시) 정작 필드까지 바꿔치는 이 단계엔 없었음.
+      const key = tKey + "|" + authKey(cand.author);
       const add = w / (cfg.rrfK + rank);
       const pin = cfg.exactPin && p.name === "keyword" && cand._rk === 0;
       const boost = (p.name === "keyword" && cand._rk === 1) ? cfg.prefixBoost : 0;
@@ -449,8 +455,7 @@ Deno.serve(async (req) => {
     //   즉시읽기 정렬 '뒤'에 하므로 전자책(바로 읽기) 판본이 종이 판본을 이기고 대표로 남는다.
     {
       const seenS = new Set<string>(); const dd: any[] = [];
-      // 저자 첫 토큰을 키에 섞어 '같은 본제목·다른 책'(예: 「사랑」 시집 vs 소설)의 과병합을 막는다
-      const authKey = (a: string) => String(a || "").split(/[,\s;/]+/)[0].replace(/[^가-힣a-z0-9]/gi, "").toLowerCase();
+      // 저자 키를 섞어 '같은 본제목·다른 책'(예: 「사랑」 시집 vs 소설)의 과병합을 막는다(authKey = 상단 공용 정의, rrfFuse와 동일 규칙)
       for (const b of out) { const k = (seriesKey(b.title) || normT(b.title)) + "|" + authKey(b.author); if (seenS.has(k)) continue; seenS.add(k); dd.push(b); }
       out = dd;
     }

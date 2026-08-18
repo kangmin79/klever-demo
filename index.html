@@ -6576,20 +6576,32 @@ async function backfillPool(){
   }
   scheduleGridRender();
 }
+// 세명대 실제 키(전자책 바코드 또는 종이책 CATTOT) 추출 — isbn 접두(sm-)에만 의존하면 깨진다(8/19 발견):
+//   사서 AI 큐레이션이 book_pool 경로로 찾은 후보를 담을 때 isbn을 원본 ISBN13 그대로 저장하고
+//   sm-접두를 안 붙이는 경우가 있다(_sm:true·tags:['ebook']인데 isbn='9791190238977' 같은 순수 ISBN13).
+//   ISBN13은 13자리 숫자라 우연히 바코드처럼 보여 그대로 조회하면 재고·줄거리 조회가 조용히 실패하고,
+//   lcBorrow는 대출 없이 전자책 URL을 그냥 열어 빈 화면이 뜬다 — lib/_pp URL 안의 진짜 키를 먼저 본다.
+function smKeyOf(b){
+  const fromLib=(String(b.lib||b.smEbookUrl||'').match(/[?&]brcd=([0-9A-Za-z]+)/)||[,''])[1];
+  if(fromLib) return fromLib;
+  const fromPaper=(String(b._pp||b.smPaperUrl||'').match(/CATTOT\d+/)||[''])[0];
+  if(fromPaper) return fromPaper;
+  return (b.isbn||'').replace(/^sm-/,'');
+}
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
   try{ const _ov=document.getElementById('lcDetail'); if(_ov){ _ov.removeAttribute('data-origin'); _ov.removeAttribute('data-origin-id'); } }catch(e){}   // 대체추천(ebSimOpen)이 남긴 origin 표식 초기화
   window._lcCurBook=b;   // 8/14: 로그인 다녀오면 이 책으로 되돌아오기 위한 현재 책 기억
   bxEvent('view',{book:b});   // 측정: 조회(상세 열림)
   // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
-  const en = (b._sm && b.isbn) ? SM_ENRICH[b.isbn.replace(/^sm-/,'')] : null;
+  const reckey=smKeyOf(b);
+  const en = (b._sm && b.isbn) ? SM_ENRICH[reckey] : null;
   const desc = b.description || (en&&en.desc) || '';
   const pubYear = b.pubYear || (en&&en.year) || '';
   const publisher = b.publisher || (en&&en.publisher) || '';
   const genre = (en&&en.genre) || '';
   // 세명대 통합검색 딥링크(제목) — 종이책 소장·구독 전자책 확인용
   const opacUrl = 'https://lib.semyung.ac.kr/search/tot/result?st=KWRD&si=TOTAL&q='+encodeURIComponent(cleanT(b.t||''));
-  const reckey=(b.isbn||'').replace(/^sm-/,'');
   const isPaperHold=/^CATTOT/.test(reckey);   // OPAC 종이책 → 라이브 대출가능 현황 표시
   // 전자책+종이책 책: 짝이 되는 종이책 소장키(CATTOT) — paperUrl(or _pp)에서 추출 → 있으면 종이책 줄을 탭 펼침으로
   const paperHoldKey=(()=>{ const m=String((en&&en.paperUrl)||b._pp||'').match(/CATTOT\d+/); return m?m[0]:''; })();
@@ -6872,9 +6884,9 @@ function bridgeHTML(b){
 }
 function lcBorrow(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
-  const reckey=(b.isbn||'').replace(/^sm-/,'');
+  const reckey=smKeyOf(b);   // isbn 접두 대신 lib URL의 진짜 brcd 우선(8/19) — 아니면 대출 없이 뷰어 URL을 그냥 열어 빈 화면
   // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
-  const isEbookLoan = /^sm-/.test(b.isbn||'') && /^\d+$/.test(reckey) &&
+  const isEbookLoan = /^\d+$/.test(reckey) &&
     ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
   // 미연동자 전자책 대출 차단(8/9) — 예전엔 공유계정(관장님)으로 대신 빌려줘서 관장님 이름으로
   // 기록이 남고, 5칸이 차면 남이 읽던 책이 강제 반납됐다. 창을 열기 전에 막는다.
