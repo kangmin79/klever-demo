@@ -645,15 +645,94 @@ TARGET_WHERE = {   # 임베딩 대상: 전자책 전부 + 종이책 단행본(m)
     "paper": "kind='paper' and (mat_type in ('m','t','') or mat_type is null)",
 }
 
-def embed_books(limit=None, target="ebook"):
-    """임베딩 재생성(P3): title+author+publisher(+description)를 text-embedding-3-small로.
-    OpenAI 키 = hwik-web/.env OPENAI_API_KEY. 100건/요청 배치, 저장은 40행/SQL."""
+def _embed_text(r):
+    """임베딩 입력 문자열 — 레시피는 여기 한 곳에서만 정의한다.
+    신규 임베딩(embed_books)과 재임베딩(reembed_stale)이 반드시 같은 문자열을 만들어야
+    세대가 섞이지 않는다(embed_text 컬럼에 그대로 저장돼 사후 검증도 이 값으로 한다)."""
+    t = re.sub(r"\s*\[전자책\]\s*", " ", r["title"] or "").strip()
+    parts = [t, r.get("author") or "", r.get("publisher") or ""]
+    if r.get("description"): parts.append((r["description"] or "")[:400])
+    return " / ".join(p for p in parts if p)[:1500] or "무제"
+
+def _openai_key():
     okey = None
     envp = os.path.join(os.path.expanduser("~"), "Desktop", "hwik-web", ".env")
     for line in open(envp, encoding="utf-8", errors="replace"):
         m = re.match(r"\s*OPENAI_API_KEY\s*=\s*(\S+)", line)
         if m: okey = m.group(1).strip().strip("\"'")
     if not okey: sys.exit("OPENAI_API_KEY 없음 (hwik-web/.env)")
+    return okey
+
+def _embed_call(texts, okey):
+    """OpenAI 임베딩 1배치. 1회 재시도 후 실패하면 None(호출자가 건너뛰고 다음 실행에서 회수)."""
+    body = json.dumps({"model": "text-embedding-3-small", "input": texts}).encode()
+    for attempt in (1, 2):
+        try:
+            d = json.loads(http("https://api.openai.com/v1/embeddings", data=body, headers={
+                "Authorization": "Bearer " + okey, "Content-Type": "application/json"}, timeout=120))
+            return [x["embedding"] for x in d["data"]]
+        except Exception as e:
+            if attempt == 1:
+                print(f"  임베딩 실패: {e} — 20초 후 재시도"); time.sleep(20)
+            else:
+                print(f"  재실패: {e} — 건너뜀(재실행 시 회수)"); return None
+
+# 줄거리가 임베딩에 안 실린 행 = 재임베딩 대상.
+# 판별식은 embed_text에 description 앞 30자가 들어있는지 (8/6 semyung_books 때와 같은 방식).
+# ⚠️ 비교 전에 제어문자를 공백으로 바꾼다 — esc()가 저장 시 그렇게 바꾸기 때문.
+#    안 맞추면 줄바꿈으로 시작하는 줄거리 5건이 영원히 "미반영"으로 잡힌다(8/18 실측).
+STALE_WHERE = ("embedding is not null and description is not null and description<>'' "
+               "and position(left(regexp_replace(description,'[[:cntrl:]]+',' ','g'),30) "
+               "in coalesce(embed_text,''))=0")
+
+def reembed_stale(limit=None, kinds=("paper", "ebook"), page=2000):
+    """줄거리 백필(8/9~8/18) 이후 임베딩에 줄거리가 안 실린 행을 제자리 갱신.
+
+    embedding을 지웠다 다시 채우지 않는다 — 같은 UPDATE를 두 번 하는 셈이고
+    그 사이 의미검색이 0건이 되기 때문. 덮어쓰기 결과는 삭제 후 재생성과 동일하다.
+    ⚠️ 실행 전 HNSW(idx_tulip_emb_paper)를 내릴 것 — 인덱스가 있으면 행당 449ms(34배),
+    내리면 13ms. 끝나면 인스턴스 임시 승급(Large) 후 재빌드 → Micro 복귀.
+    커서(ctrl)로 페이지를 넘기므로 중단해도 이어서 실행하면 남은 것만 처리한다."""
+    okey = _openai_key()
+    total = 0
+    for kind in kinds:
+        cur, done = "", 0
+        while True:
+            rows = json.loads(sql(
+                "select ctrl, title, author, publisher, description from semyung_tulip "
+                f"where kind='{kind}' and {STALE_WHERE} and ctrl > {esc(cur)} "
+                f"order by ctrl limit {page if not limit else min(page, limit - done)}",
+                timeout=300))
+            if not rows: break
+            cur = rows[-1]["ctrl"]
+            # 병목은 OpenAI가 아니라 DB 쓰기(행당 ~175ms — 6KB 벡터 TOAST 재작성 + 인덱스 7개).
+            # 청크를 스레드로 겹쳐 돌려 대기시간을 메운다. 4스레드에서 서버가 죽지 않는 걸 확인함.
+            def do_chunk(chunk):
+                texts = [_embed_text(r) for r in chunk]
+                embs = _embed_call(texts, okey)
+                if embs is None: return 0
+                n = 0
+                for j in range(0, len(chunk), 40):
+                    stmts = []
+                    for r, emb, tx in zip(chunk[j:j+40], embs[j:j+40], texts[j:j+40]):
+                        vec = "[" + ",".join("%.6f" % v for v in emb) + "]"
+                        stmts.append(f"update semyung_tulip set embedding='{vec}'::vector, "
+                                     f"embed_text={esc(tx)} where ctrl={esc(r['ctrl'])}")
+                    try: sql("; ".join(stmts), timeout=180); n += len(stmts)
+                    except Exception as e: print(f"  저장 실패({len(stmts)}행): {e}")
+                return n
+            chunks = [rows[i:i+100] for i in range(0, len(rows), 100)]
+            with cf.ThreadPoolExecutor(max_workers=4) as ex:
+                list(ex.map(do_chunk, chunks))
+            done += len(rows); total += len(rows)
+            print(f"  [{kind}] {done:,}건 (커서 {cur}) {time.strftime('%H:%M:%S')}")
+            if limit and done >= limit: break
+    print(f"[reembed] 완료 {total:,}건")
+
+def embed_books(limit=None, target="ebook"):
+    """임베딩 재생성(P3): title+author+publisher(+description)를 text-embedding-3-small로.
+    OpenAI 키 = hwik-web/.env OPENAI_API_KEY. 100건/요청 배치, 저장은 40행/SQL."""
+    okey = _openai_key()
     res = json.loads(sql("select ctrl, title, author, publisher, description from semyung_tulip "
                          f"where {TARGET_WHERE[target]} and embedding is null order by ctrl"
                          + (f" limit {limit}" if limit else ""), timeout=300))
@@ -661,25 +740,9 @@ def embed_books(limit=None, target="ebook"):
     done = 0
     for i in range(0, len(res), 100):
         chunk = res[i:i+100]
-        texts = []
-        for r in chunk:
-            t = re.sub(r"\s*\[전자책\]\s*", " ", r["title"] or "").strip()
-            parts = [t, r["author"] or "", r["publisher"] or ""]
-            if r.get("description"): parts.append((r["description"] or "")[:400])
-            texts.append(" / ".join(p for p in parts if p)[:1500] or "무제")
-        body = json.dumps({"model": "text-embedding-3-small", "input": texts}).encode()
-        try:
-            d = json.loads(http("https://api.openai.com/v1/embeddings", data=body, headers={
-                "Authorization": "Bearer " + okey, "Content-Type": "application/json"}, timeout=120))
-            embs = [x["embedding"] for x in d["data"]]
-        except Exception as e:
-            print(f"  임베딩 실패(batch {i}): {e} — 20초 후 재시도"); time.sleep(20)
-            try:
-                d = json.loads(http("https://api.openai.com/v1/embeddings", data=body, headers={
-                    "Authorization": "Bearer " + okey, "Content-Type": "application/json"}, timeout=120))
-                embs = [x["embedding"] for x in d["data"]]
-            except Exception as e2:
-                print(f"  batch {i} 재실패: {e2} — 건너뜀(재실행 시 회수)"); continue
+        texts = [_embed_text(r) for r in chunk]
+        embs = _embed_call(texts, okey)
+        if embs is None: continue
         for j in range(0, len(chunk), 40):
             stmts = []
             for r, emb, tx in zip(chunk[j:j+40], embs[j:j+40], texts[j:j+40]):
@@ -855,6 +918,9 @@ if __name__ == "__main__":
     ap.add_argument("--covers-budget", type=int, default=4500)
     ap.add_argument("--embed-ebook", action="store_true"); ap.add_argument("--embed-paper", action="store_true")
     ap.add_argument("--embed-limit", type=int)
+    ap.add_argument("--reembed", action="store_true",
+                    help="줄거리가 임베딩에 안 실린 행 제자리 재임베딩(삭제 없음). HNSW 내리고 실행할 것")
+    ap.add_argument("--reembed-kind", default="paper,ebook")
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
     ap.add_argument("--inherit", action="store_true")
     ap.add_argument("--covers-paper", action="store_true")
@@ -873,6 +939,7 @@ if __name__ == "__main__":
     elif a.covers_yes24: covers_yes24(a.covers_limit, a.covers_budget)
     elif a.embed_ebook: embed_books(a.embed_limit, "ebook")
     elif a.embed_paper: embed_books(a.embed_limit, "paper")
+    elif a.reembed: reembed_stale(a.embed_limit, tuple(a.reembed_kind.split(",")))
     elif a.daily: run_daily()
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
