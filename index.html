@@ -403,6 +403,18 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 .lcd-way .wtag{font-size:11px;font-weight:700;color:#15803d;background:rgba(34,197,94,.13);border-radius:999px;padding:3px 10px;}
 body.dark .lcd-way .wtag{color:#86efac;}
 .lcd-way .wtag.sub{color:#7c3aed;background:rgba(124,58,237,.12);}
+/* 전자책 대체 추천(추천 v2, 8/18) — 대출 중 예약 CTA 아래 "같은 장르 · 지금 바로 읽을 수 있는" 3권 가로 줄 */
+.ebsim{margin-top:10px;padding:12px 12px 10px;border:1px dashed var(--border);border-radius:13px;background:var(--bg-card);}
+.ebsim-h{font-size:12.5px;font-weight:700;color:var(--text-sub);letter-spacing:-0.3px;margin-bottom:9px;}
+.ebsim-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.ebsim-row::-webkit-scrollbar{display:none;}
+.ebsim-card{flex:0 0 96px;cursor:pointer;}
+.ebsim-cv{width:96px;height:132px;border-radius:8px;overflow:hidden;background:var(--bg-input);box-shadow:0 3px 10px rgba(0,0,0,.08);}
+.ebsim-cv img{width:100%;height:100%;object-fit:cover;display:block;}
+.ebsim-t{font-size:12px;font-weight:700;line-height:1.3;margin-top:6px;letter-spacing:-0.3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.ebsim-a{font-size:11px;color:var(--text-light);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ebsim-go{margin-top:5px;font-size:11px;font-weight:700;color:#15803d;background:rgba(34,197,94,.13);border-radius:999px;padding:3px 8px;display:inline-block;}
+body.dark .ebsim-go{color:#86efac;}
 body.dark .lcd-way .wtag.sub{color:#c4b5fd;}
 /* 주 동작(전자책/종이책/크레마/찾기)도 종이책처럼 깔끔한 박스 — primary는 아이콘칩을 채워 강조 */
 .lcd-way.pw,.lcd-way.t-ebook{border-color:rgba(26,41,66,.22);cursor:pointer;}
@@ -6726,10 +6738,35 @@ async function loadEbookStock(brcd, bookTitle, _retried){
         //  '대출 중'까지만 바뀌고 예약 버튼이 조용히 사라지던 버그)
         const wic=row&&row.querySelector('.wic');
         note.innerHTML=`<div class="lcd-way t-ebook" onclick="ebReserve('${esc(brcd)}')" style="margin-top:8px">
-          <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>`;
+          <span class="wic">${wic?wic.innerHTML:''}</span><span class="wlabel">예약하기 · 반납되면 알려드려요${waiting}</span><span class="ar">›</span></div>
+          <div id="ebSimilar"></div>`;
+        loadSimilarEbooks(brcd, bookTitle);   // 추천 v2(8/18): 예약은 1순위, 그 아래 "같은 장르 · 지금 바로 읽을 수 있는" 3권
       }
     }
   }catch(e){ try{ if(tag&&tag.isConnected) tag.remove(); }catch(_){} }   // 확인 실패 — 배지 생략
+}
+// 전자책 대체 추천(추천 v2, _추천설계_20260818.md) — 학생이 열려던 전자책이 전권 대출 중일 때, 그 자리에서
+//   "같은 장르(KDC) · 인기 · 지금 바로 읽을 수 있는" 3권. 줄거리 유사도 아님(급류를 찾은 학생은 '요즘 다들 읽는 소설'을 원한 것).
+//   서버(curate similar 모드)가 재고까지 확인해 대출 가능한 것만 준다. 카드 클릭 = 바로 대출(lcBorrow). 측정: data-origin="similar" →
+//   클릭 위임이 origin을 잡아 ebook_borrow 링크 이벤트에 origin=similar로 남는다(추천→대출 전환을 관리자 엑셀에서).
+async function loadSimilarEbooks(brcd, bookTitle){
+  const box=document.getElementById('ebSimilar'); if(!box) return;
+  try{
+    const r=await fetch(US_CURATE_FN,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json'},
+      body:JSON.stringify({similar:{brcd:String(brcd||''), title:bookTitle||'', count:3}})});
+    const d=await r.json();
+    if(!box.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
+    const list=(d&&Array.isArray(d.candidates))?d.candidates.filter(c=>c&&c.isbn&&c.title):[];
+    if(!list.length){ box.remove(); return; }   // 대체재 없으면 조용히(예약 CTA만 남음)
+    list.forEach(c=>{ curateToLibBook(c); US_CLICKMAP[String(c.isbn||'')]=c; });
+    box.innerHTML=`<div class="ebsim" data-origin="similar" data-origin-id="${esc(String(brcd||''))}">
+      <div class="ebsim-h">기다리는 동안 — 같은 장르, 지금 바로 읽을 수 있어요</div>
+      <div class="ebsim-row">${list.map(c=>{ const isbn=String(c.isbn||'').replace(/'/g,'');
+        return `<div class="ebsim-card" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')" title="${esc(cleanT(c.title||''))}">
+          <div class="ebsim-cv">${c.cover?`<img src="${esc(c.cover)}" loading="lazy" decoding="async" data-t="${esc(cleanT(c.title||''))}" data-a="${esc(String(c.author||''))}" onerror="ncSwap(this)">`:ncCover(c)}</div>
+          <div class="ebsim-t">${escD(cleanT(c.title||''))}</div><div class="ebsim-a">${escD(c.author||'')}</div>
+          <div class="ebsim-go">지금 바로 읽기</div></div>`; }).join('')}</div></div>`;
+  }catch(e){ try{ if(box&&box.isConnected) box.remove(); }catch(_){} }
 }
 // 전자책 예약 — 개인 계정이 있어야 순번이 내 것이 된다(공유계정으론 의미 없음)
 async function ebReserve(brcd){
@@ -11045,8 +11082,11 @@ function usCardsHTML(results){
     const isbn=String(b.isbn||'').replace(/'/g,'');
     // 인라인 액션: 묻기→읽기를 대화 안에서 한 탭으로(카드 본문 클릭은 상세 모달, 버튼은 stopPropagation)
     let act='';
-    if(b.smEbook){
-      act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">바로 읽기</button>`;
+    if(b.smEbook && b._avail===false){
+      // 추천 v2(8/18): 서버가 재고를 확인해 '대출 중'으로 판정한 전자책 — 헛된 대출 시도 대신 상세(예약 CTA·대체 추천)로 보낸다
+      act=`<button class="usc-act ghost" onclick="event.stopPropagation();libDetail('${esc(isbn)}')">대출 중 · 예약하기</button>`;
+    } else if(b.smEbook){
+      act=`<button class="usc-act" onclick="event.stopPropagation();lcBorrow('${esc(isbn)}')">${b._avail===true?'지금 바로 읽기':'바로 읽기'}</button>`;
     } else if(b.crema===true){
       act=`<a class="usc-act" href="${esc(cremaHref(b.cremaUrl||'', b.title||''))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">크레마클럽에서 읽기 · 앱 필요</a>`;
     } else if(b.smPaper){
@@ -11777,7 +11817,8 @@ window.addEventListener('keydown', (e) => {
   // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
   function hwcCandCard(b){
     const isbn=String(b.isbn||'').replace(/'/g,'');
-    const read=b.smEbook?'<div class="hwc-read">바로 읽기</div>':'';
+    // 추천 v2(8/18): 서버 재고 판정 반영 — 대출 중이면 '바로 읽기' 힌트 대신 예약 안내
+    const read=b.smEbook?(b._avail===false?'<div class="hwc-read" style="color:#dc2626">대출 중 · 예약하기</div>':`<div class="hwc-read">${b._avail===true?'지금 바로 읽기':'바로 읽기'}</div>`):'';
     const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
     const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
     return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">

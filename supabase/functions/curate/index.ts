@@ -14,6 +14,8 @@
 // 응답: { title, subtitle, params, count, candidates:[{title,author,publisher,year,isbn,kdc,loan,cover,smPaper..,smEbook..}] }
 // 시크릿(env): CLAUDE_API_KEY, OPENAI_API_KEY (+ 자동주입 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+import { stockMany } from "../_shared/ebook_stock.ts";
+
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY")!;
 const OPENAI = Deno.env.get("OPENAI_API_KEY") || "";
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
@@ -227,7 +229,7 @@ async function bookPoolLoans(isbns: string[]): Promise<Record<string, number>> {
   for (const r of rows) if (r.isbn13) m[r.isbn13] = r.loan_count || 0;
   return m;
 }
-const SEL = "select=isbn13,title,author,publisher,pub_year,kdc_nm,kdc1,loan_count,cover,sm_paper,sm_paper_status,sm_paper_url,sm_ebook,sm_ebook_provider,sm_ebook_url";
+const SEL = "select=isbn13,title,author,publisher,pub_year,kdc_nm,kdc1,loan_count,cover,sm_paper,sm_paper_status,sm_paper_url,sm_ebook,sm_ebook_provider,sm_ebook_url,sm_ebook_brcd";
 
 // 질의 임베딩 → 벡터 RPC (text는 호출부에서 풍부한 의미검색문으로 준비)
 async function embedQuery(text: string): Promise<number[] | null> {
@@ -313,7 +315,9 @@ const toCand = (b: any) => ({
   loan: b.loan_count || null, cover: b.cover || "",
   smPaper: b.sm_paper === true, smPaperStatus: b.sm_paper_status || "", smPaperUrl: b.sm_paper_url || "",
   smEbook: b.sm_ebook === true, smEbookProvider: b.sm_ebook_provider || "", smEbookUrl: b.sm_ebook_url || "",
-  brcd: b.brcd || "", crema: b.crema === true ? true : (b.crema === false ? false : null), cremaUrl: b.crema_url || "",
+  // brcd: tulip 결과는 RPC가 주고, book_pool 결과는 sm_ebook_brcd(없으면 상세 URL의 brcd=)에서 — 없으면 재고 확인(즉시읽기 정렬)이 불가능해진다(8/18)
+  brcd: b.brcd || b.sm_ebook_brcd || ((/[?&]brcd=([0-9A-Za-z]+)/.exec(String(b.sm_ebook_url || "")) || [, ""])[1]) || "",
+  crema: b.crema === true ? true : (b.crema === false ? false : null), cremaUrl: b.crema_url || "",
 });
 
 // ── 리랭킹(검수): 검색된 실존 후보를 '원 질의 의도'와 다시 대조해 무관한 책을 떨군다.
@@ -376,6 +380,62 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const body = await req.json();
+
+    // ── 전자책 대체 추천(2026-08-18 설계 v2, _추천설계_20260818.md) ──
+    //   학생이 열려던 전자책이 전권 대출 중일 때 "같은 장르 · 인기 · 지금 바로 읽을 수 있는" want권(기본 3).
+    //   울타리 = 그 책의 KDC(class_no) 접두 사다리(5자→3자→2자→1자). ⛔줄거리 임베딩 안 씀 — '급류'를 찾은 학생은
+    //   "요즘 다들 읽는 소설"을 원한 것이지 강물 이야기를 원한 게 아니다(사용자 지적). 순서 = book_pool 국중 대출수 → 신착.
+    //   재고는 실시간(스크래핑) — 대출 중인 책을 대체재로 내미는 건 무의미하니 available만 통과.
+    if (body.similar && typeof body.similar === "object") {
+      const t0 = Date.now();
+      const want = Math.min(Math.max(Number(body.similar.count) || 3, 1), 6);
+      const brcd = String(body.similar.brcd || "").replace(/[^0-9A-Za-z]/g, "");
+      const hdr = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "content-type": "application/json" };
+      const get = (u: string) => fetch(u, { headers: hdr }).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+      // 시리즈·판본 대표 1권 키: 부제(:) 앞 본제목 → 권차(". 2", "v.3", "제2권", "(상)") 제거 → 공백·구두점 제거
+      const seriesKey = (t: string) => String(t || "").replace(/\[[^\]]*\]/g, " ").split(/[:：=\/]/)[0]
+        .replace(/\s*[\(（]?\s*(상|중|하|전|후)\s*[\)）]?\s*$/, "")
+        .replace(/\s*(?:v\.|vol\.?|제)?\s*\d+\s*(?:권|부|편)?\s*$/i, "")
+        .replace(/\s*[.．]\s*\d{1,2}\s+.*$/, "")   // 중간 권차 "설득의 심리학 . 2  Yes를…" → "설득의 심리학"
+        .replace(/[\s\-·,.'"’“”()（）]/g, "").toLowerCase();
+      let src: any = null;
+      if (brcd) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&barcode=eq.${encodeURIComponent(brcd)}&limit=1`))[0] || null;
+      if (!src && body.similar.title) {   // 바코드로 못 찾으면 제목 핵심부로 1회(구 바코드 형식 등)
+        const core = sani(String(body.similar.title)).split(/\s*[:\-(\[]/)[0].trim();
+        if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&title=ilike.*${encodeURIComponent(core)}*&limit=1`))[0] || null;
+      }
+      if (!src || !src.class_no) return json({ similar: true, count: 0, candidates: [], reason: "no_source", tookMs: Date.now() - t0 });
+      const cls = String(src.class_no).trim();
+      const ladder = [...new Set([cls.slice(0, 5), cls.slice(0, 3), cls.slice(0, 2), cls.slice(0, 1)].map((s) => s.replace(/\.$/, "")).filter(Boolean))];
+      const rpc = (prefix: string, lim: number) => fetch(`${SB_URL}/rest/v1/rpc/similar_ebooks`, { method: "POST", headers: hdr, body: JSON.stringify({ class_prefix: prefix, exclude_brcd: src.barcode || brcd, lim }) })
+        .then((r) => (r.ok ? r.json() : [])).catch(() => []);
+      const pool: any[] = []; const seenK = new Set<string>([seriesKey(src.title)]); const used: string[] = [];
+      for (const p of ladder) {
+        const rows = await rpc(p, 80);
+        used.push(`${p}:${Array.isArray(rows) ? rows.length : 0}`);
+        for (const r of (Array.isArray(rows) ? rows : [])) { const k = seriesKey(r.title); if (!k || seenK.has(k)) continue; seenK.add(k); pool.push(r); }
+        if (pool.length >= 24) break;   // 후보가 충분하면 울타리를 더 넓히지 않는다(장르가 흐려짐)
+      }
+      // 재고 확인 — 인기 상위부터 8권씩, want권 찰 때까지 최대 3배치(도서관 서버 배려)
+      const picked: { b: any; s: any }[] = []; let checked = 0;
+      for (let i = 0; i < pool.length && picked.length < want && i < 24; i += 8) {
+        const batch = pool.slice(i, i + 8);
+        const st = await stockMany(batch.map((b) => String(b.brcd)), { concurrency: 8, timeoutMs: 3500 });
+        checked += batch.length;
+        for (const b of batch) { const s = st.get(String(b.brcd)); if (s && s.available) { picked.push({ b, s }); if (picked.length >= want) break; } }
+      }
+      const cleanTitle = (t: string) => String(t || "").replace(/\s*\/\s*$/, "").replace(/\s{2,}/g, " ").trim();
+      const candidates = picked.map(({ b, s }) => ({
+        title: cleanTitle(b.title), author: b.author || "", publisher: b.publisher || "", year: b.pub_year || "",
+        isbn: "sm-" + b.brcd, kdc: b.class_no || "", loan: b.loan_count || null, cover: b.cover || "",
+        smPaper: false, smPaperStatus: "", smPaperUrl: "",
+        smEbook: true, smEbookProvider: b.vendor || "", smEbookUrl: `https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd=${b.brcd}`,
+        brcd: String(b.brcd), crema: false, cremaUrl: "", _avail: true, _stock: { loaned: s.loaned, total: s.total }, _source: "similar", _kind: "ebook",
+      }));
+      return json({ similar: true, count: candidates.length, candidates,
+        source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked, tookMs: Date.now() - t0 });
+    }
+
     const query = body.query;
     if (!query || !query.trim()) return json({ error: "query 비었음" }, 400);
 
@@ -465,8 +525,21 @@ Deno.serve(async (req) => {
     const out: any[] = [];
     let degraded = false;   // 벡터검색이 죽어(임베딩 실패·timeout) 키워드로만 검색된 상태 — 관찰성용(동작 변화 없음)
     const heldOk = (b: any) => !onlyHeld || b.sm_paper === true || b.sm_ebook === true;
+    // 같은 책(isbn13)이 종이·전자 두 행으로 오면 대표 1건에 형태를 합친다(8/18) — 안 그러면 먼저 온 종이 행이 전자책을 가려
+    //   "바로 읽기"가 사라지고, 즉시읽기 정렬(byeoli-search)이 재고를 확인할 brcd도 못 받는다.
+    const mergeSm = (ex: any, b: any) => {
+      if (b.sm_ebook && !ex.sm_ebook) { ex.sm_ebook = true; ex.sm_ebook_url = b.sm_ebook_url || ex.sm_ebook_url; ex.sm_ebook_provider = b.sm_ebook_provider || ex.sm_ebook_provider; }
+      if (b.sm_paper && !ex.sm_paper) { ex.sm_paper = true; ex.sm_paper_url = b.sm_paper_url || ex.sm_paper_url; ex.sm_paper_status = b.sm_paper_status || ex.sm_paper_status; }
+      if (!ex.brcd && (b.brcd || b.sm_ebook_brcd)) ex.brcd = b.brcd || b.sm_ebook_brcd;
+      if (!ex.cover && b.cover) ex.cover = b.cover;
+      if ((ex.loan_count == null) && b.loan_count != null) ex.loan_count = b.loan_count;
+    };
     const push = (rows: any[]) => {
-      for (const b of rows) { if (b.isbn13 && !seen.has(b.isbn13) && heldOk(b)) { seen.add(b.isbn13); out.push(b); } }
+      for (const b of rows) {
+        if (!b.isbn13 || !heldOk(b)) continue;
+        if (seen.has(b.isbn13)) { const ex = out.find((x) => x.isbn13 === b.isbn13); if (ex) mergeSm(ex, b); continue; }
+        seen.add(b.isbn13); out.push(b);
+      }
     };
 
     // 검색 층 정의
@@ -562,9 +635,11 @@ Deno.serve(async (req) => {
       const seenV = new Set<string>();
       const scored: { b: any; score: number }[] = [];
       const passed: any[] = [];
+      const byIsbn = new Map<string, any>();
       for (const b of rows) {
-        if (!b.isbn13 || seenV.has(b.isbn13) || !heldOk(b)) continue;
-        seenV.add(b.isbn13);
+        if (!b.isbn13 || !heldOk(b)) continue;
+        if (seenV.has(b.isbn13)) { const ex = byIsbn.get(b.isbn13); if (ex) mergeSm(ex, b); continue; }   // 종이·전자 같은 책 → 형태 병합
+        seenV.add(b.isbn13); byIsbn.set(b.isbn13, b);
         const sim = b.similarity ?? 0;
         const hits = kwHit(b, kws);
         if (sim >= gate.hard || (hits >= 1 && sim >= gate.soft)) scored.push({ b, score: sim + gate.kw * hits });
@@ -596,9 +671,19 @@ Deno.serve(async (req) => {
     // 후보 빌드 — 제목 기준 중복제거(같은 책 다른 판본 ISBN 방지)
     const titleSeen = new Set<string>();
     const candidates: any[] = [];
+    // 제목이 같은 다른 판본(예: 종이 isbn 있음 + 전자 isbn 없음)은 대표 1건에 형태를 합친다 — 저자 첫 토큰까지 같을 때만(동명이서 과병합 방지)
+    const authKey = (a: string) => String(a || "").split(/[,\s;/]+/)[0].replace(/[^가-힣a-z0-9]/gi, "").toLowerCase();
+    const mergeCand = (ex: any, b: any) => {
+      if (b.sm_ebook && !ex.smEbook) { ex.smEbook = true; ex.smEbookUrl = b.sm_ebook_url || ""; ex.smEbookProvider = b.sm_ebook_provider || ""; }
+      if (b.sm_paper && !ex.smPaper) { ex.smPaper = true; ex.smPaperUrl = b.sm_paper_url || ""; ex.smPaperStatus = b.sm_paper_status || ""; }
+      const bb = b.brcd || b.sm_ebook_brcd || ((/[?&]brcd=([0-9A-Za-z]+)/.exec(String(b.sm_ebook_url || "")) || [, ""])[1]);
+      if (!ex.brcd && bb) ex.brcd = bb;
+      if (!ex.cover && b.cover) ex.cover = b.cover;
+      if (ex.loan == null && b.loan_count != null) ex.loan = b.loan_count;
+    };
     for (const b of out) {
       const nt = normT(b.title);
-      if (titleSeen.has(nt)) continue;
+      if (titleSeen.has(nt)) { const ex = candidates.find((c: any) => normT(c.title) === nt && authKey(c.author) === authKey(b.author)); if (ex) mergeCand(ex, b); continue; }
       titleSeen.add(nt); candidates.push(toCand(b));
       if (candidates.length >= LIMIT) break;
     }

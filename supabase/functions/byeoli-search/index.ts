@@ -16,6 +16,8 @@
 //   results = 책버킷(curate+find+keyword RRF). 클라 카드 형태 그대로.
 // 시크릿: OPENAI 불필요(소스가 알아서). 자동주입 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 로 형제 함수·RPC 호출.
 // ───────────────────────────────────────────────────────────────────────────
+import { stockMany } from "../_shared/ebook_stock.ts";
+
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY") || "";
@@ -33,8 +35,11 @@ const CONFIG = {
   prefixBoost: 0.02,        // keyword rk==1(접두 일치)에 가산점(살짝 위로, 고정은 아님)
   // 호출 규모(소스별 count) — 융합 전 후보를 넉넉히 받아 RRF 재정렬
   pull: { curate: 12, find: 8, keyword: 6 },
-  caps: { books: 12 },      // 최종 책 상한
+  caps: { books: 5 },       // 최종 책 상한 — 12→5 (2026-08-18 설계 v2: 많이 보여주는 게 좋은 게 아니다. 관련성 울타리 안에서 바로 읽을 수 있는 책 위주)
   enable: { curate: true, find: true, keyword: true },
+  // 즉시읽기 우선 정렬(설계 v2): 검수 통과 후보 중 전자책의 재고를 실시간 확인해 ①바로 읽기 가능 ②재고 미확인 ③종이책 소장 순으로.
+  //   대출 중 전자책은 원래 1위였을 때만 1권 허용(맨 위, "대출 중·예약" 배지) — 인기책이 별이에서 영원히 안 보이는 편향 방지.
+  availability: true, availabilityTopN: 10, availabilityTimeoutMs: 3500, loanedKeepIfTop1: true,
   // 전소스 리랭킹(2단계, ROI최고): RRF 융합 상위 K를 원 질의로 LLM 재채점(0~3) → minRel 미만 컷 → rel순.
   // curate에만 있던 검수를 융합 전체(find·keyword 표면노이즈 포함)로 확대. Haiku 1콜(curate 내부 rerank 끔=총비용 동일).
   rerank: true, rerankTopK: 16, minRel: 2,   // 24→16: 화면 상한 12라 상위16이면 최선12 포함 → 리랭킹 토큰 ~30%↓(품질 영향0)
@@ -53,6 +58,12 @@ const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { ...CORS, "content-type": "application/json" } });
 
 const normT = (t: string) => String(t || "").replace(/\s+/g, "").replace(/[\(\)\[\]:：·,.]/g, "").toLowerCase();
+// 시리즈·판본 대표 키(curate similar 모드와 동일 규칙): 부제(:) 앞 본제목 → 권차(". 2", "v.3", "제2권", "(상)") 제거 → 공백·구두점 제거
+const seriesKey = (t: string) => String(t || "").replace(/\[[^\]]*\]/g, " ").split(/[:：=\/]/)[0]
+  .replace(/\s*[\(（]?\s*(상|중|하|전|후)\s*[\)）]?\s*$/, "")
+  .replace(/\s*(?:v\.|vol\.?|제)?\s*\d+\s*(?:권|부|편)?\s*$/i, "")
+  .replace(/\s*[.．]\s*\d{1,2}\s+.*$/, "")   // 중간 권차 "설득의 심리학 . 2  Yes를…" → "설득의 심리학"
+  .replace(/[\s\-·,.'"’“”()（）]/g, "").toLowerCase();
 
 // ── 공통 후보 스키마 매퍼(클라 *ToCand를 서버로 이전 — 화면은 이제 매핑 안 함) ──
 // curate 후보는 이미 카드 형태(toCand) → 통과시키며 표식만 부착.
@@ -125,8 +136,21 @@ function rrfFuse(pulls: Pulled[], cfg: typeof CONFIG) {
       const cur = acc.get(key);
       if (!cur) { acc.set(key, { cand, score: add, sources: [p.name], pin, boost }); return; }
       cur.score += add; cur.sources.push(p.name); cur.pin = cur.pin || pin; cur.boost = Math.max(cur.boost, boost);
-      // 대표 후보는 데이터가 풍부한 소스(curate>find>keyword) 것으로 교체
-      if ((srcRank[cand._source] ?? 9) < (srcRank[cur.cand._source] ?? 9)) cur.cand = cand;
+      // 대표 후보는 데이터가 풍부한 소스(curate>find>keyword) 것으로 교체 — 단 형태(전자·종이)와 brcd는 합친다(8/18):
+      //   대표가 종이 행이어도 다른 소스가 같은 책의 전자책을 찾았다면 "바로 읽기"를 잃으면 안 된다.
+      const useNew = (srcRank[cand._source] ?? 9) < (srcRank[cur.cand._source] ?? 9);
+      const merged = { ...(useNew ? cand : cur.cand) };
+      const o = useNew ? cur.cand : cand;
+      if (o.smEbook && !merged.smEbook) {
+        merged.smEbook = true; merged.smEbookUrl = o.smEbookUrl || ""; merged.smEbookProvider = o.smEbookProvider || "";
+        if (o.brcd && !/^cattot/i.test(o.brcd)) { merged.brcd = o.brcd; if (/^\d+$/.test(o.brcd)) merged.isbn = "sm-" + o.brcd; }   // 앱 안 대출(lcBorrow)은 sm-숫자 키가 필요
+      }
+      if (o.smPaper && !merged.smPaper) { merged.smPaper = true; merged.smPaperUrl = o.smPaperUrl || ""; merged.smPaperStatus = o.smPaperStatus || ""; }
+      if (!merged.brcd && o.brcd) merged.brcd = o.brcd;
+      if (!merged.cover && o.cover) merged.cover = o.cover;
+      if (merged.loan == null && o.loan != null) merged.loan = o.loan;
+      merged._kind = merged.smEbook ? "ebook" : (merged.smPaper ? "paper" : (merged._kind || "ebook"));
+      cur.cand = merged;
     });
   }
   return [...acc.values()].sort((a, b) =>
@@ -152,8 +176,9 @@ const RERANK_TOOL = {
 const RERANK_SYS = "너는 대학 도서관 추천 결과의 적합성 검수자다. 학생 질의의 '실제 의도'에 각 책이 부합하는지 제목·저자·분류만 보고 0~3으로 채점한다. " +
   "주제가 명백히 다르면 0~1(예: '데카르트 이원론'에 자기계발서, '기후변화 비용편익'에 회계감사론 = 0), 같은 주제권이면 2, 핵심 의도를 정확히 충족하면 3. " +
   "목적은 검색이 잘못 끌어온 무관한 책을 솎아내는 것이다. 후하지도 박하지도 않게, 의심스러우면 낮게.";
+let lastRerankDiag = "";   // 관찰성: 리랭킹이 안 붙었을 때 이유(meta.fusion.rerank.diag)
 async function claudeRerank(query: string, cands: any[]): Promise<number[] | null> {
-  if (!CLAUDE || cands.length < 2) return null;
+  if (!CLAUDE || cands.length < 2) { lastRerankDiag = !CLAUDE ? "no_key" : "few_cands"; return null; }
   const list = cands.map((b, i) => `${i + 1}. ${b.title} / ${b.author || "?"} (${b.kdc || b._material || ""})`).join("\n");
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -167,8 +192,9 @@ async function claudeRerank(query: string, cands: any[]): Promise<number[] | nul
     });
     const d = await r.json();
     const sc = (d.content || []).find((c: any) => c.type === "tool_use")?.input?.scores;
-    return Array.isArray(sc) && sc.length === cands.length ? sc.map((x: any) => Number(x) || 0) : null;
-  } catch { return null; }
+    if (!Array.isArray(sc) || sc.length !== cands.length) { lastRerankDiag = `http ${r.status} len ${Array.isArray(sc) ? sc.length : "none"}/${cands.length} ${String(d?.error?.message || d?.stop_reason || "").slice(0, 80)}`; return null; }
+    lastRerankDiag = ""; return sc.map((x: any) => Number(x) || 0);
+  } catch (e) { lastRerankDiag = "err " + String(e).slice(0, 80); return null; }
 }
 // 책버킷 리랭킹: RRF 융합 상위 K를 한 번의 Haiku 호출로 검수(find/keyword 표면노이즈 컷).
 //   minRel 미만 컷 후 rel순(동점=RRF·인기). topK 밖은 검수 못 했으니 버림(표시=전부 통과만, curate와 동일).
@@ -176,7 +202,7 @@ async function rerankBooks(query: string, books: any[], cfg: typeof CONFIG) {
   const bHead = books.slice(0, cfg.rerankTopK);
   if (bHead.length < 2) return { books, meta: { applied: false } };
   const scores = await claudeRerank(query, bHead.map((e) => e.cand));
-  if (!scores) return { books, meta: { applied: false } };
+  if (!scores) return { books, meta: { applied: false, diag: lastRerankDiag } };
   const tagged = bHead.map((e, i) => ({ ...e, rel: scores[i] }));
   const sortKept = (arr: any[]) => arr.filter((e) => e.rel >= cfg.minRel)
     .sort((a, b) => b.rel - a.rel || (b.score + b.boost) - (a.score + a.boost) || (b.cand.loan || 0) - (a.cand.loan || 0))
@@ -356,10 +382,51 @@ Deno.serve(async (req) => {
       fusedBooks = rr.books; rerankMeta = rr.meta;
     }
 
-    // 3) 조립: 책 버킷만. 제목 dedup.
+    // 3) 조립: 책 버킷만. 제목 dedup. (풀은 넉넉히 받아두고 — 즉시읽기 정렬 뒤 caps로 자른다)
     const seen = new Set<string>();
-    const out: any[] = [];
-    for (const e of fusedBooks) { const k = normT(e.cand.title); if (!seen.has(k)) { seen.add(k); out.push({ ...e.cand, _rrf: +(e.score + e.boost).toFixed(5), _srcs: e.sources }); } if (out.length >= cfg.caps.books) break; }
+    let out: any[] = [];
+    const poolCap = Math.max(cfg.caps.books, cfg.availability ? cfg.availabilityTopN : 0);
+    for (const e of fusedBooks) { const k = normT(e.cand.title); if (!seen.has(k)) { seen.add(k); out.push({ ...e.cand, _rrf: +(e.score + e.boost).toFixed(5), _srcs: e.sources }); } if (out.length >= poolCap) break; }
+
+    // 3.5) 즉시읽기 우선 정렬(2026-08-18 설계 v2, _추천설계_20260818.md) — 울타리(검수 통과)는 그대로, 순서만 바꾼다.
+    //   전자책 상위 N권 재고 실시간 확인 → ①바로 읽기 가능 ②재고 미확인 ③종이책 소장(앱 밖에서 읽기) → 각 계층 안에서 rel → 인기(loan) → RRF.
+    //   대출 중 전자책은 원래 1위였을 때만 1권 유지(맨 위, 클라가 "대출 중·예약하기"로 표시). 나머지 대출 중은 제외.
+    let availMeta: any = { applied: false };
+    if (cfg.availability && out.length) {
+      const t1 = Date.now();
+      const isEb = (b: any) => b.smEbook === true && /^[0-9A-Za-z]+$/.test(String(b.brcd || "")) && !/^cattot/i.test(String(b.brcd || ""));
+      const targets = out.filter(isEb).slice(0, cfg.availabilityTopN).map((b: any) => String(b.brcd));
+      const st = targets.length ? await stockMany(targets, { concurrency: 8, timeoutMs: cfg.availabilityTimeoutMs }) : new Map();
+      out = out.map((b: any) => {
+        if (!isEb(b)) return { ...b, _avail: null };
+        const s = st.get(String(b.brcd));
+        return { ...b, _avail: s ? s.available : null, _stock: s ? { loaned: s.loaned, total: s.total, reserved: s.reserved } : undefined };
+      });
+      const tier = (b: any) => b.smEbook === true ? (b._avail === true ? 0 : (b._avail === null ? 1 : 3)) : 2;
+      const top1 = out[0];
+      const keepLoaned = (cfg.loanedKeepIfTop1 && top1 && tier(top1) === 3) ? top1 : null;
+      const ranked = out.map((b: any, i: number) => ({ b, i, t: tier(b) }))
+        .filter((x) => x.t < 3 || (keepLoaned && x.b === keepLoaned))
+        .sort((x, y) => x.t - y.t || ((y.b._rel ?? 2) - (x.b._rel ?? 2)) || ((y.b.loan || 0) - (x.b.loan || 0)) || x.i - y.i);
+      let list = ranked.map((x) => x.b);
+      if (keepLoaned) list = [keepLoaned, ...list.filter((b) => b !== keepLoaned)];
+      // 대출 중을 다 뺐더니 2권도 안 남으면 대출 중 후보로 보충(원순서) — "못 찾는 별이"가 되면 안 된다
+      if (list.length < 2) { for (const b of out) { if (!list.includes(b)) { list.push(b); if (list.length >= 2) break; } } }
+      availMeta = { applied: true, checked: targets.length,
+        avail: out.filter((b: any) => b._avail === true).length, loaned: out.filter((b: any) => b._avail === false).length,
+        unknown: out.filter((b: any) => b.smEbook && b._avail === null).length, keptLoanedTop1: !!keepLoaned, ms: Date.now() - t1 };
+      out = list;
+    }
+    // 3.7) 시리즈·판본은 대표 1권(설계 v2 공통 규칙) — "설득의 심리학 1·2·3", "내 여자의 열매 : 소설/소설집" 같은 중복이 5칸을 다 먹지 않게.
+    //   즉시읽기 정렬 '뒤'에 하므로 전자책(바로 읽기) 판본이 종이 판본을 이기고 대표로 남는다.
+    {
+      const seenS = new Set<string>(); const dd: any[] = [];
+      // 저자 첫 토큰을 키에 섞어 '같은 본제목·다른 책'(예: 「사랑」 시집 vs 소설)의 과병합을 막는다
+      const authKey = (a: string) => String(a || "").split(/[,\s;/]+/)[0].replace(/[^가-힣a-z0-9]/gi, "").toLowerCase();
+      for (const b of out) { const k = (seriesKey(b.title) || normT(b.title)) + "|" + authKey(b.author); if (seenS.has(k)) continue; seenS.add(k); dd.push(b); }
+      out = dd;
+    }
+    out = out.slice(0, cfg.caps.books);
 
     // 4) Answer Engine — 표시되는 책(검수통과 소장자료)만 근거로 답 합성(opt-in). 감정/탐색이면 모델이 use=false.
     let answer: any = { used: false };
@@ -368,8 +435,8 @@ Deno.serve(async (req) => {
     }
 
     const sources = Object.fromEntries(pulls.map((p) => [p.name, { n: p.items.length, ms: p.ms, ok: p.ok }]));
-    const fusion = { rrfK: cfg.rrfK, weights: cfg.weights, bookBucket: fusedBooks.length, rerank: rerankMeta };
-    const top_results = out.slice(0, 8).map((b) => ({ title: b.title, source: b._source, rrf: b._rrf, rel: b._rel ?? null, kind: b._kind }));
+    const fusion = { rrfK: cfg.rrfK, weights: cfg.weights, bookBucket: fusedBooks.length, rerank: rerankMeta, availability: availMeta };
+    const top_results = out.slice(0, 8).map((b) => ({ title: b.title, source: b._source, rrf: b._rrf, rel: b._rel ?? null, kind: b._kind, avail: b._avail ?? null }));
     const eventId = await logEvent({ surface, query, offtopic: false, total_ms: Date.now() - t0, result_count: out.length, sources,
       fusion: { ...fusion, answer: { used: answer.used }, translit }, top_results,
       rrf_top: fusedBooks.slice(0, 5).map((e) => ({ t: e.cand.title, s: +(e.score).toFixed(4), src: e.sources })) });
