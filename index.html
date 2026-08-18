@@ -11077,8 +11077,24 @@ function usCiteJump(isbn, ev){
 }
 // 논문 표지 대체(학술자료는 표지 이미지 없음) — 문서 라인 아이콘 플레이스홀더
 const PAPER_COVER='<div class="paper-cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg></div>';
+// 별이 결과의 북스타 고전 카드(추천 v2, 8/18) — 자체 본문이라 항상 "지금 바로 읽기". 클릭=openDetail(id) (도서관 상세 아님)
+function usClassicCardHTML(b){
+  const id=String(b.isbn||'').replace(/'/g,'');
+  const bk=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===id):null;
+  const cover=(bk&&bk.coverSrc)?`<img src="${esc(bk.coverSrc)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`:(b.cover?`<img src="${esc(b.cover)}" loading="lazy" decoding="async" onerror="this.style.display='none'">`:ncCover(bk||{title:b.title,author:b.author}));
+  const genre=(b._classic&&b._classic.genre)||(bk&&(bk.litGenre||bk.category))||'';
+  return `<div class="book-card bc-book" data-isbn="${esc(id)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(id)}']);openDetail('${esc(id)}')">
+      <div class="book-cover has-img">${cover}</div>
+      <div class="book-info">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span class="bt-tag bt-eb">북스타 고전</span>${genre?`<span class="hwc-loan">${esc(genre)}</span>`:''}</div>
+        <div class="book-title">${escD(b.title)}</div>
+        <div class="book-author">${escD([b.author,(b.year||'')].filter(Boolean).join(' · '))}</div>
+        <button class="usc-act" onclick="event.stopPropagation();openDetail('${esc(id)}')">지금 바로 읽기</button>
+      </div></div>`;
+}
 function usCardsHTML(results){
   return `<div class="book-grid">`+results.map(b=>{
+    if(b._kind==='classic') return usClassicCardHTML(b);
     const isbn=String(b.isbn||'').replace(/'/g,'');
     // 인라인 액션: 묻기→읽기를 대화 안에서 한 탭으로(카드 본문 클릭은 상세 모달, 버튼은 stopPropagation)
     let act='';
@@ -11280,7 +11296,7 @@ async function byeoliFindBooks(topic, surface, wantAnswer){
     ? `${prof.name||'회원'}님${prof.dept?'('+prof.dept+')':''} 취향을 반영했어요`+(pz.excluded>0?` · 이미 읽은 ${pz.excluded}권 제외`:'')
     : '';
   // LIB_POOL 등재(libDetail/lcBorrow가 isbn으로 찾음). 논문 검색 제거(2026-07-02)로 결과는 책만.
-  results.forEach(b=>{ curateToLibBook(b); });
+  results.forEach(b=>{ if(b._kind!=='classic') curateToLibBook(b); });   // 북스타 고전(_kind classic)은 BOOKS/openDetail 경로 — 도서관 풀에 안 넣는다
   results.forEach((b,i)=>{ if(b&&b.isbn){ b._pos=i; US_CLICKMAP[String(b.isbn).replace(/'/g,'')]=b; } });   // 클릭 로깅 참조용(표시순 위치)
   // Answer — 서버는 {used,text}만 반환(cited 폐지). 혹시 남은 [n] 인용표식만 제거하고 본문 있으면 채택.
   let answer=(d.answer&&d.answer.used)?d.answer:null;
@@ -11816,6 +11832,7 @@ window.addEventListener('keydown', (e) => {
 
   // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
   function hwcCandCard(b){
+    if(b._kind==='classic') return usClassicCardHTML(b).replace('class="book-card bc-book"','class="hwc-card bc-book"');   // 고전은 같은 카드(openDetail)
     const isbn=String(b.isbn||'').replace(/'/g,'');
     // 추천 v2(8/18): 서버 재고 판정 반영 — 대출 중이면 '바로 읽기' 힌트 대신 예약 안내
     const read=b.smEbook?(b._avail===false?'<div class="hwc-read" style="color:#dc2626">대출 중 · 예약하기</div>':`<div class="hwc-read">${b._avail===true?'지금 바로 읽기':'바로 읽기'}</div>`):'';

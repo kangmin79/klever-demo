@@ -21,6 +21,7 @@ import { stockMany } from "../_shared/ebook_stock.ts";
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY") || "";
+const OPENAI = Deno.env.get("OPENAI_API_KEY") || "";   // 고전 소스 질의 임베딩(text-embedding-3-small) — 프로젝트 시크릿(curate와 공유)
 const RERANK_MODEL = "claude-haiku-4-5";  // 리랭킹=싸고 빠른 Haiku(curate와 동일)
 const FN = (n: string) => `${SB_URL}/functions/v1/${n}`;
 const RPC = (n: string) => `${SB_URL}/rest/v1/rpc/${n}`;
@@ -30,13 +31,15 @@ const AUTH = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "content-type"
 const CONFIG = {
   rrfK: 60,                 // RRF 상수(클수록 하위순위 기여↑, 60=관용)
   // 책버킷 소스 가중치. keyword=정확매칭이라 최상위로, curate=리랭킹된 전자책이 가장 깨끗, find=종이 표면노이즈 다수.
-  weights: { keyword: 2.0, curate: 1.6, find: 1.0 } as Record<string, number>,
+  weights: { keyword: 2.0, curate: 1.6, find: 1.0, classics: 1.4 } as Record<string, number>,
   exactPin: true,           // keyword rk==0(정규화 제목 완전일치)은 RRF 무시하고 최상단 고정(총균쇠 등)
   prefixBoost: 0.02,        // keyword rk==1(접두 일치)에 가산점(살짝 위로, 고정은 아님)
   // 호출 규모(소스별 count) — 융합 전 후보를 넉넉히 받아 RRF 재정렬
-  pull: { curate: 12, find: 8, keyword: 6 },
+  pull: { curate: 12, find: 8, keyword: 6, classics: 6 },
   caps: { books: 5 },       // 최종 책 상한 — 12→5 (2026-08-18 설계 v2: 많이 보여주는 게 좋은 게 아니다. 관련성 울타리 안에서 바로 읽을 수 있는 책 위주)
-  enable: { curate: true, find: true, keyword: true },
+  enable: { curate: true, find: true, keyword: true, classics: true },
+  // 북스타 고전(자체 본문, 310권 = classic_embeddings) — 항상 "지금 바로 읽기"라 즉시읽기 정렬에서 최상위 계층. 유사도 하한 아래는 안 섞는다.
+  classicsFloor: 0.33,
   // 즉시읽기 우선 정렬(설계 v2): 검수 통과 후보 중 전자책의 재고를 실시간 확인해 ①바로 읽기 가능 ②재고 미확인 ③종이책 소장 순으로.
   //   대출 중 전자책은 원래 1위였을 때만 1권 허용(맨 위, "대출 중·예약" 배지) — 인기책이 별이에서 영원히 안 보이는 편향 방지.
   availability: true, availabilityTopN: 10, availabilityTimeoutMs: 3500, loanedKeepIfTop1: true,
@@ -84,6 +87,23 @@ const fromKeyword = (r: any) => (r.src === "ebook"
       smEbook: false, smEbookUrl: "", smPaper: true, smPaperUrl: r.detail_url || ("https://lib.semyung.ac.kr/search/detail/" + r.id),
       crema: false, cremaUrl: "", brcd: r.id, _material: r.material || "book", _kw: true, _rk: r.rk, _source: "keyword", _kind: r.material || "paper" });
 
+// 북스타 고전(자체 본문) — 카드 키(isbn)에 고전 id(gb-/kr-)를 싣는다. 클라는 _kind==='classic'이면 openDetail(id)로 연다(도서관 상세 아님).
+const fromClassic = (c: any) => ({
+  isbn: c.id, title: c.title || "", author: c.author || "", publisher: "북스타 고전", cover: c.cover || "", year: c.period || "", loan: null, description: "",
+  smEbook: false, smEbookUrl: "", smEbookProvider: "", smPaper: false, smPaperStatus: "", smPaperUrl: "", crema: false, cremaUrl: "", brcd: "",
+  _material: "classic", _kind: "classic", _source: "classics", sim: c.similarity, _avail: true,
+  _classic: { id: c.id, titleEn: c.title_en || "", genre: c.genre || "", locale: c.locale || "" },
+});
+async function embedQuery(text: string): Promise<number[] | null> {
+  if (!OPENAI) return null;
+  try {
+    const r = await fetch("https://api.openai.com/v1/embeddings", { method: "POST", headers: { Authorization: "Bearer " + OPENAI, "content-type": "application/json" },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: text.slice(0, 1000) }) });
+    const d = await r.json();
+    return d?.data?.[0]?.embedding || null;
+  } catch { return null; }
+}
+
 // ── 동일 인터페이스 retrieve: 소스 호출 → 공통후보[] + 측정({n,ms,ok}). 절대 throw 안 함(우아한 실패). ──
 type Pulled = { name: string; items: any[]; ms: number; ok: boolean; raw?: any };
 async function pull(name: string, fn: () => Promise<{ items: any[]; raw?: any }>): Promise<Pulled> {
@@ -115,6 +135,12 @@ const retrieveFind = (q: string, cfg: typeof CONFIG) => pull("find", async () =>
   const d = await postJson(FN("semyung-find"), { query: q, count: cfg.pull.find });
   return { items: (d?.candidates || []).map(fromFind) };
 });
+const retrieveClassics = (q: string, cfg: typeof CONFIG) => pull("classics", async () => {
+  const emb = await embedQuery(q);
+  if (!emb) return { items: [] };
+  const rows = await postJson(RPC("match_classics"), { query_embedding: emb, match_count: cfg.pull.classics });
+  return { items: (Array.isArray(rows) ? rows : []).filter((c: any) => c && c.id && c.title && (c.similarity ?? 0) >= cfg.classicsFloor).map(fromClassic) };
+});
 const retrieveKeyword = (q: string, cfg: typeof CONFIG) => pull("keyword", async () => {
   const rows = await postJson(RPC("keyword_books"), { q, lim: cfg.pull.keyword });
   return { items: (Array.isArray(rows) ? rows : []).map(fromKeyword).filter((b: any) => b.isbn && b.title) };
@@ -124,7 +150,7 @@ const retrieveKeyword = (q: string, cfg: typeof CONFIG) => pull("keyword", async
 //    같은 책이 여러 소스에 뜨면 점수 누적(교차합의 보상) → 표면노이즈는 1소스라 자연 하락.
 function rrfFuse(pulls: Pulled[], cfg: typeof CONFIG) {
   const acc = new Map<string, { cand: any; score: number; sources: string[]; pin: boolean; boost: number }>();
-  const srcRank: Record<string, number> = { curate: 0, find: 1, keyword: 2 }; // 대표후보 선택 우선순위
+  const srcRank: Record<string, number> = { classics: -1, curate: 0, find: 1, keyword: 2 }; // 대표후보 선택 우선순위(고전=자체본문이라 최우선: 바로 읽기 정체성 유지)
   for (const p of pulls) {
     const w = cfg.weights[p.name] ?? 1.0;
     p.items.forEach((cand, rank) => {
@@ -149,7 +175,7 @@ function rrfFuse(pulls: Pulled[], cfg: typeof CONFIG) {
       if (!merged.brcd && o.brcd) merged.brcd = o.brcd;
       if (!merged.cover && o.cover) merged.cover = o.cover;
       if (merged.loan == null && o.loan != null) merged.loan = o.loan;
-      merged._kind = merged.smEbook ? "ebook" : (merged.smPaper ? "paper" : (merged._kind || "ebook"));
+      if (merged._kind !== "classic") merged._kind = merged.smEbook ? "ebook" : (merged.smPaper ? "paper" : (merged._kind || "ebook"));
       cur.cand = merged;
     });
   }
@@ -350,6 +376,7 @@ Deno.serve(async (req) => {
     if (cfg.enable.curate) tasks.push(retrieveCurate(qSearch, cfg));
     if (cfg.enable.find) tasks.push(retrieveFind(qSearch, cfg));
     if (cfg.enable.keyword) tasks.push(retrieveKeyword(qSearch, cfg));
+    if (cfg.enable.classics) tasks.push(retrieveClassics(qSearch, cfg));
     const settled = await Promise.allSettled(tasks);
     const pulls: Pulled[] = settled.map((s) => s.status === "fulfilled" ? s.value : { name: "?", items: [], ms: 0, ok: false });
     const byName = (n: string) => pulls.find((p) => p.name === n);
@@ -372,7 +399,7 @@ Deno.serve(async (req) => {
     }
 
     // 2) RRF 융합 — 책 버킷(curate+find+keyword).
-    const bookPulls = [byName("curate"), byName("find"), byName("keyword")].filter(Boolean) as Pulled[];
+    const bookPulls = [byName("curate"), byName("find"), byName("keyword"), byName("classics")].filter(Boolean) as Pulled[];
     let fusedBooks = rrfFuse(bookPulls, cfg);
 
     // 2.5) 리랭킹 — 책 버킷을 원 질의로 재채점 → 무관책 컷.
@@ -398,11 +425,12 @@ Deno.serve(async (req) => {
       const targets = out.filter(isEb).slice(0, cfg.availabilityTopN).map((b: any) => String(b.brcd));
       const st = targets.length ? await stockMany(targets, { concurrency: 8, timeoutMs: cfg.availabilityTimeoutMs }) : new Map();
       out = out.map((b: any) => {
+        if (b._kind === "classic") return { ...b, _avail: true };   // 자체 본문 = 항상 열림
         if (!isEb(b)) return { ...b, _avail: null };
         const s = st.get(String(b.brcd));
         return { ...b, _avail: s ? s.available : null, _stock: s ? { loaned: s.loaned, total: s.total, reserved: s.reserved } : undefined };
       });
-      const tier = (b: any) => b.smEbook === true ? (b._avail === true ? 0 : (b._avail === null ? 1 : 3)) : 2;
+      const tier = (b: any) => b._kind === "classic" ? 0 : (b.smEbook === true ? (b._avail === true ? 0 : (b._avail === null ? 1 : 3)) : 2);
       const top1 = out[0];
       const keepLoaned = (cfg.loanedKeepIfTop1 && top1 && tier(top1) === 3) ? top1 : null;
       const ranked = out.map((b: any, i: number) => ({ b, i, t: tier(b) }))
