@@ -8,8 +8,9 @@
 //   ② 기존 키워드: 제목/저자 ilike + 토큰 스코어 (특정 제목/저자)
 //   ③ holdings 완전성: semyung_tulip ilike (신착·소장 특정책이 book_pool에 없어도 잡음) — P3 전환
 //   ④ Haiku: 큐레이션 제목 + 부제 생성
-// 입력: { query, onlyHeld?, genTitle?, holdings?, count? }
+// 입력: { query, onlyHeld?, genTitle?, holdings?, count?, format? }
 //   - onlyHeld: 소장도서(종이∪전자)만 (사서 큐레이션) / 기본 false(=admin 통합검색 기존동작)
+//   - format: 'ebook' | 'paper' | 'both'(기본) — 8/19 사서가 큐레이션 책 형태를 고름. 지정 시 onlyHeld 강제 + 그 형태만
 //   - genTitle: 제목+부제 항상 생성 / holdings: semyung 완전성 추가
 // 응답: { title, subtitle, params, count, candidates:[{title,author,publisher,year,isbn,kdc,loan,cover,smPaper..,smEbook..}] }
 // 시크릿(env): CLAUDE_API_KEY, OPENAI_API_KEY (+ 자동주입 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -266,12 +267,12 @@ async function vectorMatch(emb: number[], count: number, onlyHeld: boolean, kdcF
 
 // 소장 큐레이션(onlyHeld) 전용: 세명대 전 장서(semyung_tulip, 전자책+종이책 임베딩 ~30만) 벡터검색 — P3 전환.
 // 결과를 book_pool 후보 형태로 정규화 → 이후 GATE/dedup/toCand 파이프라인 그대로 재사용(저위험).
-async function vectorMatchSemyung(emb: number[], count: number, floor = SIM_FLOOR) {
+async function vectorMatchSemyung(emb: number[], count: number, floor = SIM_FLOOR, kindFilter: "ebook" | "paper" | null = null) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/rpc/match_tulip`, {
         method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "content-type": "application/json" },
-        body: JSON.stringify({ query_embedding: emb, match_count: count }),
+        body: JSON.stringify({ query_embedding: emb, match_count: count, kind_filter: kindFilter }),
       });
       if (!r.ok) { await new Promise((s) => setTimeout(s, 400 * (attempt + 1))); continue; }
       const rows = await r.json();
@@ -523,7 +524,9 @@ Deno.serve(async (req) => {
       return json({ title: outTitle, subtitle: outSub, count: candidates.length, candidates, monthCount, poolMode: true });
     }
 
-    const onlyHeld = body.onlyHeld === true;
+    // 8/19 책 형태 선택(사서 큐레이션 전부): 'ebook' | 'paper' | 'both'(기본). 형태를 고르면 소장도서 안에서만 찾는다(형태=소장의 부분집합).
+    const format: "ebook" | "paper" | "both" = (body.format === "ebook" || body.format === "paper") ? body.format : "both";
+    const onlyHeld = body.onlyHeld === true || format !== "both";
     const genTitle = body.genTitle === true;
     const withHoldings = body.holdings === true;
     // (월 한도 과금은 오프토픽 판정 통과 후로 이동 — 비도서 질의엔 카운트·검색 안 함)
@@ -534,7 +537,10 @@ Deno.serve(async (req) => {
     const seen = new Set<string>();
     const out: any[] = [];
     let degraded = false;   // 벡터검색이 죽어(임베딩 실패·timeout) 키워드로만 검색된 상태 — 관찰성용(동작 변화 없음)
-    const heldOk = (b: any) => !onlyHeld || b.sm_paper === true || b.sm_ebook === true;
+    const heldOk = (b: any) => !onlyHeld ? true
+      : format === "ebook" ? b.sm_ebook === true
+      : format === "paper" ? b.sm_paper === true
+      : (b.sm_paper === true || b.sm_ebook === true);
     // 같은 책(isbn13)이 종이·전자 두 행으로 오면 대표 1건에 형태를 합친다(8/18) — 안 그러면 먼저 온 종이 행이 전자책을 가려
     //   "바로 읽기"가 사라지고, 즉시읽기 정렬(byeoli-search)이 재고를 확인할 brcd도 못 받는다.
     const mergeSm = (ex: any, b: any) => {
@@ -633,7 +639,7 @@ Deno.serve(async (req) => {
       if (emb) {
         if (onlyHeld) {
           // 소장 큐레이션 = 세명대 전체 장서(23,727) 의미검색. book_pool(인기 9,887) 천장 해소.
-          rows = await vectorMatchSemyung(emb, LIMIT * 4, 0);
+          rows = await vectorMatchSemyung(emb, LIMIT * 4, 0, format === "both" ? null : format);   // 형태 지정 시 RPC 부분 인덱스(kind_filter)로 바로 좁힘
         } else {
           const kdcF = (qtype === "genre" && kdc) ? kdc : null; // genre만 KDC 하드필터(문학 등)
           rows = await vectorMatch(emb, LIMIT * 4, onlyHeld, kdcF, 0);
@@ -707,6 +713,11 @@ Deno.serve(async (req) => {
         titleSeen.add(nt); candidates.push(c);
         if (candidates.length >= LIMIT + 12) break;
       }
+    }
+    // 형태 선택 최종 안전망 — 어떤 경로(holdings·키워드 최후보강)로 왔든 고른 형태가 아닌 책은 내지 않는다
+    if (format !== "both") {
+      const kept = candidates.filter((c: any) => format === "ebook" ? c.smEbook === true : c.smPaper === true);
+      candidates.length = 0; candidates.push(...kept);
     }
 
     // 리랭킹(선택): 검색된 후보를 원 질의로 재검수해 무관책 컷 + 정밀순 재정렬. 제목생성·크레마 앞에 둬서

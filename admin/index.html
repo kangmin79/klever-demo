@@ -336,6 +336,9 @@ textarea.cur-inp{resize:vertical;line-height:1.5}
 #aiCurCard .aic-seg button,#aiCurCard .aic-chips button{border:1.5px solid #e0e4ec;background:#fff;color:var(--sub);font-family:inherit;font-weight:700;cursor:pointer}
 #aiCurCard .aic-seg button{font-size:12.5px;padding:8px 14px;border-radius:9px}
 #aiCurCard .aic-seg button.on{border-color:var(--ai);color:var(--ai-d);background:var(--ai-t)}
+/* 8/19 책담기 모달 '책 형태' 세그(AI 카드 세그와 같은 모양) */
+.fmt-btn{border:1.5px solid #e0e4ec;background:#fff;color:var(--sub);font-family:inherit;font-weight:700;cursor:pointer;font-size:12.5px;padding:7px 13px;border-radius:9px;transition:border-color .12s,background .12s,color .12s}
+.fmt-btn:hover,.fmt-btn.on{border-color:#6b5cf0;color:#4f3fd6;background:#efedfe}
 #aiCurCard .aic-chips{display:flex;gap:6px;flex-wrap:wrap}
 #aiCurCard .aic-chips button{font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px}
 #aiCurCard .aic-chips button.on{border-color:var(--ai);color:var(--ai-d);background:var(--ai-t)}
@@ -1191,6 +1194,13 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
                   <button type="button" onclick="aicCount(this,15)">15권</button>
                   <button type="button" class="on" onclick="aicCount(this,20)">20권</button>
                 </div></div>
+              <!-- 8/19 책 형태 선택(사서 요청): 온라인 기획전=전자책만, 서가 코너=종이책만. 기본=둘 다(기존 동작). 고전 영역에선 의미 없어 숨김 -->
+              <div class="aic-opt aic-opt-row" id="aicFmtRow" style="margin-top:10px"><div class="aic-field-l">책 형태 <span style="color:var(--light);font-weight:600">· 우리 도서관 소장 중에서</span></div>
+                <div class="aic-seg" id="aicFmtSeg">
+                  <button type="button" class="on" onclick="aicFormat(this,'both')">종이책 + 전자책</button>
+                  <button type="button" onclick="aicFormat(this,'ebook')">전자책만</button>
+                  <button type="button" onclick="aicFormat(this,'paper')">종이책만</button>
+                </div></div>
               <div class="aic-steps" id="aicSteps">
                 <div class="aic-stp" id="aicS1"><span class="ic">1</span><span>소장도서에서 <b>후보</b>를 좁히는 중…</span></div>
                 <div class="aic-stp" id="aicS2"><span class="ic">2</span><span>후보 중 <b>가장 잘 맞는 책</b>을 고르는 중…</span></div>
@@ -1254,6 +1264,15 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
             <button class="btab" data-sbt="isbn" onclick="secTab('isbn')">ISBN 입력</button>
           </div>
           <div class="searchrow"><input class="cur-inp" id="secQ" onkeydown="if(event.key==='Enter')secSearch()"><button class="btn-primary" id="secBtn" onclick="secSearch()">찾기</button></div>
+          <!-- 8/19 책 형태(통합검색 탭 전용) — AI 큐레이션 카드의 선택과 같은 값 -->
+          <div id="secFmtRow" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px">
+            <span style="font-size:12px;font-weight:700;color:var(--ink2,#56607a)">책 형태</span>
+            <div id="secFmtSeg" style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="fmt-btn on" onclick="secFormat(this,'both')">종이책 + 전자책</button>
+              <button type="button" class="fmt-btn" onclick="secFormat(this,'ebook')">전자책만</button>
+              <button type="button" class="fmt-btn" onclick="secFormat(this,'paper')">종이책만</button>
+            </div>
+          </div>
           <div class="cur-ex" id="secEx"></div>
           <div id="secCandWrap" style="margin-top:12px"></div>
         </div>
@@ -2013,6 +2032,7 @@ function secClosePicker(){el('secOv').classList.remove('on');if(scMode==='chal')
 function secTab(t){scTab=t;document.querySelectorAll('#secOv .btab').forEach(b=>b.classList.toggle('on',b.dataset.sbt===t));SCAND=[];_aiCur=null;secApplyTab();}
 function secNote(){const o=pkObj();el('secAddedNote').textContent='담긴 책 '+((o&&o.books||[]).length)+'권';}
 function secApplyTab(){const q=el('secQ');
+  const fr=el('secFmtRow'); if(fr){ fr.style.display=(scTab==='nat')?'flex':'none'; secSyncFormat(); }   // 8/19 책 형태는 통합검색 탭에서만
   if(scTab==='cls'){q.placeholder='북스타 고전 검색 (제목·저자) — 비우면 전체';el('secBtn').textContent='검색';
     el('secEx').innerHTML = _clsLock ? `<span style="font-size:12px;color:var(--text-light);font-weight:700">${_clsLock==='foreign'?'🌍 해외 고전':'🇰🇷 한국 고전'}만 담을 수 있어요 (이 탭 전용)</span>` : clsChips();
     secRenderClassics();}
@@ -2049,10 +2069,11 @@ async function secSearch(){
   if(scTab==='isbn'){return secLookupISBN();}
   // ── 통합검색: 자연어/제목 → 세명대 소장 + 국중 전체 병렬 → 병합(소장 우선, 미소장 표시) ──
   const q=el('secQ').value.trim();if(!q)return;
-  el('secCandWrap').innerHTML='<div class="cur-loading">✦ 세명대 소장 책과 미소장 책을 함께 찾는 중…</div>';
+  const fmt=CUR_FORMAT||'both';   // 8/19 책 형태: ebook=소장 전자책만 / paper=소장 종이책만 / both=기존(소장+미소장)
+  el('secCandWrap').innerHTML='<div class="cur-loading">✦ '+(fmt==='ebook'?'세명대 소장 전자책을 찾는 중…':fmt==='paper'?'세명대 소장 종이책을 찾는 중…':'세명대 소장 책과 미소장 책을 함께 찾는 중…')+'</div>';
   const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
-  // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip
-  const smP=(async()=>{ try{
+  // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip (종이책만 고르면 건너뜀)
+  const smP=(async()=>{ if(fmt==='paper') return []; try{
     const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
     const r=await fetch(SB_REST+'/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     const d=await r.json(); return (Array.isArray(d)?d:[]).map(b=>({brcd:b.barcode||b.ctrl,title:b.title,author:b.author,cover:b.cover_url||'',provider:b.vendor||'',
@@ -2061,16 +2082,18 @@ async function secSearch(){
   // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
   _aiCur=null;
   const natP=(async()=>{ try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify({query:q,genTitle:true})});
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify(fmt==='both'?{query:q,genTitle:true}:{query:q,genTitle:true,holdings:true,format:fmt})});   // 형태 지정=소장 그 형태만(서버가 강제)
     const d=await r.json(); if(d&&d.title) _aiCur={title:d.title,subtitle:d.subtitle||''}; return d.candidates||[];
   }catch(e){ return []; } })();
   const [sm,nat]=await Promise.all([smP,natP]);
   const smCand=sm.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true,prov:b.provider||''}));
   const heldT=new Set(smCand.map(b=>normT(b.t)));
-  const natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||'',smEbook:b.smEbook,smEbookProvider:b.smEbookProvider||'',smEbookUrl:b.smEbookUrl||''}));
+  let natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||'',smEbook:b.smEbook,smEbookProvider:b.smEbookProvider||'',smEbookUrl:b.smEbookUrl||''}));
+  if(fmt==='ebook') natCand=natCand.filter(b=>b.smEbook);   // 클라 안전망(서버도 거름): 고른 형태가 아닌 책·미소장은 안 보임
+  if(fmt==='paper') natCand=natCand.filter(b=>b.smPaper);
   SCAND=[...smCand,...natCand];   // 세명대 소장 먼저, 미소장(국중) 뒤
-  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">딱 맞는 후보를 못 찾았어요. 다른 말로 검색해보세요.</div>';return;}
-  secRenderCands(`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 미소장 ${natCand.length}`);
+  if(!SCAND.length){el('secCandWrap').innerHTML='<div class="book-empty">'+(fmt==='both'?'딱 맞는 후보를 못 찾았어요. 다른 말로 검색해보세요.':`우리 도서관 <b>${FMT_LABEL[fmt]}</b> 중엔 딱 맞는 책이 없어요. 다른 말로 찾거나 형태를 ‘종이책 + 전자책’으로 바꿔보세요.`)+'</div>';return;}
+  secRenderCands(fmt==='both'?`통합검색 ${SCAND.length}권 · 세명대 소장 ${smCand.length} · 미소장 ${natCand.length}`:`${FMT_LABEL[fmt]} ${SCAND.length}권 · 모두 세명대 소장`);
 }
 async function secSearchSemyung(){
   const raw=(el('secQ').value||'').trim();
@@ -2171,7 +2194,16 @@ function aicSetContext(ctx){
   }[ctx]||[];
   if(sub&&txt[0]) sub.textContent=txt[0];
   if(addBtn&&txt[1]) addBtn.textContent=txt[1];
+  const fr=el('aicFmtRow'); if(fr) fr.style.display=(ctx==='foreign'||ctx==='kr')?'none':'';   // 고전 풀은 형태 개념 없음
 }
+// 8/19 책 형태(both|ebook|paper) — AI 큐레이션·책담기 통합검색이 같은 값을 공유(사서가 한 번 고르면 유지)
+let CUR_FORMAT='both';
+function aicFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); secSyncFormat(); }
+function secFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+f+"'")>=0));
+  if(scTab==='nat'&&(el('secQ').value||'').trim()) secSearch(); }   // 검색어가 있으면 바로 다시 찾는다
+function secSyncFormat(){ document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+CUR_FORMAT+"'")>=0)); }
+const FMT_LABEL={both:'종이책 + 전자책',ebook:'전자책만',paper:'종이책만'};
 function aicMount(host){ const c=el('aiCurCard'); if(c&&host&&c.parentNode!==host) host.prepend(c); }
 function aicClassicPool(){   // 현재 문맥(해외/국내)의 고전 후보 풀 — curate pool 모드로 보낸다
   const foreign=AIC_CTX==='foreign';
@@ -2249,7 +2281,7 @@ async function aicRunGenerate(topic,isRe){
   AIC_TOPIC=topic; AIC_BUSY=true; const sb=el('aicSendBtn'); if(sb)sb.disabled=true; aicShowChips([]);
   // 8/14: 문맥별 후보 소스 — 고전 영역은 북스타 고전 풀에서만 고른다(curate pool 모드)
   const clsMode=(AIC_CTX==='foreign'||AIC_CTX==='kr');
-  const srcName=AIC_CTX==='foreign'?'북스타 해외 고전':AIC_CTX==='kr'?'북스타 한국 고전':'소장도서';
+  const srcName=AIC_CTX==='foreign'?'북스타 해외 고전':AIC_CTX==='kr'?'북스타 한국 고전':(CUR_FORMAT==='ebook'?'소장 전자책':CUR_FORMAT==='paper'?'소장 종이책':'소장도서');
   if(clsMode&&!CLASSICS_POOL.length){ loadClassicsPool(); aicPush('ai','고전 목록을 불러오는 중이에요 — 잠시 후 다시 눌러주세요.'); AIC_BUSY=false; if(sb)sb.disabled=false; return; }
   const steps=el('aicSteps'), result=el('aicResult');
   el('aicS1').querySelector('span:last-child').innerHTML=`${srcName}에서 <b>'${esc(topic)}' 후보</b>를 좁히는 중…`;
@@ -2261,7 +2293,7 @@ async function aicRunGenerate(topic,isRe){
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
       body:JSON.stringify(clsMode
         ? {query:topic, pool:aicClassicPool(), genTitle:true, titleModel:'sonnet', count:(AIC_COUNT||8)+6}
-        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6})});
+        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6, format:CUR_FORMAT})});   // 8/19 책 형태
     j=await r.json(); if(j&&j.error)err=j.error;
   }catch(e){ err=String(e); }
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
@@ -2278,7 +2310,7 @@ async function aicRunGenerate(topic,isRe){
   AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
   const weakN=AIC_RESULTS.filter(b=>b.rel===1).length;
-  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> ${clsMode?'작가·시대 정보를':'줄거리·작가·소장형태(전자/종이/구독)를'} 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>${clsMode?'북스타 고전 — 바로 읽기 연결':'우리 도서관 소장'}</b>)`;
+  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> ${clsMode?'작가·시대 정보를':'줄거리·작가·소장형태(전자/종이/구독)를'} 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>${clsMode?'북스타 고전 — 바로 읽기 연결':(CUR_FORMAT==='ebook'?'우리 도서관 전자책 — 바로 읽기 연결':CUR_FORMAT==='paper'?'우리 도서관 종이책':'우리 도서관 소장')}</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
