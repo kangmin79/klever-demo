@@ -2039,7 +2039,9 @@ function secApplyTab(){const q=el('secQ');
   else if(scTab==='lib'){q.placeholder='소장 목록 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';secRenderLib();}
   else if(scTab==='sm'){q.placeholder='세명대 전자도서관 검색 (제목·저자)';el('secBtn').textContent='검색';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">세명대 학술정보원 전자책에서 검색해 담아요.<br>담은 책은 학생 앱에서 ‘전자책 바로 읽기’로 연결됩니다.</div>';}
   else if(scTab==='isbn'){q.placeholder='ISBN 13자리 입력';el('secBtn').textContent='조회';el('secEx').innerHTML='';el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 넣으면 표지·제목이 자동으로 붙어요.</div>';}
-  else{q.placeholder='제목·저자 또는 자연어 (예: 시험 끝 머리 식히는 책)';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML='<div class="book-empty">말하듯 적거나 제목을 넣으면 <b>세명대 소장 책</b>과 <b>미소장 책</b>을 한 번에 찾아드려요.<br>세명대 소장 책이 위에, 미소장 책은 아래에 표시됩니다.</div>';}
+  else{q.placeholder='제목·저자 또는 자연어 (예: 시험 끝 머리 식히는 책)';el('secBtn').textContent='찾기';el('secEx').innerHTML=EX_HOLD.map(e=>`<span onclick="secExample('${esc(e)}')">${esc(e)}</span>`).join('');el('secCandWrap').innerHTML=(CUR_FORMAT==='ebook'||CUR_FORMAT==='paper')
+      ?`<div class="book-empty">말하듯 적거나 제목을 넣으면 우리 도서관 <b>${FMT_LABEL[CUR_FORMAT]}</b> 중에서 찾아드려요.<br>미소장 책은 이 형태에선 표시되지 않아요 (‘종이책 + 전자책’으로 바꾸면 함께 보여요).</div>`
+      :'<div class="book-empty">말하듯 적거나 제목을 넣으면 <b>세명대 소장 책</b>과 <b>미소장 책</b>을 한 번에 찾아드려요.<br>세명대 소장 책이 위에, 미소장 책은 아래에 표시됩니다.</div>';}
   q.value='';secNote();
 }
 function secRenderClassics(){
@@ -2082,7 +2084,7 @@ async function secSearch(){
   // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
   _aiCur=null;
   const natP=(async()=>{ try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify(fmt==='both'?{query:q,genTitle:true}:{query:q,genTitle:true,holdings:true,format:fmt})});   // 형태 지정=소장 그 형태만(서버가 강제)
+    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify(fmt==='both'?{query:q,genTitle:true}:{query:q,genTitle:true,holdings:true,format:fmt,rerank:true})});   // 형태 지정=소장 그 형태만(서버가 강제) + 풀이 좁아 꼬리가 약해지므로 리랭크로 무관책 컷
     const d=await r.json(); if(d&&d.title) _aiCur={title:d.title,subtitle:d.subtitle||''}; return d.candidates||[];
   }catch(e){ return []; } })();
   const [sm,nat]=await Promise.all([smP,natP]);
@@ -2201,7 +2203,7 @@ let CUR_FORMAT='both';
 function aicFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); secSyncFormat(); }
 function secFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
   document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+f+"'")>=0));
-  if(scTab==='nat'&&(el('secQ').value||'').trim()) secSearch(); }   // 검색어가 있으면 바로 다시 찾는다
+  if(scTab==='nat'){ if((el('secQ').value||'').trim()) secSearch(); else if(!SCAND.length) secApplyTab(); } }   // 검색어 있으면 바로 재검색, 없으면 안내문만 형태에 맞게
 function secSyncFormat(){ document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+CUR_FORMAT+"'")>=0)); }
 const FMT_LABEL={both:'종이책 + 전자책',ebook:'전자책만',paper:'종이책만'};
 function aicMount(host){ const c=el('aiCurCard'); if(c&&host&&c.parentNode!==host) host.prepend(c); }
