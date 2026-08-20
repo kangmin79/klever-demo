@@ -107,15 +107,51 @@ async function listReserves(jar: Jar): Promise<EbReserve[]> {
   return out;
 }
 
-// 뷰어 URL 발급 (토큰 내장, 쿠키 없이 단독 실행되는 교보/예스24 DRM 뷰어)
-async function viewerUrlFor(jar: Jar, loanSrmb: string, brcd: string): Promise<string> {
-  await ebPost(jar, "/process/sessionAddProc.xml", { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" });
+// 뷰어 URL 발급 — 도서관 '보기' 버튼(process.js gFnEBookFileChoicePopup)과 **같은 순서**로 간다.
+//
+// 🚨 8/21 사고: 세명대 전자책은 교보문고·YES24 두 공급사인데(실측 55:45) 예전 코드는 popupInfo를 건너뛰고
+//    무조건 교보 뷰어 URL을 만들었다 → YES24 책은 대출은 되는데 열면 "DRM 인증 처리에 문제(403)".
+//    게다가 sessionAddProc가 <result>False</result> "라이선스 오류"를 돌려줘도 읽지 않고 통과시켜
+//    깨진 URL을 '성공'으로 앱에 넘겼다. 절반의 책이 조용히 안 열리고 있었다.
+//
+// 규칙(재발 방지):
+//   ① 도서관 XML의 <result>는 빠짐없이 검사한다. False면 도서관이 준 <msg>를 그대로 올린다 — 우리가 지어내지 않는다.
+//   ② 파라미터는 추측하지 않는다. popupInfo.xml이 주는 값(barcode·seqBarcode·userId·productCD·useCondition·comCode)을 쓴다.
+//   ③ 실패는 {url:""} + error로 돌려 호출부가 학생에게 이유를 말하게 한다. 빈 문자열만 돌려주고 끝내지 않는다.
+interface ViewerRes { url: string; vendor: "external" | "kyobo" | ""; error?: string }
+async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string): Promise<ViewerRes> {
+  // 1) popupInfo — 공급사 분기 + 교보용 정확한 값. 도서관 버튼이 제일 먼저 부르는 것
+  const pi = await ebGet(jar, `/process/popupInfo.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&ifType=W`);
+  if (xmlTag(pi, "result") !== "True") {
+    return { url: "", vendor: "", error: xmlTag(pi, "msgcode") || "도서관이 열람 정보를 주지 않았어요" };
+  }
+  // 2) 외부 공급사(YES24 등): 도서관이 준 주소가 곧 뷰어 진입점. 교보 토큰을 만들면 안 된다
+  const apiUrl = xmlTag(pi, "apiUrl");
+  if (apiUrl) return { url: apiUrl, vendor: "external" };
+
+  // 3) 교보: 라이선스(웹세션) 등록 → 결과 반드시 확인.
+  //    ⚠️ 파라미터 조합은 '기존 방식(빈값)'을 먼저 쓴다 — 8/21 이전에 교보 책이 열리던 경로를 절대 바꾸지 않기 위함(회귀 방지).
+  //    빈값이 False면 그때만 popupInfo가 준 값으로 재시도한다. 둘 다 False면 도서관 메시지를 그대로 올린다.
+  const brcd = xmlTag(pi, "barcode") || brcdHint;
+  const epdeBrcd = xmlTag(pi, "seqBarcode");
+  const legacy = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" };
+  let sa = await ebPost(jar, "/process/sessionAddProc.xml", legacy);
+  if (xmlTag(sa, "result") !== "True") {
+    const full = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd, cttsDvsnCode: xmlTag(pi, "productCD") || "001", fileDvsnCode: xmlTag(pi, "useCondition"), mmbrNum: xmlTag(pi, "userId"), ifType: "W" };
+    sa = await ebPost(jar, "/process/sessionAddProc.xml", full);
+    if (xmlTag(sa, "result") !== "True") {
+      return { url: "", vendor: "kyobo", error: xmlTag(sa, "msg").replace(/<br\s*\/?>/gi, " ") || "라이선스 등록에 실패했어요" };
+    }
+  }
+  // 4) 웹뷰어 토큰 (기존 코드와 동일한 호출 — epdeBrcd 빈값)
   const wx = await ebGet(jar, `/process/webViewerProc.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&brcd=${brcd}&epdeBrcd=&type=web`);
-  if (xmlTag(wx, "result") !== "True") return "";
+  if (xmlTag(wx, "result") !== "True") {
+    return { url: "", vendor: "kyobo", error: xmlTag(wx, "msg") || "뷰어 토큰을 받지 못했어요" };
+  }
   const wvUrl = xmlTag(wx, "webViewrUrl");
-  const token = xmlTag(wx, "token").replace(/\//g, "-"); // 네이티브와 동일: '/'→'-'
+  const token = xmlTag(wx, "token").replace(/\//g, "-"); // 도서관 JS와 동일: '/'→'-'
   const title = xmlTag(wx, "title");
-  return `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`;
+  return { url: `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`, vendor: "kyobo" };
 }
 
 // 전자책 재고 — 상세페이지가 `[ 대출 : 0/1 예약 : 0 ]`으로 노출한다(로그인 불필요).
@@ -210,9 +246,12 @@ Deno.serve(async (req) => {
       if (!mine) {
         return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
       }
-      const viewerUrl = await viewerUrlFor(jar, loanSrmb, mine.brcd || brcd);
-      if (!viewerUrl) return json({ ok: false, action, personal, message: "뷰어를 열지 못했어요. 잠시 후 다시 시도해 주세요" });
-      return json({ ok: true, action, personal, loanSrmb, viewerUrl, dueDate: mine.dueDate || "" });
+      const v = await viewerUrlFor(jar, loanSrmb, mine.brcd || brcd);
+      if (!v.url) {
+        console.error("viewer fail", loanSrmb, v.vendor, v.error);
+        return json({ ok: false, action, personal, vendor: v.vendor, message: `뷰어를 열지 못했어요 — ${v.error || "잠시 후 다시 시도해 주세요"}` });
+      }
+      return json({ ok: true, action, personal, loanSrmb, viewerUrl: v.url, vendor: v.vendor, dueDate: mine.dueDate || "" });
     }
 
     // 반납은 loanSrmb만으로 성립 — brcd 요구는 borrow에만.
@@ -224,9 +263,11 @@ Deno.serve(async (req) => {
       // (공유계정 시절의 "가장 오래된 1권 강제 반납"은 남이 읽던 책을 끊어서 8/9에 폐지)
       const res = await doBorrow(jar, brcd);
       if (!res.ok) return json({ ok: false, action, personal, message: res.msg });
-      let viewerUrl = "";
-      try { viewerUrl = await viewerUrlFor(jar, res.loanSrmb, brcd); }
-      catch (_) { /* 뷰어URL 실패해도 대출은 유효 */ }
+      // 뷰어URL 실패해도 대출은 유효 — 다만 왜 못 열었는지는 viewerError로 같이 보내 앱이 말하게 한다(8/21: 조용한 실패 금지)
+      let viewerUrl = "", vendor = "", viewerError = "";
+      try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
+      catch (e) { viewerError = "뷰어 발급 중 오류: " + String(e).slice(0, 80); }
+      if (!viewerUrl) console.error("borrow ok but viewer fail", res.loanSrmb, vendor, viewerError);
       // 반납예정일은 도서관이 정한 값을 그대로 읽어 온다.
       // ⚠️ 예전엔 "대출기간 14일"이라고 박아 뒀는데 **실측 5일**이었다(8/9: 8/9 대출 → 8/14 반납예정).
       //    기간은 도서관 정책이라 우리가 알 수 없다 — 숫자를 짐작하지 말고 실제 날짜를 보여준다.
@@ -235,7 +276,7 @@ Deno.serve(async (req) => {
       catch (_) { /* 못 읽으면 날짜 없이 안내 */ }
       const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
       return json({
-        ok: true, action, personal, loanSrmb: res.loanSrmb, entsDvsnCode: res.ents, viewerUrl, dueDate,
+        ok: true, action, personal, loanSrmb: res.loanSrmb, entsDvsnCode: res.ents, viewerUrl, vendor, viewerError, dueDate,
         message: dm
           ? `대출 완료 — ${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요`
           : "대출 완료 — 읽고 나면 반납해 주세요",
