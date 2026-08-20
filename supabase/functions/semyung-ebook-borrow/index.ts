@@ -122,8 +122,11 @@ async function listReserves(jar: Jar): Promise<EbReserve[]> {
 //   학생 입장에선 읽기까지 한 번 더 누르는 마찰이라(원칙: 찾고→읽기 마찰 < 밀리), 그 화면의 '바로보기'가
 //   만들어 내는 주소를 서버가 미리 계산해서 바로 건넨다. 계산식은 도서관 webview.js의 goViewer()와 글자 그대로 동일:
 //     url = 도메인 + code + "/" + subcode + "/" + encodeURIComponent(암호문.replace(/\//g,"-"))
-//   ⚠️ 암호문은 (회원, 책)마다 고정이라 세션·IP에 묶이지 않는다(8/21 실측: 서로 다른 대출·다른 UA에서 동일값).
+//   ⚠️ 암호문은 발급 때마다 꼬리가 달라진다(8/21 재실측 — 앞부분만 같음). 그래서 저장해 두고 재사용하면 안 되고,
+//     지금처럼 열 때마다 선택 화면을 새로 읽어 그 자리에서 뽑는다. 세션 쿠키는 안 쓰므로(연결 자체가 무쿠키) 발급자·사용자 IP가 달라도 된다.
 //   파싱이 어긋나면 빈 값을 돌려 호출부가 선택 화면 주소를 그대로 쓰게 한다 — 못 여는 것보다 한 번 더 누르는 게 낫다.
+//   📌 8/21 아침 실측: b2bwv.yes24.com(웹리더)·www.yes24.com이 SK망(SKT LTE·SKB)에서 통째로 시간초과 — YES24측/구간 장애.
+//     같은 시각 교보·네이버·yes24 CDN은 정상, AWS에서는 b2bwv도 정상. 이런 증상이 또 오면 우리 코드가 아니라 회선↔공급사부터 의심할 것.
 async function yes24DirectUrl(apiUrl: string): Promise<string> {
   try {
     const r = await fetch(apiUrl, { headers: { "User-Agent": UA } });
