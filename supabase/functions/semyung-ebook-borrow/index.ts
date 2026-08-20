@@ -118,6 +118,23 @@ async function listReserves(jar: Jar): Promise<EbReserve[]> {
 //   ① 도서관 XML의 <result>는 빠짐없이 검사한다. False면 도서관이 준 <msg>를 그대로 올린다 — 우리가 지어내지 않는다.
 //   ② 파라미터는 추측하지 않는다. popupInfo.xml이 주는 값(barcode·seqBarcode·userId·productCD·useCondition·comCode)을 쓴다.
 //   ③ 실패는 {url:""} + error로 돌려 호출부가 학생에게 이유를 말하게 한다. 빈 문자열만 돌려주고 끝내지 않는다.
+// YES24: 도서관이 주는 apiUrl은 '바로보기 / 뷰어보기'를 고르라는 **선택 화면**이다.
+//   학생 입장에선 읽기까지 한 번 더 누르는 마찰이라(원칙: 찾고→읽기 마찰 < 밀리), 그 화면의 '바로보기'가
+//   만들어 내는 주소를 서버가 미리 계산해서 바로 건넨다. 계산식은 도서관 webview.js의 goViewer()와 글자 그대로 동일:
+//     url = 도메인 + code + "/" + subcode + "/" + encodeURIComponent(암호문.replace(/\//g,"-"))
+//   ⚠️ 암호문은 (회원, 책)마다 고정이라 세션·IP에 묶이지 않는다(8/21 실측: 서로 다른 대출·다른 UA에서 동일값).
+//   파싱이 어긋나면 빈 값을 돌려 호출부가 선택 화면 주소를 그대로 쓰게 한다 — 못 여는 것보다 한 번 더 누르는 게 낫다.
+async function yes24DirectUrl(apiUrl: string): Promise<string> {
+  try {
+    const r = await fetch(apiUrl, { headers: { "User-Agent": UA } });
+    if (!r.ok) return "";
+    const html = new TextDecoder("euc-kr").decode(await r.arrayBuffer());
+    const m = /goViewer\('([^']+)','([^']+)','([^']+)','([^']+)'\)/.exec(html);
+    if (!m) return "";
+    return m[1] + m[2] + "/" + m[3] + "/" + encodeURIComponent(m[4].split("/").join("-"));
+  } catch (_) { return ""; }
+}
+
 interface ViewerRes { url: string; vendor: "external" | "kyobo" | ""; error?: string }
 async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string): Promise<ViewerRes> {
   // 1) popupInfo — 공급사 분기 + 교보용 정확한 값. 도서관 버튼이 제일 먼저 부르는 것
@@ -125,9 +142,10 @@ async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string): Promi
   if (xmlTag(pi, "result") !== "True") {
     return { url: "", vendor: "", error: xmlTag(pi, "msgcode") || "도서관이 열람 정보를 주지 않았어요" };
   }
-  // 2) 외부 공급사(YES24 등): 도서관이 준 주소가 곧 뷰어 진입점. 교보 토큰을 만들면 안 된다
+  // 2) 외부 공급사(YES24 등): 도서관이 준 주소가 곧 뷰어 진입점. 교보 토큰을 만들면 안 된다.
+  //    선택 화면은 건너뛰고 '바로보기'(웹 브라우저 읽기)로 직행 — 실패하면 선택 화면이라도 준다
   const apiUrl = xmlTag(pi, "apiUrl");
-  if (apiUrl) return { url: apiUrl, vendor: "external" };
+  if (apiUrl) return { url: (await yes24DirectUrl(apiUrl)) || apiUrl, vendor: "external" };
 
   // 3) 교보: 라이선스(웹세션) 등록 → 결과 반드시 확인.
   //    ⚠️ 파라미터 조합은 '기존 방식(빈값)'을 먼저 쓴다 — 8/21 이전에 교보 책이 열리던 경로를 절대 바꾸지 않기 위함(회귀 방지).
