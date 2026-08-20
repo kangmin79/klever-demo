@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>북스타 책갈피 목업</title>
+<style>
+  body{margin:0;background:#ececea;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+  h1{font-size:16px;color:#555;font-weight:700;margin:0 0 30px;}
+  .stage{display:flex;gap:70px;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+  .tag-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;}
+  .cap{font-size:12px;color:#888;}
+  svg{filter:drop-shadow(6px 10px 14px rgba(0,0,0,.18));}
+  .tilt1{transform:rotate(8deg);}
+  .tilt2{transform:rotate(-6deg);}
+</style>
+</head>
+<body>
+<h1>북스타(참나루) 책갈피 목업 — 실물 행잉 태그</h1>
+<div class="stage">
+
+  <!-- A. 남색 바탕 + 금색 세리프 -->
+  <div class="tag-wrap">
+    <svg class="tilt1" width="150" height="470" viewBox="0 0 150 470">
+      <defs>
+        <clipPath id="tagA"><path d="M75 0 L150 40 L150 430 L112 470 L75 440 L38 470 L0 430 L0 40 Z"/></clipPath>
+      </defs>
+      <!-- 몸통: 상단 패턴 + 남색 본체, 하단 리본 노치 -->
+      <g clip-path="url(#tagA)">
+        <rect width="150" height="470" fill="#1b2438"/>
+        <!-- 상단 패턴부: 책/페이지 아이콘 타일 -->
+        <rect width="150" height="150" fill="#f5efe2"/>
+        <g>
+          <!-- 타일 6열 x 3행, 책갈피/책 모티프 -->
+          <g transform="translate(0,0)">
+            <rect x="0" y="0" width="50" height="50" fill="#e8c46b"/>
+            <path d="M15 12 h20 v28 l-10 -8 l-10 8 z" fill="#1b2438"/>
+            <rect x="50" y="0" width="50" height="50" fill="#2f6f6a"/>
+            <path d="M62 14 h26 v24 h-26 z M75 14 v24" stroke="#f5efe2" stroke-width="3" fill="none"/>
+            <rect x="100" y="0" width="50" height="50" fill="#1b2438"/>
+            <path d="M115 12 h20 v28 l-10 -8 l-10 8 z" fill="#e8c46b"/>
+          </g>
+          <g transform="translate(0,50)">
+            <rect x="0" y="0" width="50" height="50" fill="#b0562f"/>
+            <path d="M12 14 h26 v24 h-26 z M25 14 v24" stroke="#f5efe2" stroke-width="3" fill="none"/>
+            <rect x="50" y="0" width="50" height="50" fill="#e8c46b"/>
+            <circle cx="75" cy="25" r="11" fill="#1b2438"/>
+            <rect x="100" y="0" width="50" height="50" fill="#2f6f6a"/>
+            <path d="M115 12 h20 v28 l-10 -8 l-10 8 z" fill="#f5efe2"/>
+          </g>
+          <g transform="translate(0,100)">
+            <rect x="0" y="0" width="50" height="50" fill="#1b2438"/>
+            <path d="M12 14 h26 v24 h-26 z M25 14 v24" stroke="#e8c46b" stroke-width="3" fill="none"/>
+            <rect x="50" y="0" width="50" height="50" fill="#b0562f"/>
+            <path d="M65 12 h20 v28 l-10 -8 l-10 8 z" fill="#f5efe2"/>
+            <rect x="100" y="0" width="50" height="50" fill="#e8c46b"/>
+            <path d="M112 14 h26 v24 h-26 z M125 14 v24" stroke="#1b2438" stroke-width="3" fill="none"/>
+          </g>
+        </g>
+        <!-- 세로 텍스트 -->
+        <text x="88" y="185" fill="#e8c46b" font-family="Georgia,'Nanum Myeongjo',serif" font-size="34" font-weight="700" letter-spacing="4"
+              transform="rotate(90 88 185)">참나루</text>
+        <text x="46" y="188" fill="rgba(245,239,226,.75)" font-family="Georgia,serif" font-size="15" letter-spacing="3"
+              transform="rotate(90 46 188)">BOOKSTAR</text>
+        <rect x="80" y="392" width="9" height="9" fill="#e8c46b" transform="rotate(45 84 396)"/>
+      </g>
+      <!-- 아일렛 + 고리 -->
+      <circle cx="75" cy="34" r="9" fill="#d9d9d9" stroke="#9a9a9a" stroke-width="2"/>
+      <circle cx="75" cy="34" r="4.5" fill="#ececea"/>
+      <path d="M75 30 C 55 -10, 95 -25, 78 8" stroke="#3a3a3a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="cap">A — 남색 본체 · 금색 세리프 (다크 앱 톤)</div>
+  </div>
+
+  <!-- B. 크림 바탕 + 남색 텍스트 -->
+  <div class="tag-wrap">
+    <svg class="tilt2" width="150" height="470" viewBox="0 0 150 470">
+      <defs>
+        <clipPath id="tagB"><path d="M75 0 L150 40 L150 430 L112 470 L75 440 L38 470 L0 430 L0 40 Z"/></clipPath>
+      </defs>
+      <g clip-path="url(#tagB)">
+        <rect width="150" height="470" fill="#f5efe2"/>
+        <rect width="150" height="150" fill="#1b2438"/>
+        <g>
+          <g transform="translate(0,0)">
+            <rect x="0" y="0" width="50" height="50" fill="#2f6f6a"/>
+            <path d="M15 12 h20 v28 l-10 -8 l-10 8 z" fill="#f5efe2"/>
+            <rect x="50" y="0" width="50" height="50" fill="#e8c46b"/>
+            <path d="M62 14 h26 v24 h-26 z M75 14 v24" stroke="#1b2438" stroke-width="3" fill="none"/>
+            <rect x="100" y="0" width="50" height="50" fill="#b0562f"/>
+            <path d="M115 12 h20 v28 l-10 -8 l-10 8 z" fill="#f5efe2"/>
+          </g>
+          <g transform="translate(0,50)">
+            <rect x="0" y="0" width="50" height="50" fill="#e8c46b"/>
+            <path d="M12 14 h26 v24 h-26 z M25 14 v24" stroke="#1b2438" stroke-width="3" fill="none"/>
+            <rect x="50" y="0" width="50" height="50" fill="#1b2438"/>
+            <circle cx="75" cy="25" r="11" fill="#e8c46b"/>
+            <rect x="100" y="0" width="50" height="50" fill="#2f6f6a"/>
+            <path d="M112 14 h26 v24 h-26 z M125 14 v24" stroke="#f5efe2" stroke-width="3" fill="none"/>
+          </g>
+          <g transform="translate(0,100)">
+            <rect x="0" y="0" width="50" height="50" fill="#b0562f"/>
+            <path d="M15 12 h20 v28 l-10 -8 l-10 8 z" fill="#e8c46b"/>
+            <rect x="50" y="0" width="50" height="50" fill="#2f6f6a"/>
+            <path d="M62 14 h26 v24 h-26 z M75 14 v24" stroke="#f5efe2" stroke-width="3" fill="none"/>
+            <rect x="100" y="0" width="50" height="50" fill="#e8c46b"/>
+            <path d="M115 12 h20 v28 l-10 -8 l-10 8 z" fill="#1b2438"/>
+          </g>
+        </g>
+        <text x="88" y="185" fill="#1b2438" font-family="Georgia,'Nanum Myeongjo',serif" font-size="34" font-weight="700" letter-spacing="4"
+              transform="rotate(90 88 185)">참나루</text>
+        <text x="46" y="188" fill="rgba(27,36,56,.6)" font-family="Georgia,serif" font-size="15" letter-spacing="3"
+              transform="rotate(90 46 188)">SEMYUNG READING</text>
+        <rect x="80" y="392" width="9" height="9" fill="#1b2438" transform="rotate(45 84 396)"/>
+      </g>
+      <circle cx="75" cy="34" r="9" fill="#d9d9d9" stroke="#9a9a9a" stroke-width="2"/>
+      <circle cx="75" cy="34" r="4.5" fill="#ececea"/>
+      <path d="M75 30 C 55 -10, 95 -25, 78 8" stroke="#3a3a3a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="cap">B — 크림 본체 · 남색 텍스트 (라이트 톤)</div>
+  </div>
+
+  <!-- C. QR 뒷면 시안 -->
+  <div class="tag-wrap">
+    <svg width="150" height="470" viewBox="0 0 150 470">
+      <defs>
+        <clipPath id="tagC"><path d="M75 0 L150 40 L150 430 L112 470 L75 440 L38 470 L0 430 L0 40 Z"/></clipPath>
+      </defs>
+      <g clip-path="url(#tagC)">
+        <rect width="150" height="470" fill="#f5efe2"/>
+        <text x="75" y="120" text-anchor="middle" fill="#1b2438" font-size="15" font-weight="800" font-family="'Segoe UI',sans-serif">오늘 빌린 책,</text>
+        <text x="75" y="142" text-anchor="middle" fill="#1b2438" font-size="15" font-weight="800" font-family="'Segoe UI',sans-serif">퀴즈로 완독 인증!</text>
+        <!-- QR 자리 표시 -->
+        <rect x="35" y="175" width="80" height="80" fill="none" stroke="#1b2438" stroke-width="3"/>
+        <g fill="#1b2438">
+          <rect x="42" y="182" width="18" height="18"/><rect x="90" y="182" width="18" height="18"/>
+          <rect x="42" y="230" width="18" height="18"/><rect x="68" y="208" width="14" height="14"/>
+          <rect x="90" y="230" width="8" height="8"/><rect x="102" y="242" width="6" height="6"/>
+        </g>
+        <text x="75" y="285" text-anchor="middle" fill="#8a7f6a" font-size="11" font-family="'Segoe UI',sans-serif">bookstar.co.kr</text>
+        <text x="88" y="320" fill="#e8c46b" font-family="Georgia,serif" font-size="22" font-weight="700" letter-spacing="2"
+              transform="rotate(90 88 320)">참나루</text>
+        <rect x="0" y="440" width="150" height="30" fill="#1b2438"/>
+      </g>
+      <circle cx="75" cy="34" r="9" fill="#d9d9d9" stroke="#9a9a9a" stroke-width="2"/>
+      <circle cx="75" cy="34" r="4.5" fill="#ececea"/>
+    </svg>
+    <div class="cap">C — 뒷면: QR로 앱 유입 (대출데스크 배포용)</div>
+  </div>
+
+</div>
+</body>
+</html>

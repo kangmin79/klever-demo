@@ -516,6 +516,19 @@ body.dark .rsv-warn{color:#fca5a5;}
 .lcd-btn{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:12px;padding:13px 15px;font-size:13.5px;font-weight:700;cursor:pointer;background:var(--bg-card);color:var(--text);}
 .lcd-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
 .lcd-btn .ar{margin-left:auto;opacity:.6;}
+/* 8/20 사장님 수정요청: '전자책 바로 읽기' 아래 '퀴즈로 바로 읽기' — 작품 이해·인문 성찰 두 줄을 항상 보여준다 */
+.lcd-quiz{margin:0 24px 18px;background:var(--primary-bg);border-radius:14px;padding:16px 14px 14px;}
+.lcd-quiz-h{font-size:14.5px;font-weight:800;color:var(--primary);margin-bottom:3px;}
+.lcd-quiz-s{font-size:12px;color:var(--text-light);margin-bottom:11px;line-height:1.5;}
+.lcd-qcard{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:11px;padding:13px 14px;cursor:pointer;margin-bottom:8px;transition:box-shadow .15s,transform .15s;}
+.lcd-qcard:last-child{margin-bottom:0;}
+.lcd-qcard:hover{box-shadow:0 2px 10px rgba(0,0,0,.07);transform:translateY(-1px);}
+.lcd-qcard.rf{border-left-color:#7c5cc4;}
+.lcd-qcard .qt{font-size:14px;font-weight:800;color:var(--primary);margin-bottom:3px;}
+.lcd-qcard.rf .qt{color:#6b4bb0;}
+.lcd-qcard .qd{font-size:12px;color:var(--text-light);line-height:1.5;}
+.lcd-qcard .ar{margin-left:auto;flex-shrink:0;opacity:.45;font-size:15px;}
+@media(max-width:600px){.lcd-quiz{margin:0 16px 16px;}}
 
 /* ═══════════════════════════════════════════════════════════
    4. 홈 — 3 메인 프로그램 + 공지
@@ -6688,8 +6701,9 @@ function libDetail(isbn){
         return '출처 · 세명대학교 학술정보원 '+fmt+(tags.includes('paper')&&!tags.includes('ebook')?(desc?' · 표지·줄거리 알라딘':' · 표지 알라딘'):'');
       }
       return b._sm?('출처 · 세명대학교 학술정보원 전자도서관 소장'+(en&&en.src==='nl'?' · 줄거리·서지 국립중앙도서관(정보나루)':'')):'출처 · 별점·표지·쪽수 알라딘 / 대출 정보나루(국립중앙도서관)';
-    })()}</div>
-    <div id="lcdReviews"></div>`;
+    })()}</div>`;
+  // 8/20 사장님 수정요청: 소장자료 상세의 '독자 서평' 삭제(PC·모바일 둘 다 — 같은 DOM을 CSS로만 나누므로 여기 한 곳).
+  //   고전 상세(openDetail)의 서평은 그대로 두고, 서평 쓰기·보기 기능 자체도 유지(내 도서관에서 계속 쓴다)
   ov.classList.add('on');
   lcdDescMark(document.getElementById('lcdDesc'));   // 8/14: 설명 넘치면 '더 보기' 표시(탭=펼침)
   if(isPaperHold) loadHolding(reckey);
@@ -6708,7 +6722,6 @@ function libDetail(isbn){
       loadHolding(k, 'pwHold-'+k);
     });
   }
-  renderDetailReviews(b.isbn, cleanT(b.t));
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   // 세명대 키(전자책 바코드=숫자 / 종이책 CATTOT)만 있으면 어느 목록에서 왔든 DB에서 보강한다.
   // (기존: b._sm 플래그에 의존 → 큐레이션 등 일부 경로에서 저자·줄거리가 통째로 비어 보였다)
@@ -7932,11 +7945,20 @@ function openDetail(bookId){
         <div class="lcd-chips">${chips}</div></div>
     </div>
     <p class="lcd-desc${summary?' has-sum':''}">${esc(intro)}</p>
-    <div style="font-size:11px;font-weight:800;color:var(--text-light);letter-spacing:0.3px;padding:0 24px 8px;">이렇게 읽어요</div>
     <div class="lcd-acts">
-      <!-- 8/14 사장님 수정요청: '전문 바로 읽기·북스타 표준 본문' → '전자책 바로 읽기'(용어 통일), '퀴즈로 깊이 읽기' 줄 삭제(챌린지는 독서 챌린지 메뉴에서만) -->
+      <!-- 8/14 사장님 수정요청: '전문 바로 읽기·북스타 표준 본문' → '전자책 바로 읽기'(용어 통일)
+           8/20 사장님 수정요청: '이렇게 읽어요' 라벨 삭제 + 아래에 '퀴즈로 바로 읽기' 부활
+             (8/14엔 '퀴즈로 깊이 읽기' 한 줄을 지웠지만, 이번엔 작품 이해·인문 성찰 두 종을 항상 보이게 — 챌린지 참여 없이도 열린다) -->
       <div class="lcd-btn primary" onclick="closeLc();openViewer('${b.id}','full')">전자책 바로 읽기<span class="ar">›</span></div>
       ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
+    </div>
+    <div class="lcd-quiz">
+      <div class="lcd-quiz-h">퀴즈로 바로 읽기</div>
+      <div class="lcd-quiz-s">작품의 핵심 문장과 배경 설명을 읽고 퀴즈를 풀어요</div>
+      <div class="lcd-qcard" onclick="openQuizDirect('${b.id}','작품 이해')">
+        <div><div class="qt">작품 이해 퀴즈</div><div class="qd">사건과 인물을 이해하게 되고, 작품 한 권을 이야기할 수 있게 돼요</div></div><span class="ar">›</span></div>
+      <div class="lcd-qcard rf" onclick="openQuizDirect('${b.id}','인문 성찰')">
+        <div><div class="qt">인문 성찰 퀴즈</div><div class="qd">인문학적 질문에 답을 찾다 보면, 사람과 삶을 보는 내 기준이 생겨요</div></div><span class="ar">›</span></div>
     </div>
     <div class="lcd-src">본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
@@ -8605,7 +8627,8 @@ function renderViewer(){
     if(_S && !_mockOrigin && _S.length <= 4500) body.classList.add('sent-novirt'); }
 
   if(currentMode==='challenge'){ const _pl=document.getElementById('viewerProgLabel'); if(_pl) _pl.textContent=''; }   // 챌린지: 남은시간 라벨 강제 비움(스크롤 없어 _setProgLabel 미호출 대비)
-  if(currentMode === 'challenge' && typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[currentBook.id]){
+  // 상세 모달에서 유형을 골라 들어왔으면 장면 챌린지(하드코딩)보다 그 유형의 퀴즈 패널이 우선 — 학생이 방금 누른 것이니까(8/20)
+  if(currentMode === 'challenge' && !_quizWant() && typeof CHALLENGE_SCENES !== 'undefined' && CHALLENGE_SCENES[currentBook.id]){
     renderSceneChallenge(CHALLENGE_SCENES[currentBook.id], body, info);
   } else if(currentMode === 'challenge'){
     // 챌린지 좌측: classic/foreign은 풀이/번역, modern은 원문 / 우측: 참여 챌린지 미션(별 적립)
@@ -8670,19 +8693,36 @@ function renderViewer(){
 
 /* ═══ 챌린지 미션 패널 (참여 챌린지 mission → 별 적립 award_*) ═══ */
 let _mpCtx=null;
+// 8/20 사장님 수정요청 — 상세 모달의 '작품 이해 퀴즈 / 인문 성찰 퀴즈'에서 바로 들어온 경우.
+//   챌린지 참여 여부와 무관하게 그 유형의 퀴즈를 연다(참여했으면 아래 정규 경로가 그대로 돌고, 아니면 퀴즈만 있는 패널).
+// {bookId, qtype} — 뷰어가 열려 있는 동안 유지한다. renderMissionPanel은 좌우 칸 토글·언어 전환 등으로 여러 번 다시 그려지므로
+//   한 번 쓰고 버리면 두 번째 렌더에서 '챌린지에 먼저 참여' 안내로 되돌아간다(8/20 스모크에서 실측).
+let _quizWanted = null;
+function openQuizDirect(bookId, qtype){
+  _quizWanted = {bookId, qtype};
+  closeLc();
+  openViewer(bookId, 'challenge');
+}
+function _quizWant(){ return (_quizWanted && currentBook && _quizWanted.bookId===currentBook.id) ? _quizWanted.qtype : null; }
 function renderMissionPanel(body, info, leftBody, L){
   const ch = chalForBook(currentBook);
   const stu = bxStudent();
+  const want = _quizWant();
   let m = ch ? appChalMission(ch) : null;
   // 사서가 미션을 바꿨으면 최신본 우선(독서 챌린지 페이지에서 로드된 CHAL_PUB) — 참여 시점 스냅샷보다 최신
   if(ch && typeof CHAL_PUB!=='undefined'){ const pub=CHAL_PUB.find(x=>String(x.id)===String(ch.id)); if(pub&&pub.mission) m=appChalMission(pub); }
+  // 상세 모달에서 유형을 골라 들어왔으면 그 유형으로 연다(챌린지가 켠 유형보다 우선 — 학생이 방금 누른 것이니까)
+  if(want && m) m = Object.assign({}, m, {quiz:true, quizType:want, quizLevel:''});
+  const solo = !!want && !ch;   // 챌린지 없이 퀴즈만 푸는 모드 — 별은 주되 챌린지 진행/완주 기록은 건드리지 않는다
+  if(solo) m = {reward:'rank', quiz:true, quizN:10, quizType:want, quizLevel:'', oneline:false, question:false, review:false};
   const acts = m ? chalActiveMissions(m) : [];
   info.innerHTML = ch ? `챌린지 · <b>${esc(ch.title)}</b> · 맞힌 퀴즈·제출 미션마다 ⭐ 적립`
-                      : '챌린지 미션 · <b>참여 후 별 적립</b>';
+                      : (solo ? `<b>${esc(want)} 퀴즈</b> · 맞힌 문제마다 ⭐ 적립`
+                              : '챌린지 미션 · <b>참여 후 별 적립</b>');
   let right;
   if(!stu){
     right = `<div class="mp-note">상단에서 <b>학생 계정</b>을 선택하면 미션을 수행하고 별을 모을 수 있어요.</div>`;
-  } else if(!ch){
+  } else if(!ch && !solo){
     right = `<div class="mp-note">이 책이 담긴 <b>챌린지에 먼저 참여</b>하면 미션이 열려요.<br>독서 챌린지 페이지에서 ‘참여하기’를 눌러 주세요.</div>`;
   } else if(!acts.length){
     right = `<div class="mp-note">사서가 켠 미션이 아직 없어요.</div>`;
@@ -8697,10 +8737,10 @@ function renderMissionPanel(body, info, leftBody, L){
       ${leftBody}
     </div>
     <div class="viewer-pane right">
-      <div class="viewer-pane-label">오른쪽 — 챌린지 미션${ch?' <span style="color:var(--text-light);font-weight:500">· 사서가 켠 것만</span>':''}</div>
+      <div class="viewer-pane-label">${solo ? '오른쪽 — '+esc(want)+' 퀴즈' : '오른쪽 — 챌린지 미션'+(ch?' <span style="color:var(--text-light);font-weight:500">· 사서가 켠 것만</span>':'')}</div>
       ${right}
     </div>`;
-  if(stu && ch && acts.length) setTimeout(()=>mpHydrate(ch, m, stu), 0);
+  if(stu && (ch||solo) && acts.length) setTimeout(()=>mpHydrate(ch, m, stu, solo), 0);
 }
 function mpMissionCard(x){
   if(x.kind==='quiz'){
@@ -8723,9 +8763,11 @@ function mpMissionCard(x){
     <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpCert('${x.k}')">${esc(x.btn||'인증하기')}</button>
       <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
 }
-async function mpHydrate(ch, m, stu){
+async function mpHydrate(ch, m, stu, solo){
   const _bid=currentBook.id;   // 레이스 가드: fetch 대기 중 다른 책으로 전환되면 B 화면을 A 미션으로 덮지 않게
-  _mpCtx={bookId:_bid, school:CH_SCHOOL, student:stu.id, m, chId:ch.id,
+  // solo(상세 모달에서 퀴즈만 열기, 8/20): 챌린지가 없으므로 chId 없음 →
+  //   진행 저장(challenge_id NOT NULL)·완주 보너스(ref=chId)·내 챌린지 카드 미러는 건너뛴다. 맞힌 별·퀴즈 완주 ⭐10은 책 단위라 그대로 준다
+  _mpCtx={bookId:_bid, school:CH_SCHOOL, student:stu.id, m, chId:ch?ch.id:null, solo:!!solo,
           done:new Set(), ans:{}, quizCount:0, complete:false};
   // 별 적립 + 퀴즈 시도 복원 — 독립 쿼리 병렬(기존 직렬 2왕복)
   await Promise.all([
@@ -9109,7 +9151,7 @@ function mpRenderProgress(){
 }
 // 퀴즈 시도(정답·오답) 진행을 서버에 저장 (이어하기/진행률 소스)
 async function mpSaveProgress(){
-  if(!_mpCtx) return;
+  if(!_mpCtx || _mpCtx.solo) return;   // solo=챌린지 없이 연 퀴즈 — challenge_id가 없어 이 표에 못 쓴다(8/20)
   try{
     await fetch(`${SB_REST}/bookstar_challenge_results?on_conflict=student_id,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
@@ -9123,14 +9165,14 @@ async function mpSaveProgress(){
 //   ans 키는 퀴즈 항목 UUID(장면 챌린지의 'si-qi'와 다르지만 카드는 값의 ok만 센다), 문항수는 quiz_total로 저장.
 function _mpMirrorLocal(extra){
   try{
-    if(!_mpCtx||!_mpCtx.bookId) return;
+    if(!_mpCtx||!_mpCtx.bookId||_mpCtx.solo) return;   // solo는 챌린지 카드가 없으므로 미러할 곳도 없다(8/20)
     const cur=_chalRead(_mpCtx.bookId)||{};
     _chalMerge(_mpCtx.bookId, Object.assign({ ans:Object.assign({}, cur.ans||{}, _mpCtx.ans||{}), quiz_total:(_mpCtx.quizCount||cur.quiz_total||0) }, extra||{}));
   }catch(e){}
 }
 // 모든 미션 수행 시: 완주 보너스(⭐30, 멱등) + enroll done + 축하
 async function mpCheckComplete(){
-  if(!_mpCtx || _mpCtx.complete) return;
+  if(!_mpCtx || _mpCtx.complete || _mpCtx.solo) return;   // solo는 챌린지 완주가 아니다 — challenge_done(ref=chId) 지급 금지(8/20)
   const {done,total}=mpProgress();
   if(!(total>0 && done>=total)) return;
   _mpCtx.complete=true;
@@ -10059,6 +10101,7 @@ function submitSceneImpression(){
 }
 
 function closeViewer(){
+  _quizWanted = null;   // 상세 모달에서 고른 퀴즈 유형은 이번 뷰어 세션까지만(8/20)
   if(_scrollSaveTimer){ clearTimeout(_scrollSaveTimer); _scrollSaveTimer=null; }   // 대기 중 위치저장 디바운스 해제 — 닫힌 화면에서 발화하면 위치 오염
   if(_scnIO){ _scnIO.disconnect(); _scnIO=null; } _scnCur=-1; _scnMarkP=null;   // 장면 동기화 옵저버 정리
   if(_pg.on){ pgSave(); _pg.on=false; const pv=document.getElementById('pagedView'); if(pv) pv.style.display='none'; document.getElementById('viewerBody')?.classList.remove('pg-active'); }
