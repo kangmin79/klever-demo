@@ -46,12 +46,12 @@ async function embedQuery(text: string): Promise<number[] | null> {
   } catch { return null; }
 }
 
-// 의미검색 보강: match_tulip(kind=paper) — 종이책 임베딩. 실패·빈결과는 조용히 [] (lexical 결과만으로 응답)
-async function matchPaper(emb: number[], count: number, floor: number) {
+// 의미검색 보강: match_tulip — 판형별 부분 인덱스(kind='paper'|'ebook'). 실패·빈결과는 조용히 [] (lexical 결과만으로 응답)
+async function matchKind(emb: number[], count: number, floor: number, kind: string) {
   try {
     const r = await fetch(`${SB_URL}/rest/v1/rpc/match_tulip`, {
       method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "content-type": "application/json" },
-      body: JSON.stringify({ query_embedding: emb, match_count: count, kind_filter: "paper" }),
+      body: JSON.stringify({ query_embedding: emb, match_count: count, kind_filter: kind }),
     });
     if (!r.ok) return [];
     const rows = await r.json();
@@ -67,20 +67,26 @@ async function matchPaper(emb: number[], count: number, floor: number) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
-    const { query, count, material, floor } = await req.json().catch(() => ({}));
+    const { query, count, material, floor, prefer } = await req.json().catch(() => ({}));
     if (!query || !String(query).trim()) return json({ candidates: [], count: 0 });
     const want = Math.min(Number(count) || 12, 40);
     const rows = await searchTulip(String(query), want,
       material === "book" || material === "thesis" ? material : null);
     // 정확 매칭이 모자라면 의미검색으로 보강 (thesis 필터 시엔 정확 매칭만 — 의미보강은 book 전용)
+    // prefer='ebook'이면 전자책 이웃을 먼저 채우고 남은 자리를 종이책으로 (기본은 기존 그대로 종이책만)
     if (rows.length < want && material !== "thesis") {
       const emb = await embedQuery(String(query));
       if (emb) {
+        const floorVal = typeof floor === "number" ? floor : SIM_FLOOR;
+        const kinds = prefer === "ebook" ? ["ebook", "paper"] : ["paper"];
+        const lists = await Promise.all(kinds.map((k) => matchKind(emb, want * 2, floorVal, k)));
         const seen = new Set(rows.map((r: any) => r.key));
-        for (const m of await matchPaper(emb, want * 2, typeof floor === "number" ? floor : SIM_FLOOR)) {
-          if (seen.has(m.key)) continue;
-          seen.add(m.key); rows.push(m);
-          if (rows.length >= want) break;
+        outer: for (const list of lists) {
+          for (const m of list) {
+            if (seen.has(m.key)) continue;
+            seen.add(m.key); rows.push(m);
+            if (rows.length >= want) break outer;
+          }
         }
       }
     }
