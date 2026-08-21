@@ -2399,13 +2399,13 @@ function secRenderCands(head){scHead=head;const have=new Set((pkObj().books||[])
       <div class="cv2">${b.cover?`<img src="${esc(b.cover)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div>
       <div class="ci"><div class="t">${esc(b.t)}</div><div class="s">${esc(b.a)}${b.isbn?' · '+esc(b.isbn):''}</div>
         <div class="sig">${b.rating!=null?`<span class="sig-r">★ ${b.rating}</span>`:''}${b.loan?`<span class="sig-l">대출 ${nf(b.loan)}</span>`:''}${b._sm?`<span class="sig-own">세명대 전자책${b.prov?' · '+esc(b.prov):''}</span>`:(b.held===false?(()=>{const t=[];if(b.smEbook)t.push(`<span class="sig-own">세명대 전자책${b.smEbookProvider?' · '+esc(b.smEbookProvider):''}</span>`);if(b.smPaper)t.push(`<span class="sig-own">세명대 종이책 · ${esc(b.smPaperStatus||'소장')}</span>`);return t.length?t.join(''):'<span class="sig-no">미소장 · 희망도서</span>';})():own?'<span class="sig-own">소장중</span>':'')}</div></div>
-      ${(scMode==='chal'&&secNoHold(b))?'<div class="pick" title="소장하지 않은 책 — 학생이 빌릴 수 없어 챌린지에 담을 수 없어요" style="opacity:.35;cursor:not-allowed" onclick="secAdd(${i})">×</div>':`<div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div>`}</div>`;}).join('');
+      ${secNoHold(b)?'<div class="pick" title="소장하지 않은 책 — 학생이 빌릴 수 없어 담을 수 없어요" style="opacity:.35;cursor:not-allowed" onclick="secAdd(${i})">×</div>':`<div class="pick" onclick="secAdd(${i})">${added?'✓':'+'}</div>`}</div>`;}).join('');
 }
-// 챌린지에는 세명대가 소장한 책만(8/21 사용자: "소장하지 않은 책이 어떻게 나오지?"). 통합검색의 국중 후보 중 전자책도 종이책도 없는 책은
-//   학생이 빌릴 수도 미션을 끝낼 수도 없는 막다른 골목. 큐레이션(희망도서 유도)은 예전대로 허용
+// 챌린지·큐레이션 모두 세명대가 소장한 책만(8/21 사용자 확정: "큐레이션 전체에 미소장 도서는 안 되는 게 맞다"). 통합검색의 국중 후보 중
+//   전자책도 종이책도 없는 책은 학생에게 막다른 골목(즐시읽기 원칙). 희망도서 유도는 검색 결과의 몶—선반이 아니다
 function secNoHold(b){ return !!b && !b.cls && !b.id && !b._sm && b.held===false && !b.smEbook && !b.smPaper; }
 function secAdd(i){const b=SCAND[i];const arr=pkObj().books;
-  if(scMode==='chal'&&secNoHold(b)){toast('소장하지 않은 책은 챌린지에 담을 수 없어요 — 학생이 빌릴 수 없어요. 형태를 ‘종이책’이나 ‘전자책’으로 고르면 소장 책만 보여요');return;}
+  if(secNoHold(b)){toast('소장하지 않은 책은 담을 수 없어요 — 학생이 빌릴 수 없어요. 형태를 ‘종이책’이나 ‘전자책’으로 고르면 소장 책만 보여요');return;}
   const idx=arr.findIndex(x=>(b.isbn&&x.isbn===b.isbn)||(b.id&&x.id===b.id)||(x.title===b.t));
   if(idx>=0)arr.splice(idx,1);
   else if(b.cls||b.id){arr.push({id:b.id,title:b.t,author:(b.a||'').split(' · ')[0],cover:b.cover||CLS_COVER[b.id]||''});}   // 북스타 고전 참조 (8/14: 표지 저장)
