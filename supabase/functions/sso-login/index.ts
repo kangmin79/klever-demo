@@ -154,6 +154,16 @@ Deno.serve(async (req) => {
     } else if (g("portal_id") && g("portal_pw")) {
       try { handoff = await portalLogin(g("portal_id"), g("portal_pw")); }
       catch (e) { console.error("portalLogin fail", String(e)); }
+    } else {
+      // 8/22: 배너는 기본 3필드(학교·학번·이름)만 보낸다 → 이 학번이 전에 포털 로그인으로 남긴 연계값이 있으면
+      // 그걸로 개인기능을 연다. (GET 테스트 경로엔 있었는데 POST엔 빠져 있어 "이름은 뜨는데 빌린 책이 안 보이는" 상태였음)
+      try {
+        const row = await loadLatestByHakbun(hakbun);
+        if (row?.school_no && row?.portal_user_id) {
+          handoff = { school_no: row.school_no, portal_user_id: row.portal_user_id };
+          if (!uname && row.name) name = row.name.slice(0, 40);
+        }
+      } catch (e) { console.error("loadLatestByHakbun fail", String(e)); }
     }
 
     // ④~⑦ 공통 마무리(연계값 → liid → 세션 저장 → 앱으로 302)
