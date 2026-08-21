@@ -211,6 +211,18 @@ async function fetchStock(brcd: string) {
   };
 }
 
+// 8/22 솔숲 앱 "책이 움직이면 앱도 움직인다": 우리 앱을 거친 대출·반납은 우리가 제일 먼저 안다 → 홈 조립기에 즉시 알려
+//   그 책 재고만 재확인하고 홈을 다시 짓게 한다(응답은 안 기다림). 키는 같은 프로젝트 시크릿(SOLSUP_ADMIN_KEY).
+function notifyStockChanged(brcd: string): void {
+  try {
+    const key = Deno.env.get("SOLSUP_ADMIN_KEY") || Deno.env.get("SEMYUNG_ADMIN_KEY") || "";
+    const base = Deno.env.get("SUPABASE_URL") || "";
+    if (!key || !base || !brcd) return;
+    const p = fetch(`${base}/functions/v1/solsup-home?action=changed&key=${encodeURIComponent(key)}&brcd=${encodeURIComponent(brcd)}`).then((r) => r.text()).catch(() => {});
+    try { (globalThis as any).EdgeRuntime?.waitUntil?.(p); } catch (_) { /* waitUntil 없으면 떠 있는 프라미스 */ }
+  } catch (_) { /* 알림 실패는 대출 결과에 영향 없음 */ }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -299,6 +311,7 @@ Deno.serve(async (req) => {
       // (공유계정 시절의 "가장 오래된 1권 강제 반납"은 남이 읽던 책을 끊어서 8/9에 폐지)
       const res = await doBorrow(jar, brcd);
       if (!res.ok) return json({ ok: false, action, personal, message: res.msg });
+      notifyStockChanged(brcd);   // 8/22: 빌린 순간 홈에서 빠지게
       // 뷰어URL 실패해도 대출은 유효 — 다만 왜 못 열었는지는 viewerError로 같이 보내 앱이 말하게 한다(8/21: 조용한 실패 금지)
       let viewerUrl = "", vendor = "", viewerError = "";
       try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd, (url.searchParams.get("device") || "") === "m"); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
@@ -324,8 +337,10 @@ Deno.serve(async (req) => {
       if (!loanSrmb) return json({ ok: false, action, error: "loanSrmb 필요" }, 400);
       const path = action === "return" ? "/process/contentReturnProc.xml" : "/process/contentExtendProc.xml";
       const xml = await ebPost(jar, path, { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "" });
+      const okRR = xmlTag(xml, "result") === "True";
+      if (okRR && action === "return") notifyStockChanged(brcd);   // 8/22: 반납한 순간 홈에 돌아오게
       return json({
-        ok: xmlTag(xml, "result") === "True", action, personal, loanSrmb,
+        ok: okRR, action, personal, loanSrmb,
         message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
       });
     }
