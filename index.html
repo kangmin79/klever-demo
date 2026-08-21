@@ -6950,6 +6950,9 @@ function lcBorrow(isbn){
 }
 // 전자도서관 구매 전자책 대출 — semyung-ebook-borrow가 로그인·대출·뷰어URL 생성까지 대행, 그 URL로 이동
 const SMEBK_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook-borrow";
+// 폰 브라우저면 교보 뷰어를 모바일용으로 발급(device=m) — PC용 뷰어가 폰에서 깨짐(8/21, 앱과 동일 수리).
+// 판별식은 도서관 자체 isPC()와 동일. 창 크기가 아니라 UA 기준(좁힌 PC 창에 모바일 뷰어가 나가지 않게)
+const SM_DEV=/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent)?'&device=m':'';
 const SMMY_FN ="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-my";
 // ── 세명대 개인기능 자격증명 ──
 // 토큰이 있으면 학생 본인 명의(각자 5권 한도), 없으면 서버가 공유계정으로 폴백한다.
@@ -7277,7 +7280,7 @@ async function ebOpen(loanSrmb, brcd, title){
   if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
   try{ w.document.write(bridgeHTML({t:title||'',a:'',cover:''})); w.document.close(); }catch(e){}
   try{
-    const r=await fetch(SMEBK_FN+'?action=viewer&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+    const r=await fetch(SMEBK_FN+'?action=viewer&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||'')+SM_DEV,{headers:smHeaders()});
     const d=await r.json();
     if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } return; }
     try{ w.close(); }catch(e){}
@@ -7329,7 +7332,7 @@ async function smDropPickup(reqNo){
 }
 async function smEbookBorrowOpen(brcd, w, book){
   try{
-    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd),{headers:smHeaders()});
+    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd)+SM_DEV,{headers:smHeaders()});
     const d=await r.json();
     // 연동 만료(토큰 7일) — 누를 땐 연동 상태였는데 서버에서 세션이 안 만들어진 경우.
     // 공유계정으로 대신 빌려주지 않으므로 여기서 안내로 돌린다.
