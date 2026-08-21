@@ -139,7 +139,9 @@ async function yes24DirectUrl(apiUrl: string): Promise<string> {
 }
 
 interface ViewerRes { url: string; vendor: "external" | "kyobo" | ""; error?: string }
-async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string): Promise<ViewerRes> {
+// mobile=true(솔숲 앱 등 폰): 도서관 모바일 사이트(mobileProcess.js)와 같은 순서 — licenseCheck + type=mobile.
+//   type=web 토큰을 폰에서 열면 PC용 뷰어가 나와 레이아웃이 깨진다(8/21 실기기 비교: 도서관 모바일=정돈된 폰 뷰어 vs 우리=깨짐).
+async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string, mobile = false): Promise<ViewerRes> {
   // 1) popupInfo — 공급사 분기 + 교보용 정확한 값. 도서관 버튼이 제일 먼저 부르는 것
   const pi = await ebGet(jar, `/process/popupInfo.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&ifType=W`);
   if (xmlTag(pi, "result") !== "True") {
@@ -155,17 +157,25 @@ async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string): Promi
   //    빈값이 False면 그때만 popupInfo가 준 값으로 재시도한다. 둘 다 False면 도서관 메시지를 그대로 올린다.
   const brcd = xmlTag(pi, "barcode") || brcdHint;
   const epdeBrcd = xmlTag(pi, "seqBarcode");
-  const legacy = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" };
-  let sa = await ebPost(jar, "/process/sessionAddProc.xml", legacy);
-  if (xmlTag(sa, "result") !== "True") {
-    const full = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd, cttsDvsnCode: xmlTag(pi, "productCD") || "001", fileDvsnCode: xmlTag(pi, "useCondition"), mmbrNum: xmlTag(pi, "userId"), ifType: "W" };
-    sa = await ebPost(jar, "/process/sessionAddProc.xml", full);
+  if (mobile) {
+    // 모바일 공식 순서(mobileProcess.js gFnWebViewerProc): licenseCheck → webViewerProc?type=mobile
+    const lc = await ebPost(jar, "/process/licenseCheck.xml", { lbryCode: LBRY, brcd, epdeBrcd });
+    if (xmlTag(lc, "result") !== "True") {
+      return { url: "", vendor: "kyobo", error: xmlTag(lc, "msg").replace(/<br\s*\/?>/gi, " ") || "라이선스 확인에 실패했어요" };
+    }
+  } else {
+    const legacy = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "", cttsDvsnCode: "001", fileDvsnCode: "", mmbrNum: "", ifType: "W" };
+    let sa = await ebPost(jar, "/process/sessionAddProc.xml", legacy);
     if (xmlTag(sa, "result") !== "True") {
-      return { url: "", vendor: "kyobo", error: xmlTag(sa, "msg").replace(/<br\s*\/?>/gi, " ") || "라이선스 등록에 실패했어요" };
+      const full = { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd, cttsDvsnCode: xmlTag(pi, "productCD") || "001", fileDvsnCode: xmlTag(pi, "useCondition"), mmbrNum: xmlTag(pi, "userId"), ifType: "W" };
+      sa = await ebPost(jar, "/process/sessionAddProc.xml", full);
+      if (xmlTag(sa, "result") !== "True") {
+        return { url: "", vendor: "kyobo", error: xmlTag(sa, "msg").replace(/<br\s*\/?>/gi, " ") || "라이선스 등록에 실패했어요" };
+      }
     }
   }
-  // 4) 웹뷰어 토큰 (기존 코드와 동일한 호출 — epdeBrcd 빈값)
-  const wx = await ebGet(jar, `/process/webViewerProc.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&brcd=${brcd}&epdeBrcd=&type=web`);
+  // 4) 웹뷰어 토큰 (모바일이면 type=mobile — 교보가 폰용 뷰어를 내준다)
+  const wx = await ebGet(jar, `/process/webViewerProc.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&brcd=${brcd}&epdeBrcd=${mobile ? encodeURIComponent(epdeBrcd) : ""}&type=${mobile ? "mobile" : "web"}`);
   if (xmlTag(wx, "result") !== "True") {
     return { url: "", vendor: "kyobo", error: xmlTag(wx, "msg") || "뷰어 토큰을 받지 못했어요" };
   }
@@ -267,7 +277,7 @@ Deno.serve(async (req) => {
       if (!mine) {
         return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
       }
-      const v = await viewerUrlFor(jar, loanSrmb, mine.brcd || brcd);
+      const v = await viewerUrlFor(jar, loanSrmb, mine.brcd || brcd, (url.searchParams.get("device") || "") === "m");
       if (!v.url) {
         console.error("viewer fail", loanSrmb, v.vendor, v.error);
         return json({ ok: false, action, personal, vendor: v.vendor, message: `뷰어를 열지 못했어요 — ${v.error || "잠시 후 다시 시도해 주세요"}` });
@@ -286,7 +296,7 @@ Deno.serve(async (req) => {
       if (!res.ok) return json({ ok: false, action, personal, message: res.msg });
       // 뷰어URL 실패해도 대출은 유효 — 다만 왜 못 열었는지는 viewerError로 같이 보내 앱이 말하게 한다(8/21: 조용한 실패 금지)
       let viewerUrl = "", vendor = "", viewerError = "";
-      try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
+      try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd, (url.searchParams.get("device") || "") === "m"); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
       catch (e) { viewerError = "뷰어 발급 중 오류: " + String(e).slice(0, 80); }
       if (!viewerUrl) console.error("borrow ok but viewer fail", res.loanSrmb, vendor, viewerError);
       // 반납예정일은 도서관이 정한 값을 그대로 읽어 온다.
