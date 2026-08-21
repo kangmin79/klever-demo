@@ -451,6 +451,7 @@ body.dark .lcd-way .wtag.eb{color:#8fd9bf;}
 .fmt-ebook{color:#1d4ed8;background:rgba(37,99,235,.1);}
 .fmt-paper{color:#15803d;background:rgba(34,197,94,.12);}
 .fmt-sub{color:#7c3aed;background:rgba(124,58,237,.12);}
+.fmt-cls{color:#b45309;background:rgba(245,158,11,.14);}
 body.dark .fmt-ebook{color:#93c5fd;}
 body.dark .fmt-paper{color:#86efac;}
 body.dark .fmt-sub{color:#c4b5fd;}
@@ -5116,10 +5117,30 @@ async function loadChalCards(){
     const rows=await fetchProgramsCached(); if(!Array.isArray(rows)) return;
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
-      mission:x.mission||null,books:(x.books||[]).map(b=>({id:b.id||'',t:b.title,cover:_gbCover(b),isbn:b.isbn}))}));
+      mission:x.mission||null,books:(x.books||[]).map(b=>({id:b.id||'',t:b.title,a:b.author||'',cover:_gbCover(b),isbn:b.isbn,
+        tags:(!b.isbn&&/^(gb|kr)-/.test(b.id||''))?['cls']:undefined}))}));
+    await chalResolveFormats();
     const _fi=CHAL_PUB.findIndex(c=>c.featured); if(_fi>0) CHAL_PUB.unshift(CHAL_PUB.splice(_fi,1)[0]);   // 사서가 지정한 '이달의 챌린지'(featured)를 맨 앞으로 → 히어로. 미지정이면 최신순 그대로
     renderChalCards();
   }catch(e){}
+}
+// 챌린지 책 판형(8/21): 관리자가 담은 책이 맨 ISBN13이면 판형 정보가 없다 → 장서(semyung_tulip)에서 isbn→kind 를 한 번에 조회해 tags 로.
+//   'sm-' ISBN은 fmtTags 의 기존 폴백(sm-CATTOT=종이책 / 그 외 sm-=전자책)이 처리하고, 고전(gb-/kr-)은 위에서 'cls'.
+//   같은 ISBN이 종이책·전자책 둘 다 있으면 둘 다 붙는다. 장서에 없으면(신청만 받은 책) 태그 없음 — 추측해서 붙이지 않는다.
+async function chalResolveFormats(){
+  const want=new Set();
+  CHAL_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(!b.tags && /^\d{10,13}$/.test(String(b.isbn||''))) want.add(String(b.isbn)); }));
+  if(!want.size) return;
+  const byIsbn={};
+  const arr=[...want];
+  for(let i=0;i<arr.length;i+=100){
+    try{
+      const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind&isbn=in.(${arr.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=400`,{headers:BX_H});
+      if(!r.ok) continue;
+      for(const row of await r.json()){ const k=row.kind==='paper'?'paper':row.kind==='ebook'?'ebook':null; if(!k) continue; (byIsbn[row.isbn]=byIsbn[row.isbn]||new Set()).add(k); }
+    }catch(e){}
+  }
+  CHAL_PUB.forEach(c=>(c.books||[]).forEach(b=>{ const set=byIsbn[String(b.isbn||'')]; if(set&&set.size) b.tags=['ebook','paper'].filter(k=>set.has(k)); }));
 }
 /* ── 챌린지 미션 정의 (admin CH_MISSIONS 미러 · docx 별 배점 고정) ── */
 const CH_MISSIONS=[
@@ -5224,7 +5245,8 @@ function chalRowHead(c){
 // 캐러셀용 책 카드(우리 도서관 ml-bk 재사용)
 function chalBookCard(b,c){
   const click=b.isbn?`libDetail('${esc(b.isbn)}')`:`chalJoin('${esc(String(c.id))}')`;
-  return `<div class="ml-bk" onclick="${click}">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div></div>`;
+  // 8/21 사용자 지적: 챌린지 책에만 종이책·전자책 태그가 없었다 — 다른 선반(mlRow)과 같이 저자 줄 + fmtTags. 맨 ISBN13 책은 loadChalCards가 장서를 조회해 tags를 채운다
+  return `<div class="ml-bk" onclick="${click}">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div>${b.a?`<div class="ml-bk-a">${esc(b.a)}</div>`:''}${fmtTags(b)}</div>`;
 }
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
@@ -5828,7 +5850,7 @@ function fmtTags(b){
   if(!b) return '';
   // 신착(semyung_new)은 명시적 tags 배열(전자책/종이책)을 가짐 — 우선 사용
   if(b.tags&&b.tags.length){
-    const M={ebook:'전자책',paper:'종이책',sub:'구독'};
+    const M={ebook:'전자책',paper:'종이책',sub:'구독',cls:'고전 · 바로 읽기'};
     return `<div class="fmt-tags">${b.tags.map(k=>`<span class="fmt-tag fmt-${k}">${M[k]||k}</span>`).join('')}</div>`;
   }
   const isbn=b.isbn||'';
