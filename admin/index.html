@@ -980,7 +980,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         </div>
         <div class="toolbar" style="margin-bottom:0">
           <span class="st-lb">종류</span>
-          <select id="fdMs" onchange="fdSum();renderWritings()"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기</option><option value="rv">독자 서평(빌린 책)</option></select>
+          <select id="fdMs" onchange="fdSum();renderWritings()"><option value="">전체</option><option value="oneline">한 줄 소감</option><option value="question">한 줄 질문</option><option value="review">서평 쓰기</option><option value="essay">독후감 쓰기</option><option value="rv">독자 서평(빌린 책)</option></select>
         </div>
       </div>
       <div class="db-card">
@@ -2706,12 +2706,13 @@ const CH_MISSIONS=[
   {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈를 풀고 별 획득',star:'문제당 ⭐1'},
   {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄',star:'⭐5'},
   {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기',star:'⭐5'},
-  {k:'review',t:'서평 쓰기',s:'100자 이상으로 책에 대한 평을 작성',star:'⭐10'},
+  {k:'review',t:'서평 쓰기',s:'300자 이상으로 책에 대한 평을 작성',star:'⭐10'},
+  {k:'essay',t:'독후감 쓰기',s:'800자 이상으로 읽고 난 내 생각을 작성',star:'⭐50'},   // 8/21 사장님 요청: 독후감 미션 추가
 ];
 const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
-function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(essay/underline/recommend/cert) — 4종만 유지
+function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(underline/recommend/cert) — 5종 + autoJoin 유지
   m=m||{};
-  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:10};   /* 퀴즈 문항 수 = 10개 고정 */
+  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:10, autoJoin:!!m.autoJoin};   /* 퀴즈 문항 수 = 10개 고정 */
   if(m.quizType)o.quizType=m.quizType; if(m.quizLevel)o.quizLevel=m.quizLevel;
   _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
   return o;
@@ -2723,7 +2724,8 @@ function chalMission(c){   // 미션객체 정규화(구버전 review→oneline 
   const o={reward:m.reward||(c.type==='고전챌린지'?'rank':'draw'),
     quiz:c.type==='고전챌린지'?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
     quizType:m.quizType||'', quizLevel:m.quizLevel||'',
-    drawCount:m.drawCount||10, drawCond:m.drawCond||'all'};
+    drawCount:m.drawCount||10, drawCond:m.drawCond||'all',
+    autoJoin:!!m.autoJoin};   // 8/21: 신청 없이 자동 참여(학생 앱에 '참여하기' 버튼 없음 → '자동 참여')
   CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
     o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
   c.mission=o; return o;
@@ -2792,13 +2794,14 @@ function renderChallenges(){
       <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요" oninput="chalPvSync()">${esc(c.detail||'')}</textarea>
       <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}" onchange="chalPvSync()"></div>
         <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}" onchange="chalPvSync()"></div></div>
-      <div class="flabel">미션 — 완독 측정 <span style="font-weight:400;color:var(--light)">켠 미션 ${cnt}개 · 원하는 만큼 선택</span></div>
-      <div class="mission">${missCells}</div>
+      <div class="flabel">미션 <span style="font-weight:400;color:var(--light)">· 원하는 만큼 선택</span></div>
+      <div class="mission">
+        <div class="mrow" style="background:#eef4fb;border-color:#cfe0f5"><div class="mt"><b>신청 없이 자동으로 참여시키기</b><span>켜면 학생 앱에 ‘참여하기’ 버튼 대신 ‘자동 참여’로 표시되고, 모든 학생이 바로 참여 상태가 돼요</span></div>
+          <div class="tg${m.autoJoin?' on':''}" onclick="chalToggleAuto(${i})"></div></div>
+        ${missCells}</div>
       ${quizCfg}
-      <div class="flabel" style="margin-top:10px">보상 방식</div>
-      <div class="qn"><span class="${m.reward==='rank'?'on':''}" onclick="chalSetReward(${i},'rank')">순위형 · 별 많은 순</span><span class="${m.reward==='draw'?'on':''}" onclick="chalSetReward(${i},'draw')">추첨형 · 참여 응모</span></div>
-      ${chalRewardBox(c,i)}
-      <div class="flabel">담긴 책 ${books.length}권</div>
+      <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제(엑셀로 확인) -->
+      <div class="flabel" style="margin-top:10px">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
     </div>`;
@@ -2845,7 +2848,7 @@ function chalPvRender(){
         <div class="cpv-sub">${cpvSub(heroC)}</div>
         <div class="cpv-quote">“${esc(heroC.detail||'사서가 운영하는 독서 챌린지예요.')}”<span> — 우리 학교 사서</span></div>
         ${m&&m!=='-'?`<div class="cpv-meta">${esc(m)}</div>`:''}
-        <span class="cpv-hbtn">참여하기 →</span></div>
+        <span class="cpv-hbtn">${heroC.mission&&heroC.mission.autoJoin?'자동 참여':'참여하기 →'}</span></div>
       <div class="cpv-stage"><div class="cpv-side">독서 챌린지</div><div class="cpv-shadow"></div><div class="cpv-book3d">${cpvCover(b,heroC.title)}</div></div>
     </div>`; }
   out+=`<div class="cpv-lhead">진행 중인 챌린지 <span class="cpv-ltag">우리 학교 사서 운영</span></div>`;
@@ -2853,7 +2856,7 @@ function chalPvRender(){
   rows.forEach(c=>{ const off=!cpvLive(c), isC=c.type==='고전챌린지', books=c.books||[];
     out+=`<div class="cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(c)}</span>`:''}
       <div class="cpv-rhead"><div><span class="cpv-type${isC?' classic':''}">${isC?'고전 컬렉션':'소장자료'}</span>
-        <div class="cpv-rt">${esc(c.title||'')}</div><div class="cpv-rs">${cpvSub(c)}</div></div><span class="cpv-join">참여하기 →</span></div>
+        <div class="cpv-rt">${esc(c.title||'')}</div><div class="cpv-rs">${cpvSub(c)}</div></div><span class="cpv-join">${c.mission&&c.mission.autoJoin?'자동 참여':'참여하기 →'}</span></div>
       ${c.detail?`<div class="cpv-desc">${esc(c.detail)}</div>`:''}
       ${books.length?`<div class="cpv-books">${books.map(b=>`<div class="cpv-bk">${cpvCover(b,'')}<div class="cpv-bk-t">${esc(b.title||b.t||'')}</div></div>`).join('')}</div>`:''}
     </div>`; });
@@ -2868,6 +2871,7 @@ function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&
   c.mission[k]=!c.mission[k];renderChallenges();}
 function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
 function chalSetReward(i,r){readChalInputs();CHALLENGES[i].mission.reward=r;renderChallenges();}
+function chalToggleAuto(i){readChalInputs();const c=CHALLENGES[i];c.mission.autoJoin=!c.mission.autoJoin;renderChallenges();}
 function chalRemoveBook(i,bi){readChalInputs();CHALLENGES[i].books.splice(bi,1);renderChallenges();}
 async function saveChallenges(){
   readChalInputs();
@@ -3323,7 +3327,7 @@ async function chFixedExcel(id){
    8/17 시안: 여기는 챌린지 밖에서 쓴 글만(challenge_id 없는 bookstar_writings + reviews 독자 서평). 챌린지 글은 「챌린지 통계」 상세 엑셀에서. */
 let FEEDV=null;   // WRITINGS 선언은 위 '학생 글' 구역
 let _wrSeq=0;     // 기간을 연달아 바꿔도 마지막 응답만 화면에(경합 방지)
-const WR_MIN={oneline:5,question:5,review:100};   // 학생 앱 CH_MISSIONS min 과 동일 — 글자 수 미달 = 미인정(별 없음). 옛 글엔 저장돼 있을 수 있어 화면에서 표시
+const WR_MIN={oneline:5,question:5,review:300,essay:800};   // 학생 앱 CH_MISSIONS min 과 동일 — 글자 수 미달 = 미인정(별 없음). 옛 글엔 저장돼 있을 수 있어 화면에서 표시
 function initFeedDates(){ if(el('fdFrom')&&!el('fdFrom').value){ const [f,t]=presetRange('d30'); el('fdFrom').value=f; el('fdTo').value=t; } }
 function setFeedRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('fdFrom').value=f; el('fdTo').value=t; fdSum(); loadWritings(); }
 function fdSum(){

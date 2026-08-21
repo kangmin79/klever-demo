@@ -1799,6 +1799,47 @@ body.dark .bm-btn.fill{color:#0f172a;}
 body.dark .bm-toast{color:#0f172a;}
 .bm-toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 @media(max-width:760px){.bm-life{flex-direction:column;}.bm-pickgrid{grid-template-columns:repeat(3,1fr);}}
+/* ── 내 책 · ⋮ 글쓰기 메뉴 · 에디터 · 내가 쓴 글 (8/21) ── */
+.mb-bk{position:relative;}
+.mb-dots{position:absolute;top:20px;right:20px;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.mb-dots:hover{border-color:var(--gold);color:var(--text);}
+.mb-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+.mb-tab{font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);cursor:pointer;}
+.mb-tab.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+.mb-tab.add{border-style:dashed;color:var(--primary);}
+.mb-shelfbar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);margin:0 0 12px;}
+.mb-hint{display:flex;align-items:center;gap:10px;background:var(--primary-bg);border:1px solid color-mix(in srgb,var(--primary) 25%,transparent);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--text-sub);margin:0 0 14px;}
+.mb-hint svg{vertical-align:-3px;}
+.mb-hint b{margin-left:auto;cursor:pointer;font-size:15px;color:var(--text-light);}
+.mb-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--text-sub);background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin-top:4px;}
+.mb-mi{display:flex;align-items:center;gap:12px;padding:13px 4px;border-top:1px solid var(--border);cursor:pointer;}
+.mb-mi:hover b{color:var(--primary);}
+.mb-mi .ic{width:34px;height:34px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none;font-weight:800;}
+.mb-mi .ic svg{width:17px;height:17px;}
+.mb-mi b{display:block;font-size:15px;} .mb-mi span:not(.ic){font-size:12px;color:var(--text-light);}
+.mb-mi i{margin-left:auto;color:var(--text-light);font-style:normal;}
+.mb-mi.sm{padding:10px 4px;} .mb-mi.sm b{font-size:13.5px;} .mb-mi.sm .ic{width:28px;height:28px;}
+.mb-mi.danger .ic{background:rgba(220,38,38,.08);color:#dc2626;} .mb-mi.danger b{color:#dc2626;}
+.mb-sep{height:6px;}
+.wr-foot{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-light);margin-top:8px;flex-wrap:wrap;}
+.wr-pub{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-sub);font-weight:600;cursor:pointer;margin-left:auto;}
+.wr-pub input{width:15px;height:15px;accent-color:var(--primary);}
+.wr-go{width:100%;justify-content:center;padding:12px;margin-top:14px;font-size:14px;}
+.wr-go:disabled,.bm-btn.fill:disabled{opacity:.45;cursor:default;}
+.wr-back{font-size:13px;color:var(--text-light);margin-top:12px;cursor:pointer;}
+.bm-modal.wide{max-width:760px;height:min(88vh,820px);display:flex;flex-direction:column;}
+.wr-long{display:flex;flex-direction:column;flex:1;min-height:0;}
+.wr-lh{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.wr-lt{font-size:17px;font-weight:800;} .wr-ls{font-size:12.5px;color:var(--text-light);margin-top:2px;}
+.wr-intro{background:var(--primary-bg);border-radius:10px;padding:13px 16px;font-size:13px;color:var(--text-sub);line-height:1.6;margin-bottom:12px;}
+.wr-intro .wr-it{font-weight:800;color:var(--text);margin-bottom:3px;} .wr-intro .wr-it b{color:var(--primary);}
+.wr-long textarea{flex:1;min-height:220px;resize:none;line-height:1.7;}
+.wr-long .wr-foot{margin-top:12px;}
+.wr-item{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin-bottom:10px;}
+.wr-im{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light);flex-wrap:wrap;} .wr-im b{color:var(--text);font-size:13px;}
+.wr-item p{margin:8px 0 0;font-size:14px;line-height:1.65;white-space:pre-wrap;color:var(--text);}
+.wr-pub-on{color:#1B8F5A;font-weight:700;} .wr-pub-off{color:var(--text-light);}
+@media(max-width:600px){.bm-modal.wide{height:92vh;max-width:100%;padding:16px;}}
 /* ── ② 내 챌린지: 완료 결과 + 문항별 복습 ── */
 .cg-done{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:border-color .15s,transform .15s;}
 .cg-done:hover{border-color:var(--gold);transform:translateY(-2px);}
@@ -2765,14 +2806,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div id="chalGroupMy"></div>
 </section>
 
-<!-- 내 도서관 — 도서관 계정과 나의 실시간 접점(빌린 책·기다리는 책·이용 상태) -->
-<section class="page" id="page-mylib">
-  <h1 class="page-title">내 도서관</h1>
-  <p class="page-subtitle">세명대학교 학술정보원에서 빌리고 기다리는 책 — 종이책·전자책 모두</p>
-  <div id="myLibBody"></div>
-  <!-- 알림 켜기 — 앱을 안 열어도 반납일·예약도착을 알려주는 유일한 경로 -->
-  <div id="myLibPush"></div>
-</section>
+<!-- 내 도서관(빌린 책·기다리는 책) — 8/21 사장님 요청으로 내서재(#page-mypage) 맨 위 '내 대출·예약' 그룹으로 합쳐짐. nav('mylib')는 내서재로 보냄 -->
+<section class="page" id="page-mylib"></section>
 
 <!-- ═══════════════════════════════════════════════════════════
      2-2) AI추천 (ai.html 이식 — 도서관 1,133권 자연어 추천)
@@ -2892,6 +2927,14 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 
 <section class="page" id="page-mypage" data-origin="mypage">
   <!-- 페이지 제목/설명 제거(2026-06-23): 좌측 네비 '내서재'와 중복 → 첫 그룹이 상단 -->
+
+  <!-- ⓪ 내 대출·예약 (옛 '내 도서관' 페이지를 통째로 — 8/21 합침). 도서관 계정 연동 학생에게만 보임(renderMyLibStatus가 헤더 표시 제어) -->
+  <div id="libGroup" style="display:none">
+    <div class="lib-grp first"><div class="lib-grp-ic"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/></svg></div><div><div class="lib-grp-t">내 대출·예약</div><div class="lib-grp-s">세명대학교 학술정보원에서 빌리고 기다리는 책 — 종이책·전자책 모두</div></div></div>
+    <div id="myLibBody"></div>
+    <!-- 알림 켜기 — 앱을 안 열어도 반납일·예약도착을 알려주는 유일한 경로 -->
+    <div id="myLibPush"></div>
+  </div>
 
   <!-- ① 내 활동 그룹 (프로필 6스탯 + 별 내역·등급 + 내 기록) — 실데이터 -->
   <div id="actGroup"></div>
@@ -5026,6 +5069,7 @@ window.addEventListener('popstate', e=>{
 });
 
 function nav(page){
+  if(page==='mylib') page='mypage';   // 8/21 사장님 요청: 내 도서관 + 내서재 합침 — 옛 링크는 내서재로
   _navPage=page;
   _histPush(page);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -5049,12 +5093,12 @@ function nav(page){
     if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 세명대 대출 베스트 라이브 로드(최초 1회)
     renderMyLibStatus();   // 빌린 책·기다리는 책 — 도서관 실시간, 개인연동 학생만
   }
-  if(page === 'mylib') renderMyLibStatus();
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
   }
   if(page === 'mychal') {
-    setTimeout(()=>renderChalGroup(), 30);
+    // 자동 참여 챌린지가 독서 챌린지 탭을 안 거쳐도 들어오도록, 목록이 비어 있으면 먼저 로드
+    setTimeout(async()=>{ if(!CHAL_PUB.length){ try{ await loadChalCards(); }catch(e){} } renderChalGroup(); }, 30);
   }
   if(page === 'collection') {
     setTimeout(()=>renderClassicShelves(), 30);   // 탭+책줄+탭별 사서큐레이션 일괄 렌더
@@ -5063,7 +5107,7 @@ function nav(page){
     setTimeout(()=>renderAreaCuration('intlCuration','International'), 30);
   }
   if(page === 'mypage') {
-    setTimeout(()=>{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
+    setTimeout(()=>{ renderMyLibStatus(); renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
     setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
@@ -5121,6 +5165,7 @@ async function loadChalCards(){
         tags:(!b.isbn&&/^(gb|kr)-/.test(b.id||''))?['cls']:undefined}))}));
     await chalResolveFormats();
     const _fi=CHAL_PUB.findIndex(c=>c.featured); if(_fi>0) CHAL_PUB.unshift(CHAL_PUB.splice(_fi,1)[0]);   // 사서가 지정한 '이달의 챌린지'(featured)를 맨 앞으로 → 히어로. 미지정이면 최신순 그대로
+    try{ chalAutoJoinAll(); }catch(e){}   // 8/21: '신청 없이 자동 참여' 챌린지는 여기서 조용히 참여
     renderChalCards();
   }catch(e){}
 }
@@ -5147,7 +5192,8 @@ const CH_MISSIONS=[
   {k:'quiz',     t:'퀴즈 풀기',     icon:'🎯', star:1,  kind:'quiz'},
   {k:'oneline',  t:'한 줄 소감',    icon:'✍️', star:5,  kind:'write', min:5,   ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
   {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,   ph:'책에 대해 떠오른 질문을 적어 보세요.'},
-  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:100, ph:'책에 대한 평을 100자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
+  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:300, ph:'책에 대한 평을 300자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
+  {k:'essay',    t:'독후감 쓰기',   icon:'📜', star:50, kind:'write', min:800, ph:'읽고 난 내 생각을 800자 이상으로 적어 보세요. (마음에 남은 대목·그때 든 생각·내 경험과의 연결)'},   // 8/21 사장님 요청
 ];
 /* Ver10 2종 체제(2026-07-04) + 레거시 5종 명칭(옛 발행 챌린지 호환) */
 const CH_QMAP={'작품 이해':'01','인문 성찰':'02','고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
@@ -5157,7 +5203,7 @@ function appChalMission(c){
   const m=(c&&c.mission)||{};
   const o={reward:m.reward||(c&&c.type==='고전챌린지'?'rank':'draw'),
     quiz:(c&&c.type==='고전챌린지')?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
-    quizType:m.quizType||'', quizLevel:m.quizLevel||''};
+    quizType:m.quizType||'', quizLevel:m.quizLevel||'', autoJoin:!!m.autoJoin};   // autoJoin(8/21): 신청 없이 자동 참여
   CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
     o[x.k]=(m[x.k]!==undefined)?!!m[x.k]:(x.k==='oneline'?!!m.review:(x.k==='question'?!!m.question:false)); });
   return o;
@@ -5201,9 +5247,25 @@ function chalIsJoined(c){ try{ return joinedChals().some(x=>String(x.id)===Strin
 // 참여/진행 버튼(참여 전: 참여하기 → / 참여 후: 진행 중 → 내서재로)
 function chalJoinBtn(c,cls){
   const j=chalIsJoined(c), id=esc(String(c.id));
+  // 8/21 사장님 요청: '신청 없이 자동 참여' 챌린지는 참여하기 버튼 없이 '자동 참여'로 표시(누르면 마이 챌린지)
+  if(chalIsAuto(c)) return `<button class="${cls} joined" onclick="nav('mychal')">자동 참여 · 진행 중 →</button>`;
   return j
-    ? `<button class="${cls} joined" onclick="nav('mypage')">진행 중 →</button>`
+    ? `<button class="${cls} joined" onclick="nav('mychal')">진행 중 →</button>`
     : `<button class="${cls}" onclick="chalJoin('${id}')">참여하기 →</button>`;
+}
+function chalIsAuto(c){ return !!(c&&c.mission&&c.mission.autoJoin); }
+// 자동 참여 챌린지: 로그인 학생이 독서 챌린지 목록을 볼 때 조용히 참여 처리(알림·이동 없음)
+function chalAutoJoinAll(){
+  if(!bxStudent()) return false;
+  let changed=false;
+  (CHAL_PUB||[]).forEach(c=>{ if(chalIsAuto(c)&&!chalIsJoined(c)){ chalJoin(String(c.id),{silent:true}); changed=true; } });
+  return changed;
+}
+// alert() 대체 — 브라우저 주소("semyung.bookstar.co.kr 내용:")가 붙지 않는 앱 안 알림창(8/21)
+function bsNotice(title, lines, onOk){
+  const body=(lines||[]).map(l=>`<div style="font-size:13.5px;color:var(--text-sub);line-height:1.6">${l}</div>`).join('');
+  _bmModal(`<h3>${title}</h3><div style="margin:10px 0 4px">${body}</div><div class="bm-mact"><button class="bm-btn fill" id="bsNoticeOk">확인</button></div>`);
+  const b=document.getElementById('bsNoticeOk'); if(b) b.onclick=()=>{ bmCloseModal(); if(onOk) onOk(); };
 }
 // 히어로(우리 도서관 shelf-hero 재사용) — 대표 챌린지 1개를 크게
 function chalHero(c){
@@ -5212,7 +5274,7 @@ function chalHero(c){
     ? `<div class="book-cover has-img"><img src="${esc(hiCover(b.cover))}" alt="" decoding="async" data-t="${esc(cleanT(b.t||c.title||''))}" data-a="${esc(String(b.a||''))}" onerror="ncSwap(this)"></div>`
     : `<div class="book-cover">${ncCover(b.t?b:{t:c.title})}</div>`;
   const m=chalMissionPlain(c.mission);
-  const join=chalIsJoined(c)?`nav('mypage')`:`chalJoin('${esc(String(c.id))}')`;
+  const join=(chalIsJoined(c)||chalIsAuto(c))?`nav('mychal')`:`chalJoin('${esc(String(c.id))}')`;
   return `<div class="shelf-hero"><div class="sh-grid">
     <div class="sh-left">
       <div class="sh-kicker">✦ 이달의 챌린지</div>
@@ -5283,11 +5345,13 @@ function joinedChals(){            // 참여 중인 챌린지 배열 (구버전 
   return [];
 }
 function _saveJoinedChals(a){ try{ localStorage.setItem(_joinedKey(), JSON.stringify(a)); }catch(e){} }
-function chalJoin(id){
+function chalJoin(id,opt){
+  opt=opt||{};
   const c=CHAL_PUB.find(x=>String(x.id)===String(id)); if(!c) return;
   const arr=joinedChals();
   if(arr.some(x=>String(x.id)===String(c.id))){
-    alert(`이미 참여 중인 챌린지예요.\n마이 챌린지에서 진행하세요.`); nav('mypage'); return;
+    if(opt.silent) return;
+    bsNotice('이미 참여 중인 챌린지예요',['마이 챌린지에서 진행하세요.'],()=>nav('mychal')); return;
   }
   arr.push({ id:c.id, type:c.type||'', title:c.title, to:c.to||'', mission:c.mission||null,
     books:(c.books||[]).map(b=>({id:b.id||'', t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
@@ -5300,8 +5364,11 @@ function chalJoin(id){
        body:JSON.stringify({student_id:_stu.id, challenge_id:String(c.id), status:'joined'})}).catch(()=>{});
     mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_stu.id,p_activity:'challenge_join',p_ref:String(c.id)}).catch(()=>{});
   }
-  alert(`‘${c.title}’ 챌린지 참여 완료!\n\n· 담긴 책 ${(c.books||[]).length}권이 마이 챌린지에 들어갔어요.\n· 미션: ${chalMissionPlain(c.mission)}\n\n여러 챌린지를 동시에 진행할 수 있어요.`);
-  nav('mypage');
+  if(opt.silent) return;
+  // 8/21 사장님 요청: 브라우저 alert(주소 표기) 제거 · "여러 챌린지를 동시에…" 문구 삭제
+  bsNotice(`‘${esc(c.title)}’ 챌린지 참여 완료!`,
+    [`· 담긴 책 ${(c.books||[]).length}권이 마이 챌린지에 들어갔어요.`, `· 미션: ${esc(chalMissionPlain(c.mission))}`],
+    ()=>nav('mychal'));
 }
 function chalQuit(cid){
   const arr=joinedChals(); const c=arr.find(x=>String(x.id)===String(cid)); if(!c) return;
@@ -5628,7 +5695,7 @@ async function smUnhold(reckey,mainNo){
   btn.innerHTML='취소 중…';
   try{
     if(!ssoIsPersonal()){ smLoginGuide(); loadHolding(reckey); return; }
-    if(!mainNo){ alert('취소할 예약을 찾지 못했어요. 내 도서관에서 다시 시도해 주세요.'); loadHolding(reckey); return; }
+    if(!mainNo){ alert('취소할 예약을 찾지 못했어요. 내 서재에서 다시 시도해 주세요.'); loadHolding(reckey); return; }
     const d=await smMy('cancelReserve',{main_no:mainNo});
     _myWaitCache=null;
     if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 문자로 알려드리고 2층 안내데스크에 보관해 드려요'; }
@@ -6361,8 +6428,7 @@ function bxRenderAccMenu(){
   const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;
   const _t=(k)=>(typeof uiT==='function'?uiT(k):k);
   m.innerHTML=`<div class="who"><b>${esc(s.name)}</b><br>${esc(s.dept||'세명대학교')}</div>
-    <button class="mi" onclick="bxCloseAccMenu();nav('mylib')"><span>${esc(_t('내 도서관'))}</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
-    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>${esc(_t('내 서재'))}</span></button>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>${esc(_t('내 서재'))}</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
     <div class="sep"></div>
     <button class="mi" onclick="bxLogout()"><span style="color:#c0392b">${esc(_t('로그아웃'))}</span></button>`;
 }
@@ -6375,7 +6441,7 @@ function bxCloseAccMenu(){ const m=document.getElementById('bxAccMenu'); if(m) m
 document.addEventListener('click', bxCloseAccMenu);   // 바깥을 누르면 닫힘(칩은 stopPropagation)
 // 로그아웃 — 도서관 열람실 공용 PC를 생각하면 없어선 안 된다(다음 사람이 남의 대출내역을 그대로 본다).
 function bxLogout(){
-  if(!confirm('로그아웃할까요?\n이 기기에서 내 도서관 정보가 지워집니다.')) return;
+  if(!confirm('로그아웃할까요?\n이 기기에서 도서관 연동 정보가 지워집니다.')) return;
   try{
     localStorage.removeItem('bookstar-current-student');
     localStorage.removeItem(SSO_TOK_KEY);
@@ -6639,6 +6705,7 @@ function libDetail(isbn){
   try{ const _ov=document.getElementById('lcDetail'); if(_ov){ _ov.removeAttribute('data-origin'); _ov.removeAttribute('data-origin-id'); } }catch(e){}   // 대체추천(ebSimOpen)이 남긴 origin 표식 초기화
   window._lcCurBook=b;   // 8/14: 로그인 다녀오면 이 책으로 되돌아오기 위한 현재 책 기억
   bxEvent('view',{book:b});   // 측정: 조회(상세 열림)
+  try{ mbTouch(b); }catch(e){}   // 8/21: 상세를 연 책은 내서재 '내 책'에 담긴다
   // 세명대 책 보강 캐시(줄거리·출판사·연도·장르) 적용 — books/semyung_enrich.json
   const reckey=smKeyOf(b);
   const en = (b._sm && b.isbn) ? SM_ENRICH[reckey] : null;
@@ -7109,6 +7176,8 @@ async function renderMyLibStatus(){
   const line=document.getElementById('myLibStatus');   // 우리 도서관 상단 한 줄 요약
   // 알림 줄은 대출 목록과 무관하게 그린다(아래 어느 경로로 빠져나가도 항상 보이도록)
   try{ renderPushRow(); }catch(e){}
+  // 8/21: 내서재 맨 위 '내 대출·예약' 그룹 — 도서관 연동 학생에게만 헤더째 표시
+  try{ const g=document.getElementById('libGroup'); if(g) g.style.display=ssoIsPersonal()?'':'none'; const a=document.querySelector('#actGroup .lib-grp'); if(a) a.classList.toggle('first',!ssoIsPersonal()); }catch(e){}
   if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
@@ -7402,8 +7471,7 @@ function libBridgeOpen(book){
 }
 /* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 리더보드 / 검색 / 피드 / 내서재 */
 const SIDE_MENU = [
-  // 내 도서관 = 도서관 계정이 연결된 학생에게만. 연결 안 된 이용자에겐 빈 메뉴가 되므로 숨긴다.
-  {key:'mylib',  icon:'library',  label:'내 도서관',   page:'mylib', needsLib:true},
+  // 8/21 사장님 요청: '내 도서관' 메뉴는 내서재(내 대출·예약 그룹)로 합쳐짐 — 연체·예약도착 배지는 내서재에 표시
   {key:'mychal', icon:'target',   label:'마이 챌린지', page:'mychal'},
   {key:'leader', icon:'trophy',   label:'리더보드',    page:'leaderboard'},
   {key:'search', icon:'search',   label:'검색',        page:'search'},
@@ -7422,7 +7490,7 @@ function renderSideNav(activePage){
   el.style.display='';
   el.innerHTML = SIDE_MENU.filter(n=>!n.needsLib||ssoIsPersonal()).map(n=>{
     const on = (activePage===n.page) ? ' active' : '';
-    const badge=(n.key==='mylib'&&MYLIB_BADGE)
+    const badge=(n.key==='shelf'&&MYLIB_BADGE)
       ? `<span class="side-badge" style="background:${MYLIB_BADGE.color}" title="${esc(MYLIB_BADGE.title)}"></span>` : '';
     return `<div class="side-node${on}" data-key="${n.key}" onclick="onSideMenu('${n.key}')">
       ${ic(n.icon)}${badge}
@@ -7947,6 +8015,7 @@ function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
   bxEvent('view',{book:b});   // 측정: 조회(고전 상세 열림)
+  try{ mbTouch(b); }catch(e){}   // 8/21: 상세를 연 책은 내서재 '내 책'에 담긴다
   // 체감 속도↑: 상세 보는 동안 '전문 바로읽기' 본문을 백그라운드로 미리 당겨옴(await 안 함, 클릭 시 즉시 표시)
   try{
     if(bookId.startsWith('gb-')) ensureClassicBody(bookId);          // Supabase 원문+번역 데움(대용량 JS는 번역 없을 때만 openViewer에서)
@@ -7996,7 +8065,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260818g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260822a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260629a';
@@ -9138,7 +9207,7 @@ async function mpSubmitWrite(k,min){
     // 글 내용도 서버 저장(사서 '학생 글' 화면용). 재제출 시 갱신.
     fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v})}).catch(()=>{});
+       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})}).catch(()=>{});
     bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
     if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
@@ -9642,7 +9711,7 @@ const AG_ACTGRP={
 };
 // 8/17: 범례엔 실제로 지급 코드가 있는 항목만. attend(출석)는 8/17 저녁 정의 확정(도서관 로그인→배너 진입 = 출석, 하루 1번 ⭐1, SSO 수신부에서 지급) → 범례 복귀. visit(방문 1)은 여전히 정의·지급 코드 없음(범례 제외).
 const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','challenge_join','challenge_done'];   // (참고용 — 실제 범례는 아래 _mis/_evt 두 묶음으로 그린다)
-const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
+const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
 const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
 let _agWritings=[], _agNoteFilter='all';
@@ -9661,6 +9730,7 @@ async function renderActivityGroup(){
   const s=bxStudent();
   if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 활동이 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
   const enc=encodeURIComponent(s.id);
+  try{ await mbLoad(); }catch(e){}   // 내 기록의 책 제목(도서관 책 포함)용
   const [profA,writings,stars,totalsA,enroll,rates]=await Promise.all([
     _agFetch(`bookstar_students?id=eq.${enc}&select=bio,favorite_book_id,emoji,name`),
     _agFetch(`bookstar_writings?student_id=eq.${enc}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity,book_id,text,created_at&order=created_at.desc`),
@@ -9672,7 +9742,7 @@ async function renderActivityGroup(){
   const prof=profA[0]||{}, totals=totalsA[0]||{};
   const emoji=prof.emoji||s.emoji||'📘', name=prof.name||s.name||'', bio=prof.bio||s.bio||'';
   const wCnt=a=>writings.filter(w=>w.activity===a).length;
-  const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review')+wCnt('essay');
+  const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review'), nEss=wCnt('essay');
   const nDone=_doneBooks().length, nEnroll=enroll.length, nEnrollDone=enroll.filter(e=>e.status==='done').length;
   const totalStars=totals.total_stars||0, grade=totals.grade||gradeOf(totalStars);
   const yr=new Date().getFullYear();
@@ -9690,7 +9760,7 @@ async function renderActivityGroup(){
   const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
   // 미션(퀴즈·글) 별은 챌린지 안에서만 나온다 — 내 도서관 '빌린 책' 서평(상시)은 별 없음. 범례에 그 구분을 적어 "서평 썼는데 별이 없다"는 오해 방지(8/17)
   const _lab=a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`;
-  const _mis=['quiz','quiz_done','oneline','question','review'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
+  const _mis=['quiz','quiz_done','oneline','question','review','essay'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
   const _evt=['challenge_join','challenge_done'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
   // 출석 ⭐1 (8/17 정의 확정: 도서관 로그인 후 배너로 들어온 날, 하루 1번) — 지급 코드는 SSO 수신부(award_activity attend day:날짜)
   const _att=(rateMap.attend!=null)?`${_lab('attend')} <span style="color:var(--light);font-weight:500">(도서관 로그인 후 배너로 들어온 날, 하루 1번)</span>`:'';
@@ -9709,7 +9779,7 @@ async function renderActivityGroup(){
         <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
       </div>
       <div class="ag-pstats">
-        ${[[nDone,'완독','s-done'],[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
+        ${[[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEss,'독후감','s-rv'],[nDone,'완독','s-done'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
       </div>
     </div>
     <div class="ag-sec-h"><h3>내 별 내역</h3></div>
@@ -9729,16 +9799,16 @@ async function renderActivityGroup(){
       <div class="ag-earn">별 버는 법 — ${earn}<br>등급은 <b>누적 별</b> 기준이며 한 번 오르면 내려가지 않아요.</div>
     </div>
     <div class="ag-sec-h"><h3>내 기록</h3>${hasNotes?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
-    <div class="ag-chips" id="agChips"><span class="ag-chip" data-f="soup" onclick="agSetNoteFilter('soup')">한 줄 소감 ${nOne}</span><span class="ag-chip" data-f="q" onclick="agSetNoteFilter('q')">한 줄 질문 ${nQ}</span><span class="ag-chip" data-f="rv" onclick="agSetNoteFilter('rv')">서평 ${nRev}</span></div>
+    <div class="ag-chips" id="agChips"><span class="ag-chip" data-f="soup" onclick="agSetNoteFilter('soup')">한 줄 소감 ${nOne}</span><span class="ag-chip" data-f="q" onclick="agSetNoteFilter('q')">한 줄 질문 ${nQ}</span><span class="ag-chip" data-f="rv" onclick="agSetNoteFilter('rv')">서평 ${nRev}</span><span class="ag-chip" data-f="es" onclick="agSetNoteFilter('es')">독후감 ${nEss}</span></div>
     <div class="ag-notes" id="agNotes">${_agNotesHTML()}</div>`;
 }
-const AG_NOTE_FILTERS={soup:['oneline','impression'],q:['question'],rv:['review','essay']};
+const AG_NOTE_FILTERS={soup:['oneline','impression'],q:['question'],rv:['review'],es:['essay']};
 function _agNotesHTML(){
   let list=(_agWritings||[]).filter(w=>AG_NOTE_KIND[w.activity]);
   if(_agNoteFilter!=='all'){ const acts=AG_NOTE_FILTERS[_agNoteFilter]||[]; list=list.filter(w=>acts.indexOf(w.activity)>=0); }
   list=list.slice(0,12);
   if(!list.length) return `<div class="ag-empty">${_agNoteFilter==='all'?'아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.':'해당하는 기록이 아직 없어요.'}</div>`;
-  return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('');
+  return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=(typeof _anyBook==='function')?_anyBook(w.book_id):_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('');
 }
 function agSetNoteFilter(f){
   _agNoteFilter=(_agNoteFilter===f?'all':f);
@@ -9767,9 +9837,151 @@ async function _bmWrite(method,path,bodyObj){
   try{ const r=await fetch(`${BX_SB}/${path}`,{method,headers:{...BX_H,Prefer:'return=minimal'},body:bodyObj?JSON.stringify(bodyObj):undefined}); return r.ok; }catch(e){ return false; }
 }
 
+/* ── 내 책(8/21 사장님 요청): 상세 페이지를 열어 본 책이 자동으로 담긴다 — bookstar_mybooks(학생별, 기기 무관).
+   인생책·책장·글쓰기(⋮ 메뉴)의 공통 후보. 옛 _bookById는 고전(BOOKS)만 알아서 도서관 책 인생책이 안 보이던 버그의 원인 → _anyBook으로 통일 ── */
+let _mbList=[], _mbTab='all', _mbLoadedFor='', _mbExtra={};
+function mbKey(b){ if(!b) return ''; const id=String(b.id||''); if(/^(gb|kr)-/.test(id)) return id; return String(b.isbn||id||''); }
+function _mbNormRow(r){ return {id:String(r.book_id), title:cleanT(r.title||''), author:r.author||'', coverSrc:r.cover||'', isbn:r.isbn||'', kind:r.kind||'', last:r.last_seen||r.created_at||''}; }
+function _mbNormCls(b){ return {id:b.id, title:cleanT(b.title||''), author:b.author||'', coverSrc:b.coverSrc||'', isbn:'', kind:String(b.id||'').indexOf('gb-')===0?'foreign':'korean', last:''}; }
+function mbIsCls(b){ return /^(gb|kr)-/.test(String((b&&b.id)||'')); }
+function _anyBook(id){ id=String(id||''); if(!id) return null; const m=_mbList.find(x=>x.id===id); if(m) return m; if(_mbExtra[id]) return _mbExtra[id]; const c=_bookById(id); return c?_mbNormCls(c):null; }
+async function mbLoad(force){
+  const s=bxStudent(); if(!s){ _mbList=[]; _mbLoadedFor=''; return _mbList; }
+  if(!force && _mbLoadedFor===s.id) return _mbList;
+  const rows=await _agFetch(`bookstar_mybooks?student_id=eq.${encodeURIComponent(s.id)}&select=book_id,title,author,cover,isbn,kind,created_at,last_seen&order=last_seen.desc&limit=300`);
+  _mbList=(Array.isArray(rows)?rows:[]).map(_mbNormRow); _mbLoadedFor=s.id; return _mbList;
+}
+// 상세가 열릴 때 호출(libDetail·openDetail) — 서버 upsert + 로컬 목록 즉시 갱신
+function mbTouch(b){
+  try{
+    const s=bxStudent(); if(!s||!b) return; const key=mbKey(b); if(!key) return;
+    const it=bxItemOf(b);
+    const row={school_id:CH_SCHOOL,student_id:s.id,book_id:key,title:cleanT(b.t||b.title||''),author:String(b.a||b.author||''),cover:String(b.cover||b.coverSrc||''),isbn:String(b.isbn||''),kind:it.item_type||'',last_seen:new Date().toISOString()};
+    if(!row.title) return;
+    fetch(`${SB_REST}/bookstar_mybooks?on_conflict=student_id,book_id`,{method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)}).catch(()=>{});
+    if(_mbLoadedFor===s.id) _mbList=[_mbNormRow(row)].concat(_mbList.filter(x=>x.id!==key));
+  }catch(e){}
+}
+function _mbAll(){   // 내 책 = 담긴 책 ∪ 완독 고전 ∪ 읽던 고전 (중복 제거, 최근 본 순)
+  const seen={}, out=[]; const push=b=>{ if(b&&b.id&&!seen[b.id]){ seen[b.id]=1; out.push(b); } };
+  _mbList.forEach(push); _doneBooks().forEach(b=>push(_mbNormCls(b))); _readingBooks().forEach(x=>push(_mbNormCls(x.b)));
+  return out;
+}
+function mbOpen(id){   // 표지 클릭 → 고전은 상세, 도서관 책은 libDetail(풀에 없으면 최소 정보로 넣고 연다)
+  const b=_anyBook(id); if(!b) return;
+  if(mbIsCls(b)){ openDetail(b.id); return; }
+  const isbn=b.isbn||b.id;
+  if(!LIB_POOL.find(x=>x.isbn===isbn)) LIB_POOL.push({isbn, t:b.title, a:b.author, cover:b.coverSrc, _sm:/^sm-/.test(isbn)||undefined});
+  libDetail(isbn);
+}
+async function mbRemove(id){
+  const s=bxStudent(); if(!s) return;
+  if(!confirm('내 책에서 뺄까요? (쓴 글은 지워지지 않아요)')) return;
+  await _bmWrite('DELETE',`bookstar_mybooks?student_id=eq.${encodeURIComponent(s.id)}&book_id=eq.${encodeURIComponent(id)}`);
+  _mbList=_mbList.filter(x=>x.id!==String(id)); bmCloseModal(); renderMyProfileTop();
+}
+function mbSetTab(t){ _mbTab=t; renderMyProfileTop(); }
+function mbHideHint(){ try{ localStorage.setItem('bookstar-mb-hint','1'); }catch(e){} const h=document.getElementById('mbHint'); if(h) h.style.display='none'; }
+const MB_DOTS='<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+/* ── ⋮ 메뉴: 한 줄 소감 · 한 줄 질문 · 서평 · 독후감 (+ 책장 담기 · 인생책 · 빼기). opt.chId·opt.only = 챌린지 책(마이 챌린지 카드)에서 열 때 ── */
+const WR_ICON={oneline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>',question:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9a3 3 0 1 1 4.5 2.6c-.9.5-1.5 1.2-1.5 2.4"/><circle cx="12" cy="18" r=".6"/></svg>',review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 16.9 6.4 20l1.3-6.2L3 9.5l6.3-.7z"/></svg>',essay:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg>'};
+const WR_DESC={oneline:'읽고 느낀 생각을 한 줄로',question:'책에 던지고 싶은 질문을 한 줄로',review:'이 책을 남에게 소개하는 글',essay:'읽고 난 내 생각을 쓰는 글'};
+const WR_INTRO={review:['서평은 <b>책 이야기</b>예요.','읽을 사람을 위해 쓰는 글이에요. 이 책이 어떤 책인지, 어떤 점이 좋고 아쉬웠는지, 누구에게 권하고 싶은지를 씁니다. 줄거리를 다 옮기기보다 읽고 나서 내린 판단과 그 이유를 담아 보세요.'],
+  essay:['독후감은 <b>내 이야기</b>예요.','나를 위해 쓰는 글이에요. 어떤 대목이 마음에 남았는지, 그때 무슨 생각이 들었는지, 내 경험과 어떻게 이어졌는지를 씁니다. 잘 쓰려고 애쓰기보다 솔직하게 쓰면 됩니다.']};
+function _mbHead(b,tag){ return `<div class="bm-mbook" style="margin-bottom:10px"><div class="cv" style="width:46px;height:64px">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span><br><span class="mb-tag">${tag||'내 책'}</span></div></div>`; }
+function mbMenu(id,opt){
+  opt=opt||{}; if(opt.book){ _mbExtra[String(opt.book.id)]=opt.book; }
+  const b=_anyBook(id); if(!b){ bmToast('책 정보를 찾지 못했어요'); return; }
+  const keys=opt.only||['oneline','question','review','essay'];
+  const chArg=opt.chId?`'${esc(String(opt.chId))}'`:'null';
+  const items=CH_MISSIONS.filter(x=>x.kind==='write'&&keys.indexOf(x.k)>=0).map(x=>`<div class="mb-mi" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg})"><span class="ic">${WR_ICON[x.k]}</span><div><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}${opt.chId?` · ⭐${x.star}`:''}</span></div><i>›</i></div>`).join('');
+  const extra=opt.chId?'':`<div class="mb-sep"></div>
+    <div class="mb-mi sm" onclick="openAddShelf('${esc(b.id)}')"><span class="ic">${IC_PLUS}</span><div><b>책장에 담기</b></div><i>›</i></div>
+    <div class="mb-mi sm" onclick="openLifeModal('${esc(b.id)}')"><span class="ic">${IC_STAR_SM}</span><div><b>인생책으로</b></div><i>›</i></div>
+    <div class="mb-mi sm danger" onclick="mbRemove('${esc(b.id)}')"><span class="ic">×</span><div><b>내 책에서 빼기</b></div></div>`;
+  _bmModal(`${_mbHead(b,opt.chId?'챌린지 책':'내 책')}${items||'<div class="ag-empty">이 챌린지엔 글쓰기 미션이 없어요.</div>'}${extra}`);
+}
+/* ── 글쓰기 에디터. 짧은 글(소감·질문)=120자 · 긴 글(서평 300자↑·독후감 800자↑). '다른 학생에게 공개'=is_public.
+   별: 이 책이 담긴 참여 중 챌린지에 그 미션이 켜져 있을 때만(award_activity, 멱등). 상시 글은 저장만(별 없음 — 8/17 규칙 유지) ── */
+let _wr=null;
+function _wrDraftKey(){ return `bookstar-draft-${_bxSid()}-${_wr.k}-${_wr.bookId}`; }
+async function wrOpen(bookId,k,chId){
+  const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  const b=_anyBook(bookId); const def=CH_MISSIONS.find(x=>x.k===k); if(!b||!def) return;
+  _wr={bookId:String(bookId),k,chId:chId||null,b,def};
+  const enc=encodeURIComponent(s.id);
+  let prev=null; try{ const rows=await _agFetch(`bookstar_writings?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&activity=eq.${k}&select=text,is_public,challenge_id`); prev=(rows&&rows[0])||null; }catch(e){}
+  let draft=''; try{ draft=localStorage.getItem(_wrDraftKey())||''; }catch(e){}
+  const text=(prev&&prev.text)||draft||'';
+  const pubChk=`<label class="wr-pub"><input type="checkbox" id="wrPub" ${prev&&prev.is_public?'checked':''}> 다른 학생에게 공개</label>`;
+  const backArg=chId?`,{chId:'${esc(String(chId))}'}`:'';
+  const long=(k==='review'||k==='essay');
+  if(!long){
+    _bmModal(`${_mbHead(b,chId?'챌린지 책':'내 책')}<label style="margin-top:6px">${def.t}</label>
+      <textarea id="wrTa" rows="3" maxlength="120" placeholder="${esc(def.ph)}">${esc(text)}</textarea>
+      <div class="wr-foot"><span id="wrCnt">${text.length}/120자</span>${pubChk}</div>
+      <button class="bm-btn fill wr-go" id="wrGo" onclick="wrSubmit()" ${text.trim().length<def.min?'disabled':''}>${prev?'수정해서 올리기':'올리기'}</button>
+      <div class="wr-back" onclick="mbMenu('${esc(bookId)}'${backArg})">← 뒤로</div>`);
+  } else {
+    const intro=WR_INTRO[k];
+    _bmModal(`<div class="wr-long">
+      <div class="wr-lh"><div><div class="wr-lt">${def.t}</div><div class="wr-ls">${esc(b.title)} · ${esc(b.author||'')}</div></div><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>
+      <div class="wr-intro"><div class="wr-it">${intro[0]}</div><div>${intro[1]}</div></div>
+      <textarea id="wrTa" placeholder="여기에 글을 써 보세요." oninput="wrCount()">${esc(text)}</textarea>
+      <div class="wr-foot"><span id="wrCnt"><b>${text.length}</b>자 / 최소 ${def.min}자</span>${pubChk}<span style="flex:1"></span><button class="bm-btn" onclick="wrSaveDraft()">저장</button><button class="bm-btn fill" id="wrGo" onclick="wrSubmit()" ${text.trim().length<def.min?'disabled':''}>${prev?'수정해서 올리기':'올리기'}</button></div>
+    </div>`);
+    const m=document.querySelector('#bmOv .bm-modal'); if(m) m.classList.add('wide');
+  }
+  const ta=document.getElementById('wrTa'); if(ta){ ta.addEventListener('input',wrCount); if(!prev) ta.addEventListener('input',()=>{ try{ localStorage.setItem(_wrDraftKey(), ta.value); }catch(e){} }); setTimeout(()=>ta.focus(),30); }
+}
+function wrCount(){
+  if(!_wr) return; const ta=document.getElementById('wrTa'), c=document.getElementById('wrCnt'), go=document.getElementById('wrGo'); if(!ta) return;
+  const n=ta.value.length, long=(_wr.k==='review'||_wr.k==='essay');
+  if(c) c.innerHTML=long?`<b>${n}</b>자 / 최소 ${_wr.def.min}자`:`${n}/120자`;
+  if(go) go.disabled=ta.value.trim().length<_wr.def.min;
+}
+function wrSaveDraft(){ const ta=document.getElementById('wrTa'); if(!ta||!_wr) return; try{ localStorage.setItem(_wrDraftKey(), ta.value); }catch(e){} bmToast('임시 저장했어요 (이 기기에만 남아요)'); }
+async function wrSubmit(){
+  if(!_wr) return; const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
+  const ta=document.getElementById('wrTa'); const v=((ta&&ta.value)||'').trim();
+  const chk=bxWriteCheck(v,_wr.k,_wr.def.min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복)
+  if(!chk.ok){ bmToast(chk.msg); if(ta) ta.focus(); return; }
+  const pub=!!(document.getElementById('wrPub')&&document.getElementById('wrPub').checked);
+  const go=document.getElementById('wrGo'); if(go) go.disabled=true;
+  let chId=_wr.chId;
+  if(!chId){ try{ const c=chalForBook({id:_wr.bookId,isbn:_wr.b.isbn,title:_wr.b.title}); if(c&&appChalMission(c)[_wr.k]) chId=String(c.id); }catch(e){} }
+  let starred=false;
+  if(chId){ try{ const res=await mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:s.id,p_activity:_wr.k,p_ref:'book:'+_wr.bookId}); starred=!!(res&&res.ok); if(starred&&typeof res.total==='number') mpRefreshTotal(s.id,res.total); }catch(e){} }
+  let ok=false;
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,{method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify({student_id:s.id,school_id:CH_SCHOOL,challenge_id:chId||null,book_id:_wr.bookId,activity:_wr.k,text:v,is_public:pub})}); ok=r.ok; }catch(e){}
+  if(!ok){ if(go) go.disabled=false; bmToast('저장에 실패했어요'); return; }
+  bxEvent('activity',{sub:_wr.k, book:bxBookByKey(_wr.bookId), program_id:chId||null, ref_table:'bookstar_writings', ref_id:s.id+'|'+_wr.k+'|'+_wr.bookId, meta:{len:v.length,standing:!chId,is_public:pub}});
+  try{ localStorage.removeItem(_wrDraftKey()); }catch(e){}
+  bmCloseModal(); bmToast(starred?`올렸어요 · ⭐${_wr.def.star}`:'올렸어요');
+  try{ _agfCache.clear(); }catch(e){}
+  _wrMine=null; renderMyProfileTop(); try{ renderActivityGroup(); }catch(e){} try{ renderQuestMap(); }catch(e){}
+}
+/* ── 내가 쓴 글 (bookstar_writings, 현재 학생) — 탭: 소감/질문/서평/독후감 ── */
+let _wrMine=null, _wrTab='oneline';
+const WR_TABS=[['oneline','한 줄 소감'],['question','한 줄 질문'],['review','서평'],['essay','독후감']];
+async function wrLoadMine(){
+  const s=bxStudent(); if(!s) return [];
+  const rows=await _agFetch(`bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&hidden=eq.false&select=activity,book_id,text,created_at,is_public,challenge_id&order=created_at.desc`);
+  _wrMine=Array.isArray(rows)?rows:[]; return _wrMine;
+}
+function wrSetTab(t){ _wrTab=t; const w=document.getElementById('wrList'); if(w) w.innerHTML=_wrListHTML(); document.querySelectorAll('#wrTabs .mb-tab').forEach(x=>x.classList.toggle('on',x.dataset.t===_wrTab)); }
+function _wrListHTML(){
+  const alias={oneline:['oneline','impression'],question:['question'],review:['review'],essay:['essay']}[_wrTab]||[_wrTab];
+  const list=(_wrMine||[]).filter(w=>alias.indexOf(w.activity)>=0);
+  if(!list.length) return `<div class="ag-empty" style="padding:16px 2px">아직 남긴 글이 없어요. 책 표지 오른쪽 위 ${MB_DOTS} 를 눌러 첫 글을 남겨보세요.</div>`;
+  return list.map(w=>{ const b=_anyBook(w.book_id); const t=b?b.title:(w.book_id||''); const d=w.created_at?_agDate(w.created_at):'';
+    return `<div class="wr-item"><div class="wr-im"><b>${esc(t)}</b>${d?` · ${d}`:''} · <span class="${w.is_public?'wr-pub-on':'wr-pub-off'}">${w.is_public?'공개':'나만 보기'}</span>${w.challenge_id?' · 챌린지':''}<span style="flex:1"></span><button class="bm-mini" style="flex:none;padding:4px 10px" onclick="wrOpen('${esc(w.book_id)}','${esc(w.activity==='impression'?'oneline':w.activity)}')">수정</button></div><p>${esc(w.text||'')}</p></div>`; }).join('');
+}
+
 async function renderMyProfileTop(){
   const el=document.getElementById('myProfileTop'); if(!el) return;
-  const grpHead='<div class="lib-grp"><div class="lib-grp-ic">'+BM_IC_BOOK+'</div><div><div class="lib-grp-t">내 책 모음</div><div class="lib-grp-s">인생책 · 도서 · 책장</div></div></div>';
+  const grpHead='<div class="lib-grp"><div class="lib-grp-ic">'+BM_IC_BOOK+'</div><div><div class="lib-grp-t">내 책 모음</div><div class="lib-grp-s">인생책 · 내 책 · 책장 · 내가 쓴 글</div></div></div>';
   const s=bxStudent(); const moreBtn=document.getElementById('myMoreBtn');
   if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 서가가 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; if(moreBtn) moreBtn.style.display='none'; return; }
   if(moreBtn) moreBtn.style.display='block';
@@ -9777,66 +9989,62 @@ async function renderMyProfileTop(){
   const [profA,hist,shelves]=await Promise.all([
     _agFetch(`bookstar_students?id=eq.${enc}&select=favorite_book_id,favorite_reason`),
     _agFetch(`bookstar_life_history?student_id=eq.${enc}&select=book_id,reason,replaced_at&order=replaced_at.desc`),
-    _agFetch(`bookstar_shelves?student_id=eq.${enc}&select=id,name,book_ids,created_at&order=created_at.desc`)
+    _agFetch(`bookstar_shelves?student_id=eq.${enc}&select=id,name,book_ids,created_at&order=created_at.desc`),
+    mbLoad(), wrLoadMine()
   ]);
   const prof=profA[0]||{}; const favId=prof.favorite_book_id||''; const favReason=prof.favorite_reason||'';
   _curFav={id:favId,reason:favReason}; _bmShelves=Array.isArray(shelves)?shelves:[];
-  const favBook=favId?_bookById(favId):null;
-  const reading=_readingBooks();
-  let done=_doneBooks();
-  if(favBook){ const i=done.findIndex(b=>b.id===favBook.id); if(i>0){ done=[done[i], ...done.slice(0,i), ...done.slice(i+1)]; } }
-  // ── 내 인생책
+  const favBook=favId?_anyBook(favId):null;
+  const all=_mbAll();
+  // ── 내 인생책 (등록한 책·사유가 그대로 보이도록 — 도서관 책도 _anyBook으로 해석)
   const histRows=(Array.isArray(hist)&&hist.length)
-    ? `<div class="bm-hist"><div class="bm-hist-h">지난 인생책</div>${hist.map(h=>{ const b=_bookById(h.book_id); const t=b?cleanT(b.title):(h.book_id||''); const a=b?(b.author||''):''; const d=h.replaced_at?_agDate(h.replaced_at):''; return `<div class="bm-hist-row"><div class="bm-hc">${b?_bmCover(b):'📕'}</div><div class="bm-hb"><div class="bm-ht">${esc(t)}${a?`<span class="ha">${esc(a)}</span>`:''}</div>${h.reason?`<div class="bm-hr">${esc(h.reason)}</div>`:''}</div><div class="bm-hd">${d}</div></div>`; }).join('')}</div>`
+    ? `<div class="bm-hist"><div class="bm-hist-h">지난 인생책</div>${hist.map(h=>{ const b=_anyBook(h.book_id); const t=b?b.title:(h.book_id||''); const a=b?(b.author||''):''; const d=h.replaced_at?_agDate(h.replaced_at):''; return `<div class="bm-hist-row"><div class="bm-hc">${b?_bmCover(b):'📕'}</div><div class="bm-hb"><div class="bm-ht">${esc(t)}${a?`<span class="ha">${esc(a)}</span>`:''}</div>${h.reason?`<div class="bm-hr">${esc(h.reason)}</div>`:''}</div><div class="bm-hd">${d}</div></div>`; }).join('')}</div>`
     : '';
   const lifeCard = favBook
-    ? `<div class="bm-life"><div class="bm-cover">${_bmCover(favBook)}</div><div style="flex:1;min-width:0">
+    ? `<div class="bm-life"><div class="bm-cover" style="cursor:pointer" onclick="mbOpen('${esc(favBook.id)}')">${_bmCover(favBook)}</div><div style="flex:1;min-width:0">
         <div class="bm-life-k">${IC_STAR_SM} 내 인생책</div>
-        <div class="bm-life-t">${esc(cleanT(favBook.title))}</div><div class="bm-life-a">${esc(favBook.author||'')}</div>
+        <div class="bm-life-t">${esc(favBook.title)}</div><div class="bm-life-a">${esc(favBook.author||'')}</div>
         ${favReason?`<div class="bm-reason">${esc(favReason)}</div>`:'<div class="bm-reason" style="color:var(--text-light)">아직 이유를 안 적었어요. ‘인생책 바꾸기’로 한마디 남겨보세요.</div>'}
-        <div class="bm-acts"><button class="bm-btn" onclick="openLifePicker()">${IC_EDIT} 인생책 바꾸기</button><button class="bm-btn" onclick="bmShare('내 인생책','${esc(cleanT(favBook.title))}')">${IC_SHARE} 공유</button></div></div></div>${histRows}`
-    : ((done.length||reading.length)
-        ? `<div class="bm-life-empty"><div class="ph">${IC_STAR_SM.replace('width="13" height="13"','width="34" height="34"')}</div><div><div style="font-weight:800;color:var(--text);font-size:16px">아직 인생책을 안 골랐어요</div><div style="margin-top:5px">내가 읽은·읽는 책 중 가장 인상 깊었던 한 권을 골라보세요.</div><div style="margin-top:12px"><button class="bm-btn fill" onclick="openLifePicker()">${IC_STAR_SM} 인생책 고르기</button></div></div></div>${histRows}`
-        : `<div class="ag-empty">책을 읽기 시작하면 인생책을 고를 수 있어요.</div>${histRows}`);
-  // ── 읽던 책 이어가기
-  const readSec=reading.length
-    ? `<div class="sg-sec sg-mini" style="margin-top:24px"><div class="sg-h">읽던 책 이어가기</div><div class="sg-row">${reading.map(x=>`<div class="sg-card" onclick="openViewer('${esc(x.b.id)}','full')"><div class="sg-cv">${_bkCover(x.b)}</div><div class="sg-t">${esc(cleanT(x.b.title))}</div><div class="sg-bar"><i style="width:${x.pct}%"></i></div><div class="sg-pct">${x.pct}% · 이어 읽기</div></div>`).join('')}</div></div>`
-    : '';
-  // ── 내 도서 (완독) — 기본 BM_BOOK_LIMIT권만, 많으면 펼치기
-  const shownBooks = _bmBooksOpen ? done : done.slice(0, BM_BOOK_LIMIT);
-  const bkCard = b => { const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk"><div class="bm-bc" onclick="openDetail('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><div class="bm-bk-t">${esc(cleanT(b.title))}</div><div class="bm-bk-a">${esc(b.author||'')}</div><div class="bm-bk-acts"><button class="bm-mini${isFav?' on':''}" onclick="openLifeModal('${esc(b.id)}')">${IC_STAR_SM} 인생책</button><button class="bm-mini" onclick="openAddShelf('${esc(b.id)}')">+ 책장</button></div></div>`; };
-  const booksMore = done.length>BM_BOOK_LIMIT ? `<div style="text-align:center;margin-top:16px"><button class="bm-btn" onclick="bmToggleBooks()">${_bmBooksOpen?'접기 ▴':`완독 ${done.length}권 전체 보기 ▾`}</button></div>` : '';
-  const booksGrid=done.length
-    ? `<div class="bm-bkgrid">${shownBooks.map(bkCard).join('')}</div>${booksMore}`
-    : '<div class="ag-empty">아직 완독한 책이 없어요. 첫 완독에 도전해 보세요!</div>';
-  // ── 내 책장 (큐레이션)
-  const curCards=_bmShelves.map(c=>{ const ids=Array.isArray(c.book_ids)?c.book_ids:[]; const cb=ids.map(_bookById).filter(Boolean); const covers=cb.length?cb.slice(0,4).map(b=>`<div class="cv">${_bmCover(b)}</div>`).join(''):'<div class="bm-cur-empty">아직 담은 책이 없어요</div>'; return `<div class="bm-cur"><div class="bm-cur-h"><b>${esc(c.name||'제목 없음')}</b><span>${ids.length}권</span></div><div class="bm-cur-books">${covers}</div><div class="bm-cur-foot"><button class="bm-btn" onclick="bmShare('책장','${esc(c.name||'')}')">${IC_SHARE} 공유</button></div></div>`; }).join('');
-  const curGrid=`<div class="bm-curgrid">${curCards}<div class="bm-cur-new" onclick="openNewShelf()">${IC_PLUS} 책장 만들기</div></div>`;
+        <div class="bm-acts"><button class="bm-btn" onclick="openLifeModal('${esc(favBook.id)}')">${IC_EDIT} 이유 고치기</button><button class="bm-btn" onclick="openLifePicker()">${IC_STAR_SM} 인생책 바꾸기</button></div></div></div>${histRows}`
+    : (favId
+        ? `<div class="bm-life"><div class="bm-cover">📕</div><div style="flex:1;min-width:0"><div class="bm-life-k">${IC_STAR_SM} 내 인생책</div><div class="bm-life-t">${esc(favId)}</div>${favReason?`<div class="bm-reason">${esc(favReason)}</div>`:''}<div class="bm-acts"><button class="bm-btn" onclick="openLifePicker()">${IC_STAR_SM} 인생책 바꾸기</button></div></div></div>${histRows}`
+        : `<div class="bm-life-empty"><div class="ph">${IC_STAR_SM.replace('width="13" height="13"','width="34" height="34"')}</div><div><div style="font-weight:800;color:var(--text);font-size:16px">아직 인생책을 안 골랐어요</div><div style="margin-top:5px">읽은 책 중 가장 인상 깊었던 한 권을 골라보세요.</div><div style="margin-top:12px"><button class="bm-btn fill" onclick="openLifePicker()">${IC_STAR_SM} 인생책 고르기</button></div></div></div>${histRows}`);
+  // ── 내 책 (담긴 책 전체 / 책장별 탭) — 카드 ⋮ = 글쓰기 메뉴
+  let showHint=true; try{ showHint=!localStorage.getItem('bookstar-mb-hint'); }catch(e){}
+  const curShelf=_mbTab==='all'?null:_bmShelves.find(c=>String(c.id)===String(_mbTab));
+  if(_mbTab!=='all'&&!curShelf) _mbTab='all';
+  const shown=curShelf?(Array.isArray(curShelf.book_ids)?curShelf.book_ids:[]).map(_anyBook).filter(Boolean):all;
+  const tabs=`<div class="mb-tabs"><span class="mb-tab${_mbTab==='all'?' on':''}" onclick="mbSetTab('all')">전체 ${all.length}</span>${_bmShelves.map(c=>`<span class="mb-tab${String(c.id)===String(_mbTab)?' on':''}" onclick="mbSetTab('${esc(String(c.id))}')">${esc(c.name||'제목 없음')} ${(Array.isArray(c.book_ids)?c.book_ids.length:0)}</span>`).join('')}<span class="mb-tab add" onclick="openNewShelf()">+ 책장 만들기</span></div>`;
+  const shelfBar=curShelf?`<div class="mb-shelfbar"><span>책장 <b>${esc(curShelf.name||'')}</b> · ${shown.length}권</span><span style="flex:1"></span><button class="bm-btn" onclick="openShelfAdd('${esc(String(curShelf.id))}')">${IC_PLUS} 책 담기</button><button class="bm-btn" onclick="shelfDelete('${esc(String(curShelf.id))}')">책장 삭제</button></div>`:'';
+  const bkCard = b => { const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk mb-bk"><div class="bm-bc" onclick="mbOpen('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><button class="mb-dots" title="글쓰기" onclick="event.stopPropagation();mbMenu('${esc(b.id)}')">${MB_DOTS}</button><div class="bm-bk-t">${esc(b.title)}</div><div class="bm-bk-a">${esc(b.author||'')}</div></div>`; };
+  const booksGrid=shown.length
+    ? `<div class="bm-bkgrid">${shown.map(bkCard).join('')}</div>`
+    : (curShelf?`<div class="ag-empty">아직 담은 책이 없어요. <b style="color:var(--primary);cursor:pointer" onclick="openShelfAdd('${esc(String(curShelf.id))}')">책 담기</b>로 내 책에서 골라 담아요.</div>`
+               :'<div class="ag-empty">아직 내 책이 없어요. 책 상세 페이지를 열어 보면 여기에 담겨요.</div>');
+  const hint=showHint?`<div class="mb-hint" id="mbHint"><span>표지를 누르면 이어 읽고, 오른쪽 위 ${MB_DOTS} 를 누르면 소감·질문·서평·독후감을 쓸 수 있어요.</span><b onclick="mbHideHint()">×</b></div>`:'';
+  // ── 내가 쓴 글
+  const cnt=k=>(_wrMine||[]).filter(w=>k==='oneline'?(w.activity==='oneline'||w.activity==='impression'):w.activity===k).length;
+  const wrTabs=`<div class="mb-tabs" id="wrTabs">${WR_TABS.map(t=>`<span class="mb-tab${_wrTab===t[0]?' on':''}" data-t="${t[0]}" onclick="wrSetTab('${t[0]}')">${t[1]} ${cnt(t[0])}</span>`).join('')}</div>`;
 
   el.innerHTML = grpHead
-   +`<div class="ag-sec-h"><h3>내 인생책</h3></div><div class="ag-card">${lifeCard}</div>${readSec}
-     <div class="ag-sec-h"><h3>내 도서<span class="more" style="cursor:default;color:var(--text-light);font-weight:600">완독 ${done.length}</span></h3></div>${booksGrid}
-     <div class="ag-sec-h"><h3>내 책장 <span style="font-size:12px;color:var(--text-light);font-weight:600">내가 만든 책 모음</span></h3></div>${curGrid}`;
+   +`<div class="ag-sec-h"><h3>내 인생책</h3></div><div class="ag-card">${lifeCard}</div>
+     <div class="ag-sec-h"><h3>내 책 <span style="font-size:12px;color:var(--text-light);font-weight:600">책 ${all.length}권 · 책장 ${_bmShelves.length}개</span></h3></div>${hint}${tabs}${shelfBar}${booksGrid}
+     <div class="ag-sec-h"><h3>내가 쓴 글 <span style="font-size:12px;color:var(--text-light);font-weight:600">한 줄 소감 · 한 줄 질문 · 서평 · 독후감</span></h3></div>${wrTabs}<div id="wrList">${_wrListHTML()}</div>`;
 }
-/* ── 인생책 등록/바꾸기 ── */
-function _lifeCandidates(){
-  const seen={}, out=[];
-  _doneBooks().forEach(b=>{ if(b&&!seen[b.id]){ seen[b.id]=1; out.push(b); } });
-  _readingBooks().forEach(x=>{ const b=x.b; if(b&&!seen[b.id]){ seen[b.id]=1; out.push(b); } });
-  return out;
-}
+/* ── 인생책 등록/바꾸기 (후보 = 내 책 전체) ── */
+function _lifeCandidates(){ return _mbAll(); }
 function openLifePicker(){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
   const cand=_lifeCandidates();
-  if(!cand.length){ bmToast('먼저 책을 읽어보세요'); return; }
-  const grid=cand.map(b=>`<div class="bm-pick${_curFav.id===b.id?' sel':''}" onclick="openLifeModal('${esc(b.id)}')"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(cleanT(b.title))}</div></div>`).join('');
-  _bmModal(`<h3>인생책 고르기</h3><div class="sub">내가 읽은·읽는 책 중에서 한 권을 고른 뒤, 이유를 적어요.</div><div class="bm-pickgrid">${grid}</div><div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>`);
+  if(!cand.length){ bmToast('먼저 책 상세를 열어 보세요 — 본 책이 내 책에 담겨요'); return; }
+  const grid=cand.map(b=>`<div class="bm-pick${_curFav.id===b.id?' sel':''}" onclick="openLifeModal('${esc(b.id)}')"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(b.title)}</div></div>`).join('');
+  _bmModal(`<h3>인생책 고르기</h3><div class="sub">내 책 중에서 한 권을 고른 뒤, 이유를 적어요.</div><div class="bm-pickgrid">${grid}</div><div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>`);
 }
 function openLifeModal(id){
-  _bmPendBook=id; const b=_bookById(id); if(!b) return;
-  const cur=(_curFav.id===id)?_curFav.reason:'';
+  _bmPendBook=String(id); const b=_anyBook(id); if(!b) return;
+  const cur=(_curFav.id===String(id))?_curFav.reason:'';
   _bmModal(`<h3>인생책 등록</h3><div class="sub">이 책을 인생책으로 고른 이유를 적어주세요. 바꾸면 이전 인생책은 ‘지난 인생책’에 남아요.</div>
-    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(cleanT(b.title))}</b><br><span>${esc(b.author||'')}</span></div></div>
+    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span></div></div>
     <label>인생책으로 고른 이유</label><textarea id="bmReason" rows="4" maxlength="300" placeholder="예) 이 책이 나에게 남긴 한 가지…">${esc(cur)}</textarea><div class="bm-cc"><span id="bmRc">${cur.length}</span>/300</div>
     <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="saveLifeBook()">인생책으로 등록</button></div>`);
   const ta=document.getElementById('bmReason'); if(ta){ ta.addEventListener('input',function(){ const c=document.getElementById('bmRc'); if(c) c.textContent=this.value.length; }); ta.focus(); }
@@ -9852,14 +10060,15 @@ async function saveLifeBook(){
   const ok=await _bmWrite('PATCH',`bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{favorite_book_id:_bmPendBook,favorite_reason:r});
   bmCloseModal();
   if(ok){ bmToast('인생책으로 등록했어요'); } else { bmToast('저장에 실패했어요'); }
+  try{ _agfCache.clear(); }catch(e){}
   renderMyProfileTop();
 }
 /* ── 책장(큐레이션) 담기 ── */
 function openAddShelf(bookId){
-  _bmPendBook=bookId; const b=_bookById(bookId); if(!b) return;
+  _bmPendBook=String(bookId); const b=_anyBook(bookId); if(!b) return;
   const opts=_bmShelves.map((c,i)=>`<div class="bm-opt${i===0?' sel':''}" data-sid="${c.id}" onclick="bmPickShelf(this)">${esc(c.name||'제목 없음')} <span style="margin-left:auto;color:var(--text-light);font-size:12px">${(Array.isArray(c.book_ids)?c.book_ids.length:0)}권</span></div>`).join('');
   _bmModal(`<h3>책장에 담기</h3><div class="sub">담을 책장을 고르거나 새로 만드세요.</div>
-    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(cleanT(b.title))}</b><br><span>${esc(b.author||'')}</span></div></div>
+    <div class="bm-mbook"><div class="cv">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span></div></div>
     ${opts||'<div class="ag-empty" style="padding:8px 2px">아직 만든 책장이 없어요. 아래에 이름을 적어 새로 만들어요.</div>'}
     <label style="margin-top:6px">또는 새 책장 이름</label><input id="bmNewName" maxlength="30" placeholder="예) 밑줄 긋고 싶은 문장들">
     <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="saveAddShelf()">담기</button></div>`);
@@ -9870,20 +10079,44 @@ async function saveAddShelf(){
   const nm=(document.getElementById('bmNewName')?.value||'').trim();
   if(nm){
     const ok=await _bmWrite('POST','bookstar_shelves',{school_id:CH_SCHOOL,student_id:s.id,name:nm,book_ids:[_bmPendBook]});
-    bmCloseModal(); bmToast(ok?`“${nm}”에 담았어요`:'저장 실패'); renderMyProfileTop(); return;
+    bmCloseModal(); bmToast(ok?`“${nm}”에 담았어요`:'저장 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop(); return;
   }
   const sel=document.querySelector('#bmOv .bm-opt.sel'); if(!sel){ bmToast('책장을 고르거나 이름을 입력하세요'); return; }
   const sid=sel.getAttribute('data-sid'); const c=_bmShelves.find(x=>String(x.id)===String(sid)); if(!c){ bmCloseModal(); return; }
   const ids=Array.isArray(c.book_ids)?c.book_ids.slice():[]; if(ids.indexOf(_bmPendBook)<0) ids.push(_bmPendBook);
   const ok=await _bmWrite('PATCH',`bookstar_shelves?id=eq.${encodeURIComponent(c.id)}`,{book_ids:ids,updated_at:new Date().toISOString()});
-  bmCloseModal(); bmToast(ok?`“${c.name}”에 담았어요`:'저장 실패'); renderMyProfileTop();
+  bmCloseModal(); bmToast(ok?`“${c.name}”에 담았어요`:'저장 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop();
 }
-/* ── 새 책장 만들기 ── */
+/* ── 책장에 여러 권 담기(책장 탭 → 책 담기) ── */
+function openShelfAdd(sid){
+  const c=_bmShelves.find(x=>String(x.id)===String(sid)); if(!c) return;
+  const have=new Set((Array.isArray(c.book_ids)?c.book_ids:[]).map(String));
+  const cand=_mbAll().filter(b=>!have.has(String(b.id)));
+  _bmPickSet={};
+  const grid=cand.length?cand.map(b=>`<div class="bm-pick" data-bid="${esc(b.id)}" onclick="bmTogglePick(this)"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(b.title)}</div></div>`).join('')
+    :'<div class="ag-empty" style="padding:8px 2px">더 담을 책이 없어요. 책 상세를 열어 보면 내 책에 담겨요.</div>';
+  _bmModal(`<h3>“${esc(c.name||'')}”에 책 담기</h3><div class="sub">내 책 중에서 골라 담아요 (여러 권 선택).</div><div class="bm-pickgrid">${grid}</div>
+    <div class="bm-mact"><button class="bm-btn" onclick="bmCloseModal()">취소</button><button class="bm-btn fill" onclick="shelfAddMany('${esc(String(sid))}')">담기</button></div>`);
+}
+async function shelfAddMany(sid){
+  const c=_bmShelves.find(x=>String(x.id)===String(sid)); if(!c) return;
+  const add=Object.keys(_bmPickSet); if(!add.length){ bmToast('책을 골라주세요'); return; }
+  const ids=(Array.isArray(c.book_ids)?c.book_ids.slice():[]); add.forEach(id=>{ if(ids.indexOf(id)<0) ids.push(id); });
+  const ok=await _bmWrite('PATCH',`bookstar_shelves?id=eq.${encodeURIComponent(c.id)}`,{book_ids:ids,updated_at:new Date().toISOString()});
+  bmCloseModal(); bmToast(ok?`${add.length}권 담았어요`:'저장 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop();
+}
+async function shelfDelete(sid){
+  const c=_bmShelves.find(x=>String(x.id)===String(sid)); if(!c) return;
+  if(!confirm(`책장 “${c.name||''}”을(를) 지울까요? (책과 글은 그대로 남아요)`)) return;
+  const ok=await _bmWrite('DELETE',`bookstar_shelves?id=eq.${encodeURIComponent(c.id)}`);
+  _mbTab='all'; bmToast(ok?'책장을 지웠어요':'삭제 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop();
+}
+/* ── 새 책장 만들기 (후보 = 내 책) ── */
 function openNewShelf(){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
-  _bmPickSet={}; const done=_doneBooks();
-  const grid=done.length?done.map(b=>`<div class="bm-pick" data-bid="${esc(b.id)}" onclick="bmTogglePick(this)"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(cleanT(b.title))}</div></div>`).join('')
-    :'<div class="ag-empty" style="padding:8px 2px">완독한 책이 생기면 담을 수 있어요.</div>';
+  _bmPickSet={}; const cand=_mbAll();
+  const grid=cand.length?cand.map(b=>`<div class="bm-pick" data-bid="${esc(b.id)}" onclick="bmTogglePick(this)"><div class="cv">${_bmCover(b)}</div><div class="pt">${esc(b.title)}</div></div>`).join('')
+    :'<div class="ag-empty" style="padding:8px 2px">책 상세를 열어 보면 내 책에 담기고, 여기서 고를 수 있어요. (이름만 정해 빈 책장을 만들 수도 있어요)</div>';
   _bmModal(`<h3>책장 만들기</h3><div class="sub">이름을 정하고, 담을 책을 골라보세요.</div>
     <label>책장 이름</label><input id="bmShelfName" maxlength="30" placeholder="예) 다시 읽고 싶은 책">
     <label style="margin-top:14px">책 고르기 <span style="color:var(--text-light);font-weight:400">(여러 권 선택)</span></label><div class="bm-pickgrid">${grid}</div>
@@ -9896,7 +10129,7 @@ async function makeShelf(){
   const nm=(document.getElementById('bmShelfName')?.value||'').trim(); if(!nm){ bmToast('이름을 입력해주세요'); return; }
   const ids=Object.keys(_bmPickSet);
   const ok=await _bmWrite('POST','bookstar_shelves',{school_id:CH_SCHOOL,student_id:s.id,name:nm,book_ids:ids});
-  bmCloseModal(); bmToast(ok?`“${nm}” 책장을 만들었어요 (${ids.length}권)`:'저장 실패'); renderMyProfileTop();
+  bmCloseModal(); bmToast(ok?`“${nm}” 책장을 만들었어요 (${ids.length}권)`:'저장 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop();
 }
 function bmShare(kind,name){
   try{ const txt=`[북스타] ${kind} · ${name}`; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); } }catch(e){}
@@ -9925,6 +10158,7 @@ async function renderChalGroup(rootId){
     + '<div class="ag-sec-h"><h3>완료한 챌린지</h3></div>'
     + '<div id="chalDoneBody"><div class="cg-empty">불러오는 중…</div></div>';
   try{ renderQuestMap(); }catch(e){}
+  try{ await wrLoadMine(); renderQuestMap(); }catch(e){}   // 소장자료 책 진행(내 글) 반영
   const enc=encodeURIComponent(s.id);
   const results=await _agFetch(`bookstar_challenge_results?student_id=eq.${enc}&select=book_id,impression,quiz_ok,quiz_total,score,submitted,updated_at&order=updated_at.desc`);
   const hasScenes=(typeof CHALLENGE_SCENES!=='undefined');
@@ -9992,7 +10226,7 @@ async function openProfileEdit(){
     <div class="pe-emoji" id="peEmoji">${PE_EMOJI.map(e=>`<button class="pe-em${_peEmoji===e?' on':''}" onclick="peSetEmoji('${e}')">${e}</button>`).join('')}</div>
     <div class="pe-lb">상태메시지</div>
     <input class="pe-in" id="peBio" maxlength="60" placeholder="예: 오늘도 한 챕터씩" value="${esc(bio)}">
-    <div class="pe-lb" style="color:var(--text-light);font-weight:500;margin-top:4px">인생책은 ‘내 책 모음 › 내 도서’에서 ⭐로 등록해요.</div>
+    <div class="pe-lb" style="color:var(--text-light);font-weight:500;margin-top:4px">인생책은 ‘내 책 모음 › 내 인생책’에서 골라요.</div>
     <div class="pe-btns">
       <button class="pe-btn cancel" onclick="closeProfileEdit()">취소</button>
       <button class="pe-btn save" onclick="saveProfile()">저장</button>
@@ -10362,13 +10596,13 @@ function _questSlot(ci, bi, x, expired){
     ? `<span style="font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--primary);color:#fff;">진행 중</span>`
     : x.book
     ? `<span style="font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--primary);color:var(--primary);">시작하기</span>`
-    : `<span style="font-size:10.5px;padding:3px 10px;border-radius:99px;border:1px solid rgba(120,120,140,.4);color:var(--text-light);">도서관 소장</span>`;
+    : `<span style="font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--primary);color:var(--primary);">글쓰기</span>`;   // 8/21: 소장자료 책은 누르면 글쓰기 메뉴(소감·질문·서평·독후감 중 미션에 켜진 것)
   const coverHtml = x.cover
     ? `<img src="${esc(x.cover)}" loading="lazy" style="width:62px;height:90px;object-fit:cover;border-radius:6px;box-shadow:0 5px 14px rgba(0,0,0,.22);">`
     : `<div style="width:62px;height:90px;border-radius:6px;background:rgba(120,120,140,.12);display:flex;align-items:center;justify-content:center;font-size:26px;">${icon}</div>`;
   const pct = x.pct||0;
   const scoreLine = !x.book
-    ? `<div class="qs-empty">대출 후 완독 인증</div>`
+    ? (x.wr&&x.wr.total ? `<div class="qs-quiz" style="font-size:11.5px">${x.wr.list.map(w=>`<span style="${w.done?'color:var(--primary);font-weight:700':'color:var(--text-light)'}">${w.done?'✓':'○'} ${esc(w.t)}</span>`).join(' · ')}</div>` : `<div class="qs-empty">아직 시작 안 함</div>`)
     : (!(pct>0) && !x.sco)
     ? `<div class="qs-empty">아직 시작 안 함</div>`
     : `<div class="qs-stats">
@@ -10384,9 +10618,18 @@ function _questSlot(ci, bi, x, expired){
 }
 function _questGroup(c, ci){
   const expired = _questIsExpired(c);
+  const mm = appChalMission(c);
+  const writeMis = CH_MISSIONS.filter(x=>x.kind==='write'&&mm[x.k]);
+  const mine = (typeof _wrMine!=='undefined'&&Array.isArray(_wrMine))?_wrMine:[];
   const items = (c.books||[]).map(b=>{
     const m = _matchBookByTitle(b.t);
-    return { t:b.t, cover:b.cover, book:m, st:m?_chalBookState(m.id):'none', sco:m?_chalBookScore(m.id):null, pct:m?((_chalRead(m.id)||{}).read_pct||0):0 };
+    if(m) return { t:b.t, cover:b.cover, book:m, st:_chalBookState(m.id), sco:_chalBookScore(m.id), pct:((_chalRead(m.id)||{}).read_pct||0) };
+    // 도서관 소장 책(고전 아님): 진행 = 이 책에 쓴 미션 글(bookstar_writings) 기준 — 8/21 '대출 후 완독 인증' 막다른 길 제거
+    const key=String(b.isbn||b.id||'');
+    const list=writeMis.map(x=>({k:x.k,t:x.t.replace(' 쓰기',''),done:mine.some(w=>String(w.book_id)===key&&(w.activity===x.k||(x.k==='oneline'&&w.activity==='impression')))}));
+    const doneN=list.filter(w=>w.done).length;
+    const st=list.length&&doneN===list.length?'done':(doneN>0?'progress':'none');
+    return { t:b.t, cover:b.cover, book:null, key, st, sco:null, pct:0, wr:{list,total:list.length,done:doneN} };
   });
   const doneCnt = items.filter(x=>x.st==='done').length;
   const sumPts = items.reduce((s,x)=>s+(x.sco?x.sco.pts:0), 0);
@@ -10402,7 +10645,7 @@ function _questGroup(c, ci){
     <div class="quest-grid quest-grid-wide">${items.map((x,bi)=>_questSlot(ci,bi,x,expired)).join('')}</div>
     ${expired
       ? `<div class="qg-note">기간이 끝난 챌린지예요 — 완료 ${doneCnt}/${items.length}권. 퀴즈·소감·점수는 그대로 보관돼요. <b>내리기</b>를 누르면 정리됩니다.</div>`
-      : `<div class="qg-note">미션: ${esc(chalMissionPlain(c.mission))} · 책을 누르면 별이 챌린지로 이동해요 · 도서관 소장 책은 대출 후 완독 인증</div>`}
+      : `<div class="qg-note">미션: ${esc(chalMissionPlain(c.mission))}</div>`}
   </div>`;
 }
 // 사서가 삭제한(=DB에 더 없는) 챌린지를 학생 내서재에서 자동 정리
@@ -10440,7 +10683,12 @@ function onJoinedSlot(ci, bi){
   const c = joinedChals()[ci]; if(!c) return;
   const b = (c.books||[])[bi]; if(!b) return;
   const m = _matchBookByTitle(b.t);
-  if(!m){ alert(`‘${b.t}’은(는) 도서관 소장자료예요.\n도서관에서 대출해 읽고, 완독 인증으로 진행해 주세요. (데모)`); return; }
+  if(!m){   // 8/21: 소장자료 책 → 글쓰기 메뉴(챌린지 미션에 켜진 글 종류만, 제출 시 별)
+    const mm=appChalMission(c); const only=CH_MISSIONS.filter(x=>x.kind==='write'&&mm[x.k]).map(x=>x.k);
+    const key=String(b.isbn||b.id||'');
+    const book={id:key, title:cleanT(b.t||''), author:b.a||'', coverSrc:b.cover||'', isbn:b.isbn||'', kind:'', last:''};
+    mbMenu(key,{chId:String(c.id), only, book}); return;
+  }
   if(_chalBookState(m.id)==='done'){
     if(!confirm(`‘${b.t}’은(는) 이미 완료했어요.\n다시 열어 볼까요?`)) return;
   }
@@ -10687,7 +10935,7 @@ async function renderCommunityReviews(){
   const list=await rvFetch('select=*&hidden=eq.false&order=verified.desc,likes.desc,created_at.desc&limit=50');   // 사서가 숨긴 서평 제외(8/17)
   host.innerHTML=`<div style="font-size:12.5px;color:var(--text-light);margin-bottom:12px">
       완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>이 모이는 곳이에요.
-      서평은 <b>내 도서관의 빌린 책</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
+      서평은 <b>내 서재 › 내 대출·예약의 빌린 책</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
     ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 책을 읽고 첫 서평을 남겨보세요!</div>'}`;
 }
 function renderCommunity(tab){
@@ -10798,7 +11046,7 @@ async function renderDetailReviews(bookId,bookTitle){
   // 서평 쓰기는 '내 도서관 > 빌린 책'에서만: 대출 사실이 곧 "읽었다"의 최소 증거다.
   host.innerHTML=`<div class="rvh">
       <b>독자 서평 ${list.length}</b>${avg?`<span class="rv-stars">${rvStars(Math.round(avg))}</span><span style="font-size:12px;color:var(--text-light)">${avg}</span>`:''}</div>
-    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 이 책을 빌려 읽은 학생이 내 도서관에서 남길 수 있어요.</div>'}`;
+    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 이 책을 빌려 읽은 학생이 내 서재(내 대출·예약)에서 남길 수 있어요.</div>'}`;
 }
 // 내 도서관 '빌린 책'에서 서평 쓰기 — 전자책은 바코드가 곧 책 키, 종이책은 소장목록에서 ctrl을 찾아 연결
 // (ctrl을 못 찾으면 제목 키로 저장 — 내 서평·커뮤니티에는 보이고 상세 연결만 빠진다)
@@ -11588,7 +11836,7 @@ function feedCard(it,i){
 async function loadFeedItems(){
   const items=[];
   try{
-    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,featured,hidden,created_at&order=created_at.desc&limit=200`,{headers:BX_H});
+    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,featured,hidden,created_at&is_public=eq.true&order=created_at.desc&limit=200`,{headers:BX_H});
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(x.hidden||!(x.text||'').trim())return;
       items.push({sid:x.student_id,book_id:x.book_id,act:x.activity,text:x.text,featured:!!x.featured,time:x.created_at,meta:''}); });
