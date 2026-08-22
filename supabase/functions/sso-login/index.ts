@@ -60,7 +60,16 @@ async function ensureAuthUser(hakbun: string, name: string): Promise<void> {
 
 // 연계값 → (liid 확보 → 세션 저장 → 앱으로 302) 공통 마무리.
 // 배너 POST와 테스트용 GET이 똑같은 길을 타야 "테스트에선 됐는데 배너에선 안 되네"가 안 생긴다.
-async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | null): Promise<Response> {
+// 8/22 앱 SSO: 앱은 학교 로그인 화면을 '시스템 인증 브라우저'로 열고, 끝나면 앱 주소로 돌아와야 한다(카카오 로그인 방식).
+//   ret= 로 돌아갈 주소를 받되 허용 목록만 — 아무 주소로나 토큰을 흘리면 안 된다.
+//   solsup://(정식 앱) · exp:// exps://(Expo Go 개발) · https://semyung.bookstar.co.kr/(웹·앱 링크)
+function appReturn(ret: string): string {
+  const r = String(ret || "").trim();
+  if (!r) return "";
+  if (/^(solsup:\/\/|exp:\/\/|exps:\/\/|https:\/\/semyung\.bookstar\.co\.kr\/)/i.test(r) && !/[\s<>"']/.test(r)) return r.slice(0, 400);
+  return "";
+}
+async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | null, ret = ""): Promise<Response> {
   let name = nameIn;
 
   // ④ lib 체인으로 liid 확보(실패해도 로그인 자체는 진행 — 개인기능만 비활성)
@@ -97,6 +106,8 @@ async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | nu
     sso_token: await signSsoToken(hakbun, name, sid),
     sso_personal: liid && saved ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
   });
+  const back = appReturn(ret);
+  if (back) return new Response(null, { status: 302, headers: { ...CORS, Location: `${back}${back.includes("?") ? "&" : "?"}${q}` } });
   return new Response(null, { status: 302, headers: { ...CORS, Location: `${APP_URL}?${q}#ourlib` } });
 }
 
@@ -167,7 +178,7 @@ Deno.serve(async (req) => {
     }
 
     // ④~⑦ 공통 마무리(연계값 → liid → 세션 저장 → 앱으로 302)
-    return await issue(hakbun, name, handoff);
+    return await issue(hakbun, name, handoff, g("ret"));   // ret=앱 복귀 주소(8/22)
   } catch (e) {
     return errPage("처리 중 오류가 발생했습니다. (" + String(e).slice(0, 120) + ")", 500);
   }
