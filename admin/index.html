@@ -1902,8 +1902,37 @@ function pvSync(){
     const f=el('pvLiveFrame'); if(f&&f.contentWindow){ try{ f.contentWindow.postMessage({type:'bookstar_preview',sections:rows},'*'); }catch(e){} }
   },200);
 }
+// ── 8/22 소장 표식 보정(저장 직전 단일 관문) ─────────────────────────────────────
+// 사고: 챌린지 저장이 책을 {id,isbn,title,…}로만 추려 tags/_pp/lib 를 버렸고, AI 큐레이션 경로는 애초에 안 붙였다
+//   → 학생 앱에서 소장 책(71권)이 "우리 도서관에서 찾기"(외부책)로 보였다. 사장님 지적 "세명대에 없는 책이 또 나온다".
+// 규칙: 맨 ISBN인데 소장 표식(_pp·lib)이 없으면 장서(semyung_tulip)에서 채우고, 장서에 없으면 저장을 막는다(미소장은 선반에 못 올린다).
+async function fillHeld(books){
+  const need=[...new Set((books||[]).map(b=>String(b.isbn||'')).filter(i=>/^\d{10,13}$/.test(i)))];
+  const map={};
+  for(let i=0;i<need.length;i+=100){
+    try{
+      const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+      if(r.ok) for(const row of await r.json()) (map[row.isbn]=map[row.isbn]||[]).push(row);
+    }catch(e){}
+  }
+  const missing=[];
+  for(const b of (books||[])){
+    const isbn=String(b.isbn||''); if(!/^\d{10,13}$/.test(isbn)) continue;
+    const hits=map[isbn]||[];
+    if(!hits.length){ if(!b._pp&&!b.lib) missing.push(b.title||b.t||isbn); continue; }
+    const tags=new Set(b.tags||[]);
+    for(const h of hits){
+      if(h.kind==='paper'&&h.ctrl){ b._pp=b._pp||('https://lib.semyung.ac.kr/search/detail/CATTOT'+h.ctrl); tags.add('paper'); }
+      if(h.kind==='ebook'&&h.viewer_url){ b.lib=b.lib||h.viewer_url; b._sm=true; tags.add('ebook'); }
+    }
+    if(tags.size) b.tags=[...tags];
+    delete b.held;
+  }
+  return missing;
+}
 async function saveSections(){
   readSecInputs();
+  for(const s of SECTIONS){ const miss=await fillHeld(s.books||[]); if(miss.length){ toast(`‘${s.title}’에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 빼고 저장해 주세요`); return; } }
   const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{
     const r=await adminSave({op:'sections_upsert',rows});
@@ -2880,12 +2909,16 @@ async function saveChallenges(){
     if(!c.books||!c.books.length){toast(`‘${c.title}’에 책을 1권 이상 담아주세요`);return;}
     if(chalMissCount(c)===0){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
     if(c.type==='고전챌린지'&&c.mission.quiz&&!c.mission.quizType){toast(`‘${c.title}’의 퀴즈 유형을 선택해주세요`);return;}
+    const miss=await fillHeld(c.books||[]);   // 8/22 소장 표식 채우기 · 미소장 차단
+    if(miss.length){toast(`‘${c.title}’에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 빼고 저장해 주세요`);return;}
   }
   try{
     if(CHALLENGES.length){
+      // 8/22: 형태 필드(tags·_pp·lib·_sm)를 버리지 않는다 — 버리면 학생 앱이 소장 책을 외부책으로 그린다
+      const keep=b=>{ const o={id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}; for(const k of ['tags','_pp','lib','_sm','paperStatus','crema','cremaUrl']) if(b[k]!==undefined) o[k]=b[k]; return o; };
       const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
-        books:(c.books||[]).map(b=>({id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}))}));
+        books:(c.books||[]).map(keep)}));
       const r=await adminSave({op:'programs_insert',rows});
       if(!r.ok){toast(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');return;}
     }
