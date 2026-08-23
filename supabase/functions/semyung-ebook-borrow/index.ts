@@ -316,18 +316,9 @@ Deno.serve(async (req) => {
       let viewerUrl = "", vendor = "", viewerError = "";
       try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd, (url.searchParams.get("device") || "") === "m"); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
       catch (e) { viewerError = "뷰어 발급 중 오류: " + String(e).slice(0, 80); }
-      // 🚨 8/22 사용자 신고: 방금 대출한 책은 뷰어가 표지만 뜨고 안 열리다가, 닫고 "이어보기"(=viewer 액션,
-      //   popupInfo→라이선스→토큰을 처음부터 다시 부름)로 재시도하면 열린다. 교보 wviewer가 F5 anti-bot(TS 쿠키)을
-      //   써서 헤드리스로는 재현·확정을 못 했지만(관련 메모: 헤드리스 결과로 교보 실패 단정 금지), 학생이 실제로
-      //   겪는 "재발급하면 된다"는 패턴은 명확하다 — 그래서 학생이 직접 재시도하는 그 동작을 서버가 대신 한 번 더 해서
-      //   먼저 준다. 라이선스 등록 직후 콘텐츠 서버가 아직 못 따라잡는 어긋남으로 추정(확정 아님 — 실기기 재확인 필요).
-      if (vendor === "kyobo" && viewerUrl) {
-        await new Promise((r) => setTimeout(r, 1500));
-        try {
-          const v2 = await viewerUrlFor(jar, res.loanSrmb, brcd, (url.searchParams.get("device") || "") === "m");
-          if (v2.url) { viewerUrl = v2.url; viewerError = ""; }
-        } catch (_) { /* 재발급 실패해도 처음 것이 있으니 그대로 진행 */ }
-      }
+      // 📌 8/22 "방금 빌린 책은 표지만 뜨고 멈춤 → 이어보기면 열림" 신고는 8/23에 원인 확정: 솔숲 앱의 상세 화면 대출 호출만
+      //   device=m을 빠뜨려 PC용(type=web) 토큰이 나갔던 것(이어보기는 device=m). 앱 쪽 수정으로 해결.
+      //   여기 있던 "1.5초 후 재발급" 완화는 원인과 무관하고 대출만 느리게 해서 걷어냈다(8/23).
       if (!viewerUrl) console.error("borrow ok but viewer fail", res.loanSrmb, vendor, viewerError);
       // 반납예정일은 도서관이 정한 값을 그대로 읽어 온다.
       // ⚠️ 예전엔 "대출기간 14일"이라고 박아 뒀는데 **실측 5일**이었다(8/9: 8/9 대출 → 8/14 반납예정).
