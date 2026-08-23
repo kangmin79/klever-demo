@@ -138,6 +138,13 @@ Deno.serve(async (req) => {
     if (err) return json({ ok: false, action, err, data: data?.result ?? data });
     // 쓰기류(request/cancel/renew)는 <code>0</code>이 성공 — 정규화해서 앱이 ok만 보면 되게
     const code = data?.result?.code;
+    // 🚨 8/24 리뷰: 예전엔 code가 **아예 없으면 성공**으로 간주했다 — 도서관 점검 페이지·차단·구조 개편처럼
+    //   결과 코드가 안 오는 상황에서 연장/예약이 "완료"로 보였고, 학생은 그걸 믿었다가 연체될 수 있었다.
+    //   쓰기류는 code가 있어야만 성공. 조회류(list 등)는 code가 원래 없으므로 기존대로.
+    const isWrite = ["request", "cancel", "renew"].includes(String(params.verb || ""));
+    if (isWrite && code === undefined) {
+      return json({ ok: false, action, error: "도서관이 처리 결과를 확인해 주지 않았어요 — 잠시 후 다시 시도하고, 급하면 내 서재에서 실제 상태를 확인해 주세요", data: data?.result ?? data });
+    }
     const ok = code !== undefined ? String(code) === "0" : true;
     return json({ ok, action, data: data?.result ?? data });
   } catch (e) {

@@ -34,6 +34,9 @@ export async function tulip(path: string, params: Record<string, string>): Promi
   const qs = new URLSearchParams(params);
   const r = await fetch(`${TULIP}/${path}?${qs}`, { headers: { "User-Agent": UA } });
   const raw = new TextDecoder("utf-8").decode(await r.arrayBuffer());
+  // 8/24 리뷰: HTTP 상태를 안 보고 에러 페이지(500 등)도 그대로 파싱했다 — 쓰기류가 거짓 성공이 되는 한 축.
+  //   실패는 실패라고 던진다(호출부가 전부 try/catch로 감싸고 있음).
+  if (!r.ok) throw new Error(`도서관 서버 오류(${r.status})`);
   return { raw, data: xmlToObj(raw) };
 }
 
