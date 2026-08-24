@@ -148,14 +148,14 @@ async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string, mobile
     return { url: "", vendor: "", error: xmlTag(pi, "msgcode") || "도서관이 열람 정보를 주지 않았어요" };
   }
   // 2) 외부 공급사(YES24 등): 도서관이 준 주소가 곧 뷰어 진입점. 교보 토큰을 만들면 안 된다.
-  //    PC는 선택 화면을 건너뛰고 '바로보기'로 직행 — 실패하면 선택 화면이라도 준다.
-  //    ⚠️ 폰(mobile)은 직행시키지 않는다(8/21 저녁 실기기): 우리가 미리 계산하는 주소는 /Gun/(PC 리더) 고정인데
-  //      YES24에는 /GunMobile/(폰 리더)이 따로 있고, 어느 쪽으로 보낼지는 **선택 화면 자신이** 판단한다
-  //      (그 페이지에 iPadOS·모바일 감지 스크립트가 들어 있다 — location.pathname.indexOf("/GunMobile/") 분기).
-  //      직행시키면 그 판단을 통째로 건너뛰어 폰에 PC 리더가 나가고 "정상적인 접근이 아니므로" 404가 뜬다.
-  //      도서관 모바일 사이트가 apiUrl을 그대로 넘기는 이유가 이것 — 마찰(한 번 더 누르기)보다 열리는 게 먼저다.
+  //    폰·PC 모두 선택 화면을 건너뛰고 '바로보기'로 직행 — 실패하면 선택 화면이라도 준다(못 여는 것보다 한 번 더 누르는 게 낫다).
+  //    8/24 재검증으로 폰 직행 복원: 8/21 "폰은 /GunMobile/이라 직행 404" 우려는 지금 구조와 다름 —
+  //      선택 화면 HTML은 어떤 UA로 받아도 goViewer('…/Gun/', code, subcode, 암호문) 재료가 동일하고(실측),
+  //      goViewer(webview.js)는 그 재료를 글자 그대로 조립해 열 뿐이라, 서버 계산 주소 == 바로보기가 여는 주소.
+  //      실기기(안드로이드)에서 그 주소가 ePubViewer로 정상 착지함을 확인. 기기 분기는 yes24 서버가 착지 후 스스로 처리.
+  //    ⚠️ 남은 예외: iPadOS만 선택 화면이 device=ipad로 자체 재요청하는 스크립트가 있음 — iOS 빌드 때 재점검할 것.
   const apiUrl = xmlTag(pi, "apiUrl");
-  if (apiUrl) return { url: mobile ? apiUrl : ((await yes24DirectUrl(apiUrl)) || apiUrl), vendor: "external" };
+  if (apiUrl) return { url: (await yes24DirectUrl(apiUrl)) || apiUrl, vendor: "external" };
 
   // 3) 교보: 라이선스(웹세션) 등록 → 결과 반드시 확인.
   //    ⚠️ 파라미터 조합은 '기존 방식(빈값)'을 먼저 쓴다 — 8/21 이전에 교보 책이 열리던 경로를 절대 바꾸지 않기 위함(회귀 방지).
