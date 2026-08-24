@@ -5,7 +5,7 @@
 //   ② 부족분은 match_tulip(kind=paper) 의미검색으로 보강 (전 장서 임베딩, 하한 0.45 = 구버전과 동일)
 // 입력: { query: string, count?: number, material?: 'book'|'thesis'|null, floor?: number, prefer?: 'ebook', mode?: 'semantic' }
 // 응답: { candidates:[{ key, title, author, publisher, material, typecode, detailUrl, cover, description, similarity, fuzzy? }], count }
-// mode='semantic' (8/24 앱 자연어 검색): 어휘 매칭 생략, 전자책 의미검색만 — 앱이 재고 걸러 10권 노출.
+// mode='semantic' (8/24): 어휘 매칭 생략, 전자책 의미검색만 — 호출측이 재고 걸러 노출.
 //   임베딩 실패 시엔 어휘 검색으로 폴백(빈손 방지).
 // 기본 모드에 닮은꼴 폴백 추가(8/24): 어휘 매칭 0건이면 search_norm ilike 창(앞·뒤·중간 3자)으로 후보를 모아
 //   바이그램 Dice 점수로 오타를 잡는다 — "채식주이자"→채식주의자. DDL 없이 함수 안에서만 처리.
@@ -133,18 +133,18 @@ Deno.serve(async (req) => {
     const { query, count, material, floor, prefer, mode } = await req.json().catch(() => ({}));
     if (!query || !String(query).trim()) return json({ candidates: [], count: 0 });
     const want = Math.min(Number(count) || 12, 40);
-    // 자연어 모드(앱 8/24) — 어휘 매칭 건너뛰고 전자책 의미검색만. 앱이 재고를 걸러 '바로 빌릴 수 있는 책'만 보여준다
+    // 자연어 모드(8/24) — 어휘 매칭 건너뛰고 전자책 의미검색만. 호출측이 재고를 걸러 '바로 빌릴 수 있는 책'만 보여준다
     if (mode === "semantic") {
       const emb = await embedQuery(String(query));
       let rows: any[] = [];
       if (emb) {
-        // 자연어는 0.45가 너무 짜서 4~7건에 그친다(8/24 실측) — 0.35로 넉넉히 뽑고 앱이 재고 걸러 10권만 노출
+        // 자연어는 0.45가 너무 짜서 4~7건에 그친다(8/24 실측) — 0.35로 넉넉히 뽑고 호출측이 재고 걸러 노출
         const floorVal = typeof floor === "number" ? floor : 0.35;
         rows = (await matchKind(emb, want * 2, floorVal, "ebook")).slice(0, want);
       }
       if (!rows.length) rows = await searchTulip(String(query), want, null);   // 임베딩 죽어도 빈손은 안 준다
       // ctrl 없는 행은 바코드로 서버에서 되찾는다(8/24) — match_tulip이 ctrl을 안 줄 때
-      //   비정형 바코드(13자리 숫자 아님)를 앱이 끝 12자 ctrl로 오인해 딴 책에 연결되거나 통째로 버려지던 것 방지
+      //   비정형 바코드를 클라이언트가 끝 12자 ctrl로 오인해 딴 책에 연결되거나 통째로 버려지던 것 방지
       const noCtrl = rows.filter((b: any) => !b.ctrl && b.key);
       if (noCtrl.length) {
         try {
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
           }
         } catch { /* 되찾기 실패면 기존 그대로 */ }
       }
-      // key는 ctrl 우선(8/24) — 앱은 이 key로 상세(대출 버튼)를 연다
+      // key는 ctrl 우선(8/24) — 클라이언트는 이 key로 상세를 연다
       const candidates = rows.map((b: any) => ({
         key: String(b.ctrl || b.key || ""), title: b.title, author: b.author || "", publisher: b.publisher || "",
         material: b.material, typecode: b.typecode || "", detailUrl: b.detail_url || "",
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       material === "book" || material === "thesis" ? material : null);
     // 닮은꼴(오타) 폴백 — 0건일 때만이 아니라, 검색어를 통째로 품은 제목이 하나도 없으면 병행한다.
     // ("채식주이자"는 어휘검색이 '채식 이야기' 같은 딴 책 10건을 채워버려 0건 조건으로는 영영 안 돌았다 — 8/24 실측)
-    // 찾으면 fuzzy 표시를 달아 맨 앞에 — 앱이 "혹시 이 책?"으로 보여준다
+    // 찾으면 fuzzy 표시를 달아 맨 앞에 — 호출측이 "혹시 이 책?"으로 보여준다
     const nqAll = normQ(String(query));
     if (nqAll.length >= 3 && !rows.some((r: any) => normQ(r.title).includes(nqAll))) {
       const fz = await fuzzyTulip(String(query), Math.min(want, 12));
