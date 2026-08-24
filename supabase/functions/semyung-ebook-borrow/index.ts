@@ -128,14 +128,15 @@ async function listReserves(jar: Jar): Promise<EbReserve[]> {
 //   📌 8/21 아침 실측: b2bwv.yes24.com(웹리더)·www.yes24.com이 SK망(SKT LTE·SKB)에서 통째로 시간초과 — YES24측/구간 장애.
 //     같은 시각 교보·네이버·yes24 CDN은 정상, AWS에서는 b2bwv도 정상. 이런 증상이 또 오면 우리 코드가 아니라 회선↔공급사부터 의심할 것.
 async function yes24DirectUrl(apiUrl: string): Promise<string> {
+  // 실패 사유를 반드시 로그로 남긴다(8/24 — 폰이 선택 화면으로 후퇴하는 원인 추적. 조용한 실패 금지)
   try {
     const r = await fetch(apiUrl, { headers: { "User-Agent": UA } });
-    if (!r.ok) return "";
+    if (!r.ok) { console.error("y24direct http", r.status, apiUrl.slice(0, 120)); return ""; }
     const html = new TextDecoder("euc-kr").decode(await r.arrayBuffer());
     const m = /goViewer\('([^']+)','([^']+)','([^']+)','([^']+)'\)/.exec(html);
-    if (!m) return "";
+    if (!m) { console.error("y24direct nomatch", apiUrl.slice(0, 120), html.replace(/\s+/g, " ").slice(0, 200)); return ""; }
     return m[1] + m[2] + "/" + m[3] + "/" + encodeURIComponent(m[4].split("/").join("-"));
-  } catch (_) { return ""; }
+  } catch (e) { console.error("y24direct err", String(e)); return ""; }
 }
 
 interface ViewerRes { url: string; vendor: "external" | "kyobo" | ""; error?: string }
@@ -148,14 +149,16 @@ async function viewerUrlFor(jar: Jar, loanSrmb: string, brcdHint: string, mobile
     return { url: "", vendor: "", error: xmlTag(pi, "msgcode") || "도서관이 열람 정보를 주지 않았어요" };
   }
   // 2) 외부 공급사(YES24 등): 도서관이 준 주소가 곧 뷰어 진입점. 교보 토큰을 만들면 안 된다.
-  //    폰·PC 모두 선택 화면을 건너뛰고 '바로보기'로 직행 — 실패하면 선택 화면이라도 준다(못 여는 것보다 한 번 더 누르는 게 낫다).
-  //    8/24 재검증으로 폰 직행 복원: 8/21 "폰은 /GunMobile/이라 직행 404" 우려는 지금 구조와 다름 —
-  //      선택 화면 HTML은 어떤 UA로 받아도 goViewer('…/Gun/', code, subcode, 암호문) 재료가 동일하고(실측),
-  //      goViewer(webview.js)는 그 재료를 글자 그대로 조립해 열 뿐이라, 서버 계산 주소 == 바로보기가 여는 주소.
-  //      실기기(안드로이드)에서 그 주소가 ePubViewer로 정상 착지함을 확인. 기기 분기는 yes24 서버가 착지 후 스스로 처리.
-  //    ⚠️ 남은 예외: iPadOS만 선택 화면이 device=ipad로 자체 재요청하는 스크립트가 있음 — iOS 빌드 때 재점검할 것.
+  //    8/24 저녁: 직행(선택 화면 건너뛰기)이 계정·책 가리지 않고 첫 시도부터 403("동일 도서 1개 브라우저 창")
+  //      — 서로 다른 계정 2개·서로 다른 책 3권으로 재현, 매번 즉시 실패(실측). 이건 잠금이 쌓인 게 아니라
+  //      선택 화면을 안 거쳐서(referer·쿠키 없이 콘텐츠 서버로 바로 감) yes24가 "정상 창 아님"으로 막는 것으로 추정.
+  //      원인 확정 전까지 직행은 끄고 선택 화면 그대로 준다 — 학생이 그 화면에서 '바로보기'를 한 번 더 눌러야 하지만
+  //      그게 도서관 정식 경로이자 지금 유일하게 검증된 경로.
   const apiUrl = xmlTag(pi, "apiUrl");
-  if (apiUrl) return { url: (await yes24DirectUrl(apiUrl)) || apiUrl, vendor: "external" };
+  if (apiUrl) {
+    console.error("y24 viewer", "chooser-only(direct disabled 8/24)", "mobile=" + mobile, apiUrl.slice(0, 120));
+    return { url: apiUrl, vendor: "external" };
+  }
 
   // 3) 교보: 라이선스(웹세션) 등록 → 결과 반드시 확인.
   //    ⚠️ 파라미터 조합은 '기존 방식(빈값)'을 먼저 쓴다 — 8/21 이전에 교보 책이 열리던 경로를 절대 바꾸지 않기 위함(회귀 방지).
