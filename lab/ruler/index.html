@@ -42,7 +42,7 @@
   #shadeBot{bottom:0}
   #win{position:absolute;left:0;right:0;border-top:1px solid rgba(59,93,58,.25);border-bottom:1px solid rgba(59,93,58,.25);
     transition:top .12s ease-out}
-  #handle{position:absolute;right:0;width:30px;height:64px;border-radius:15px;background:var(--accent);opacity:.92;
+  #handle{position:absolute;right:0;width:30px;height:64px;border-radius:0 0 15px 15px;background:var(--accent);opacity:.92;
     box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
     transition:top .12s ease-out;touch-action:none}
   #handle::before{content:"";width:12px;height:22px;
@@ -164,7 +164,8 @@
     shadeTop.style.height=y+'px';
     win.style.top=y+'px'; win.style.height=wh+'px';
     shadeBot.style.height=(pageH-y-wh)+'px';
-    handle.style.top=(y+wh/2-32)+'px';
+    // 손잡이는 자 아랫선에 매달림 (바닥 근처면 위로 올려 붙임)
+    handle.style.top=Math.min(y+wh+4, pageH-64)+'px';
   }
   function step(d){ // +1 아래, -1 위
     const ny=y+d*lh;
