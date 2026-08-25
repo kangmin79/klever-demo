@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>읽기 자 실험 — 데미안</title>
+<style>
+  :root{
+    --fs:17px; --lh:1.85; --pad:20px; --top:52px; --bot:40px;
+    --bg:#f7f3ea; --ink:#1f1c17; --dim:.72; --lines:3;
+    --accent:#3b5d3a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+    font-family:"Noto Serif KR","Apple SD Gothic Neo","Malgun Gothic",serif;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+  body{position:fixed;inset:0}
+  #topbar{position:absolute;top:0;left:0;right:0;height:var(--top);display:flex;align-items:center;justify-content:space-between;
+    padding:0 54px 0 14px;font-size:13px;color:#6b665c;z-index:5}
+  #topbar b{color:var(--ink);font-weight:600}
+  #stage{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);overflow:hidden}
+  #book{position:absolute;top:0;left:0;height:100%;
+    column-gap:0;column-fill:auto;
+    font-size:var(--fs);line-height:var(--lh);
+    padding:0 var(--pad);
+    will-change:transform;transition:transform .18s ease-out}
+  #book p{margin:0 0 calc(var(--fs)*var(--lh));word-break:keep-all;overflow-wrap:break-word;text-align:justify}
+  #book p.h{font-weight:700}
+  #foot{position:absolute;left:0;right:0;bottom:0;height:var(--bot);display:flex;align-items:center;justify-content:center;
+    font-size:12px;color:#8a8478;z-index:5}
+
+  /* 읽기 자 */
+  #ruler{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);z-index:3;pointer-events:none;touch-action:none}
+  #ruler.on{pointer-events:auto}
+  #shadeTop,#shadeBot{position:absolute;left:0;right:0;background:var(--bg);opacity:var(--dim);
+    transition:top .12s ease-out,height .12s ease-out}
+  #shadeTop{top:0}
+  #shadeBot{bottom:0}
+  #win{position:absolute;left:0;right:0;border-top:1px solid rgba(59,93,58,.25);border-bottom:1px solid rgba(59,93,58,.25);
+    transition:top .12s ease-out}
+  #handle{position:absolute;right:0;width:26px;height:64px;border-radius:13px 0 0 13px;background:var(--accent);opacity:.92;
+    box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
+    transition:top .12s ease-out;touch-action:none}
+  #handle::before{content:"";width:12px;height:22px;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,.85) 0 2px,transparent 2px 6px)}
+  #ruler.drag #shadeTop,#ruler.drag #shadeBot,#ruler.drag #win,#ruler.drag #handle{transition:none}
+
+  /* 설정 */
+  #gear{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid #cfc8b8;background:#fff;
+    z-index:6;font-size:15px;display:flex;align-items:center;justify-content:center;color:#6b665c}
+  #panel{position:absolute;top:var(--top);right:10px;width:250px;background:#fff;border:1px solid #d8d2c4;border-radius:12px;
+    padding:14px;z-index:7;box-shadow:0 8px 30px rgba(0,0,0,.15);display:none;font-size:14px}
+  #panel.open{display:block}
+  #panel .row{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
+  #panel .seg{display:flex;border:1px solid #d8d2c4;border-radius:8px;overflow:hidden}
+  #panel .seg button{border:0;background:#fff;padding:6px 10px;font-size:13px;color:#6b665c}
+  #panel .seg button.sel{background:var(--accent);color:#fff}
+  #panel input[type=range]{width:120px}
+  #panel .hint{font-size:12px;color:#8a8478;line-height:1.5;margin-top:10px;border-top:1px dashed #e2dccd;padding-top:8px}
+
+  /* 처음 안내 */
+  #guide{position:absolute;inset:0;z-index:8;background:rgba(31,28,23,.78);color:#fff;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:30px;font-size:15px;line-height:1.7}
+  #guide.hide{display:none}
+  #guide div{max-width:320px}
+  #guide b{display:block;font-size:19px;margin-bottom:12px}
+  #guide span{display:block;margin-top:16px;font-size:13px;opacity:.7}
+</style>
+</head>
+<body>
+<div id="topbar"><b>데미안</b><span id="pos">–</span></div>
+<div id="stage"><div id="book"></div></div>
+<div id="foot">읽기 자 실험용 페이지 · 헤르만 헤세 「데미안」</div>
+
+<div id="ruler" class="on">
+  <div id="shadeTop"></div>
+  <div id="win"></div>
+  <div id="shadeBot"></div>
+  <div id="handle"></div>
+</div>
+
+<div id="gear">⚙</div>
+<div id="panel">
+  <div class="row"><span>읽기 자</span>
+    <div class="seg" data-k="mode"><button data-v="on">켬</button><button data-v="off">끔</button></div></div>
+  <div class="row"><span>창 줄 수</span>
+    <div class="seg" data-k="lines"><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
+  <div class="row"><span>바깥 흐림</span><input type="range" id="dimR" min="30" max="92" step="2"></div>
+  <div class="row"><span>글자 크기</span>
+    <div class="seg" data-k="fs"><button data-v="15">작게</button><button data-v="17">보통</button><button data-v="20">크게</button></div></div>
+  <div class="hint">오른쪽 초록 손잡이를 잡고 내리면 자가 따라옵니다.<br>자 아래를 톡 치면 한 줄, 자 위를 톡 치면 한 줄 위로.<br>자가 바닥에 닿으면 다음 페이지로 넘어가고 자는 맨 위로 돌아옵니다.<br>자를 끄면 좌우 절반 톡으로 넘깁니다.</div>
+</div>
+
+<div id="guide"><div>
+  <b>읽기 자 실험</b>
+  종이책에 자를 대고 읽듯,<br>오른쪽 <strong style="color:#8fd18c">초록 손잡이</strong>를 잡고 내리면서 읽어보세요.<br><br>
+  손 대기 귀찮으면 자 <strong>아래쪽을 톡</strong> — 한 줄 내려갑니다.
+  <span>어디든 누르면 시작</span>
+</div></div>
+
+<script src="demian_ko.js"></script>
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  const book=$('#book'), stage=$('#stage'), ruler=$('#ruler'), shadeTop=$('#shadeTop'), shadeBot=$('#shadeBot'),
+        win=$('#win'), handle=$('#handle'), pos=$('#pos'), panel=$('#panel'), guide=$('#guide');
+  const LS='ruler_lab_v1';
+  let S=Object.assign({mode:'on',lines:3,dim:72,fs:17,page:0},JSON.parse(localStorage.getItem(LS)||'{}'));
+  let pageW=0, pageH=0, lh=0, pages=1, y=0; // y = 창 상단(스테이지 기준 px)
+
+  // ── 본문 ──
+  function buildBook(){
+    const paras=window.BOOK_TEXT.split(/\n\n+/);
+    const frag=document.createDocumentFragment();
+    paras.forEach((p,i)=>{
+      const el=document.createElement('p');
+      const lines=p.split('\n');
+      if(i===0){ el.className='h'; el.textContent=lines.join(' '); }
+      else if(lines.length>1 && lines.every(l=>l.length<40)){ el.className='h'; el.textContent=lines.join(' '); }
+      else el.textContent=lines.join(' ');
+      frag.appendChild(el);
+    });
+    book.appendChild(frag);
+  }
+
+  // ── 페이지 나누기 (세로쓰기 아님, CSS 다단으로 가로 배열) ──
+  function layout(){
+    document.documentElement.style.setProperty('--fs',S.fs+'px');
+    document.documentElement.style.setProperty('--dim',(S.dim/100).toString());
+    pageW=stage.clientWidth; pageH=stage.clientHeight;
+    lh=S.fs*1.85;
+    const rows=Math.floor(pageH/lh);
+    const contentH=rows*lh;
+    book.style.width=pageW+'px';
+    book.style.height=contentH+'px';
+    book.style.columnWidth=(pageW-40)+'px';
+    book.style.columnGap='40px'; // 단 간격 = 좌우 여백 합 → 단 하나의 보폭이 정확히 화면 너비
+    pages=Math.max(1,Math.ceil((book.scrollWidth-20)/pageW));
+    S.page=Math.min(S.page,pages-1);
+    goPage(S.page,true);
+    snapY(0);
+  }
+  function goPage(n,silent){
+    S.page=Math.max(0,Math.min(pages-1,n));
+    book.style.transform='translateX('+(-S.page*pageW)+'px)';
+    pos.textContent=(S.page+1)+' / '+pages;
+    if(!silent) save();
+  }
+
+  // ── 읽기 자 ──
+  function rows(){ return Math.floor(pageH/lh); }
+  function maxY(){ return (rows()-S.lines)*lh; }
+  function snapY(py){
+    y=Math.round(py/lh)*lh;
+    y=Math.max(0,Math.min(maxY(),y));
+    paint();
+  }
+  function paint(){
+    const wh=S.lines*lh;
+    shadeTop.style.height=y+'px';
+    win.style.top=y+'px'; win.style.height=wh+'px';
+    shadeBot.style.height=(pageH-y-wh)+'px';
+    handle.style.top=(y+wh/2-32)+'px';
+  }
+  function step(d){ // +1 아래, -1 위
+    const ny=y+d*lh;
+    if(ny>maxY()){ if(S.page<pages-1){ goPage(S.page+1); snapY(0);} return; }
+    if(ny<0){ if(S.page>0){ goPage(S.page-1); snapY(maxY()); } return; }
+    snapY(ny);
+  }
+
+  // 손잡이 끌기
+  let drag=null;
+  handle.addEventListener('pointerdown',e=>{
+    drag={sy:e.clientY,y0:y}; handle.setPointerCapture(e.pointerId); ruler.classList.add('drag'); e.stopPropagation();
+  });
+  handle.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    let ny=drag.y0+(e.clientY-drag.sy);
+    const wh=S.lines*lh;
+    if(ny+wh>pageH+lh*0.6 && S.page<pages-1){ // 바닥 넘김
+      goPage(S.page+1); drag={sy:e.clientY,y0:0}; ny=0;
+    }else if(ny<-lh*0.6 && S.page>0){
+      goPage(S.page-1); drag={sy:e.clientY,y0:maxY()}; ny=maxY();
+    }
+    y=Math.max(0,Math.min(maxY(),ny)); paint();
+  });
+  const endDrag=e=>{ if(!drag) return; drag=null; ruler.classList.remove('drag'); snapY(y); };
+  handle.addEventListener('pointerup',endDrag); handle.addEventListener('pointercancel',endDrag);
+
+  // 자 위/아래 톡
+  ruler.addEventListener('pointerdown',e=>{
+    if(e.target===handle) return;
+    const ry=e.clientY-stage.getBoundingClientRect().top;
+    const wh=S.lines*lh;
+    if(ry>y+wh) step(1); else if(ry<y) step(-1);
+  });
+  // 자 껐을 때: 좌우 절반 톡
+  stage.addEventListener('pointerdown',e=>{
+    if(S.mode==='on') return;
+    const rx=e.clientX-stage.getBoundingClientRect().left;
+    goPage(S.page+(rx>pageW/2?1:-1));
+  });
+  // 키보드(PC 확인용)
+  addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'||e.key===' '){e.preventDefault();S.mode==='on'?step(1):goPage(S.page+1);}
+    if(e.key==='ArrowUp'){e.preventDefault();S.mode==='on'?step(-1):goPage(S.page-1);}
+    if(e.key==='ArrowRight')goPage(S.page+1); if(e.key==='ArrowLeft')goPage(S.page-1);
+  });
+
+  // ── 설정 ──
+  function applyMode(){ ruler.classList.toggle('on',S.mode==='on'); ruler.style.display=S.mode==='on'?'':'none'; }
+  function syncPanel(){
+    panel.querySelectorAll('.seg').forEach(seg=>{
+      const k=seg.dataset.k; seg.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',String(S[k])===b.dataset.v));
+    });
+    $('#dimR').value=S.dim;
+  }
+  panel.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    const k=b.parentElement.dataset.k, v=b.dataset.v;
+    S[k]=(k==='mode')?v:Number(v);
+    save(); syncPanel(); applyMode(); layout();
+  });
+  $('#dimR').addEventListener('input',e=>{ S.dim=Number(e.target.value); document.documentElement.style.setProperty('--dim',(S.dim/100).toString()); save(); });
+  $('#gear').addEventListener('click',()=>panel.classList.toggle('open'));
+  stage.addEventListener('pointerdown',()=>panel.classList.remove('open'),true);
+  guide.addEventListener('pointerdown',()=>{guide.classList.add('hide');});
+  function save(){ try{localStorage.setItem(LS,JSON.stringify(S));}catch(_){ } }
+
+  buildBook(); syncPanel(); applyMode(); layout();
+  addEventListener('resize',layout);
+  if(localStorage.getItem(LS)) guide.classList.add('hide');
+})();
+</script>
+</body>
+</html>
