@@ -19,7 +19,9 @@
   #topbar{position:absolute;top:0;left:0;right:0;height:var(--top);display:flex;align-items:center;justify-content:space-between;
     padding:0 54px 0 14px;font-size:13px;color:#6b665c;z-index:5}
   #topbar b{color:var(--ink);font-weight:600}
-  #stage{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);overflow:hidden}
+  /* 오른쪽 34px = 손잡이 전용 길. 글은 여기 안 들어옴 */
+  #stage{position:absolute;left:0;right:34px;top:var(--top);bottom:var(--bot);overflow:hidden}
+  @media (min-width:760px){ #stage{left:50%;right:auto;width:720px;transform:translateX(-50%)} }
   #book{position:absolute;top:0;left:0;height:100%;
     column-gap:0;column-fill:auto;
     font-size:var(--fs);line-height:var(--lh);
@@ -33,13 +35,14 @@
   /* 읽기 자 */
   #ruler{position:absolute;left:0;right:0;top:var(--top);bottom:var(--bot);z-index:3;pointer-events:none;touch-action:none}
   #ruler.on{pointer-events:auto}
+  @media (min-width:760px){ #ruler{left:calc(50% - 360px);right:auto;width:754px} }
   #shadeTop,#shadeBot{position:absolute;left:0;right:0;background:var(--bg);opacity:var(--dim);
     transition:top .12s ease-out,height .12s ease-out}
   #shadeTop{top:0}
   #shadeBot{bottom:0}
   #win{position:absolute;left:0;right:0;border-top:1px solid rgba(59,93,58,.25);border-bottom:1px solid rgba(59,93,58,.25);
     transition:top .12s ease-out}
-  #handle{position:absolute;right:0;width:26px;height:64px;border-radius:13px 0 0 13px;background:var(--accent);opacity:.92;
+  #handle{position:absolute;right:0;width:30px;height:64px;border-radius:15px;background:var(--accent);opacity:.92;
     box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;
     transition:top .12s ease-out;touch-action:none}
   #handle::before{content:"";width:12px;height:22px;
