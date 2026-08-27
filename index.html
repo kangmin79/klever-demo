@@ -5526,14 +5526,16 @@ function smLoginGuide(mode){
   const read = mode==='read';
   const classic = mode==='classic';   // 8/14: 고전 읽기 게이트 — 대출이 아니라 '구성원 확인' 성격의 문구
   const review = mode==='review';     // 8/14: 서평도 본인 이름으로만
+  // ⛔ "내 이름으로·본인 명의" 계열 문구 금지(8/23 사용자) — 학생에겐 당연한 사실이라
+  //    정보가 안 되고 개인정보가 나가는 느낌만 준다. 쓸모 있는 조건(권수 등)만 남긴다.
   const sub = classic
     ? '북스타 고전은 <b>세명대 구성원 전용</b>이에요. 세명대 계정으로 로그인하면 바로 읽을 수 있어요.'
     : read
-    ? '전자책은 <b>학생 본인 명의</b>로 대출돼요. 세명대 계정으로 로그인하면 내 이름으로 5권까지 빌릴 수 있어요.'
+    ? '세명대 계정으로 로그인하면 전자책을 <b>5권까지</b> 빌릴 수 있어요.'
     : review
-    ? '서평은 <b>학생 본인 이름</b>으로 올라가요. 세명대 계정으로 로그인하면 바로 쓸 수 있어요.'
-    : '예약은 <b>학생 본인 이름</b>으로 접수돼요. 세명대 계정으로 로그인하면 바로 이용할 수 있어요.';
-  const last = classic ? '돌아오면 <b>보던 책이 바로</b> 열려요' : read ? '돌아와서 누르면 <b>내 이름으로</b> 대출돼요' : review ? '돌아와서 쓰면 <b>내 이름으로</b> 올라가요' : '돌아와서 예약을 누르면 <b>내 이름으로</b> 접수돼요';
+    ? '세명대 계정으로 로그인하면 서평을 바로 쓸 수 있어요.'
+    : '세명대 계정으로 로그인하면 예약을 바로 할 수 있어요.';
+  const last = classic ? '돌아오면 <b>보던 책이 바로</b> 열려요' : read ? '돌아와서 누르면 <b>바로 대출</b>돼요' : review ? '돌아와서 <b>바로 쓸 수</b> 있어요' : '돌아와서 <b>바로 예약</b>할 수 있어요';
   let sh=document.getElementById('rsvSheet');
   if(!sh){ sh=document.createElement('div'); sh.id='rsvSheet'; sh.className='rsv-sheet';
     sh.addEventListener('click',e=>{ if(e.target===sh) sh.classList.remove('on'); }); document.body.appendChild(sh); }
