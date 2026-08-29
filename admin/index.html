@@ -580,6 +580,10 @@ body.pv-open .main{max-width:none}
 .pv-loc{margin-top:12px;font-size:11px;color:var(--light)}
 .pv-empty{color:var(--light);font-size:12.5px;padding:8px 0}
 .makefoot{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+/* 8/29 칸 머리 버튼 — 위로/아래로(자리 정하기) + 등록 */
+.sec-mv{padding:5px 9px;font-size:12px;font-weight:700}
+.sec-mv:disabled{opacity:.32;cursor:default}
+.sec-reg{padding:6px 15px;font-size:12.5px;font-weight:800}
 /* 8/29 안내형 카드 만들기 — 꾸미기 화면 맨 위(AI 큐레이션 카드 아래) */
 .nt-add{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:12px;border:1.5px dashed #cfd8ee;border-radius:12px;background:#f8faff;cursor:pointer;transition:border-color .15s,background .15s}
 .nt-add:hover{border-color:var(--accent);background:#f2f7fd}
@@ -1797,6 +1801,20 @@ function renderReorderList(){
 }
 function reMove(k,dir){ const items=_areaSecs().map(o=>o.s); const j=k+dir; if(j<0||j>=items.length) return;
   const t=items[k]; items[k]=items[j]; items[j]=t; _applyAreaOrder(items); renderReorderList(); }
+// 8/29 사장님 요청: 자리(위치)는 사서가 카드에서 바로 정한다 — 순서 바꾸기 창을 열지 않아도 ▲▼로 한 칸씩 옮긴다.
+//   (_areaSecs는 순서바꾸기 모달용 _reMode에 걸려 있어 여기선 쓰지 않고 현재 영역만 직접 다룬다)
+function secMove(i,dir){
+  readSecInputs();
+  const items=SECTIONS.map((s,idx)=>({s,idx})).filter(o=>aOf(o.s)===curArea);
+  const k=items.findIndex(o=>o.idx===i); if(k<0) return;
+  const j=k+dir; if(j<0||j>=items.length) return;
+  const arr=items.map(o=>o.s); const t=arr[k]; arr[k]=arr[j]; arr[j]=t;
+  let n=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=arr[n++]; });   // 현재 영역 칸만 재배열(다른 영역 위치 보존)
+  _pvFocusSlot=null; updatePvCap();   // 자리를 옮겼으니 미리보기는 '한 칸만'이 아니라 전체를 보여 준다(어디로 갔는지 보이게)
+  renderSettings(); pvSync();
+  const el2=document.querySelector('#secList .sec-panel[data-slot="'+arr[j].slot+'"]');
+  if(el2) el2.scrollIntoView({block:'center',behavior:'smooth'});   // 옮긴 칸을 눈으로 따라갈 수 있게
+}
 let _reDrag=-1;
 function reDragStart(e,k){ _reDrag=k; e.currentTarget.classList.add('dragging'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(k)); }catch(_){}}
 function reDragOver(e,k){ if(_reDrag<0||_reDrag===k) return; e.preventDefault(); const p=e.currentTarget;
@@ -2025,9 +2043,14 @@ function renderSettings(){
     return `<div class="panel sec-panel${isFix?' sec-fixed':''}${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px${isFix&&!vis?';opacity:.5':''}" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span class="sec-no">칸 ${k+1}${isFix?' · 고정':''}${isNotice?' · 📢 안내 카드':''}</span><span style="flex:1"></span>
+      ${/* 8/29 사장님 요청: 자리는 사서가 여기서 바로 — 위/아래 한 칸씩 */''}
+      <button class="btn-ghost sec-mv" ${first?'disabled':''} onclick="event.stopPropagation();secMove(${i},-1)" title="한 칸 위로">▲ 위로</button>
+      <button class="btn-ghost sec-mv" ${last?'disabled':''} onclick="event.stopPropagation();secMove(${i},1)" title="한 칸 아래로">▼ 아래로</button>
       ${isFix?`<button class="btn-ghost vis-toggle" style="padding:5px 11px;font-weight:700;${vis?'color:#1a8f4c;border-color:#bfe6cd;background:#f0faf3':'color:var(--light);border-color:var(--border)'}" onclick="event.stopPropagation();toggleVisible(${i})" title="우리 도서관에 보일지 켜고 끄기">${vis?'👁 노출 켜짐':'🚫 숨김'}</button>
         <span class="btn-ghost" style="padding:5px 10px;color:var(--light)" title="자동 집계 고정 — 삭제 불가">🔒 고정</span>`
         :`<button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="event.stopPropagation();delSection(${i})">삭제</button>`}
+      ${/* 8/29 사장님 요청: 등록(=저장) 버튼을 카드에도 — 위의 '저장 →'과 같은 일을 한다 */''}
+      <button class="btn-primary sec-reg" onclick="event.stopPropagation();saveSections()" title="지금까지 고친 내용을 학생 앱에 반영합니다">등록</button>
     </div>
     <div><div class="flabel">제목</div><input class="cur-inp" id="sec_t_${s.slot}" value="${esc(s.title)}" oninput="pvSync()"></div>
     ${isNotice
