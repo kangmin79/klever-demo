@@ -62,6 +62,11 @@ export async function sessionFromRequest(req: Request, bodyToken?: string): Prom
   const auth = req.headers.get("authorization") || "";
   const m = /^Bearer\s+(.+)$/i.exec(auth);
   const url = new URL(req.url);
-  const tok = (m && m[1]) || url.searchParams.get("sso_token") || bodyToken || "";
-  return tok ? verifySsoToken(tok) : null;
+  // 8/29: Authorization 에 게이트웨이용 anon JWT 가 실려 오는 함수(evaluate 등)는 헤더 토큰이 실패하면 쿼리·본문 토큰을 이어서 본다
+  for (const tok of [m && m[1], url.searchParams.get("sso_token"), bodyToken]) {
+    if (!tok) continue;
+    const s = await verifySsoToken(tok);
+    if (s) return s;
+  }
+  return null;
 }
