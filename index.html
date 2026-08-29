@@ -8227,7 +8227,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260829f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260829g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -11304,7 +11304,7 @@ function onUnifiedSearch(submit){
   const _dupSeen=new Set();
   const libHits=(typeof libTitled==='function'?libTitled():[]).filter(b=>
     hit((b.t||b.title||'')+' '+(b.a||b.author||''))
-  ).filter(b=>{ const k=_usDupKey(b.t||b.title,b.a||b.author,(b.tags||[]).includes('ebook')?'e':((b.tags||[]).includes('paper')?'p':'x')); if(_dupSeen.has(k)) return false; _dupSeen.add(k); return true; });
+  ).filter(b=>{ const k=_usDupKey(b.t||b.title,b.a||b.author,_usKindOf(b)); if(_dupSeen.has(k)) return false; _dupSeen.add(k); return true; });
   let html='';
   // 8/17 사장님 수정요청: 우리 도서관 소장이 위, 북스타 고전은 아래
   // 우리 도서관 소장 = 로컬 풀(베스트·신착·큐레이션) 즉시 표시 + 전체 장서(semyung_tulip 31.9만) 서버검색이 뒤이어 합류
@@ -11322,6 +11322,8 @@ function onUnifiedSearch(submit){
   usTulipSearch(q, libHits);
 }
 
+// 형태 판정(중복 제거용): tags 가 없는 풀 항목(베스트·신착 목록의 세명대 전자책)은 _sm/lib 로 전자책 취급 — fmtTags 와 같은 판정
+function _usKindOf(b){ const t=b.tags||[]; if(t.includes('ebook')) return 'e'; if(t.includes('paper')) return 'p'; if(b._sm||b.lib||b._smLib||String(b.isbn||'').indexOf('sm-')===0) return 'e'; return 'x'; }
 // 같은 책 판별 키: 부제(':' '/' 뒤) 떼고 공백·기호 제거한 제목 + 저자 + 형태(e 전자책/p 종이책)
 function _usDupKey(title,author,kind){
   const n=s=>String(s||'').replace(/\[전자책\]/g,'').split(/\s[:/]\s|\s*:\s*|\s\/\s*/)[0].toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
@@ -11345,7 +11347,7 @@ async function usTulipSearch(q, localLib){
   if(seq!==_usTulipSeq) return;                        // 그 사이 새 입력 — 늦은 응답 폐기
   const seen=new Set((localLib||[]).map(b=>String(b.isbn||'')).filter(Boolean));
   // 8/29: ISBN 뿐 아니라 제목+저자+형태로도 중복 제거 — 풀의 전자책(brcd 키)과 장서 행(ctrl 키)이 같은 책인데 키가 달라 두 장으로 나오던 것
-  const seenKey=new Set((localLib||[]).map(b=>_usDupKey(b.t||b.title,b.a||b.author,(b.tags||[]).includes('ebook')?'e':((b.tags||[]).includes('paper')?'p':'x'))));
+  const seenKey=new Set((localLib||[]).map(b=>_usDupKey(b.t||b.title,b.a||b.author,_usKindOf(b))));
   rows=rows.filter(t=>{ if(t.isbn && seen.has(String(t.isbn))) return false; const k=_usDupKey(t.title,t.author,t.kind==='ebook'?'e':(t.kind==='paper'?'p':'x')); if(seenKey.has(k)) return false; seenKey.add(k); return true; });
   rows.sort((x,y)=>((x.kind==='ebook')?0:1)-((y.kind==='ebook')?0:1) || (x.title||'').length-(y.title||'').length);   // 전자책 먼저, 짧은 제목(정확 일치 근접) 먼저
   const {sec,grid,cnt,no}=els();
