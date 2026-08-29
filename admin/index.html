@@ -975,7 +975,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
       </div>
     </section>
 
-    <!-- ===== 피드관리 = 학생 글 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 기간·종류를 정해 엑셀 1장, 아래에 '부적절한 글 숨기기' 최근 10건만. 숨김=별 회수, admin-save writings_hide / reviews_hide) ===== -->
+    <!-- ===== 피드관리 = 학생 글 (2026-08-17 사장님 시안 '엑셀 다운로드 방식' — 기간·종류를 정해 엑셀 1장, 아래에 '부적절한 글 숨기기' 최근 10건만. admin-save writings_hide / reviews_hide. 8/29 별 폐지) ===== -->
     <section id="pg-writings" style="display:none">
       <div class="phead">
         <div><h1>학생 글 <span class="tagpill">세명대학교 학술정보원</span></h1>
@@ -1010,8 +1010,8 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         </div>
       </div>
       <div class="st-warn">
-        <b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면에서 글이 내려가고, 준 별도 회수됩니다.
-        잘못 눌렀으면 「보기」를 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br>
+        <b>숨기면 안 쓴 것이 됩니다.</b> 학생 화면에서 글이 내려갑니다.
+        잘못 눌렀으면 아래 목록 오른쪽의 선택을 <b>숨긴 글</b>로 바꿔 <b>[다시 보이기]</b>를 누르면 됩니다.<br>
         <b>챌린지에서 쓴 글은 여기 없습니다</b> — 「챌린지 통계」에서 봅니다. 여기는 <b>챌린지 밖에서 쓴 글</b>만 모입니다.
       </div>
       <div class="db-card">
@@ -1829,11 +1829,12 @@ function ntChalDel(slot){
   ntReadInputs();
   const i=SECTIONS.findIndex(s=>s.slot===slot); if(i<0) return;
   SECTIONS.splice(i,1); renderChalNotices();
-  toast('지웠어요 — 등록을 눌러야 학생 앱에서도 사라집니다');
+  toast('지웠어요 — 위쪽 「저장 →」을 눌러야 학생 앱에서도 사라집니다');   // 8/29 리뷰 F3: 마지막 카드를 지우면 '등록' 버튼이 없어지므로 상단 저장을 가리킨다
 }
 async function ntChalSave(){ ntReadInputs(); await saveSections(); }
 function renderChalNotices(){
   const host=el('ntListChal'); if(!host) return;
+  ntReadInputs();   // 8/29 리뷰 F1: 다시 그리기 전에 화면의 입력값을 먼저 되받는다 — 안 그러면 챌린지 쪽 버튼만 눌러도 쓰던 안내 글이 사라진다
   const list=SECTIONS.filter(s=>aOf(s)===CHAL_AREA && (s.style||'')==='notice');
   host.innerHTML=ntBarHTML()+list.map((s,k)=>`
     <div class="panel sec-panel" style="margin-bottom:12px">
@@ -3104,6 +3105,9 @@ async function saveChallenges(){
         if(!dr.ok) chalDelFail=true;
       }catch(_){ chalDelFail=true; }
     }
+    // 8/29 리뷰 F2: 위쪽 큰 '저장 →'이 안내 카드는 안 저장하던 문제 — 안내 카드(library_sections 독서챌린지)도 같이 저장
+    try{ const _ntDirty=SECTIONS.some(s=>aOf(s)===CHAL_AREA)||ORIG_SLOTS.some(sl=>!SECTIONS.some(s=>s.slot===sl));
+      if(_ntDirty){ ntReadInputs(); await saveSections(); } }catch(_){}
     if(chalDelFail) toast('저장은 됐지만 이전 챌린지 정리가 실패했어요 — 중복으로 보이면 다시 저장해주세요');
     else toast('저장 완료 — 학생 앱에 반영됩니다');
     await loadChallenges(); loadServerPrograms();
