@@ -9284,7 +9284,9 @@ async function mpSubmitWrite(k,min){
     // 글 내용도 서버 저장(사서 '학생 글' 화면용). 재제출 시 갱신.
     fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})}).catch(()=>{});
+       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})})
+      .then(r=>{ if(!r.ok) throw new Error('writings '+r.status); })
+      .catch(()=>{ const m='별은 받았지만 글 저장에 실패했어요 — 다시 제출해 주세요'; try{ bmToast(m); }catch(e){ alert(m); } });   // 8/29 실패를 삼키지 않음(8/21~29 조용한 유실 재발 방지)
     bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
     if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
   else if(btn) btn.disabled=false;
