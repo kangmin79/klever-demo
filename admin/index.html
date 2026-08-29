@@ -1756,7 +1756,9 @@ function addNoticeSection(){readSecInputs();
   _pvFocusSlot=slot;   // 만든 직후 그 칸으로 시선이 가게
   renderSettings(); pvSync();
   setTimeout(()=>{ const ta=el('sec_s_'+slot); if(ta) ta.focus(); },60);   // 바로 글을 쓸 수 있게
-  toast('📢 안내 카드를 맨 위에 만들었어요 — 제목과 본문을 적고 저장하세요');}
+  // 8/29 사장님 지적: 여기서 "만들었어요" 알림을 띄우면 이미 저장된 것처럼 읽힌다(아직 아무것도 안 올라감).
+  //   빈 카드가 눈앞에 생기는 것 자체가 안내이므로 알림 없음 — 알림은 '등록'을 눌러 실제로 반영됐을 때만.
+}
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
@@ -1976,6 +1978,9 @@ async function fillHeld(books){
 }
 async function saveSections(){
   readSecInputs();
+  // 8/29 안내 카드는 글이 전부다 — 본문이 비면 학생 앱에 빈 카드가 올라간다. 등록 전에 막는다.
+  const _emptyNt=SECTIONS.filter(s=>(s.style==='notice')&&!String(s.subtitle||'').trim());
+  if(_emptyNt.length){ toast('📢 안내 카드에 본문이 비어 있어요 — 내용을 적고 등록해 주세요'); return; }
   for(const s of SECTIONS){ const miss=await fillHeld(s.books||[]); if(miss.length){ toast(`‘${s.title}’에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 빼고 저장해 주세요`); return; } }
   const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{
@@ -2069,7 +2074,7 @@ function renderSettings(){
          <textarea class="cur-inp" id="sec_s_${s.slot}" rows="7" style="line-height:1.8" placeholder="예) 2026학년도 2학기 월별 우수독서 후기&#10;&#10;1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="pvSync()">${esc(s.subtitle)}</textarea>`
       : `<div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">`}
     ${isFix?`<div class="note" style="margin-top:12px">⚙ 자동 집계 — 책을 직접 담지 않습니다. ${vis?'지금 <b>우리 도서관에 노출 중</b>이에요.':'지금 <b>숨김</b> 상태 — 학생 앱에 안 보여요.'}</div>`
-      :isNotice?`<div class="note" style="margin-top:12px">📢 안내 카드 — 책을 담지 않습니다. 제목과 본문만 학생 앱에 그대로 나와요. 위치는 <b>↕ 순서 바꾸기</b>로 옮기세요.</div>`
+      :isNotice?`<div class="note" style="margin-top:12px">📢 안내 카드 — 책을 담지 않습니다. 제목과 본문만 학생 앱에 그대로 나와요. 자리는 위의 <b>▲ 위로 · ▼ 아래로</b>로 옮기고, <b>등록</b>을 눌러야 학생 앱에 반영됩니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
         <div class="deco-list">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">
