@@ -584,14 +584,20 @@ body.pv-open .main{max-width:none}
 .sec-mv{padding:5px 9px;font-size:12px;font-weight:700}
 .sec-mv:disabled{opacity:.32;cursor:default}
 .sec-reg{padding:6px 15px;font-size:12.5px;font-weight:800}
-/* 8/29 안내형 카드 만들기 — 꾸미기 화면 맨 위(AI 큐레이션 카드 아래) */
-.nt-add{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:12px;border:1.5px dashed #cfd8ee;border-radius:12px;background:#f8faff;cursor:pointer;transition:border-color .15s,background .15s}
-.nt-add:hover{border-color:var(--accent);background:#f2f7fd}
+/* 8/29 안내형 카드 만들기 — 꾸미기 화면 맨 위(AI 큐레이션 카드 아래). 눌러서 펴고 접는다 */
+.nt-wrap{margin-bottom:12px;border:1.5px dashed #cfd8ee;border-radius:12px;background:#f8faff;overflow:hidden;transition:border-color .15s}
+.nt-wrap.on{border-style:solid;border-color:var(--accent);background:#fff}
+.nt-add{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:background .15s}
+.nt-wrap:not(.on) .nt-add:hover{background:#f2f7fd}
 .nt-add-ic{font-size:18px;line-height:1}
 .nt-add-x{flex:1;display:flex;flex-direction:column;gap:2px}
 .nt-add-x b{font-size:13.5px;font-weight:800}
 .nt-add-x span{font-size:11.5px;color:var(--light)}
-.nt-add-p{font-size:20px;font-weight:800;color:var(--accent);line-height:1}
+.nt-add-p{font-size:12.5px;font-weight:800;color:var(--accent);line-height:1;white-space:nowrap}
+.nt-form{padding:2px 16px 16px;border-top:1px solid var(--border)}
+.nt-form .flabel{margin-top:12px}
+.nt-form-f{display:flex;align-items:center;gap:8px;margin-top:12px}
+.nt-form-n{flex:1;font-size:11.5px;color:var(--light);line-height:1.6}
 /* 공지 */
 .notice-i{display:flex;gap:12px;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
 .notice-i .nx{flex:1}.notice-i h4{font-size:14px;font-weight:800}.notice-i .nm{font-size:11.5px;color:var(--light);margin-top:4px}
@@ -1748,16 +1754,25 @@ function addSection(){readSecInputs();
   SECTIONS.splice(at,0,{area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});
   renderSettings();}
 // 8/29 사장님 요청: 책 없이 공지·안내 글만 담는 '안내 카드' 칸. 다른 칸과 똑같이 ↕ 순서 바꾸기로 원하는 자리에 끼워 넣는다.
-function addNoticeSection(){readSecInputs();
+// 8/29 사장님 요청: 'AI로 큐레이션 만들기'와 같은 방식 — 누르면 아래가 펴지고 다시 누르면 닫힌다.
+//   그리고 칸은 '등록'을 눌러야 생긴다(펴는 것만으로는 아무것도 안 만들어짐).
+let _ntFormOpen=false, _ntDraft={title:'',body:''};
+function _ntSyncDraft(){ const t=el('ntNewT'), b=el('ntNewB'); if(t)_ntDraft.title=t.value; if(b)_ntDraft.body=b.value; }
+function ntToggleForm(){ _ntSyncDraft(); _ntFormOpen=!_ntFormOpen; renderSettings();
+  if(_ntFormOpen) setTimeout(()=>{ const t=el('ntNewT'); if(t) t.focus(); },60); }
+function ntCancel(){ _ntDraft={title:'',body:''}; _ntFormOpen=false; renderSettings(); }
+async function ntSubmit(){
+  _ntSyncDraft();
+  const body=String(_ntDraft.body||'').trim();
+  if(!body){ toast('본문을 적어 주세요 — 안내 카드는 글이 전부예요'); const b=el('ntNewB'); if(b)b.focus(); return; }
+  readSecInputs();
   const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
-  const at=idxs.length?idxs[0]:SECTIONS.length;
-  const slot='nt'+Date.now().toString(36);
-  SECTIONS.splice(at,0,{area:curArea,slot,title:'안내',subtitle:'',style:'notice',books:[]});
-  _pvFocusSlot=slot;   // 만든 직후 그 칸으로 시선이 가게
+  const at=idxs.length?idxs[0]:SECTIONS.length;   // 일단 이 영역 맨 위 — 자리는 카드의 ▲위로·▼아래로로 옮긴다
+  SECTIONS.splice(at,0,{area:curArea,slot:'nt'+Date.now().toString(36),
+    title:String(_ntDraft.title||'').trim()||'안내', subtitle:body, style:'notice', books:[]});
+  _ntDraft={title:'',body:''}; _ntFormOpen=false; _pvFocusSlot=null;
   renderSettings(); pvSync();
-  setTimeout(()=>{ const ta=el('sec_s_'+slot); if(ta) ta.focus(); },60);   // 바로 글을 쓸 수 있게
-  // 8/29 사장님 지적: 여기서 "만들었어요" 알림을 띄우면 이미 저장된 것처럼 읽힌다(아직 아무것도 안 올라감).
-  //   빈 카드가 눈앞에 생기는 것 자체가 안내이므로 알림 없음 — 알림은 '등록'을 눌러 실제로 반영됐을 때만.
+  await saveSections();   // 등록 = 학생 앱에 실제 반영(완료 알림도 여기서)
 }
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
@@ -2036,11 +2051,25 @@ function renderAreaTabs(){
 function renderSettings(){
   renderAreaTabs();
   const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
-  // 8/29 사장님 요청: AI 큐레이션 카드 바로 아래 = 안내 카드 만들기 입구
-  el('secList').innerHTML=`<div class="nt-add" onclick="addNoticeSection()" title="책 없이 공지·행사 안내만 보여 주는 칸을 만듭니다">
-      <span class="nt-add-ic">📢</span>
-      <span class="nt-add-x"><b>안내형 카드 만들기</b><span>책 없이 공지·행사 안내 글만 — 칸 사이 원하는 자리에 넣을 수 있어요</span></span>
-      <span class="nt-add-p">+</span></div>`
+  // 8/29 사장님 요청: AI 큐레이션 카드 바로 아래 = 안내 카드 만들기 입구. 누르면 펴지고 다시 누르면 닫힌다.
+  el('secList').innerHTML=`<div class="nt-wrap${_ntFormOpen?' on':''}">
+      <div class="nt-add" onclick="ntToggleForm()" title="책 없이 공지·행사 안내만 보여 주는 칸을 만듭니다">
+        <span class="nt-add-ic">📢</span>
+        <span class="nt-add-x"><b>안내형 카드 만들기</b><span>책 없이 공지·행사 안내 글만 — 칸 사이 원하는 자리에 넣을 수 있어요</span></span>
+        <span class="nt-add-p">${_ntFormOpen?'닫기 ▴':'열기 ▾'}</span>
+      </div>
+      ${_ntFormOpen?`<div class="nt-form">
+        <div class="flabel">제목</div>
+        <input class="cur-inp" id="ntNewT" value="${esc(_ntDraft.title)}" placeholder="예) 2026학년도 2학기 월별 우수독서 후기" oninput="_ntSyncDraft()">
+        <div class="flabel" style="margin-top:11px">본문 <span style="font-weight:400;color:var(--light)">· 학생에게 보일 글 — 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
+        <textarea class="cur-inp" id="ntNewB" rows="8" style="line-height:1.8" placeholder="1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="_ntSyncDraft()">${esc(_ntDraft.body)}</textarea>
+        <div class="nt-form-f">
+          <span class="nt-form-n">등록하면 이 영역 <b>맨 위</b>에 생겨요 — 자리는 카드의 <b>▲ 위로 · ▼ 아래로</b>로 옮기세요.</span>
+          <button class="btn-ghost" onclick="ntCancel()">취소</button>
+          <button class="btn-primary" onclick="ntSubmit()">등록</button>
+        </div>
+      </div>`:''}
+    </div>`
    +list.map((o,k)=>{
     const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
     const isNotice=!isFix && NO_BOOK_STYLES.includes(s.style||'row');   // 8/29 안내 카드 = 책 없는 칸
