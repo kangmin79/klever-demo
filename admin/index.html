@@ -775,10 +775,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
             어느 쪽이 읽히는지 봅니다. (외부참조는 담지 않습니다 — 세명대가 가지고 있지 않은 책입니다)</div></div></label>
         <label class="pk on" id="pkChSt"><input type="checkbox" checked onchange="dbSum()">
           <div><div class="pk-t">챌린지 현황 <span class="chip end">학번 없음</span></div>
-          <div class="pk-d">운영중인 챌린지 · 완료된 챌린지 · 참여 학생 · 완주 학생 · 적립된 별.</div></div></label>
-        <label class="pk on" id="pkRank"><input type="checkbox" checked onchange="dbSum()">
-          <div><div class="pk-t">별 순위 <span class="chip done">학번 있음 · 시상용</span></div>
-          <div class="pk-d">별을 많이 모은 학생 순위. <b>시상 대상</b>을 고를 때 씁니다.</div></div></label>
+          <div class="pk-d">운영중인 챌린지 · 완료된 챌린지 · 참여 학생 · 완주 학생.</div></div></label>
         <div class="st-sum" id="dbSumLine"></div>
         <div style="margin-top:14px">
           <button class="btn-excel" id="dbXlsBtn" style="font-size:14.5px;padding:13px 22px" onclick="downloadDashExcel(this)">⤓ 엑셀 다운로드</button>
@@ -2567,8 +2564,7 @@ async function renderMsApp(){
 }
 
 /* ====== 학생 글 — 공용 선언 (화면 코드는 파일 끝 '통계·관리 5화면' 구역) ====== */
-let WRITINGS=[];
-const ACT_STAR={oneline:5,question:5,review:10,essay:50,underline:5,recommend:5};
+let WRITINGS=[];   // 8/29 별 포인트 폐지 — ACT_STAR 삭제
 
 /* ====== 프로그램 만들기 ====== */
 const CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";
@@ -2758,18 +2754,18 @@ async function loadChallenges(){
     if(el('pg-make').style.display!=='none')renderChallenges();
   }catch(e){renderChallenges();}
 }
-// ===== 챌린지 미션 (최종본 2026-06-21: 10미션·최대3·보상 순위형/추첨형·별 고정배점) =====
+// ===== 챌린지 미션 (8/29 별 포인트 폐지 — 배점 없음·시상은 추첨형만) =====
 const CH_MISSIONS=[
-  {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈를 풀고 별 획득',star:'문제당 ⭐1'},
-  {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄',star:'⭐5'},
-  {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기',star:'⭐5'},
-  {k:'review',t:'서평 쓰기',s:'300자 이상으로 책에 대한 평을 작성',star:'⭐10'},
-  {k:'essay',t:'독후감 쓰기',s:'800자 이상으로 읽고 난 내 생각을 작성',star:'⭐50'},   // 8/21 사장님 요청: 독후감 미션 추가
+  {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈 10문항'},
+  {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄'},
+  {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기'},
+  {k:'review',t:'서평 쓰기',s:'300자 이상으로 책에 대한 평을 작성'},
+  {k:'essay',t:'독후감 쓰기',s:'800자 이상으로 읽고 난 내 생각을 작성'},   // 8/21 사장님 요청: 독후감 미션 추가
 ];
 const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
 function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(underline/recommend/cert) — 5종 + autoJoin 유지
   m=m||{};
-  const o={reward:m.reward||(type==='고전챌린지'?'rank':'draw'), quizN:10, autoJoin:!!m.autoJoin};   /* 퀴즈 문항 수 = 10개 고정 */
+  const o={reward:'draw', quizN:10, autoJoin:!!m.autoJoin};   /* 퀴즈 문항 수 = 10개 고정. 8/29: 시상은 추첨형만 */
   if(m.quizType)o.quizType=m.quizType; if(m.quizLevel)o.quizLevel=m.quizLevel;
   _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
   return o;
@@ -2778,7 +2774,7 @@ function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(underl
 const CH_MAX=3, CH_QTYPES=['작품 이해','인문 성찰'];
 function chalMission(c){   // 미션객체 정규화(구버전 review→oneline / question→question 호환)
   const m=c.mission||{};
-  const o={reward:m.reward||(c.type==='고전챌린지'?'rank':'draw'),
+  const o={reward:'draw',   // 8/29 별 포인트 폐지: 순위형 없음
     quiz:c.type==='고전챌린지'?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
     quizType:m.quizType||'', quizLevel:m.quizLevel||'',
     drawCount:m.drawCount||10, drawCond:m.drawCond||'all',
@@ -2800,20 +2796,15 @@ function readChalInputs(){
     if(!Array.isArray(c.books))c.books=[];
   });
 }
-function chalRewardBox(c,i){
+function chalRewardBox(c,i){   // 8/29 별 포인트 폐지 — 추첨형만
   const m=c.mission;
-  if(m.reward==='draw'){
-    return `<div class="flabel">추첨 설정</div>
+  return `<div class="flabel">추첨 설정</div>
       <div class="row2">
         <div><div class="flabel" style="font-weight:500;color:var(--light)">추첨 인원</div><input type="number" min="1" class="cur-inp" id="ch_dc_${i}" value="${m.drawCount}" oninput="readChalInputs()"></div>
         <div><div class="flabel" style="font-weight:500;color:var(--light)">응모 조건</div><select class="cur-inp" id="ch_dcd_${i}" onchange="readChalInputs()">
           <option value="all" ${m.drawCond==='all'?'selected':''}>미션 전체 완료 시</option>
           <option value="any" ${m.drawCond==='any'?'selected':''}>미션 1개 이상 완료 시</option></select></div>
       </div>`;
-  }
-  const rows=CH_MISSIONS.filter(x=>m[x.k]).map(x=>`<div style="display:flex;justify-content:space-between;padding:5px 0"><span>${x.t}<span style="color:var(--light);font-size:11px;margin-left:6px">${x.k==='quiz'?'맞힌 문제당 적립':'제출 시 적립'}</span></span><b style="color:#b4690e">${x.star}</b></div>`).join('');
-  return `<div class="flabel">이 챌린지의 별 적립 <span style="font-weight:400;color:var(--light)">— 별 많은 순으로 시상</span></div>
-    <div class="scorebox">${rows||'미션을 켜면 적립 별이 표시됩니다.'}<div style="font-size:11px;color:var(--light);margin-top:8px;border-top:1px solid var(--border);padding-top:8px">별 배점은 모든 도서관 공통 고정값입니다. 순위를 더 잘 가르려면 별이 큰 활동(서평·독후감)을 켜세요.</div></div>`;
 }
 function renderChallenges(){
   el('chalList').innerHTML=CHALLENGES.map((c,i)=>{
@@ -2821,10 +2812,10 @@ function renderChallenges(){
     const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[], cnt=chalMissCount(c);
     const missCells=CH_MISSIONS.map(x=>{
       if(x.k==='quiz'&&!isClassic)return '';
-      if(x.soon) return `<div class="mrow" style="opacity:.5"><div class="mt"><b>${x.t}</b><span>${x.star} · 준비 중</span></div>
+      if(x.soon) return `<div class="mrow" style="opacity:.5"><div class="mt"><b>${x.t}</b><span>${x.s} · 준비 중</span></div>
         <div class="tg lock" title="준비 중인 미션이에요"></div></div>`;
       const on=!!m[x.k], lock=(x.k==='quiz'&&isClassic);
-      return `<div class="mrow"><div class="mt"><b>${x.t}</b><span>${x.star}${lock?' · 필수':''}</span></div>
+      return `<div class="mrow"><div class="mt"><b>${x.t}</b><span>${x.s}${lock?' · 필수':''}</span></div>
         <div class="tg${on?' on':''}${lock?' lock':''}" onclick="chalToggleM(${i},'${x.k}')"></div></div>`;
     }).join('');
     const quizCfg=(isClassic&&m.quiz)?`<div style="margin:6px 0 2px">
@@ -2927,7 +2918,6 @@ function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&
   const def=CH_MISSIONS.find(x=>x.k===k); if(def&&def.soon)return;   // 준비 중 미션은 켤 수 없음
   c.mission[k]=!c.mission[k];renderChallenges();}
 function chalSetQuizN(i,n){readChalInputs();CHALLENGES[i].mission.quizN=n;renderChallenges();}
-function chalSetReward(i,r){readChalInputs();CHALLENGES[i].mission.reward=r;renderChallenges();}
 function chalToggleAuto(i){readChalInputs();const c=CHALLENGES[i];c.mission.autoJoin=!c.mission.autoJoin;renderChallenges();}
 function chalRemoveBook(i,bi){readChalInputs();CHALLENGES[i].books.splice(bi,1);renderChallenges();}
 async function saveChallenges(){
@@ -3221,11 +3211,11 @@ async function withBusy(btn, fn){
 /* ══════════ 1. 대시보드 — 기간·시트 고르고 엑셀 (stats_overview) ══════════ */
 function initDashDates(){ if(el('dbFrom')&&!el('dbFrom').value){ const [f,t]=presetRange('t'); el('dbFrom').value=f; el('dbTo').value=t; } }
 function setRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('dbFrom').value=f; el('dbTo').value=t; dbSum(); }
-const DB_PK=[['pkSum','요약'],['pkSrc','유형별'],['pkChSt','챌린지 현황'],['pkRank','별 순위']];
+const DB_PK=[['pkSum','요약'],['pkSrc','유형별'],['pkChSt','챌린지 현황']];   // 8/29 별 포인트 폐지 — '별 순위' 시트 삭제
 function dbPicked(){ return DB_PK.filter(x=>mark(x[0])).map(x=>x[0]); }
 function dbSum(){
   initDashDates();
-  const [f,t]=rangeOf('dbFrom','dbTo'); const on=dbPicked(); const id9=on.includes('pkRank');
+  const [f,t]=rangeOf('dbFrom','dbTo'); const on=dbPicked(); const id9=false;
   const e=el('dbSumLine'); if(!e) return;
   if(!on.length){ e.innerHTML=NEED_PICK; return; }
   e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b><br>엑셀 한 개 · 시트 <b>'+on.length+'장</b> — '+DB_PK.filter(x=>on.includes(x[0])).map(x=>x[1]).join(' · ')
@@ -3242,9 +3232,8 @@ function downloadDashExcel(btn){
     if(on.includes('pkSrc')){ const bt=(d.by_type||[]).filter(r=>r.type!=='external'&&r.type!=='none');   // 시안: 외부참조(세명대 미소장)는 담지 않음 → 합계도 네 줄 기준
       const sum=k=>bt.reduce((a,r)=>a+(+r[k]||0),0);
       sheets.push({name:'유형별',rows:[per,[],['유형','조회','이용','활동'],...bt.map(r=>[TYPE_KO[r.type]||r.type,r.views,r.uses,r.acts]),['합계',sum('views'),sum('uses'),sum('acts')],[],...NOTE3]}); }
-    if(on.includes('pkChSt')) sheets.push({name:'챌린지 현황',rows:[per,[],['운영중인 챌린지','완료된 챌린지','참여 학생','완주 학생','적립된 별'],[d.ch_open,d.ch_done,d.ch_part,d.ch_fin,d.stars]]});
-    if(on.includes('pkRank')) sheets.push({name:'별 순위',rows:[per,[],['순위','학번','별'],...(d.rank||[]).map((x,i)=>[i+1,x.student_id,x.stars])]});
-    xlsxDownload(dbFileName(f,t,on.includes('pkRank')).replace(/\.xlsx$/,''), sheets);
+    if(on.includes('pkChSt')) sheets.push({name:'챌린지 현황',rows:[per,[],['운영중인 챌린지','완료된 챌린지','참여 학생','완주 학생'],[d.ch_open,d.ch_done,d.ch_part,d.ch_fin]]});
+    xlsxDownload(dbFileName(f,t,false).replace(/\.xlsx$/,''), sheets);
   });
 }
 
@@ -3272,7 +3261,7 @@ function downloadStatsExcel(btn){
     const d=await statsOp('stats_usage',{from:kst(f), to:kst(nextDay(t)), type:ty, path:pa});
     const per=[fmtRange(f,t)+(ty?' · 유형: '+(TYPE_KO[ty]||ty):'')+(pa?' · 경로: '+pa:'')], sheets=[];
     if(on.includes('pkBook'))   sheets.push({name:'도서별',rows:[per,[],['번호','유형','도서명','조회','이용','활동'],...(d.books||[]).map((b,i)=>[i+1,TYPE_KO[b.item_type]||b.item_type,b.title||b.item_key,b.views,b.uses,b.acts]),[],...NOTE3]});
-    if(on.includes('pkUser'))   sheets.push({name:'학생별',rows:[per,[],['번호','학번','조회','이용','활동','별'],...(d.students||[]).map((s,i)=>[i+1,s.student_id,s.views,s.uses,s.acts,s.stars])]});
+    if(on.includes('pkUser'))   sheets.push({name:'학생별',rows:[per,[],['번호','학번','조회','이용','활동'],...(d.students||[]).map((s,i)=>[i+1,s.student_id,s.views,s.uses,s.acts])]});
     if(on.includes('pkDetail')) sheets.push({name:'상세통계',rows:[per,[],['학번','날짜','유형','도서명','이용 방식','경로'],...(d.detail||[]).map(r=>[r.student_id,r.date,TYPE_KO[r.type]||r.type,r.title||'',r.way,r.path])]});
     xlsxDownload(stFileName(f,t,on.includes('pkUser')||on.includes('pkDetail')).replace(/\.xlsx$/,''), sheets);
   });
@@ -3286,8 +3275,8 @@ const chStatus=(c)=>{ const today=ymd(new Date()); if(c.end_date && c.end_date<t
 const chMissionLabel=(m)=>{ m=m||{}; const a=[]; if(m.quiz)a.push('퀴즈 풀기'); if(m.oneline)a.push('한 줄 소감'); if(m.question)a.push('한 줄 질문'); if(m.review)a.push('서평 쓰기'); if(m.essay)a.push('독후감'); return a.join('·')||'—'; };
 // 추첨 응모 자격 = 챌린지 빌더의 '추첨 자격' 옵션을 그대로 따른다: all(미션 전체 완료)=완주 수 / any(미션 1개 이상)=참가 수  (8/17 시안 감사 C7)
 const chEligible=(c)=>{ const m=c.mission||{}; return (m.drawCond==='any') ? {n:c.part||0, label:'참가'} : {n:c.done||0, label:'완주'}; };
-const chRewardText=(c)=>{ const m=c.mission||{}; return m.reward==='draw' ? '추첨형 · '+(m.drawCount||'?')+'명 뽑기' : '순위형 · 별 많은 순'; };
-const chReward=(c)=>{ const m=c.mission||{}; if(m.reward==='draw'){ const e=chEligible(c); return chRewardText(c)+'<br><span class="db-sub2">응모 자격('+e.label+') '+nf(e.n)+'명'+(e.n<(m.drawCount||0)?' — 뽑을 인원보다 적음':'')+'</span>'; } return chRewardText(c); };
+const chRewardText=(c)=>{ const m=c.mission||{}; return '추첨형 · '+(m.drawCount||'?')+'명 뽑기'; };   // 8/29 별 포인트 폐지 — 순위형 없음
+const chReward=(c)=>{ const m=c.mission||{}; const e=chEligible(c); return chRewardText(c)+'<br><span class="db-sub2">응모 자격('+e.label+') '+nf(e.n)+'명'+(e.n<(m.drawCount||0)?' — 뽑을 인원보다 적음':'')+'</span>'; };
 const chType=(t)=>String(t||'').indexOf('고전')>=0?'고전 컬렉션 챌린지':'소장자료 챌린지';
 const chEnded=(c)=>!!(c.end_date && c.end_date<ymd(new Date()));
 // 결과 확정(얼린 값) — 챌린지 id → {fixed_at, summary}.
@@ -3350,7 +3339,7 @@ function downloadChExcel(btn){
 function downloadChSumExcel(){
   if(!CHS.length){ toast('불러온 챌린지가 없어요'); return; }
   const rows=[['기준일: '+ymd(new Date())],[],['챌린지','구분','미션','시작','종료','담긴 책','참가','완주','완주율(%)','미션 수행','시상 방식','응모 자격'],
-    ...CHS.map(c=>{ const m=c.mission||{}, e=chEligible(c); return [c.title,chType(c.type),chMissionLabel(c.mission),c.start_date||'',c.end_date||'',c.books_n,c.part,c.done,c.part?Math.round(c.done/c.part*100):0,c.missions,chRewardText(c).replace('<br>',' '),m.reward==='draw'?(e.label+' '+e.n+'명'):'']; })];
+    ...CHS.map(c=>{ const e=chEligible(c); return [c.title,chType(c.type),chMissionLabel(c.mission),c.start_date||'',c.end_date||'',c.books_n,c.part,c.done,c.part?Math.round(c.done/c.part*100):0,c.missions,chRewardText(c).replace('<br>',' '),e.label+' '+e.n+'명']; })];
   xlsxDownload(chSumFileName(ymd(new Date())), [{name:'요약',rows:rows}]);
 }
 // 상세 행렬(학생 × 담긴 책) — 화면·상세 엑셀·운영이력 확정본 엑셀이 같은 계산을 쓴다
@@ -3437,7 +3426,7 @@ function renderWritings(){
   const LIMIT=10;
   tb.innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
     const isRv=w.activity==='rv';
-    const tag=w.hidden?`<span class="chip bad">${isRv?'숨김':`숨김 · 별 −${ACT_STAR[w.activity]||0}`}</span>`
+    const tag=w.hidden?`<span class="chip bad">숨김</span>`
                      :(wrShort(w)?'<span class="chip end">미인정 · 글자 수 미달</span>':'');
     return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}</td>
       <td><div class="fd-txt">${w.hidden?'숨긴 글입니다':esc(w.text)}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
@@ -3447,12 +3436,12 @@ function renderWritings(){
 async function wrToggleHide(id){
   const w=WRITINGS.find(x=>String(x.id)===String(id)); if(!w) return;
   const to=!w.hidden, isRv=w.activity==='rv';
-  if(to && !confirm(isRv?'이 서평을 숨길까요? 학생 화면(책 상세·서평 목록)에서 내려갑니다.':'이 글을 숨길까요? 학생 화면에서 내려가고, 이 글로 받은 별도 회수됩니다.')) return;
+  if(to && !confirm(isRv?'이 서평을 숨길까요? 학생 화면(책 상세·서평 목록)에서 내려갑니다.':'이 글을 숨길까요? 학생 화면에서 내려갑니다.')) return;
   try{ const r=await adminSave(isRv
         ? {op:'reviews_hide', id:w.rv_id, hidden:to}
         : {op:'writings_hide', school:ST_SCHOOL, student_id:w.student_id, activity:w.activity, book_id:w.book_id, hidden:to});
     const j=r.ok?await r.json():null; if(!j||!j.ok) throw new Error((j&&j.error)||('HTTP '+r.status));
-    w.hidden=to; renderWritings(); toast(isRv?(to?'숨겼어요':'다시 보이게 했어요'):(to?'숨겼어요 (별 회수)':'다시 보이게 했어요 (별 복구)')); }
+    w.hidden=to; renderWritings(); toast(to?'숨겼어요':'다시 보이게 했어요'); }
   catch(e){ toast('처리하지 못했어요 — '+String(e.message||e)); }
 }
 // 8/29 사장님 지시: 사서 '우수작' 선정 기능 전부 삭제 (wrFeature·featured 표시·정렬·서버 경로). 숨김(hidden)만 남는다.

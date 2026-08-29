@@ -993,46 +993,7 @@ body.dark .stat-num{color:var(--gold);}
 .badge-name{font-size:12px;font-weight:700;}
 .badge-desc{font-size:10px;color:var(--text-light);margin-top:2px;}
 
-/* 리더보드 */
-.leader-tabs{display:flex;gap:6px;background:var(--bg-input);padding:4px;border-radius:12px;margin-bottom:20px;}
-.leader-tab{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;text-align:center;}
-.leader-tab.active{background:var(--bg-card);color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,0.06);}
-.leader-list{display:flex;flex-direction:column;gap:8px;}
-.leader-row{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;transition:transform .15s,box-shadow .15s,border-color .15s;cursor:default;}
-.leader-row:hover{transform:translateX(4px);box-shadow:0 6px 16px rgba(26,30,55,.08);border-color:var(--primary);}
-.leader-row:hover .leader-score{color:var(--primary);}
-.leader-row.me{border-color:var(--primary);background:var(--primary-bg);}
-.leader-rank{width:32px;height:32px;border-radius:50%;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
-.leader-row.top1 .leader-rank{background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff;}
-.leader-row.top2 .leader-rank{background:linear-gradient(135deg,#C0C0C0,#A8A8A8);color:#fff;}
-.leader-row.top3 .leader-rank{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff;}
-.leader-name{flex:1;font-weight:700;}
-.leader-score{font-weight:800;color:var(--primary);font-size:15px;white-space:nowrap;}
-/* ── 리더보드 페이지: 별 종합 랭킹 ── */
-.lb-loading{color:var(--text-light);font-size:13px;padding:34px 0;text-align:center;}
-.lb-legend{font-size:11.5px;color:var(--text-light);margin:0 2px 14px;line-height:1.6;}
-.lb-wrap{display:flex;flex-direction:column;gap:8px;}
-/* 내 순위 카드 */
-.lb-me-card{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:16px;margin-bottom:18px;background:linear-gradient(135deg,var(--primary-bg),transparent);border:1.5px solid var(--primary);}
-.lb-me-main{flex:1;min-width:0;}
-.lb-me-top{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.lb-me-sub{font-size:12px;color:var(--text-sub);margin-top:4px;}
-.lb-me-rank{text-align:right;flex-shrink:0;}
-.lb-me-rk{font-size:22px;font-weight:900;color:var(--primary);line-height:1;}
-.lb-me-rkk{font-size:11px;color:var(--text-light);margin-top:5px;}
-/* 행 내부 (이름/등급 + 측정 보조) */
-.lb-id{flex:1;min-width:0;}
-.lb-name2{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lb-grade{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap;}
-body.dark .lb-grade{color:var(--gold);background:rgba(212,169,59,.14);}
-.lb-meas{font-size:11.5px;color:var(--text-light);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;}
-.lb-unit{font-size:11px;margin-left:1px;}
-/* 빈 상태 */
-.lb-empty{text-align:center;padding:48px 22px;background:var(--bg-input);border-radius:18px;}
-.lb-empty-emo{font-size:46px;margin-bottom:14px;}
-.lb-empty-t{font-size:16px;font-weight:800;margin-bottom:8px;}
-.lb-empty-s{font-size:13px;color:var(--text-sub);line-height:1.7;margin-bottom:20px;}
-.lb-empty-btn{display:inline-block;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:800;cursor:pointer;}
+/* (8/29 별 포인트 폐지 — 리더보드 CSS 삭제) */
 
 /* 사서 대시보드 (?page=dashboard) */
 .dk-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
@@ -2588,9 +2549,7 @@ body.preview-mode #page-international > *:not(#intlCuration){display:none !impor
 body.preview-mode .main{padding-top:8px;}
 body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 
-/* ── 챌린지 미션 패널 (리더 우측 · 별 적립) ── */
-.mp-star{display:flex;align-items:center;gap:6px;justify-content:flex-end;font-size:15px;font-weight:800;color:var(--gold);margin:0 0 10px}
-.mp-star small{font-size:11px;color:var(--text-light);font-weight:600}
+/* ── 챌린지 미션 패널 (리더 우측) ── */
 .mp-card{background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:11px}
 .mp-t{font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:3px;color:var(--text)}
 .mp-v{font-size:11.5px;font-weight:700;color:var(--gold);background:rgba(180,105,14,.14);padding:1px 8px;border-radius:20px}
@@ -2600,7 +2559,6 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-q:first-child{border-top:0;padding-top:2px}
 .mp-qn{font-size:11px;font-weight:800;color:var(--accent)}
 .mp-qq{font-size:13.5px;font-weight:600;margin:3px 0 9px;line-height:1.5;color:var(--text)}
-.mp-gain{font-size:11.5px;font-weight:800;color:var(--gold)}
 .mp-opt{display:flex;align-items:center;gap:9px;border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:7px;cursor:pointer;font-size:13px;background:var(--bg-card);color:var(--text);transition:.12s}
 .mp-opt:hover{border-color:var(--accent)}
 .mp-mk{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);flex:none;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
@@ -2719,7 +2677,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
         <div class="program-card featured" onclick="enrollProgram('champion')">
           <div class="program-eyebrow">전교생 대상</div>
           <div class="program-title">고전 챔피언<br>프로그램</div>
-          <div class="program-desc">한 학기 동안 누가 가장 많이 읽었나? 점수·뱃지·리더보드로 경쟁하는 전교생 대상 챌린지.</div>
+          <div class="program-desc">한 학기 동안 고전을 함께 읽고 퀴즈·기록으로 완주하는 전교생 대상 챌린지.</div>
           <div class="program-meta">
             <span class="program-meta-item">1,247명 참여</span>
             <span class="program-meta-item">12주</span>
@@ -2812,7 +2770,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-curation">
   <!-- 8/17 사장님 수정요청: 큰 제목(GNB와 중복) 대신 메뉴 하단 설명 2줄 -->
-  <div class="pg-intro"><div class="pi-main">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="pi-sub">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하면 별이 쌓여요</div></div>
+  <div class="pg-intro"><div class="pi-main">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="pi-sub">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하며 내 기록을 남겨요</div></div>
 
   <!-- 사서가 만든 챌린지 (library_programs · 진행중) — 우리 도서관 밀리식 레이아웃 -->
   <div id="chalLive" data-origin="challenge"><div class="chal-empty">불러오는 중…</div></div>
@@ -2930,11 +2888,6 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div id="feedBody"></div>
 </section>
 
-<section class="page" id="page-leaderboard">
-  <h1 class="page-title">리더보드</h1>
-  <p class="page-subtitle">별(⭐)을 가장 많이 모은 친구들 — 우리 학교 종합 랭킹</p>
-  <div id="leaderboardBody" style="margin-top:20px;"></div>
-</section>
 
 <!-- 사서(관리자) 대시보드 — ?page=dashboard 딥링크 전용, GNB 미노출 -->
 <section class="page" id="page-dashboard">
@@ -3350,7 +3303,6 @@ const BADGES = [
   {icon:'🎯', name:'퀴즈 마스터', desc:'퀴즈 10개 정답', unlocked:false},
   {icon:'⭐', name:'챌린지 완주', desc:'12주 챌린지', unlocked:false},
   {icon:'🌟', name:'독서왕', desc:'책 10권 완독', unlocked:false},
-  {icon:'👑', name:'학교 1위', desc:'학교 리더보드 1위', unlocked:false},
 ];
 
 const LEADERBOARD = [
@@ -5135,9 +5087,6 @@ function nav(page){
     _feedItems=[];   // 방문할 때마다 최신 글 다시 로드
     setTimeout(renderFeed, 30);
   }
-  if(page === 'leaderboard') {
-    setTimeout(renderLeaderList, 30);
-  }
   if(page === 'dashboard') {
     setTimeout(renderDashboard, 30);
   }
@@ -5222,13 +5171,13 @@ async function chalResolveFormats(){
     c.books=keep;
   });
 }
-/* ── 챌린지 미션 정의 (admin CH_MISSIONS 미러 · docx 별 배점 고정) ── */
+/* ── 챌린지 미션 정의 (admin CH_MISSIONS 미러) — 8/29 별 포인트 폐지(배점 없음) ── */
 const CH_MISSIONS=[
-  {k:'quiz',     t:'퀴즈 풀기',     icon:'🎯', star:1,  kind:'quiz'},
-  {k:'oneline',  t:'한 줄 소감',    icon:'✍️', star:5,  kind:'write', min:5,   ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
-  {k:'question', t:'한 줄 질문',    icon:'❓', star:5,  kind:'write', min:5,   ph:'책에 대해 떠오른 질문을 적어 보세요.'},
-  {k:'review',   t:'서평 쓰기',     icon:'📝', star:10, kind:'write', min:300, ph:'책에 대한 평을 300자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
-  {k:'essay',    t:'독후감 쓰기',   icon:'📜', star:50, kind:'write', min:800, ph:'읽고 난 내 생각을 800자 이상으로 적어 보세요. (마음에 남은 대목·그때 든 생각·내 경험과의 연결)'},   // 8/21 사장님 요청
+  {k:'quiz',     t:'퀴즈 풀기',     icon:'🎯', kind:'quiz'},
+  {k:'oneline',  t:'한 줄 소감',    icon:'✍️', kind:'write', min:5,   ph:'책을 읽고 느낀 점을 한 줄로 남겨 보세요.'},
+  {k:'question', t:'한 줄 질문',    icon:'❓', kind:'write', min:5,   ph:'책에 대해 떠오른 질문을 적어 보세요.'},
+  {k:'review',   t:'서평 쓰기',     icon:'📝', kind:'write', min:300, ph:'책에 대한 평을 300자 이상으로 적어 보세요. (주제·인상 깊은 장면·추천 이유 등)'},
+  {k:'essay',    t:'독후감 쓰기',   icon:'📜', kind:'write', min:800, ph:'읽고 난 내 생각을 800자 이상으로 적어 보세요. (마음에 남은 대목·그때 든 생각·내 경험과의 연결)'},   // 8/21 사장님 요청
 ];
 /* Ver10 2종 체제(2026-07-04) + 레거시 5종 명칭(옛 발행 챌린지 호환) */
 const CH_QMAP={'작품 이해':'01','인문 성찰':'02','고전 이해':'01','작가 의도':'02','인문학':'03','나의 삶':'04','사회(관계)':'05'};
@@ -5236,7 +5185,7 @@ const CH_SCHOOL='hankuk';
 // 미션 객체 정규화(구버전 review→oneline / question 호환, 고전챌린지 quiz 강제)
 function appChalMission(c){
   const m=(c&&c.mission)||{};
-  const o={reward:m.reward||(c&&c.type==='고전챌린지'?'rank':'draw'),
+  const o={reward:'draw',   // 8/29 별 포인트 폐지 — 시상은 추첨형만
     quiz:(c&&c.type==='고전챌린지')?true:!!m.quiz, quizN:10,   /* 퀴즈 문항 수 = 10개 고정 */
     quizType:m.quizType||'', quizLevel:m.quizLevel||'', autoJoin:!!m.autoJoin};   // autoJoin(8/21): 신청 없이 자동 참여
   CH_MISSIONS.forEach(x=>{ if(x.k==='quiz')return;
@@ -5391,13 +5340,12 @@ function chalJoin(id,opt){
   arr.push({ id:c.id, type:c.type||'', title:c.title, to:c.to||'', mission:c.mission||null,
     books:(c.books||[]).map(b=>({id:b.id||'', t:b.t, cover:b.cover||'', isbn:b.isbn||''})), joinedAt:Date.now() });
   _saveJoinedChals(arr);
-  // 서버 참여 기록(로그인 시) — 관리자 대시보드 '참여' 집계 + 참가 별(+5, 멱등). 완주(done)는 덮지 않음.
+  // 서버 참여 기록(로그인 시) — 관리자 대시보드 '참여' 집계. 완주(done)는 덮지 않음. (8/29 별 포인트 폐지 — 참가 별 지급 삭제)
   const _stu=bxStudent();
   if(_stu){
     fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},
        body:JSON.stringify({student_id:_stu.id, challenge_id:String(c.id), status:'joined'})}).catch(()=>{});
-    mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_stu.id,p_activity:'challenge_join',p_ref:String(c.id)}).catch(()=>{});
   }
   if(opt.silent) return;
   // 8/21 사장님 요청: 브라우저 alert(주소 표기) 제거 · "여러 챌린지를 동시에…" 문구 삭제
@@ -7518,11 +7466,10 @@ function libBridgeOpen(book){
   try{ w.document.write(bridgeHTML(b)); w.document.close(); }catch(e){}
   setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);
 }
-/* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 리더보드 / 검색 / 피드 / 내서재 */
+/* Ver03 고정 좌측 메뉴 — 마이 챌린지 / 검색 / 피드 / 내서재 (8/29 별 포인트 폐지로 리더보드 삭제) */
 const SIDE_MENU = [
   // 8/21 사장님 요청: '내 도서관' 메뉴는 내서재(내 대출·예약 그룹)로 합쳐짐 — 연체·예약도착 배지는 내서재에 표시
   {key:'mychal', icon:'target',   label:'마이 챌린지', page:'mychal'},
-  {key:'leader', icon:'trophy',   label:'리더보드',    page:'leaderboard'},
   {key:'search', icon:'search',   label:'검색',        page:'search'},
   {key:'feed',   icon:'users',    label:'피드',        page:'feed'},
   {key:'shelf',  icon:'bookOpen', label:'내서재',      page:'mypage'},
@@ -8862,7 +8809,7 @@ function renderViewer(){
   }
 }
 
-/* ═══ 챌린지 미션 패널 (참여 챌린지 mission → 별 적립 award_*) ═══ */
+/* ═══ 챌린지 미션 패널 (참여 챌린지 mission → 퀴즈·글 미션 수행. 8/29 별 포인트 폐지) ═══ */
 let _mpCtx=null;
 // 8/20 사장님 수정요청 — 상세 모달의 '작품 이해 퀴즈 / 인문 성찰 퀴즈'에서 바로 들어온 경우.
 //   챌린지 참여 여부와 무관하게 그 유형의 퀴즈를 연다(참여했으면 아래 정규 경로가 그대로 돌고, 아니면 퀴즈만 있는 패널).
@@ -8884,22 +8831,21 @@ function renderMissionPanel(body, info, leftBody, L){
   if(ch && typeof CHAL_PUB!=='undefined'){ const pub=CHAL_PUB.find(x=>String(x.id)===String(ch.id)); if(pub&&pub.mission) m=appChalMission(pub); }
   // 상세 모달에서 유형을 골라 들어왔으면 그 유형으로 연다(챌린지가 켠 유형보다 우선 — 학생이 방금 누른 것이니까)
   if(want && m) m = Object.assign({}, m, {quiz:true, quizType:want, quizLevel:''});
-  const solo = !!want && !ch;   // 챌린지 없이 퀴즈만 푸는 모드 — 별은 주되 챌린지 진행/완주 기록은 건드리지 않는다
-  if(solo) m = {reward:'rank', quiz:true, quizN:10, quizType:want, quizLevel:'', oneline:false, question:false, review:false};
+  const solo = !!want && !ch;   // 챌린지 없이 퀴즈만 푸는 모드 — 챌린지 진행/완주 기록은 건드리지 않는다
+  if(solo) m = {reward:'draw', quiz:true, quizN:10, quizType:want, quizLevel:'', oneline:false, question:false, review:false};
   const acts = m ? chalActiveMissions(m) : [];
-  info.innerHTML = ch ? `챌린지 · <b>${esc(ch.title)}</b> · 맞힌 퀴즈·제출 미션마다 ⭐ 적립`
-                      : (solo ? `<b>${esc(want)} 퀴즈</b> · 맞힌 문제마다 ⭐ 적립`
-                              : '챌린지 미션 · <b>참여 후 별 적립</b>');
+  info.innerHTML = ch ? `챌린지 · <b>${esc(ch.title)}</b> · 퀴즈·글 미션`
+                      : (solo ? `<b>${esc(want)} 퀴즈</b>`
+                              : '챌린지 미션 · <b>참여 후 수행</b>');
   let right;
   if(!stu){
-    right = `<div class="mp-note">상단에서 <b>학생 계정</b>을 선택하면 미션을 수행하고 별을 모을 수 있어요.</div>`;
+    right = `<div class="mp-note">상단에서 <b>학생 계정</b>을 선택하면 미션을 수행할 수 있어요.</div>`;
   } else if(!ch && !solo){
     right = `<div class="mp-note">이 책이 담긴 <b>챌린지에 먼저 참여</b>하면 미션이 열려요.<br>독서 챌린지 페이지에서 ‘참여하기’를 눌러 주세요.</div>`;
   } else if(!acts.length){
     right = `<div class="mp-note">사서가 켠 미션이 아직 없어요.</div>`;
   } else {
-    right = `<div class="mp-star">⭐ <b id="mpTotal">…</b> <small>모은 별</small></div>`
-          + `<div class="mp-prog" id="mpProg"></div>`
+    right = `<div class="mp-prog" id="mpProg"></div>`
           + acts.map(mpMissionCard).join('');
   }
   body.innerHTML = `
@@ -8916,35 +8862,28 @@ function renderMissionPanel(body, info, leftBody, L){
 function mpMissionCard(x){
   if(x.kind==='quiz'){
     return `<div class="mp-card">
-      <div class="mp-t">🎯 퀴즈 풀기 <span class="mp-v">맞힌 문제당 ⭐1</span></div>
+      <div class="mp-t">🎯 퀴즈 풀기</div>
       <div class="mp-s">보기는 매번 섞여요 — 위치가 아니라 내용으로 채점됩니다.</div>
       <div id="mpQuizBox"><div class="mp-load">문제 불러오는 중…</div></div></div>`;
   }
-  if(x.kind==='write'){
-    return `<div class="mp-card">
-      <div class="mp-t">${x.icon} ${esc(x.t)} <span class="mp-v">제출 ⭐${x.star}</span></div>
-      <div class="mp-s">${esc(x.ph||'')} (${x.min}자 이상 · 연락처·링크·같은 글자 반복은 인정되지 않아요)</div>
-      <textarea class="mp-ta" id="mp_ta_${x.k}" placeholder="여기에 적어 주세요"></textarea>
-      <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpSubmitWrite('${x.k}',${x.min})">제출</button>
-        <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
-  }
   return `<div class="mp-card">
-    <div class="mp-t">${x.icon} ${esc(x.t)} <span class="mp-v">⭐${x.star}</span></div>
-    <div class="mp-s">참여 흔적을 남기면 별을 받아요.</div>
-    <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpCert('${x.k}')">${esc(x.btn||'인증하기')}</button>
-      <span class="mp-done" id="mp_done_${x.k}">✓ 완료 +⭐${x.star}</span></div></div>`;
+    <div class="mp-t">${x.icon} ${esc(x.t)}</div>
+    <div class="mp-s">${esc(x.ph||'')} (${x.min}자 이상 · 연락처·링크·같은 글자 반복은 인정되지 않아요)</div>
+    <textarea class="mp-ta" id="mp_ta_${x.k}" placeholder="여기에 적어 주세요"></textarea>
+    <div class="mp-sub"><button class="mp-btn" id="mp_btn_${x.k}" onclick="mpSubmitWrite('${x.k}',${x.min})">제출</button>
+      <span class="mp-done" id="mp_done_${x.k}">✓ 완료</span></div></div>`;
 }
 async function mpHydrate(ch, m, stu, solo){
   const _bid=currentBook.id;   // 레이스 가드: fetch 대기 중 다른 책으로 전환되면 B 화면을 A 미션으로 덮지 않게
   // solo(상세 모달에서 퀴즈만 열기, 8/20): 챌린지가 없으므로 chId 없음 →
-  //   진행 저장(challenge_id NOT NULL)·완주 보너스(ref=chId)·내 챌린지 카드 미러는 건너뛴다. 맞힌 별·퀴즈 완주 ⭐10은 책 단위라 그대로 준다
+  //   진행 저장(challenge_id NOT NULL)·완주 처리·내 챌린지 카드 미러는 건너뛴다.
   _mpCtx={bookId:_bid, school:CH_SCHOOL, student:stu.id, m, chId:ch?ch.id:null, solo:!!solo,
           done:new Set(), ans:{}, quizCount:0, complete:false};
-  // 별 적립 + 퀴즈 시도 복원 — 독립 쿼리 병렬(기존 직렬 2왕복)
+  // 제출한 글(완료 표시용) + 퀴즈 시도 복원 — 독립 쿼리 병렬. (8/29 별 포인트 폐지: 완료 여부는 bookstar_stars 대신 bookstar_writings로 판단)
   await Promise.all([
     (async()=>{ try{
-      const r=await fetch(`${SB_REST}/bookstar_stars?student_id=eq.${encodeURIComponent(stu.id)}&select=activity,ref`,{headers:BX_H});
-      if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>_mpCtx.done.add(x.activity+'|'+x.ref)); }
+      const r=await fetch(`${SB_REST}/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(_bid)}&select=activity`,{headers:BX_H});
+      if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>_mpCtx.done.add(x.activity+'|book:'+_bid)); }
     }catch(e){} })(),
     (async()=>{ try{
       const r=await fetch(`${SB_REST}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(currentBook.id)}&select=ans`,{headers:BX_H});
@@ -8953,7 +8892,6 @@ async function mpHydrate(ch, m, stu, solo){
   ]);
   if(!currentBook || currentBook.id!==_bid || _mpCtx.bookId!==_bid) return;   // 책 전환됨 — 낡은 하이드레이트 중단
   _mpMirrorLocal();   // 서버에 있던 시도 기록을 로컬 카드 캐시에도(8/18)
-  mpRefreshTotal(stu.id);
   chalActiveMissions(m).forEach(x=>{
     if(x.kind==='quiz') return;
     if(_mpCtx.done.has(x.k+'|book:'+currentBook.id)) mpMarkDone(x.k);
@@ -8962,13 +8900,6 @@ async function mpHydrate(ch, m, stu, solo){
   const p=mpProgress();
   if(p.total>0 && p.done>=p.total) _mpCtx.complete=true;   // 이미 완료 — 재적립·모달 방지
   mpRenderProgress();
-}
-async function mpRefreshTotal(sid, val){
-  const el=document.getElementById('mpTotal'); if(!el) return;
-  if(typeof val==='number'){ el.textContent=val; return; }
-  try{ const r=await fetch(`${SB_REST}/bookstar_student_totals?school_id=eq.${CH_SCHOOL}&student_id=eq.${encodeURIComponent(sid)}&select=total_stars`,{headers:BX_H});
-    if(r.ok){ const rows=await r.json(); el.textContent=(rows&&rows[0])?rows[0].total_stars:0; } else el.textContent='0';
-  }catch(e){ el.textContent='0'; }
 }
 function mpMarkDone(k){
   const b=document.getElementById('mp_btn_'+k), d=document.getElementById('mp_done_'+k), ta=document.getElementById('mp_ta_'+k);
@@ -9237,30 +9168,16 @@ async function mpAnswer(el,q,it){
   if(!_mpCtx) return;
   q.querySelectorAll('.mp-opt').forEach(x=>x.classList.add('mp-lock'));
   const chosen=+el.dataset.orig;
-  const res=await mpRpc('award_quiz',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_item_id:it.id,p_choice:chosen});
-  const right=!!(res&&res.right);
-  const correct=(res&&typeof res.correct==='number')?res.correct:it.correct;
+  // 8/29 별 포인트 폐지: 서버 award_quiz 대신 문항에 담긴 정답(it.correct)으로 바로 채점
+  const correct=it.correct;
+  const right=(typeof correct==='number') && chosen===correct;
   mpRevealQuiz(q,it,correct,right,false,chosen);
-  if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
   // 진행 기록(정답·오답 모두 = "풀었음") → 서버 저장 + 진행바 + 완료체크
   _mpCtx.ans[it.id]={ok:right, pick:chosen};
   mpSaveProgress();
   _mpMirrorLocal();   // 8/18 사장님 수정요청(귀향 퀴즈 3개 풀고 닫으면 카드가 0/0): 내 챌린지 카드는 로컬 캐시만 읽으므로 여기에도 기록
   mpRenderProgress();
-  mpCheckQuizDone();
   mpCheckComplete();
-}
-// 퀴즈 완주 ⭐10 (설계 §3: "책 퀴즈 전부 풀면 완료 10" — 정답 여부 무관, 이 책의 문항을 전부 답하면 1회). 8/17까지 범례에만 있고 지급 코드가 없던 항목.
-// 서버 on conflict(student,activity,ref) 로 멱등 → 다시 열어도 중복 지급 없음.
-async function mpCheckQuizDone(){
-  if(!_mpCtx || _mpCtx.quizDone) return;
-  const ids=_mpCtx.quizIds||[]; if(!ids.length) return;
-  if(!ids.every(id=>_mpCtx.ans && _mpCtx.ans[id])) return;
-  _mpCtx.quizDone=true;
-  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:'quiz_done',p_ref:'book:'+_mpCtx.bookId});
-  if(res&&res.ok){ if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
-    try{ readerToast&&readerToast('퀴즈 완주 +⭐10'); }catch(e){} }
-  else _mpCtx.quizDone=false;
 }
 function mpRevealQuiz(q,it,correct,right,restored,pickOrig){
   q.querySelectorAll('.mp-opt').forEach(x=>{ x.classList.add('mp-lock');
@@ -9269,39 +9186,23 @@ function mpRevealQuiz(q,it,correct,right,restored,pickOrig){
     else if(oi===pickOrig && !right){ x.classList.add('mp-wrong'); x.querySelector('.mp-mk').textContent='✕'; }
     else x.classList.add('mp-dim');
   });
-  if(right){ const qq=q.querySelector('.mp-qq');
-    if(qq && !qq.querySelector('.mp-gain')){ const g=document.createElement('span'); g.className='mp-gain'; g.textContent=' +⭐1'; qq.appendChild(g); } }
   const ex=q.querySelector('.mp-expl'); if(ex){ ex.innerHTML='<b>'+(right?'정답!':'아쉬워요')+'</b> '+esc(it.expl||''); ex.classList.add('mp-show'); }
 }
 async function mpSubmitWrite(k,min){
   if(!_mpCtx) return;
   const ta=document.getElementById('mp_ta_'+k); const v=((ta&&ta.value)||'').trim();
-  const chk=bxWriteCheck(v,k,min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복) — 별 없음·저장 없음
+  const chk=bxWriteCheck(v,k,min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복) — 저장 없음
   if(!chk.ok){ alert(chk.msg); if(ta) ta.focus(); bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ok:false, meta:{reason:chk.reason,len:v.length}}); return; }
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
-  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
-  if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
-    // 글 내용도 서버 저장(사서 '학생 글' 화면용). 재제출 시 갱신.
-    fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
+  // 8/29 별 포인트 폐지: 글 저장(bookstar_writings)이 곧 미션 완료. 재제출 시 갱신.
+  let ok=false;
+  try{ const r=await fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})})
-      .then(r=>{ if(!r.ok) throw new Error('writings '+r.status); })
-      .catch(()=>{ const m='별은 받았지만 글 저장에 실패했어요 — 다시 제출해 주세요'; try{ bmToast(m); }catch(e){ alert(m); } });   // 8/29 실패를 삼키지 않음(8/21~29 조용한 유실 재발 방지)
-    bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
-    if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
-  else if(btn) btn.disabled=false;
-}
-async function mpCert(k){
-  if(!_mpCtx) return;
-  const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
-  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:k,p_ref:'book:'+_mpCtx.bookId});
-  if(res&&res.ok){ mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
-    if(typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total); mpRenderProgress(); mpCheckComplete(); }
-  else if(btn) btn.disabled=false;
-}
-async function mpRpc(fn,bodyObj){
-  try{ const r=await fetch(`${SB_REST}/rpc/${fn}`,{method:'POST',headers:BX_H,body:JSON.stringify(bodyObj)});
-    return r.ok ? await r.json() : {ok:false}; }catch(e){ return {ok:false}; }
+       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})}); ok=r.ok; }catch(e){}
+  if(!ok){ if(btn) btn.disabled=false; const m='글 저장에 실패했어요 — 다시 제출해 주세요'; try{ bmToast(m); }catch(e){ alert(m); } return; }
+  mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
+  bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
+  mpRenderProgress(); mpCheckComplete();
 }
 // 진행률 = 푼 퀴즈 문항 + 완료한 작성·인증 미션 / (퀴즈 문항수 + 켠 작성·인증 미션수)
 function mpProgress(){
@@ -9343,23 +9244,21 @@ function _mpMirrorLocal(extra){
     _chalMerge(_mpCtx.bookId, Object.assign({ ans:Object.assign({}, cur.ans||{}, _mpCtx.ans||{}), quiz_total:(_mpCtx.quizCount||cur.quiz_total||0) }, extra||{}));
   }catch(e){}
 }
-// 모든 미션 수행 시: 완주 보너스(⭐30, 멱등) + enroll done + 축하
+// 모든 미션 수행 시: enroll done + 축하 (8/29 별 포인트 폐지 — 완주 보너스 삭제)
 async function mpCheckComplete(){
-  if(!_mpCtx || _mpCtx.complete || _mpCtx.solo) return;   // solo는 챌린지 완주가 아니다 — challenge_done(ref=chId) 지급 금지(8/20)
+  if(!_mpCtx || _mpCtx.complete || _mpCtx.solo) return;   // solo는 챌린지 완주가 아니다(8/20)
   const {done,total}=mpProgress();
   if(!(total>0 && done>=total)) return;
   _mpCtx.complete=true;
   _mpMirrorLocal({mp_done:true});   // 내 챌린지 카드 '완료 ✓'(8/18)
-  const res=await mpRpc('award_activity',{p_school:_mpCtx.school,p_student:_mpCtx.student,p_activity:'challenge_done',p_ref:_mpCtx.chId});
-  if(res&&typeof res.total==='number') mpRefreshTotal(_mpCtx.student,res.total);
   try{
     await fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
       {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
        body:JSON.stringify({student_id:_mpCtx.student, challenge_id:_mpCtx.chId, status:'done', done_at:new Date().toISOString()})});
   }catch(e){}
   mpRenderProgress();
-  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['완주 보너스 <b>+⭐30</b>','내서재에서 모은 별을 확인하세요']}); }
-  catch(e){ readerToast&&readerToast('🏅 챌린지 완주! +⭐30'); }
+  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 미션을 모두 마쳤어요','내서재에서 내 기록을 확인하세요']}); }
+  catch(e){ readerToast&&readerToast('🏅 챌린지 완주!'); }
 }
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
@@ -9777,22 +9676,9 @@ function _doneBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEa
 function _readingBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); const p=r?(r.read_pct||0):0; if(p>0&&p<95) out.push({b, pct:Math.max(1,Math.min(94,p)), ts:(r&&r.ts)||0}); }); out.sort((x,y)=>y.ts-x.ts); return out; }
 function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
 
-/* ════════ 내서재 ① 내 활동 그룹 (프로필·별 내역·기록) — 실데이터 ════════ */
+/* ════════ 내서재 ① 내 활동 그룹 (프로필·기록) — 실데이터. 8/29 별 포인트 폐지(별 내역·등급 삭제) ════════ */
 const AG_IC_USER='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>';
-const AG_ACTGRP={
-  quiz:['퀴즈','#3a6ea5'], quiz_done:['퀴즈','#3a6ea5'],
-  review:['서평·독후감','#b5462f'], essay:['서평·독후감','#b5462f'],
-  challenge_join:['챌린지','#7a5a2f'], challenge_done:['챌린지','#7a5a2f'],
-  question:['한 줄 질문','#d4a93b'],
-  oneline:['한 줄 소감','#1fa971'], impression:['한 줄 소감','#1fa971'],
-  attend:['출석·방문','#7c6f9c'], visit:['출석·방문','#7c6f9c'],
-  reading:['독서·기타','#64748b'], photo:['독서·기타','#64748b'], recommend:['독서·기타','#64748b'], underline:['독서·기타','#64748b'], comment:['독서·기타','#64748b']
-};
-// 8/17: 범례엔 실제로 지급 코드가 있는 항목만. attend(출석)는 8/17 저녁 정의 확정(도서관 로그인→배너 진입 = 출석, 하루 1번 ⭐1, SSO 수신부에서 지급) → 범례 복귀. visit(방문 1)은 여전히 정의·지급 코드 없음(범례 제외).
-const AG_EARN_ORDER=['quiz','quiz_done','oneline','question','review','challenge_join','challenge_done'];   // (참고용 — 실제 범례는 아래 _mis/_evt 두 묶음으로 그린다)
-const AG_EARN_LABEL={quiz:'퀴즈 1문항',quiz_done:'퀴즈 완주',oneline:'한 줄 소감',question:'한 줄 질문',review:'서평',essay:'독후감',attend:'출석',challenge_join:'챌린지 참가',challenge_done:'챌린지 완주'};
 const AG_NOTE_KIND={oneline:['한 줄 소감','ag-k-sg'],impression:['한 줄 소감','ag-k-sg'],question:['한 줄 질문','ag-k-q'],review:['서평','ag-k-rv'],essay:['독후감','ag-k-rv']};
-const AG_STAR='<svg class="ag-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.8.7-5 4.6 1.4 6.7L12 17.8 5.9 21l1.4-6.7-5-4.6 6.8-.7z"/></svg>';
 let _agWritings=[], _agNoteFilter='all';
 const _AGF_TTL=2000; const _agfCache=new Map();   // 마이페이지 진입 시 같은 path 중복 fetch 폭주 방지(2초 TTL + in-flight dedupe). path에 계정 id 포함되어 계정 간 오염 없음
 async function _agFetch(path){
@@ -9805,48 +9691,21 @@ async function _agFetch(path){
 function _agDate(iso){ try{ const d=new Date(iso); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; }catch(e){ return ''; } }
 async function renderActivityGroup(){
   const el=document.getElementById('actGroup'); if(!el) return;
-  const grpHead='<div class="lib-grp first"><div class="lib-grp-ic">'+AG_IC_USER+'</div><div><div class="lib-grp-t">내 활동</div><div class="lib-grp-s">프로필 · 별 · 기록</div></div></div>';
+  const grpHead='<div class="lib-grp first"><div class="lib-grp-ic">'+AG_IC_USER+'</div><div><div class="lib-grp-t">내 활동</div><div class="lib-grp-s">프로필 · 기록</div></div></div>';
   const s=bxStudent();
   if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 활동이 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
   const enc=encodeURIComponent(s.id);
   try{ await mbLoad(); }catch(e){}   // 내 기록의 책 제목(도서관 책 포함)용
-  const [profA,writings,stars,totalsA,enroll,rates]=await Promise.all([
+  const [profA,writings,enroll]=await Promise.all([
     _agFetch(`bookstar_students?id=eq.${enc}&select=bio,favorite_book_id,emoji,name`),
     _agFetch(`bookstar_writings?student_id=eq.${enc}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity,book_id,text,created_at&order=created_at.desc`),
-    _agFetch(`bookstar_stars?student_id=eq.${enc}&select=activity,stars,created_at`),
-    _agFetch(`bookstar_student_totals?student_id=eq.${enc}&select=total_stars,grade`),
-    _agFetch(`bookstar_challenge_enroll?student_id=eq.${enc}&select=status`),
-    _agFetch(`bookstar_star_rates?select=activity,stars`)
+    _agFetch(`bookstar_challenge_enroll?student_id=eq.${enc}&select=status`)
   ]);
-  const prof=profA[0]||{}, totals=totalsA[0]||{};
+  const prof=profA[0]||{};
   const emoji=prof.emoji||s.emoji||'📘', name=prof.name||s.name||'', bio=prof.bio||s.bio||'';
   const wCnt=a=>writings.filter(w=>w.activity===a).length;
   const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review'), nEss=wCnt('essay');
   const nDone=_doneBooks().length, nEnroll=enroll.length, nEnrollDone=enroll.filter(e=>e.status==='done').length;
-  const totalStars=totals.total_stars||0, grade=totals.grade||gradeOf(totalStars);
-  const yr=new Date().getFullYear();
-  const yearStars=stars.filter(x=>x.created_at&&(+String(x.created_at).slice(0,4))===yr).reduce((a,x)=>a+(x.stars||0),0);
-  const ng=nextGrade(totalStars), flr=gradeFloor(totalStars);
-  const pct= ng ? Math.round((totalStars-flr)/((ng.at-flr)||1)*100) : 100;
-  const gEmo=GRADE_EMO[grade]||'⭐';
-  // 활동별 별 그룹 집계
-  const grp={};
-  stars.forEach(x=>{ const m=AG_ACTGRP[x.activity]; if(!m) return; const g=grp[m[0]]||(grp[m[0]]={color:m[1],year:0,cum:0}); g.cum+=x.stars||0; if(x.created_at&&(+String(x.created_at).slice(0,4))===yr) g.year+=x.stars||0; });
-  const grpKeys=Object.keys(grp).sort((a,b)=>grp[b].cum-grp[a].cum);
-  const maxCum=Math.max(1,...grpKeys.map(k=>grp[k].cum));
-  const grpRows=grpKeys.map(lab=>{ const g=grp[lab]; const w=Math.max(4,Math.round(g.cum/maxCum*100)); return `<div class="ag-arow"><div class="ag-arow-top"><span class="ag-dot" style="background:${g.color}"></span><span class="ag-aname">${esc(lab)}</span><b class="ag-ayear">${g.year}</b><span class="ag-acum">${g.cum.toLocaleString()}</span></div><div class="ag-abar"><i style="width:${w}%;background:${g.color}"></i></div></div>`; }).join('');
-  // 별 버는 법 (star_rates = 진짜 출처)
-  const rateMap={}; rates.forEach(r=>rateMap[r.activity]=r.stars);
-  // 미션(퀴즈·글) 별은 챌린지 안에서만 나온다 — 내 도서관 '빌린 책' 서평(상시)은 별 없음. 범례에 그 구분을 적어 "서평 썼는데 별이 없다"는 오해 방지(8/17)
-  const _lab=a=>`${AG_EARN_LABEL[a]} <b>⭐${rateMap[a]}</b>`;
-  const _mis=['quiz','quiz_done','oneline','question','review','essay'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
-  const _evt=['challenge_join','challenge_done'].filter(a=>rateMap[a]!=null).map(_lab).join(' · ');
-  // 출석 ⭐1 (8/17 정의 확정: 도서관 로그인 후 배너로 들어온 날, 하루 1번) — 지급 코드는 SSO 수신부(award_activity attend day:날짜)
-  const _att=(rateMap.attend!=null)?`${_lab('attend')} <span style="color:var(--light);font-weight:500">(도서관 로그인 후 배너로 들어온 날, 하루 1번)</span>`:'';
-  const earn=`<b>챌린지 미션</b> ${_mis}${_evt?` &nbsp;/&nbsp; <b>챌린지</b> ${_evt}`:''}${_att?` &nbsp;/&nbsp; <b>출석</b> ${_att}`:''}`;
-  // 등급 안내
-  const curIdx=GRADE_TIERS.findIndex(t=>t[0]===grade);
-  const tiers=GRADE_TIERS.map((t,i)=>{ const lo=t[1], nx=GRADE_TIERS[i+1]; const rng=nx?`${lo.toLocaleString()}~${(nx[1]-1).toLocaleString()}`:`${lo.toLocaleString()}~`; const on=t[0]===grade; const cls=on?' on':(i<curIdx?' done':' future'); return `<div class="ag-tier${cls}"><div class="te">${GRADE_EMO[t[0]]||'⭐'}</div><div class="tn">${t[0]}</div><div class="tr">${rng}</div>${on?'<div class="tnow">현재</div>':''}</div>`; }).join('');
   // 내 기록 노트 (칩으로 필터)
   _agWritings=writings; _agNoteFilter='all';
   const hasNotes=writings.some(w=>AG_NOTE_KIND[w.activity]);
@@ -9854,28 +9713,12 @@ async function renderActivityGroup(){
    +`<div class="ag-card">
       <div class="ag-ptop">
         <div class="ag-pav">${esc(emoji)}</div>
-        <div><div class="ag-pname">${esc(name)} <span class="ag-grade">${gEmo} ${esc(grade)}</span></div><div class="ag-pstatus">${esc(bio||'상태메시지를 남겨보세요')}</div></div>
+        <div><div class="ag-pname">${esc(name)}</div><div class="ag-pstatus">${esc(bio||'상태메시지를 남겨보세요')}</div></div>
         <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
       </div>
       <div class="ag-pstats">
         ${[[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEss,'독후감','s-rv'],[nDone,'완독','s-done'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
       </div>
-    </div>
-    <div class="ag-sec-h"><h3>내 별 내역</h3></div>
-    <div class="ag-card">
-      <div class="ag-tiles">
-        <div class="ag-tile"><div class="k">올해 별</div><div class="v">${AG_STAR}${yearStars.toLocaleString()}</div></div>
-        <div class="ag-tile"><span class="ag-grade gtag">${gEmo} ${esc(grade)}</span><div class="k">누적 별</div><div class="v">${AG_STAR}${totalStars.toLocaleString()}</div></div>
-      </div>
-      ${ng?`<div class="ag-nextbar"><div class="lab"><span>다음 등급 <b>${ng.name}</b>까지</span><span><b>${ng.need.toLocaleString()}별</b></span></div><div class="ag-bar"><span style="width:${Math.max(2,Math.min(100,pct))}%"></span></div></div>`
-          :`<div class="ag-nextbar"><div class="lab"><span>최고 등급 <b>레전드</b> 달성! 🎉</span></div><div class="ag-bar"><span style="width:100%"></span></div></div>`}
-      <div class="ag-div"></div>
-      <div class="ag-subh">활동별 별 (올해 · 누적)</div>
-      ${grpRows?`<div class="ag-atbl"><div class="ag-ahead"><span>활동</span><span>올해</span><span>누적</span></div>${grpRows}</div>`:'<div class="ag-empty">아직 모은 별이 없어요. 퀴즈·소감·챌린지로 별을 모아보세요.</div>'}
-      <div class="ag-div"></div>
-      <div class="ag-subh">등급 안내</div>
-      <div class="ag-tiers">${tiers}</div>
-      <div class="ag-earn">별 버는 법 — ${earn}<br>등급은 <b>누적 별</b> 기준이며 한 번 오르면 내려가지 않아요.</div>
     </div>
     <div class="ag-sec-h"><h3>내 기록</h3>${hasNotes?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
     <div class="ag-chips" id="agChips"><span class="ag-chip" data-f="soup" onclick="agSetNoteFilter('soup')">한 줄 소감 ${nOne}</span><span class="ag-chip" data-f="q" onclick="agSetNoteFilter('q')">한 줄 질문 ${nQ}</span><span class="ag-chip" data-f="rv" onclick="agSetNoteFilter('rv')">서평 ${nRev}</span><span class="ag-chip" data-f="es" onclick="agSetNoteFilter('es')">독후감 ${nEss}</span></div>
@@ -9973,7 +9816,7 @@ function mbMenu(id,opt){
   const b=_anyBook(id); if(!b){ bmToast('책 정보를 찾지 못했어요'); return; }
   const keys=opt.only||['oneline','question','review','essay'];
   const chArg=opt.chId?`'${esc(String(opt.chId))}'`:'null';
-  const items=CH_MISSIONS.filter(x=>x.kind==='write'&&keys.indexOf(x.k)>=0).map(x=>`<div class="mb-mi" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg})"><span class="ic">${WR_ICON[x.k]}</span><div><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}${opt.chId?` · ⭐${x.star}`:''}</span></div><i>›</i></div>`).join('');
+  const items=CH_MISSIONS.filter(x=>x.kind==='write'&&keys.indexOf(x.k)>=0).map(x=>`<div class="mb-mi" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg})"><span class="ic">${WR_ICON[x.k]}</span><div><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}</span></div><i>›</i></div>`).join('');
   const extra=opt.chId?'':`<div class="mb-sep"></div>
     <div class="mb-mi sm" onclick="openAddShelf('${esc(b.id)}')"><span class="ic">${IC_PLUS}</span><div><b>책장에 담기</b></div><i>›</i></div>
     <div class="mb-mi sm" onclick="openLifeModal('${esc(b.id)}')"><span class="ic">${IC_STAR_SM}</span><div><b>인생책으로</b></div><i>›</i></div>
@@ -9981,7 +9824,7 @@ function mbMenu(id,opt){
   _bmModal(`${_mbHead(b,opt.chId?'챌린지 책':'내 책')}${items||'<div class="ag-empty">이 챌린지엔 글쓰기 미션이 없어요.</div>'}${extra}`);
 }
 /* ── 글쓰기 에디터. 짧은 글(소감·질문)=120자 · 긴 글(서평 300자↑·독후감 800자↑). '다른 학생에게 공개'=is_public.
-   별: 이 책이 담긴 참여 중 챌린지에 그 미션이 켜져 있을 때만(award_activity, 멱등). 상시 글은 저장만(별 없음 — 8/17 규칙 유지) ── */
+   8/29 별 포인트 폐지 — 챌린지 글·상시 글 모두 저장만 한다. ── */
 let _wr=null;
 function _wrDraftKey(){ return `bookstar-draft-${_bxSid()}-${_wr.k}-${_wr.bookId}`; }
 async function wrOpen(bookId,k,chId){
@@ -10029,15 +9872,13 @@ async function wrSubmit(){
   const go=document.getElementById('wrGo'); if(go) go.disabled=true;
   let chId=_wr.chId;
   if(!chId){ try{ const c=chalForBook({id:_wr.bookId,isbn:_wr.b.isbn,title:_wr.b.title}); if(c&&appChalMission(c)[_wr.k]) chId=String(c.id); }catch(e){} }
-  let starred=false;
-  if(chId){ try{ const res=await mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:s.id,p_activity:_wr.k,p_ref:'book:'+_wr.bookId}); starred=!!(res&&res.ok); if(starred&&typeof res.total==='number') mpRefreshTotal(s.id,res.total); }catch(e){} }
   let ok=false;
   try{ const r=await fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,{method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
     body:JSON.stringify({student_id:s.id,school_id:CH_SCHOOL,challenge_id:chId||null,book_id:_wr.bookId,activity:_wr.k,text:v,is_public:pub})}); ok=r.ok; }catch(e){}
   if(!ok){ if(go) go.disabled=false; bmToast('저장에 실패했어요'); return; }
   bxEvent('activity',{sub:_wr.k, book:bxBookByKey(_wr.bookId), program_id:chId||null, ref_table:'bookstar_writings', ref_id:s.id+'|'+_wr.k+'|'+_wr.bookId, meta:{len:v.length,standing:!chId,is_public:pub}});
   try{ localStorage.removeItem(_wrDraftKey()); }catch(e){}
-  bmCloseModal(); bmToast(starred?`올렸어요 · ⭐${_wr.def.star}`:'올렸어요');
+  bmCloseModal(); bmToast('올렸어요');
   try{ _agfCache.clear(); }catch(e){}
   _wrMine=null; renderMyProfileTop(); try{ renderActivityGroup(); }catch(e){} try{ renderQuestMap(); }catch(e){}
 }
@@ -10336,7 +10177,7 @@ async function saveProfile(){
   renderActivityGroup();
 }
 /* 마이페이지 — 내가 챌린지 미션으로 제출한 글 (bookstar_writings, 현재 학생) */
-const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬',star:5},question:{t:'한 줄 질문',icon:'❓',star:5},review:{t:'서평',icon:'📝',star:10},essay:{t:'독후감',icon:'📜',star:50},underline:{t:'핵심 문장',icon:'✏️',star:5},recommend:{t:'책 추천',icon:'📚',star:5}};
+const WR_ACT={oneline:{t:'한 줄 소감',icon:'💬'},question:{t:'한 줄 질문',icon:'❓'},review:{t:'서평',icon:'📝'},essay:{t:'독후감',icon:'📜'},underline:{t:'핵심 문장',icon:'✏️'},recommend:{t:'책 추천',icon:'📚'}};
 async function renderMyWritings(){
   const el=document.getElementById('myWritings'); if(!el) return;
   const stu=(typeof bxStudent==='function')&&bxStudent();
@@ -10355,10 +10196,10 @@ async function renderMyWritings(){
   el.innerHTML=`
     <div class="section-head" style="margin-top:40px"><div class="section-title"><em>내가 제출한 글</em> · 챌린지 미션 ${rows.length}건</div></div>
     <div class="mw-grid">${rows.map(w=>{
-      const a=WR_ACT[w.activity]||{t:w.activity,icon:'📝',star:''};
+      const a=WR_ACT[w.activity]||{t:w.activity,icon:'📝'};
       const date=(w.created_at||'').slice(0,10);
       return `<div class="mw-card">
-        <div class="mw-top"><span class="mw-badge">${a.icon} ${esc(a.t)}${a.star?` ⭐${a.star}`:''}</span>
+        <div class="mw-top"><span class="mw-badge">${a.icon} ${esc(a.t)}</span>
           <span class="mw-book">${esc(bookTitle(w.book_id))}</span>
           <span class="mw-date">${esc(date)}</span></div>
         <div class="mw-text">${esc(w.text||'')}</div></div>`;
@@ -10488,7 +10329,6 @@ const HUB_NODES = [
   {key:'program',     icon:'sparkles', label:'프로그램',     angle:30,  badge:'3', alert:true},
   {key:'challenge',   icon:'target',   label:'챌린지',       angle:90,  badge:'5/12'},
   {key:'score',       icon:'trophy',   label:'점수·뱃지',    angle:150, badge:''},
-  {key:'leaderboard', icon:'users',    label:'리더보드',     angle:210, badge:''},
 ];
 
 function renderHomeHub(){
@@ -10593,7 +10433,6 @@ function onHubNode(key){
   else if(key==='library'){ nav('collection'); }
   else if(key==='program'){ openProgramModal(); }
   else if(key==='score'){ nav('mypage'); }
-  else if(key==='leaderboard'){ nav('mypage'); }
   else if(key==='challenge'){ nav('mypage'); }
 }
 
@@ -10783,7 +10622,7 @@ function onJoinedSlot(ci, bi){
 
 
 /* ═══════════════════════════════════════════════════════════
-   뱃지 / 리더보드 / 내가 읽은 책
+   뱃지 / 내가 읽은 책
    ═══════════════════════════════════════════════════════════ */
 function renderBadges(){
   const el = document.getElementById('badgeGrid');
@@ -10797,88 +10636,7 @@ function renderBadges(){
   `).join('');
 }
 
-/* ── 리더보드: 별 종합 랭킹 (관리자 리더보드와 동일 데이터: totals + students) ── */
-function _lbWeekKeys(){                 // 이번 주(월~일) 날짜 키 배열 — todayKey()와 동일 포맷
-  const out=[], d=new Date(), day=(d.getDay()+6)%7;   // 월=0
-  const mon=new Date(d); mon.setDate(d.getDate()-day);
-  for(let i=0;i<7;i++){ const x=new Date(mon); x.setDate(mon.getDate()+i);
-    out.push(x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')); }
-  return out;
-}
-function _lbMin(m){ m=Math.round(m||0); if(m<=0) return '0분'; if(m<60) return m+'분'; const h=Math.floor(m/60), r=m%60; return r?`${h}시간 ${r}분`:`${h}시간`; }
-function _lbEmpty(){
-  return `<div class="lb-empty">
-    <div class="lb-empty-emo">🏆</div>
-    <div class="lb-empty-t">아직 랭킹이 비어 있어요</div>
-    <div class="lb-empty-s">책을 읽고 <b>퀴즈·소감</b>으로 별(⭐)을 모으면<br>이곳 리더보드에 이름이 올라가요.</div>
-    <button class="lb-empty-btn" onclick="nav('curation')">챌린지 둘러보기 →</button>
-  </div>`;
-}
-function _lbMeCard(me, meId, ranked, meIdx, nameMap, emoMap, doneMap, weekMap){
-  if(!me){
-    return `<div class="lb-me-card" style="border-style:dashed;cursor:pointer" onclick="bxOpenPicker()">
-      <div class="lb-me-main"><div class="lb-me-top">내 순위 보기</div>
-        <div class="lb-me-sub">계정을 선택하면 내 순위가 여기에 표시돼요.</div></div>
-      <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:14px">선택 →</div></div></div>`;
-  }
-  const nm=nameMap[meId]||me.name||'나';
-  const done=doneMap[meId]||0, week=weekMap[meId]||0;
-  if(meIdx<0){     // 계정은 있으나 아직 별 0 → 랭킹 미진입
-    const g=gradeOf(0);
-    return `<div class="lb-me-card">
-      <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${esc(g)}</span></div>
-        <div class="lb-me-sub">아직 별을 모으는 중 · 완독 ${done}권 · 이번 주 ${_lbMin(week)}</div></div>
-      <div class="lb-me-rank"><div class="lb-me-rk" style="font-size:15px">— 위</div><div class="lb-me-rkk">별을 모으면 등장!</div></div></div>`;
-  }
-  const t=ranked[meIdx], grade=t.grade||gradeOf(t.total_stars);
-  return `<div class="lb-me-card">
-    <div class="lb-me-main"><div class="lb-me-top">${esc(nm)} <span class="lb-grade">${esc(grade)}</span></div>
-      <div class="lb-me-sub">완독 ${done}권 · 이번 주 ${_lbMin(week)}</div></div>
-    <div class="lb-me-rank"><div class="lb-me-rk">${meIdx+1}위</div><div class="lb-me-rkk">/ ${ranked.length}명 · ${(t.total_stars||0).toLocaleString()}⭐</div></div></div>`;
-}
-async function renderLeaderList(){
-  const el = document.getElementById('leaderboardBody');
-  if(!el) return;
-  el.innerHTML = '<div class="lb-loading">리더보드를 불러오는 중…</div>';
-  const me = (typeof bxStudent==='function')?bxStudent():null;
-  const meId = me && me.id;
-  const [totals, students, results, rstats] = await Promise.all([
-    _agFetch(`bookstar_student_totals?school_id=eq.${CH_SCHOOL}&order=total_stars.desc&select=student_id,total_stars,grade`),
-    _agFetch(`bookstar_students?select=id,name,emoji`),
-    _agFetch(`bookstar_challenge_results?select=student_id,read_pct`),
-    _agFetch(`bookstar_reader_stats?select=student_id,data`)
-  ]);
-  const nameMap={}, emoMap={};
-  (students||[]).forEach(s=>{ nameMap[s.id]=s.name||''; emoMap[s.id]=s.emoji||''; });
-  const doneMap={};       // 완독 = read_pct ≥ 95 인 책 수
-  (results||[]).forEach(r=>{ if((r.read_pct||0)>=95) doneMap[r.student_id]=(doneMap[r.student_id]||0)+1; });
-  const wk=_lbWeekKeys(), weekMap={};     // 이번 주 읽은시간(분)
-  (rstats||[]).forEach(r=>{ const days=(r.data&&r.data.readingTime&&r.data.readingTime.days)||{}; let m=0; wk.forEach(k=>m+=(days[k]||0)); weekMap[r.student_id]=m; });
-
-  const ranked=(totals||[]).filter(t=>(t.total_stars||0)>0);   // 별 1개 이상만 랭킹
-  if(!ranked.length){ el.innerHTML=_lbEmpty(); return; }
-
-  const meIdx = meId ? ranked.findIndex(t=>t.student_id===meId) : -1;
-  const meCard = _lbMeCard(me, meId, ranked, meIdx, nameMap, emoMap, doneMap, weekMap);
-
-  const rows = ranked.map((t,i)=>{
-    const rank=i+1, sid=t.student_id;
-    const nm=sid===meId?(nameMap[sid]||(me&&me.name)||'나'):(nameMap[sid]?pubName(nameMap[sid]):'이름 없는 친구');   // 남은 실명 아닌 가린 이름(8/17), 본인 줄만 실명
-    const grade=t.grade||gradeOf(t.total_stars);
-    const done=doneMap[sid]||0, week=weekMap[sid]||0;
-    const topCls = rank<=3 ? `top${rank}` : '', meCls = sid===meId ? 'me' : '';
-    return `<div class="leader-row ${topCls} ${meCls}">
-      <div class="leader-rank">${rank}</div>
-      <div class="lb-id">
-        <div class="lb-name2">${esc(nm)} <span class="lb-grade">${esc(grade)}</span></div>
-        <div class="lb-meas"><span>완독 ${done}권</span><span>이번 주 ${_lbMin(week)}</span></div>
-      </div>
-      <div class="leader-score">${(t.total_stars||0).toLocaleString()}<span class="lb-unit">⭐</span></div>
-    </div>`;
-  }).join('');
-
-  el.innerHTML = `${meCard}<div class="lb-legend">⭐ 누적 별 종합 랭킹 · 측정 보조 — 📖 완독 권수 · ⏱ 이번 주 읽은 시간</div><div class="lb-wrap">${rows}</div>`;
-}
+/* (8/29 별 포인트 폐지 — 리더보드 페이지·함수 삭제) */
 
 /* ═══════════════════════════════════════════════════════════
    사서 대시보드 — 전교생 완독·퀴즈·독서시간 집계 (?page=dashboard)
@@ -11818,11 +11576,6 @@ const FEED_PASTEL=['#eef2ff','#fdeef4','#eefaf1','#fff6e9','#eef7fb','#f3eefe','
 const FEED_ACT={ oneline:{t:'한 줄 소감',cat:'oneline'}, review:{t:'서평',cat:'review'}, essay:{t:'독후감',cat:'essay'},
   underline:{t:'핵심 문장',cat:'highlight'}, recommend:{t:'책 추천',cat:'recommend'}, question:{t:'한 줄 질문',cat:'question'},
   impression:{t:'한 줄 소감',cat:'oneline'}, favorite:{t:'인생책',cat:'favorite'} };
-const GRADE_EMO={라이징스타:'💫',스타:'⭐',빅스타:'🌟',슈퍼스타:'✨',레전드:'👑'};
-const GRADE_TIERS=[['라이징스타',0],['스타',500],['빅스타',1500],['슈퍼스타',3000],['레전드',5000]];
-function gradeOf(t){t=+t||0;let g=GRADE_TIERS[0][0];for(const[n,m]of GRADE_TIERS){if(t>=m)g=n;}return g;}
-function nextGrade(t){t=+t||0;for(const[n,m]of GRADE_TIERS){if(t<m)return{name:n,at:m,need:m-t};}return null;}
-function gradeFloor(t){t=+t||0;let f=0;for(const[,m]of GRADE_TIERS){if(t>=m)f=m;}return f;}
 let _feedTab='rec', _feedType='all', _feedItems=[];
 let _myFollows=new Set(), _likeCount={}, _myLikes=new Set();
 // 학생 이름·이모지 서버 캐시 — BX_STUDENTS는 빈 폴백 배열이라(5850) 피드·프로필 이름이 전부 '학생'으로 나오던 버그 수리
@@ -12010,15 +11763,14 @@ async function openStudentProfile(sid){
   ov.classList.add('on'); document.body.style.overflow='hidden';
   // stale 가드: 최신 호출만 렌더 (기존: A 프로필 늦은 응답이 B 모달을 통째로 덮어쓰던 레이스)
   const token = (openStudentProfile._t = {});
-  let writings=[], results=[], totals=null, enroll=[];
+  let writings=[], results=[], enroll=[];
   const me=_bxSid();
   let followers=0, followingN=0, iFollow=_myFollows.has(sid);
   const _gj = async (url, fn) => { try{ const r=await fetch(url,{headers:BX_H}); if(r.ok) fn(await r.json()); }catch(e){} };
-  // 독립 6요청 병렬 (기존: 순차 6왕복 동안 '불러오는 중')
+  // 독립 5요청 병렬 (8/29 별 포인트 폐지 — totals 요청 삭제)
   await Promise.all([
     _gj(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}&select=*&order=created_at.desc`, a=>{ writings=a; }),
     _gj(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`, a=>{ results=a; }),
-    _gj(`${BX_SB}/bookstar_student_totals?student_id=eq.${encodeURIComponent(sid)}&select=total_stars,grade`, a=>{ totals=Array.isArray(a)&&a[0]; }),
     _gj(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`, a=>{ enroll=a; }),
     _gj(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`, a=>{ if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } }),
     _gj(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(sid)}&select=following_id`, a=>{ if(Array.isArray(a)) followingN=a.length; }),
@@ -12029,8 +11781,6 @@ async function openStudentProfile(sid){
   const done=enroll.filter(e=>e.status==='done').length;
   let qok=0,qt=0; results.forEach(r=>{ qok+=(r.quiz_ok||0); qt+=(r.quiz_total||0); });
   const rate=qt?Math.round(qok/qt*100):0;
-  const stars=totals?(totals.total_stars||0):0;
-  const grade=totals?(totals.grade||''):'';
   const byBook={};
   results.forEach(r=>{ if(!r.book_id||!(r.impression||'').trim())return; (byBook[r.book_id]=byBook[r.book_id]||[]).push({act:'impression',text:r.impression}); });
   writings.forEach(w=>{ if(!w.book_id)return; (byBook[w.book_id]=byBook[w.book_id]||[]).push({act:w.activity,text:w.text}); });
@@ -12045,14 +11795,13 @@ async function openStudentProfile(sid){
   ov.querySelector('.bxp').innerHTML=`
     <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
       <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(me===sid?s.name:pubName(s.name))}</div>
-      <div class="bxp-gr">${grade?`${GRADE_EMO[grade]||''} ${esc(grade)} 등급 · `:''}세명대학교 학술정보원</div>
+      <div class="bxp-gr">세명대학교 학술정보원</div>
       <div class="bxp-fl"><span>팔로워 <b id="bxpFollowers">${followers}</b></span><span>팔로잉 <b>${followingN}</b></span></div>
       ${me===sid?'':`<button class="bxp-followbtn${iFollow?' on':''}" onclick="profileFollow(this,'${esc(sid)}')">${iFollow?'팔로잉':'팔로우'}</button>`}</div>
     <div class="bxp-stats">
       <div class="bxp-st"><div class="v">${done}</div><div class="l">챌린지 완주</div></div>
       <div class="bxp-st"><div class="v">${qt?rate+'%':'—'}</div><div class="l">퀴즈 정답률</div></div>
-      <div class="bxp-st"><div class="v">${writings.length}</div><div class="l">남긴 글</div></div>
-      <div class="bxp-st"><div class="v">${stars.toLocaleString()}</div><div class="l">누적 별</div></div></div>
+      <div class="bxp-st"><div class="v">${writings.length}</div><div class="l">남긴 글</div></div></div>
     <div class="bxp-sec">📚 읽고 기록한 책 (${books.length})</div>
     <div class="bxp-body">${rowsHtml}</div>`;
 }
@@ -12099,10 +11848,7 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(SSO_PERSONAL_KEY, _sp.get('sso_personal')==='1'?'1':'0');
       }catch(e){}
       try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
-      // 출석 ⭐1 (8/17 사장님 정의): 학교 도서관에 로그인한 뒤 배너를 눌러 북스타로 들어온 날 = 출석. 하루 1번(ref='day:날짜' — award_activity가 학번·활동·ref 중복을 막는다).
-      // 배점은 서버 bookstar_star_rates.attend(=1)가 진짜 출처. 학생 화면 범례에도 같은 값이 뜬다.
-      try{ const _d=new Date(), _day=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
-        mpRpc('award_activity',{p_school:CH_SCHOOL,p_student:_ssoUid,p_activity:'attend',p_ref:'day:'+_day}).catch(()=>{}); }catch(e){}
+      // (8/29 별 포인트 폐지 — 출석 별 지급 삭제)
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
       // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
       // 고전(뷰어 게이트)이 우선 — 있으면 그 책 읽기로 바로 진입하고 도서관 책 기억은 함께 폐기
