@@ -5336,16 +5336,17 @@ function chalBookCard(b,c){
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
   // 8/29 안내 카드 — 사서가 순서 바꾸기에서 정한 자리(chal_pos = 앞에 오는 챌린지 수)에 끼워 넣는다. 없으면 맨 위. 챌린지가 아직 없어도 안내는 보인다.
-  //   히어로(이달의 챌린지)는 맨 앞으로 올라가므로, 그 챌린지 앞에 둔 카드는 히어로 앞에 온다.
-  const ntBefore={}; let ntTail='';
-  (CHAL_NOTICES||[]).forEach(s=>{ const n=CHAL_PUB.length; const p=Math.min(Math.max(s.chal_pos==null?0:+s.chal_pos,0),n);
-    if(p>=n) ntTail+=mlNotice(s.title,s.subtitle); else { const k=String(CHAL_PUB[p].id); ntBefore[k]=(ntBefore[k]||'')+mlNotice(s.title,s.subtitle); } });
-  const ntFor=c=>ntBefore[String(c.id)]||'';
-  if(!CHAL_PUB.length){
-    g.innerHTML=`<div class="ml">${ntTail}<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div></div>`; return; }
+  //   자리의 기준 = 화면 순서(이달의 챌린지가 맨 위) — 관리자 순서 바꾸기 창과 같은 기준.
   // 히어로는 사서가 '이달의 챌린지'(featured)로 지정한 경우에만 노출. 자동 생성 안 함(=중복/자동 히어로 방지).
   const heroC=CHAL_PUB.find(c=>c.featured)||null;
   const listC=heroC?CHAL_PUB.filter(c=>c!==heroC):CHAL_PUB;   // 히어로로 뜬 챌린지는 아래 목록에서 제외(중복 방지)
+  const D=heroC?[heroC,...listC]:listC;
+  const ntBefore={}; let ntTail='';
+  (CHAL_NOTICES||[]).forEach(s=>{ const n=D.length; const p=Math.min(Math.max(s.chal_pos==null?0:+s.chal_pos,0),n);
+    if(p>=n) ntTail+=mlNotice(s.title,s.subtitle); else { const k=String(D[p].id); ntBefore[k]=(ntBefore[k]||'')+mlNotice(s.title,s.subtitle); } });
+  const ntFor=c=>ntBefore[String(c.id)]||'';
+  if(!CHAL_PUB.length){
+    g.innerHTML=`<div class="ml">${ntTail}<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div></div>`; return; }
   let out=heroC?(ntFor(heroC)+chalHero(heroC)):'';
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
     + listC.map((c)=>{
@@ -8226,7 +8227,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260829d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260829e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
