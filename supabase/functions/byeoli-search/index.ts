@@ -17,6 +17,7 @@
 // 시크릿: OPENAI 불필요(소스가 알아서). 자동주입 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 로 형제 함수·RPC 호출.
 // ───────────────────────────────────────────────────────────────────────────
 import { stockMany } from "../_shared/ebook_stock.ts";
+import { stockFromTable } from "../_shared/stock_table.ts";
 
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -43,6 +44,10 @@ const CONFIG = {
   // 즉시읽기 우선 정렬(설계 v2): 검수 통과 후보 중 전자책의 재고를 실시간 확인해 ①바로 읽기 가능 ②재고 미확인 ③종이책 소장 순으로.
   //   대출 중 전자책은 원래 1위였을 때만 1권 허용(맨 위, "대출 중·예약" 배지) — 인기책이 별이에서 영원히 안 보이는 편향 방지.
   availability: true, availabilityTopN: 10, availabilityTimeoutMs: 3500, loanedKeepIfTop1: true,
+  // 8/29 웹 긁기 0: 재고는 학교 화면을 실시간으로 긁지 않고 우리 표(solsup_stock, 밤 작업이 채움)에서 읽는다.
+  //   "table"(기본) = 학교 호출 0. 표에 없거나 stockMaxAgeHours 넘은 책은 "미확인"(tier 1)으로 — 절대 대출 중으로 단정 안 함.
+  //   "live" = 예전 방식(검색 1회당 최대 10권 긁기). 평가·비상용으로만 남겨둠. 클라가 config로 못 켜게 아래에서 막는다.
+  availabilitySource: "table", stockMaxAgeHours: 36,
   // 전소스 리랭킹(2단계, ROI최고): RRF 융합 상위 K를 원 질의로 LLM 재채점(0~3) → minRel 미만 컷 → rel순.
   // curate에만 있던 검수를 융합 전체(find·keyword 표면노이즈 포함)로 확대. Haiku 1콜(curate 내부 rerank 끔=총비용 동일).
   rerank: true, rerankTopK: 16, minRel: 2,   // 24→16: 화면 상한 12라 상위16이면 최선12 포함 → 리랭킹 토큰 ~30%↓(품질 영향0)
@@ -368,6 +373,12 @@ Deno.serve(async (req) => {
     cfg.enable = { ...CONFIG.enable, ...((body.config || {}).enable || {}) };
     cfg.caps = { ...CONFIG.caps, ...((body.config || {}).caps || {}) };
     cfg.pull = { ...CONFIG.pull, ...((body.config || {}).pull || {}) };   // 깊은 병합(부분 pull 전달 시 나머지 소스 count 유실 방지 = 멀티테넌시)
+    // 8/29: 학교 화면 긁기("live")는 브라우저가 config로 켤 수 없다 — 서버 시크릿(STOCK_LIVE_KEY)을 아는 호출만.
+    //   (공개 함수라 누구나 body를 보낼 수 있으므로, 실수로든 고의로든 학교 호출이 다시 늘어나는 길을 막는다)
+    if (cfg.availabilitySource === "live") {
+      const liveKey = Deno.env.get("STOCK_LIVE_KEY") || "";
+      if (!liveKey || (body.stockLiveKey || "") !== liveKey) cfg.availabilitySource = "table";
+    }
     if (!query) return json({ offtopic: false, results: [], subtitle: "", meta: { tookMs: 0, sources: {}, error: "empty_query" } });
 
     // #1 질의이해 — 라틴 위주 질의(한글 0 + 영문자 2+)만 한글 표제로 변환해 검색. 한글 질의는 미접촉(지연/비용 0).
@@ -429,7 +440,18 @@ Deno.serve(async (req) => {
       const t1 = Date.now();
       const isEb = (b: any) => b.smEbook === true && /^[0-9A-Za-z]+$/.test(String(b.brcd || "")) && !/^cattot/i.test(String(b.brcd || ""));
       const targets = out.filter(isEb).slice(0, cfg.availabilityTopN).map((b: any) => String(b.brcd));
-      const st = targets.length ? await stockMany(targets, { concurrency: 8, timeoutMs: cfg.availabilityTimeoutMs }) : new Map();
+      // 8/29: 기본은 표 읽기(학교 호출 0). live는 위에서 시크릿 검증을 통과한 호출만 여기 온다.
+      let st: Map<string, any> = new Map();
+      let tableMeta: any = null;
+      if (targets.length) {
+        if (cfg.availabilitySource === "live") {
+          st = await stockMany(targets, { concurrency: 8, timeoutMs: cfg.availabilityTimeoutMs });
+        } else {
+          const tr = await stockFromTable(targets, { maxAgeMs: Number(cfg.stockMaxAgeHours) * 3600_000 });
+          st = tr.map;
+          tableMeta = { found: tr.found, fresh: tr.fresh, stale: tr.stale, missing: tr.missing, error: tr.error };
+        }
+      }
       out = out.map((b: any) => {
         if (b._kind === "classic") return { ...b, _avail: true };   // 자체 본문 = 항상 열림
         if (!isEb(b)) return { ...b, _avail: null };
@@ -448,7 +470,8 @@ Deno.serve(async (req) => {
       if (list.length < 2) { for (const b of out) { if (!list.includes(b)) { list.push(b); if (list.length >= 2) break; } } }
       availMeta = { applied: true, checked: targets.length,
         avail: out.filter((b: any) => b._avail === true).length, loaned: out.filter((b: any) => b._avail === false).length,
-        unknown: out.filter((b: any) => b.smEbook && b._avail === null).length, keptLoanedTop1: !!keepLoaned, ms: Date.now() - t1 };
+        unknown: out.filter((b: any) => b.smEbook && b._avail === null).length, keptLoanedTop1: !!keepLoaned, ms: Date.now() - t1,
+        source: cfg.availabilitySource, table: tableMeta };   // 8/29: 어디서 읽었는지·표가 얼마나 신선한지 응답에 남긴다(감시용)
       out = list;
     }
     // 3.7) 시리즈·판본은 대표 1권(설계 v2 공통 규칙) — "설득의 심리학 1·2·3", "내 여자의 열매 : 소설/소설집" 같은 중복이 5칸을 다 먹지 않게.

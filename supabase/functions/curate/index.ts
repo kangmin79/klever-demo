@@ -15,7 +15,7 @@
 // 응답: { title, subtitle, params, count, candidates:[{title,author,publisher,year,isbn,kdc,loan,cover,smPaper..,smEbook..}] }
 // 시크릿(env): CLAUDE_API_KEY, OPENAI_API_KEY (+ 자동주입 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-import { stockMany } from "../_shared/ebook_stock.ts";
+import { stockFromTable } from "../_shared/stock_table.ts";
 
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY")!;
 const OPENAI = Deno.env.get("OPENAI_API_KEY") || "";
@@ -388,7 +388,8 @@ Deno.serve(async (req) => {
     //   학생이 열려던 전자책이 전권 대출 중일 때 "같은 장르 · 인기 · 지금 바로 읽을 수 있는" want권(기본 3).
     //   울타리 = 그 책의 KDC(class_no) 접두 사다리(5자→3자→2자→1자). ⛔줄거리 임베딩 안 씀 — '급류'를 찾은 학생은
     //   "요즘 다들 읽는 소설"을 원한 것이지 강물 이야기를 원한 게 아니다(사용자 지적). 순서 = book_pool 국중 대출수 → 신착.
-    //   재고는 실시간(스크래핑) — 대출 중인 책을 대체재로 내미는 건 무의미하니 available만 통과.
+    //   재고는 우리 표(solsup_stock)에서만 읽는다(8/29 웹 긁기 0 — 예전엔 열 때마다 학교 화면을 최대 24권 긁었다).
+    //   대출 중이거나 표에서 확인 안 되는 책은 대체재로 내밀지 않는다(available===true 이고 신선한 것만).
     if (body.similar && typeof body.similar === "object") {
       const t0 = Date.now();
       const want = Math.min(Math.max(Number(body.similar.count) || 3, 1), 6);
@@ -425,14 +426,13 @@ Deno.serve(async (req) => {
         for (const r of (Array.isArray(rows) ? rows : [])) { const k = seriesKey(r.title); if (!k || seenK.has(k)) continue; seenK.add(k); pool.push(r); }
         if (pool.length >= 24) break;   // 후보가 충분하면 울타리를 더 넓히지 않는다(장르가 흐려짐)
       }
-      // 재고 확인 — 인기 상위부터 8권씩, want권 찰 때까지 최대 3배치(도서관 서버 배려)
-      const picked: { b: any; s: any }[] = []; let checked = 0;
-      for (let i = 0; i < pool.length && picked.length < want && i < 24; i += 8) {
-        const batch = pool.slice(i, i + 8);
-        const st = await stockMany(batch.map((b) => String(b.brcd)), { concurrency: 8, timeoutMs: 3500 });
-        checked += batch.length;
-        for (const b of batch) { const s = st.get(String(b.brcd)); if (s && s.available) { picked.push({ b, s }); if (picked.length >= want) break; } }
-      }
+      // 재고 확인 — 표에서 한 번에(학교 호출 0). 인기 순서 그대로 훑어 want권 찰 때까지.
+      const picked: { b: any; s: any }[] = [];
+      const cand = pool.slice(0, 24);
+      const tr = await stockFromTable(cand.map((b) => String(b.brcd)));
+      const checked = cand.length;
+      for (const b of cand) { const s = tr.map.get(String(b.brcd)); if (s && s.available) { picked.push({ b, s }); if (picked.length >= want) break; } }
+      const stockMeta = { source: "table", found: tr.found, fresh: tr.fresh, stale: tr.stale, missing: tr.missing, error: tr.error };
       const cleanTitle = (t: string) => String(t || "").replace(/\s*\/\s*$/, "").replace(/\s{2,}/g, " ").trim();
       const candidates = picked.map(({ b, s }) => ({
         title: cleanTitle(b.title), author: b.author || "", publisher: b.publisher || "", year: b.pub_year || "",
@@ -442,7 +442,7 @@ Deno.serve(async (req) => {
         brcd: String(b.brcd), crema: false, cremaUrl: "", _avail: true, _stock: { loaned: s.loaned, total: s.total }, _source: "similar", _kind: "ebook",
       }));
       const out = { similar: true, count: candidates.length, candidates,
-        source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked };
+        source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked, stock: stockMeta };
       if (candidates.length) { if (SIM_CACHE.size > 500) SIM_CACHE.clear(); SIM_CACHE.set(cacheKey, { t: Date.now(), body: out }); }
       return json({ ...out, tookMs: Date.now() - t0 });
     }

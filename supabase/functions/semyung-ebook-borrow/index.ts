@@ -22,6 +22,7 @@
 // 인증: Authorization: Bearer <sso_token> 필수. 없으면 stock 외 전부 409.
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
+import { stockOneFromTable } from "../_shared/stock_table.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, listEbookLoans, xmlTag } from "../_shared/semyung_session.ts";
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
@@ -236,8 +237,20 @@ Deno.serve(async (req) => {
     // 재고는 공개 정보 — 로그인·세션 없이 바로 응답(게스트도 "지금 빌릴 수 있나"를 본다)
     if (action === "stock") {
       if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
+      // 8/29 웹 긁기 0: 책 상세 배지는 우리 표(solsup_stock)에서만 읽는다. 학교 화면을 부르지 않는다.
+      //   표에 없거나 오래됐으면 ok:false → 웹은 배지를 조용히 생략한다("틀린 말보다 침묵", index.html loadEbookStock).
+      //   실시간 긁기(fetchStock)는 action=stockLive + 서버 시크릿으로만 — 감시·점검용.
+      const st = await stockOneFromTable(brcd);
+      return json(st
+        ? { ok: true, action, source: "table", checked_at: st.checked_at, age_min: Math.round(st.age_ms / 60000), loaned: st.loaned, total: st.total, reserved: st.reserved, available: st.available, reservable: st.reservable, btn: st.btn }
+        : { ok: false, action, source: "table", error: "표에 최근 재고가 없어요" });
+    }
+    if (action === "stockLive") {
+      const liveKey = Deno.env.get("STOCK_LIVE_KEY") || "";
+      if (!liveKey || url.searchParams.get("key") !== liveKey) return json({ ok: false, action, error: "권한이 없습니다" }, 403);
+      if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
       const st = await fetchStock(brcd);
-      return json(st ? { ok: true, action, ...st } : { ok: false, action, error: "재고를 읽지 못했어요" });
+      return json(st ? { ok: true, action, source: "live", ...st } : { ok: false, action, source: "live", error: "재고를 읽지 못했어요" });
     }
 
     // 관리자 전용 — 폴백 시절 공유계정에 남은 대출을 비우는 청소용. 키는 서버 시크릿과 대조한다.
