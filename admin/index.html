@@ -1727,12 +1727,12 @@ let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
 let SEC_LOAD_FAILED=false;
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible,chal_pos&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
     const rows=await r.json(); if(!Array.isArray(rows)){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
     SEC_LOAD_FAILED=false;
     if(!rows.length) return;   // 서버에 아직 아무 칸도 없음(첫 사용) — 견본으로 시작
-    SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
+    SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[],chal_pos:(x.chal_pos==null?null:+x.chal_pos)}));
     injectFixed(SECTIONS);   // 고정 4칸(대출랭킹·인기전자책·종이/전자 신착) 항상 존재 보장
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
     LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
@@ -1862,7 +1862,7 @@ function renderChalNotices(){
       <div class="flabel">제목</div><input class="cur-inp" id="sec_t_${esc(s.slot)}" value="${esc(s.title)}">
       <div class="flabel" style="margin-top:11px">본문 <span style="font-weight:400;color:var(--light)">· 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
       <textarea class="cur-inp" id="sec_s_${esc(s.slot)}" rows="7" style="line-height:1.8">${esc(s.subtitle)}</textarea>
-      <div class="note" style="margin-top:12px">📢 학생 앱 ‘독서 챌린지’ 맨 위에 이 순서대로 나옵니다. <b>등록</b>을 눌러야 반영돼요.</div>
+      <div class="note" style="margin-top:12px">📢 자리는 위쪽 <b>↕ 순서 바꾸기</b>에서 챌린지 사이로 옮길 수 있어요(기본은 맨 위). <b>등록</b> 또는 <b>저장</b>을 눌러야 반영돼요.</div>
     </div>`).join('');
 }
 function delSection(i){readSecInputs();
@@ -1889,8 +1889,26 @@ function secRemoveBook(i,bi){readSecInputs();SECTIONS[i].books.splice(bi,1);rend
 /* ── 순서 바꾸기 모드 (제목만 컴팩트 목록 — 스크롤 없이 한눈에 정렬) ── */
 // 8/17: 같은 모달을 독서 챌린지 빌더도 쓴다 — _reMode 'sec'(우리도서관·고전 칸) | 'chal'(CHALLENGES 순서)
 let _reMode='sec';
-function _areaSecs(){ if(_reMode==='chal') return CHALLENGES.map((s,i)=>({s,i})); return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
-function _applyAreaOrder(items){ if(_reMode==='chal'){ CHALLENGES.splice(0,CHALLENGES.length,...items); return; }
+// 8/29 사장님 지적: 순서 바꾸기 창에 안내 카드가 없어 챌린지 사이로 못 옮겼다 → 챌린지+안내 카드를 한 줄로 섞어 보여 준다.
+//   안내 카드의 자리 = chal_pos(앞에 오는 챌린지 수). 없으면 맨 위. 학생 앱·미리보기도 같은 규칙으로 그린다.
+function _chalCombined(){
+  const nts=SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice');
+  const out=[]; const n=CHALLENGES.length;
+  const at=p=>nts.filter(s=>Math.min(Math.max(s.chal_pos==null?0:+s.chal_pos,0),n)===p);
+  for(let i=0;i<n;i++){ out.push(...at(i)); out.push(CHALLENGES[i]); }
+  out.push(...at(n));
+  return out;
+}
+function _areaSecs(){ if(_reMode==='chal') return _chalCombined().map((s,i)=>({s,i})); return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
+function _applyAreaOrder(items){
+  if(_reMode==='chal'){
+    const chs=[]; const ntOrder=[];
+    items.forEach(s=>{ if((s.style||'')==='notice'){ s.chal_pos=chs.length; ntOrder.push(s); } else chs.push(s); });
+    CHALLENGES.splice(0,CHALLENGES.length,...chs);
+    // 안내 카드끼리의 순서도 창에서 정한 대로 SECTIONS 에 반영(같은 자리에 둘 이상일 때의 앞뒤)
+    let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===CHAL_AREA&&(s.style||'')==='notice') SECTIONS[idx]=ntOrder[k++]; });
+    return;
+  }
   let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=items[k++]; }); }   // 현재 영역 칸만 재배열, 다른 영역 위치 보존
 function openReorder(mode){ _reMode=(mode==='chal')?'chal':'sec'; if(_reMode==='chal') readChalInputs(); else readSecInputs();
   const h=document.querySelector('#reOv .sec-h h3'); if(h) h.textContent=_reMode==='chal'?'챌린지 순서 바꾸기':'칸 순서 바꾸기';
@@ -2097,7 +2115,7 @@ async function saveSections(){
     let miss; try{ miss=await fillHeld(s.books||[]); }catch(e){ toast('소장 여부를 확인하지 못했어요(연결 문제) — 잠시 후 다시 저장해 주세요'); return; }
     // 8/29 리뷰 B4: 다른 영역 칸 이름만 대면 사서가 못 찾는다 → 어느 화면인지 같이 알린다
     if(miss.length){ const where=(AREA_LABELS[aOf(s)]||aOf(s)); toast(`[${where}] ‘${s.title}’ 칸에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 그 화면에서 빼고 저장해 주세요`); return; } }
-  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
+  const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s),chal_pos:(s.chal_pos==null?null:s.chal_pos)}));   // chal_pos: 독서챌린지 안내 카드의 자리(앞에 오는 챌린지 수)
   try{
     const r=await adminSave({op:'sections_upsert',rows});
     if(!r.ok){toast(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');return;}
@@ -3072,10 +3090,14 @@ function chalPvRender(){
   const rows=heroC?list.filter(c=>c!==heroC):list;
   let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>세계고전</span><span>International</span></div>`
     +`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하며 내 기록을 남겨요</div></div>`;   // 8/17 학생 앱 탭 설명 2줄 미러 (8/29 별 폐지 문구 반영)
-  // 8/29 리뷰 F5: 학생 앱은 안내 카드를 챌린지 목록 맨 위에 놓는다 — 미리보기도 같게
-  try{ ntReadInputs(); SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice').forEach(s=>{
-    out+=`<div class="cpv-notice"><div class="cpv-notice-k">📢 안내</div>${s.title?`<div class="cpv-notice-t">${esc(s.title)}</div>`:''}<div class="cpv-notice-b">${esc(s.subtitle||'')}</div></div>`; }); }catch(e){}
-  if(!list.length){ host.innerHTML=out+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
+  // 8/29: 안내 카드는 chal_pos 자리(앞에 오는 챌린지 수)에 끼워 넣는다 — 학생 앱과 같은 규칙. 히어로로 뽑힌 챌린지는 맨 앞으로 가므로 그 앞 카드는 히어로 앞에.
+  const ntHTML=s=>`<div class="cpv-notice"><div class="cpv-notice-k">안내</div>${s.title?`<div class="cpv-notice-t">${esc(s.title)}</div>`:''}<div class="cpv-notice-b">${esc(s.subtitle||'')}</div></div>`;
+  let ntBefore={}, ntTail='';
+  try{ ntReadInputs(); const nts=SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice'); const n=list.length;
+    nts.forEach(s=>{ const p=Math.min(Math.max(s.chal_pos==null?0:+s.chal_pos,0),n); if(p>=n){ ntTail+=ntHTML(s); } else { const key=String(list[p].id||('#'+p)); ntBefore[key]=(ntBefore[key]||'')+ntHTML(s); } }); }catch(e){}
+  const ntFor=c=>ntBefore[String(c.id||('#'+list.indexOf(c)))]||'';
+  if(!list.length){ host.innerHTML=out+ntTail+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
+  if(heroC) out+=ntFor(heroC);
   if(heroC){ const b=(heroC.books||[])[0]||null; const m=cpvMission(heroC); const off=!cpvLive(heroC);
     out+=`<div class="cpv-hero cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(heroC)}</span>`:''}
       <div><div class="cpv-kicker">✦ 이달의 챌린지</div>
@@ -3089,13 +3111,14 @@ function chalPvRender(){
   out+=`<div class="cpv-lhead">진행 중인 챌린지 <span class="cpv-ltag">우리 학교 사서 운영</span></div>`;
   if(!rows.length) out+=`<div class="cpv-empty" style="padding:22px 0">‘이달의 챌린지’ 말고 다른 챌린지가 없어요.</div>`;
   rows.forEach(c=>{ const off=!cpvLive(c), isC=c.type==='고전챌린지', books=c.books||[];
+    out+=ntFor(c);
     out+=`<div class="cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(c)}</span>`:''}
       <div class="cpv-rhead"><div><span class="cpv-type${isC?' classic':''}">${isC?'고전 컬렉션':'소장자료'}</span>
         <div class="cpv-rt">${esc(c.title||'')}</div><div class="cpv-rs">${cpvSub(c)}</div></div><span class="cpv-join">${c.mission&&c.mission.autoJoin?'자동 참여':'참여하기 →'}</span></div>
       ${c.detail?`<div class="cpv-desc">${esc(c.detail)}</div>`:''}
       ${books.length?`<div class="cpv-books">${books.map(b=>`<div class="cpv-bk">${cpvCover(b,'')}<div class="cpv-bk-t">${esc(b.title||b.t||'')}</div></div>`).join('')}</div>`:''}
     </div>`; });
-  host.innerHTML=out;
+  host.innerHTML=out+ntTail;
 }
 // 8/29 리뷰 F11: 미션 0개로 만들면 저장이 거부되는데 그 말이 없었다 → 한 줄 소감을 기본으로 켜 둔다(끄면 됨)
 function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});renderChallenges();}
