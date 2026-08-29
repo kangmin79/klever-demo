@@ -11813,11 +11813,11 @@ function _feedAgo(iso){
   }catch(e){ return ''; }
 }
 /* ── 밀리식 피드: 추천/팔로잉 탭 + 타입 필터 + 타입별 카드 + 학생 프로필 ── */
-const FEED_TYPES=[['all','전체'],['oneline','한 줄 소감'],['review','서평'],['question','질문']];
+const FEED_TYPES=[['all','전체'],['oneline','한 줄 소감'],['question','한 줄 질문'],['review','서평'],['essay','독후감'],['favorite','인생책']];   // 8/29 사장님 PDF 순서·명칭
 const FEED_PASTEL=['#eef2ff','#fdeef4','#eefaf1','#fff6e9','#eef7fb','#f3eefe','#fef0ef','#eefbf6'];
-const FEED_ACT={ oneline:{t:'한 줄 소감',cat:'oneline'}, review:{t:'서평',cat:'review'}, essay:{t:'독후감',cat:'review'},
-  underline:{t:'핵심 문장',cat:'highlight'}, recommend:{t:'책 추천',cat:'recommend'}, question:{t:'질문',cat:'question'},
-  impression:{t:'한 줄 소감',cat:'oneline'} };
+const FEED_ACT={ oneline:{t:'한 줄 소감',cat:'oneline'}, review:{t:'서평',cat:'review'}, essay:{t:'독후감',cat:'essay'},
+  underline:{t:'핵심 문장',cat:'highlight'}, recommend:{t:'책 추천',cat:'recommend'}, question:{t:'한 줄 질문',cat:'question'},
+  impression:{t:'한 줄 소감',cat:'oneline'}, favorite:{t:'인생책',cat:'favorite'} };
 const GRADE_EMO={라이징스타:'💫',스타:'⭐',빅스타:'🌟',슈퍼스타:'✨',레전드:'👑'};
 const GRADE_TIERS=[['라이징스타',0],['스타',500],['빅스타',1500],['슈퍼스타',3000],['레전드',5000]];
 function gradeOf(t){t=+t||0;let g=GRADE_TIERS[0][0];for(const[n,m]of GRADE_TIERS){if(t>=m)g=n;}return g;}
@@ -11934,6 +11934,13 @@ async function loadFeedItems(){
       const m=[]; if(x.quiz_total)m.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`); if(x.score)m.push(`${x.score}점`);
       items.push({sid:x.student_id,book_id:x.book_id,act:'impression',text:x.impression,time:x.updated_at,meta:m.join(' · ')}); });
   }catch(e){}
+  // 인생책 — 글(bookstar_writings)이 아니라 학생 프로필의 별도 통로(favorite_book_id·favorite_reason). 시각은 프로필 생성 시각뿐이라 그것을 씀
+  try{
+    const r=await fetch(`${BX_SB}/bookstar_students?select=id,favorite_book_id,favorite_reason,created_at&favorite_book_id=not.is.null&favorite_book_id=neq.&order=created_at.desc&limit=200`,{headers:BX_H});
+    const rows=await r.json();
+    (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!x.favorite_book_id)return;
+      items.push({sid:x.id,book_id:x.favorite_book_id,act:'favorite',text:(x.favorite_reason||'').trim()||'인생책으로 골랐어요',time:x.created_at,meta:''}); });
+  }catch(e){}
   _feedItems=items;
 }
 async function renderFeed(){
@@ -11970,7 +11977,9 @@ function _feedPaint(){
   if(!list.length){
     box.innerHTML=head+(_feedTab==='follow'
       ? `<div class="feed-empty">아직 팔로우한 친구의 글이 없어요.<br>추천 탭에서 친구 이름을 누르고 <b>팔로우</b> 해보세요.</div>`
-      : `<div class="feed-empty">아직 이 유형의 글이 없어요.<br>챌린지에서 글을 남기면 여기에 모여요.</div>`);
+      : (_feedType==='favorite'
+        ? `<div class="feed-empty">아직 인생책을 고른 친구가 없어요.<br>내 서재에서 <b>인생책</b>을 골라 보세요.</div>`
+        : `<div class="feed-empty">아직 이 유형의 글이 없어요.<br>챌린지에서 글을 남기면 여기에 모여요.</div>`));
     return;
   }
   box.innerHTML=head+`<div class="feed-grid">${list.map((x,i)=>feedCard(x,i)).join('')}</div>`;
