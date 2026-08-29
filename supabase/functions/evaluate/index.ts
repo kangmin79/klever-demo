@@ -4,6 +4,7 @@
 // 시크릿(env): CLAUDE_API_KEY
 // 루브릭 근거: 경북독서친구(정부) 독후감 심사기준 + 학술 독후감 평가 통념
 
+import { sessionFromRequest } from "../_shared/sso_token.ts";
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY")!;
 const MODEL = "claude-sonnet-4-6";
 
@@ -90,6 +91,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
     const body = await req.json();
+    // 8/29: 로그인한 학생(서명 세션토큰)만 — 무인증이라 누구나 회당 가장 비싼 모델을 무제한 호출할 수 있었다
+    const ss = await sessionFromRequest(req, body?.sso_token);
+    if (!ss) return json({ error: "로그인이 필요합니다" }, 401);
     const text = (body?.text || "").toString().trim();
     if (!text) return json({ error: "text 비었음" }, 400);
     if (text.length < 50) return json({ error: "평가하기엔 글이 너무 짧아요 (최소 50자)" }, 400);

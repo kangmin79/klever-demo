@@ -120,6 +120,7 @@ Deno.serve(async (req) => {
   try {
     const { query } = await req.json();
     if (!query || !query.trim()) return json({ error: "query 비었음" }, 400);
+    if (String(query).length > 400) return json({ error: "질문이 너무 길어요 (400자 이내)" }, 400);   // 8/29 비용 상한
 
     // 1) 라우터 (entity vs semantic 구분만)
     const route = await claudeTool(

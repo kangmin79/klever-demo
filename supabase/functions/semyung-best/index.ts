@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
 
     const r = await fetch(SRC[kind], {
       headers: { "User-Agent": UA, "Referer": HOST + "/elibrary-front/main.ink", "X-Requested-With": "XMLHttpRequest" },
+      signal: AbortSignal.timeout(12000),
     });
     if (!r.ok) return json({ error: "upstream " + r.status, books: [] }, 200);
     const d = await r.json();

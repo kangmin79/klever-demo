@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
     const { messages } = await req.json();
     const msgs = normMessages(messages);
     if (!msgs.length) return json({ error: "messages 비었음" }, 400);
+    if (JSON.stringify(msgs).length > 8000) return json({ error: "대화가 너무 길어요" }, 400);   // 8/29 비용 상한
 
     const pool = await getPool();
     const system = [

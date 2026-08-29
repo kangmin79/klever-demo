@@ -101,7 +101,10 @@ Deno.serve(async (req) => {
     //   이 함수는 인증이 없어서, 로그인 안 한 방문자도 호출만 하면 사서가 실물을 꺼내는
     //   실세계 작업이 '03251' 이름으로 발생했다. 예약류는 학생 본인 명의(semyung-my,
     //   SSO 개인세션)로만 — 앱은 smLoginGuide()로 세명대 로그인을 유도한다.
-    //   현황 조회(list/holdlist)는 읽기 전용이라 유지.
+    //   8/29: 현황 조회(list/holdlist)도 잠금 — 인증 없이 공유계정 신청 목록이 외부에 보였고, 호출마다 학교 서버 로그인이 발생했다.
+    //   앱은 본인 현황을 semyung-my(개인 세션)로 본다. 이 함수는 전부 닫힌 상태로 남긴다.
+    return json({ ok: false, action, needsLogin: true, error: "도서관 로그인이 필요합니다 — 예약·현황은 본인 이름으로만 볼 수 있어요" });
+    // deno-lint-ignore no-unreachable
     if (action !== "list" && action !== "holdlist") {
       return json({ ok: false, action, needsLogin: true, error: "도서관 로그인이 필요합니다 — 예약은 본인 이름으로만 접수돼요" });
     }

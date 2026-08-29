@@ -449,6 +449,7 @@ Deno.serve(async (req) => {
 
     const query = body.query;
     if (!query || !query.trim()) return json({ error: "query 비었음" }, 400);
+    if (String(query).length > 400) return json({ error: "질문이 너무 길어요 (400자 이내)" }, 400);   // 8/29 비용 상한
 
     // ── 대화 모드 — 의도 파악만(검색·생성 없음). 오프토픽이면 정중히. 거의 무과금(Haiku 1콜).
     if (body.chat === true) {

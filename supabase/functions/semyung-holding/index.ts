@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const ctrl = reckey.replace(/^CATTOT/, "");
     const r = await fetch(`${HOST}/openapi/bookinfo?cid=${encodeURIComponent("CAT" + ctrl)}&verb=holding`, {
-      headers: { "User-Agent": UA },
+      headers: { "User-Agent": UA }, signal: AbortSignal.timeout(12000),
     });
     if (!r.ok) return json({ ok: false, error: "upstream " + r.status }, 200);
     const xml = new TextDecoder("utf-8").decode(await r.arrayBuffer());

@@ -44,6 +44,7 @@ async function req(
     method, headers,
     body: form ? new URLSearchParams(form) : undefined,
     redirect: "manual",
+    signal: AbortSignal.timeout(15000),   // 8/29 학교 서버가 느릴 때 함수가 한도까지 매달리지 않게
   });
   jar.absorb(res);
   let body = new TextDecoder("utf-8").decode(await res.arrayBuffer());
@@ -51,7 +52,7 @@ async function req(
   let loc = res.headers.get("location");
   for (let i = 0; i < 3 && loc && res.status >= 300 && res.status < 400; i++) {
     const next = loc.startsWith("http") ? loc : new URL(loc, url).toString();
-    const r2 = await fetch(next, { headers: { "User-Agent": UA, Cookie: jar.header() }, redirect: "manual" });
+    const r2 = await fetch(next, { headers: { "User-Agent": UA, Cookie: jar.header() }, redirect: "manual", signal: AbortSignal.timeout(15000) });
     jar.absorb(r2);
     body = new TextDecoder("utf-8").decode(await r2.arrayBuffer());
     loc = r2.headers.get("location");

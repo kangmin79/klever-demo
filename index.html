@@ -5026,17 +5026,41 @@ function _histPush(page){
     else if(history.state.page!==page||history.state.cl!==st.cl) history.pushState(st,'','#'+page);
   }catch(e){}
 }
+// 8/29 뒤로가기 수리: 전면 오버레이(책 뷰어·상세·별이·프로필·인용카드)가 열릴 때 히스토리에 발자국(ov)을 하나 남긴다.
+//   전엔 발자국이 없어서, 로그인 직후처럼 뒤로 갈 기록이 없는 상태에서 책을 열고 안드로이드 뒤로가기를 누르면 앱이 통째로 닫혔다.
+//   × 버튼으로 닫으면 그 발자국을 되감아(history.back) 뒤로가기 한 번이 남지 않게 한다.
+let _ovDepth=0, _ovClosing=false;
+function _ovWatch(el, cls){
+  if(!el || el._ovWatched) return; el._ovWatched=true;
+  let was=el.classList.contains(cls);
+  new MutationObserver(()=>{
+    const now=el.classList.contains(cls); if(now===was) return; was=now;
+    if(now){ try{ history.pushState({bs:1,page:_navPage,cl:(_navPage==='collection'?_clTab:undefined),ov:1},'','#'+_navPage); _ovDepth++; }catch(e){} }
+    else{ try{ if(history.state&&history.state.ov&&_ovDepth>0){ _ovDepth--; _ovClosing=true; history.back(); } }catch(e){} }
+  }).observe(el,{attributes:true,attributeFilter:['class']});
+}
+function _ovWatchAll(){
+  _ovWatch(document.getElementById('qcOverlay'),'open');
+  _ovWatch(document.getElementById('viewerOverlay'),'open');
+  _ovWatch(document.getElementById('lcDetail'),'on');
+  _ovWatch(document.getElementById('hwcPanel'),'on');
+  _ovWatch(document.getElementById('bxProfileOv'),'on');   // 프로필 창은 처음 열 때 만들어진다 — 아래 body 감시가 다시 부른다
+}
+window.addEventListener('DOMContentLoaded',()=>{ _ovWatchAll(); try{ new MutationObserver(()=>{ if(document.getElementById('bxProfileOv')&&!document.getElementById('bxProfileOv')._ovWatched) _ovWatchAll(); }).observe(document.body,{childList:true}); }catch(e){} });
 window.addEventListener('popstate', e=>{
-  // 전면 오버레이가 열려 있으면 그것부터 닫는 게 뒤로가기의 기대 동작 (닫고 현재 화면 발자국 복원)
-  const _repush=()=>{ try{history.pushState({bs:1,page:_navPage,cl:(_navPage==='collection'?_clTab:undefined)},'','#'+_navPage);}catch(_){} };
+  if(_ovClosing){ _ovClosing=false; return; }   // × 로 닫으며 우리가 되감은 발자국 — 화면 전환 아님
+  // 전면 오버레이가 열려 있으면 그것부터 닫는 게 뒤로가기의 기대 동작. 발자국(ov)이 있었으면 그걸 소비하고, 없었으면(옛 경로) 현재 화면 발자국 복원
+  const _repush=()=>{ if(_ovDepth>0){ _ovDepth--; return; } try{history.pushState({bs:1,page:_navPage,cl:(_navPage==='collection'?_clTab:undefined)},'','#'+_navPage);}catch(_){} };
   const qc=document.getElementById('qcOverlay');
-  if(qc&&qc.classList.contains('open')){ try{closeQuoteCard();}catch(_){} _repush(); return; }   // 인용카드가 뷰어보다 위 — 먼저 닫기
+  if(qc&&qc.classList.contains('open')){ _repush(); try{closeQuoteCard();}catch(_){} return; }   // 인용카드가 뷰어보다 위 — 먼저 닫기
   const vo=document.getElementById('viewerOverlay');
-  if(vo&&vo.classList.contains('open')){ try{closeViewer();}catch(_){} _repush(); return; }
+  if(vo&&vo.classList.contains('open')){ _repush(); try{closeViewer();}catch(_){} return; }
   const lc=document.getElementById('lcDetail');
-  if(lc&&lc.classList.contains('on')){ try{closeLc();}catch(_){} _repush(); return; }
+  if(lc&&lc.classList.contains('on')){ _repush(); try{closeLc();}catch(_){} return; }
+  const pf=document.getElementById('bxProfileOv');
+  if(pf&&pf.classList.contains('on')){ _repush(); try{closeStudentProfile();}catch(_){} return; }
   const hp=document.getElementById('hwcPanel');
-  if(hp&&hp.style.display==='flex'&&typeof hwcToggle==='function'){ try{hwcToggle();}catch(_){} _repush(); return; }
+  if(hp&&hp.classList.contains('on')&&typeof hwcToggle==='function'){ _repush(); try{hwcToggle();}catch(_){} return; }   // 8/29: 열림 판정을 실제 클래스(.on)로 — display 검사라 영원히 false 였다
   const st=e.state;
   if(st&&st.bs){
     _histNav=true;
@@ -5795,10 +5819,7 @@ const LIB_SAMPLE=['9788936434267','9791161571188','9791165341909','9791188862290
 // [데모] 도서관 통합검색 딥링크 — 세명대학교 학술정보원. 책 상세의 "도서관에서 빌리기" 클릭 시 실제 lib.semyung.ac.kr 통합검색(소장자료+예스24+학술DB)으로 바로 이동
 const LIB_LINK_BASE='https://lib.semyung.ac.kr/searchTotal/result?st=KWRD&si=TOTAL&q=';
 const semyungLink=(title)=>LIB_LINK_BASE+encodeURIComponent(title);
-// 세명대 데모 계정(도서관 제공)이 이미 대출한 책 → '빌리기' 클릭 시 예스24 EPUB 뷰어가 바로 열림(원클릭 읽기 데모)
-const SEMYUNG_DEMO_USER='00003251';
-const HAILMARY={isbn:'9788925588735',t:'프로젝트 헤일메리',a:'앤디 위어',cover:'https://image.aladin.co.kr/product/27045/43/cover200/k692135851_3.jpg',note:'끝까지 손에서 못 놓는 SF — 우리 도서관에서 바로 읽어보세요',
-  lib:'http://ebook.semyung.ac.kr:8082//api/yes24_ebook_open.asp?user_id='+SEMYUNG_DEMO_USER+'&goods_id=101619655'};
+// (8/29 데모 계정(00003251) 헤일메리 상수 삭제 — 실제 학생에게 남의 계정 뷰어가 열리던 링크)
 // 세명대학교 학술정보원 실제 소장 소설 — 대출순 베스트(전자도서관 contentList loanNmvl). brcd로 상세 딥링크.
 const SM_LBRY=20213;
 const smDetail=(brcd)=>`https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=${SM_LBRY}&brcd=${brcd}`;
@@ -5938,7 +5959,7 @@ function fmtTags(b){
   }
   return t.length?`<div class="fmt-tags">${t.map(x=>`<span class="fmt-tag fmt-${x[1]}">${x[0]}</span>`).join('')}</div>`:'';
 }
-function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').split(/(?<=[.!?。])\s/)[0].trim();return s.length>44?s.slice(0,44)+'…':s;}
+function firstSent(d){if(!d)return '';const s=d.replace(/\s+/g,' ').replace(/([.!?。])\s/g,'$1').split('')[0].trim();return s.length>44?s.slice(0,44)+'…':s;}   // 8/29 lookbehind 제거 — 구형 iOS(16.3 이하)에서 스크립트 전체가 죽던 원인
 function mlcv(cls,b){return `<div class="${cls}">${lcCvHTML(b)}</div>`;}   /* 표지 없으면 lcCvHTML이 ncCover(활자 표지)를 넣는다 — 뒤에 깔던 단색 배경 불필요 */
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 /* 8/29 안내 카드 — 사서가 적은 글을 그대로 보여준다(줄바꿈 유지). 본문 속 주소는 자동으로 누를 수 있게 바뀐다.
@@ -6107,7 +6128,7 @@ function millieHTML(secs,classicMode){
     out+='</div><div class="bx-org" data-origin="'+((st==='rank'||st==='ebookrank')?'ranking':'curation')+'" data-origin-id="'+esc(String(s.slot||''))+'">';
     if(s.visible===false) return;   // 사서가 '노출 끄기' 한 고정 칸은 우리 도서관에 안 보임
     if(st==='notice'){ out+=mlNotice(s.title,s.subtitle); return; }   // 8/29 안내 카드 — 책을 담지 않는 글 전용 칸(공지·행사 안내)
-    if(st==='rank'){ out+=mlRank(s.title,s.subtitle,rank,!!liveRank); return; }   // 종이책 대출 랭킹(횟수+변동)
+    if(st==='rank'){ if(liveRank) out+=mlRank(s.title,s.subtitle,rank,true); return; }   // 종이책 대출 랭킹(횟수+변동). 실데이터 없으면 칸 자체를 안 그림(8/29 — 전엔 가짜 순위·▲배지가 나갔다)
     if(st==='ebookrank'){ if(SEMYUNG_BEST_LIVE&&SEMYUNG_BEST_LIVE.length) out+=mlRank(s.title,s.subtitle,SEMYUNG_BEST_LIVE.slice(0,12),true); return; }   // 전자책 인기(순위만, 전자도서관)
     if(st==='newlive_p'){ const nb=(SEMYUNG_NEW_P&&SEMYUNG_NEW_P.length)?SEMYUNG_NEW_P:(SEMYUNG_NEW_LIVE||[]).filter(b=>b.tags&&b.tags.includes('paper')); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 종이책 신착(입고순)
     if(st==='newlive_e'){ const nb=(SEMYUNG_NEW_E&&SEMYUNG_NEW_E.length)?SEMYUNG_NEW_E:(SEMYUNG_NEW_LIVE||[]).filter(b=>b.tags&&b.tags.includes('ebook')); if(nb.length) out+=mlNew(s.title,s.subtitle,nb.slice(0,80)); return; }   // 전자책 신착(발행일순)
@@ -6121,10 +6142,11 @@ function millieHTML(secs,classicMode){
       const heroNote = own.length ? (s.subtitle||'') : (s.subtitle || (hc&&hc.intro) || '');
       out+=mlShelf(assigned[0]||(classicMode?classicPick(1,i)[0]:life), heroNote, hc||cur, s.title); return;
     }
-    // [데모] '사서가 주목한 책'(우리도서관 row) = 세명대 실소장 베스트 소설 + 헤일메리, 클릭 시 도서관 딥링크
+    // '사서가 주목한 책'(우리도서관 row): 사서가 꾸미기로 담은 책이 최우선(8/29 수리 — 전엔 데모 11권 고정이라 사서가 바꿔도 안 변했다).
+    //   담은 책이 없을 때만 세명대 실소장 소설 목록(SEMYUNG_BEST)으로 채운다. 데모 계정 링크가 박힌 헤일메리는 뺐다.
     if(s.slot==='row'&&!classicMode){
-      const pick=[LIB_POOL.find(x=>x.isbn===HAILMARY.isbn),...SEMYUNG_BEST.map(b=>LIB_POOL.find(x=>x.isbn===b.isbn)||b)].filter(Boolean);
-      out+=mlRow(s.title, s.subtitle||'세명대학교 학술정보원 인기 대출 소설', pick); return;
+      const pick=assigned.length?assigned:SEMYUNG_BEST.map(b=>LIB_POOL.find(x=>x.isbn===b.isbn)||b).filter(Boolean);
+      out+=mlRow(s.title, s.subtitle||'', pick); return;
     }
     const books=assigned.length?assigned:(classicMode?classicPick(10,i*4+2):libPick(8,i*3+2)); // 둘 다 없으면 폴백(고전영역=우리 고전)
     if(st==='grad') out+=mlGrad(s.title,s.subtitle,books);
@@ -6584,7 +6606,7 @@ function rebuildLibPool(){
   LC_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } }));
   SECTIONS.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!seen.has(b.isbn)){ seen.add(b.isbn); const sm=b._sm||(b.isbn||'').startsWith('sm-'); LIB_POOL.push(Object.assign({},b,{t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||'',lib:b.lib||'',_sm:sm||undefined})); } }));   // 형태 필드(tags·_pp·crema·cremaUrl) 보존 위해 전체 복사
   LIB_SAMPLE.forEach(isbn=>{ if(!seen.has(isbn)){ seen.add(isbn); LIB_POOL.push({isbn}); } });
-  if(!seen.has(HAILMARY.isbn)){ seen.add(HAILMARY.isbn); LIB_POOL.unshift(Object.assign({},HAILMARY)); }  // [데모] 헤일메리 항상 풀에 포함(표지·별점은 backfill 보강)
+  // (8/29 데모 책 '프로젝트 헤일메리' 풀 삽입 삭제 — 데모 계정 번호가 박힌 http 링크라 실제 학생이 누르면 남의 계정으로 열렸다)
   SEMYUNG_BEST.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // [데모] 세명대 실소장 베스트 소설(폴백)
   if(SEMYUNG_BEST_LIVE) SEMYUNG_BEST_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 대출 베스트 라이브
   if(SEMYUNG_NEW_LIVE) SEMYUNG_NEW_LIVE.forEach(b=>{ if(!seen.has(b.isbn)){ seen.add(b.isbn); LIB_POOL.push(Object.assign({},b)); } });  // 세명대 신착 자료 라이브
@@ -7564,8 +7586,7 @@ function libBridgeOpen(book){
   let b;
   if(book._smLib||book.lib){ b={t:book.title||book.t||'', cover:book.cover||'', a:book.author||book.a||'', lib:book._smLib||book.lib}; }
   else{
-    const pool=(typeof SEMYUNG_BEST!=='undefined'?SEMYUNG_BEST:[]).concat(
-      (typeof HAILMARY!=='undefined')?[Object.assign({},HAILMARY,{t:HAILMARY.t,cover:HAILMARY.cover})]:[]);
+    const pool=(typeof SEMYUNG_BEST!=='undefined'?SEMYUNG_BEST:[]);
     const hit=pool.find(x=>norm(x.t)===norm(book.title||book.t));
     b=hit||{t:book.title||book.t||'', cover:book.cover||'', a:book.author||book.a||'', lib:null};
   }
@@ -8200,7 +8221,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260829a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260829b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -12038,8 +12059,10 @@ window.addEventListener('DOMContentLoaded', () => {
   loadLoanData();
   renderCommunity('program');
   // ?page=airec/community/mypage 등 딥링크(관리자에서 학생앱 화면 연결용) — 없으면 우리 도서관
-  const _ip=new URLSearchParams(location.search).get('page');
-  nav(_ip && document.getElementById('page-'+_ip) ? _ip : 'ourlib');
+  // 8/29: 푸시 알림(/#mylib)·즐겨찾기 해시도 첫 화면으로 — 전엔 ?page= 만 읽어 알림을 눌러도 첫 화면이었다
+  const _ip=new URLSearchParams(location.search).get('page') || (location.hash||'').replace(/^#/,'').replace(/[^a-z_-]/gi,'');
+  const _ipm=(_ip==='mylib')?'mypage':_ip;
+  nav(_ipm && document.getElementById('page-'+_ipm) ? _ipm : 'ourlib');
 });
 
 window.addEventListener('resize', () => {

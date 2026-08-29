@@ -368,11 +368,16 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const query = String(body.query || "").trim();
     const surface = String(body.surface || "api");
-    const cfg = { ...CONFIG, ...(body.config || {}) };
-    cfg.weights = { ...CONFIG.weights, ...((body.config || {}).weights || {}) };
-    cfg.enable = { ...CONFIG.enable, ...((body.config || {}).enable || {}) };
-    cfg.caps = { ...CONFIG.caps, ...((body.config || {}).caps || {}) };
-    cfg.pull = { ...CONFIG.pull, ...((body.config || {}).pull || {}) };   // 깊은 병합(부분 pull 전달 시 나머지 소스 count 유실 방지 = 멀티테넌시)
+    // 8/29: 브라우저가 보낸 config 는 answer(별이 답변 켜기/끄기) 하나만 받는다.
+    //   전엔 통째로 덮어써서 rerank 개수·pull 소스 수·availability 등을 아무나 키울 수 있었다(공개 함수 = 비용·학교 호출 증가 통로).
+    //   앱(index.html)은 config:{answer} 만 보낸다. 운영 조정은 여기 CONFIG 상수로.
+    const clientCfg = (body.config && typeof body.config === "object") ? body.config : {};
+    const cfg = { ...CONFIG };
+    if (typeof clientCfg.answer === "boolean") cfg.answer = clientCfg.answer;
+    cfg.weights = { ...CONFIG.weights };
+    cfg.enable = { ...CONFIG.enable };
+    cfg.caps = { ...CONFIG.caps };
+    cfg.pull = { ...CONFIG.pull };
     // 8/29: 학교 화면 긁기("live")는 브라우저가 config로 켤 수 없다 — 서버 시크릿(STOCK_LIVE_KEY)을 아는 호출만.
     //   (공개 함수라 누구나 body를 보낼 수 있으므로, 실수로든 고의로든 학교 호출이 다시 늘어나는 길을 막는다)
     if (cfg.availabilitySource === "live") {
