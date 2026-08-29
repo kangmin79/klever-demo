@@ -1184,11 +1184,9 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
             <div class="aic-body" id="aicBody">
               <div class="aic-thread" id="aicThread"></div>
               <div class="aic-qchips" id="aicQchips"></div>
-              <div class="aic-inputbar">
-                <input class="aic-topic" id="aicTopic" placeholder="예: 시험 스트레스에 지친 학생 / 새 학기 / 진로 고민" onkeydown="if(event.key==='Enter'){event.preventDefault();aicSend();}">
-                <button type="button" class="aic-send" id="aicSendBtn" onclick="aicSend()" title="보내기">➤</button>
-              </div>
-              <div class="aic-opt aic-opt-row" style="margin-top:12px"><div class="aic-field-l">후보 권수 <span style="color:var(--light);font-weight:600">· 쭉 보고 골라 담으세요</span></div>
+              <!-- 8/29 사장님 수정요청: 권수·형태 옵션을 입력창 **위**로 — 예전엔 아래에 있어 결과가 다 나온 뒤에야 눈에 띄었고,
+                   그때 눌러도 아무 변화가 없어 "작동 안 한다"로 보였다. 이제 누르면 즉시 반영된다(aicCount·aicFormat). -->
+              <div class="aic-opt aic-opt-row" style="margin-top:4px"><div class="aic-field-l">후보 권수 <span style="color:var(--light);font-weight:600">· 쭉 보고 골라 담으세요</span></div>
                 <div class="aic-seg" id="aicSeg">
                   <button type="button" onclick="aicCount(this,10)">10권</button>
                   <button type="button" onclick="aicCount(this,15)">15권</button>
@@ -1201,6 +1199,10 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
                   <button type="button" onclick="aicFormat(this,'ebook')">전자책만</button>
                   <button type="button" onclick="aicFormat(this,'paper')">종이책만</button>
                 </div></div>
+              <div class="aic-inputbar" style="margin-top:12px">
+                <input class="aic-topic" id="aicTopic" placeholder="예: 시험 스트레스에 지친 학생 / 새 학기 / 진로 고민" onkeydown="if(event.key==='Enter'){event.preventDefault();aicSend();}">
+                <button type="button" class="aic-send" id="aicSendBtn" onclick="aicSend()" title="보내기">➤</button>
+              </div>
               <div class="aic-steps" id="aicSteps">
                 <div class="aic-stp" id="aicS1"><span class="ic">1</span><span>소장도서에서 <b>후보</b>를 좁히는 중…</span></div>
                 <div class="aic-stp" id="aicS2"><span class="ic">2</span><span>후보 중 <b>가장 잘 맞는 책</b>을 고르는 중…</span></div>
@@ -2234,7 +2236,11 @@ function aicSetContext(ctx){
 }
 // 8/19 책 형태(both|ebook|paper) — AI 큐레이션·책담기 통합검색이 같은 값을 공유(사서가 한 번 고르면 유지)
 let CUR_FORMAT='both';
-function aicFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); secSyncFormat(); }
+function aicFormat(b,f){ const changed=CUR_FORMAT!==f; CUR_FORMAT=f; document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); secSyncFormat();
+  // 8/29: 결과가 이미 떠 있으면 형태를 바꾼 즉시 다시 만든다(형태가 바뀌면 후보 자체가 달라져 재검색이 필요 — AI 생성 1회 소모).
+  //   예전엔 값만 기억하고 아무것도 안 해서 "작동 안 함"으로 보였다. 고전 영역은 형태 개념이 없어 제외.
+  const shown=el('aicResult')&&el('aicResult').classList.contains('show');
+  if(changed&&shown&&AIC_TOPIC&&!(AIC_CTX==='foreign'||AIC_CTX==='kr')&&!AIC_BUSY){ aicPush('me',FMT_LABEL[f]+'으로'); aicRunGenerate(AIC_TOPIC,true); } }
 function secFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
   document.querySelectorAll('#aicFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+f+"'")>=0));
   if(scTab==='nat'){ if((el('secQ').value||'').trim()) secSearch(); else if(!SCAND.length) secApplyTab(); } }   // 검색어 있으면 바로 재검색, 없으면 안내문만 형태에 맞게
@@ -2262,6 +2268,11 @@ function aicShowChips(chips){ const q=el('aicQchips'); if(!q)return; q.innerHTML
 async function aicSend(forced){
   if(AIC_BUSY) return;
   const inp=el('aicTopic'); const text=(forced!=null?String(forced):(inp.value||'')).trim(); if(!text) return;
+  // 8/29 사장님 수정요청 "전부다": AI가 장르를 되물었을 때 "전부다"를 고르면 되묻기 없이 직전 주제로 바로 만든다(장르 안 가림).
+  if(/^전부\s*다/.test(text)){
+    const prev=[...AIC_MSGS].reverse().find(m=>m.role==='user');
+    if(prev){ if(inp) inp.value=''; aicShowChips([]); aicPush('me',text); aicPush('ai','좋아요, 장르를 가리지 않고 골라볼게요 ✨'); aicRunGenerate(prev.content,false); return; }
+  }
   if(inp) inp.value=''; aicShowChips([]); aicPush('me',text);
   AIC_BUSY=true; const sb=el('aicSendBtn'); if(sb)sb.disabled=true;
   const typing=aicPush('typing','⭐ 생각 중…');
@@ -2276,7 +2287,7 @@ async function aicSend(forced){
   if(j.offtopic){ aicPush('ai', j.reply||'책 주제를 알려주세요 📚'); return; }
   aicPush('ai', j.reply||'좋아요, 골라볼게요 ✨');
   if(j.ready!==false){ AIC_TOPIC=j.refinedTopic||text; aicRunGenerate(AIC_TOPIC,false); }
-  else { aicShowChips(j.chips||[]); }
+  else { aicShowChips([...(j.chips||[]),'전부다 (장르 안 가림)']); }   // 8/29: AI가 무엇을 묻든 "전부다"는 항상 붙는다(AI가 만드는 칩이라 있다 없다 했음)
 }
 // 결과 후 조정 — chat 경유 없이 직전 주제를 방향만 바꿔 즉시 재생성(안정적·빠름)
 function aicAdjust(kind){
@@ -2287,7 +2298,21 @@ function aicAdjust(kind){
   aicPush('me', kind==='light'?'더 가볍게':'더 깊이 있게');
   aicRunGenerate(AIC_TOPIC+mod, true);
 }
-function aicCount(b,n){ document.querySelectorAll('#aicSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); AIC_COUNT=n; aicUpdateCount(); }
+function aicCount(b,n){ document.querySelectorAll('#aicSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); AIC_COUNT=n;
+  // 8/29: 결과가 떠 있으면 담는 권수를 그 자리에서 다시 자른다(AI 호출 없음 = 즉시·공짜). 예전엔 배지 숫자만 바뀌고 후보엔 반영 안 됐다.
+  if(AIC_RESULTS.length){ aicRepick(); aicRenderHint(); aicBuildGrid(); } else aicUpdateCount(); }
+// 후보(AIC_RESULTS)에서 담을 책을 고른다 — 관련도 강한(rel≥2) 것부터 AIC_COUNT권. 강한 게 없으면 전체에서.
+function aicRepick(){
+  const strongIdx=AIC_RESULTS.map((b,i)=>i).filter(i=>AIC_RESULTS[i].rel===undefined||AIC_RESULTS[i].rel>=2);
+  const baseIdx=strongIdx.length?strongIdx:AIC_RESULTS.map((_,i)=>i);
+  AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
+  aicUpdateCount(); }
+// 결과 위 안내문("후보 N권 중 M권을 담아뒀어요…") — 생성 직후와 권수 버튼 양쪽에서 같은 글을 쓴다
+function aicRenderHint(){
+  const h=el('aicHint'); if(!h) return;
+  const clsMode=(AIC_CTX==='foreign'||AIC_CTX==='kr');
+  const weakN=AIC_RESULTS.filter(b=>b.rel===1).length;
+  h.innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> ${clsMode?'작가·시대 정보를':'줄거리·작가·소장형태(전자/종이/구독)를'} 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>${clsMode?'북스타 고전 — 바로 읽기 연결':(CUR_FORMAT==='ebook'?'우리 도서관 전자책 — 바로 읽기 연결':CUR_FORMAT==='paper'?'우리 도서관 종이책':'우리 도서관 소장')}</b>)`; }
 function aicUpdateCount(){ const c=el('aicCnt'); if(c)c.textContent=AIC_PICKED.size+'권'; }
 function aicBuildGrid(){
   const g=el('aicGrid'); if(!g)return;
@@ -2328,8 +2353,8 @@ async function aicRunGenerate(topic,isRe){
   try{
     const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
       body:JSON.stringify(clsMode
-        ? {query:topic, pool:aicClassicPool(), genTitle:true, titleModel:'sonnet', count:(AIC_COUNT||8)+6}
-        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8)+6, format:CUR_FORMAT})});   // 8/19 책 형태
+        ? {query:topic, pool:aicClassicPool(), genTitle:true, titleModel:'sonnet', count:(AIC_COUNT||8)}
+        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8), format:CUR_FORMAT})});   // 8/19 책 형태 · 8/29 "+6" 제거(10권 고르면 후보 16권 나와 라벨과 안 맞았다)
     j=await r.json(); if(j&&j.error)err=j.error;
   }catch(e){ err=String(e); }
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
@@ -2340,13 +2365,9 @@ async function aicRunGenerate(topic,isRe){
   if(j&&j.offtopic){ aicPush('ai','📚 '+(j.message||'책 큐레이션 주제를 적어주세요')); return; }
   if(err||!j||!(j.candidates||[]).length){ aicPush('ai',`음… 그 주제로는 ${srcName}에서 책을 못 찾았어요. 조금 다르게 말씀해 주실래요?`); return; }
   AIC_RESULTS=j.candidates;
-  // 기본 선택 = 관련도 강함(rel 3, 또는 rel 없는 응답)만 → 약한 매칭은 사서가 판단. 강한 게 없으면 전체에서 채움.
-  const strongIdx=AIC_RESULTS.map((b,i)=>i).filter(i=>AIC_RESULTS[i].rel===undefined||AIC_RESULTS[i].rel>=2);   // 주제권(rel≥2) 기본 담기, rel=1만 제외
-  const baseIdx=strongIdx.length?strongIdx:AIC_RESULTS.map((_,i)=>i);
-  AIC_PICKED=new Set(baseIdx.slice(0,AIC_COUNT||8));
+  // 기본 선택 = 관련도 강함(rel≥2)만 → 약한 매칭은 사서가 판단. (aicRepick·aicRenderHint — 권수 버튼과 같은 규칙, 8/29)
+  aicRepick(); aicRenderHint();
   el('aicTitle').value=j.title||topic; el('aicSub').value=j.subtitle||'';
-  const weakN=AIC_RESULTS.filter(b=>b.rel===1).length;
-  el('aicHint').innerHTML=`후보 <b>${AIC_RESULTS.length}권</b> 중 주제에 맞는 <b>${AIC_PICKED.size}권</b>을 담아뒀어요${weakN?`, <span style="color:#b45309">⚠ 관련 낮은 ${weakN}권</span>은 빼뒀어요(확인 후 담기)`:''}.<br>📖 <b>책을 누르면</b> ${clsMode?'작가·시대 정보를':'줄거리·작가·소장형태(전자/종이/구독)를'} 보고 담을 수 있어요. (오른쪽 ✓로 바로 담기/빼기, 모두 <b>${clsMode?'북스타 고전 — 바로 읽기 연결':(CUR_FORMAT==='ebook'?'우리 도서관 전자책 — 바로 읽기 연결':CUR_FORMAT==='paper'?'우리 도서관 종이책':'우리 도서관 소장')}</b>)`;
   aicBuildGrid(); result.classList.add('show'); result.scrollIntoView({behavior:'smooth',block:'nearest'});
   aicPush('ai',(isRe?'다시 골라봤어요!':'이렇게 골라봤어요!')+' 아래에서 확인하고, 더 다듬고 싶으면 눌러주세요.');
   aicShowChips2([{t:'더 가볍게',k:'light'},{t:'더 깊이 있게',k:'deep'},{t:'다른 분야로',k:'other'},{t:'이대로 좋아요 ✓',k:'ok'}]);
