@@ -767,9 +767,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>세계 고전</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 국내')"><span>한국 고전</span></div>
-    <!-- 8/29 리뷰 B1/F17: 학생 앱엔 있는데 관리자 메뉴에 빠져 있던 두 화면 — International 큐레이션, 커뮤니티(학생 앱 커뮤니티 4탭의 유일한 편집기·서평 삭제) -->
-    <div class="navi" onclick="goArea(this,'International')"><span>International</span></div>
-    <div class="navi" onclick="go(this,'comm')"><span>커뮤니티</span></div>
+    <!-- ⛔ 8/29 사장님 지시: 메뉴는 이 4개로 고정. 'International'·'커뮤니티' 메뉴를 넣었다가 즉시 뺌(International 탭은 국내 고전과 같은 것 — 별도 메뉴 아님). 메뉴 추가는 반드시 먼저 물어볼 것 -->
   </aside>
 
   <main class="main">
@@ -3034,8 +3032,7 @@ function renderChallenges(){
           <div class="tg${m.autoJoin?' on':''}" onclick="chalToggleAuto(${i})"></div></div>
         ${missCells}</div>
       ${quizCfg}
-      <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제. 8/29 리뷰 F4: 별은 없어졌고 시상은 추첨형뿐이라 '추첨 인원·응모 조건'만 되살림(없으면 통계 엑셀에 늘 "10명"이 찍혔다) -->
-      ${chalRewardBox(c,i)}
+      <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제(엑셀로 확인). 8/29 되살렸다가 다시 뺌 — 화면 변경은 사장님 승인 후. 추첨 인원·조건 값은 chalMissClean에서 보존만 -->
       <div class="flabel" style="margin-top:10px">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
