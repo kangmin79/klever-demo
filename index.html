@@ -8227,7 +8227,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260829e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260829f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -11299,9 +11299,12 @@ function onUnifiedSearch(submit){
   const qn=ql.replace(/\s+/g,'');
   const hit=(s)=>{ s=String(s||'').toLowerCase(); return s.includes(ql) || (qn && s.replace(/\s+/g,'').includes(qn)); };
   const clsHits=BOOKS.filter(b=> hit(b.title) || hit(b.titleEn) || hit(b.author) || hit(b.category) );
+  // 8/29 사장님 지적: 같은 책이 3~4장으로 — 풀에 같은 전자책이 키만 다르게(베스트 목록 brcd·장서 ctrl·ISBN) 여러 번 들어 있었다.
+  //   제목(부제 앞)+저자+형태(전자책/종이책)가 같으면 한 장만 남긴다. 종이책·전자책은 서로 다른 카드로 유지.
+  const _dupSeen=new Set();
   const libHits=(typeof libTitled==='function'?libTitled():[]).filter(b=>
     hit((b.t||b.title||'')+' '+(b.a||b.author||''))
-  );
+  ).filter(b=>{ const k=_usDupKey(b.t||b.title,b.a||b.author,(b.tags||[]).includes('ebook')?'e':((b.tags||[]).includes('paper')?'p':'x')); if(_dupSeen.has(k)) return false; _dupSeen.add(k); return true; });
   let html='';
   // 8/17 사장님 수정요청: 우리 도서관 소장이 위, 북스타 고전은 아래
   // 우리 도서관 소장 = 로컬 풀(베스트·신착·큐레이션) 즉시 표시 + 전체 장서(semyung_tulip 31.9만) 서버검색이 뒤이어 합류
@@ -11319,6 +11322,12 @@ function onUnifiedSearch(submit){
   usTulipSearch(q, libHits);
 }
 
+// 같은 책 판별 키: 부제(':' '/' 뒤) 떼고 공백·기호 제거한 제목 + 저자 + 형태(e 전자책/p 종이책)
+function _usDupKey(title,author,kind){
+  const n=s=>String(s||'').replace(/\[전자책\]/g,'').split(/\s[:/]\s|\s*:\s*|\s\/\s*/)[0].toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+  const a=String(author||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,'').slice(0,6);
+  return n(title)+'|'+a+'|'+(kind||'x');
+}
 // 키워드 탭 → 세명대 전체 장서(semyung_tulip) 서버 검색.
 //   search_norm = 제목+저자에서 공백·기호 제거한 정규화 컬럼(gin_trgm 인덱스 있음) — 질의도 같은 규칙으로 정규화해 ilike.
 let _usTulipSeq=0;
@@ -11335,7 +11344,9 @@ async function usTulipSearch(q, localLib){
   }catch(e){}
   if(seq!==_usTulipSeq) return;                        // 그 사이 새 입력 — 늦은 응답 폐기
   const seen=new Set((localLib||[]).map(b=>String(b.isbn||'')).filter(Boolean));
-  rows=rows.filter(t=>!t.isbn || !seen.has(String(t.isbn)));
+  // 8/29: ISBN 뿐 아니라 제목+저자+형태로도 중복 제거 — 풀의 전자책(brcd 키)과 장서 행(ctrl 키)이 같은 책인데 키가 달라 두 장으로 나오던 것
+  const seenKey=new Set((localLib||[]).map(b=>_usDupKey(b.t||b.title,b.a||b.author,(b.tags||[]).includes('ebook')?'e':((b.tags||[]).includes('paper')?'p':'x'))));
+  rows=rows.filter(t=>{ if(t.isbn && seen.has(String(t.isbn))) return false; const k=_usDupKey(t.title,t.author,t.kind==='ebook'?'e':(t.kind==='paper'?'p':'x')); if(seenKey.has(k)) return false; seenKey.add(k); return true; });
   rows.sort((x,y)=>((x.kind==='ebook')?0:1)-((y.kind==='ebook')?0:1) || (x.title||'').length-(y.title||'').length);   // 전자책 먼저, 짧은 제목(정확 일치 근접) 먼저
   const {sec,grid,cnt,no}=els();
   if(!rows.length){ if(no&&no.style.display!=='none') no.textContent=noHitMsg; return; }
