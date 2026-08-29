@@ -1849,21 +1849,35 @@ async function ntChalSave(){ ntReadInputs(); await saveSections(); }
 function renderChalNotices(){
   const host=el('ntListChal'); if(!host) return;
   ntReadInputs();   // 8/29 리뷰 F1: 다시 그리기 전에 화면의 입력값을 먼저 되받는다 — 안 그러면 챌린지 쪽 버튼만 눌러도 쓰던 안내 글이 사라진다
-  const list=SECTIONS.filter(s=>aOf(s)===CHAL_AREA && (s.style||'')==='notice');
-  host.innerHTML=ntBarHTML()+list.map((s,k)=>`
+  // 8/29 사장님: 왼쪽 편집 목록도 오른쪽 화면과 같은 순서로 — 안내 카드는 챌린지 목록(renderChallenges) 안에 제자리로 섞여 그려진다. 여기엔 만들기 바만.
+  host.innerHTML=ntBarHTML();
+}
+// 안내 카드 한 장(편집용). pos/total = 챌린지와 섞인 전체 목록에서의 자리 — ▲▼가 챌린지 사이로 움직인다
+function ntCardHTML(s,pos,total){
+  return `
     <div class="panel sec-panel" style="margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span class="sec-no">📢 안내 카드 ${k+1}</span><span style="flex:1"></span>
-        <button class="btn-ghost sec-mv" ${k===0?'disabled':''} onclick="ntChalMove('${esc(s.slot)}',-1)" title="한 칸 위로">▲ 위로</button>
-        <button class="btn-ghost sec-mv" ${k===list.length-1?'disabled':''} onclick="ntChalMove('${esc(s.slot)}',1)" title="한 칸 아래로">▼ 아래로</button>
+        <span class="sec-no">📢 안내 카드</span><span style="flex:1"></span>
+        <button class="btn-ghost sec-mv" ${pos<=0?'disabled':''} onclick="chalCombMove('n:${esc(s.slot)}',-1)" title="한 칸 위로">▲ 위로</button>
+        <button class="btn-ghost sec-mv" ${pos>=total-1?'disabled':''} onclick="chalCombMove('n:${esc(s.slot)}',1)" title="한 칸 아래로">▼ 아래로</button>
         <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="ntChalDel('${esc(s.slot)}')">삭제</button>
         <button class="btn-primary sec-reg" onclick="ntChalSave()" title="지금 고친 내용을 학생 앱에 반영합니다">등록</button>
       </div>
       <div class="flabel">제목</div><input class="cur-inp" id="sec_t_${esc(s.slot)}" value="${esc(s.title)}">
       <div class="flabel" style="margin-top:11px">본문 <span style="font-weight:400;color:var(--light)">· 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
       <textarea class="cur-inp" id="sec_s_${esc(s.slot)}" rows="7" style="line-height:1.8">${esc(s.subtitle)}</textarea>
-      <div class="note" style="margin-top:12px">📢 자리는 위쪽 <b>↕ 순서 바꾸기</b>에서 챌린지 사이로 옮길 수 있어요(기본은 맨 위). <b>등록</b> 또는 <b>저장</b>을 눌러야 반영돼요.</div>
-    </div>`).join('');
+      <div class="note" style="margin-top:12px">📢 이 자리 그대로 학생 앱에 나가요. ▲▼나 위쪽 <b>↕ 순서 바꾸기</b>로 챌린지 사이를 옮기고, <b>등록</b> 또는 <b>저장</b>을 눌러야 반영돼요.</div>
+    </div>`;
+}
+// 챌린지·안내 카드를 한 줄로 놓고 한 칸 옮기기. key = 'c:<챌린지 index>' | 'n:<안내 slot>'
+function chalCombMove(key,dir){
+  readChalInputs(); ntReadInputs();
+  const items=_chalCombined();
+  const k=key.startsWith('n:')?items.findIndex(s=>(s.style||'')==='notice'&&s.slot===key.slice(2)):items.indexOf(CHALLENGES[+key.slice(2)]);
+  const j=k+dir; if(k<0||j<0||j>=items.length) return;
+  const t=items[k]; items[k]=items[j]; items[j]=t;
+  if(!_applyChalOrder(items)) return;
+  renderChallenges();
 }
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
@@ -1903,15 +1917,19 @@ function _chalCombined(){
   return out;
 }
 function _areaSecs(){ if(_reMode==='chal') return _chalCombined().map((s,i)=>({s,i})); return SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea); }
+// 섞인 목록(items) → CHALLENGES 순서 + 안내 카드 chal_pos. '이달의 챌린지'는 학생 화면에서 항상 맨 위라 그 위로는 못 올린다(안내 카드는 예외 — 히어로 위에 둘 수 있음).
+function _applyChalOrder(items){
+  const chs=[]; const ntOrder=[];
+  items.forEach(s=>{ if((s.style||'')==='notice'){ s.chal_pos=chs.length; ntOrder.push(s); } else chs.push(s); });
+  const heroC=chs.find(c=>c.featured)||null;
+  if(heroC&&chs[0]!==heroC){ toast('‘이달의 챌린지’는 학생 화면에서 항상 맨 위예요 — 다른 챌린지를 그 위로 올릴 수 없어요'); return false; }
+  CHALLENGES.splice(0,CHALLENGES.length,...chs);
+  // 안내 카드끼리의 순서도 정한 대로 SECTIONS 에 반영(같은 자리에 둘 이상일 때의 앞뒤)
+  let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===CHAL_AREA&&(s.style||'')==='notice') SECTIONS[idx]=ntOrder[k++]; });
+  return true;
+}
 function _applyAreaOrder(items){
-  if(_reMode==='chal'){
-    const chs=[]; const ntOrder=[];
-    items.forEach(s=>{ if((s.style||'')==='notice'){ s.chal_pos=chs.length; ntOrder.push(s); } else chs.push(s); });
-    CHALLENGES.splice(0,CHALLENGES.length,...chs);
-    // 안내 카드끼리의 순서도 창에서 정한 대로 SECTIONS 에 반영(같은 자리에 둘 이상일 때의 앞뒤)
-    let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===CHAL_AREA&&(s.style||'')==='notice') SECTIONS[idx]=ntOrder[k++]; });
-    return;
-  }
+  if(_reMode==='chal'){ _applyChalOrder(items); return; }
   let k=0; SECTIONS.forEach((s,idx)=>{ if(aOf(s)===curArea) SECTIONS[idx]=items[k++]; }); }   // 현재 영역 칸만 재배열, 다른 영역 위치 보존
 function openReorder(mode){ _reMode=(mode==='chal')?'chal':'sec'; if(_reMode==='chal') readChalInputs(); else readSecInputs();
   const h=document.querySelector('#reOv .sec-h h3'); if(h) h.textContent=_reMode==='chal'?'챌린지 순서 바꾸기':'칸 순서 바꾸기';
@@ -3012,8 +3030,9 @@ function chalRewardBox(c,i){   // 8/29 별 포인트 폐지 — 추첨형만
 function renderChallenges(){
   try{ renderChalNotices(); }catch(e){}   // 8/29: 챌린지 목록 위 안내 카드도 같이 그린다
   el('chalList').innerHTML=(CHAL_LOAD_FAILED?`<div class="load-fail">챌린지를 서버에서 불러오지 못했어요. <span>지금 보이는 목록은 진짜가 아닐 수 있어 저장이 막혀 있습니다 — 페이지를 새로고침한 뒤 다시 시도해 주세요.</span></div>`:'')
-  +CHALLENGES.map((c,i)=>{
+  +(function(){ const _comb=_chalCombined(); const cards=CHALLENGES.map((c,i)=>{   // 8/29: 안내 카드와 섞인 화면 순서대로 그린다(오른쪽 미리보기·학생 앱과 동일)
     chalMission(c);
+    const _pos=_comb.indexOf(c);
     const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[], cnt=chalMissCount(c);
     const missCells=CH_MISSIONS.map(x=>{
       if(x.k==='quiz'&&!isClassic)return '';
@@ -3033,8 +3052,8 @@ function renderChallenges(){
         <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span>
         <button class="btn-ghost" style="padding:5px 10px;${c.featured?'background:#fff7e6;border-color:#f0c674;color:#b8860b;font-weight:800':''}" onclick="chalSetFeatured(${i})" title="학생 앱 '독서 챌린지' 상단 '이달의 챌린지'로 크게 노출됩니다 (하나만 지정)">${c.featured?'⭐ 이달의 챌린지':'☆ 이달의로 지정'}</button>
         <span style="flex:1"></span>
-        <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},-1)" ${i===0?'disabled':''}>↑</button>
-        <button class="btn-ghost" style="padding:5px 10px" onclick="chalMove(${i},1)" ${i===CHALLENGES.length-1?'disabled':''}>↓</button>
+        <button class="btn-ghost" style="padding:5px 10px" onclick="chalCombMove('c:${i}',-1)" ${_pos<=0?'disabled':''}>↑</button>
+        <button class="btn-ghost" style="padding:5px 10px" onclick="chalCombMove('c:${i}',1)" ${_pos>=_comb.length-1?'disabled':''}>↓</button>
         <button class="btn-ghost" style="padding:5px 10px;color:var(--bad);border-color:#e7c9c4" onclick="chalDel(${i})">삭제</button>
       </div>
       <div class="row2">
@@ -3058,7 +3077,7 @@ function renderChallenges(){
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
     </div>`;
-  }).join('')
+  }); return _comb.map((it,pos)=>(it.style||'')==='notice'?ntCardHTML(it,pos,_comb.length):cards[CHALLENGES.indexOf(it)]).join(''); })()
   +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="chalAdd()">+ 새 챌린지 추가</button>`;
   // 8/14 사장님 수정요청: 독서 챌린지에도 AI 큐레이션 카드 — 이 페이지 상단 슬롯으로 이동
   const _slot=el('aicSlotChal');
