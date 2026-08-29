@@ -41,21 +41,47 @@ function errPage(msg: string, code = 400): Response {
 }
 
 // Supabase Auth Admin — 학번 이메일로 계정 생성(있으면 조용히 무시). 정식 계정 자산 확보.
+const ADMIN_H = { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}`, "content-type": "application/json" };
 async function ensureAuthUser(hakbun: string, name: string): Promise<void> {
   const email = `${hakbun.toLowerCase()}@${SSO_EMAIL_DOMAIN}`;
   const r = await fetch(`${SB_URL}/auth/v1/admin/users`, {
     method: "POST",
-    headers: { apikey: SB_SRV, Authorization: `Bearer ${SB_SRV}`, "content-type": "application/json" },
+    headers: ADMIN_H,
     body: JSON.stringify({
       email,
       email_confirm: true,
       user_metadata: { hakbun, name, school: ALLOWED_SCHOOL, via: "sso" },
+      app_metadata: { hakbun, school: ALLOWED_SCHOOL },
     }),
   });
   // 201=신규 생성, 422/409=이미 존재(정상). 그 외는 로그만(로그인 흐름은 계속 — 계정은 부가자산).
   if (!r.ok && r.status !== 422 && r.status !== 409) {
     console.error("ensureAuthUser fail", r.status, (await r.text()).slice(0, 200));
   }
+}
+
+// 8/29 신원 잠금: 앱이 쓰는 학생 신원 = Supabase Auth 세션(JWT)으로 통일.
+//   JWT의 app_metadata.hakbun 은 서버(여기)만 쓸 수 있고 학생이 못 바꾼다 → DB RLS가 "본인 행만" 조건을 이걸로 건다.
+//   흐름: 1회용 magiclink 해시(token_hash) 발급 → 앱이 /auth/v1/verify 로 교환 → 세션(access/refresh) 보관.
+//   실패하면 빈 문자열 — 앱은 이 값이 없으면 로그인으로 치지 않는다(학번을 URL에서 믿던 옛 방식 폐기).
+async function issueAuthHandoff(hakbun: string, name: string): Promise<string> {
+  const email = `${hakbun.toLowerCase()}@${SSO_EMAIL_DOMAIN}`;
+  const r = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
+    method: "POST", headers: ADMIN_H,
+    body: JSON.stringify({ type: "magiclink", email }),
+  });
+  if (!r.ok) { console.error("generate_link fail", r.status, (await r.text()).slice(0, 200)); return ""; }
+  const j = await r.json();
+  const uid = j?.id || j?.user?.id || "";
+  const th = j?.hashed_token || j?.properties?.hashed_token || "";
+  if (!uid || !th) { console.error("generate_link shape", JSON.stringify(j).slice(0, 200)); return ""; }
+  // 학번·이름을 서버 전용 칸(app_metadata)에 고정 — 기존 계정도 매 로그인마다 최신화(이름은 도서관 등록명 우선)
+  const u = await fetch(`${SB_URL}/auth/v1/admin/users/${uid}`, {
+    method: "PUT", headers: ADMIN_H,
+    body: JSON.stringify({ app_metadata: { hakbun, school: ALLOWED_SCHOOL }, user_metadata: { hakbun, name, school: ALLOWED_SCHOOL, via: "sso" } }),
+  });
+  if (!u.ok) { console.error("app_metadata fail", u.status, (await u.text()).slice(0, 200)); return ""; }
+  return th;
 }
 
 // 연계값 → (liid 확보 → 세션 저장 → 앱으로 302) 공통 마무리.
@@ -97,14 +123,18 @@ async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | nu
     saved = true;
   } catch (e) { console.error("saveSession fail", String(e)); }
 
-  // ⑥ 정식 계정 자산 확보(실패해도 로그인은 진행)
+  // ⑥ 정식 계정 + 앱 신원 세션 핸드오프(8/29). 이게 없으면 웹 앱은 로그인 실패로 처리한다.
+  let authHandoff = "";
   try { await ensureAuthUser(hakbun, name); } catch (e) { console.error("ensureAuthUser err", String(e)); }
+  try { authHandoff = await issueAuthHandoff(hakbun, name); } catch (e) { console.error("issueAuthHandoff err", String(e)); }
+  if (!authHandoff) return errPage("계정 세션을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.", 500);
 
-  // ⑦ 앱으로 리다이렉트 → app.html이 __SSO_STUDENT 세팅
+  // ⑦ 앱으로 리다이렉트 → 앱이 sso_auth 를 세션으로 교환해 로그인 확정 (sso_uid·sso_name 은 표시·앱(솔숲) 호환용, 신원 근거 아님)
   const q = new URLSearchParams({
     sso_uid: hakbun, sso_name: name, sso_dept: "세명대학교",
     sso_token: await signSsoToken(hakbun, name, sid),
     sso_personal: liid && saved ? "1" : "0", // 1=대출현황·연장·예약·개인 전자책 대출 가능
+    sso_auth: authHandoff,
   });
   const back = appReturn(ret);
   if (back) return new Response(null, { status: 302, headers: { ...CORS, Location: `${back}${back.includes("?") ? "&" : "?"}${q}` } });
@@ -168,6 +198,13 @@ Deno.serve(async (req) => {
     } else {
       // 8/22: 배너는 기본 3필드(학교·학번·이름)만 보낸다 → 이 학번이 전에 포털 로그인으로 남긴 연계값이 있으면
       // 그걸로 개인기능을 연다. (GET 테스트 경로엔 있었는데 POST엔 빠져 있어 "이름은 뜨는데 빌린 책이 안 보이는" 상태였음)
+      // 8/29 잠금: 이 "학번만으로 로그인" 길은 학교 배너가 비밀키(banner_key)를 함께 보낼 때만 연다.
+      //   SSO_BANNER_SECRET 시크릿이 비어 있으면 완전히 닫힘 — 학번만 아는 남이 남으로 로그인하던 구멍.
+      //   배너 설치 시 학교와 합의한 키를 시크릿에 넣고, 배너 폼에 <input type=hidden name=banner_key> 로 실어 보낸다.
+      const bannerKey = Deno.env.get("SSO_BANNER_SECRET") || "";
+      if (!bannerKey || g("banner_key") !== bannerKey) {
+        return errPage("학교 인증 정보가 없습니다. 도서관 홈페이지의 로그인 배너 또는 포털 로그인으로 들어와 주세요.", 403);
+      }
       try {
         const row = await loadLatestByHakbun(hakbun);
         if (row?.school_no && row?.portal_user_id) {

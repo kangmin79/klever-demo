@@ -6167,7 +6167,7 @@ function bxEnsureStudentRow(s){
   const row={id:String(s.id), name:String(s.name||s.id), school_id:CH_SCHOOL};
   if(s.emoji) row.emoji=s.emoji;
   fetch(`${SB_REST}/bookstar_students?on_conflict=id`,{method:'POST',
-    headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'resolution=ignore-duplicates,return=minimal'},
+    headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},   // 8/29 본인 세션으로(익명 키는 이제 못 씀)
     body:JSON.stringify(row)}).catch(()=>{});
 }
 
@@ -6467,10 +6467,15 @@ document.addEventListener('click', bxCloseAccMenu);   // 바깥을 누르면 닫
 // 로그아웃 — 도서관 열람실 공용 PC를 생각하면 없어선 안 된다(다음 사람이 남의 대출내역을 그대로 본다).
 function bxLogout(){
   if(!confirm('로그아웃할까요?\n이 기기에서 도서관 연동 정보가 지워집니다.')) return;
+  // 8/29: 서버 세션도 끝내고(다음 사람이 이 기기에서 이어 쓰지 못하게), 이 학생 이름으로 남은 임시 기록까지 지운다
+  try{ const a=_bxAuthGet(); if(a&&a.at) fetch(SB_AUTH+'/logout',{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+a.at},keepalive:true}).catch(()=>{}); }catch(e){}
+  try{ _bxAuthClear(); }catch(e){}
   try{
     localStorage.removeItem('bookstar-current-student');
     localStorage.removeItem(SSO_TOK_KEY);
     localStorage.removeItem(SSO_PERSONAL_KEY);
+    const gone=[]; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i)||''; if(/^bookstar-(chal|draft|joined-chal|score-log)/.test(k)) gone.push(k); }
+    gone.forEach(k=>localStorage.removeItem(k));
   }catch(e){}
   try{ window.__SSO_STUDENT=null; }catch(e){}
   location.href=location.pathname;   // 부분 갱신은 이전 계정 잔여가 남는다 — 통째로 게스트 상태에서 다시 시작
@@ -7073,6 +7078,84 @@ const SMMY_FN ="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-my
 const SSO_TOK_KEY='bx_sso_token', SSO_PERSONAL_KEY='bx_sso_personal';
 function ssoToken(){ try{ return localStorage.getItem(SSO_TOK_KEY)||''; }catch(e){ return ''; } }
 function ssoIsPersonal(){ try{ return localStorage.getItem(SSO_PERSONAL_KEY)==='1'; }catch(e){ return false; } }
+
+/* ═══ 8/29 신원 잠금 — 앱 안 활동(글·챌린지·팔로우·인생책)의 학생 신원 = Supabase Auth 세션 ═══
+   전에는 주소창 ?sso_uid=학번 / localStorage 학번을 그대로 믿어 "학번만 알면 남으로" 쓰고 지울 수 있었다.
+   이제 sso-login 이 주는 1회용 sso_auth 를 /auth/v1/verify 로 세션(JWT)으로 바꾸고, 그 JWT 의
+   app_metadata.hakbun(서버만 쓸 수 있는 칸)이 학번이다. DB(RLS)는 이 학번과 행의 student_id 가 같을 때만 쓰게 한다.
+   BX_H.Authorization 을 이 세션으로 바꿔 두면 기존 호출 70여 곳이 그대로 본인 명의로 동작한다. */
+const BX_AUTH_KEY='bx_auth';
+const SB_AUTH='https://gkujptyfrzqrjrvovbnc.supabase.co/auth/v1';
+let _bxAuthTimer=null;
+function _bxJwt(at){
+  try{ let p=String(at).split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); while(p.length%4) p+='=';
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(p),c=>c.charCodeAt(0)))); }catch(e){ return null; }
+}
+function _bxAuthGet(){ try{ return JSON.parse(localStorage.getItem(BX_AUTH_KEY)||'null'); }catch(e){ return null; } }
+function _bxAuthStore(j){
+  const sess={at:j.access_token, rt:j.refresh_token, exp:(j.expires_at||(Math.floor(Date.now()/1000)+(j.expires_in||3600)))};
+  try{ localStorage.setItem(BX_AUTH_KEY, JSON.stringify(sess)); }catch(e){}
+  return sess;
+}
+function _bxAuthClear(){ try{ localStorage.removeItem(BX_AUTH_KEY); }catch(e){} BX_H.Authorization='Bearer '+COVER_ANON; clearTimeout(_bxAuthTimer); }
+function _bxAuthSchedule(sess){
+  clearTimeout(_bxAuthTimer);
+  const ms=Math.max(10000,(sess.exp-Math.floor(Date.now()/1000)-120)*1000);
+  _bxAuthTimer=setTimeout(bxAuthRefresh, Math.min(ms, 2000000000));
+}
+// 세션 → 헤더 + 학생 확정. 학번이 JWT 에 없으면 신원으로 안 친다.
+function _bxAuthApply(sess){
+  const p=_bxJwt(sess.at)||{};
+  const hak=String((p.app_metadata&&p.app_metadata.hakbun)||'');
+  if(!hak){ _bxAuthClear(); return false; }
+  BX_H.Authorization='Bearer '+sess.at;
+  const nm=String((p.user_metadata&&p.user_metadata.name)||hak);
+  const cur=bxStudent();
+  const st={id:hak, name:nm, emoji:(cur&&cur.id===hak&&cur.emoji)||'🎓', dept:'세명대학교'};
+  window.__SSO_STUDENT=st; bxSetStudent(st);
+  _bxAuthSchedule(sess);
+  return true;
+}
+async function bxAuthRefresh(){
+  const s=_bxAuthGet(); if(!s||!s.rt) return false;
+  try{
+    const r=await fetch(SB_AUTH+'/token?grant_type=refresh_token',{method:'POST',headers:{apikey:COVER_ANON,'content-type':'application/json'},body:JSON.stringify({refresh_token:s.rt})});
+    if(r.ok){ const j=await r.json(); if(j&&j.access_token) return _bxAuthApply(_bxAuthStore(j)); }
+    if(r.status===400||r.status===401||r.status===403){
+      const s2=_bxAuthGet();                       // 다른 탭이 먼저 갱신했으면 그걸 쓴다
+      if(s2&&s2.rt&&s2.rt!==s.rt) return _bxAuthApply(s2);
+      bxAuthSignedOut(); return false;
+    }
+  }catch(e){}
+  clearTimeout(_bxAuthTimer); _bxAuthTimer=setTimeout(bxAuthRefresh,60000);   // 네트워크 — 1분 뒤 재시도
+  return false;
+}
+// 세션 무효(서버에서 회수·만료) — 게스트로 되돌림
+function bxAuthSignedOut(){
+  _bxAuthClear();
+  try{ localStorage.removeItem('bookstar-current-student'); localStorage.removeItem(SSO_TOK_KEY); localStorage.removeItem(SSO_PERSONAL_KEY); }catch(e){}
+  try{ window.__SSO_STUDENT=null; }catch(e){}
+  try{ bxRenderAccountChip(); }catch(e){}
+}
+// sso-login 이 준 1회용 해시 → 세션. 성공=true
+async function bxAuthExchange(tokenHash){
+  try{
+    const r=await fetch(SB_AUTH+'/verify',{method:'POST',headers:{apikey:COVER_ANON,'content-type':'application/json'},body:JSON.stringify({type:'magiclink',token_hash:tokenHash})});
+    if(!r.ok) return false;
+    const j=await r.json(); if(!j||!j.access_token) return false;
+    return _bxAuthApply(_bxAuthStore(j));
+  }catch(e){ return false; }
+}
+// 시작 시 복원 — 세션이 없으면 옛 방식 잔여(학번만 든 localStorage)는 신원이 아니므로 지운다
+function bxAuthRestore(){
+  const s=_bxAuthGet();
+  if(!s||!s.at){ try{ localStorage.removeItem('bookstar-current-student'); }catch(e){} try{ window.__SSO_STUDENT=null; }catch(e){} return false; }
+  const ok=_bxAuthApply(s);
+  if(ok && s.exp-Math.floor(Date.now()/1000)<=120) bxAuthRefresh();   // 만료 임박·지남 → 바로 재발급(표시는 유지)
+  return ok;
+}
+bxAuthRestore();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState!=='visible') return; const s=_bxAuthGet(); if(s&&s.rt&&s.exp-Math.floor(Date.now()/1000)<=120) bxAuthRefresh(); });
 function smHeaders(){
   const t=ssoToken();
   return t ? {apikey:COVER_ANON, Authorization:'Bearer '+t} : {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON};
@@ -8117,10 +8200,10 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260822b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260829a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
-const BODIES_VER = '260629a';
+const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
@@ -9616,7 +9699,7 @@ function renderMyHero(){
   const s=bxStudent(); const st=_myStats();
   const empty = st.done===0 && st.answered===0 && st.score===0;
   el.innerHTML = `
-    <div class="my-hero-name">${s?`<span style="font-size:18px;">${s.emoji||'🙂'}</span> ${esc(s.name)}`:'🙂 게스트'}</div>
+    <div class="my-hero-name">${s?`<span style="font-size:18px;">${esc(s.emoji||'🙂')}</span> ${esc(s.name)}`:'🙂 게스트'}</div>
     <div class="my-hero-msg">${empty
       ? '아직 시작 전이에요 — 첫 책을 골라 <b>별이</b>와 함께 읽어보세요!'
       : `지금까지 <b>${st.done}권 완독</b>${st.answered?` · 퀴즈 정답률 <b>${st.rate}%</b>`:''}`}</div>
@@ -10680,7 +10763,7 @@ async function renderDashboard(){
   const el=document.getElementById('dashboardBody'); if(!el) return;
   el.innerHTML='<div class="lb-loading">독서 통계를 불러오는 중…</div>';
   const [students, results, rstats] = await Promise.all([
-    _agFetch(`bookstar_students?select=id,name,emoji`),   // dept는 서버에 없음 → 로컬 BX_STUDENTS에서 보강
+    _agFetch(`bookstar_students_public?select=id,name,emoji`),   // 8/29 공개용 뷰(이름 가림). dept는 서버에 없음
     _agFetch(`bookstar_challenge_results?select=student_id,book_id,read_pct,read_sec,quiz_ok,quiz_total,score,submitted`),
     _agFetch(`bookstar_reader_stats?select=student_id,data`)
   ]);
@@ -11611,7 +11694,7 @@ let _bxNameMap=null;
 async function _bxNames(){
   if(_bxNameMap) return _bxNameMap;
   const m={};
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?select=id,name,emoji`,{headers:BX_H});
+  try{ const r=await fetch(`${BX_SB}/bookstar_students_public?select=id,name,emoji`,{headers:BX_H});   // 8/29 공개용 뷰(이름 가림) — 본체 표는 본인 행만
     if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>{ m[x.id]={name:x.name||'학생', emoji:x.emoji||'🙂'}; }); } }catch(e){}
   _bxNameMap=m;
   return m;
@@ -11685,7 +11768,7 @@ function feedCard(it,i){
   else content=`<div class="fc-quote" style="background:${pastel}">${esc(it.text)}</div>`;
   return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
-      <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${s.emoji||'🙂'}</div>
+      <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${esc(s.emoji||'🙂')}</div>
       <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(isMe?s.name:pubName(s.name))}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
       ${followBtn}
     </div>
@@ -11717,7 +11800,7 @@ async function loadFeedItems(){
   }catch(e){}
   // 인생책 — 글(bookstar_writings)이 아니라 학생 프로필의 별도 통로(favorite_book_id·favorite_reason). 시각은 프로필 생성 시각뿐이라 그것을 씀
   try{
-    const r=await fetch(`${BX_SB}/bookstar_students?select=id,favorite_book_id,favorite_reason,created_at&favorite_book_id=not.is.null&favorite_book_id=neq.&order=created_at.desc&limit=200`,{headers:BX_H});
+    const r=await fetch(`${BX_SB}/bookstar_students_public?select=id,favorite_book_id,favorite_reason,created_at&favorite_book_id=not.is.null&favorite_book_id=neq.&order=created_at.desc&limit=200`,{headers:BX_H});
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!x.favorite_book_id)return;
       items.push({sid:x.id,book_id:x.favorite_book_id,act:'favorite',text:(x.favorite_reason||'').trim()||'인생책으로 골랐어요',time:x.created_at,meta:''}); });
@@ -11787,7 +11870,7 @@ async function openStudentProfile(sid){
   const s=(await _bxNames())[sid] || BX_STUDENTS.find(z=>z.id===sid) || {name:'학생', emoji:'🙂'};
   let ov=document.getElementById('bxProfileOv');
   if(!ov){ ov=document.createElement('div'); ov.id='bxProfileOv'; ov.className='bxp-ov'; ov.onclick=e=>{ if(e.target===ov) closeStudentProfile(); }; document.body.appendChild(ov); }
-  ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(sid===_bxSid()?s.name:pubName(s.name))}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
+  ov.innerHTML=`<div class="bxp"><div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span><div class="bxp-av">${esc(s.emoji||'🙂')}</div><div class="bxp-nm">${esc(sid===_bxSid()?s.name:pubName(s.name))}</div><div class="bxp-gr">불러오는 중…</div></div><div class="bxp-body"><div class="feed-empty">불러오는 중…</div></div></div>`;
   ov.classList.add('on'); document.body.style.overflow='hidden';
   // stale 가드: 최신 호출만 렌더 (기존: A 프로필 늦은 응답이 B 모달을 통째로 덮어쓰던 레이스)
   const token = (openStudentProfile._t = {});
@@ -11797,7 +11880,7 @@ async function openStudentProfile(sid){
   const _gj = async (url, fn) => { try{ const r=await fetch(url,{headers:BX_H}); if(r.ok) fn(await r.json()); }catch(e){} };
   // 독립 5요청 병렬 (8/29 별 포인트 폐지 — totals 요청 삭제)
   await Promise.all([
-    _gj(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}&select=*&order=created_at.desc`, a=>{ writings=a; }),
+    _gj(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}${sid===me?'':'&is_public=eq.true&hidden=eq.false'}&select=*&order=created_at.desc`, a=>{ writings=a; }),   // 8/29 남의 '나만 보기' 글 노출 수리
     _gj(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`, a=>{ results=a; }),
     _gj(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`, a=>{ enroll=a; }),
     _gj(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`, a=>{ if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } }),
@@ -11822,7 +11905,7 @@ async function openStudentProfile(sid){
   }).join('') : `<div class="feed-empty">아직 남긴 글이 없어요.</div>`;
   ov.querySelector('.bxp').innerHTML=`
     <div class="bxp-hd"><span class="bxp-x" onclick="closeStudentProfile()">×</span>
-      <div class="bxp-av">${s.emoji||'🙂'}</div><div class="bxp-nm">${esc(me===sid?s.name:pubName(s.name))}</div>
+      <div class="bxp-av">${esc(s.emoji||'🙂')}</div><div class="bxp-nm">${esc(me===sid?s.name:pubName(s.name))}</div>
       <div class="bxp-gr">세명대학교 학술정보원</div>
       <div class="bxp-fl"><span>팔로워 <b id="bxpFollowers">${followers}</b></span><span>팔로잉 <b>${followingN}</b></span></div>
       ${me===sid?'':`<button class="bxp-followbtn${iFollow?' on':''}" onclick="profileFollow(this,'${esc(sid)}')">${iFollow?'팔로잉':'팔로우'}</button>`}</div>
@@ -11864,20 +11947,32 @@ window.addEventListener('DOMContentLoaded', () => {
   // 학번이 오면 그 학생으로 즉시 로그인(__SSO_STUDENT). 데모 선택창(bxOpenPicker)은 건너뜀.
   try{
     const _sp=new URLSearchParams(location.search);
-    const _ssoUid=_sp.get('sso_uid');
-    if(_ssoUid){
-      const _prevSid=_bxSid();   // 로그인 직전 계정(게스트/데모) — 읽던 진행 승계용
-      const _st={id:_ssoUid, name:_sp.get('sso_name')||_ssoUid, emoji:'🎓', dept:_sp.get('sso_dept')||'세명대학교'};
-      window.__SSO_STUDENT=_st; bxSetStudent(_st);
-      // 서명 세션토큰 보관 — 개인기능(대출현황·연장·예약·본인명의 전자책 대출)의 유일한 자격증명.
-      // sso_personal=1 이어야 도서관 개인정보 연동까지 열린 상태(=liid 확보). 0이면 이름만 아는 게스트.
+    const _ssoAuth=_sp.get('sso_auth');
+    // 8/29 신원 잠금: 학번(sso_uid)은 더 이상 신원 근거가 아니다. sso_auth(1회용 해시)를 세션으로 바꿔야 로그인.
+    //   바꾸는 동안 이 페이지는 게스트로 그려지고, 성공하면 주소를 깨끗이 해서 다시 연다(그때 bxAuthRestore 가 학생을 복원).
+    if(_ssoAuth){
       try{
+        // 서명 세션토큰 보관 — 개인기능(대출현황·연장·예약·본인명의 전자책 대출)의 유일한 자격증명.
+        // sso_personal=1 이어야 도서관 개인정보 연동까지 열린 상태(=liid 확보). 0이면 이름만 아는 게스트.
         localStorage.setItem(SSO_TOK_KEY, _sp.get('sso_token')||'');
         localStorage.setItem(SSO_PERSONAL_KEY, _sp.get('sso_personal')==='1'?'1':'0');
+        sessionStorage.setItem('bx_login_prev', _bxSid());   // 로그인 직전 계정(게스트) — 읽던 진행 승계용
+        sessionStorage.setItem('bx_login_pending','1');
       }catch(e){}
-      try{ _migrateChalRecords(_prevSid, _ssoUid); }catch(e){}
-      // (8/29 별 포인트 폐지 — 출석 별 지급 삭제)
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
+      bxAuthExchange(_ssoAuth).then(ok=>{
+        if(ok){ location.replace(location.pathname+location.hash); return; }
+        try{ sessionStorage.removeItem('bx_login_pending'); localStorage.removeItem(SSO_TOK_KEY); localStorage.removeItem(SSO_PERSONAL_KEY); }catch(e){}
+        try{ bmToast('로그인 확인에 실패했어요. 다시 로그인해 주세요.'); }catch(e){}
+      });
+    }else if(_sp.get('sso_uid')){
+      history.replaceState(null,'',location.pathname+location.hash);   // 옛 방식 링크 — 신원으로 쓰지 않고 주소만 정리
+    }
+    let _pending=false; try{ _pending=sessionStorage.getItem('bx_login_pending')==='1'; }catch(e){}
+    if(_pending && bxStudent()){   // 세션 교환 뒤 다시 열린 페이지 — 로그인 직후 1회 처리
+      let _prevSid='guest'; try{ _prevSid=sessionStorage.getItem('bx_login_prev')||'guest'; sessionStorage.removeItem('bx_login_prev'); sessionStorage.removeItem('bx_login_pending'); }catch(e){}
+      try{ _migrateChalRecords(_prevSid, bxStudent().id); }catch(e){}
+      // (8/29 별 포인트 폐지 — 출석 별 지급 삭제)
       // 8/14 사장님 수정요청: 로그인 전에 보던 책을 자동으로 다시 연다 (로그인 후 활성화 안 되던 문제)
       // 고전(뷰어 게이트)이 우선 — 있으면 그 책 읽기로 바로 진입하고 도서관 책 기억은 함께 폐기
       try{

@@ -1,0 +1,21 @@
+#!/bin/sh
+# 8/29 자동 버전 올리기 — index.html 이 커밋에 들어가면 APP_BUILD 와 version.txt 를 오늘 날짜로 맞춘다.
+# (8/22 이후 8번 배포하면서 버전을 안 올려 "새 버전" 안내가 한 번도 안 뜬 사고 재발 방지)
+# 활성화: git config core.hooksPath .githooks   (이 저장소에서 1회)
+if git diff --cached --name-only | grep -qx 'index.html'; then
+  today=$(date +%y%m%d)
+  cur=$(sed -n "s/^const APP_BUILD = '\([0-9a-z]*\)';.*/\1/p" index.html | head -1)
+  if [ "${cur%?}" = "$today" ]; then
+    last=$(printf '%s' "$cur" | tail -c 1)
+    next=$(printf '%s' "abcdefghijklmnopqrstuvwxyz" | sed "s/.*$last//" | cut -c1)
+    [ -z "$next" ] && next=z
+  else
+    next=a
+  fi
+  new="$today$next"
+  sed -i "s/^const APP_BUILD = '[0-9a-z]*';/const APP_BUILD = '$new';/" index.html
+  printf '%s' "$new" > version.txt
+  git add index.html version.txt
+  echo "pre-commit: APP_BUILD -> $new"
+fi
+exit 0
