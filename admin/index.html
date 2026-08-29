@@ -1726,7 +1726,12 @@ function readSecInputs(){
   SECTIONS.forEach(s=>{const t=el('sec_t_'+s.slot),sub=el('sec_s_'+s.slot),st=el('sec_style_'+s.slot);
     if(t)s.title=t.value.trim()||s.title; if(sub)s.subtitle=sub.value.trim(); if(st)s.style=st.value; if(!Array.isArray(s.books))s.books=[];});
 }
-function addSection(){readSecInputs();SECTIONS.push({area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});renderSettings();}
+function addSection(){readSecInputs();
+  // 8/29: 손으로 만드는 칸도 현재 영역 맨 위에(AI 큐레이션과 같은 규칙) — 그 뒤 ↕ 순서 바꾸기로 옮긴다
+  const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
+  const at=idxs.length?idxs[0]:SECTIONS.length;
+  SECTIONS.splice(at,0,{area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});
+  renderSettings();}
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
@@ -2406,17 +2411,19 @@ function aicAddSection(){
     const now=new Date(), y=now.getFullYear(), m=now.getMonth();
     const p2=n=>String(n).padStart(2,'0');
     const from=`${y}-${p2(m+1)}-01`, to=`${y}-${p2(m+1)}-${p2(new Date(y,m+1,0).getDate())}`;
-    CHALLENGES.push({id:null,type:'소장챌린지',title,detail:subtitle,from,to,mission:{reward:'draw',quiz:false,quizN:10},books});
+    CHALLENGES.unshift({id:null,type:'소장챌린지',title,detail:subtitle,from,to,mission:{reward:'draw',quiz:false,quizN:10},books});   // 8/29: 새 챌린지는 맨 위(사장님 수정요청)
     _reset(); renderChallenges();
     toast(`✦ '${title}' 챌린지 초안이 추가됐어요 — 기간·미션 확인 후 저장하세요`);
     return;
   }
   readSecInputs();
-  // 고정 칸들 뒤에 새 큐레이션 칸 삽입(현재 영역)
+  // 8/29 사장님 수정요청: 새 큐레이션은 현재 영역의 **맨 위**에 — 예전엔 "고정 칸(대출랭킹·신착 등) 뒤"라
+  //   사서 칸이 고정 칸 사이에 끼어 있는 지금은 8번째 칸으로 들어가 한참 찾아야 했다.
+  //   위치는 그 뒤 사서가 ↕ 순서 바꾸기로 옮긴다. (관리자 순서 = 학생 앱 순서)
   const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
-  const lastFixed=[...idxs].reverse().find(i=>isFixed(SECTIONS[i]));
-  const at=(lastFixed!=null?lastFixed+1:(idxs.length?idxs[idxs.length-1]+1:SECTIONS.length));
+  const at=idxs.length?idxs[0]:SECTIONS.length;
   SECTIONS.splice(at,0,{area:curArea,slot:'ai'+Date.now().toString(36),title,subtitle,style:'row',books});
+  _pvFocusSlot=SECTIONS[at].slot;   // 만든 직후 그 칸으로 시선이 가게(강조·스크롤은 renderSettings/pvSync가 처리)
   _reset();
   renderSettings(); pvSync();
   toast(`✦ '${title}' 칸으로 추가됐어요 — 저장하면 학생 앱에 반영됩니다`);
@@ -2450,7 +2457,7 @@ let PROGRAMS=[];   // 서버(library_programs) 발행물만 — loadServerProgra
 // 서버(library_programs)의 실제 발행물을 불러와 데모 앞에 합침
 async function loadServerPrograms(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok)return;
     const rows=await r.json(); if(!Array.isArray(rows))return;
     const mapped=rows.map(x=>({id:x.id,type:x.type,title:x.title,status:x.status,from:x.start_date||'',to:x.end_date||'',
@@ -2719,7 +2726,7 @@ async function finishMake(){
 /* ====== 챌린지 만들기 (카테고리 목록형 — 우리도서관 꾸미기와 동일 패턴) ====== */
 async function loadChallenges(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await fetch(`${SB_REST}/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
     if(!r.ok){renderChallenges();return;}
     const rows=await r.json(); if(!Array.isArray(rows)){renderChallenges();return;}
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
@@ -2891,7 +2898,7 @@ function chalPvRender(){
     </div>`; });
   host.innerHTML=out;
 }
-function chalAdd(){readChalInputs();CHALLENGES.push({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
+function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
 function chalSetFeatured(i){readChalInputs();const on=!CHALLENGES[i].featured;CHALLENGES.forEach(c=>c.featured=false);CHALLENGES[i].featured=on;renderChallenges();}   // 라디오식: 하나만 '이달의 챌린지'(다시 누르면 해제)
@@ -2916,7 +2923,9 @@ async function saveChallenges(){
     if(CHALLENGES.length){
       // 8/22: 형태 필드(tags·_pp·lib·_sm)를 버리지 않는다 — 버리면 학생 앱이 소장 책을 외부책으로 그린다
       const keep=b=>{ const o={id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}; for(const k of ['tags','_pp','lib','_sm','paperStatus','crema','cremaUrl']) if(b[k]!==undefined) o[k]=b[k]; return o; };
-      const rows=CHALLENGES.map(c=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,
+      // 8/29: sort_order(화면 순서) 저장 — 예전엔 없어서 "↕ 순서 바꾸기"로 정한 순서가 저장 후 보장되지 않았다
+      //   (전부 지우고 한꺼번에 다시 넣는 방식이라 created_at이 전부 같음 → 정렬 동점 → 순서는 운)
+      const rows=CHALLENGES.map((c,i)=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,sort_order:i,
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(keep)}));
       const r=await adminSave({op:'programs_insert',rows});

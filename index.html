@@ -5161,7 +5161,7 @@ async function fetchProgramsCached(){
   if(_progCacheP) return _progCacheP;
   _progCacheP=(async()=>{
     try{
-      const r=await fetch(`${SB_REST}/library_programs?select=*&status=neq.${encodeURIComponent('종료')}&order=created_at.desc`,
+      const r=await fetch(`${SB_REST}/library_programs?select=*&status=neq.${encodeURIComponent('종료')}&order=sort_order.asc.nullslast,created_at.desc`,   // 8/29: 사서가 관리자에서 정한 순서(sort_order)대로
         {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
       if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)){
         // status 컬럼은 관리자 저장 시점의 스냅샷이라 시작일이 와도 '예정'에 머문다(자동 갱신 없음).
@@ -6641,7 +6641,7 @@ let _pvLastSecs=null;
 // 미리보기도 실제 앱처럼 발행 프로그램(library_programs)을 불러와 LC_PUB 채움 → 빈 칸 폴백이 앱과 일치(WYSIWYG)
 async function _pvLoadPub(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=created_at.desc`,
+    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=sort_order.asc.nullslast,created_at.desc`,   // 8/29: 사서가 정한 순서
       {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
     if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
       books:(x.books||[]).map(b=>Object.assign({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''},_keepForm(b)))})); }
