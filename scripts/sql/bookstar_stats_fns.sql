@@ -1,3 +1,8 @@
+-- ⛔ 주의 (2026-08-29 리뷰): 이 파일을 통째로 다시 실행하지 말 것.
+--   아래 두 함수는 뒤 버전이 덮어썼다 — 재실행하면 옛 정의로 되돌아간다(시간대 보정·완주 정의 퇴행):
+--     bs_stats_overview   → 최신 = bookstar_stats_fns_v3.sql
+--     bs_stats_challenges → 최신 = bookstar_stats_fns_v2.sql
+--   bs_stats_curation 은 호출처가 없음(8/17부터 v4 bs_stats_curation_history 가 대체). 적용 순서: v1 → v2 → v3 → v4.
 -- 북스타 측정 로그 v2 — 3단계 집계 함수 (2026-08-17)
 -- 설계: klever_demo/_측정로그_설계_20260817.md §5. 호출 = admin-save Edge Function(service role)만. anon/authenticated 실행 권한 없음.
 -- 사장님 화면 용어: 조회=view / 이용=link(ok)+read(seconds>=60) / 활동=activity(ok, not voided, ref 중복 제거) / 경로=program_id 유무

@@ -580,6 +580,14 @@ body.pv-open .main{max-width:none}
 .pv-loc{margin-top:12px;font-size:11px;color:var(--light)}
 .pv-empty{color:var(--light);font-size:12.5px;padding:8px 0}
 .makefoot{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+/* 8/29 독서 챌린지 미리보기의 안내 카드(학생 앱 .ml-nt 축소판) */
+.cpv-notice{border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;background:var(--card);padding:14px 16px;margin:0 0 14px}
+.cpv-notice-k{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.4px;color:var(--accent);background:rgba(58,110,165,.1);padding:2px 8px;border-radius:99px;margin-bottom:7px}
+.cpv-notice-t{font-size:15px;font-weight:800;line-height:1.4}
+.cpv-notice-b{font-size:12.5px;line-height:1.8;color:var(--sub);margin-top:6px;white-space:pre-wrap;word-break:break-word}
+/* 8/29 불러오기 실패 배너(꾸미기·독서 챌린지) */
+.load-fail{border:1.5px solid #e7c9c4;background:#fdf3f2;color:var(--bad);border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;font-weight:700;line-height:1.6}
+.load-fail span{font-weight:500;color:var(--sub)}
 /* 8/29 칸 머리 버튼 — 위로/아래로(자리 정하기) + 등록 */
 .sec-mv{padding:5px 9px;font-size:12px;font-weight:700}
 .sec-mv:disabled{opacity:.32;cursor:default}
@@ -759,6 +767,9 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
     <div class="navi" onclick="go(this,'make')"><span>독서 챌린지</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 해외')"><span>세계 고전</span></div>
     <div class="navi" onclick="goArea(this,'고전 컬렉션 국내')"><span>한국 고전</span></div>
+    <!-- 8/29 리뷰 B1/F17: 학생 앱엔 있는데 관리자 메뉴에 빠져 있던 두 화면 — International 큐레이션, 커뮤니티(학생 앱 커뮤니티 4탭의 유일한 편집기·서평 삭제) -->
+    <div class="navi" onclick="goArea(this,'International')"><span>International</span></div>
+    <div class="navi" onclick="go(this,'comm')"><span>커뮤니티</span></div>
   </aside>
 
   <main class="main">
@@ -914,8 +925,8 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           <div class="pk-d">책마다 <b>조회 · 이용 · 활동</b>이 몇 건인지. 어떤 책이 읽혔는지 보고 <b>구입 검토</b>에 씁니다.</div></div></label>
         <label class="pk on" id="pkUser"><input type="checkbox" checked onchange="statSum()">
           <div><div class="pk-t">학생별 <span class="chip done">학번 있음 · 시상용</span></div>
-          <div class="pk-d">학생마다 <b>조회 · 이용 · 활동 · 별</b>. <b>우수 이용자 시상</b> 대상을 고를 때 씁니다.<br>
-            검색어와 별이에게 물은 내용은 담기지 않습니다.</div></div></label>
+          <div class="pk-d">학생마다 <b>조회 · 이용 · 활동</b>. <b>우수 이용자 시상</b> 대상을 고를 때 씁니다.<br>
+            검색어와 AI 사서(별이)에게 물은 내용은 담기지 않습니다.</div></div></label>
         <label class="pk on" id="pkDetail"><input type="checkbox" checked onchange="statSum()">
           <div><div class="pk-t">상세통계 <span class="chip done">학번 있음 · 시상용</span></div>
           <div class="pk-d">한 줄이 <b>누가 · 언제 · 무슨 책을 · 어떻게</b>입니다 (학번 · 날짜 · 유형 · 도서명 · 이용 방식).
@@ -932,7 +943,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
       <div class="st-warn">
         <b>오늘 것은 아직 다 안 들어와 있습니다.</b>
         읽기 기록은 학생이 뷰어를 닫아야 한 줄로 쌓입니다.<br>
-        <b>챌린지별 통계는 여기 없습니다</b> — 「챌린지 통계」에서 챌린지를 골라 받습니다.
+        경로를 <b>챌린지</b>로 고르면 챌린지 안에서 한 이용만 모아 볼 수 있고, <b>챌린지 하나하나의 참가·완주 명단</b>은 「챌린지 통계」에서 받습니다.
       </div>
     </section>
 
@@ -1053,7 +1064,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           <!-- 8/29 사장님 요청: 독서 챌린지에도 우리 도서관과 똑같은 자리·똑같은 안내형 카드 만들기 -->
           <div id="ntListChal"></div>
           <div id="chalList"></div>
-          <div class="note">※ <b>퀴즈·한 줄 소감·질문</b> 미션으로 완독을 측정합니다. <b>고전 컬렉션</b> 종류는 북스타 요약본 대상으로 퀴즈가 필수(100점제)입니다.<br>
+          <div class="note">※ <b>한 줄 소감·한 줄 질문·서평·독후감</b> 미션으로 완독을 측정합니다. <b>퀴즈</b>는 <b>고전 컬렉션</b> 종류에서만 있고, 그때는 필수입니다.<br>
             ※ 책은 ‘통합검색·ISBN 입력’(고전 컬렉션 챌린지는 ‘북스타 고전’)으로 담을 수 있어요. 순서는 상단 <b>↕ 순서 바꾸기</b>나 카드의 ↑↓로 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
         </div>
         <!-- 학생 화면 '독서 챌린지' 탭 미리보기 — 학생 앱은 챌린지 미리보기 모드가 없어(우리도서관은 iframe ?preview=1) 편집 중인 CHALLENGES 로 인라인 렌더 -->
@@ -1149,7 +1160,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <h3>2. 무엇을 받을까요 <span class="db-sub2">엑셀 한 개 안에 고른 것만 시트로 들어갑니다</span></h3>
         <label class="pk on" id="pkHsCh"><input type="checkbox" checked onchange="hsSum();renderHist()">
           <div><div class="pk-t">챌린지 이력 <span class="chip end">학번 없음</span></div>
-          <div class="pk-d">끝난 챌린지 — 구분 · 이름 · 기간 · 미션 · <b>참가 · 완주</b>.</div></div></label>
+          <div class="pk-d">끝난 챌린지 — 구분 · 이름 · 기간 · 미션 · 시상 방식 · <b>참가 · 완주</b>.</div></div></label>
         <label class="pk on" id="pkHsCur"><input type="checkbox" checked onchange="hsSum();renderHist()">
           <div><div class="pk-t">큐레이션 이력 <span class="chip end">학번 없음</span></div>
           <div class="pk-d">내렸거나 기간이 끝난 큐레이션 — 이름 · 기간 · 위치 · 담긴 책 · <b>조회 · 이용</b>.
@@ -1248,8 +1259,8 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           </div>
           <div id="secList"></div>
           <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
-            <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>랭킹</b>(대출수 자동)·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 랭킹은 책을 담지 않습니다.<br>
-            ※ 칸 순서는 상단 <b>↕ 순서 바꾸기</b>에서 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+            <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 대출 랭킹·인기 전자책·신착은 자동 집계 고정 칸이라 책을 담지 않고, <b>📢 안내 카드</b>는 책 없이 글만 담습니다.<br>
+            ※ 칸 순서는 카드의 <b>▲ 위로 · ▼ 아래로</b>나 상단 <b>↕ 순서 바꾸기</b>로 정합니다. <b>저장</b>(카드의 <b>등록</b>도 같은 저장)을 눌러야 학생 앱에 반영되고, 이때 <b>모든 영역의 칸이 함께</b> 저장됩니다.</div>
         </div>
         <aside class="settings-pv" id="livePv">
           <div class="pv-phone"><iframe id="pvLiveFrame" title="실시간 미리보기" onload="window.pvFrameLoaded&&pvFrameLoaded()"></iframe></div>
@@ -1714,10 +1725,15 @@ let SECTIONS=[
 ];
 let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
 let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
+// 8/29 리뷰 B2: 조회 실패가 조용히 넘어가면 코드에 박힌 견본 칸이 화면에 남고, 그걸 저장하면 서버의 진짜 칸을 덮어쓴다 → 실패 표시 + 저장 차단
+let SEC_LOAD_FAILED=false;
 async function loadSections(){
   try{
     const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
-    if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
+    if(!r.ok){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
+    const rows=await r.json(); if(!Array.isArray(rows)){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
+    SEC_LOAD_FAILED=false;
+    if(!rows.length) return;   // 서버에 아직 아무 칸도 없음(첫 사용) — 견본으로 시작
     SECTIONS=rows.map(x=>({area:x.area||'우리도서관',slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
     injectFixed(SECTIONS);   // 고정 4칸(대출랭킹·인기전자책·종이/전자 신착) 항상 존재 보장
     ORIG_SLOTS=SECTIONS.map(s=>s.slot);
@@ -1725,7 +1741,7 @@ async function loadSections(){
     buildNtLoc(); if(MK.type)buildLoc();
     if(el('pg-settings').style.display!=='none')renderSettings();
     if(el('pg-make')&&el('pg-make').style.display!=='none'){ try{ renderChalNotices(); }catch(e){} }   // 8/29 독서 챌린지 안내 카드도 갱신
-  }catch(e){}
+  }catch(e){ SEC_LOAD_FAILED=true; try{ if(el('pg-settings').style.display!=='none')renderSettings(); }catch(_){} }
 }
 // 북스타 고전 풀 (고전 컬렉션 큐레이션용 — classics 테이블)
 let CLASSICS_POOL=[];
@@ -1853,7 +1869,10 @@ function renderChalNotices(){
 }
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
-  if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
+  const s=SECTIONS[i]; if(!s) return;
+  if(!confirm(`‘${s.title||'제목 없음'}’ 칸을 지울까요? 저장하면 학생 앱에서도 사라져요.`)) return;   // 8/29 리뷰: 한 번 클릭에 삭제 방지
+  SECTIONS.splice(i,1);renderSettings();
+  toast('지웠어요 — 저장(등록)을 눌러야 학생 앱에서도 사라집니다');}   // 8/29 리뷰 C7: 삭제 뒤 아무 신호가 없던 것
 // 고정 칸 노출 on/off — 우리 도서관에 보일지 사서가 결정
 function toggleVisible(i){readSecInputs();SECTIONS[i].visible=!visOf(SECTIONS[i]);renderSettings();}
 // 순서 번호 지정 — 같은 영역 안에서 이 칸을 N번째로 이동(드래그/↑↓ 대체)
@@ -1940,6 +1959,8 @@ function pvBuildRows(){ readSecInputs();
 }
 // 좌측에서 편집 중인 칸 → 우측 미리보기에 그 칸만 표시
 function pvFocusSec(slot){
+  // 8/29 리뷰 C4: 제목 칸에 커서만 놓아도 미리보기가 한 칸으로 줄어들던 것 — 입력칸·버튼 클릭은 무시하고 카드 여백을 눌렀을 때만
+  try{ const t=window.event&&window.event.target; if(t&&/^(INPUT|TEXTAREA|SELECT|BUTTON|LABEL|OPTION)$/.test(t.tagName)) return; }catch(e){}
   if(_pvFocusSlot!==slot){_pvFocusSlot=slot; updatePvCap();
     document.querySelectorAll('#secList .sec-panel').forEach(p=>p.classList.toggle('pv-focus',p.getAttribute('data-slot')===slot));
   }
@@ -2044,14 +2065,14 @@ function pvSync(){
 // 사고: 챌린지 저장이 책을 {id,isbn,title,…}로만 추려 tags/_pp/lib 를 버렸고, AI 큐레이션 경로는 애초에 안 붙였다
 //   → 학생 앱에서 소장 책(71권)이 "우리 도서관에서 찾기"(외부책)로 보였다. 사장님 지적 "세명대에 없는 책이 또 나온다".
 // 규칙: 맨 ISBN인데 소장 표식(_pp·lib)이 없으면 장서(semyung_tulip)에서 채우고, 장서에 없으면 저장을 막는다(미소장은 선반에 못 올린다).
+// 8/29 리뷰 F7/B3: 장서 조회가 실패하면 예전엔 조용히 "전부 미소장"이 되어 사서가 멀쩡한 책을 빼게 했다 → 실패는 throw(호출부가 "연결 문제"로 안내)
 async function fillHeld(books){
   const need=[...new Set((books||[]).map(b=>String(b.isbn||'')).filter(i=>/^\d{10,13}$/.test(i)))];
   const map={};
   for(let i=0;i<need.length;i+=100){
-    try{
-      const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
-      if(r.ok) for(const row of await r.json()) (map[row.isbn]=map[row.isbn]||[]).push(row);
-    }catch(e){}
+    const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    if(!r.ok) throw new Error('held-check '+r.status);
+    for(const row of await r.json()) (map[row.isbn]=map[row.isbn]||[]).push(row);
   }
   const missing=[];
   for(const b of (books||[])){
@@ -2070,10 +2091,14 @@ async function fillHeld(books){
 }
 async function saveSections(){
   readSecInputs();
+  if(SEC_LOAD_FAILED){ toast('칸을 서버에서 불러오지 못한 상태라 저장할 수 없어요 — 새로고침 후 다시 시도해 주세요'); return; }   // 8/29 리뷰 B2: 견본 칸이 진짜를 덮어쓰는 것 방지
   // 8/29 안내 카드는 글이 전부다 — 본문이 비면 학생 앱에 빈 카드가 올라간다. 등록 전에 막는다.
   const _emptyNt=SECTIONS.filter(s=>(s.style==='notice')&&!String(s.subtitle||'').trim());
   if(_emptyNt.length){ toast('📢 안내 카드에 본문이 비어 있어요 — 내용을 적고 등록해 주세요'); return; }
-  for(const s of SECTIONS){ const miss=await fillHeld(s.books||[]); if(miss.length){ toast(`‘${s.title}’에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 빼고 저장해 주세요`); return; } }
+  for(const s of SECTIONS){
+    let miss; try{ miss=await fillHeld(s.books||[]); }catch(e){ toast('소장 여부를 확인하지 못했어요(연결 문제) — 잠시 후 다시 저장해 주세요'); return; }
+    // 8/29 리뷰 B4: 다른 영역 칸 이름만 대면 사서가 못 찾는다 → 어느 화면인지 같이 알린다
+    if(miss.length){ const where=(AREA_LABELS[aOf(s)]||aOf(s)); toast(`[${where}] ‘${s.title}’ 칸에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 그 화면에서 빼고 저장해 주세요`); return; } }
   const rows=SECTIONS.map((s,i)=>({school:'한국대학교',area:aOf(s),slot:s.slot,title:s.title,subtitle:s.subtitle,style:s.style,sort_order:i,books:s.books||[],visible:visOf(s)}));
   try{
     const r=await adminSave({op:'sections_upsert',rows});
@@ -2130,7 +2155,8 @@ function renderSettings(){
   renderAreaTabs();
   const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
   // 8/29 사장님 요청: AI 큐레이션 카드 바로 아래 = 안내 카드 만들기 입구. 누르면 펴지고 다시 누르면 닫힌다.
-  el('secList').innerHTML=ntBarHTML()
+  el('secList').innerHTML=(SEC_LOAD_FAILED?`<div class="load-fail">칸을 서버에서 불러오지 못했어요. <span>지금 보이는 칸은 견본일 수 있어 저장이 막혀 있습니다 — 페이지를 새로고침한 뒤 다시 시도해 주세요.</span></div>`:'')
+   +ntBarHTML()
    +list.map((o,k)=>{
     const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
     const isNotice=!isFix && NO_BOOK_STYLES.includes(s.style||'row');   // 8/29 안내 카드 = 책 없는 칸
@@ -2396,7 +2422,9 @@ function secFormat(b,f){ CUR_FORMAT=f; document.querySelectorAll('#secFmtSeg but
   if(scTab==='nat'){ if((el('secQ').value||'').trim()) secSearch(); else if(!SCAND.length) secApplyTab(); } }   // 검색어 있으면 바로 재검색, 없으면 안내문만 형태에 맞게
 function secSyncFormat(){ document.querySelectorAll('#secFmtSeg button').forEach(x=>x.classList.toggle('on',x.getAttribute('onclick').indexOf("'"+CUR_FORMAT+"'")>=0)); }
 const FMT_LABEL={both:'종이책 + 전자책',ebook:'전자책만',paper:'종이책만'};
-function aicMount(host){ const c=el('aiCurCard'); if(c&&host&&c.parentNode!==host) host.prepend(c); }
+function aicMount(host){ const c=el('aiCurCard'); if(c&&host&&c.parentNode!==host) host.prepend(c);
+  // 8/29 리뷰 B5: 후보 책 상세 팝업이 꾸미기 화면 안에 있어 독서 챌린지 화면에선 숨겨진 부모 아래라 안 열렸다 → body 직속으로 한 번 옮긴다(position:fixed라 자리 무관)
+  const d=el('aicDetail'); if(d&&d.parentNode!==document.body) document.body.appendChild(d); }
 function aicClassicPool(){   // 현재 문맥(해외/국내)의 고전 후보 풀 — curate pool 모드로 보낸다
   const foreign=AIC_CTX==='foreign';
   return CLASSICS_POOL.filter(b=>foreign?b.origin==='foreign':b.origin!=='foreign')
@@ -2582,7 +2610,7 @@ function aicAddSection(){
     const now=new Date(), y=now.getFullYear(), m=now.getMonth();
     const p2=n=>String(n).padStart(2,'0');
     const from=`${y}-${p2(m+1)}-01`, to=`${y}-${p2(m+1)}-${p2(new Date(y,m+1,0).getDate())}`;
-    CHALLENGES.unshift({id:null,type:'소장챌린지',title,detail:subtitle,from,to,mission:{reward:'draw',quiz:false,quizN:10},books});   // 8/29: 새 챌린지는 맨 위(사장님 수정요청)
+    CHALLENGES.unshift({id:null,type:'소장챌린지',title,detail:subtitle,from,to,mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books});   // 8/29: 새 챌린지는 맨 위(사장님 수정요청). 리뷰 F11: 미션 0개면 저장 거부라 한 줄 소감 기본 켬
     _reset(); renderChallenges();
     toast(`✦ '${title}' 챌린지 초안이 추가됐어요 — 기간·미션 확인 후 저장하세요`);
     return;
@@ -2894,18 +2922,21 @@ async function finishMake(){
 }
 
 /* ====== 챌린지 만들기 (카테고리 목록형 — 우리도서관 꾸미기와 동일 패턴) ====== */
+// 8/29 리뷰 F6: 불러오기 실패가 빈 화면으로 보여 사서가 다시 만들고 저장 → 옛 행 삭제는 건너뛰어 학생 앱에 중복 발행. 실패면 표시하고 저장을 막는다.
+let CHAL_LOAD_FAILED=false;
 async function loadChallenges(){
   try{
     const r=await fetch(`${SB_REST}/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
-    if(!r.ok){renderChallenges();return;}
-    const rows=await r.json(); if(!Array.isArray(rows)){renderChallenges();return;}
+    if(!r.ok){CHAL_LOAD_FAILED=true;renderChallenges();return;}
+    const rows=await r.json(); if(!Array.isArray(rows)){CHAL_LOAD_FAILED=true;renderChallenges();return;}
+    CHAL_LOAD_FAILED=false;
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
       mission:chalMissClean(x.mission,x.type),
       books:(x.books||[]).map(b=>({id:b.id||'',isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
     ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
     if(el('pg-make').style.display!=='none')renderChallenges();
-  }catch(e){renderChallenges();}
+  }catch(e){CHAL_LOAD_FAILED=true;renderChallenges();}
 }
 // ===== 챌린지 미션 (8/29 별 포인트 폐지 — 배점 없음·시상은 추첨형만) =====
 const CH_MISSIONS=[
@@ -2918,7 +2949,7 @@ const CH_MISSIONS=[
 const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
 function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(underline/recommend/cert) — 5종 + autoJoin 유지
   m=m||{};
-  const o={reward:'draw', quizN:10, autoJoin:!!m.autoJoin};   /* 퀴즈 문항 수 = 10개 고정. 8/29: 시상은 추첨형만 */
+  const o={reward:'draw', quizN:10, autoJoin:!!m.autoJoin, drawCount:m.drawCount||10, drawCond:m.drawCond||'all'};   /* 퀴즈 문항 수 = 10개 고정. 8/29: 시상은 추첨형만. 리뷰 F4: 추첨 인원·조건을 여기서 버려 저장 때마다 10명/전체완료로 되돌아가던 것 */
   if(m.quizType)o.quizType=m.quizType; if(m.quizLevel)o.quizLevel=m.quizLevel;
   _CH_MISS_KEYS.forEach(k=>{ o[k]=(m[k]!==undefined)?!!m[k]:(k==='quiz'?(type==='고전챌린지'):false); });
   return o;
@@ -2961,7 +2992,8 @@ function chalRewardBox(c,i){   // 8/29 별 포인트 폐지 — 추첨형만
 }
 function renderChallenges(){
   try{ renderChalNotices(); }catch(e){}   // 8/29: 챌린지 목록 위 안내 카드도 같이 그린다
-  el('chalList').innerHTML=CHALLENGES.map((c,i)=>{
+  el('chalList').innerHTML=(CHAL_LOAD_FAILED?`<div class="load-fail">챌린지를 서버에서 불러오지 못했어요. <span>지금 보이는 목록은 진짜가 아닐 수 있어 저장이 막혀 있습니다 — 페이지를 새로고침한 뒤 다시 시도해 주세요.</span></div>`:'')
+  +CHALLENGES.map((c,i)=>{
     chalMission(c);
     const m=c.mission, isClassic=c.type==='고전챌린지', books=c.books||[], cnt=chalMissCount(c);
     const missCells=CH_MISSIONS.map(x=>{
@@ -2993,7 +3025,7 @@ function renderChallenges(){
           <option value="고전챌린지" ${isClassic?'selected':''}>고전 컬렉션 챌린지</option></select></div>
       </div>
       <div class="flabel">상세내용 — 학생에게 보일 설명</div>
-      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="예: 6월 한 달, 추천도서를 읽고 퀴즈에 도전하세요" oninput="chalPvSync()">${esc(c.detail||'')}</textarea>
+      <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="${isClassic?'예: 6월 한 달, 고전을 읽고 퀴즈에 도전하세요':'예: 6월 한 달, 추천도서를 읽고 한 줄 소감을 남겨 보세요'}" oninput="chalPvSync()">${esc(c.detail||'')}</textarea>
       <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}" onchange="chalPvSync()"></div>
         <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}" onchange="chalPvSync()"></div></div>
       <div class="flabel">미션 <span style="font-weight:400;color:var(--light)">· 원하는 만큼 선택</span></div>
@@ -3002,7 +3034,8 @@ function renderChallenges(){
           <div class="tg${m.autoJoin?' on':''}" onclick="chalToggleAuto(${i})"></div></div>
         ${missCells}</div>
       ${quizCfg}
-      <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제(엑셀로 확인) -->
+      <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제. 8/29 리뷰 F4: 별은 없어졌고 시상은 추첨형뿐이라 '추첨 인원·응모 조건'만 되살림(없으면 통계 엑셀에 늘 "10명"이 찍혔다) -->
+      ${chalRewardBox(c,i)}
       <div class="flabel" style="margin-top:10px">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
@@ -3041,7 +3074,10 @@ function chalPvRender(){
   const heroC=list.find(c=>c.featured)||null;              // 사서가 '이달의 챌린지'로 지정한 하나만 히어로(자동 히어로 없음)
   const rows=heroC?list.filter(c=>c!==heroC):list;
   let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>세계고전</span><span>International</span></div>`
-    +`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하면 별이 쌓여요</div></div>`;   // 8/17 학생 앱 탭 설명 2줄 미러
+    +`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하며 내 기록을 남겨요</div></div>`;   // 8/17 학생 앱 탭 설명 2줄 미러 (8/29 별 폐지 문구 반영)
+  // 8/29 리뷰 F5: 학생 앱은 안내 카드를 챌린지 목록 맨 위에 놓는다 — 미리보기도 같게
+  try{ ntReadInputs(); SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice').forEach(s=>{
+    out+=`<div class="cpv-notice"><div class="cpv-notice-k">📢 안내</div>${s.title?`<div class="cpv-notice-t">${esc(s.title)}</div>`:''}<div class="cpv-notice-b">${esc(s.subtitle||'')}</div></div>`; }); }catch(e){}
   if(!list.length){ host.innerHTML=out+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
   if(heroC){ const b=(heroC.books||[])[0]||null; const m=cpvMission(heroC); const off=!cpvLive(heroC);
     out+=`<div class="cpv-hero cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(heroC)}</span>`:''}
@@ -3064,8 +3100,11 @@ function chalPvRender(){
     </div>`; });
   host.innerHTML=out;
 }
-function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10},books:[]});renderChallenges();}
-function chalDel(i){readChalInputs();CHALLENGES.splice(i,1);renderChallenges();}
+// 8/29 리뷰 F11: 미션 0개로 만들면 저장이 거부되는데 그 말이 없었다 → 한 줄 소감을 기본으로 켜 둔다(끄면 됨)
+function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});renderChallenges();}
+function chalDel(i){readChalInputs();const c=CHALLENGES[i]; if(!c) return;
+  if(!confirm(`‘${c.title||'제목 없음'}’ 챌린지를 지울까요? 저장하면 학생 앱에서도 사라지고 참여 기록도 이어지지 않아요.`)) return;   // 8/29 리뷰: 한 번 클릭에 통째 삭제 방지
+  CHALLENGES.splice(i,1);renderChallenges();}
 function chalMove(i,d){readChalInputs();const j=i+d;if(j<0||j>=CHALLENGES.length)return;const t=CHALLENGES[i];CHALLENGES[i]=CHALLENGES[j];CHALLENGES[j]=t;renderChallenges();}
 function chalSetFeatured(i){readChalInputs();const on=!CHALLENGES[i].featured;CHALLENGES.forEach(c=>c.featured=false);CHALLENGES[i].featured=on;renderChallenges();}   // 라디오식: 하나만 '이달의 챌린지'(다시 누르면 해제)
 function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
@@ -3076,12 +3115,14 @@ function chalToggleAuto(i){readChalInputs();const c=CHALLENGES[i];c.mission.auto
 function chalRemoveBook(i,bi){readChalInputs();CHALLENGES[i].books.splice(bi,1);renderChallenges();}
 async function saveChallenges(){
   readChalInputs();
+  if(CHAL_LOAD_FAILED){ toast('챌린지를 불러오지 못한 상태라 저장할 수 없어요 — 새로고침 후 다시 시도해 주세요'); return; }   // 8/29 리뷰 F6: 중복 발행 방지
   for(const c of CHALLENGES){
     if(!c.title||!c.title.trim()){toast('제목이 빈 챌린지가 있어요');return;}
     if(!c.books||!c.books.length){toast(`‘${c.title}’에 책을 1권 이상 담아주세요`);return;}
     if(chalMissCount(c)===0){toast(`‘${c.title}’의 미션을 1개 이상 선택해주세요`);return;}
     if(c.type==='고전챌린지'&&c.mission.quiz&&!c.mission.quizType){toast(`‘${c.title}’의 퀴즈 유형을 선택해주세요`);return;}
-    const miss=await fillHeld(c.books||[]);   // 8/22 소장 표식 채우기 · 미소장 차단
+    if(c.from&&c.to&&c.from>c.to){toast(`‘${c.title}’의 종료일이 시작일보다 앞서 있어요`);return;}
+    let miss; try{ miss=await fillHeld(c.books||[]); }catch(e){ toast('소장 여부를 확인하지 못했어요(연결 문제) — 잠시 후 다시 저장해 주세요'); return; }   // 8/29 리뷰 F7: 연결 실패를 "미소장"으로 안내하지 않음
     if(miss.length){toast(`‘${c.title}’에 세명대 미소장 책이 있어요: ${miss.slice(0,3).join(', ')}${miss.length>3?' 외 '+(miss.length-3)+'권':''} — 빼고 저장해 주세요`);return;}
   }
   try{
@@ -3090,18 +3131,21 @@ async function saveChallenges(){
       const keep=b=>{ const o={id:b.id||'',isbn:b.isbn||'',title:b.title,author:b.author||'',cover:b.cover||'',note:b.note||''}; for(const k of ['tags','_pp','lib','_sm','paperStatus','crema','cremaUrl']) if(b[k]!==undefined) o[k]=b[k]; return o; };
       // 8/29: sort_order(화면 순서) 저장 — 예전엔 없어서 "↕ 순서 바꾸기"로 정한 순서가 저장 후 보장되지 않았다
       //   (전부 지우고 한꺼번에 다시 넣는 방식이라 created_at이 전부 같음 → 정렬 동점 → 순서는 운)
-      const rows=CHALLENGES.map((c,i)=>({school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,sort_order:i,
+      // 8/29 리뷰 F8: id를 실어 보내 기존 챌린지는 같은 id로 덮어쓴다(서버가 upsert). 예전엔 매번 새 id라 학생 참여·퀴즈 기록이 끊겼다
+      const rows=CHALLENGES.map((c,i)=>({id:c.id||null,school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,sort_order:i,
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(keep)}));
       const r=await adminSave({op:'programs_insert',rows});
       if(!r.ok){toast(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');return;}
     }
-    // 새로 올린 뒤 기존 챌린지 행 삭제(중복 방지) — 목록 전체 교체 방식
+    // 화면에서 지운 챌린지만 서버에서 삭제(살아 있는 id는 위에서 덮어썼으므로 건드리지 않음)
     // 삭제 실패 감지: 실패하면 옛 행이 남아 학생 앱에 챌린지가 중복 노출되므로 반드시 알림 (재저장하면 스스로 회복)
     let chalDelFail=false;
-    if(ORIG_CHAL_IDS.length){
+    const _keepIds=new Set(CHALLENGES.map(c=>String(c.id||'')).filter(Boolean));
+    const _delIds=ORIG_CHAL_IDS.filter(id=>!_keepIds.has(String(id)));
+    if(_delIds.length){
       try{
-        const dr=await adminSave({op:'programs_delete',ids:ORIG_CHAL_IDS});
+        const dr=await adminSave({op:'programs_delete',ids:_delIds});
         if(!dr.ok) chalDelFail=true;
       }catch(_){ chalDelFail=true; }
     }
@@ -3179,34 +3223,41 @@ function renderPopups(){
   el('ppList').innerHTML=POPUPS.length?POPUPS.map(p=>`<tr style="${p.active?'':'opacity:.45'}">
     <td style="font-weight:600">${esc(p.title)}</td>
     <td>${PP_TGT[p.target]||esc(p.target)}</td><td>${PP_CH[p.channel]||esc(p.channel)}</td>
-    <td>${(!p.starts_at&&!p.ends_at)?'계속':esc((p.starts_at||'')+' ~ '+(p.ends_at||''))}</td>
-    <td class="num"><button class="btn-ghost" style="${btn}" onclick="togglePopup(${p.id},${!p.active})">${p.active?'켜짐 · 끄기':'꺼짐 · 켜기'}</button></td>
-    <td class="num"><button class="btn-ghost" style="${btn}" onclick="delPopup(${p.id})">삭제</button></td></tr>`).join('')
+    <td>${(!p.starts_at&&!p.ends_at)?'계속':esc(fmtD(p.starts_at)+' ~ '+fmtD(p.ends_at))}</td>
+    <td class="num"><button class="btn-ghost" style="${btn}" onclick="togglePopup('${esc(String(p.id))}',${!p.active})">${p.active?((p.ends_at&&fmtD(p.ends_at)<ymd(new Date()))?'기간 지남 · 끄기':'켜짐 · 끄기'):'꺼짐 · 켜기'}</button></td>
+    <td class="num"><button class="btn-ghost" style="${btn}" onclick="delPopup('${esc(String(p.id))}')">삭제</button></td></tr>`).join('')
   :'<tr><td colspan="6" style="color:var(--light)">아직 띄운 팝업이 없어요</td></tr>';
 }
 async function savePopup(){
   const title=el('ppTitle').value.trim();
   if(!title){toast('제목을 적어 주세요');return;}
-  const row={title,body:el('ppBody').value.trim(),target:el('ppTarget').value,channel:el('ppChannel').value,
-    starts_at:el('ppFrom').value||null,ends_at:el('ppTo').value||null};
+  const from=el('ppFrom').value||null, to=el('ppTo').value||null, target=el('ppTarget').value, channel=el('ppChannel').value;
+  if(from&&to&&from>to){toast('종료일이 시작일보다 앞서 있어요');return;}   // 8/29 리뷰 P3
+  if((target==='overdue'||target==='charm0')&&channel==='web'){toast('연체·독서인증 대상은 앱에서만 판별돼요 — 채널을 앱 또는 앱+웹으로 골라 주세요');return;}   // 8/29 리뷰 P6: 아무도 못 보는 조합
+  const row={title,body:el('ppBody').value.trim(),target,channel,starts_at:from,ends_at:to,active:true};   // 8/29 리뷰 P2: 켜짐 값을 명시(학생 앱은 active=true만 띄운다)
   try{
     const r=await adminSave({op:'popups_insert',row});
-    if(!r.ok)throw 0;
+    if(!r.ok)throw new Error(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'저장 실패 ('+r.status+')');
     el('ppTitle').value='';el('ppBody').value='';el('ppFrom').value='';el('ppTo').value='';
     toast('팝업을 띄웠어요');loadPopups();
-  }catch(e){toast('저장하지 못했어요 — 잠시 후 다시');}
+  }catch(e){toast(String(e&&e.message||'저장하지 못했어요 — 잠시 후 다시'));}
 }
+// 8/29 리뷰 P1: 켜기/끄기·삭제 실패가 완전히 무음이었다(만료된 로그인 포함) → 결과를 확인하고 알린다
 async function togglePopup(id,on){
   try{
-    await adminSave({op:'popups_patch',id,patch:{active:on}});
-  }catch(e){}
+    const r=await adminSave({op:'popups_patch',id,patch:{active:on}});
+    if(!r.ok) throw new Error(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'처리 실패 ('+r.status+')');
+    toast(on?'켰어요':'껐어요');
+  }catch(e){ toast(String(e&&e.message||'처리하지 못했어요 — 잠시 후 다시')); }
   loadPopups();
 }
 async function delPopup(id){
   if(!confirm('이 팝업을 삭제할까요?'))return;
   try{
-    await adminSave({op:'popups_delete',id});
-  }catch(e){}
+    const r=await adminSave({op:'popups_delete',id});
+    if(!r.ok) throw new Error(r.status===401?'로그인이 만료됐어요 — 새로고침 후 다시 로그인해주세요':'삭제 실패 ('+r.status+')');
+    toast('삭제했어요');
+  }catch(e){ toast(String(e&&e.message||'삭제하지 못했어요 — 잠시 후 다시')); }
   loadPopups();
 }
 
@@ -3385,7 +3436,7 @@ function downloadDashExcel(btn){
   return withBusy(btn, async()=>{
     const d=await statsOp('stats_overview',{from:kst(f), to:kst(nextDay(t))});
     const per=[fmtRange(f,t)], sheets=[];
-    if(on.includes('pkSum'))  sheets.push({name:'요약',rows:[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3,['유형별 시트는 외부참조(세명대 미소장 책)를 빼고 세므로 이 요약의 합과 다를 수 있습니다']]});
+    if(on.includes('pkSum'))  sheets.push({name:'요약',rows:[per,[],['접속 학생','조회','이용','활동'],[d.visitors,d.views,d.uses,d.acts],[],...NOTE3]});   // 8/29 리뷰 F-1: "유형별과 합이 다를 수 있다" 경고 삭제 — 둘 다 같은 기준(외부참조 제외)으로 세서 항상 같다
     if(on.includes('pkSrc')){ const bt=(d.by_type||[]).filter(r=>r.type!=='external'&&r.type!=='none');   // 시안: 외부참조(세명대 미소장)는 담지 않음 → 합계도 네 줄 기준
       const sum=k=>bt.reduce((a,r)=>a+(+r[k]||0),0);
       sheets.push({name:'유형별',rows:[per,[],['유형','조회','이용','활동'],...bt.map(r=>[TYPE_KO[r.type]||r.type,r.views,r.uses,r.acts]),['합계',sum('views'),sum('uses'),sum('acts')],[],...NOTE3]}); }
@@ -3478,7 +3529,9 @@ function chSum(){
 }
 const chSumFileName=(today)=>'북스타_챌린지통계_요약_'+today;
 const chDetFileName=(c,today)=>'북스타_챌린지통계_상세_시상용_'+(c?chFileTitle(c):'챌린지')+'_'+today;
-// [엑셀 다운로드] — 요약 체크=전체 챌린지 1파일, 상세 체크=고른 챌린지 1파일(학번 있음). 둘 다면 파일 둘
+// [엑셀 다운로드] — 요약 체크=전체 챌린지, 상세 체크=고른 챌린지(학번 있음).
+//   8/29 리뷰 F-15/F-18: 예전엔 둘 다 고르면 파일이 둘 나가 브라우저가 둘째를 막아도 "내려받았어요"가 두 번 떴고, 상세 실패도 조용히 넘어갔다
+//   → 이제 파일 하나에 시트 둘(요약·상세). 상세를 못 받으면 파일 자체를 안 만들고 실패를 알린다.
 function downloadChExcel(btn){
   const s=ck('pkChSum'), d=ck('pkChDet');
   if(!s&&!d){ chSum(); toast('받을 자료를 하나 이상 골라 주세요'); return; }
@@ -3487,17 +3540,19 @@ function downloadChExcel(btn){
   return withBusy(btn, async()=>{
     if(!CHS.length) await loadChs();
     const today=ymd(new Date());
+    const sheets=[];
+    if(s){ if(!CHS.length) throw new Error('불러온 챌린지가 없어요'); sheets.push({name:'요약',rows:chSumRows()}); }
     let dd=null;
-    if(d){ dd=await statsOp('stats_challenge_detail',{program:pid}); CHD=dd; if(!dd||!dd.program){ toast('이 챌린지의 상세를 불러오지 못했어요'); dd=null; } }
-    if(s) downloadChSumExcel();   // 파일 1 — 전체 챌린지 요약(학번 없음)
-    if(dd) xlsxDownload(chDetFileName(dd.program,today), [{name:'상세',rows:chMatrixRows(dd,'기준일: '+today)}]);   // 파일 2 — 고른 챌린지 상세(학번 있음). 브라우저가 '여러 파일 다운로드' 허용을 물을 수 있음
+    if(d){ dd=await statsOp('stats_challenge_detail',{program:pid}); CHD=dd;
+      if(!dd||!dd.program) throw new Error('이 챌린지의 상세를 불러오지 못했어요 — 잠시 후 다시 시도해 주세요');
+      sheets.push({name:'상세(시상용)',rows:chMatrixRows(dd,'기준일: '+today)}); }
+    const name = dd ? (s ? '북스타_챌린지통계_요약+상세_시상용_'+chFileTitle(dd.program)+'_'+today : chDetFileName(dd.program,today)) : chSumFileName(today);
+    xlsxDownload(name, sheets);
   });
 }
-function downloadChSumExcel(){
-  if(!CHS.length){ toast('불러온 챌린지가 없어요'); return; }
-  const rows=[['기준일: '+ymd(new Date())],[],['챌린지','구분','미션','시작','종료','담긴 책','참가','완주','완주율(%)','미션 수행','시상 방식','응모 자격'],
+function chSumRows(){
+  return [['기준일: '+ymd(new Date())],[],['챌린지','구분','미션','시작','종료','담긴 책','참가','완주','완주율(%)','미션 수행','시상 방식','응모 자격'],
     ...CHS.map(c=>{ const e=chEligible(c); return [c.title,chType(c.type),chMissionLabel(c.mission),c.start_date||'',c.end_date||'',c.books_n,c.part,c.done,c.part?Math.round(c.done/c.part*100):0,c.missions,chRewardText(c).replace('<br>',' '),e.label+' '+e.n+'명']; })];
-  xlsxDownload(chSumFileName(ymd(new Date())), [{name:'요약',rows:rows}]);
 }
 // 상세 행렬(학생 × 담긴 책) — 화면·상세 엑셀·운영이력 확정본 엑셀이 같은 계산을 쓴다
 function chBuildMatrix(d){
@@ -3507,10 +3562,13 @@ function chBuildMatrix(d){
   const byStu={};
   rows.forEach(r=>{ const s=byStu[r.student_id]||(byStu[r.student_id]={books:{},first:null});
     const k=bkey(r.book_id); const bb=s.books[k]||(s.books[k]={acts:{},at:null,text:[]});
-    bb.acts[r.act]=true; if(r.text&&r.act!=='quiz') bb.text.push(r.text); if(r.act==='quiz'&&r.text) bb.text.unshift('퀴즈 '+r.text);
-    const at=(r.at||'').slice(0,10); if(at&&(!bb.at||at>bb.at)) bb.at=at; if(at&&(!s.first||at<s.first)) s.first=at; });
-  // 참가 = 1건이라도 활동한 학생(요약표·SQL bs_ch_part_students와 같은 정의). 신청만 하고 활동 0인 학생은 줄을 만들지 않는다(신청일만 보조로 씀)
-  enroll.forEach(e=>{ const s=byStu[e.student_id]; if(!s) return; if(!s.first&&e.joined_at) s.first=(e.joined_at||'').slice(0,10); s.done_at=e.done_at; });
+    // 8/29 리뷰 F-14: 화면이 약속한 "글자 수 미달은 미완료"를 실제로 적용 — 피드관리의 미인정 기준(WR_MIN)과 같은 잣대
+    const _min=WR_MIN[r.act]; const _short=!!(_min && String(r.text||'').trim().length<_min);
+    if(!_short) bb.acts[r.act]=true;
+    if(r.text&&r.act!=='quiz') bb.text.push(_short?('[글자 수 미달] '+r.text):r.text); if(r.act==='quiz'&&r.text) bb.text.unshift('퀴즈 '+r.text);
+    const at=kstDay(r.at); if(at&&(!bb.at||at>bb.at)) bb.at=at; if(at&&(!s.first||at<s.first)) s.first=at; });
+  // 8/29 리뷰 F-19: 신청만 하고 활동 0인 학생도 줄을 만든다(전부 '—') — 화면 문구 "안 한 책도 —로 줄이 남습니다"와 맞춤
+  enroll.forEach(e=>{ const s=byStu[e.student_id]||(byStu[e.student_id]={books:{},first:null}); if(!s.first&&e.joined_at) s.first=kstDay(e.joined_at); s.done_at=e.done_at; });
   const doneBook=bb=>bb && (need.length?need.every(k=>bb.acts[k]):Object.keys(bb.acts).length>0);
   const list=Object.keys(byStu).map(sid=>{ const s=byStu[sid]; const cnt=books.filter(b=>doneBook(s.books[bkey(b.key)])).length; return {sid,s,cnt}; }).sort((a,b)=>b.cnt-a.cnt||a.sid.localeCompare(b.sid));
   return {books,list,need,m,doneBook,bkey};
@@ -3534,9 +3592,22 @@ async function chFixedExcel(id){
 
 /* ══════════ 4. 피드관리(학생 글) — 기간·종류 정해 엑셀 1장 + '부적절한 글 숨기기' 최근 10건 ══════════
    8/17 시안: 여기는 챌린지 밖에서 쓴 글만(challenge_id 없는 bookstar_writings + reviews 독자 서평). 챌린지 글은 「챌린지 통계」 상세 엑셀에서. */
-let FEEDV=null;   // WRITINGS 선언은 위 '학생 글' 구역
+let FEEDV=null, FEED_FAILED=false;   // WRITINGS 선언은 위 '학생 글' 구역
 let _wrSeq=0;     // 기간을 연달아 바꿔도 마지막 응답만 화면에(경합 방지)
-const WR_MIN={oneline:5,question:5,review:300,essay:800};   // 학생 앱 CH_MISSIONS min 과 동일 — 글자 수 미달 = 미인정(별 없음). 옛 글엔 저장돼 있을 수 있어 화면에서 표시
+const WR_MIN={oneline:5,question:5,review:300,essay:800,rv:100};   // 학생 앱 CH_MISSIONS min 과 동일. rv(독자 서평)=학생 앱 100자 기준(8/29 리뷰 W6). 글자 수 미달 = 미인정
+// 8/29 리뷰 W1: 서버 시각은 세계표준시(…T16:00Z) — 그대로 자르면 자정~오전 9시 글이 전날로 찍힌다. 한국시간 날짜로.
+function kstDay(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); return new Date(d.getTime()+9*3600*1000).toISOString().slice(0,10); }
+// 8/29 리뷰 W2: 조회에 개수 제한이 없으면 서버 상한(1,000)에서 조용히 잘린다 → 1,000건씩 끝까지 이어 받는다
+async function fetchAllRows(url,H){
+  const out=[], PAGE=1000;
+  for(let from=0; ; from+=PAGE){
+    const r=await fetch(url,{headers:{...H,Range:`${from}-${from+PAGE-1}`,'Range-Unit':'items'}});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const a=await r.json(); if(!Array.isArray(a)) break;
+    out.push(...a); if(a.length<PAGE) break;
+  }
+  return out;
+}
 function initFeedDates(){ if(el('fdFrom')&&!el('fdFrom').value){ const [f,t]=presetRange('d30'); el('fdFrom').value=f; el('fdTo').value=t; } }
 function setFeedRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('fdFrom').value=f; el('fdTo').value=t; fdSum(); loadWritings(); }
 function fdSum(){
@@ -3556,17 +3627,15 @@ async function loadWritings(){
   const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
   let list=[], failed=false;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 실패 표시
   // 챌린지 밖에서 쓴 글만(challenge_id 없음) — 시안: 챌린지 글은 여기 없음
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,{headers:H}); if(!r.ok) failed=true; const a=r.ok?await r.json():[]; if(Array.isArray(a)) list=a; }catch(e){ failed=true; }
+  try{ list=await fetchAllRows(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,H); }catch(e){ failed=true; }
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
-  try{ const r=await fetch(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,{headers:H});
-    if(!r.ok) failed=true;
-    const rv=r.ok?await r.json():[];
-    if(Array.isArray(rv)) rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
+  try{ const rv=await fetchAllRows(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,H);
+    rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
   }catch(e){ failed=true; }
-  if(seq!==_wrSeq) return false;   // 그 사이 다른 기간 요청이 나갔으면 버림
+  if(seq!==_wrSeq) return null;   // 그 사이 다른 기간 요청이 나갔으면 버림(실패 아님 — 8/29 리뷰 W9)
   list.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  WRITINGS=list; FEEDV=failed?null:{from:f,to:t}; renderWritings();
-  if(failed){ const tb=el('fdTbl'); if(tb&&!list.length) tb.innerHTML=stEmpty(6,'불러오지 못했어요 — 잠시 후 다시 시도해 주세요'); }
+  WRITINGS=list; FEEDV=failed?null:{from:f,to:t}; FEED_FAILED=failed; renderWritings();
+  if(failed) toast('학생 글을 다 불러오지 못했어요 — 잠시 후 다시 시도해 주세요');
   return !failed;
 }
 const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
@@ -3582,13 +3651,12 @@ function renderWritings(){
   const rows=WRITINGS.filter(w=>(view==='on'?!w.hidden:!!w.hidden)&&(!ms||w.activity===ms));
   const LIMIT=10;
   tb.innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
-    const isRv=w.activity==='rv';
     const tag=w.hidden?`<span class="chip bad">숨김</span>`
                      :(wrShort(w)?'<span class="chip end">미인정 · 글자 수 미달</span>':'');
-    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc((w.created_at||'').slice(0,10))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}</td>
+    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc(kstDay(w.created_at))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}</td>
       <td><div class="fd-txt">${w.hidden?'숨긴 글입니다':esc(w.text)}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
       <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide('${esc(String(w.id))}')">${w.hidden?'다시 보이기':'숨기기'}</button></td></tr>`; }).join('')
-    : stEmpty(6,FEEDV?'해당하는 글이 없어요.':'불러오는 중…');
+    : stEmpty(6, FEEDV ? '해당하는 글이 없어요.' : (FEED_FAILED ? '불러오지 못했어요 — 기간을 다시 고르거나 잠시 후 시도해 주세요' : '불러오는 중…'));   // 8/29 리뷰 W8: 실패가 "불러오는 중…"으로 영구 표시되던 것
 }
 async function wrToggleHide(id){
   const w=WRITINGS.find(x=>String(x.id)===String(id)); if(!w) return;
@@ -3611,20 +3679,21 @@ function downloadFeedExcel(btn){
     const ms=el('fdMs')?el('fdMs').value:'';
     const list=WRITINGS.filter(w=>!ms||w.activity===ms);
     const rows=[[fmtRange(f,t)+(ms?' · 종류: '+(ACT_KO[ms]||ms):'')],[],['학번','날짜','종류','도서명','쓴 내용','숨김'],
-      ...list.map(w=>[w.student_id,(w.created_at||'').slice(0,10),ACT_KO[w.activity]||w.activity,wrTitle(w),w.text,w.hidden?'숨김':''])];
+      ...list.map(w=>[w.student_id,kstDay(w.created_at),ACT_KO[w.activity]||w.activity,wrTitle(w),w.text,w.hidden?'숨김':''])];
     xlsxDownload(fdFileName(f,t), [{name:'학생 글 목록',rows:rows}]);
   });
 }
 
 /* ══════════ 5. 운영이력 — 끝난 챌린지·큐레이션을 기간(종료일 기준)으로 골라 엑셀 1개 2시트 + '지난 목록' 10줄(숫자 없음) ══════════
    8/17 시안: 진행중·지금 걸린 칸 실적(stats_curation)·확정 명단 [명단 엑셀] 은 두지 않는다. 시상 명단은 「챌린지 통계」 상세 엑셀. */
-let HSHIST=null;   // stats_curation_history (끝난 큐레이션 — 트리거 자동 기록, 8/17부터)
-const fmtD=(s)=>String(s||'').slice(0,10);
+let HSHIST=null, HS_FAILED=false;   // stats_curation_history (끝난 큐레이션 — 트리거 자동 기록, 8/17부터)
+const fmtD=(s)=>kstDay(s);   // 8/29 리뷰: 시각(ended_at 등)은 한국시간 날짜로. 날짜만 있는 값(end_date)은 그대로
 function initHsDates(){ if(el('hsFrom')&&!el('hsFrom').value){ const [f,t]=presetRange('y'); el('hsFrom').value=f; el('hsTo').value=t; } }
 function setHsRange(b,k){ segOn(b); const [f,t]=presetRange(k); el('hsFrom').value=f; el('hsTo').value=t; hsSum(); renderHist(); }
 // 끝난 챌린지: 종료일이 지난 것(지금 다시 센 값). FIXED 는 8/17 시안 이후 비어 있어(로드 안 함) 항상 현재 값
 function hsEndedList(){ const today=ymd(new Date());
-  return CHS.filter(c=>c.end_date&&c.end_date<today).sort((a,b)=>String(b.end_date).localeCompare(String(a.end_date)))
+  // 8/29 리뷰 H3: 서버 함수가 프로그램 종류를 안 걸러 끝난 '큐레이션' 발행물이 챌린지 이력에 섞였다 → 챌린지만
+  return CHS.filter(c=>String(c.type||'').includes('챌린지')).filter(c=>c.end_date&&c.end_date<today).sort((a,b)=>String(b.end_date).localeCompare(String(a.end_date)))
     .map(c=>{ const f=FIXED[String(c.id)]; const s=f&&f.summary||null; return Object.assign({}, c, {part_v:s?s.part:c.part, done_v:s?s.done:c.done, fixed:!!f, fixed_at:f?String(f.fixed_at||'').slice(0,10):''}); }); }
 // 기간 안에 끝난 것만(종료일 기준)
 function hsInRange(){ const [f,t]=rangeOf('hsFrom','hsTo');
@@ -3646,11 +3715,16 @@ async function hsLoad(force){
   const jobs=[];
   let failed=false;
   if(force||!CHS.length) jobs.push(loadChs().catch(()=>{ failed=true; }));
-  if(force||!HSHIST) jobs.push(statsOp('stats_curation_history').then(h=>{ HSHIST=Array.isArray(h)?h:[]; }).catch(()=>{ failed=true; if(!HSHIST) HSHIST=[]; }));
+  // 8/29 리뷰 H2: 실패 때 HSHIST=[] 로 두면 다음 hsLoad가 "이미 있다"고 보고 재시도를 건너뛰어 빈 엑셀이 내려갔다 → 실패면 null 유지(=다음에 다시 시도)
+  if(force||!HSHIST) jobs.push(statsOp('stats_curation_history').then(h=>{ HSHIST=Array.isArray(h)?h:[]; }).catch(()=>{ failed=true; HSHIST=null; }));
   await Promise.all(jobs);
+  HS_FAILED=failed;
   return !failed;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 호출부가 판단
 }
-async function renderHistory(){ initHsDates(); hsSum(); const tb=el('hsTbl'); if(tb&&!HSHIST) tb.innerHTML=stEmpty(4,'불러오는 중…'); await hsLoad(true); renderHist(); }
+async function renderHistory(){ initHsDates(); hsSum(); const tb=el('hsTbl'); if(tb&&!HSHIST) tb.innerHTML=stEmpty(4,'불러오는 중…');
+  const ok=await hsLoad(true); renderHist();
+  if(!ok) toast('운영이력을 불러오지 못했어요 — 잠시 후 다시 열어 주세요');   // 8/29 리뷰 H1: 실패가 "끝난 것이 없어요"로 둔갑하던 것
+}
 // '3. 지난 목록' — 구분·이름·기간·미션/위치, 최근 끝난 순 10줄, 숫자 없음. 체크 안 한 종류는 목록에서도 뺀다(시안 renderHist)
 function renderHist(){
   const tb=el('hsTbl'); if(!tb) return;
@@ -3660,7 +3734,7 @@ function renderHist(){
   if(b) cur.forEach(r=>items.push({end:fmtD(r.ended_at), kind:'큐레이션', name:r.title||('(제목 없는 칸) '+r.slot), term:fmtD(r.started_at)+' ~ '+fmtD(r.ended_at), sub:AREA_LABELS[r.area]||r.area||''}));
   items.sort((x,y)=>String(y.end).localeCompare(String(x.end)));
   tb.innerHTML = items.length ? items.slice(0,10).map(x=>`<tr><td><span class="chip end">${esc(x.kind)}</span></td><td><b>${esc(x.name)}</b></td><td>${esc(x.term)}</td><td class="db-sub2">${esc(x.sub)}</td></tr>`).join('')
-    : stEmpty(4,(a||b)?'이 기간에 끝난 것이 없어요.':'고른 자료가 없어요.');
+    : stEmpty(4,(a||b)?(HS_FAILED?'불러오지 못했어요 — 잠시 후 다시 열어 주세요':'이 기간에 끝난 것이 없어요.'):'고른 자료가 없어요.');
 }
 function downloadHistExcel(btn){
   const [f,t]=rangeOf('hsFrom','hsTo'); if(!rangeOk(f,t)) return;

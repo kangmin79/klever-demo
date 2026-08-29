@@ -1,3 +1,5 @@
+-- ⛔ 주의 (2026-08-29 리뷰): 이 파일의 bs_stats_overview 는 같은 날 저녁 bookstar_stats_fns_v3.sql 이 덮어썼다(KST 시간대 보정).
+--   재실행 시 v3 를 반드시 뒤이어 적용할 것. bs_stats_challenges 는 이 파일이 최신.
 -- 측정 로그 v2 집계 보정 (2026-08-17 오후) — 완주·참가 정의를 사장님 문서 기준으로 통일
 -- 참가 = 그 챌린지 책에서 1건이라도 활동(인정 글 또는 퀴즈)한 학생
 -- 완주 = 담긴 책 '전부'에서 켠 미션(quiz/oneline/question/review/essay) '전부'를 마친 학생

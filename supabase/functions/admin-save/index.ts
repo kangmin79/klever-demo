@@ -48,15 +48,29 @@ Deno.serve(async (req) => {
   }
 
   if (op === 'programs_insert') {
-    const rows = Array.isArray(body.rows) ? body.rows : [body.rows];
+    const rows = (Array.isArray(body.rows) ? body.rows : [body.rows]) as Record<string, unknown>[];
     if (!rows.length || !rows[0]) return J({ error: 'rows required' }, 400);
-    const r = await fetch(`${REST}/library_programs`, {
-      method: 'POST',
-      headers: { ...H, Prefer: 'return=representation' },
-      body: JSON.stringify(rows),
-    });
-    if (!r.ok) return J({ ok: false, status: r.status }, 500);
-    return J({ ok: true, rows: await r.json() });
+    // 8/29 리뷰 F8: id가 있는 행은 그 id로 덮어쓴다(upsert) — 예전엔 전부 새로 넣고 옛 행을 지워 id가 매번 바뀌었고,
+    //   학생 앱은 id로 참여·퀴즈 기록을 기억하므로 제목 오타만 고쳐도 참여가 끊겼다. id 없는 행(새 챌린지)만 insert.
+    //   PostgREST 일괄 입력은 모든 행의 키가 같아야 해서 둘로 나눠 보낸다.
+    const withId = rows.filter((x) => x && x.id != null && String(x.id) !== '');
+    const noId = rows.filter((x) => x && (x.id == null || String(x.id) === '')).map((x) => { const { id: _i, ...rest } = x; return rest; });
+    const out: unknown[] = [];
+    if (withId.length) {
+      const r = await fetch(`${REST}/library_programs?on_conflict=id`, {
+        method: 'POST', headers: { ...H, Prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify(withId),
+      });
+      if (!r.ok) return J({ ok: false, status: r.status, detail: (await r.text()).slice(0, 300) }, 500);
+      out.push(...(await r.json()));
+    }
+    if (noId.length) {
+      const r = await fetch(`${REST}/library_programs`, {
+        method: 'POST', headers: { ...H, Prefer: 'return=representation' }, body: JSON.stringify(noId),
+      });
+      if (!r.ok) return J({ ok: false, status: r.status, detail: (await r.text()).slice(0, 300) }, 500);
+      out.push(...(await r.json()));
+    }
+    return J({ ok: true, rows: out });
   }
 
   if (op === 'programs_delete') {
@@ -121,9 +135,7 @@ Deno.serve(async (req) => {
 
   if (op === 'reviews_delete') return deleteById('reviews', body.id);
 
-  // 학생 글 모더레이션: hidden(숨김)만 (본문 text는 관리자도 이 경로로 수정 불가)
-  //   8/29 사장님 지시: 사서 '우수작'(featured) 선정 기능 삭제 → 이 경로로도 featured는 못 바꾼다
-  if (op === 'writings_patch') return patchById('bookstar_writings', body.id, pick(body.patch, ['hidden']));
+  // (8/29 리뷰: writings_patch 삭제 — 아무도 안 부르는데 숨김의 부수 정리(이벤트 voided) 없이 값만 바꿔 데이터가 어긋날 수 있었다. 숨김은 writings_hide만)
 
   // ── 측정 로그 v2 (2026-08-17, 설계: klever_demo/_측정로그_설계_20260817.md) ──
   // 집계 함수는 anon 실행 권한이 없다 → 여기서 service role로만 호출. 학번이 든 개인 로그라 이 경로가 유일한 읽기 창구.
@@ -139,7 +151,7 @@ Deno.serve(async (req) => {
   if (op === 'stats_usage')     return rpc('bs_stats_usage',     { p_school: school, p_from: S(body.from), p_to: S(body.to), p_type: S(body.type), p_path: S(body.path) });
   if (op === 'stats_challenges') return rpc('bs_stats_challenges', { p_school: school });
   if (op === 'stats_challenge_detail') return rpc('bs_stats_challenge_detail', { p_school: school, p_program: S(body.program) });
-  if (op === 'stats_curation')  return rpc('bs_stats_curation',  { p_school: school, p_from: S(body.from), p_to: S(body.to) });
+  // (8/29 리뷰: stats_curation 삭제 — 8/17부터 stats_curation_history가 대체, 호출처 없음)
   // 학생 글 숨김/복구 = "안 쓴 것" (글 hidden + 이벤트 voided + 별 회수/원복을 한 트랜잭션으로)
   if (op === 'writings_hide')   return rpc('bs_writing_hide',    { p_school: school, p_student: S(body.student_id), p_activity: S(body.activity), p_book: S(body.book_id), p_hidden: !!body.hidden });
   // 독자 서평(reviews, 빌린 책 서평) 숨김/복구 — 별 없음(글 hidden + 이벤트 voided만). 8/17 학생 글 화면에 합류
