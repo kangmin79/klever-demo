@@ -580,6 +580,14 @@ body.pv-open .main{max-width:none}
 .pv-loc{margin-top:12px;font-size:11px;color:var(--light)}
 .pv-empty{color:var(--light);font-size:12.5px;padding:8px 0}
 .makefoot{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap}
+/* 8/29 안내형 카드 만들기 — 꾸미기 화면 맨 위(AI 큐레이션 카드 아래) */
+.nt-add{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:12px;border:1.5px dashed #cfd8ee;border-radius:12px;background:#f8faff;cursor:pointer;transition:border-color .15s,background .15s}
+.nt-add:hover{border-color:var(--accent);background:#f2f7fd}
+.nt-add-ic{font-size:18px;line-height:1}
+.nt-add-x{flex:1;display:flex;flex-direction:column;gap:2px}
+.nt-add-x b{font-size:13.5px;font-weight:800}
+.nt-add-x span{font-size:11.5px;color:var(--light)}
+.nt-add-p{font-size:20px;font-weight:800;color:var(--accent);line-height:1}
 /* 공지 */
 .notice-i{display:flex;gap:12px;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
 .notice-i .nx{flex:1}.notice-i h4{font-size:14px;font-weight:800}.notice-i .nm{font-size:11.5px;color:var(--light);margin-top:4px}
@@ -1623,10 +1631,13 @@ const STYLES=[
   ['hero','히어로 (대표 1권)'],['row','가로 표지 목록'],['rank','랭킹 (대출 자동)'],
   ['grad','요약 카드 (15분)'],['ai','AI 카드'],
   ['grid','표지 그리드 (서가)'],['mag','매거진'],['banner','와이드 띠배너'],
-  ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션']
+  ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션'],
+  ['notice','안내 카드 (글만)']   // 8/29 사장님 요청: 책 없이 공지·안내만 담는 칸
 ];
+// 8/29: 책을 담지 않는 스타일 — 편집 화면에서 '담긴 책'을 숨기고 본문 칸을 보여준다
+const NO_BOOK_STYLES=['notice'];
 // 스타일별 한 줄 설명(툴팁)
-const STYLE_DESC={hero:'대표 1권을 큰 카드로 강조',row:'표지를 가로로 죽 나열(가장 기본)',grad:'15분 요약 카드',ai:'AI 질문이 있는 다크 카드',grid:'표지를 격자(서가)처럼',mag:'잡지 스프레드형(큰 표지+소개)',banner:'와이드 띠배너 1권',new:'신간 NEW 표시 줄',quote:'책 속 문장 인용',swipe:'넘겨보는 스와이프 카드',coll:'테마별 표지 모음'};
+const STYLE_DESC={hero:'대표 1권을 큰 카드로 강조',row:'표지를 가로로 죽 나열(가장 기본)',grad:'15분 요약 카드',ai:'AI 질문이 있는 다크 카드',grid:'표지를 격자(서가)처럼',mag:'잡지 스프레드형(큰 표지+소개)',banner:'와이드 띠배너 1권',new:'신간 NEW 표시 줄',quote:'책 속 문장 인용',swipe:'넘겨보는 스와이프 카드',coll:'테마별 표지 모음',notice:'책 없이 공지·안내 글만 (칸 사이에 끼워 넣기)'};
 // 스타일별 미니 미리보기 그림(CSS 도형)
 function styleThumb(st){
   switch(st){
@@ -1641,6 +1652,7 @@ function styleThumb(st){
     case 'quote': return `<span style="display:flex;align-items:center;gap:4px"><b style="font-size:24px;color:#aeb7e6;line-height:.7;font-family:Georgia,serif">“</b><span style="width:36px"><i class="tln" style="width:100%"></i><i class="tln" style="width:85%"></i><i class="tln" style="width:50%"></i></span></span>`;
     case 'swipe': return `<span style="position:relative;width:40px;height:32px"><i class="tcv" style="position:absolute;left:8px;top:4px;width:20px;height:26px;transform:rotate(-8deg);background:#cdd4ee"></i><i class="tcv" style="position:absolute;left:13px;top:2px;width:20px;height:26px;transform:rotate(6deg);background:#aeb7e6"></i></span>`;
     case 'coll': return `<span style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;border-radius:5px;background:#e7ebf6">${'<i class="tcv" style="width:11px;height:13px"></i>'.repeat(4)}</span>`;
+    case 'notice': return `<span style="display:flex;gap:5px;align-items:center;width:60px;height:30px;border-radius:6px;border:1px solid #cfd8ee;border-left:3px solid #3a6ea5;background:#f7f9fd;padding:0 5px"><span style="font-size:11px">📢</span><span style="flex:1"><i class="tln" style="width:88%"></i><i class="tln" style="width:66%"></i><i class="tln" style="width:78%"></i></span></span>`;
     default: return `<span style="display:flex;gap:3px">${'<i class="tcv"></i>'.repeat(4)}</span>`;
   }
 }
@@ -1731,6 +1743,16 @@ function addSection(){readSecInputs();
   const at=idxs.length?idxs[0]:SECTIONS.length;
   SECTIONS.splice(at,0,{area:curArea,slot:'c'+Date.now().toString(36),title:'새 카테고리',subtitle:'',style:'row',books:[]});
   renderSettings();}
+// 8/29 사장님 요청: 책 없이 공지·안내 글만 담는 '안내 카드' 칸. 다른 칸과 똑같이 ↕ 순서 바꾸기로 원하는 자리에 끼워 넣는다.
+function addNoticeSection(){readSecInputs();
+  const idxs=SECTIONS.map((s,i)=>i).filter(i=>aOf(SECTIONS[i])===curArea);
+  const at=idxs.length?idxs[0]:SECTIONS.length;
+  const slot='nt'+Date.now().toString(36);
+  SECTIONS.splice(at,0,{area:curArea,slot,title:'안내',subtitle:'',style:'notice',books:[]});
+  _pvFocusSlot=slot;   // 만든 직후 그 칸으로 시선이 가게
+  renderSettings(); pvSync();
+  setTimeout(()=>{ const ta=el('sec_s_'+slot); if(ta) ta.focus(); },60);   // 바로 글을 쓸 수 있게
+  toast('📢 안내 카드를 맨 위에 만들었어요 — 제목과 본문을 적고 저장하세요');}
 function delSection(i){readSecInputs();
   if(isFixed(SECTIONS[i])){toast('학교 도서관 고정 칸은 삭제 대신 ‘노출 끄기’로 숨길 수 있어요');return;}
   if(SECTIONS.length<=1){toast('최소 1개는 있어야 해요');return;}SECTIONS.splice(i,1);renderSettings();}
@@ -1766,7 +1788,7 @@ function renderReorderList(){
     return `<div class="re-row" draggable="true" data-k="${k}"
       ondragstart="reDragStart(event,${k})" ondragover="reDragOver(event,${k})" ondragleave="reDragLeave(event)" ondrop="reDrop(event,${k})" ondragend="reDragEnd()">
       <span class="re-handle">⠿</span><span class="re-no">${k+1}</span>
-      <span class="re-t">${esc(s.title||'(제목 없음)')}${isFix?`<span class="re-lock">고정·자동${visOf(s)?'':' · 숨김'}</span>`:''}</span>
+      <span class="re-t">${esc(s.title||'(제목 없음)')}${isFix?`<span class="re-lock">고정·자동${visOf(s)?'':' · 숨김'}</span>`:(s.style==='notice'?'<span class="re-lock">📢 안내 카드</span>':'')}</span>
       <span class="re-btns">
         <button class="re-arrow" ${k===0?'disabled':''} onclick="reMove(${k},-1)" title="위로">▲</button>
         <button class="re-arrow" ${k===items.length-1?'disabled':''} onclick="reMove(${k},1)" title="아래로">▼</button>
@@ -1991,8 +2013,14 @@ function renderAreaTabs(){
 function renderSettings(){
   renderAreaTabs();
   const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
-  el('secList').innerHTML=list.map((o,k)=>{
+  // 8/29 사장님 요청: AI 큐레이션 카드 바로 아래 = 안내 카드 만들기 입구
+  el('secList').innerHTML=`<div class="nt-add" onclick="addNoticeSection()" title="책 없이 공지·행사 안내만 보여 주는 칸을 만듭니다">
+      <span class="nt-add-ic">📢</span>
+      <span class="nt-add-x"><b>안내형 카드 만들기</b><span>책 없이 공지·행사 안내 글만 — 칸 사이 원하는 자리에 넣을 수 있어요</span></span>
+      <span class="nt-add-p">+</span></div>`
+   +list.map((o,k)=>{
     const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
+    const isNotice=!isFix && NO_BOOK_STYLES.includes(s.style||'row');   // 8/29 안내 카드 = 책 없는 칸
     const first=k===0, last=k===list.length-1;
     return `<div class="panel sec-panel${isFix?' sec-fixed':''}${s.slot===_pvFocusSlot?' pv-focus':''}" style="margin-bottom:12px${isFix&&!vis?';opacity:.5':''}" data-i="${i}" data-slot="${esc(s.slot)}" onclick="pvFocusSec('${s.slot}')">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -2010,8 +2038,12 @@ function renderSettings(){
           <span class="style-toggle" id="styletoggle_${s.slot}">바꾸기 ▾</span>
         </div>
         <div class="style-pick" id="stylegrid_${s.slot}" style="display:none">${STYLES.filter(o=>o[0]!=='rank').map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}
-    <div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">
+    ${isNotice
+      ? `<div class="flabel">본문 <span style="font-weight:400;color:var(--light)">· 학생에게 보일 글 — 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
+         <textarea class="cur-inp" id="sec_s_${s.slot}" rows="7" style="line-height:1.8" placeholder="예) 2026학년도 2학기 월별 우수독서 후기&#10;&#10;1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="pvSync()">${esc(s.subtitle)}</textarea>`
+      : `<div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">`}
     ${isFix?`<div class="note" style="margin-top:12px">⚙ 자동 집계 — 책을 직접 담지 않습니다. ${vis?'지금 <b>우리 도서관에 노출 중</b>이에요.':'지금 <b>숨김</b> 상태 — 학생 앱에 안 보여요.'}</div>`
+      :isNotice?`<div class="note" style="margin-top:12px">📢 안내 카드 — 책을 담지 않습니다. 제목과 본문만 학생 앱에 그대로 나와요. 위치는 <b>↕ 순서 바꾸기</b>로 옮기세요.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
         <div class="deco-list">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">
