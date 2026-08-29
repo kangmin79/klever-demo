@@ -5129,8 +5129,15 @@ async function fetchProgramsCached(){
   })();
   return _progCacheP;
 }
+// 8/29 독서 챌린지 안내 카드 — 사서가 관리자 '독서 챌린지'에서 만든 글 전용 칸(library_sections area='독서챌린지')
+let CHAL_NOTICES=[];
+async function loadChalNotices(){
+  try{ CHAL_NOTICES=(await loadAreaSections('독서챌린지')).filter(s=>s.style==='notice'); }
+  catch(e){ CHAL_NOTICES=[]; }
+}
 async function loadChalCards(){
   renderChalCards();
+  try{ await loadChalNotices(); renderChalCards(); }catch(e){}   // 안내는 챌린지보다 먼저 떠도 된다(챌린지 조회를 기다리지 않음)
   try{
     const rows=await fetchProgramsCached(); if(!Array.isArray(rows)) return;
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
@@ -5303,11 +5310,14 @@ function chalBookCard(b,c){
 }
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
-  if(!CHAL_PUB.length){ g.innerHTML='<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>'; return; }
+  // 8/29 안내 카드 — 챌린지 목록 위. 챌린지가 아직 없어도 안내는 보인다.
+  const ntHTML=(CHAL_NOTICES||[]).map(s=>mlNotice(s.title,s.subtitle)).join('');
+  if(!CHAL_PUB.length){
+    g.innerHTML=`<div class="ml">${ntHTML}<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div></div>`; return; }
   // 히어로는 사서가 '이달의 챌린지'(featured)로 지정한 경우에만 노출. 자동 생성 안 함(=중복/자동 히어로 방지).
   const heroC=CHAL_PUB.find(c=>c.featured)||null;
   const listC=heroC?CHAL_PUB.filter(c=>c!==heroC):CHAL_PUB;   // 히어로로 뜬 챌린지는 아래 목록에서 제외(중복 방지)
-  let out=heroC?chalHero(heroC):'';
+  let out=ntHTML+(heroC?chalHero(heroC):'');
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
     + listC.map((c)=>{
         const books=(c.books||[]);
