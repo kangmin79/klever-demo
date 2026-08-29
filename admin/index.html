@@ -3415,7 +3415,7 @@ async function loadWritings(){
   try{ const r=await fetch(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,{headers:H});
     if(!r.ok) failed=true;
     const rv=r.ok?await r.json():[];
-    if(Array.isArray(rv)) rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null,featured:false}));
+    if(Array.isArray(rv)) rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
   }catch(e){ failed=true; }
   if(seq!==_wrSeq) return false;   // 그 사이 다른 기간 요청이 나갔으면 버림
   list.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
@@ -3455,8 +3455,7 @@ async function wrToggleHide(id){
     w.hidden=to; renderWritings(); toast(isRv?(to?'숨겼어요':'다시 보이게 했어요'):(to?'숨겼어요 (별 회수)':'다시 보이게 했어요 (별 복구)')); }
   catch(e){ toast('처리하지 못했어요 — '+String(e.message||e)); }
 }
-// (보존·미사용) 우수작 표시 — 8/17 시안 목록엔 ★ 버튼 없음
-async function wrFeature(id,v){ try{ await adminSave({op:'writings_patch',id,patch:{featured:v}}); }catch(e){} const w=WRITINGS.find(x=>String(x.id)===String(id)); if(w)w.featured=v; renderWritings(); }
+// 8/29 사장님 지시: 사서 '우수작' 선정 기능 전부 삭제 (wrFeature·featured 표시·정렬·서버 경로). 숨김(hidden)만 남는다.
 // [엑셀 다운로드] — 기간(fdFrom~fdTo)·종류(fdMs) 조건의 학생 글 전부 1장. 화면 목록(10건)과 달리 숨긴 글도 '숨김' 표시로 함께
 function downloadFeedExcel(btn){
   const [f,t]=rangeOf('fdFrom','fdTo'); if(!rangeOk(f,t)) return;

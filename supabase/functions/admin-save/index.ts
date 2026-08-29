@@ -121,8 +121,9 @@ Deno.serve(async (req) => {
 
   if (op === 'reviews_delete') return deleteById('reviews', body.id);
 
-  // 학생 글 모더레이션: featured/hidden만 (본문 text는 관리자도 이 경로로 수정 불가)
-  if (op === 'writings_patch') return patchById('bookstar_writings', body.id, pick(body.patch, ['featured', 'hidden']));
+  // 학생 글 모더레이션: hidden(숨김)만 (본문 text는 관리자도 이 경로로 수정 불가)
+  //   8/29 사장님 지시: 사서 '우수작'(featured) 선정 기능 삭제 → 이 경로로도 featured는 못 바꾼다
+  if (op === 'writings_patch') return patchById('bookstar_writings', body.id, pick(body.patch, ['hidden']));
 
   // ── 측정 로그 v2 (2026-08-17, 설계: klever_demo/_측정로그_설계_20260817.md) ──
   // 집계 함수는 anon 실행 권한이 없다 → 여기서 service role로만 호출. 학번이 든 개인 로그라 이 경로가 유일한 읽기 창구.

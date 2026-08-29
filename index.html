@@ -1498,9 +1498,6 @@ body.dark .b-book .bb-done{color:#6fd9a6;}
 .mw-grid{display:grid;gap:14px;}
 .mw-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;transition:transform .15s,box-shadow .15s,border-color .15s;}
 .mw-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(40,40,90,.10);}
-.mw-card.feat{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 10px 24px rgba(212,169,59,.14);}
-.mw-feat{font-size:11.5px;font-weight:800;color:#b4690e;margin-bottom:9px;}
-body.dark .mw-feat{color:#ffd479;}
 .mw-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;}
 .mw-badge{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--primary-bg);padding:3px 10px;border-radius:20px;white-space:nowrap;}
 body.dark .mw-badge{color:var(--gold);}
@@ -10353,14 +10350,12 @@ async function renderMyWritings(){
     try{ if(typeof CHAL_PUB!=='undefined') for(const c of CHAL_PUB){ const bk=(c.books||[]).find(x=>String(x.id)===String(id)); if(bk) return cleanT(bk.t||bk.title); } }catch(e){}
     return id;
   };
-  const feat=rows.filter(w=>w.featured).length;
   el.innerHTML=`
-    <div class="section-head" style="margin-top:40px"><div class="section-title"><em>내가 제출한 글</em> · 챌린지 미션 ${rows.length}건${feat?` · ★ 우수작 ${feat}`:''}</div></div>
+    <div class="section-head" style="margin-top:40px"><div class="section-title"><em>내가 제출한 글</em> · 챌린지 미션 ${rows.length}건</div></div>
     <div class="mw-grid">${rows.map(w=>{
       const a=WR_ACT[w.activity]||{t:w.activity,icon:'📝',star:''};
       const date=(w.created_at||'').slice(0,10);
-      return `<div class="mw-card${w.featured?' feat':''}">
-        ${w.featured?'<div class="mw-feat">★ 사서가 우수작으로 선정했어요</div>':''}
+      return `<div class="mw-card">
         <div class="mw-top"><span class="mw-badge">${a.icon} ${esc(a.t)}${a.star?` ⭐${a.star}`:''}</span>
           <span class="mw-book">${esc(bookTitle(w.book_id))}</span>
           <span class="mw-date">${esc(date)}</span></div>
@@ -11874,7 +11869,7 @@ async function feedFollow(btn,sid){
 }
 function setFeedTab(t){ _feedTab=t; renderFeed(); }
 function setFeedType(t){ _feedType=t; renderFeed(); }
-// 정렬 우선순위(우수작→최신)는 지키되, 같은 학생이 연속으로 안 나오게 골고루 섞기
+// 정렬(최신순)은 지키되, 같은 학생이 연속으로 안 나오게 골고루 섞기
 function _feedSpread(sorted){
   const pool=sorted.slice(), out=[]; let last=null;
   while(pool.length){
@@ -11908,7 +11903,7 @@ function feedCard(it,i){
   return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
       <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${s.emoji||'🙂'}</div>
-      <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(isMe?s.name:pubName(s.name))}${it.featured?' <span style="color:var(--gold)">★</span>':''}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
+      <div class="fc-id" onclick="openStudentProfile('${esc(it.sid)}')"><div class="fc-nm">${esc(isMe?s.name:pubName(s.name))}</div><div class="fc-mt">${esc(meta)||'방금'}</div></div>
       ${followBtn}
     </div>
     ${content}
@@ -11925,17 +11920,17 @@ function feedCard(it,i){
 async function loadFeedItems(){
   const items=[];
   try{
-    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,featured,hidden,created_at&is_public=eq.true&order=created_at.desc&limit=200`,{headers:BX_H});
+    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,hidden,created_at&is_public=eq.true&order=created_at.desc&limit=200`,{headers:BX_H});
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(x.hidden||!(x.text||'').trim())return;
-      items.push({sid:x.student_id,book_id:x.book_id,act:x.activity,text:x.text,featured:!!x.featured,time:x.created_at,meta:''}); });
+      items.push({sid:x.student_id,book_id:x.book_id,act:x.activity,text:x.text,time:x.created_at,meta:''}); });
   }catch(e){}
   try{
     const r=await fetch(`${BX_SB}/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=120`,{headers:BX_H});
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!(x.impression||'').trim())return;
       const m=[]; if(x.quiz_total)m.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`); if(x.score)m.push(`${x.score}점`);
-      items.push({sid:x.student_id,book_id:x.book_id,act:'impression',text:x.impression,featured:false,time:x.updated_at,meta:m.join(' · ')}); });
+      items.push({sid:x.student_id,book_id:x.book_id,act:'impression',text:x.impression,time:x.updated_at,meta:m.join(' · ')}); });
   }catch(e){}
   _feedItems=items;
 }
@@ -11968,7 +11963,7 @@ function _feedPaint(){
   let list=_feedItems.slice();
   if(_feedTab==='follow') list=list.filter(x=>_myFollows.has(x.sid));
   if(_feedType!=='all') list=list.filter(x=>(FEED_ACT[x.act]||{}).cat===_feedType);
-  list.sort((a,b)=>((b.featured?1:0)-(a.featured?1:0)) || String(b.time||'').localeCompare(String(a.time||'')));
+  list.sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));   // 8/29: 우수작 우선 정렬 삭제 → 최신순만
   list=_feedSpread(list);   // 같은 학생 연속 방지(여러 친구 골고루)
   if(!list.length){
     box.innerHTML=head+(_feedTab==='follow'
