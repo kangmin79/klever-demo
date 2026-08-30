@@ -3466,14 +3466,6 @@ function loadReaderStats(){
   }catch(e){}
 }
 function saveReaderStats(){ try{ localStorage.setItem(_rsKey(), JSON.stringify(readerStats)); }catch(e){} bxUpsertReaderStats(); }
-function _rsMigrateGuest(){   // 게스트(공용 키)로 읽던 리더 통계를 로그인 계정으로 병합 — 로그인 순간 하이라이트·독서시간이 사라지지 않게(챌린지 기록 승계와 대칭)
-  try{
-    const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
-    const g=JSON.parse(localStorage.getItem(READER_STATS_KEY)||'null'); if(!g) return;
-    _rsMergeServer(g);
-    saveReaderStats();
-  }catch(e){}
-}
 
 /* ── 내 서재(도서관에서 빌린 책) — '읽고 돌아오기' 루프의 그릇 ──
    빌리기 클릭 → 읽는 중 기록 → 돌아와서 완독 인증(독후감) → 완독 이력 누적.
@@ -5489,8 +5481,6 @@ function chalQuit(cid){
 
 let LC_PUB=[];
 let LC_SEL={};  // ci → 펼친 책으로 보여줄 책 인덱스(기본 0)
-function spineColor(s){const c=['#2a3650','#3a4a6b','#4a3f6b','#5b3a52','#3a5b52','#5b4a2f'];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i);return c[h%c.length];}
-function spineHeight(s){const hs=[150,174,186,158,178,146,190,164,154,182];let h=0;for(let i=0;i<(s||'').length;i++)h+=s.charCodeAt(i)*(i+1);return hs[h%hs.length];}
 const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
 const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
 const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
@@ -6182,14 +6172,6 @@ function mlRank(t,s,books,live){
     ${chips}
     ${bar}
     <div class="ml-rgrid">${books.map((b,i)=>`<div class="ml-rkc" onclick="libDetail('${b.isbn}')"><div class="ml-rkc-n"><div class="ml-rkc-num">${i+1}</div>${(isLoan||live)?'':chgBadge(i)}</div>${mlcv('ml-rkc-cv',b)}<div class="ml-rkc-i"><div class="ml-rkc-t">${esc(cleanT(b.t))}</div><div class="ml-rkc-a">${esc(authorLine(b))}</div>${fmtTags(b)}</div></div>`).join('')}</div></div>`;}
-// 대출 랭킹 변동(지난달 대비): ▲상승(초록)·▼하락(회색)·NEW(보라)·─유지
-function loanMove(b){
-  if(b.prevRank==null) return `<span class="ml-mv ml-mv-new">NEW</span>`;
-  const d=b.prevRank-b.rank;
-  if(d>0) return `<span class="ml-mv ml-mv-up">▲${d}</span>`;
-  if(d<0) return `<span class="ml-mv ml-mv-down">▼${-d}</span>`;
-  return `<span class="ml-mv ml-mv-keep">─</span>`;
-}
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 // 표지 그리드(서가)
@@ -6629,19 +6611,6 @@ function bxOpenPicker(){
   document.getElementById('bxAccOverlay')?.classList.add('open');
 }
 function bxClosePicker(){ document.getElementById('bxAccOverlay')?.classList.remove('open'); }
-async function bxPickStudent(id){
-  const s=BX_STUDENTS.find(x=>x.id===id)||{id,name:id,emoji:'🙂'};
-  _migrateChalRecords('guest', id);   // 로그인 전 게스트로 읽던 진행을 이 계정으로 승계(안 날아가게)
-  bxSetStudent(s); bxRenderAccountChip(); bxClosePicker();
-  _sc={bookId:null, idx:0, ans:{}, impression:'', submitted:false};   // 챌린지 상태 무효화 → 재로딩
-  _bxShownCur=-1; _bxPendingReveal=false; _bxLastSi=-1;
-  await bxLoadResultsFromDB();
-  loadReaderStats();            // 새 계정의 로컬 키로 리셋(이전 계정 잔여 제거)
-  _rsMigrateGuest();            // 게스트로 읽던 하이라이트·책갈피·독서시간·streak 승계
-  await bxLoadReaderStats();    // 서버 리더통계 → 로컬 병합 + 리듬/streak 재렌더
-  try{ renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderChalScore(); renderMyImpressions(); }catch(e){}
-  if(document.getElementById('page-mypage')?.classList.contains('active')) nav('mypage');
-}
 // 우리도서관 카테고리(관리자가 추가·삭제·편집) — 서버 library_sections에서 로드
 let SECTIONS=[
   {slot:'life',title:'오늘의 사서 추천',subtitle:'',style:'hero'},
@@ -7143,7 +7112,6 @@ function lcdDescMark(el){
   if(!el.classList.contains('open') && el.scrollHeight>el.clientHeight+4) el.classList.add('clip');
 }
 function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
-function lcAccess(t){alert(t+' 링크는 도서관 카탈로그 연동 시 연결됩니다. (현재 데모)');}
 // 도서관에서 빌리기 — 브라우저가 직접 전자도서관 뷰어 페이지를 연다.
 //  예스24 뷰어 토큰은 "여는 브라우저 세션"에 묶여 있어(DRM) 서버 릴레이로는 못 만든다.
 //  그래서 b.lib(yes24_ebook_open.asp)를 브라우저가 직접 열어야 토큰이 유효하다.
@@ -8190,61 +8158,8 @@ function toggleRecGenre(k){ recSel.genres.has(k)?recSel.genres.delete(k):recSel.
 function setRecMood(k){ recSel.mood = (recSel.mood===k)?null:k; renderRecChips(); }
 function setRecRegion(k){ recSel.region = k; renderRecChips(); }
 
-function genreOfBook(b){
-  return REC_GENRES.find(g=>g.cats.includes(b.category));
-}
 
-function loanCardHTML(b){
-  const coverInner = b.cover
-    ? `<div class="book-cover has-img"><img src="${esc(b.cover)}" alt="${esc(b.title)}" loading="lazy" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>`
-    : `<div class="book-cover style-${(Math.abs((b.title||'').charCodeAt(0))%8)+1}"><div><div class="book-cover-title">${esc(b.title)}</div><div class="book-cover-author">${esc(b.author)}</div></div></div>`;
-  const loanTxt = b.loan ? `대출 ${parseInt(b.loan).toLocaleString()}회` : '';
-  const link = b.detail ? `window.open('${esc(b.detail)}','_blank')` : `alert('도서관 소장 조회는 로그인 후 이용 가능합니다.')`;
-  return `<div class="book-card">
-    ${coverInner}
-    <div class="book-info">
-      <div class="book-title">${esc(b.title)}</div>
-      <div class="book-author">${esc(b.author)}${b.publisher?' · '+esc(b.publisher):''}</div>
-      ${loanTxt?`<div style="font-size:11px;color:var(--text-light);margin-top:3px;">📚 ${loanTxt}</div>`:''}
-      <button class="rec-card-cta" style="background:var(--accent);color:#fff;" onclick="${link}">🏛 도서관에서 찾기</button>
-    </div>
-  </div>`;
-}
 
-function renderRecResults(pdList, loanList, anySel, moodObj){
-  const el = document.getElementById('recResults');
-  if(!el) return;
-  const genreTxt = recSel.genres.size ? [...recSel.genres].map(k=>REC_GENRES.find(g=>g.key===k).label).join('·') : '전체';
-  const moodTxt = moodObj ? ` · ${moodObj.label.replace(/^\S+\s/,'')} 기분에` : '';
-  let html = `<div class="rec-results-sub" style="margin-bottom:20px;">${esc(genreTxt)}${moodTxt} 어울리는 책을 골랐어요.</div>`;
-
-  // 1층 — 북스타 고전
-  html += `<div class="rec-results-head">${ic('sparkles','icon icon-sm')} 북스타에서 바로 읽을 수 있는 고전 <span style="color:var(--text-light);font-weight:600;">${pdList.length}</span></div>
-    <div class="rec-results-sub">전문·번역·퀴즈가 준비돼 있어요. 읽고 바로 챌린지까지!</div>`;
-  if(pdList.length){
-    html += `<div class="book-grid" style="margin-bottom:28px;">${pdList.map(({b})=>`
-      <div class="book-card">
-        <div onclick="openDetail('${b.id}')">${bookCoverHTML(b)}</div>
-        <div class="book-info">
-          <div class="book-title">${esc(b.title)}</div>
-          <div class="book-author">${esc(b.author)} · ${esc(b.category)}</div>
-          <button class="rec-card-cta" onclick="event.stopPropagation();openViewer('${b.id}','challenge')">${ic('target','icon icon-sm')} 챌린지 시작</button>
-        </div>
-      </div>`).join('')}</div>`;
-  } else {
-    html += `<div class="rec-empty" style="margin-bottom:28px;">선택한 조건의 북스타 고전이 없어요. 권역을 '무관'으로 바꿔보세요.</div>`;
-  }
-
-  // 2층 — 도서관 대출
-  if(loanList.length){
-    html += `<div class="rec-results-head">🏛 도서관에서 빌릴 만한 책 <span style="color:var(--text-light);font-weight:600;">${loanList.length}</span></div>
-      <div class="rec-results-sub">우리 학교 도서관 인기 대출 도서예요. 더 읽고 싶다면 빌려보세요.</div>
-      <div class="book-grid">${loanList.map(loanCardHTML).join('')}</div>
-      <div style="font-size:11px;color:var(--text-light);margin-top:14px;">표지·서지·대출 데이터 출처: 도서관 정보나루(국립중앙도서관)${LOAN_DATA._sample?' · ※ 현재 샘플 데이터':''}</div>`;
-  }
-  el.innerHTML = html;
-  el.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
 
 function bookCoverHTML(b, extra=''){
   const hasImg = !!b.coverSrc;
@@ -8354,7 +8269,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -9537,16 +9452,6 @@ async function mpCheckComplete(){
 }
 
 /* ── 장(章) 이동 — 현재 보이는 칸의 chapter-anchor 기준 이전/다음 ── */
-function gotoChapter(dir){
-  if(_pg.on){ showChapter(_pg.chIdx+dir, 0); return; }
-  const pane = _scrollEl(); if(!pane) return;
-  const secs = [...pane.querySelectorAll('.chapter-anchor')];
-  if(secs.length <= 1){ pane.scrollTo({top: dir>0 ? pane.scrollHeight : 0, behavior:'smooth'}); return; }
-  const top = pane.scrollTop + 10;
-  let idx = 0; for(let i=0;i<secs.length;i++){ if(secs[i].offsetTop <= top) idx = i; }
-  const t = Math.max(0, Math.min(secs.length-1, idx + dir));
-  secs[t].scrollIntoView({behavior:'smooth', block:'start'});
-}
 
 
 /* ── 점수 원장 (실측 적립 — 데모 기본 1,842점 + 챌린지로 번 점수) ── */
@@ -9949,7 +9854,6 @@ const PE_EMOJI=['📘','🌷','⚽','🎨','🚀','📚','🦊','🌙','🍀','�
 let _peEmoji='', _peFav='';
 function _doneBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); if(r&&(r.read_pct||0)>=95) out.push(b); }); return out; }
 function _readingBooks(){ const out=[]; (typeof BOOKS!=='undefined'?BOOKS:[]).forEach(b=>{ const r=_chalRead(b.id); const p=r?(r.read_pct||0):0; if(p>0&&p<95) out.push({b, pct:Math.max(1,Math.min(94,p)), ts:(r&&r.ts)||0}); }); out.sort((x,y)=>y.ts-x.ts); return out; }
-function _bkCover(b){ return (b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕'; }
 
 /* ════════ 내서재 ① 내 활동 그룹 (프로필·기록) — 실데이터. 8/29 별 포인트 폐지(별 내역·등급 삭제) ════════ */
 const AG_IC_USER='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>';
@@ -10006,11 +9910,6 @@ function _agNotesHTML(){
   if(!list.length) return `<div class="ag-empty">${_agNoteFilter==='all'?'아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.':'해당하는 기록이 아직 없어요.'}</div>`;
   return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=(typeof _anyBook==='function')?_anyBook(w.book_id):_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('');
 }
-function agSetNoteFilter(f){
-  _agNoteFilter=(_agNoteFilter===f?'all':f);
-  const wrap=document.getElementById('agNotes'); if(wrap) wrap.innerHTML=_agNotesHTML();
-  document.querySelectorAll('#agChips .ag-chip').forEach(c=>c.classList.toggle('on', c.dataset.f===_agNoteFilter));
-}
 
 /* ════════ 내서재 ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 ════════ */
 const BM_IC_BOOK='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H18v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 1 6.5 18H18"/></svg>';
@@ -10020,7 +9919,6 @@ const IC_SHARE='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke
 const IC_PLUS='<svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 let _bmShelves=[], _curFav={id:'',reason:''}, _bmPendBook=null, _bmPickSet={};
 const BM_BOOK_LIMIT=10; let _bmBooksOpen=false;
-function bmToggleBooks(){ _bmBooksOpen=!_bmBooksOpen; renderMyProfileTop(); }
 function _bmCover(b,extra){ extra=extra||''; const inner=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.outerHTML='📕'">`:'📕'; return inner+extra; }
 function bmToast(m){ let t=document.getElementById('bmToast'); if(!t){ t=document.createElement('div'); t.id='bmToast'; t.className='bm-toast'; document.body.appendChild(t); } t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),1900); }
 function bmCloseModal(){ const o=document.getElementById('bmOv'); if(o) o.classList.remove('on'); }
@@ -10365,10 +10263,6 @@ async function makeShelf(){
   const ids=Object.keys(_bmPickSet);
   const ok=await _bmWrite('POST','bookstar_shelves',{school_id:CH_SCHOOL,student_id:s.id,name:nm,book_ids:ids});
   bmCloseModal(); bmToast(ok?`“${nm}” 책장을 만들었어요 (${ids.length}권)`:'저장 실패'); try{ _agfCache.clear(); }catch(e){} renderMyProfileTop();
-}
-function bmShare(kind,name){
-  try{ const txt=`[북스타] ${kind} · ${name}`; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); } }catch(e){}
-  bmToast('공유 내용을 복사했어요');
 }
 
 /* ════════ 내서재 ② 내 챌린지 그룹 (참여 중 / 완료 결과·복습) — 실데이터 ════════ */
@@ -11345,7 +11239,6 @@ function renderReadChart(){
     <div class="rc-col"><div class="rc-h">언어</div>${bars(langs,'#b8902f')}</div>`;
 }
 
-function _seed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return function(){h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
 /* ── 올해의 ○○ (슈퍼래티브) ── */
 async function renderSuperlatives(){
   const host=document.getElementById('superlatives'); if(!host) return;
@@ -11648,16 +11541,6 @@ function usAnswerHTML(answer){
   const html=esc(answer.text).replace(/\s*\[\d+\]/g,'');
   return `<div class="usc-answer"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div></div>`;
 }
-// 인용 클릭 → 같은 결과 묶음 안의 해당 카드로 스크롤 + 잠깐 강조
-function usCiteJump(isbn, ev){
-  try{ if(ev) ev.stopPropagation();
-    const box=document.getElementById('usResults')||document;
-    const card=box.querySelector('.book-card[data-isbn="'+(window.CSS&&CSS.escape?CSS.escape(isbn):isbn)+'"]');
-    if(!card) return;
-    card.scrollIntoView({behavior:'smooth', block:'center'});
-    card.classList.add('cite-flash'); setTimeout(()=>card.classList.remove('cite-flash'), 1400);
-  }catch(e){}
-}
 // 논문 표지 대체(학술자료는 표지 이미지 없음) — 문서 라인 아이콘 플레이스홀더
 const PAPER_COVER='<div class="paper-cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg></div>';
 // 별이 결과의 북스타 고전 카드(추천 v2, 8/18) — 자체 본문이라 항상 "지금 바로 읽기". 클릭=openDetail(id) (도서관 상세 아님)
@@ -11796,17 +11679,6 @@ function findToCand(c){
     crema:false, cremaUrl:'', brcd:c.key,
     _material:c.material||'book', sim:c.similarity,
   };
-}
-// 하이브리드 키워드 RPC 행(전자책/종이책 혼합) → 앱 공용 cand 형태로 정규화
-function keywordToCand(r){
-  if(r.src==='ebook'){
-    return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null, description:r.description||'',
-      smEbook:true, smEbookUrl:r.detail_url||'', smPaper:false, smPaperUrl:'',
-      crema:r.crema===true, cremaUrl:r.crema_url||'', brcd:r.id, _kw:true };
-  }
-  return { isbn:'sm-'+r.id, title:r.title||'', author:r.author||'', publisher:r.publisher||'', cover:r.cover||'', year:'', loan:null, description:r.description||'',
-    smEbook:false, smEbookUrl:'', smPaper:true, smPaperUrl:r.detail_url||('https://lib.semyung.ac.kr/search/detail/'+r.id),
-    crema:false, cremaUrl:'', brcd:r.id, _material:r.material||'book', _kw:true };
 }
 async function usChatRecommend(topic, subtitleHint){
   US_CHAT_BUSY=true; usChatRender();
