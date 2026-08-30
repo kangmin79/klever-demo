@@ -423,7 +423,9 @@ body.dark .ml-chip.on{background:var(--gold);color:#0f172a;}
 /* 8/14 사장님 수정요청: 도서 설명 잘림 — 넘치면 하단 페이드 + '더 보기', 탭하면 전체 펼침 */
 .lcd-desc.clip{position:relative;cursor:pointer;}
 .lcd-desc.clip::after{content:'… 더 보기';position:absolute;right:24px;bottom:0;padding-left:44px;font-size:12px;font-weight:800;color:var(--primary);background:linear-gradient(90deg,transparent,var(--bg-card) 38%,var(--bg-card));}
-.lcd-desc.open{max-height:none;cursor:pointer;}
+/* 8/30: 펼쳐도 화면 절반까지만 늘어나고 그 안에서 스크롤 — 아래 소장현황·빌리기 자리가 안 밀린다 */
+.lcd-desc.open{max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain;cursor:pointer;}
+.lcd-desc.open::after{content:'접기';display:block;position:sticky;bottom:0;text-align:right;font-size:12px;font-weight:800;color:var(--primary);background:var(--bg-card);padding:5px 0 1px;margin-top:6px;}
 .lcd-ways{margin-top:16px;border-top:1px solid var(--border);padding-top:14px;}
 .lcd-ways-h{font-size:10.5px;font-weight:700;color:var(--text-light);letter-spacing:.08em;text-transform:uppercase;margin:0 2px 10px;}
 .lcd-way{display:flex;align-items:center;gap:11px;text-decoration:none;font-size:13.5px;color:var(--text);background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:11px 14px;margin-bottom:8px;transition:border-color .16s,transform .12s,box-shadow .16s;}
@@ -6867,6 +6869,9 @@ function libDetail(isbn){
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
+    <!-- 8/30 사장님: 줄거리는 표지 바로 아래(원래 자리). 펼쳐도 아래 버튼이 밀리지 않도록
+         .lcd-desc.open 에서 높이를 묶고 그 안에서만 스크롤한다 -->
+    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${escD(desc)}</p>
     ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">우리 도서관 소장 현황을 확인하고 있어요…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
@@ -6902,9 +6907,6 @@ function libDetail(isbn){
       })()}
       <div id="ebSimilar"></div>
     </div>
-    <!-- 8/30 사장님: 줄거리를 소장현황·빌리기 아래로 내림. 위에 있으면 줄거리가 긴 책
-         (또는 '더 보기'로 펼친 책)에서 빌리기 버튼이 화면 밖으로 밀려 "왜 안 뜨지"가 된다 -->
-    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${escD(desc)}</p>
     <div class="lcd-src">${(()=>{
       const tags=b.tags||null;
       if(tags){
@@ -8316,7 +8318,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830r';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830s';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
