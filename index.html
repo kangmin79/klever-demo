@@ -2059,7 +2059,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
         → ①윗줄 두 칸이 줄어들며 한 줄을 지키게 하고 ②그래도 넘치면 헤더가 늘어나도록 높이를 자동으로. */
   .header{height:auto;min-height:var(--header-h);flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 14px;}
   /* 8/30 사장님: 폰 좌우 여백이 과하고 헤더와 어긋나 보였다 — 헤더(14px)에 맞춘다 */
-  .page{padding-left:14px;padding-right:14px;}
+  .page{--page-pad:14px;padding-left:var(--page-pad);padding-right:var(--page-pad);}
   .brand-logo{order:1;min-height:50px;display:flex;align-items:center;flex:0 1 auto;min-width:0;overflow:hidden;}
   /* flex-basis:0 → '얼마나 넓어야 하는지'를 0으로 봐서 절대 다음 줄로 밀리지 않는다. 남는 폭을 채우고 안에서 줄어든다. */
   .hdr-actions{order:2;min-height:50px;display:flex;align-items:center;flex:1 1 0;min-width:0;justify-content:flex-end;overflow:hidden;margin-left:12px;}
@@ -2648,9 +2648,13 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   .ml-bk{width:var(--mlcw,112px);}
   .ml-bk-cv{width:100%;}
   .ml-hrow .cl-card{flex:0 0 var(--mlcw,124px);width:var(--mlcw,124px);}
-  .ml-nw{width:var(--mlcw,104px);flex:0 0 var(--mlcw,104px);}
+  /* 기본값을 ml-bk와 같은 112px로 — 줄마다 표지 장수가 3장/4장으로 갈리지 않게(한 화면 한 리듬) */
+  .ml-nw{width:var(--mlcw,112px);flex:0 0 var(--mlcw,112px);}
   .ml-nw-cv{width:100%;height:auto;aspect-ratio:104/150;}
   .ml-hrow{scroll-snap-type:x mandatory;}
+  /* 표지 줄만 화면 끝까지 (8/31 사용자: 앱처럼 좌우 여백 없이).
+     제목·설명 글은 .page 여백(--page-pad)을 그대로 지킨다 — 글까지 끝에 붙으면 읽기 나쁨. */
+  .ml-car{margin-left:calc(var(--page-pad,14px) * -1);margin-right:calc(var(--page-pad,14px) * -1);}
 }
 </style>
 </head>
@@ -8350,7 +8354,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
