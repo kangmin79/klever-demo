@@ -1678,6 +1678,9 @@ function styleThumb(st){
   }
 }
 function setSecStyle(slot,val){const h=el('sec_style_'+slot);if(h)h.value=val;readSecInputs();renderSettings();}
+// 8/30: 챌린지가 고를 수 있는 스타일 — 자동 집계(rank)·글 전용(안내 카드)·히어로(큐레이션 문맥 필요)는 뺀다
+const CHAL_STYLES=STYLES.filter(o=>!['rank','hero'].includes(o[0])&&!NO_BOOK_STYLES.includes(o[0]));
+function setChalStyle(i,val){ const h=el('ch_style_'+i); if(h)h.value=val; readChalInputs(); renderChallenges(); }
 function styleLabel(key){const o=STYLES.find(x=>x[0]===key);return o?o[1]:'가로 표지 목록';}
 // 스타일 그리드 접기/펼치기 — 칸 높이 절약(평소엔 현재 스타일만 표시)
 function toggleStyleGrid(e,slot){ const g=el('stylegrid_'+slot); if(!g)return;
@@ -2969,6 +2972,7 @@ async function loadChallenges(){
     CHAL_LOAD_FAILED=false;
     CHALLENGES=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,detail:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
+      style:x.style||'row',
       mission:chalMissClean(x.mission,x.type),
       books:(x.books||[]).map(b=>({id:b.id||'',isbn:b.isbn,title:b.title,author:b.author,cover:b.cover,note:b.note||''}))}));
     ORIG_CHAL_IDS=CHALLENGES.map(c=>c.id).filter(Boolean);
@@ -3010,6 +3014,7 @@ function readChalInputs(){
     const t=el('ch_t_'+i),d=el('ch_d_'+i),f=el('ch_f_'+i),to=el('ch_to_'+i),ty=el('ch_type_'+i);
     if(t)c.title=t.value.trim()||c.title; if(d)c.detail=d.value; if(f)c.from=f.value; if(to)c.to=to.value;
     if(ty)c.type=ty.value;
+    const st=el('ch_style_'+i); if(st)c.style=st.value||'row';
     chalMission(c);
     const qt=el('ch_qt_'+i),ql=el('ch_ql_'+i),dc=el('ch_dc_'+i),dcd=el('ch_dcd_'+i);
     if(qt)c.mission.quizType=qt.value; if(ql)c.mission.quizLevel=ql.value;
@@ -3073,6 +3078,14 @@ function renderChallenges(){
         ${missCells}</div>
       ${quizCfg}
       <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제(엑셀로 확인). 8/29 되살렸다가 다시 뺌 — 화면 변경은 사장님 승인 후. 추첨 인원·조건 값은 chalMissClean에서 보존만 -->
+      ${/* 8/30 사장님 요청: 우리 도서관처럼 챌린지도 스타일을 고를 수 있게 */''}
+      <div class="flabel" style="margin-top:10px">스타일 (학생 앱에서 담긴 책이 어떻게 보일지)</div>
+      <input type="hidden" id="ch_style_${i}" value="${esc(c.style||'row')}">
+      <div class="style-bar" onclick="toggleStyleGrid(event,'chal${i}')">
+        <span class="style-cur"><span class="sb-th">${styleThumb(c.style||'row')}</span><b>${esc(styleLabel(c.style||'row'))}</b></span>
+        <span class="style-toggle" id="styletoggle_chal${i}">바꾸기 ▾</span>
+      </div>
+      <div class="style-pick" id="stylegrid_chal${i}" style="display:none">${CHAL_STYLES.map(o=>`<div class="sp-card${(c.style||'row')===o[0]?' on':''}" onclick="setChalStyle(${i},'${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>
       <div class="flabel" style="margin-top:10px">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
@@ -3144,7 +3157,7 @@ function chalPvRender(){
   host.innerHTML=out+ntTail;
 }
 // 8/29 리뷰 F11: 미션 0개로 만들면 저장이 거부되는데 그 말이 없었다 → 한 줄 소감을 기본으로 켜 둔다(끄면 됨)
-function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});renderChallenges();}
+function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',style:'row',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});renderChallenges();}
 function chalDel(i){readChalInputs();const c=CHALLENGES[i]; if(!c) return;
   if(!confirm(`‘${c.title||'제목 없음'}’ 챌린지를 지울까요? 저장하면 학생 앱에서도 사라지고 참여 기록도 이어지지 않아요.`)) return;   // 8/29 리뷰: 한 번 클릭에 통째 삭제 방지
   CHALLENGES.splice(i,1);renderChallenges();}
@@ -3175,7 +3188,7 @@ async function saveChallenges(){
       // 8/29: sort_order(화면 순서) 저장 — 예전엔 없어서 "↕ 순서 바꾸기"로 정한 순서가 저장 후 보장되지 않았다
       //   (전부 지우고 한꺼번에 다시 넣는 방식이라 created_at이 전부 같음 → 정렬 동점 → 순서는 운)
       // 8/29 리뷰 F8: id를 실어 보내 기존 챌린지는 같은 id로 덮어쓴다(서버가 upsert). 예전엔 매번 새 id라 학생 참여·퀴즈 기록이 끊겼다
-      const rows=CHALLENGES.map((c,i)=>({id:c.id||null,school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,sort_order:i,
+      const rows=CHALLENGES.map((c,i)=>({id:c.id||null,school:'한국대학교',type:c.type,title:c.title,intro:c.detail||'',location:'',featured:!!c.featured,sort_order:i,style:c.style||'row',
         status:calcStatus(c.from,c.to),start_date:c.from||null,end_date:c.to||null,mission:c.mission,
         books:(c.books||[]).map(keep)}));
       const r=await adminSave({op:'programs_insert',rows});

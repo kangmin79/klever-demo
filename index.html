@@ -333,6 +333,8 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-arrow-r{right:-10px;}
 @media(max-width:760px){.ml-arrow{display:none;}}
 .cl-shelf{margin-bottom:34px;}
+/* 8/30: 챌린지가 큐레이션 스타일을 쓸 때 — 제목줄은 챌린지 머리글이 이미 그리므로 렌더러가 만든 빈 제목줄은 감춘다 */
+.cl-shelf .ml-head{display:none;}
 .ml-hrow .cl-card{flex:0 0 150px;width:150px;}
 @media(max-width:760px){.ml-hrow .cl-card{flex:0 0 124px;width:124px;}}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
@@ -5204,6 +5206,7 @@ async function loadChalCards(){
     const rows=await fetchProgramsCached(); if(!Array.isArray(rows)) return;
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
+      style:x.style||'row',
       mission:x.mission||null,books:(x.books||[]).map(b=>Object.assign({id:b.id||'',t:b.title,a:b.author||'',cover:_gbCover(b),isbn:b.isbn,
         tags:(!b.isbn&&/^(gb|kr)-/.test(b.id||''))?['cls']:undefined},_keepForm(b)))}));
     await chalResolveFormats();
@@ -5370,6 +5373,16 @@ function chalBookCard(b,c){
   // 8/21 사용자 지적: 챌린지 책에만 종이책·전자책 태그가 없었다 — 다른 선반(mlRow)과 같이 저자 줄 + fmtTags. 맨 ISBN13 책은 loadChalCards가 장서를 조회해 tags를 채운다
   return `<div class="ml-bk" onclick="${click}">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div>${b.a?`<div class="ml-bk-a">${esc(b.a)}</div>`:''}${fmtTags(b)}</div>`;
 }
+/* 8/30: 챌린지 담긴 책을 사서가 고른 스타일로. 큐레이션과 같은 렌더러를 그대로 쓰되
+   제목줄(mlHead)은 chalRowHead가 이미 그리므로 빈 값으로 넘기고 CSS(.cl-shelf .ml-head)로 감춘다. */
+function chalStyleBody(st, books, c){
+  const plain=()=>mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`);
+  const F={ grid:mlGrid, mag:mlMag, grad:mlGrad, ai:mlAI, banner:mlBanner, new:mlNew, quote:mlQuote, swipe:mlSwipe, coll:mlColl };
+  const f=F[st];
+  if(!f) return plain();
+  // 어떤 스타일이 이 책들과 안 맞아 실패해도 칸이 통째로 비지 않게 — 기본 모양으로 되돌린다
+  try{ const h=f('', '', books); return h||plain(); }catch(e){ return plain(); }
+}
 function renderChalCards(){
   const g=document.getElementById('chalLive'); if(!g) return;
   // 8/29 안내 카드 — 사서가 순서 바꾸기에서 정한 자리(chal_pos = 앞에 오는 챌린지 수)에 끼워 넣는다. 없으면 맨 위. 챌린지가 아직 없어도 안내는 보인다.
@@ -5388,8 +5401,11 @@ function renderChalCards(){
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
     + listC.map((c)=>{
         const books=(c.books||[]);
+        // 8/30 사장님 요청: 사서가 고른 스타일대로. 기본(row)은 지금까지의 챌린지 전용 카드를 그대로 쓴다
         const row=books.length
-          ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
+          ? ((c.style||'row')==='row'
+              ? mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`)
+              : chalStyleBody(c.style, books, c))
           : '';
         const desc=c.intro?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
         return ntFor(c)+`<div class="cl-shelf" data-origin="challenge" data-origin-id="${esc(String(c.id))}">${chalRowHead(c)}${desc}${row}</div>`;
@@ -8291,7 +8307,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830p';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
