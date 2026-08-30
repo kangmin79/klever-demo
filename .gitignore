@@ -7,3 +7,24 @@ logs/
 __pycache__/
 scripts/__pycache__/
 _scratch/
+
+# ── 내부 작업물은 공개 사이트에 배포하지 않는다 (2026-08-31 정리) ──
+# 파일은 로컬에 그대로 — git에서만 제외. 세션기록·다음세션 등 밑줄 파일 전부.
+/_*
+/docs/
+/lab/
+/logs/
+/figures/
+/minsong_app/
+/kids/
+# 디자인 시안·실험·옛 데모 페이지
+/app-login.html
+/best.html
+/evaluate.html
+/company.html
+/ai-library.html
+/cover_final.html
+/cover_try.html
+/byeoli-card-preview.html
+/byeolmadang_preview.html
+/kids_preview.html
