@@ -3921,6 +3921,15 @@ function _sentHot(s){   // PC: 같은 pi/sg 양쪽 칸 강조
   _sentClear();
   _sentSpans(s.dataset.pi, s.dataset.sg).forEach(x=>x.classList.add('ps-hot'));
 }
+/* 8/30 사장님: 폰에서 중국어 문장을 누르면 또 중국어가, 한국어를 누르면 또 한국어가 나왔다.
+   한국 고전(kr-)만 왼쪽이 번역·오른쪽이 한국어 원문으로 다른 책과 좌우가 반대인데,
+   '반대 언어' 고르기가 그 반전을 안 따라가서 보고 있는 칸과 같은 말이 나왔다.
+   짝 자료는 [한국어, 번역] 순서라, 좌우가 뒤집힌 책은 고르는 쪽도 뒤집는다. (베트남·영어·일어 동일) */
+function _sentOther(g, inLeft){
+  const krSwap = !!(currentBook && currentBook.id && String(currentBook.id).startsWith('kr-')
+                    && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id]);
+  return (inLeft !== krSwap) ? (g[1]||'') : (g[0]||'');
+}
 function _sentTap(s){   // 모바일: 강조 + 반대 언어 인라인 펼침(다시 탭 = 닫기)
   const opened = s.classList.contains('ps-hot');
   _sentClear();
@@ -3930,7 +3939,7 @@ function _sentTap(s){   // 모바일: 강조 + 반대 언어 인라인 펼침(�
   const g = grp && grp[+s.dataset.sg];
   if(!g) return;
   const inLeft = !!s.closest('.viewer-pane.left');         // 보이는 칸 기준 반대 언어
-  const other = inLeft ? (g[1]||'') : (g[0]||'');
+  const other = _sentOther(g, inLeft);
   if(!other) return;
   const rev=document.createElement('span'); rev.className='sent-reveal'; rev.textContent=other;
   s.insertAdjacentElement('afterend', rev);
@@ -3945,7 +3954,7 @@ function _sentTapPaged(s){   // 페이지모드: 인라인 삽입은 다단 조�
   if(!g) return;
   const src = _pgSourcePane();                             // 조판 원본 칸 기준 반대 언어 (스크롤 모드와 동일 규칙)
   const inLeft = !!(src && src.classList.contains('left'));
-  const other = inLeft ? (g[1]||'') : (g[0]||'');
+  const other = _sentOther(g, inLeft);
   if(!other) return;
   s.classList.add('ps-hot');
   const bar=document.createElement('div'); bar.className='pg-sent-reveal'; bar.textContent=other;
@@ -8307,7 +8316,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830r';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
