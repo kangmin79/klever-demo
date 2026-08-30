@@ -8227,7 +8227,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260829g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -9857,10 +9857,9 @@ async function renderActivityGroup(){
       <div class="ag-pstats">
         ${[[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEss,'독후감','s-rv'],[nDone,'완독','s-done'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
       </div>
-    </div>
-    <div class="ag-sec-h"><h3>내 기록</h3>${hasNotes?'<span class="more" onclick="nav(\'feed\')">전체 보기</span>':''}</div>
-    <div class="ag-chips" id="agChips"><span class="ag-chip" data-f="soup" onclick="agSetNoteFilter('soup')">한 줄 소감 ${nOne}</span><span class="ag-chip" data-f="q" onclick="agSetNoteFilter('q')">한 줄 질문 ${nQ}</span><span class="ag-chip" data-f="rv" onclick="agSetNoteFilter('rv')">서평 ${nRev}</span><span class="ag-chip" data-f="es" onclick="agSetNoteFilter('es')">독후감 ${nEss}</span></div>
-    <div class="ag-notes" id="agNotes">${_agNotesHTML()}</div>`;
+    </div>`;
+  // 8/29 사장님 지시: '내 기록' 블록(칩·카드 미리보기·전체 보기) 삭제 — 아래 '내 책 모음 › 내가 쓴 글'과 중복. (hasNotes/_agNotesHTML 은 남겨 둠)
+  void hasNotes;
 }
 const AG_NOTE_FILTERS={soup:['oneline','impression'],q:['question'],rv:['review'],es:['essay']};
 function _agNotesHTML(){
