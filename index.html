@@ -7276,9 +7276,16 @@ async function pushToggle(on){
   try{ if(on) await pushEnable(); else await pushDisable(); }
   finally{ if(box) box.style.opacity=''; renderPushRow(); }
 }
+/* 8/30 사장님: 반납일 알림 줄 감춤.
+   보내는 쪽(아침 배치 bookstar-notify-due)이 8/27 학교 자동 읽기 정지 때 같이 꺼져 있어,
+   켜도 확인 알림 한 통 뒤로는 아무것도 오지 않는다 — 거짓말하는 버튼이라 화면에서 뺀다.
+   되살리는 법: PUSH_UI_OFF=false + DB에서 select cron.alter_job(5, active:=true).
+   (전자책 대출목록은 화면 긁기라, 긁기 없이 가려면 종이책만 알리도록 notify-due도 손봐야 함) */
+const PUSH_UI_OFF=true;
 async function renderPushRow(){
   const box=document.getElementById('myLibPush');
   if(!box) return;
+  if(PUSH_UI_OFF){ box.innerHTML=''; return; }
   if(!ssoIsPersonal()){ box.innerHTML=''; return; }
   const wrap=(inner)=>`<div class="section" style="padding-top:0"><div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:13px 14px">${inner}</div></div>`;
   if(!pushSupported()){
@@ -8260,7 +8267,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
