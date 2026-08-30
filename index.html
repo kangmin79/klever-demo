@@ -2057,9 +2057,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
         계정칩이 셋째 줄로 내려갔다. 그런데 헤더 높이는 98px로 고정돼 있어서 셋째 줄(메뉴 탭)이
         헤더 밖으로 삐져나와 본문 글 위에 '떠 있는 것처럼' 보였다(8/29 사장님 지적).
         → ①윗줄 두 칸이 줄어들며 한 줄을 지키게 하고 ②그래도 넘치면 헤더가 늘어나도록 높이를 자동으로. */
-  .header{height:auto;min-height:var(--header-h);flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 14px;}
-  /* 8/30 사장님: 폰 좌우 여백이 과하고 헤더와 어긋나 보였다 — 헤더(14px)에 맞춘다 */
-  .page{--page-pad:14px;padding-left:var(--page-pad);padding-right:var(--page-pad);}
+  .header{height:auto;min-height:var(--header-h);flex-wrap:wrap;align-content:flex-start;gap:0;padding:0 20px;}
+  /* 8/30 사장님: 여백이 헤더와 어긋나 보였다 — 헤더와 본문을 같은 값으로 (당시 14px).
+     8/31 사장님: 표지 줄 풀블리드 후 14px가 초라해 균형이 깨짐 — 둘 다 20px로 올려 정렬 유지.
+     표지 줄(.ml-car)은 --page-pad만큼 음수 마진이라 여백을 키워도 여전히 화면 끝까지 나간다. */
+  .page{--page-pad:20px;padding-left:var(--page-pad);padding-right:var(--page-pad);}
   .brand-logo{order:1;min-height:50px;display:flex;align-items:center;flex:0 1 auto;min-width:0;overflow:hidden;}
   /* flex-basis:0 → '얼마나 넓어야 하는지'를 0으로 봐서 절대 다음 줄로 밀리지 않는다. 남는 폭을 채우고 안에서 줄어든다. */
   .hdr-actions{order:2;min-height:50px;display:flex;align-items:center;flex:1 1 0;min-width:0;justify-content:flex-end;overflow:hidden;margin-left:12px;}
@@ -8269,7 +8271,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
