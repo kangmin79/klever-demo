@@ -6964,9 +6964,8 @@ async function loadSimilarEbooks(brcd, bookTitle, opts){
   const key=String(brcd||'')+'|'+String(opts.ctrl||'')+'|'+String(bookTitle||'').slice(0,40);
   if(box.dataset.for===key) return;   // 재고 재확인 등으로 두 번 불려도 한 번만
   box.dataset.for=key;
-  const heading = opts.ctrl ? '같은 장르 전자책 — 지금 바로 읽을 수 있어요'
-    : opts.avail ? '같은 장르 — 지금 바로 읽을 수 있는 다른 책'
-    : '기다리는 동안 — 같은 장르, 지금 바로 읽을 수 있어요';
+  // 8/30 사장님: 바로 읽을 수 없는 책도 추천 — 재고 문구는 책마다 아는 것만 붙인다
+  const heading = opts.avail===false ? '기다리는 동안 — 같은 장르 전자책' : '같은 장르 전자책';
   try{
     const ck='ebsim:'+key; let d=null;
     try{ const c=JSON.parse(sessionStorage.getItem(ck)||'null'); if(c&&c.t&&Date.now()-c.t<600000) d=c.d; }catch(e){}
@@ -6986,7 +6985,7 @@ async function loadSimilarEbooks(brcd, bookTitle, opts){
         return `<div class="ebsim-card" onclick="event.stopPropagation();ebSimOpen('${esc(isbn)}','${esc(String(brcd||opts.ctrl||''))}')" title="${esc(cleanT(c.title||''))}">
           <div class="ebsim-cv">${c.cover?`<img src="${esc(c.cover)}" loading="lazy" decoding="async" data-t="${esc(cleanT(c.title||''))}" data-a="${esc(String(c.author||''))}" onerror="ncSwap(this)">`:ncCover(c)}</div>
           <div class="ebsim-t">${escD(cleanT(c.title||''))}</div><div class="ebsim-a">${escD(c.author||'')}</div>
-          <div class="ebsim-go">지금 대출 가능</div></div>`; }).join('')}</div></div>`;
+          ${c._avail?'<div class="ebsim-go">지금 대출 가능</div>':(c._stock?'<div class="ebsim-go" style="color:#dc2626">대출 중</div>':'')}</div>`; }).join('')}</div></div>`;
   }catch(e){ try{ if(box&&box.isConnected) box.innerHTML=''; }catch(_){} }
 }
 // 대체 추천 카드 클릭 → 바로 대출하지 않고 그 책의 상세(표지·설명·재고)로 이동, 거기서 '전자책 바로 읽기'로 대출(사용자 지시 8/18).
@@ -8230,7 +8229,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영

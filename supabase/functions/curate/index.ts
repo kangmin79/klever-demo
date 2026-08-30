@@ -431,7 +431,9 @@ Deno.serve(async (req) => {
       const cand = pool.slice(0, 24);
       const tr = await stockFromTable(cand.map((b) => String(b.brcd)));
       const checked = cand.length;
+      // 8/30 사장님: 바로 읽을 수 없는 책도 상관없다 — 재고 조건을 없앤다. 대출 가능한 책을 앞에, 나머지(대출 중·재고 모름)로 채운다.
       for (const b of cand) { const s = tr.map.get(String(b.brcd)); if (s && s.available) { picked.push({ b, s }); if (picked.length >= want) break; } }
+      if (picked.length < want) for (const b of cand) { if (picked.some((p) => p.b === b)) continue; picked.push({ b, s: tr.map.get(String(b.brcd)) || null }); if (picked.length >= want) break; }
       const stockMeta = { source: "table", found: tr.found, fresh: tr.fresh, stale: tr.stale, missing: tr.missing, error: tr.error };
       const cleanTitle = (t: string) => String(t || "").replace(/\s*\/\s*$/, "").replace(/\s{2,}/g, " ").trim();
       const candidates = picked.map(({ b, s }) => ({
@@ -439,7 +441,7 @@ Deno.serve(async (req) => {
         isbn: "sm-" + b.brcd, kdc: b.class_no || "", loan: b.loan_count || null, cover: b.cover || "",
         smPaper: false, smPaperStatus: "", smPaperUrl: "",
         smEbook: true, smEbookProvider: b.vendor || "", smEbookUrl: `https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd=${b.brcd}`,
-        brcd: String(b.brcd), crema: false, cremaUrl: "", _avail: true, _stock: { loaned: s.loaned, total: s.total }, _source: "similar", _kind: "ebook",
+        brcd: String(b.brcd), crema: false, cremaUrl: "", _avail: !!(s && s.available), _stock: s ? { loaned: s.loaned, total: s.total } : null, _source: "similar", _kind: "ebook",
       }));
       const out = { similar: true, count: candidates.length, candidates,
         source: { brcd: src.barcode || brcd, title: cleanTitle(src.title), class_no: cls }, ladder: used, pool: pool.length, checked, stock: stockMeta };
