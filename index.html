@@ -7326,7 +7326,11 @@ async function renderMyLibStatus(_retry){
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
     const _safe=p=>p.catch(()=>null);
-    let [ln,rv,pk,eb,ebrv]=await Promise.all([_safe(smMy('loans')),_safe(smMy('reservations')),_safe(smMy('pickups')),smEbookLoans(),smEbookReserves()]);
+    // 8/30 실측: 전자책 대출·예약 조회를 동시에 보내면 학교 전자도서관 로그인이 겹쳐 둘 중 하나가 409(연결 안 됨)로 실패했다
+    //   (순서대로 부르면 12/12 성공) → 전자책 둘은 차례로, 종이책 셋은 동시에.
+    const _ebSeq=(async()=>{ const a=await smEbookLoans(); const b=await smEbookReserves(); return [a,b]; })();
+    let [ln,rv,pk,_ebPair]=await Promise.all([_safe(smMy('loans')),_safe(smMy('reservations')),_safe(smMy('pickups')),_ebSeq]);
+    let [eb,ebrv]=_ebPair;
     // 8/30 사장님 지적("안 보일 때가 많고 새로고침해야 보임"): 다섯 조회 중 하나라도 실패하면 예전엔 "없어요"로 그렸다.
     //   실패는 '일부 못 불러옴'으로 정직하게 표시하고 1.5초 뒤 한 번 자동 재시도, 그래도 안 되면 '다시 시도' 버튼.
     const _bad=x=>x===null||x===undefined||(x&&x.ok===false&&!x.needsPersonal&&!/로그인이 필요|만료/.test(x.error||''));
@@ -8247,7 +8251,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
