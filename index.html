@@ -2078,7 +2078,9 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .bx-acc-name,.bx-acc-sep{display:none;}
 }
 @media (max-width:900px){
-  .gnb{order:3;flex-basis:100%;width:100%;min-height:48px;gap:0;align-items:stretch;justify-content:space-between;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
+  /* 8/31 사장님: 탭 '도서관' 앞이 유독 비어 보였다 — 데스크톱용 margin-left:28px가 모바일에도 남아
+     로고(20px)보다 탭 글자가 37px나 안쪽에서 시작했다. 여백을 지우고 아래에서 양끝 탭 글자를 20px에 맞춘다. */
+  .gnb{order:3;flex-basis:100%;width:100%;min-height:48px;gap:0;margin-left:0;align-items:stretch;justify-content:space-between;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-top:1px solid var(--border);}
   .gnb.gnb-scroll{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);}
   .gnb::-webkit-scrollbar{display:none;}
   /* 모바일: 호버 드롭다운 비활성 → 인페이지 탭으로 권역 전환 */
@@ -2088,6 +2090,11 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .cl-locale-head{display:none;}
   .gnb-item{display:flex;align-items:center;padding:0 9px;font-size:13px;white-space:nowrap;flex:0 0 auto;border-radius:0;background:none;color:var(--text-sub);}
   .gnb-item::after{left:9px;right:9px;}
+  /* 양끝 탭은 바깥쪽 여백을 빼서 글자가 로고·본문과 같은 20px 선에서 시작·끝나게 (밑줄도 같이) */
+  .gnb-item:first-child{padding-left:0;}
+  .gnb-item:last-child{padding-right:0;}
+  .gnb-item:first-child::after{left:0;}
+  .gnb-item:last-child::after{right:0;}
   .gnb.gnb-scroll .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
@@ -8271,7 +8278,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
