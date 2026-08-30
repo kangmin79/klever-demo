@@ -2640,6 +2640,18 @@ body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
 .mp-scene-desc p{font-size:15.5px;line-height:2.05;color:var(--text);opacity:.86;margin:0;text-align:left}
 .mp-scene-img{width:100%;max-width:520px;border-radius:14px;margin:0 0 26px;display:block}
 body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
+
+/* ── 모바일 가로 책줄: 오른쪽 끝 표지가 반쯤 잘리지 않게 (8/31 사용자 요청) ──
+   카드 폭을 화면에 딱 떨어지게 JS(fitMlCars)가 --mlcw 로 내려준다.
+   기본값(112/124/104px)은 JS가 아직 안 돌았을 때만 쓰인다. 스타일시트 맨 뒤라 앞의 고정폭 규칙을 이긴다. */
+@media(max-width:760px){
+  .ml-bk{width:var(--mlcw,112px);}
+  .ml-bk-cv{width:100%;}
+  .ml-hrow .cl-card{flex:0 0 var(--mlcw,124px);width:var(--mlcw,124px);}
+  .ml-nw{width:var(--mlcw,104px);flex:0 0 var(--mlcw,104px);}
+  .ml-nw-cv{width:100%;height:auto;aspect-ratio:104/150;}
+  .ml-hrow{scroll-snap-type:x mandatory;}
+}
 </style>
 </head>
 <body>
@@ -6046,19 +6058,39 @@ function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
 // 캐러셀 폭을 카드 개수 딱 맞게(마지막 책이 반쯤 잘려 보이지 않게) — 카드폭·간격은 실측(줄마다 다름: 130px/150px 등)
 function fitMlCars(){
-  // 모바일: 화살표가 없으므로 "다음 책이 반쯤 보이는" 힌트가 곧 내비게이션 — 통카드 맞춤 끄고 풀폭
+  // 모바일: 줄 폭은 화면 그대로 두고, 대신 카드 폭을 줄여 화면에 딱 떨어지게 한다
+  //   (8/31 사용자: "오른쪽에 표지가 짤리지 않게") — 마지막 책이 반쯤 걸치던 것을 없앤다
   if(window.matchMedia('(max-width:760px)').matches){
     document.querySelectorAll('.ml-car').forEach(el=>{ el.style.width=''; });
+    document.querySelectorAll('.ml-hrow').forEach(row=>{
+      const kid=row.firstElementChild; if(!kid) return;
+      // 표지 카드 줄만 대상 (장르·질문·인용 같은 넓은 카드 줄은 그대로 둔다)
+      if(!(kid.classList.contains('ml-bk')||kid.classList.contains('cl-card')||kid.classList.contains('ml-nw'))){
+        row.style.removeProperty('--mlcw'); return;
+      }
+      row.style.removeProperty('--mlcw');          // 원래 설계 폭으로 되돌린 뒤 재기 (계산이 계산을 먹지 않게)
+      const base=kid.getBoundingClientRect().width; if(!base) return;
+      const cs=getComputedStyle(row);
+      const gap=parseFloat(cs.columnGap)||14;
+      const avail=row.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+      if(!avail) return;
+      const n=Math.max(2, Math.round((avail+gap)/(base+gap)));
+      row.style.setProperty('--mlcw', ((avail-(n-1)*gap)/n).toFixed(2)+'px');
+    });
     return;
   }
+  document.querySelectorAll('.ml-hrow').forEach(row=>row.style.removeProperty('--mlcw'));
   document.querySelectorAll('.ml-car').forEach(el=>{
     const hrow=el.querySelector('.ml-hrow'); if(!hrow||!hrow.children.length) return;
     const parent=el.parentElement; if(!parent) return;
     const avail=parent.clientWidth; if(!avail) return;
     const cardW=hrow.children[0].getBoundingClientRect().width; if(!cardW) return;
-    const gap=parseFloat(getComputedStyle(hrow).columnGap)||18;
-    const n=Math.max(1, Math.floor((avail+gap)/(cardW+gap)));
-    el.style.width=Math.min(n*cardW+(n-1)*gap, avail)+'px';
+    const hs=getComputedStyle(hrow);
+    const gap=parseFloat(hs.columnGap)||18;
+    // 줄 자체의 좌우 여백까지 더해야 마지막 카드가 4px쯤 잘리지 않는다
+    const pad=(parseFloat(hs.paddingLeft)||0)+(parseFloat(hs.paddingRight)||0);
+    const n=Math.max(1, Math.floor((avail-pad+gap)/(cardW+gap)));
+    el.style.width=Math.min(n*cardW+(n-1)*gap+pad, avail)+'px';
   });
 }
 let _fitMlT=null;
@@ -8318,7 +8350,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830s';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
