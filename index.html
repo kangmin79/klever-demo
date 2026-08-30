@@ -6820,7 +6820,6 @@ function libDetail(isbn){
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>
     </div>
-    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${escD(desc)}</p>
     ${isPaperHold?'<div id="lcdHolding" class="lcd-holding loading">우리 도서관 소장 현황을 확인하고 있어요…</div>':''}
     <div class="lcd-acts">
       ${(()=>{
@@ -6856,6 +6855,9 @@ function libDetail(isbn){
       })()}
       <div id="ebSimilar"></div>
     </div>
+    <!-- 8/30 사장님: 줄거리를 소장현황·빌리기 아래로 내림. 위에 있으면 줄거리가 긴 책
+         (또는 '더 보기'로 펼친 책)에서 빌리기 버튼이 화면 밖으로 밀려 "왜 안 뜨지"가 된다 -->
+    <p class="lcd-desc" id="lcdDesc"${desc?'':' style="display:none"'}>${escD(desc)}</p>
     <div class="lcd-src">${(()=>{
       const tags=b.tags||null;
       if(tags){
@@ -8267,7 +8269,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
