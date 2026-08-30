@@ -1311,7 +1311,8 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 @media(min-width:601px){ .reader-settings-sheet .rss-row.rss-mobile-only{display:none;} }   /* 탭넘김(모바일 전용)·TTS/전체화면(PC 상단에 있음) 행 숨김 */
 .viewer-title{font-weight:800;font-size:15px;}
 .viewer-author{font-size:12px;color:var(--text-sub);margin-left:6px;}
-.mode-toggle{display:inline-flex;background:var(--bg-card);border-radius:24px;padding:4px;gap:2px;border:1px solid var(--border);}
+/* 8/30 사장님: 상세페이지에서 골라 들어오므로 뷰어 안에서는 불필요 → 감춤(setMode의 active 표시는 그대로 동작) */
+.mode-toggle{display:none;background:var(--bg-card);border-radius:24px;padding:4px;gap:2px;border:1px solid var(--border);}
 .mode-toggle button{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;color:var(--text-sub);transition:all 0.15s;}
 .mode-toggle button.active{background:var(--primary);color:#fff;}
 body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
@@ -1990,6 +1991,9 @@ body.dark .bx-books-label{color:#c5d2dd;}
 .viewer-shell.chrome-hidden .viewer-header,
 .viewer-shell.chrome-hidden .viewer-footer,
 .viewer-shell.chrome-hidden .pane-tabs{display:none !important;}
+/* 8/30 사장님: 검색어를 넣으려 하면 뷰어 메뉴가 올라와 검색창을 덮어 입력이 안 됐다 —
+   검색이 열려 있는 동안에는 메뉴를 숨기지 않고, 검색창을 메뉴 아래에 나란히 둔다 */
+.viewer-shell.searching .viewer-header{display:flex !important;}
 /* ── 종이책 페이지 넘김 (모바일 전용 · 장별 CSS 칼럼 조판) ── */
 .paged-view{display:none;position:absolute;inset:0;background:var(--bg-card);z-index:1;}
 .viewer-body.pg-active{display:none !important;}
@@ -2075,7 +2079,6 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   body.dark .gnb-item.active{background:none;color:#f1f5f9;}
   .hdr-div{display:none;}
   /* 8/16 사용자 지시: 밤낮 전환 버튼은 폰에서 숨김(기본 밝은 테마로 충분) */
-  .btn-theme{display:none;}
   /* 학교 이름표가 빠진 자리에 계정 칩만 남는다 — 좁은 폰에서 언어 버튼을 밀지 않게 조인다 */
   .bx-acc-chip{padding:0 9px;font-size:11.5px;gap:5px;}
   .detail-layout{grid-template-columns:1fr;}
@@ -2109,6 +2112,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-shell.immersive .viewer-header{position:absolute;top:0;left:0;right:0;z-index:40;}
   .viewer-shell.immersive .pane-tabs{position:absolute;bottom:0;left:0;right:0;z-index:40;border-top:1px solid var(--border);}
   .viewer-shell.immersive .reader-searchbar{position:absolute;top:0;left:0;right:0;z-index:42;}   /* 본문찾기는 헤더 자리를 대신 차지(브라우저식) */
+  .viewer-shell.immersive.searching .reader-searchbar{position:static;}   /* 8/30: 검색 중엔 헤더 아래 제자리 — 헤더에 가리지 않게 */
   /* (삭제) .toc-drawer{z-index:45} — 소스 뒤의 기본 규칙(z:5)에 캐스케이드로 덮여 죽은 규칙이었음. .open{z:50}가 담당 */
   #paneToggleBtn{display:none!important;}                     /* 모바일은 하단 탭으로 대체 */
   /* 8/17 사장님 수정요청(폰 챌린지 = 본문 아래 퀴즈, 한 화면 스크롤): 본문/퀴즈 탭 전환 대신 두 칸을 위아래로 쌓고 몸통이 스크롤 */
@@ -2124,6 +2128,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .viewer-header{flex-wrap:nowrap;gap:2px;padding:7px 8px;align-items:center;}
   .viewer-header > .vh-nav{order:0;flex:1 1 auto;min-width:0;padding-right:0;}
   .viewer-header > .mode-toggle{order:1;flex:none;}
+  .viewer-header > #krLangSel{order:1;flex:none;max-width:110px;}   /* 8/30: 모드칩 자리에 언어 변경 */
   .viewer-header > .reader-aa{order:2;margin-left:2px;display:inline-flex;border:0;background:transparent;}
   .viewer-header > .viewer-close{order:3;position:static;padding:6px 6px 6px 4px;font-size:19px;flex:none;}
   .viewer-header > .reader-toolbar{display:none !important;}   /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
@@ -2646,7 +2651,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
     <!-- 8/16 사용자 지시: 로그인 칩을 맨 오른쪽으로, 테마 버튼은 모바일에서 숨김 -->
     <button class="btn-theme" id="themeBtn" onclick="toggleTheme()" aria-label="테마"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-    <select class="lang-select" id="langSelect" onchange="changeLang(this.value)" aria-label="언어 선택 · Language">
+    <!-- 8/30 사장님: 메인 화면 언어 변경 삭제 — 바꿔도 메뉴만 번역됨. 언어 변경은 한국고전 뷰어에만 -->
+    <select class="lang-select" id="langSelect" style="display:none" onchange="changeLang(this.value)" aria-label="언어 선택 · Language">
       <option value="ko" lang="ko">한국어</option>
       <option value="en" lang="en">English</option>
       <option value="zh" lang="zh">中文</option>
@@ -2967,7 +2973,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <!-- ═══════════════════════════════════════════════════════════
      책 뷰어 모달 (3 모드)
      ═══════════════════════════════════════════════════════════ -->
-<div class="viewer-overlay" id="viewerOverlay" onclick="if(event.target.id==='viewerOverlay')closeViewer()">
+<!-- 8/30 사장님: 상하좌우 회색 여백을 클릭하면 책에서 나가 버림 → 여백 클릭으로 닫지 않는다(닫기는 X 버튼) -->
+<div class="viewer-overlay" id="viewerOverlay">
   <div class="viewer-shell">
     <div class="viewer-header">
       <div class="vh-nav" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
@@ -2986,8 +2993,9 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
         <button id="modeIntl" onclick="setMode('intl')">Intl</button>
       </div>
       <button class="reader-btn reader-aa" id="readerAaBtn" onclick="toggleReaderSettings(event)" title="읽기 설정" style="font-weight:800;font-size:14px;">A<span style="font-size:11px;">a</span></button>
+      <!-- 8/30 사장님: 폰에서 언어 변경이 안 보였다 — reader-toolbar는 폰에서 통째로 숨기므로 헤더 직속으로 올려 모드칩 자리에 둔다 -->
+      <select id="krLangSel" onchange="setKrLang(this.value)" title="번역 언어" style="display:none;font-size:12px;font-weight:700;border:1px solid var(--line,#ddd);border-radius:8px;padding:5px 8px;background:var(--card,#fff);color:inherit;"></select>
       <div class="reader-toolbar">
-        <select id="krLangSel" onchange="setKrLang(this.value)" title="번역 언어" style="display:none;font-size:12px;font-weight:700;border:1px solid var(--line,#ddd);border-radius:8px;padding:5px 8px;background:var(--card,#fff);color:inherit;"></select>
         <button class="reader-btn" id="paneToggleBtn" onclick="cyclePaneView()" title="원문/번역 보기" style="display:none;"><svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span id="paneToggleLabel">나란히</span></button>
         <button class="reader-btn" id="ttsBtn" onclick="toggleTTS()" title="음성 읽기 (완독·Intl 모드)"><svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>TTS</button>
         <button class="reader-btn" onclick="toggleFullscreen()" title="전체화면"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
@@ -4446,12 +4454,16 @@ let _searchHits = [], _searchIdx = -1;
 function openSearch(){
   const bar = document.getElementById('readerSearchbar');
   bar.classList.add('open');
+  // 8/30: 검색 중에는 메뉴를 항상 띄워 둔다 — 스크롤·탭으로 메뉴가 오르내리며 검색창을 덮던 문제
+  const _sh=document.querySelector('.viewer-shell');
+  if(_sh){ _sh.classList.add('searching'); _sh.classList.remove('chrome-hidden'); }
   const inp = document.getElementById('searchInput');
   inp.value=''; inp.focus();
   document.getElementById('searchCount').textContent='';
 }
 function closeSearch(){
   document.getElementById('readerSearchbar').classList.remove('open');
+  document.querySelector('.viewer-shell')?.classList.remove('searching');
   clearSearchHits();
 }
 function clearSearchHits(){
@@ -4692,6 +4704,7 @@ function toggleFullscreen(){
   const shell=document.querySelector('.viewer-shell'); if(!shell) return;
   if(document.fullscreenElement) document.exitFullscreen?.();   // 과거 진짜 전체화면 잔재 정리
   shell.classList.toggle('maxed');
+  try{ localStorage.setItem('bx-reader-maxed', shell.classList.contains('maxed')?'1':'0'); }catch(e){}
 }
 /* 토스트·축하 모달이 화면 꽉 채우기 안에서도 보이도록 호스트 결정 */
 function _fsHost(){
@@ -8269,7 +8282,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -8301,6 +8314,12 @@ function readerPage(dir){
 }
 
 /* ── 모바일 본문 탭: 스크롤모드=바 토글 / 탭넘김모드=좌(이전)·우(다음)·가운데(바 토글) ── */
+// 8/30: 검색창이 열려 있으면 메뉴를 숨기지 않는다(검색어 입력이 막히던 문제)
+function _toggleChrome(){
+  const sh=document.querySelector('.viewer-shell'); if(!sh) return;
+  if(sh.classList.contains('searching')) return;
+  sh.classList.toggle('chrome-hidden');
+}
 let _immersiveTapTimer=null;
 function setupImmersiveTap(){
   const vb=document.getElementById('viewerBody');
@@ -8327,14 +8346,14 @@ function setupImmersiveTap(){
     if(!readerPrefs.pageMode) return;
     clearTimeout(_immersiveTapTimer);
     _immersiveTapTimer=setTimeout(()=>{                      // 더블클릭이면 아래서 취소
-      document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');
+      _toggleChrome();
     },230);
   });
   vb.addEventListener('dblclick',()=>{ clearTimeout(_immersiveTapTimer); });
   // 8/17: 스크롤 방향으로 메뉴 표시 — 위로 올리면 뜨고(chrome-hidden 해제), 내리면 사라짐. 칸(.viewer-pane)·몸통(.chal-stack) 어느 쪽이 스크롤돼도 캡처
   vb.addEventListener('scroll',(e)=>{
     if(window.innerWidth>600 || readerPrefs.pageMode) return;
-    const sh=document.querySelector('.viewer-shell'); if(!sh || !sh.classList.contains('immersive')) return;
+    const sh=document.querySelector('.viewer-shell'); if(!sh || !sh.classList.contains('immersive') || sh.classList.contains('searching')) return;
     const el=e.target; if(!el || typeof el.scrollTop!=='number') return;
     if(el._chrIgnoreUntil && Date.now()<el._chrIgnoreUntil){ el._chrY=el.scrollTop; return; }   // 코드가 움직인 스크롤(문항 전환 등)은 무시
     const y=el.scrollTop, last=(el._chrY==null)?y:el._chrY; el._chrY=y;
@@ -8546,7 +8565,7 @@ function pgTap(clientX, tgt){
   const s = tgt && tgt.closest ? tgt.closest('#pagedFlow span.psent') : null;
   if(s){ _sentTapPaged(s); return; }                        // 가운데 문장 = 번역 바 (스크롤 모드의 문장탭과 동일 역할)
   _sentClear();
-  document.querySelector('.viewer-shell')?.classList.toggle('chrome-hidden');  // 가운데 빈곳 = 바 토글
+  _toggleChrome();  // 가운데 빈곳 = 바 토글
 }
 
 async function openViewer(bookId, mode){
@@ -8590,6 +8609,9 @@ async function openViewer(bookId, mode){
       const _imm = window.innerWidth<=600 && currentMode!=='challenge';
       _sh.classList.toggle('immersive', _imm);
       _sh.classList.toggle('chrome-hidden', _imm);
+      // 8/30 사장님: '전체화면' 보기를 기본값으로. 끄면 그 선택을 기억한다
+      let _mx=true; try{ _mx = localStorage.getItem('bx-reader-maxed')!=='0'; }catch(e){}
+      _sh.classList.toggle('maxed', _mx);
     }
   }
   renderViewer();
@@ -8982,7 +9004,7 @@ function renderViewer(){
       : (currentMode === 'full')
       ? ''
       : (currentMode === 'challenge')
-      ? `<button class="viewer-action primary" onclick="closeViewer()">챌린지 닫기 →</button>`
+      ? `<button class="viewer-action primary" onclick="closeViewer()">닫기</button>`
       : `<button class="viewer-action primary" onclick="finishChallenge()">챌린지 수행 완료 →</button>`;
     const ft = acts.closest('.viewer-footer');
     if(ft) ft.style.display = acts.innerHTML ? '' : 'none';
@@ -9307,7 +9329,7 @@ function _mpStepInit(box, items){
   if(left) left.innerHTML='<div class="viewer-pane-label">결정적 장면</div><div id="mpSceneBox" class="mp-scene"></div>';
   // 카드모드엔 본문 장(章)이 안 보이므로 바닥의 장 이동(◀이전/다음▶) 버튼 제거 — 미션 닫기만 남김
   const acts=document.getElementById('viewerActions');
-  if(acts) acts.innerHTML=`<button class="viewer-action primary" onclick="closeViewer()">챌린지 닫기 →</button>`;
+  if(acts) acts.innerHTML=`<button class="viewer-action primary" onclick="closeViewer()">닫기</button>`;
   box.querySelectorAll('.mp-step-nav').forEach(n=>n.remove());   // 8/17: 재초기화 시 네비 중복 방지(마지막 방어선)
   const nav=document.createElement('div'); nav.className='mp-step-nav'; nav.id='mpStepNav';
   nav.innerHTML=`<button class="mp-step-btn" id="mpStepPrev" onclick="mpStepGo(-1)">◀ 이전</button>`
