@@ -6917,7 +6917,10 @@ async function loadEbookStock(brcd, bookTitle, _retried){
         const bc=await tulipEbookBarcode(bookTitle);
         if(bc && bc!==String(brcd) && tag.isConnected) return loadEbookStock(bc, '', true);
       }
-      tag.remove(); return;   // 그래도 모르면 배지 생략(용어 통일 — 틀린 말보다 침묵)
+      tag.remove();   // 그래도 모르면 배지 생략(용어 통일 — 틀린 말보다 침묵)
+      // 8/30 사장님 지적: 재고를 모르는 책(재고 표에 줄이 없는 전자책)은 같은 장르 추천도 안 나왔다 — 추천은 재고와 무관하게 항상(8/19 원칙)
+      loadSimilarEbooks(brcd, bookTitle, {avail:true});
+      return;
     }
     const row=tag.closest('.lcd-way');
     if(d.available){
@@ -6947,7 +6950,7 @@ async function loadEbookStock(brcd, bookTitle, _retried){
         loadSimilarEbooks(brcd, bookTitle, {avail:false});   // 추천 v2(8/18): 예약은 1순위, 그 아래 "같은 장르 · 지금 바로 읽을 수 있는" 3권
       }
     }
-  }catch(e){ try{ if(tag&&tag.isConnected) tag.remove(); }catch(_){} }   // 확인 실패 — 배지 생략
+  }catch(e){ try{ if(tag&&tag.isConnected) tag.remove(); }catch(_){} try{ loadSimilarEbooks(brcd, bookTitle, {avail:true}); }catch(_){} }   // 확인 실패 — 배지 생략, 추천은 그대로
 }
 // 전자책 대체 추천(추천 v2, _추천설계_20260818.md) — 학생이 열려던 전자책이 전권 대출 중일 때, 그 자리에서
 //   "같은 장르(KDC) · 인기 · 지금 바로 읽을 수 있는" 3권. 줄거리 유사도 아님(급류를 찾은 학생은 '요즘 다들 읽는 소설'을 원한 것).
@@ -8227,7 +8230,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830b';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
