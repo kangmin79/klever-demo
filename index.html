@@ -8229,7 +8229,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -9906,6 +9906,31 @@ function _mbNormRow(r){ return {id:String(r.book_id), title:cleanT(r.title||''),
 function _mbNormCls(b){ return {id:b.id, title:cleanT(b.title||''), author:b.author||'', coverSrc:b.coverSrc||'', isbn:'', kind:String(b.id||'').indexOf('gb-')===0?'foreign':'korean', last:''}; }
 function mbIsCls(b){ return /^(gb|kr)-/.test(String((b&&b.id)||'')); }
 function _anyBook(id){ id=String(id||''); if(!id) return null; const m=_mbList.find(x=>x.id===id); if(m) return m; if(_mbExtra[id]) return _mbExtra[id]; const c=_bookById(id); return c?_mbNormCls(c):null; }
+// 8/30 사장님 지적: 피드·프로필에서 도서관 책이 번호(sm-…/ISBN)로만 보였다 — 글의 책 키를 세명대 장서(semyung_tulip)에서 한 번에 찾아 제목·표지를 붙인다.
+//   키 형식: sm-<바코드>(전자책) · sm-CATTOT<제어번호>(종이책) · <ISBN13>. 찾은 책은 LIB_POOL 에도 넣어 '책 보기'가 상세로 이어지게.
+const _bxResolved=new Set();
+async function bxResolveBooks(keys){
+  const want=[...new Set((keys||[]).map(k=>String(k||'')).filter(k=>k&&!/^(gb|kr)-/.test(k)&&!_bxResolved.has(k)&&!_anyBook(k)))];
+  if(!want.length) return;
+  want.forEach(k=>_bxResolved.add(k));
+  const bc=[],ct=[],isb=[];
+  want.forEach(k=>{ let m; if((m=/^sm-CATTOT(\d+)$/.exec(k))) ct.push(m[1]); else if((m=/^sm-(\d+)$/.exec(k))) bc.push(m[1]); else if(/^\d{10,13}$/.test(k)) isb.push(k); });
+  const ors=[]; if(bc.length) ors.push(`barcode.in.(${bc.join(',')})`); if(ct.length) ors.push(`ctrl.in.(${ct.join(',')})`); if(isb.length) ors.push(`isbn.in.(${isb.join(',')})`);
+  if(!ors.length) return;
+  try{
+    const r=await fetch(`${SB_REST}/semyung_tulip?select=ctrl,kind,title,author,isbn,barcode,cover_url,viewer_url&or=(${ors.join(',')})&limit=200`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+    rows.forEach(t=>{
+      const cands=[]; if(t.barcode) cands.push('sm-'+t.barcode); if(t.kind==='paper'&&t.ctrl) cands.push('sm-CATTOT'+t.ctrl); if(t.isbn) cands.push(String(t.isbn));
+      cands.filter(k=>want.includes(k)).forEach(k=>{
+        if(_mbExtra[k]) return;
+        const title=cleanT(String(t.title||'').replace(/\s*\[전자책\]\s*/g,' ').trim());
+        _mbExtra[k]={id:k, title, author:t.author||'', coverSrc:t.cover_url||'', isbn:t.isbn||'', kind:t.kind==='ebook'?'ebook':'paper', last:''};
+        try{ curateToLibBook({isbn:k, title, author:t.author||'', cover:t.cover_url||'', smEbook:t.kind==='ebook', smPaper:t.kind==='paper', smEbookUrl:t.viewer_url||'', brcd:t.barcode||t.ctrl||''}); }catch(e){}
+      });
+    });
+  }catch(e){}
+}
 async function mbLoad(force){
   const s=bxStudent(); if(!s){ _mbList=[]; _mbLoadedFor=''; return _mbList; }
   if(!force && _mbLoadedFor===s.id) return _mbList;
@@ -10027,7 +10052,9 @@ const WR_TABS=[['oneline','한 줄 소감'],['question','한 줄 질문'],['revi
 async function wrLoadMine(){
   const s=bxStudent(); if(!s) return [];
   const rows=await _agFetch(`bookstar_writings?student_id=eq.${encodeURIComponent(s.id)}&hidden=eq.false&select=activity,book_id,text,created_at,is_public,challenge_id&order=created_at.desc`);
-  _wrMine=Array.isArray(rows)?rows:[]; return _wrMine;
+  _wrMine=Array.isArray(rows)?rows:[];
+  try{ await bxResolveBooks(_wrMine.map(w=>w.book_id)); }catch(e){}   // 8/30 도서관 책 제목
+  return _wrMine;
 }
 function wrSetTab(t){ _wrTab=t; const w=document.getElementById('wrList'); if(w) w.innerHTML=_wrListHTML(); document.querySelectorAll('#wrTabs .mb-tab').forEach(x=>x.classList.toggle('on',x.dataset.t===_wrTab)); }
 function _wrListHTML(){
@@ -11788,8 +11815,9 @@ function _feedSpread(sorted){
 }
 function feedCard(it,i){
   const s=(_bxNameMap&&_bxNameMap[it.sid]) || BX_STUDENTS.find(z=>z.id===it.sid) || {name:'학생', emoji:'🙂'};
-  const b=_bookById(it.book_id);
-  const title=b?b.title:(it.book_id||'');
+  const b=(typeof _anyBook==='function'?_anyBook(it.book_id):null)||_bookById(it.book_id);   // 8/30 도서관 책도 제목·표지
+  const isCls=/^(gb|kr)-/.test(String(it.book_id||''));
+  const title=b?cleanT(b.title||''):(it.book_id||'');
   const author=b?(b.author||''):'';
   const cvImg=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" loading="lazy" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕';
   const def=FEED_ACT[it.act]||{t:'기록',cat:'oneline'};
@@ -11797,7 +11825,7 @@ function feedCard(it,i){
   const likeKey=it.sid+'|'+it.book_id+'|'+it.act+'|'+String(it.time||'').slice(0,16);
   const liked=_myLikes.has(likeKey);
   const lc=_likeCount[likeKey]||0;
-  const bk=b?` onclick="openDetail('${b.id}')"`:'';
+  const bk=!b?'':(isCls?` onclick="openDetail('${esc(String(b.id))}')"`:` onclick="libDetail('${esc(String(it.book_id))}')"`);
   const pastel=FEED_PASTEL[i%FEED_PASTEL.length];
   const long=(it.act==='essay')||(it.text||'').length>120;
   const isMe=(it.sid===_bxSid());
@@ -11846,6 +11874,7 @@ async function loadFeedItems(){
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!x.favorite_book_id)return;
       items.push({sid:x.id,book_id:x.favorite_book_id,act:'favorite',text:(x.favorite_reason||'').trim()||'인생책으로 골랐어요',time:x.created_at,meta:''}); });
   }catch(e){}
+  try{ await bxResolveBooks(items.map(x=>x.book_id)); }catch(e){}   // 8/30 도서관 책 제목·표지
   _feedItems=items;
 }
 async function renderFeed(){
@@ -11937,8 +11966,10 @@ async function openStudentProfile(sid){
   results.forEach(r=>{ if(!r.book_id||!(r.impression||'').trim())return; (byBook[r.book_id]=byBook[r.book_id]||[]).push({act:'impression',text:r.impression}); });
   writings.forEach(w=>{ if(!w.book_id)return; (byBook[w.book_id]=byBook[w.book_id]||[]).push({act:w.activity,text:w.text}); });
   const books=Object.keys(byBook);
+  try{ await bxResolveBooks(books); }catch(e){}   // 8/30 도서관 책 제목·표지
+  if(openStudentProfile._t !== token) return;
   const rowsHtml=books.length ? books.map(bid=>{
-    const b=_bookById(bid); const acts=byBook[bid];
+    const b=(typeof _anyBook==='function'?_anyBook(bid):null)||_bookById(bid); const acts=byBook[bid];
     const cv=(b&&b.coverSrc)?`<img src="${esc(b.coverSrc)}" onerror="this.style.display='none';this.parentNode.textContent='📕'">`:'📕';
     const tags=[...new Set(acts.map(a=>(FEED_ACT[a.act]||{t:''}).t).filter(Boolean))].join(' · ');
     const txt=acts.map(a=>'“'+esc(a.text)+'”').join('<br>');
