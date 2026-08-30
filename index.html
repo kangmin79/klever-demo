@@ -151,7 +151,7 @@ body.dark .bl-sub{color:var(--gold);}
 @media (min-width:1200px){ .page{padding-left:clamp(40px,5vw,130px);padding-right:clamp(40px,5vw,130px);} }
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
-#page-mypage{max-width:1000px;margin-left:auto;margin-right:auto;}   /* .page 캡 제거 후에도 이 페이지는 원래 폭대로 가운데 정렬 유지 */
+/* 8/30 사장님 요청: 내서재도 다른 페이지와 같은 폭 (1000px 캡 제거) */
 /* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
 /* #page-collection padding-top 64px 삭제(8/18 사장님 요청): 소개글 위치를 우리도서관·독서챌린지(.page 32px)와 동일하게 */
 body.with-sidenav .page:not(#page-home){padding-left:24px;}
@@ -271,6 +271,10 @@ body.dark .side-node .icon{color:var(--gold);}
 /* 8/29 안내 카드(style:notice) — 책 없이 글만 있는 칸. 사서가 공지·행사 안내를 칸 사이에 끼워 넣는다 */
 /* 안내 칸 — 8/29 사장님: "AI 박스 느낌 안 나게" → 상자·둥근 테두리·알약 배지 없이, 다른 칸(대출 랭킹 등)과 같은 제목+본문 글줄 */
 .ml-nt{padding:4px 0 8px;}
+#chalLive .ml-nt{margin:4px 0 30px;}   /* 8/30 챌린지 페이지 안내 카드 아래 간격 */
+/* 8/30 사장님: 모바일 빌린 책 카드 — 버튼 4개가 제목을 세로로 찌그러뜨림 → 좁은 화면에선 제목 줄 아래에 버튼 줄 */
+@media(max-width:640px){ .sm-loan-row{flex-direction:column;gap:8px;} .sm-loan-row>div:last-child{width:100%;justify-content:flex-start;} }
+#chalLive .shelf-hero{padding-bottom:18px;margin-bottom:22px;}   /* 8/30 히어로 아래 빈 공간 축소 */
 .ml-nt-k{font-size:12px;font-weight:700;letter-spacing:.3px;color:var(--text-light);margin-bottom:6px;}
 .ml-nt-t{font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--text);line-height:1.35;}
 .ml-nt-b{font-size:14.5px;line-height:1.9;color:var(--text-sub);margin-top:10px;white-space:pre-wrap;word-break:break-word;max-width:760px;}
@@ -781,7 +785,9 @@ body.dark .fc-mine{color:var(--gold);}
 .fc-quote{margin:12px 16px;border-radius:12px;padding:18px 16px;font-size:14.5px;line-height:1.65;color:#2b2b3a;text-align:center;font-weight:600;}
 .fc-quote.hl{text-align:left;}
 .fc-quote .qm{color:var(--gold);font-weight:800;}
-.fc-body{padding:2px 16px 8px;font-size:13.5px;line-height:1.7;color:var(--text-sub);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.fc-body{padding:2px 16px 8px;font-size:13.5px;line-height:1.7;color:var(--text-sub);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;}
+.fc-body.open{display:block;-webkit-line-clamp:unset;overflow:visible;}
+.fc-more{display:block;margin:0 16px 8px;padding:0;border:0;background:none;color:var(--primary);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
 .fc-bookrow{display:flex;align-items:center;gap:10px;padding:8px 16px 14px;cursor:pointer;}
 .fc-cv{width:38px;height:54px;border-radius:5px;overflow:hidden;flex-shrink:0;background:var(--bg-input);display:flex;align-items:center;justify-content:center;font-size:16px;}
 .fc-cv img{width:100%;height:100%;object-fit:cover;}
@@ -5976,7 +5982,7 @@ function mlNoticeBody(text){
 }
 function mlNotice(t,s){
   const body=mlNoticeBody(s);
-  return `<div class="ml-nt"><div class="ml-nt-k">안내</div>${t?`<div class="ml-nt-t">${esc(t)}</div>`:''}${body?`<div class="ml-nt-b">${body}</div>`:''}</div>`;
+  return `<div class="ml-nt">${t?`<div class="ml-nt-t">${esc(t)}</div>`:''}${body?`<div class="ml-nt-b">${body}</div>`:''}</div>`;
 }
 function mlCarousel(rowHTML){return `<div class="ml-car"><button class="ml-arrow ml-arrow-l" onclick="mlCar(this,-1)">‹</button>${rowHTML}<button class="ml-arrow ml-arrow-r" onclick="mlCar(this,1)">›</button></div>`;}
 function mlCar(btn,dir){const row=btn.parentNode.querySelector('.ml-hrow');if(!row)return;const amt=Math.max(row.clientWidth*0.85,240);const max=row.scrollWidth-row.clientWidth;if(dir>0&&row.scrollLeft>=max-4){row.scrollTo({left:0,behavior:'smooth'});}else if(dir<0&&row.scrollLeft<=4){row.scrollTo({left:max,behavior:'smooth'});}else{row.scrollBy({left:dir*amt,behavior:'smooth'});}}
@@ -7399,7 +7405,7 @@ async function renderMyLibStatus(){
             +(x.extendable?`<button onclick="ebExtend('${esc(x.loanSrmb)}','${esc(x.brcd)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`:'')
             +`<button onclick="ebReturn('${esc(x.loanSrmb)}','${esc(x.brcd)}','${_t}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">반납</button>`+rvBtn
           : `<button onclick="smRenew('${esc(x.acc)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`+rvBtn;
-        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
+        return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(cleanT(x.title||''))}</div>
             ${x.author?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author)}</div>`:''}
@@ -7426,7 +7432,7 @@ async function renderMyLibStatus(){
         const note=arrived
           ? `<span style="color:#16a34a;font-weight:800">도착했어요${x.wait_date?` · ${smFmt(x.wait_date)}까지 찾아가세요`:''}</span>`
           : `${esc(x.reservation_status_display||'예약중')}${rank?` · 내 순번 ${rank}번`:''}`;
-        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
+        return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
@@ -7447,7 +7453,7 @@ async function renderMyLibStatus(){
         const cancelBtn=ready
           ? `<span style="flex:none;font-size:11.5px;color:var(--text-light);align-self:center">취소는 데스크에</span>`
           : `<button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>`;
-        return box(`<div style="display:flex;gap:10px;align-items:flex-start">
+        return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
@@ -8229,7 +8235,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -9857,7 +9863,7 @@ async function renderActivityGroup(){
         <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
       </div>
       <div class="ag-pstats">
-        ${[[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEss,'독후감','s-rv'],[nDone,'완독','s-done'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
+        ${[[nOne,'한 줄 소감','s-sg'],[nQ,'한 줄 질문','s-q'],[nRev,'서평','s-rv'],[nEss,'독후감','s-rv'],[nEnroll,'참여 챌린지','s-ch'],[nEnrollDone,'완료 챌린지','s-cl']].map(s=>`<div class="ag-pstat ${s[2]}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('')}
       </div>
     </div>`;
   // 8/29 사장님 지시: '내 기록' 블록(칩·카드 미리보기·전체 보기) 삭제 — 아래 '내 책 모음 › 내가 쓴 글'과 중복. (hasNotes/_agNotesHTML 은 남겨 둠)
@@ -9901,6 +9907,7 @@ async function _bmWrite(method,path,bodyObj){
 /* ── 내 책(8/21 사장님 요청): 상세 페이지를 열어 본 책이 자동으로 담긴다 — bookstar_mybooks(학생별, 기기 무관).
    인생책·책장·글쓰기(⋮ 메뉴)의 공통 후보. 옛 _bookById는 고전(BOOKS)만 알아서 도서관 책 인생책이 안 보이던 버그의 원인 → _anyBook으로 통일 ── */
 let _mbList=[], _mbTab='all', _mbLoadedFor='', _mbExtra={};
+let _mbShowAll=false; const MB_PREVIEW=10;   // 8/30 사장님: 내 책은 처음엔 10권(두 줄)만, '전체 보기'로 펼침
 function mbKey(b){ if(!b) return ''; const id=String(b.id||''); if(/^(gb|kr)-/.test(id)) return id; return String(b.isbn||id||''); }
 function _mbNormRow(r){ return {id:String(r.book_id), title:cleanT(r.title||''), author:r.author||'', coverSrc:r.cover||'', isbn:r.isbn||'', kind:r.kind||'', last:r.last_seen||r.created_at||''}; }
 function _mbNormCls(b){ return {id:b.id, title:cleanT(b.title||''), author:b.author||'', coverSrc:b.coverSrc||'', isbn:'', kind:String(b.id||'').indexOf('gb-')===0?'foreign':'korean', last:''}; }
@@ -10103,8 +10110,11 @@ async function renderMyProfileTop(){
   const tabs=`<div class="mb-tabs"><span class="mb-tab${_mbTab==='all'?' on':''}" onclick="mbSetTab('all')">전체 ${all.length}</span>${_bmShelves.map(c=>`<span class="mb-tab${String(c.id)===String(_mbTab)?' on':''}" onclick="mbSetTab('${esc(String(c.id))}')">${esc(c.name||'제목 없음')} ${(Array.isArray(c.book_ids)?c.book_ids.length:0)}</span>`).join('')}<span class="mb-tab add" onclick="openNewShelf()">+ 책장 만들기</span></div>`;
   const shelfBar=curShelf?`<div class="mb-shelfbar"><span>책장 <b>${esc(curShelf.name||'')}</b> · ${shown.length}권</span><span style="flex:1"></span><button class="bm-btn" onclick="openShelfAdd('${esc(String(curShelf.id))}')">${IC_PLUS} 책 담기</button><button class="bm-btn" onclick="shelfDelete('${esc(String(curShelf.id))}')">책장 삭제</button></div>`:'';
   const bkCard = b => { const isFav=favBook&&b.id===favBook.id; return `<div class="bm-bk mb-bk"><div class="bm-bc" onclick="mbOpen('${esc(b.id)}')">${_bmCover(b, isFav?'<span class="favtag">인생책</span>':'')}</div><button class="mb-dots" title="글쓰기" onclick="event.stopPropagation();mbMenu('${esc(b.id)}')">${MB_DOTS}</button><div class="bm-bk-t">${esc(b.title)}</div><div class="bm-bk-a">${esc(b.author||'')}</div></div>`; };
+  const _cut=(!_mbShowAll && shown.length>MB_PREVIEW);
+  const _vis=_cut?shown.slice(0,MB_PREVIEW):shown;
+  const _moreBtn=(shown.length>MB_PREVIEW)?`<div style="text-align:center;margin:14px 0 4px"><button class="bm-btn" onclick="_mbShowAll=!_mbShowAll;renderMyProfileTop()">${_cut?`전체 보기 · ${shown.length}권`:'접기'}</button></div>`:'';
   const booksGrid=shown.length
-    ? `<div class="bm-bkgrid">${shown.map(bkCard).join('')}</div>`
+    ? `<div class="bm-bkgrid">${_vis.map(bkCard).join('')}</div>${_moreBtn}`
     : (curShelf?`<div class="ag-empty">아직 담은 책이 없어요. <b style="color:var(--primary);cursor:pointer" onclick="openShelfAdd('${esc(String(curShelf.id))}')">책 담기</b>로 내 책에서 골라 담아요.</div>`
                :'<div class="ag-empty">아직 내 책이 없어요. 책 상세 페이지를 열어 보면 여기에 담겨요.</div>');
   const hint=showHint?`<div class="mb-hint" id="mbHint"><span>표지를 누르면 이어 읽고, 오른쪽 위 ${MB_DOTS} 를 누르면 소감·질문·서평·독후감을 쓸 수 있어요.</span><b onclick="mbHideHint()">×</b></div>`:'';
@@ -11830,10 +11840,10 @@ function feedCard(it,i){
   const long=(it.act==='essay')||(it.text||'').length>120;
   const isMe=(it.sid===_bxSid());
   const following=_myFollows.has(it.sid);
-  const followBtn = isMe ? '<span class="fc-mine">내 글</span>' : `<button class="fc-follow${following?' on':''}" data-sid="${esc(it.sid)}" onclick="event.stopPropagation();feedFollow(this,'${esc(it.sid)}')">${following?'팔로잉':'팔로우'}</button>`;
+  const followBtn = isMe ? '' :    /* 8/30 사장님: '내 글' 배지 삭제 — 이름 아래 종류 표시로 충분 */`<button class="fc-follow${following?' on':''}" data-sid="${esc(it.sid)}" onclick="event.stopPropagation();feedFollow(this,'${esc(it.sid)}')">${following?'팔로잉':'팔로우'}</button>`;
   let content;
   if(it.act==='underline') content=`<div class="fc-quote hl" style="background:${pastel}"><span class="qm">“</span>${esc(it.text)}<span class="qm">”</span></div>`;
-  else if(long) content=`<div class="fc-body">${esc(it.text)}</div>`;
+  else if(long) content=`<div class="fc-body">${esc(it.text)}</div><button class="fc-more" onclick="event.stopPropagation();const b=this.previousElementSibling;b.classList.toggle('open');this.textContent=b.classList.contains('open')?'접기':'더보기'">더보기</button>`;   /* 8/30 서평·독후감 잘림 → 더보기 */
   else content=`<div class="fc-quote" style="background:${pastel}">${esc(it.text)}</div>`;
   return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
