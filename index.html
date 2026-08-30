@@ -7315,7 +7315,7 @@ const smFmt=(s)=>{ const d=smDate(s); return d?`${d.getMonth()+1}월 ${d.getDate
 /* ── 우리 도서관 상단: 빌린 책 · 기다리는 책 ──────────────────────────
    도서관 홈페이지에 들어가야만 알 수 있던 것(반납일·예약 도착)을 여기서 먼저 알려준다.
    숫자·날짜는 전부 도서관 실시간 값. 추정·캐시 없음. 개인연동 안 된 이용자에겐 아예 안 보인다. */
-async function renderMyLibStatus(){
+async function renderMyLibStatus(_retry){
   const el=document.getElementById('myLibBody');
   const line=document.getElementById('myLibStatus');   // 우리 도서관 상단 한 줄 요약
   // 알림 줄은 대출 목록과 무관하게 그린다(아래 어느 경로로 빠져나가도 항상 보이도록)
@@ -7325,7 +7325,17 @@ async function renderMyLibStatus(){
   if(!ssoIsPersonal()){ if(el) el.innerHTML=''; if(line) line.innerHTML=''; MYLIB_BADGE=null; return; }
   try{
     // 종이책(퓨처누리)과 전자책(교보)은 시스템이 다르지만 학생에겐 그냥 '내가 빌린 책'이다 — 한 화면에 합친다
-    const [ln,rv,pk,eb,ebrv]=await Promise.all([smMy('loans'),smMy('reservations'),smMy('pickups'),smEbookLoans(),smEbookReserves()]);
+    const _safe=p=>p.catch(()=>null);
+    let [ln,rv,pk,eb,ebrv]=await Promise.all([_safe(smMy('loans')),_safe(smMy('reservations')),_safe(smMy('pickups')),smEbookLoans(),smEbookReserves()]);
+    // 8/30 사장님 지적("안 보일 때가 많고 새로고침해야 보임"): 다섯 조회 중 하나라도 실패하면 예전엔 "없어요"로 그렸다.
+    //   실패는 '일부 못 불러옴'으로 정직하게 표시하고 1.5초 뒤 한 번 자동 재시도, 그래도 안 되면 '다시 시도' 버튼.
+    const _bad=x=>x===null||x===undefined||(x&&x.ok===false&&!x.needsPersonal&&!/로그인이 필요|만료/.test(x.error||''));
+    const partial=_bad(ln)||_bad(rv)||_bad(pk)||eb===null||ebrv===null;
+    eb=eb||[]; ebrv=ebrv||[];
+    if(partial && !_retry){ setTimeout(()=>{ try{ renderMyLibStatus(true); }catch(e){} },1500); }
+    const partialNote=partial?`<div style="display:flex;gap:8px;align-items:center;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:12.5px;color:#9a3412">
+        <span>${_retry?'도서관에서 일부 정보를 불러오지 못했어요.':'도서관 정보를 다시 불러오는 중…'}</span>${_retry?'<button onclick="renderMyLibStatus(true)" style="margin-left:auto;border:1px solid #fdba74;background:#fff;color:#9a3412;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">다시 시도</button>':''}
+      </div>`:'';
     // 토큰 만료(401)·연동 소실(409) — 이대로 두면 "연결됨·0권"이라는 거짓 화면이 된다.
     // 개인 플래그를 내리고, 다시 배너로 로그인하라고 정직하게 알린다.
     if(ln && ln.ok===false && (ln.needsPersonal || /로그인이 필요|만료/.test(ln.error||''))){
@@ -7362,17 +7372,17 @@ async function renderMyLibStatus(){
     </div>`;
 
     if(!loans.length && !resv.length && !picks.length && !eb.length && !ebrv.length){
-      el.innerHTML=`<div class="section">${statusBox}<div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
+      el.innerHTML=`<div class="section">${partialNote}${partial?'':statusBox}${partial?'':`<div style="display:flex;gap:8px;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:11px 14px">
         <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;flex:none"></span>
         <span style="font-size:12.5px;color:var(--text-sub)">도서관 계정 연결됨 — 지금 빌리거나 기다리는 책이 없어요</span>
-      </div></div>`;
+      </div>`}</div>`;
       if(line) line.innerHTML='';
       MYLIB_BADGE=null; renderSideNav(_navPage);
       return;
     }
     const box=(inner)=>`<div style="background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px">${inner}</div>`;
     const head=(t)=>`<div style="font-size:12px;font-weight:800;color:var(--text-sub);margin:0 0 7px">${t}</div>`;
-    let html=statusBox;
+    let html=partialNote+statusBox;
 
     // ① 빌린 책 — 종이책+전자책을 합쳐 반납일이 급한 순으로
     const all=loans.map(x=>({kind:'paper',title:x.title,author:x.author,due:x.return_plan_date,
@@ -7489,8 +7499,9 @@ async function smEbookLoans(){
   try{
     const r=await fetch(SMEBK_FN+'?action=myLoans',{headers:smHeaders()});
     const d=await r.json();
-    return (d&&d.ok&&d.personal===true&&Array.isArray(d.items))?d.items:[];
-  }catch(e){ return []; }
+    if(d&&d.ok&&d.personal===true&&Array.isArray(d.items)) return d.items;
+    return null;   // 8/30: 실패는 '0권'이 아니라 '모름'으로 — 화면이 "없어요"라고 거짓말하지 않게
+  }catch(e){ return null; }
 }
 // 내가 예약한 전자책 — 취소에 필요한 예약번호가 여기서만 나온다. personal 확인은 위와 같은 이유.
 async function smEbookReserves(){
@@ -7498,8 +7509,9 @@ async function smEbookReserves(){
   try{
     const r=await fetch(SMEBK_FN+'?action=myReserves',{headers:smHeaders()});
     const d=await r.json();
-    return (d&&d.ok&&d.personal===true&&Array.isArray(d.items))?d.items:[];
-  }catch(e){ return []; }
+    if(d&&d.ok&&d.personal===true&&Array.isArray(d.items)) return d.items;
+    return null;
+  }catch(e){ return null; }
 }
 async function ebDropReserve(prenSrmb){
   if(!confirm('예약을 취소할까요?')) return;
@@ -8235,7 +8247,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260830e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260830f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -10006,7 +10018,8 @@ async function wrOpen(bookId,k,chId){
   let prev=null; try{ const rows=await _agFetch(`bookstar_writings?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&activity=eq.${k}&select=text,is_public,challenge_id`); prev=(rows&&rows[0])||null; }catch(e){}
   let draft=''; try{ draft=localStorage.getItem(_wrDraftKey())||''; }catch(e){}
   const text=(prev&&prev.text)||draft||'';
-  const pubChk=`<label class="wr-pub"><input type="checkbox" id="wrPub" ${prev&&prev.is_public?'checked':''}> 다른 학생에게 공개</label>`;
+  // 8/30 사장님: 새 글은 기본 공개(체크) — 이미 '나만 보기'로 저장한 글만 해제 상태로 열림
+  const pubChk=`<label class="wr-pub"><input type="checkbox" id="wrPub" ${(!prev||prev.is_public!==false)?'checked':''}> 학우들에게 내 글을 공개해요<div style="font-size:11.5px;color:var(--text-light);margin-top:3px;font-weight:500;padding-left:20px">공개한 글만 독서챌린지 참여 기록으로 인정돼요</div></label>`;
   const backArg=chId?`,{chId:'${esc(String(chId))}'}`:'';
   const long=(k==='review'||k==='essay');
   if(!long){
