@@ -1822,6 +1822,13 @@ body.dark .bm-toast{color:#0f172a;}
 .mb-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
 .mb-tab{font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);cursor:pointer;}
 .mb-tab.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+/* 8/31 사장님 "두 줄이라 영 이상해": '내가 쓴 글' 칩 4개 폭 합이 폰 화면을 20px쯤 넘겨
+   3+1 로 접히면서 마지막 하나만 외톨이가 됐다. 한 줄에 넣으려면 이름을 줄여야 하는데
+   이름 축약은 8/31 폐지했으므로 2×2 로 가지런히 놓는다. 자리가 넉넉한 화면은 원래대로 한 줄.
+   ⚠ .mb-tabs 는 '내 책' 탭도 같이 쓰므로 #wrTabs 에만 건다. */
+#wrTabs{display:grid;grid-template-columns:1fr 1fr;}
+#wrTabs .mb-tab{text-align:center;}
+@media(min-width:520px){ #wrTabs{display:flex;} }
 .mb-tab.add{border-style:dashed;color:var(--primary);}
 .mb-shelfbar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);margin:0 0 12px;}
 .mb-hint{display:flex;align-items:center;gap:10px;background:var(--primary-bg);border:1px solid color-mix(in srgb,var(--primary) 25%,transparent);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--text-sub);margin:0 0 14px;}
@@ -8353,7 +8360,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831o';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
