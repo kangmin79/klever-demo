@@ -5436,9 +5436,12 @@ function renderChalCards(){
   const ntFor=c=>ntBefore[String(c.id)]||'';
   if(!CHAL_PUB.length){
     g.innerHTML=`<div class="ml">${ntTail}<div class="chal-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div></div>`; return; }
-  let out=heroC?(ntFor(heroC)+chalHero(heroC)):'';
+  // 8/31: 자리 0 안내는 '진행 중인 챌린지' 머리글보다 **위**에 와야 한다.
+  //   사서가 맨 앞에 둔 인사말인데 머리글을 먼저 찍는 바람에 그 아래로 밀려 있었다.
+  //   '이달의 챌린지'가 있을 땐 그 앞에 붙어 안 보이던 문제 — 이달의 챌린지가 없어지자 드러났다.
+  let out=heroC?(ntFor(heroC)+chalHero(heroC)):(listC.length?ntFor(listC[0]):'');
   out+=`<div><div class="chal-live-head">진행 중인 챌린지 <span class="chal-live-tag">우리 학교 사서 운영</span></div>`
-    + listC.map((c)=>{
+    + listC.map((c,idx)=>{
         const books=(c.books||[]);
         // 8/30 사장님 요청: 사서가 고른 스타일대로. 기본(row)은 지금까지의 챌린지 전용 카드를 그대로 쓴다
         const row=books.length
@@ -5447,7 +5450,8 @@ function renderChalCards(){
               : chalStyleBody(c.style, books, c))
           : '';
         const desc=c.intro?`<div class="chal-row-desc">${esc(c.intro)}</div>`:'';
-        return ntFor(c)+`<div class="cl-shelf" data-origin="challenge" data-origin-id="${esc(String(c.id))}">${chalRowHead(c)}${desc}${row}</div>`;
+        const nt=(!heroC&&idx===0)?'':ntFor(c);   // 위로 올린 자리 0 안내를 여기서 또 찍지 않게
+        return nt+`<div class="cl-shelf" data-origin="challenge" data-origin-id="${esc(String(c.id))}">${chalRowHead(c)}${desc}${row}</div>`;
       }).join('')
     + ntTail + `</div>`;
   g.innerHTML=`<div class="ml">${out}</div>`;
@@ -8309,7 +8313,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
