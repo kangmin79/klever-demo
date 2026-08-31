@@ -146,16 +146,19 @@ body.dark .bl-sub{color:var(--gold);}
    3. 메인 컨테이너 + 좌측 사이드바
    ═══════════════════════════════════════════════════════════ */
 .main{height:calc(100vh - var(--header-h));margin-top:var(--header-h);overflow-y:auto;overflow-x:hidden;}
-.page{padding:32px 24px;display:none;container-type:inline-size;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 / container-type: 안쪽 요소들이 전체 화면폭 아닌 실제 콘텐츠 폭 기준으로 반응하게 */
+/* 좌우 여백은 --page-pad 하나로만 정한다 (8/31). 좌·우를 따로 못박는 규칙을 두지 말 것 —
+   그렇게 갈라놓은 탓에 사이드바가 켜지면 왼쪽만 24px로 고정돼 좌우가 어긋나 있었다. */
+.page{--page-pad:24px;padding:32px var(--page-pad);display:none;container-type:inline-size;}   /* 실험: 헤더(패딩 0 24px, 풀블리드)와 좌우 경계를 맞추기 위해 max-width 캡 제거 / container-type: 안쪽 요소들이 전체 화면폭 아닌 실제 콘텐츠 폭 기준으로 반응하게 */
 /* 8/14 사장님 지시: 넓은 화면에서 양쪽 끝 숨통 — 화면이 클수록 좌우 여백을 점진적으로(5vw, 최대 130px) */
-@media (min-width:1200px){ .page{padding-left:clamp(40px,5vw,130px);padding-right:clamp(40px,5vw,130px);} }
+@media (min-width:1200px){ .page{--page-pad:clamp(40px,5vw,130px);} }
 .page.active{display:block;}
 /* 내서재는 읽기 편한 폭으로 (좌우로 너무 퍼지지 않게) */
 /* 8/30 사장님 요청: 내서재도 다른 페이지와 같은 폭 (1000px 캡 제거) */
 /* 2026-06-21: 고전 컬렉션 중복 제목 삭제 후, 첫 큐레이션이 메뉴에 붙어 답답 → 위 여백 보강(제목 자리만큼 숨 쉴 공간) */
 /* #page-collection padding-top 64px 삭제(8/18 사장님 요청): 소개글 위치를 우리도서관·독서챌린지(.page 32px)와 동일하게 */
-body.with-sidenav .page:not(#page-home){padding-left:24px;}
-body.with-sidenav .page#page-detail{padding-left:24px;}
+/* (8/31 삭제) body.with-sidenav .page{padding-left:24px} — 사이드바가 켜지면 왼쪽 여백만 24px로
+   못박혀, PC에서 레일~본문 틈 40px 대 오른쪽 102px, 폰에서 왼쪽 24 대 오른쪽 20으로 어긋났다.
+   레일 자리는 .main이 통째로 비켜주고(아래), 본문 여백은 --page-pad 하나로 좌우 같게 둔다. */
 
 /* 좌측 고정 사이드바 (홈 제외 모든 페이지) — Ver03: 항상 노출(고정), 자동 숨김 제거 */
 .side-nav{
@@ -168,7 +171,9 @@ body.with-sidenav .side-nav{display:flex;}
 .side-hot{display:none !important;}
 /* 본문이 고정 사이드바에 가리지 않도록 좌측 여백 확보 (PC) */
 @media (min-width:901px){
-  body.with-sidenav .main{padding-left:84px;}
+  /* 레일이 차지한 자리(left:16 + 폭 52 = 68px)만 정확히 비켜준다.
+     여기에 여유분을 더 얹으면 그만큼 왼쪽 틈만 커져 좌우가 다시 어긋난다 — 여유는 --page-pad가 준다. */
+  body.with-sidenav .main{padding-left:68px;}
   /* PC: 평소엔 아이콘만 보이는 얇은 레일, 마우스를 올리면 글자까지 펼쳐짐(모바일 하단바는 그대로 유지) */
   .side-nav{width:52px;transition:width .22s cubic-bezier(.2,.7,.2,1);}
   .side-nav:hover{width:80px;}
@@ -200,8 +205,8 @@ body.dark .side-node .icon{color:var(--gold);}
 .side-node-badge.alert{background:#ef4444;color:#fff;}
 
 @media (max-width:900px){
-  body.with-sidenav .page:not(#page-home){padding-left:24px;}
-  body.with-sidenav .page#page-detail{padding-left:24px;}
+  /* (8/31 삭제) 폰에는 좌측 레일이 없고 하단바만 있는데도 이 규칙 때문에
+     로그인만 하면 왼쪽 24 / 오른쪽 20으로 어긋났다. 여백은 --page-pad(20px) 하나로. */
   .side-nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%;flex-direction:row;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));background:var(--bg-card);border-top:1px solid var(--border);gap:0;transform:none;opacity:1;pointer-events:auto;}
   .side-hot{display:none !important;}
   .side-node{padding:6px 8px;flex:1;border:none;box-shadow:none;border-radius:8px;}
@@ -2597,7 +2602,7 @@ body.preview-mode .header,body.preview-mode .side-nav,body.preview-mode #hwcBubb
 body.preview-mode #page-collection > *:not(#collectionCuration),
 body.preview-mode #page-international > *:not(#intlCuration){display:none !important;}
 body.preview-mode .main{padding-top:8px;}
-body.preview-mode.with-sidenav .page:not(#page-home){padding-left:24px;}
+/* (8/31 삭제) 미리보기도 같은 이유로 왼쪽만 못박지 않는다 — --page-pad가 좌우를 같이 맡는다. */
 
 /* ── 챌린지 미션 패널 (리더 우측) ── */
 .mp-card{background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:11px}
@@ -8278,7 +8283,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
