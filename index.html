@@ -2101,6 +2101,14 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .gnb-item:last-child{padding-right:0;}
   .gnb-item:first-child::after{left:0;}
   .gnb-item:last-child::after{right:0;}
+}
+/* 8/31: 탭 이름을 폰에서도 줄이지 않기로 함(‘우리 도서관’·‘독서 챌린지’ 그대로).
+   전체 이름 4개는 284px면 되는데 320px대 옛 기기만 4px 모자라, 그 구간에서만 글자·간격을 살짝 좁혀 한 줄을 지킨다. */
+@media (max-width:360px){
+  .gnb-item{padding:0 6px;font-size:12.5px;}
+  .gnb-item::after{left:6px;right:6px;}
+  .gnb-item:first-child{padding-left:0;}
+  .gnb-item:last-child{padding-right:0;}
   .gnb.gnb-scroll .gnb-item:last-child{margin-right:28px;} /* 스크롤 끝에서 페이드에 안 가리게 */
   .gnb-item:hover{background:none;color:var(--text);}
   .gnb-item.active{background:none;color:var(--text);font-weight:700;}
@@ -8044,8 +8052,9 @@ const CL_FOREIGN_INTRO={
 };
 let UI_LANG='ko';
 function uiT(ko){ return (UI_I18N[UI_LANG]||{})[ko]||ko; }
-// 모바일 GNB 축약 라벨 (한국어일 때만) — 5개 탭이 스크롤 없이 한 줄에 들어가게
-const UI_GNB_SHORT={'우리 도서관':'도서관','독서 챌린지':'챌린지'};
+// (8/31 폐지) 모바일 축약 라벨 '우리 도서관'→'도서관' · '독서 챌린지'→'챌린지'.
+//   사장님: 폰에서 '우리'가 빠져 보인다. 실측하니 전체 이름 4개가 284px면 되고 360px 폰부터는 여유가 있다.
+//   320px대 옛 기기만 4px 모자라서, 그 구간은 CSS(max-width:360px)에서 글자·간격을 살짝 좁혀 한 줄을 지킨다.
 function applyUiLang(l){
   UI_LANG=(l&&UI_I18N[l])?l:'ko';
   const _ls=document.getElementById('langSelect'); if(_ls&&_ls.value!==UI_LANG)_ls.value=UI_LANG;   // 헤더 드롭다운 표시값 동기화
@@ -8055,12 +8064,9 @@ function applyUiLang(l){
   const _mh=document.getElementById('bxAccModalH'); if(_mh) _mh.textContent=_lm.h;
   const _mp=document.getElementById('bxAccModalP'); if(_mp) _mp.innerHTML=_lm.p;
 
-  const mob=window.matchMedia('(max-width:900px)').matches;
   document.querySelectorAll('.gnb-item').forEach(el=>{
     if(!el.dataset.ko) el.dataset.ko=el.textContent.trim();
-    let t=uiT(el.dataset.ko);
-    if(mob&&UI_LANG==='ko'&&UI_GNB_SHORT[el.dataset.ko]) t=UI_GNB_SHORT[el.dataset.ko];
-    el.textContent=t;
+    el.textContent=uiT(el.dataset.ko);   // 폰에서도 전체 이름 그대로 (축약 폐지 — 위 주석)
   });
   // 넘칠 때만 스크롤 페이드 힌트 (다 들어가면 페이드·여백 없이 깔끔하게)
   // 주의: gnb-scroll 자체가 여백 28px를 추가하므로, 반드시 벗긴 상태에서 측정 (상태 고착 방지)
@@ -8313,7 +8319,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
