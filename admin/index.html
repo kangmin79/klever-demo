@@ -2895,7 +2895,16 @@ function renderChallenges(){
           <option value="소장챌린지" ${!isClassic?'selected':''}>소장자료 챌린지</option>
           <option value="고전챌린지" ${isClassic?'selected':''}>고전 컬렉션 챌린지</option></select></div>
       </div>
-      <div class="flabel">상세내용 — 학생에게 보일 설명</div>
+      ${/* 8/30: 챌린지도 스타일 선택 가능. 8/31 사장님 지적 — 미션·퀴즈 아래에 묻혀 있어 없는 줄 알았다.
+            우리 도서관 칸과 같은 자리(제목 바로 아래)로 올려 두 화면의 순서를 맞춘다. */''}
+      <div class="flabel" style="margin-top:11px">스타일 (학생 앱에서 담긴 책이 어떻게 보일지)</div>
+      <input type="hidden" id="ch_style_${i}" value="${esc(c.style||'row')}">
+      <div class="style-bar" onclick="toggleStyleGrid(event,'chal${i}')">
+        <span class="style-cur"><span class="sb-th">${styleThumb(c.style||'row')}</span><b id="style_lbl_chal${i}">${esc(styleLabel(c.style||'row'))}</b></span>
+        <span class="style-toggle" id="styletoggle_chal${i}">바꾸기 ▾</span>
+      </div>
+      <div class="style-pick" id="stylegrid_chal${i}" style="display:none">${CHAL_STYLES.map(o=>`<div class="sp-card${(c.style||'row')===o[0]?' on':''}" onclick="setChalStyle(${i},'${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>
+      <div class="flabel" style="margin-top:11px">상세내용 — 학생에게 보일 설명</div>
       <textarea class="cur-inp" id="ch_d_${i}" rows="2" placeholder="${isClassic?'예: 6월 한 달, 고전을 읽고 퀴즈에 도전하세요':'예: 6월 한 달, 추천도서를 읽고 한 줄 소감을 남겨 보세요'}" oninput="chalPvSync()">${esc(c.detail||'')}</textarea>
       <div class="row2"><div><div class="flabel">시작일</div><input type="date" class="cur-inp" id="ch_f_${i}" value="${esc(c.from||'')}" onchange="chalPvSync()"></div>
         <div><div class="flabel">종료일</div><input type="date" class="cur-inp" id="ch_to_${i}" value="${esc(c.to||'')}" onchange="chalPvSync()"></div></div>
@@ -2906,14 +2915,6 @@ function renderChallenges(){
         ${missCells}</div>
       ${quizCfg}
       <!-- 8/21 사장님 요청: 보상 방식·별 적립 블록 삭제(엑셀로 확인). 8/29 되살렸다가 다시 뺌 — 화면 변경은 사장님 승인 후. 추첨 인원·조건 값은 chalMissClean에서 보존만 -->
-      ${/* 8/30 사장님 요청: 우리 도서관처럼 챌린지도 스타일을 고를 수 있게 */''}
-      <div class="flabel" style="margin-top:10px">스타일 (학생 앱에서 담긴 책이 어떻게 보일지)</div>
-      <input type="hidden" id="ch_style_${i}" value="${esc(c.style||'row')}">
-      <div class="style-bar" onclick="toggleStyleGrid(event,'chal${i}')">
-        <span class="style-cur"><span class="sb-th">${styleThumb(c.style||'row')}</span><b>${esc(styleLabel(c.style||'row'))}</b></span>
-        <span class="style-toggle" id="styletoggle_chal${i}">바꾸기 ▾</span>
-      </div>
-      <div class="style-pick" id="stylegrid_chal${i}" style="display:none">${CHAL_STYLES.map(o=>`<div class="sp-card${(c.style||'row')===o[0]?' on':''}" onclick="setChalStyle(${i},'${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>
       <div class="flabel" style="margin-top:10px">담긴 책 ${books.length}권</div>
       <div class="deco-books">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc(b.title||'')}"><div class="c">${_cv?`<img src="${esc(_cv)}" onerror="this.parentNode.textContent='📕'">`:'📕'}</div><button class="rm" onclick="chalRemoveBook(${i},${bi})">×</button></div>`;}).join('')}
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
