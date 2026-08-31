@@ -1612,7 +1612,8 @@ body.dark .mw-badge{color:var(--gold);}
 .ag-pname{font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
 .ag-grade{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--primary);background:var(--primary-bg);padding:4px 11px;border-radius:99px;}
 .ag-pstatus{font-size:13px;color:var(--text-light);margin-top:4px;}
-.ag-pedit{margin-left:auto;align-self:flex-start;font-size:12.5px;color:var(--text-sub);border:1px solid var(--border);background:transparent;padding:6px 14px;border-radius:99px;cursor:pointer;}
+/* 8/31: flex:none + nowrap 이 없어 좁은 폰에서 버튼이 눌려 '편/집' 두 줄로 깨졌다(사장님 스샷) */
+.ag-pedit{margin-left:auto;align-self:flex-start;flex:none;white-space:nowrap;font-size:12.5px;color:var(--text-sub);border:1px solid var(--border);background:transparent;padding:6px 14px;border-radius:99px;cursor:pointer;}
 .ag-pedit:hover{border-color:var(--gold);color:var(--text);}
 .ag-pstats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:20px;}
 .ag-pstat{background:var(--bg-input);border-radius:12px;padding:13px 4px;text-align:center;}
@@ -2678,6 +2679,21 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   /* 표지 줄만 화면 끝까지 (8/31 사용자: 앱처럼 좌우 여백 없이).
      제목·설명 글은 .page 여백(--page-pad)을 그대로 지킨다 — 글까지 끝에 붙으면 읽기 나쁨. */
   .ml-car{margin-left:calc(var(--page-pad,14px) * -1);margin-right:calc(var(--page-pad,14px) * -1);}
+}
+
+/* ── 8/31 사장님: 폰 '내서재'가 답답하다 — 상자 안 상자로 좌우가 두 번 깎이던 것을 걷어낸다 ──
+   PC는 그대로. 폰에서만 한 겹씩 덜어 글이 놓일 자리를 넓힌다. */
+@media (max-width:760px){
+  /* ① 카드 안쪽 여백 — 페이지 20 + 카드 22 = 42px가 깎이고 있었다 → 34px */
+  .ag-card{padding:16px 14px;border-radius:14px;}
+  .quest-map{padding:16px 14px;border-radius:14px;}
+  /* ② 빈 상태 안내는 카드 안에 또 회색 상자를 그리고 있었다(3중) — 상자를 없애고 글만 */
+  .qg-empty{background:none;padding:24px 4px;}
+  .ag-empty{padding:18px 2px;}
+  /* ③ 인생책: 폰에서 세로로 접느라 표지 오른쪽이 통째로 비어 있었다 → 표지를 줄이고 옆에 나란히 */
+  .bm-life{flex-direction:row;gap:14px;}
+  .bm-cover{width:100px;height:144px;}
+  .bm-life-t{font-size:18px;}
 }
 </style>
 </head>
@@ -8319,7 +8335,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831k';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -9942,7 +9958,7 @@ async function renderActivityGroup(){
    +`<div class="ag-card">
       <div class="ag-ptop">
         <div class="ag-pav">${esc(emoji)}</div>
-        <div><div class="ag-pname">${esc(name)}</div><div class="ag-pstatus">${esc(bio||'상태메시지를 남겨보세요')}</div></div>
+        <div style="flex:1;min-width:0"><div class="ag-pname">${esc(name)}</div><div class="ag-pstatus">${esc(bio||'상태메시지를 남겨보세요')}</div></div>
         <button class="ag-pedit" onclick="openProfileEdit()">편집</button>
       </div>
       <div class="ag-pstats">
