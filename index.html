@@ -5233,6 +5233,10 @@ async function loadChalNotices(){
   catch(e){ CHAL_NOTICES=[]; }
 }
 async function loadChalCards(){
+  // 8/31: 챌린지 미리보기는 부모(관리자)가 보낸 편집 중 내용만 그린다 — 서버 발행본이 덮어쓰면 저장 전 모습이 안 보인다.
+  //   (PREVIEW/PV_T는 아래쪽에서 선언돼 아직 못 읽을 수 있어 주소에서 직접 본다)
+  try{ const q=new URLSearchParams(location.search);
+    if(q.get('preview')==='1' && (q.get('area')||'')==='독서챌린지') return; }catch(e){}
   renderChalCards();
   try{ await loadChalNotices(); renderChalCards(); }catch(e){}   // 안내는 챌린지보다 먼저 떠도 된다(챌린지 조회를 기다리지 않음)
   try{
@@ -6736,7 +6740,9 @@ function renderLibCuration(){
 }
 // 미리보기 대상 영역 (관리자 꾸미기 탭과 1:1) — 우리도서관/고전 컬렉션/International
 const PV_AREA = new URLSearchParams(location.search).get('area') || '우리도서관';
-const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 해외':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 국내':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'}};
+const PV_MAP = {'우리도서관':{page:'ourlib',grid:'libCurationGrid'},'고전 컬렉션':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 해외':{page:'collection',grid:'collectionCuration'},'고전 컬렉션 국내':{page:'collection',grid:'collectionCuration'},'International':{page:'international',grid:'intlCuration'},
+  // 8/31: 독서 챌린지도 같은 미리보기 경로로 합침. 예전엔 관리자가 따로 흉내 내 그려서 사서가 고른 스타일이 미리보기에만 빠져 있었다
+  '독서챌린지':{page:'curation',grid:'chalLive',chal:true}};
 const PV_T = PV_MAP[PV_AREA] || PV_MAP['우리도서관'];
 let _pvLastSecs=null;
 // 미리보기도 실제 앱처럼 발행 프로그램(library_programs)을 불러와 LC_PUB 채움 → 빈 칸 폴백이 앱과 일치(WYSIWYG)
@@ -6758,14 +6764,32 @@ function _pvRender(rawSecs){
   secs.forEach(s=>(s.books||[]).forEach(b=>{ if(b.isbn&&!LIB_POOL.find(x=>x.isbn===b.isbn)) LIB_POOL.push({isbn:b.isbn,t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||''}); }));
   const g=document.getElementById(PV_T.grid); if(g){ g.innerHTML=millieHTML(secs, isClassicsArea(PV_AREA)); try{mlBindDrag();}catch(e){} try{backfillPool();}catch(e){} }
 }
+// 8/31: 독서 챌린지 미리보기 — 관리자가 편집 중인 챌린지를 그대로 받아 학생 앱 렌더러(renderChalCards)로 그린다.
+//   관리자 쪽 이름(detail/title/author)을 학생 앱 이름(intro/t/a)으로만 바꿔 넘긴다. 그리는 코드는 학생 앱 것 하나뿐 = 스타일이 어긋날 수 없다.
+function _pvRenderChal(chals,notices){
+  CHAL_PUB=(chals||[]).map(x=>({
+    id:x.id!=null?x.id:('pv-'+Math.random().toString(36).slice(2)),
+    type:x.type||'소장챌린지', title:x.title||'', intro:x.intro||x.detail||'',
+    from:x.from||x.start_date||'', to:x.to||x.end_date||'', featured:!!x.featured, style:x.style||'row',
+    mission:x.mission||null,
+    books:(x.books||[]).map(b=>Object.assign({id:b.id||'',t:b.title||b.t||'',a:b.author||b.a||'',cover:b.cover||'',isbn:b.isbn,
+      tags:(!b.isbn&&/^(gb|kr)-/.test(b.id||''))?['cls']:b.tags},_keepForm(b)))
+  }));
+  CHAL_NOTICES=(notices||[]).map(s=>({title:s.title||'',subtitle:s.subtitle||'',chal_pos:s.chal_pos}));
+  try{ renderChalCards(); }catch(e){}
+}
 if(PREVIEW){ try{ document.body.classList.add('preview-mode'); }catch(e){}
-  const goPv=()=>{ try{ nav(PV_T.page); }catch(e){} try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
+  const goPv=()=>{ try{ nav(PV_T.page); }catch(e){}
+    if(PV_T.chal){ try{ const pc=JSON.parse(localStorage.getItem('bookstar_preview_chals')||'null'); if(pc) _pvRenderChal(pc.challenges,pc.notices); }catch(e){} return; }
+    try{ const ps=JSON.parse(localStorage.getItem('bookstar_preview_sections')||'[]'); _pvRender(ps); }catch(e){} };
   window.addEventListener('DOMContentLoaded',goPv); setTimeout(goPv,60);
-  _pvLoadPub();   // 발행 프로그램 로드 → 로드 후 자동 재렌더(앱과 동일 화면)
+  if(!PV_T.chal) _pvLoadPub();   // 발행 프로그램 로드 → 로드 후 자동 재렌더(앱과 동일 화면). 챌린지는 부모가 보낸 것만 그린다
   // 관리자 '꾸미기' 실시간 미리보기 — 부모창이 보낸 SECTIONS로 즉시 재렌더(새로고침 없음)
   window.addEventListener('message',function(e){
     if(e.origin!==location.origin) return;   // 같은 도메인(관리자 iframe 부모)만 허용
-    var d=e.data; if(!d||d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
+    var d=e.data; if(!d)return;
+    if(d.type==='bookstar_preview_chal'){ try{ _pvRenderChal(d.challenges,d.notices); }catch(err){} return; }
+    if(d.type!=='bookstar_preview'||!Array.isArray(d.sections))return;
     try{ _pvRender(d.sections); }catch(err){}
   });
 }
@@ -8283,7 +8307,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
