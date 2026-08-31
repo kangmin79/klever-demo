@@ -338,8 +338,9 @@ body.dark .ml-life-chk .ck{color:var(--gold);}
 .ml-arrow-r{right:-10px;}
 @media(max-width:760px){.ml-arrow{display:none;}}
 .cl-shelf{margin-bottom:34px;}
-/* 8/30: 챌린지가 큐레이션 스타일을 쓸 때 — 제목줄은 챌린지 머리글이 이미 그리므로 렌더러가 만든 빈 제목줄은 감춘다 */
-.cl-shelf .ml-head{display:none;}
+/* 8/30: 챌린지가 큐레이션 스타일을 쓸 때 — 제목줄은 챌린지 머리글이 이미 그리므로 렌더러가 만든 빈 제목줄은 감춘다.
+   8/31 수리: 이 규칙이 챌린지 머리글(.chal-head)까지 같이 감춰 모든 챌린지의 제목·종류·참여하기가 사라져 있었다 */
+.cl-shelf .ml-head:not(.chal-head){display:none;}
 .ml-hrow .cl-card{flex:0 0 150px;width:150px;}
 @media(max-width:760px){.ml-hrow .cl-card{flex:0 0 124px;width:124px;}}
 .ml-bk{flex:0 0 auto;width:130px;cursor:pointer;}
@@ -5399,7 +5400,8 @@ function chalTypeBadge(c){
 }
 // 챌린지 행 헤더(좌: 종류·제목·부제 / 우: 참여하기)
 function chalRowHead(c){
-  return `<div class="ml-head"><div>`
+  // 8/31: chal-head 는 "이건 진짜 챌린지 제목줄" 표시 — 스타일 렌더러가 만드는 빈 제목줄만 CSS로 감추기 위해 구분한다
+  return `<div class="ml-head chal-head"><div>`
     + `<div style="margin-bottom:7px">${chalTypeBadge(c)}</div>`
     + `<div class="ml-h-t">${esc(c.title)}</div><div class="ml-h-s">${chalSubHTML(c)}</div></div>`
     + chalJoinBtn(c,'chal-join') + `</div>`;
@@ -5411,7 +5413,7 @@ function chalBookCard(b,c){
   return `<div class="ml-bk" onclick="${click}">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div>${b.a?`<div class="ml-bk-a">${esc(b.a)}</div>`:''}${fmtTags(b)}</div>`;
 }
 /* 8/30: 챌린지 담긴 책을 사서가 고른 스타일로. 큐레이션과 같은 렌더러를 그대로 쓰되
-   제목줄(mlHead)은 chalRowHead가 이미 그리므로 빈 값으로 넘기고 CSS(.cl-shelf .ml-head)로 감춘다. */
+   제목줄(mlHead)은 chalRowHead가 이미 그리므로 빈 값으로 넘기고 CSS(.cl-shelf .ml-head:not(.chal-head))로 감춘다. */
 function chalStyleBody(st, books, c){
   const plain=()=>mlCarousel(`<div class="ml-hrow">${books.map(b=>chalBookCard(b,c)).join('')}</div>`);
   const F={ grid:mlGrid, mag:mlMag, grad:mlGrad, ai:mlAI, banner:mlBanner, new:mlNew, quote:mlQuote, swipe:mlSwipe, coll:mlColl };
@@ -8307,7 +8309,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
