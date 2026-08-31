@@ -1807,6 +1807,17 @@ async function ntSubmit(){
   _ntRepaint();
   await saveSections();   // 등록 = 학생 앱에 실제 반영(완료 알림도 여기서)
 }
+// 8/31 사장님 요청: '+ 카테고리 추가'를 목록 맨 아래에서 위로 올리고 이름을 바꾼다.
+//   만드는 방법 3가지(AI로 · 직접 · 안내형)를 화면 맨 위에 나란히 모아 한눈에 보이게 한다.
+function secAddBarHTML(){
+  return `<div class="nt-wrap">
+      <div class="nt-add" onclick="addSection()" title="책을 직접 골라 담는 큐레이션 칸을 만듭니다">
+        <span class="nt-add-ic">📚</span>
+        <span class="nt-add-x"><b>직접 큐레이션 만들기</b><span>고른 책으로 큐레이션 한 칸을 만들 수 있어요</span></span>
+        <span class="nt-add-p">만들기 +</span>
+      </div>
+    </div>`;
+}
 /* ── 안내 카드 만들기 바 + 폼 (두 화면 공용 마크업) ── */
 function ntBarHTML(){
   return `<div class="nt-wrap${_ntFormOpen?' on':''}">
@@ -2150,7 +2161,9 @@ function renderSettings(){
   renderAreaTabs();
   const list=SECTIONS.map((s,i)=>({s,i})).filter(o=>aOf(o.s)===curArea);
   // 8/29 사장님 요청: AI 큐레이션 카드 바로 아래 = 안내 카드 만들기 입구. 누르면 펴지고 다시 누르면 닫힌다.
+  // 8/31 사장님 요청: 그 사이에 '직접 큐레이션 만들기'(옛 '+ 카테고리 추가') — AI로 / 직접 / 안내형 순으로 나란히.
   el('secList').innerHTML=(SEC_LOAD_FAILED?`<div class="load-fail">칸을 서버에서 불러오지 못했어요. <span>지금 보이는 칸은 견본일 수 있어 저장이 막혀 있습니다 — 페이지를 새로고침한 뒤 다시 시도해 주세요.</span></div>`:'')
+   +secAddBarHTML()
    +ntBarHTML()
    +list.map((o,k)=>{
     const s=o.s, i=o.i, isFix=isFixed(s), vis=visOf(s), books=s.books||[];
@@ -2194,8 +2207,7 @@ function renderSettings(){
             <div class="db-t">${esc(b.title||b.t||'제목 미상')}</div>
           </div>`;}).join('')}
           <span class="deco-add" onclick="event.stopPropagation();secOpenPicker(${i})">+ 책<br>담기</span></div>`}
-  </div>`;}).join('')
-  +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="addSection()">+ 카테고리 추가</button>`;
+  </div>`;}).join('');   // (8/31) 맨 아래 '+ 카테고리 추가' 버튼은 위 '직접 큐레이션 만들기'로 옮겨 삭제
   // 8/14 사장님 수정요청: AI 큐레이션을 세계고전·한국고전에서도 — 영역별 문맥 설정 + 카드 제자리 복귀
   const aic=el('aiCurCard');
   if(aic){
