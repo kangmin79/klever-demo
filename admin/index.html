@@ -513,7 +513,7 @@ body.pv-open .main{max-width:none}
 .sec-panel input,.sec-panel select,.sec-panel textarea{cursor:auto}
 .sec-panel button,.sec-panel .deco-add,.sec-panel .deco-bk .rm{cursor:pointer}
 .sec-panel.dragging{opacity:.5;box-shadow:0 18px 44px rgba(0,0,0,.24);transform:scale(.99)}
-.sec-panel.pv-focus{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 6px 20px rgba(26,41,66,.1)}
+.sec-panel.pv-focus,.chal-panel.pv-focus{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 6px 20px rgba(26,41,66,.1)}
 .sec-panel.drag-over{outline:2.5px dashed var(--accent,#3a6ea5);outline-offset:3px;background:rgba(58,110,165,.07)}
 .sec-panel.drag-over .sec-drag::after{content:'여기로 이동';margin-left:4px;font-size:10.5px;color:var(--accent);font-weight:800}
 /* 학교 도서관 고정 칸 — 마우스 올리면 은은하게 떠오름(자동 카테고리 강조) */
@@ -1068,7 +1068,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <!-- 학생 화면 '독서 챌린지' 탭 미리보기 — 학생 앱은 챌린지 미리보기 모드가 없어(우리도서관은 iframe ?preview=1) 편집 중인 CHALLENGES 로 인라인 렌더 -->
         <aside class="settings-pv" id="chalPv">
           <div class="pv-phone"><div id="chalPvBody" class="cpv"></div></div>
-          <div class="pv-phone-cap">학생 앱 ‘독서 챌린지’ 탭 · 편집 즉시 반영 (저장 전 모습)</div>
+          <div class="pv-phone-cap" id="chalPvCap">학생 앱 ‘독서 챌린지’ 탭 · 편집 즉시 반영 (저장 전 모습)</div>
         </aside>
       </div>
     </section>
@@ -1871,6 +1871,7 @@ function chalCombMove(key,dir){
   const j=k+dir; if(k<0||j<0||j>=items.length) return;
   const t=items[k]; items[k]=items[j]; items[j]=t;
   if(!_applyChalOrder(items)) return;
+  _chalPvFocus=null;   // 자리를 옮겼으니 미리보기는 전체로 — 어디로 갔는지 보이게 (우리 도서관 secMove와 같은 규칙)
   renderChallenges();
 }
 function delSection(i){readSecInputs();
@@ -1916,7 +1917,7 @@ function _applyAreaOrder(items){
 function openReorder(mode){ _reMode=(mode==='chal')?'chal':'sec'; if(_reMode==='chal') readChalInputs(); else readSecInputs();
   const h=document.querySelector('#reOv .sec-h h3'); if(h) h.textContent=_reMode==='chal'?'챌린지 순서 바꾸기':'칸 순서 바꾸기';
   renderReorderList(); el('reOv').classList.add('on'); }
-function closeReorder(){ el('reOv').classList.remove('on'); if(_reMode==='chal') renderChallenges(); else renderSettings(); }
+function closeReorder(){ el('reOv').classList.remove('on'); if(_reMode==='chal'){ _chalPvFocus=null; updateChalPvCap(); renderChallenges(); } else renderSettings(); }
 function renderReorderList(){
   const items=_areaSecs();
   el('reList').innerHTML=items.map((o,k)=>{
@@ -2880,7 +2881,7 @@ function renderChallenges(){
         <div><div class="flabel" style="font-weight:500">퀴즈 유형</div><select class="cur-inp" id="ch_qt_${i}" onchange="readChalInputs();renderChallenges()"><option value="">선택</option>${CH_QTYPES.map(t=>`<option ${m.quizType===t?'selected':''}>${t}</option>`).join('')}</select></div>
         <div><div class="flabel" style="font-weight:500">권당 문항 수</div><div class="qn" style="margin-top:2px"><span class="on">10문제 고정</span></div></div>
       </div></div>`:'';
-    return `<div class="panel" style="margin-bottom:12px">
+    return `<div class="panel chal-panel${_chalPvFocus===i?' pv-focus':''}" style="margin-bottom:12px" data-ci="${i}" onclick="chalPvFocus(${i})">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:11px;font-weight:800;color:var(--light)">챌린지 ${i+1}</span>
         <button class="btn-ghost" style="padding:5px 10px;${c.featured?'background:#fff7e6;border-color:#f0c674;color:#b8860b;font-weight:800':''}" onclick="chalSetFeatured(${i})" title="학생 앱 '독서 챌린지' 상단 '이달의 챌린지'로 크게 노출됩니다 (하나만 지정)">${c.featured?'⭐ 이달의 챌린지':'☆ 이달의로 지정'}</button>
@@ -2937,6 +2938,25 @@ function chalPvClose(){ const p=el('chalPv'); if(!p) return; p.classList.remove(
 function toggleChalPreview(){ const p=el('chalPv'); if(p&&p.classList.contains('on')) chalPvClose(); else chalPvOpen(); }
 function chalPvAutoOpen(){ if(window.innerWidth>=1180){ const p=el('chalPv'); if(p&&!p.classList.contains('on')) chalPvOpen(); } }   // 우리도서관 autoOpenPreview 와 동일 기준
 function chalPvSync(){ const p=el('chalPv'); if(!p||!p.classList.contains('on')) return; clearTimeout(_chalPvTimer); _chalPvTimer=setTimeout(chalPvRender,150); }
+// ── 좌측에서 편집 중인 챌린지 → 우측 미리보기에 그 챌린지만 (우리 도서관 pvFocusSec 와 같은 방식, 8/31 사장님 요청) ──
+// 자리(index)로 기억한다. 순서가 바뀌거나 추가·삭제되면 가리키는 대상이 달라지므로 그때는 전체로 되돌린다.
+let _chalPvFocus=null;
+function chalPvFocus(i){
+  // 입력칸·버튼을 누른 것은 '카드를 골랐다'가 아니다 (우리 도서관과 같은 판단 — 제목에 커서만 놔도 좁아지던 문제 방지)
+  try{ const t=window.event&&window.event.target; if(t&&/^(INPUT|TEXTAREA|SELECT|BUTTON|LABEL|OPTION)$/.test(t.tagName)) return; }catch(e){}
+  if(_chalPvFocus!==i){
+    _chalPvFocus=i;
+    document.querySelectorAll('#chalList .chal-panel,.chal-panel').forEach(p=>p.classList.toggle('pv-focus',+p.getAttribute('data-ci')===i));
+    updateChalPvCap();
+  }
+  chalPvRender();
+}
+function chalPvShowAll(){ _chalPvFocus=null; document.querySelectorAll('.chal-panel').forEach(p=>p.classList.remove('pv-focus')); updateChalPvCap(); chalPvRender(); }
+function updateChalPvCap(){ const c=el('chalPvCap'); if(!c) return;
+  const f=_chalPvFocus!=null?CHALLENGES[_chalPvFocus]:null;
+  if(f) c.innerHTML=`<b style="color:var(--text)">${esc(f.title||'선택한 챌린지')}</b>만 보는 중 · <a onclick="chalPvShowAll()" style="cursor:pointer;color:var(--accent);font-weight:700;text-decoration:underline">전체 보기</a>`;
+  else c.textContent='학생 앱 ‘독서 챌린지’ 탭 · 편집 즉시 반영 (저장 전 모습)';
+}
 const cpvMD=d=>{ if(!d) return ''; const p=String(d).split('-'); return p.length>=3?(+p[1])+'/'+(+p[2]):''; };
 const cpvDday=to=>{ if(!to) return ''; const n=Math.ceil((new Date(to+'T23:59:59')-new Date())/86400000); return n>0?'D-'+n:''; };   // 학생 앱 ddayText와 같은 식(종료 당일=D-1)
 const cpvMission=c=>{ const m=chalMission(c); const a=CH_MISSIONS.filter(x=>m[x.k]).map(x=>x.k==='quiz'?'퀴즈 10문항':x.t); return a.join(' · ')||'-'; };
@@ -2949,16 +2969,20 @@ const cpvCover=(b,fallbackT)=>{ const cv=b&&(b.cover||(b.id&&CLS_COVER[b.id]))||
 function chalPvRender(){
   const host=el('chalPvBody'); if(!host) return;
   readChalInputs();
-  const list=CHALLENGES.slice();
+  // 한 챌린지만 보기 중이면 그것만 그린다. 삭제 등으로 사라졌으면 전체로 복귀.
+  if(_chalPvFocus!=null && !CHALLENGES[_chalPvFocus]){ _chalPvFocus=null; updateChalPvCap(); }
+  const focused=_chalPvFocus!=null?CHALLENGES[_chalPvFocus]:null;
+  const list=focused?[focused]:CHALLENGES.slice();
   const heroC=list.find(c=>c.featured)||null;              // 사서가 '이달의 챌린지'로 지정한 하나만 히어로(자동 히어로 없음)
   const rows=heroC?list.filter(c=>c!==heroC):list;
   let out=`<div class="cpv-nav"><span>우리 도서관</span><span class="on">독서 챌린지</span><span>세계고전</span><span>International</span></div>`
-    +`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하며 내 기록을 남겨요</div></div>`;   // 8/17 학생 앱 탭 설명 2줄 미러 (8/29 별 폐지 문구 반영)
+    +(focused?'':`<div class="cpv-intro"><div class="cpv-intro-m">사서가 여는 챌린지에 참가해, 다양한 방법으로 독서 활동을 해요</div><div class="cpv-intro-s">챌린지마다 정해진 미션(소감·질문·서평·퀴즈)을 하며 내 기록을 남겨요</div></div>`);   // 8/17 학생 앱 탭 설명 2줄 미러 (8/29 별 폐지 문구 반영). 한 챌린지만 볼 땐 탭 안내는 생략
   // 8/29: 안내 카드는 chal_pos 자리(앞에 오는 챌린지 수)에 끼워 넣는다 — 학생 앱과 같은 규칙. 히어로로 뽑힌 챌린지는 맨 앞으로 가므로 그 앞 카드는 히어로 앞에.
   const ntHTML=s=>`<div class="cpv-notice"><div class="cpv-notice-k">안내</div>${s.title?`<div class="cpv-notice-t">${esc(s.title)}</div>`:''}<div class="cpv-notice-b">${esc(s.subtitle||'')}</div></div>`;
   let ntBefore={}, ntTail='';
   const D=heroC?[heroC,...rows]:rows;   // 화면 순서(히어로 맨 위) — chal_pos 기준
-  try{ ntReadInputs(); const nts=SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice'); const n=D.length;
+  try{ if(focused) throw 0;   // 한 챌린지만 볼 땐 안내 카드(자리 기준)는 끼우지 않는다
+    ntReadInputs(); const nts=SECTIONS.filter(s=>aOf(s)===CHAL_AREA&&(s.style||'')==='notice'); const n=D.length;
     nts.forEach(s=>{ const p=Math.min(Math.max(s.chal_pos==null?0:+s.chal_pos,0),n); if(p>=n){ ntTail+=ntHTML(s); } else { const key=String(D[p].id||('#'+p)); ntBefore[key]=(ntBefore[key]||'')+ntHTML(s); } }); }catch(e){}
   const ntFor=c=>ntBefore[String(c.id||('#'+D.indexOf(c)))]||'';
   if(!list.length){ host.innerHTML=out+ntTail+`<div class="cpv-empty">진행 중인 챌린지가 아직 없어요.<br>사서가 챌린지를 발행하면 여기에 나타납니다.</div>`; return; }
@@ -2973,8 +2997,10 @@ function chalPvRender(){
         <span class="cpv-hbtn">${heroC.mission&&heroC.mission.autoJoin?'자동 참여':'참여하기 →'}</span></div>
       <div class="cpv-stage"><div class="cpv-side">독서 챌린지</div><div class="cpv-shadow"></div><div class="cpv-book3d">${cpvCover(b,heroC.title)}</div></div>
     </div>`; }
-  out+=`<div class="cpv-lhead">진행 중인 챌린지 <span class="cpv-ltag">우리 학교 사서 운영</span></div>`;
-  if(!rows.length) out+=`<div class="cpv-empty" style="padding:22px 0">‘이달의 챌린지’ 말고 다른 챌린지가 없어요.</div>`;
+  if(!focused){   // 한 챌린지만 볼 땐 목록 머리글·'없어요' 안내는 군더더기
+    out+=`<div class="cpv-lhead">진행 중인 챌린지 <span class="cpv-ltag">우리 학교 사서 운영</span></div>`;
+    if(!rows.length) out+=`<div class="cpv-empty" style="padding:22px 0">‘이달의 챌린지’ 말고 다른 챌린지가 없어요.</div>`;
+  }
   rows.forEach(c=>{ const off=!cpvLive(c), isC=c.type==='고전챌린지', books=c.books||[];
     out+=ntFor(c);
     out+=`<div class="cpv-row${off?' off':''}">${off?`<span class="cpv-off">${cpvOffWhy(c)}</span>`:''}
@@ -2986,10 +3012,10 @@ function chalPvRender(){
   host.innerHTML=out+ntTail;
 }
 // 8/29 리뷰 F11: 미션 0개로 만들면 저장이 거부되는데 그 말이 없었다 → 한 줄 소감을 기본으로 켜 둔다(끄면 됨)
-function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',style:'row',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});renderChallenges();}
+function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',style:'row',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});_chalPvFocus=0;updateChalPvCap();renderChallenges();}   // 새로 만든 챌린지로 시선이 가게(맨 앞에 들어간다)
 function chalDel(i){readChalInputs();const c=CHALLENGES[i]; if(!c) return;
   if(!confirm(`‘${c.title||'제목 없음'}’ 챌린지를 지울까요? 저장하면 학생 앱에서도 사라지고 참여 기록도 이어지지 않아요.`)) return;   // 8/29 리뷰: 한 번 클릭에 통째 삭제 방지
-  CHALLENGES.splice(i,1);renderChallenges();}
+  CHALLENGES.splice(i,1);_chalPvFocus=null;updateChalPvCap();renderChallenges();}
 function chalSetFeatured(i){readChalInputs();const on=!CHALLENGES[i].featured;CHALLENGES.forEach(c=>c.featured=false);CHALLENGES[i].featured=on;renderChallenges();}   // 라디오식: 하나만 '이달의 챌린지'(다시 누르면 해제)
 function chalToggleM(i,k){readChalInputs();const c=CHALLENGES[i];if(k==='quiz'&&c.type==='고전챌린지')return;
   const def=CH_MISSIONS.find(x=>x.k===k); if(def&&def.soon)return;   // 준비 중 미션은 켤 수 없음
