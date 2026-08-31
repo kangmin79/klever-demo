@@ -26,7 +26,9 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!-- 홈 화면에 추가(A2HS) — 아이폰은 홈 화면에 설치한 경우에만 웹푸시 알림이 온다(iOS 16.4+ 제약) -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#131a2e">
+<!-- 주소창 색 = 헤더 색(밝은 테마 기준). 다크로 바꾸면 applyReaderPrefs()가 여기를 고쳐 쓴다.
+     8/31: 남색 고정이라 밝은 화면인데 브라우저 위쪽만 검게 보이던 것 수리 -->
+<meta name="theme-color" content="#f7f6f1">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://gkujptyfrzqrjrvovbnc.supabase.co">
 <!-- dynamic-subset: 통짜 2.06MB woff2 대신 unicode-range 분할(실사용 글리프만 다운로드, ~1.5MB 절감). font-family 이름 동일 -->
@@ -3629,6 +3631,10 @@ function applyReaderPrefs(){
   document.body.classList.remove('dark','sepia');
   if(readerPrefs.theme === 'dark') document.body.classList.add('dark');
   else if(readerPrefs.theme === 'sepia') document.body.classList.add('sepia');
+  // 브라우저 주소창 색을 지금 헤더 색과 맞춘다 (.header 밝은 rgba(247,246,241) / body.dark .header rgba(15,23,42))
+  // 세피아는 헤더 override 가 없어 밝은 색 그대로다 — 일부러 light 와 같은 값을 준다
+  const _tcMeta = document.querySelector('meta[name="theme-color"]');
+  if(_tcMeta) _tcMeta.setAttribute('content', readerPrefs.theme === 'dark' ? '#0f172a' : '#f7f6f1');
   document.querySelectorAll('.reader-btn[data-theme]').forEach(b=>{
     b.classList.toggle('on', b.dataset.theme === readerPrefs.theme);
   });
@@ -8347,7 +8353,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
