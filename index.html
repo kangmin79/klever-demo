@@ -1696,13 +1696,25 @@ body.dark .ag-card{box-shadow:0 1px 2px rgba(0,0,0,.2), 0 12px 32px -22px rgba(0
 body.dark .ag-grade{color:var(--gold);}
 .ag-pstat{background:var(--bg-card);border:1.5px solid color-mix(in srgb,var(--border) 75%,transparent);box-shadow:0 1px 2px rgba(26,41,66,.03);padding:14px 4px;}
 .ag-pstat b{color:var(--primary);letter-spacing:-.5px;}
-/* 박스 테두리에 카테고리 색 은은하게 */
-.ag-pstat.s-done{border-color:rgba(58,110,165,.40);}
-.ag-pstat.s-sg{border-color:rgba(31,157,107,.40);}
-.ag-pstat.s-q{border-color:rgba(212,169,59,.52);}
-.ag-pstat.s-rv{border-color:rgba(193,59,126,.38);}
-.ag-pstat.s-ch{border-color:rgba(122,90,47,.42);}
-.ag-pstat.s-cl{border-color:rgba(31,157,107,.40);}
+/* 8/31 사장님 "밋밋하다": 카테고리 색이 1.5px 테두리에만 있어 흰 카드 위에서 거의 안 보였고,
+   숫자는 여섯 칸 모두 같은 색이라 색 구분이 아무 일도 안 하고 있었다.
+   쓰던 팔레트 그대로 배경과 숫자에 실어 여섯 칸이 실제로 구분되게 한다(새 색 도입 없음). */
+.ag-pstat.s-done{border-color:rgba(58,110,165,.42);background:rgba(58,110,165,.075);}
+.ag-pstat.s-sg{border-color:rgba(31,157,107,.42);background:rgba(31,157,107,.075);}
+.ag-pstat.s-q{border-color:rgba(212,169,59,.55);background:rgba(212,169,59,.105);}
+.ag-pstat.s-rv{border-color:rgba(193,59,126,.40);background:rgba(193,59,126,.072);}
+.ag-pstat.s-ch{border-color:rgba(122,90,47,.44);background:rgba(122,90,47,.075);}
+.ag-pstat.s-cl{border-color:rgba(31,157,107,.42);background:rgba(31,157,107,.075);}
+.ag-pstat.s-done b{color:#3a6ea5;}
+.ag-pstat.s-sg b,.ag-pstat.s-cl b{color:#1a8a5e;}
+.ag-pstat.s-q b{color:#a8801f;}
+.ag-pstat.s-rv b{color:#b53973;}
+.ag-pstat.s-ch b{color:#7a5a2f;}
+body.dark .ag-pstat.s-done b{color:#7fb0e0;}
+body.dark .ag-pstat.s-sg b,body.dark .ag-pstat.s-cl b{color:#46c98e;}
+body.dark .ag-pstat.s-q b{color:var(--gold);}
+body.dark .ag-pstat.s-rv b{color:#e585b8;}
+body.dark .ag-pstat.s-ch b{color:#c9a06a;}
 /* 아바타 골드 링 */
 .ag-pav{box-shadow:inset 0 0 0 1px var(--border),0 0 0 3px rgba(212,169,59,.14);}
 .ag-tile{border:1px solid color-mix(in srgb,var(--border) 75%,transparent);}
@@ -8335,7 +8347,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260831m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
