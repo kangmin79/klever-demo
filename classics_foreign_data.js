@@ -1673,7 +1673,7 @@ const BOOKS_CLASSICS_FOREIGN =
  },
  {
   "id": "gb-83",
-  "title": "From the Earth to the moon; and, round the moon",
+  "title": "From the Earth to the Moon",
   "author": "쥘 베른",
   "category": "해외문학",
   "period": "해외",
@@ -1687,6 +1687,7 @@ const BOOKS_CLASSICS_FOREIGN =
   "progress": 0,
   "coverSrc": "./covers/gb-83.webp"
  },
+ {"id": "gb-83b", "title": "Round the Moon", "author": "쥘 베른", "category": "해외문학", "period": "해외", "locale": "foreign", "intl": false, "hasBody": true, "hasTrans": true, "src": "Gutenberg", "participants": 58, "reviews": 4, "progress": 0, "coverSrc": "./covers/gb-83b.webp"},
  {
   "id": "gb-110",
   "title": "Tess of the d'Urbervilles: A Pure Woman",
