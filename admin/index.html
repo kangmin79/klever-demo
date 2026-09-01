@@ -1258,7 +1258,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           </div>
           <div id="secList"></div>
           <div class="note">※ 스타일 = 학생 앱에서 그 칸의 책을 <b>보여주는 방식</b>입니다. 같은 책 목록도 스타일에 따라 다르게 표시돼요:<br>
-            <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>요약 카드</b>·<b>AI 카드</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>·<b>책 속 한 문장</b>·<b>스와이프 카드</b>·<b>테마 컬렉션</b>. 대출 랭킹·인기 전자책·신착은 자동 집계 고정 칸이라 책을 담지 않고, <b>📢 안내 카드</b>는 책 없이 글만 담습니다.<br>
+            <b>히어로</b>(대표 1권 큰 카드)·<b>가로 표지 목록</b>·<b>표지 그리드</b>(서가)·<b>매거진</b>·<b>와이드 띠배너</b>·<b>신간 입고</b>. 대출 랭킹·인기 전자책·신착은 자동 집계 고정 칸이라 책을 담지 않고, <b>📢 안내 카드</b>는 책 없이 글만 담습니다.<br>
             ※ 칸 순서는 카드의 <b>▲ 위로 · ▼ 아래로</b>나 상단 <b>↕ 순서 바꾸기</b>로 정합니다. <b>저장</b>(카드의 <b>등록</b>도 같은 저장)을 눌러야 학생 앱에 반영되고, 이때 <b>모든 영역의 칸이 함께</b> 저장됩니다.</div>
         </div>
         <aside class="settings-pv" id="livePv">
@@ -1649,11 +1649,14 @@ async function rtUpload(file){
 }
 function calcStatus(from,to){const t=new Date().toISOString().slice(0,10);if(from&&t<from)return '예정';if(to&&t>to)return '종료';return '진행중';}
 // 우리도서관 카테고리(app.html millieHTML와 동일) — 관리자가 추가·삭제·편집
+// 9/1 사장님 요청: 화면에서 약속한 대로 안 나오는 스타일 5개를 골라 쓰는 목록에서 뺀다(우리도서관·독서챌린지·세계고전·한국고전 공통).
+//   요약 카드(15분)·AI 카드 = 15분 요약, AI와 함께 읽기를 제공하지 않음 / 책 속 한 문장 = 문장이 아니라 제목이 나옴
+//   스와이프 카드 = 넘겨지지 않음 / 테마 컬렉션 = 묶어만 주고 펼쳐지지 않음
+//   ※ 지금 쓰는 칸·챌린지 중 이 5개를 쓰는 것은 없음(2026-09-01 실측) — 학생 화면이 바뀌는 칸은 없다.
 const STYLES=[
   ['hero','히어로 (대표 1권)'],['row','가로 표지 목록'],['rank','랭킹 (대출 자동)'],
-  ['grad','요약 카드 (15분)'],['ai','AI 카드'],
   ['grid','표지 그리드 (서가)'],['mag','매거진'],['banner','와이드 띠배너'],
-  ['new','신간 입고'],['quote','책 속 한 문장'],['swipe','스와이프 카드'],['coll','테마 컬렉션'],
+  ['new','신간 입고'],
   ['notice','안내 카드 (글만)']   // 8/29 사장님 요청: 책 없이 공지·안내만 담는 칸
 ];
 // 8/29: 책을 담지 않는 스타일 — 편집 화면에서 '담긴 책'을 숨기고 본문 칸을 보여준다
@@ -1722,8 +1725,7 @@ let SECTIONS=[
   {area:'우리도서관',slot:'ebookrank',title:'세명대 인기 전자책',subtitle:'전자도서관에서 많이 빌린 전자책',style:'ebookrank',visible:true,books:[]},
   {area:'우리도서관',slot:'newarr_p',title:'세명대 종이책 신착',subtitle:'새로 들어온 종이책',style:'newlive_p',visible:true,books:[]},
   {area:'우리도서관',slot:'newarr_e',title:'세명대 전자책 신착',subtitle:'새로 들어온 전자책',style:'newlive_e',visible:true,books:[]},
-  {area:'우리도서관',slot:'grad',title:'하루 15분, 핵심만',subtitle:'책 한 권의 핵심을 15분만에',style:'grad',books:[]},
-  {area:'우리도서관',slot:'ai',title:'AI와 함께 읽는 책',subtitle:'책의 핵심을 AI가 찾아줘요',style:'ai',books:[]},
+  // 9/1: '요약 카드(15분)'·'AI 카드' 견본 칸 삭제 — 그 스타일을 골라 쓸 수 없게 뺐으므로 견본에도 남기지 않는다
 ];
 let ORIG_SLOTS=SECTIONS.map(s=>s.slot);
 let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
@@ -1818,6 +1820,17 @@ function secAddBarHTML(){
       </div>
     </div>`;
 }
+// 9/1 사장님 요청: 독서 챌린지도 같은 자리로 — 맨 아래 '+ 새 챌린지 추가' 버튼을 화면 위로 올리고 이름을 바꾼다.
+//   AI로 / 직접 / 안내형 순서는 우리 도서관 꾸미기와 동일.
+function chalAddBarHTML(){
+  return `<div class="nt-wrap">
+      <div class="nt-add" onclick="chalAdd()" title="책을 직접 골라 담는 챌린지를 만듭니다">
+        <span class="nt-add-ic">📚</span>
+        <span class="nt-add-x"><b>직접 챌린지 만들기</b><span>고른 책으로 챌린지 한 칸을 만들 수 있어요</span></span>
+        <span class="nt-add-p">만들기 +</span>
+      </div>
+    </div>`;
+}
 /* ── 안내 카드 만들기 바 + 폼 (두 화면 공용 마크업) ── */
 function ntBarHTML(){
   return `<div class="nt-wrap${_ntFormOpen?' on':''}">
@@ -1856,7 +1869,8 @@ function renderChalNotices(){
   const host=el('ntListChal'); if(!host) return;
   ntReadInputs();   // 8/29 리뷰 F1: 다시 그리기 전에 화면의 입력값을 먼저 되받는다 — 안 그러면 챌린지 쪽 버튼만 눌러도 쓰던 안내 글이 사라진다
   // 8/29 사장님: 왼쪽 편집 목록도 오른쪽 화면과 같은 순서로 — 안내 카드는 챌린지 목록(renderChallenges) 안에 제자리로 섞여 그려진다. 여기엔 만들기 바만.
-  host.innerHTML=ntBarHTML();
+  // 9/1: 만드는 방법 3가지(AI로 · 직접 · 안내형)를 우리 도서관과 같은 순서로 화면 맨 위에 나란히.
+  host.innerHTML=chalAddBarHTML()+ntBarHTML();
 }
 // 안내 카드 한 장(편집용). pos/total = 챌린지와 섞인 전체 목록에서의 자리 — ▲▼가 챌린지 사이로 움직인다
 function ntCardHTML(s,pos,total){
@@ -2407,14 +2421,17 @@ function aicSetContext(ctx){
   AIC_CTX=ctx;
   const sub=document.querySelector('#aiCurCard .aic-bar-t span');
   const addBtn=document.querySelector('#aiCurCard .aic-addbtn');
+  // 9/1 사장님 요청: 독서 챌린지 화면에서는 만드는 것이 큐레이션이 아니라 챌린지 — 바 제목까지 그 화면 말로 바꾼다.
+  const barT=document.querySelector('#aiCurCard .aic-bar-t b');
   const txt={
-    lib:['주제만 적으면 우리 도서관 소장도서로 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
-    foreign:['주제만 적으면 북스타 해외 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
-    kr:['주제만 적으면 북스타 한국 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →'],
-    chal:['주제만 적으면 소장도서로 챌린지 초안을 뚝딱 만들어 드려요','이 큐레이션으로 챌린지 추가 →']
+    lib:['주제만 적으면 우리 도서관 소장도서로 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →','AI로 큐레이션 만들기'],
+    foreign:['주제만 적으면 북스타 해외 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →','AI로 큐레이션 만들기'],
+    kr:['주제만 적으면 북스타 한국 고전에서 골라 한 칸을 뚝딱 만들어 드려요','이 큐레이션을 칸으로 추가 →','AI로 큐레이션 만들기'],
+    chal:['주제만 적으면 소장도서로 챌린지 초안을 뚝딱 만들어 드려요','이 큐레이션으로 챌린지 추가 →','AI로 챌린지 만들기']
   }[ctx]||[];
   if(sub&&txt[0]) sub.textContent=txt[0];
   if(addBtn&&txt[1]) addBtn.textContent=txt[1];
+  if(barT&&txt[2]) barT.textContent=txt[2];
   const fr=el('aicFmtRow'); if(fr) fr.style.display=(ctx==='foreign'||ctx==='kr')?'none':'';   // 고전 풀은 형태 개념 없음
 }
 // 8/19 책 형태(both|ebook|paper) — AI 큐레이션·책담기 통합검색이 같은 값을 공유(사서가 한 번 고르면 유지)
@@ -2934,7 +2951,7 @@ function renderChallenges(){
         <span class="deco-add" onclick="secOpenPicker(${i},'chal')">+ 책 담기</span></div>
     </div>`;
   }); return _comb.map((it,pos)=>(it.style||'')==='notice'?ntCardHTML(it,pos,_comb.length):cards[CHALLENGES.indexOf(it)]).join(''); })()
-  +`<button class="btn-ghost" style="width:100%;border-style:dashed;padding:13px" onclick="chalAdd()">+ 새 챌린지 추가</button>`;
+  ;   // 9/1: 맨 아래 '+ 새 챌린지 추가' 버튼은 위 '직접 챌린지 만들기'로 옮겨 삭제
   // 8/14 사장님 수정요청: 독서 챌린지에도 AI 큐레이션 카드 — 이 페이지 상단 슬롯으로 이동
   const _slot=el('aicSlotChal');
   if(_slot){ aicMount(_slot); const c=el('aiCurCard'); if(c){ c.style.display=''; aicSetContext('chal'); aicLoadUsage(); } }
@@ -3011,7 +3028,7 @@ function chalPvRender(){
   chalPvPost();
 }
 // 8/29 리뷰 F11: 미션 0개로 만들면 저장이 거부되는데 그 말이 없었다 → 한 줄 소감을 기본으로 켜 둔다(끄면 됨)
-function chalAdd(){readChalInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',style:'row',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});_chalPvFocus=0;updateChalPvCap();renderChallenges();}   // 새로 만든 챌린지로 시선이 가게(맨 앞에 들어간다)
+function chalAdd(){readChalInputs();ntReadInputs();CHALLENGES.unshift({id:null,type:'소장챌린지',style:'row',title:'새 챌린지',detail:'',from:ymd(new Date()),to:ymd(new Date(Date.now()+30*86400000)),mission:{reward:'draw',quiz:false,quizN:10,oneline:true},books:[]});_chalPvFocus=0;updateChalPvCap();renderChallenges();}   // 새로 만든 챌린지로 시선이 가게(맨 앞에 들어간다)
 function chalDel(i){readChalInputs();const c=CHALLENGES[i]; if(!c) return;
   if(!confirm(`‘${c.title||'제목 없음'}’ 챌린지를 지울까요? 저장하면 학생 앱에서도 사라지고 참여 기록도 이어지지 않아요.`)) return;   // 8/29 리뷰: 한 번 클릭에 통째 삭제 방지
   CHALLENGES.splice(i,1);_chalPvFocus=null;updateChalPvCap();renderChallenges();}

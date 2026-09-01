@@ -2573,6 +2573,9 @@ body.dark .hwc-loan{color:#c5a85e;}body.dark .hwc-loan b{color:#d9bd72;}
   #hwcBubble{bottom:calc(78px + env(safe-area-inset-bottom));right:14px;}
   /* 8/14 사장님 수정요청: 별이 클릭 즉시 전체화면 — 참나루 헤더까지 덮는다(z-index 100 위) */
   #hwcPanel{top:0;bottom:0;right:0;left:0;width:100%;max-width:100%;height:100dvh;max-height:100dvh;border-radius:0;padding-bottom:env(safe-area-inset-bottom);z-index:210;}
+  /* 9/1 사장님 지적: 폰에서 별이가 찾아 준 책을 눌러도 상세가 안 열리던 것.
+     실제로는 열렸지만 별이 전체화면(z-index 210)이 상세창(#lcDetail z-index 200)을 덮고 있었다. 상세를 위로. */
+  #lcDetail{z-index:220;}
 }
 /* ── 추가 칸 스타일 (꾸미기 신규 템플릿) ── */
 .ml-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px;}
@@ -6251,9 +6254,11 @@ function mlRank(t,s,books,live){
 function mlGrad(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_GRADS[i%ML_GRADS.length];return `<div class="ml-gc" style="background:linear-gradient(160deg,${g[0]},${g[1]})" onclick="libDetail('${b.isbn}')"><div class="ml-gc-k">감상 Point</div><div class="ml-gc-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-gc-cv',b)}<div class="ml-gc-f">${esc(cleanT(b.t))} · 15분 요약</div></div>`;}).join('')}</div>`)}</div>`;}
 function mlAI(t,s,books){return `<div>${mlHead(t,s)}${mlCarousel(`<div class="ml-hrow">${books.map((b,i)=>{const g=ML_DARK[i%ML_DARK.length];return `<div class="ml-ac" style="background:linear-gradient(160deg,${g[0]},${g[1]})"><div class="ml-ac-k">✦ 이 책의 질문</div><div class="ml-ac-h">${esc(firstSent(b.description)||cleanT(b.t))}</div>${mlcv('ml-ac-cv',b)}<button class="ml-ac-btn" onclick="nav('airec')">🤖 AI와 함께 읽기</button></div>`;}).join('')}</div>`)}</div>`;}
 // 표지 그리드(서가)
-function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>isCls(b)?clCard(clOf(b),{krLang:_clLang}):`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div></div>`).join('')}</div></div>`;}
-// 매거진
-function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">EDITOR&#39;S PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(authorRich(b))}</div></div></div>`).join('')}</div>`;}
+// 9/1 사장님 지적: 표지 아래에 전자책·종이책이 안 보였다 — 다른 선반(mlRow·mlRank·mlNew)과 같이 fmtTags를 붙인다.
+//   "지금 바로 읽을 수 있나"는 학생이 표지 다음으로 궁금해하는 것이라 디자인보다 앞선다.
+function mlGrid(t,s,books){return `<div>${mlHead(t,s)}<div class="ml-grid">${books.map(b=>isCls(b)?clCard(clOf(b),{krLang:_clLang}):`<div class="ml-gd" onclick="libDetail('${b.isbn}')">${mlcv('ml-gd-cv',b)}<div class="ml-gd-t">${esc(cleanT(b.t))}</div>${fmtTags(b)}</div>`).join('')}</div></div>`;}
+// 매거진 — 9/1 사장님 요청: EDITOR'S PICK → LIBRARY PICK(고른 주체는 편집자가 아니라 우리 도서관)
+function mlMag(t,s,books){return `<div>${mlHead(t,s)}${books.slice(0,3).map((b,i)=>`<div class="ml-mg" onclick="libDetail('${b.isbn}')">${mlcv('ml-mg-cv',b)}<div class="ml-mg-x"><div class="ml-mg-k">LIBRARY PICK</div><div class="ml-mg-h">${esc(cleanT(b.t))}</div><div class="ml-mg-d">${esc(firstSent(b.description)||'')} ${esc(authorRich(b))}</div>${fmtTags(b)}</div></div>`).join('')}</div>`;}
 // 와이드 띠배너(대표 1권)
 function mlBanner(t,s,books){const b=books[0]||{};return `<div>${mlHead(t,s)}<div class="ml-bn" onclick="libDetail('${b.isbn}')">${mlcv('ml-bn-cv',b)}<div class="ml-bn-x"><div class="ml-bn-k">BOOK OF THE MONTH</div><div class="ml-bn-h">${esc(firstSent(b.description)||cleanT(b.t))}</div><div class="ml-bn-a">${esc(cleanT(b.t))} · ${esc(authorRich(b))}</div></div></div></div>`;}
 // 신간 입고
@@ -8363,7 +8368,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260831p';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260901a';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260827a';   // 8/27 목차 수리(35권) 반영
@@ -11747,7 +11752,7 @@ async function usChatSend(text){
     if(d.intent==='books' && d.ready!==false){
       // 책 의도 확정 → 짧은 확인 후 세명대 실소장 추천 생성
       US_CHAT.push({role:'assistant', content:d.reply||'좋아요, 골라볼게요 ✨'});
-      await usChatRecommend(d.refinedTopic||text, '');
+      await usChatRecommend(byeoliTopicOf(d.refinedTopic, text), '', text);   // text = 학생이 친 말 그대로(다듬은 주제로 못 찾을 때 재검색용)
       return;
     }
     // 운영정보 답변 / 잡담 안내 / 책 의도지만 모호(되묻기) → 별이 답변 + (운영정보면)도서관 링크 + 빠른답변 칩
@@ -11774,11 +11779,11 @@ function findToCand(c){
     _material:c.material||'book', sim:c.similarity,
   };
 }
-async function usChatRecommend(topic, subtitleHint){
+async function usChatRecommend(topic, subtitleHint, rawWords){
   US_CHAT_BUSY=true; usChatRender();
   try{
     // 통합 책검색(전자책 curate + 종이/논문 find + 하이브리드 키워드) — 플로팅 위젯과 동일 엔진
-    const fr=await byeoliFindBooks(topic, 'main');
+    const fr=await byeoliFindBooks(topic, 'main', true, rawWords);
     US_CHAT_BUSY=false;
     if(fr.offtopic){
       US_CHAT.push({role:'assistant', content:fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'});
@@ -11816,7 +11821,19 @@ let US_CLICKMAP={};   // isbn→후보(현 검색결과). 카드 클릭 시 byeo
 // 5소스 병렬호출 + RRF 융합 + 측정훅은 모두 서버(byeoli-search)가 수행. 클라는 호출 + 개인화 + 렌더만.
 // (구 *ToCand 매퍼·인라인 병합 로직은 서버로 이전됨. findToCand 등은 호환 위해 남겨둠 = 죽은 코드)
 // 개인화(학과·관심·읽은책)는 북스타 로컬 신호라 클라에 유지 — 서버 RRF 위에 얹는다.
-async function byeoliFindBooks(topic, surface, wantAnswer){
+// 9/1 사장님 지적('오디세이' 통합검색 48권 vs 별이 0건)의 진짜 원인:
+//   별이 두뇌가 학생이 친 말 뒤에 짐작을 덧붙인다 — '오디세이' → '오디세이 - 고전 서사시' / '오디세이 - SF 소설'.
+//   그 덧붙임이 제목 검색을 통째로 빗나가게 한다(실측: 덧붙이면 0~1건, 그대로 찾으면 4건 + 오디세이아·오디세이 1·2·3).
+//   ▸ 덧붙이기만 한 것(학생 말로 시작)이면 → 학생 말 그대로 찾는다.
+//   ▸ 말을 통째로 바꿔 준 것('위로받고 싶은 날 읽을 책' → '위로와 공감, 감정 치유 소설/에세이')은 검색에 도움이 되므로 그대로 쓴다.
+function byeoliTopicOf(refined, text){
+  const t=String(text||'').trim(), r=String(refined||'').trim();
+  if(!r) return t;
+  if(!t) return r;
+  return (r!==t && r.indexOf(t)===0) ? t : r;
+}
+// 서버 호출 1회 — 원 응답을 그대로 돌려준다(네트워크/서버 실패는 null).
+async function _byeoliSearchOnce(topic, surface, wantAnswer){
   let d=null;
   // 서버가 8~17s 걸리므로 멈춤(stall) 대비 30s 타임아웃/취소 — 없으면 busy 락이 안 풀려 로딩 점이 영원히 돈다.
   const ac=(typeof AbortController!=='undefined')?new AbortController():null;
@@ -11830,6 +11847,19 @@ async function byeoliFindBooks(topic, surface, wantAnswer){
     d=await r.json();
   }catch(e){ d=null; }
   finally{ if(to) clearTimeout(to); }
+  return d;
+}
+// rawWords = 학생이 실제로 친 말. 별이 두뇌가 다듬은 주제로 못 찾으면 이 말 그대로 한 번 더 찾는다.
+async function byeoliFindBooks(topic, surface, wantAnswer, rawWords){
+  let d=await _byeoliSearchOnce(topic, surface, wantAnswer);
+  // 9/1 사장님 지적: 통합검색에서 '오디세이'는 48권인데 별이는 0건이었다.
+  //   두뇌가 '오디세이'를 '오디세이 - SF 소설'로 바꿔 보내면 제목 검색이 통째로 빗나간다(실측: 0건).
+  //   제목·단어로 찾아 달라는 책은 반드시 보여야 하므로, 빈손이면 학생이 친 말 그대로 다시 찾는다.
+  const _raw=String(rawWords||'').trim();
+  if(_raw && _raw!==String(topic||'').trim() && (!d || d.offtopic || !((d.results||[]).length))){
+    const d2=await _byeoliSearchOnce(_raw, surface, wantAnswer);
+    if(d2 && !d2.offtopic && (d2.results||[]).length){ d=d2; topic=_raw; }
+  }
   // 네트워크/서버 실패는 '못 찾았어요'(정상 무결과)와 구분해 error 플래그로 반환
   if(!d){ return {offtopic:false, error:true, results:[], subtitle:''}; }
   if(d.offtopic){ byeoliLog({surface:surface||'',query:topic,intent:'books',offtopic:true,result_count:0}); return {offtopic:true, message:d.message||'', results:[]}; }
@@ -12379,7 +12409,7 @@ window.addEventListener('keydown', (e) => {
   const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
   const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
   let msgs=[], busy=false, opened=false, lastQ='';
-  let shownKeys=new Set(), lastTopic='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제
+  let shownKeys=new Set(), lastTopic='', lastRaw='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제 + 학생이 친 말 그대로
   const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_tulip";   // P3: semyung_books → semyung_tulip (현재 미사용 상수)
   const el=id=>document.getElementById(id);
   const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
@@ -12458,7 +12488,7 @@ window.addEventListener('keydown', (e) => {
     busy=true; el('hwcSend').disabled=true;
     addUser(f.label.replace('🔄 ','')); typing(true);
     try{
-      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float', false); typing(false);   // 팔로업=answer 생략(렌더 안 함)
+      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float', false, (lastRaw+f.mod).trim()); typing(false);   // 팔로업=answer 생략(렌더 안 함)
       if(fr.offtopic){ addBot(fr.message||'다른 주제로 찾아볼까요?'); }
       else { const n=hwcAddBooks(fr.results); if(!n) addBot(fr.error ? '연결이 잠깐 불안정했어요. 잠시 후 다시 시도해 주세요.' : '이 주제로는 더 보여드릴 책이 없네요. 다른 걸로 찾아볼까요?'); }
     }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 다시 시도해 주세요.'); }
@@ -12513,8 +12543,9 @@ window.addEventListener('keydown', (e) => {
         if(bd && bd.reply) brainReply=bd.reply;               // 책 확인 한마디(아래에서 assistant 턴으로 기록)
       }catch(e){ /* 두뇌 실패 → 원문 질의로 검색 */ }
       // 2) 책 추천 — 메인 별이와 동일 엔진(세명대 실소장 11만: curate 전자책 + semyung-find 종이/논문)
-      lastTopic = refined || text;
-      const fr = await byeoliFindBooks(lastTopic, 'float');
+      lastTopic = byeoliTopicOf(refined, text);   // 두뇌가 덧붙이기만 했으면 학생 말 그대로(제목 검색 보호)
+      lastRaw = text;   // 학생이 친 말 그대로 — 다듬은 주제로 못 찾을 때 이 말로 다시 찾는다
+      const fr = await byeoliFindBooks(lastTopic, 'float', true, text);
       typing(false);
       // ⚠️책 추천도 assistant 턴으로 이력에 남긴다 — 안 남기면 user 메시지가 연속 누적되어
       //   Anthropic API가 한 덩어리로 합쳐 직전 책맥락이 다음 운영질문("운영시간?")을 books로 오분류시킨다(메인 챗은 8359에서 이미 기록).
