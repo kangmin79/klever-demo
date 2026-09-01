@@ -2296,9 +2296,11 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
   .viewer-body.pane-trans .viewer-pane.right .bf-go{display:block;}
   .viewer-body.pane-orig .bf-cover img,.viewer-body.pane-trans .bf-cover img{max-height:30vh;}
 }
-/* 폰 1단: 보이는 칸 안에 표지 위·목차 아래로 함께 */
+/* 폰 1단: 보이는 칸 안에 표지 위·목차 아래로 함께.
+   내용이 한 화면보다 길어 위에서부터 쌓이므로, 표지가 툴바에 붙지 않게 위 여백을 준다 */
 @media(max-width:600px){
-  .book-front{height:auto;min-height:100%;}
+  /* 폰 읽기화면은 메뉴바(위)·본문/번역 탭(아래)이 본문 위에 겹쳐 뜬다 → 그만큼 비워둔다 */
+  .book-front{height:auto;min-height:100%;padding:76px 0 72px;gap:24px;}
   .bf-cover img{max-height:34vh;}
   .bf-side{max-width:none;}
   .bf-toc{max-height:none;overflow:visible;}
@@ -3264,6 +3266,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 <script src="classics_foreign_data.js?b=260805a"></script>
 <script src="classics_ko_titles.js?b=260719a"></script>
 <script src="classics_summaries.js?b=260710e"></script>
+<!-- 다국어 소개글(classics_summaries_multi.js, 218KB)은 읽기 화면에서만 쓰므로 ensureSummaryML로 지연 로드 -->
 <!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
      예전엔 BODIES_SENT를 아래 인라인 스크립트에서 선언 → 초기 4권의 문장정렬 데이터가 통째로 누락되어
      정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결.
@@ -3295,6 +3298,18 @@ function ensureKrBody(b){                  // 평행 번역 bodies 지연 로드
     s.onerror=()=>{ delete KR_BODY_P[id]; s.remove(); res(); };   // 실패분 캐시 삭제 — 다음 열기 때 재시도
     document.head.appendChild(s); });
   return KR_BODY_P[id];
+}
+// 속표지 '이 책은' 칸의 다국어 소개글(218KB) — 첫 화면 로딩을 늦추지 않게 읽기 화면에서 처음 필요할 때만 받는다
+let _sumMLP=null;
+function ensureSummaryML(){
+  if(typeof CLASSIC_SUMMARY_ML!=='undefined') return Promise.resolve();
+  if(_sumMLP) return _sumMLP;
+  _sumMLP=new Promise(res=>{ const s=document.createElement('script');
+    s.src='classics_summaries_multi.js'+(typeof BODIES_VER!=='undefined'?'?b='+BODIES_VER:'');
+    s.onload=res;
+    s.onerror=()=>{ _sumMLP=null; s.remove(); res(); };   // 실패해도 한국어 소개글로 폴백되므로 그냥 진행
+    document.head.appendChild(s); });
+  return _sumMLP;
 }
 function applyKrLang(id){                  // 선택 언어를 BODIES_SENT에 주입 → 기존 sentHtml 평행 렌더 재사용
   const d=KR_SENT[id]; if(!d) return;
@@ -3760,11 +3775,13 @@ document.addEventListener('click',(e)=>{
 /* TOC */
 // 속표지(첫 화면) 오른쪽 칸 채우기 — 목차가 있으면 목차, 없으면 작품 소개.
 // 장 정보는 본문에서 뽑기 때문에 본문 렌더가 끝난 뒤(buildTOC 시점)에야 채울 수 있다.
-function _fillFront(head, html){
+// kind: 'toc' | 'about'. 칸마다 data-lang이 달라서(번역 칸/원문 칸) 각각의 말로 채운다
+function _fillFront(kind, makeHtml){
   document.querySelectorAll('.book-front').forEach(f=>{
+    const lang=f.dataset.lang||'ko';
     const h=f.querySelector('.bf-h'), t=f.querySelector('.bf-toc');
-    if(h) h.textContent=head;
-    if(t) t.innerHTML=html;
+    if(h) h.textContent=frontT(lang)[kind==='toc'?'toc':'about'];
+    if(t) t.innerHTML=makeHtml(lang, f.closest('.viewer-pane'));
   });
 }
 function buildTOC(){
@@ -3775,15 +3792,20 @@ function buildTOC(){
   const sections = left.querySelectorAll('.chapter-anchor');
   if(sections.length <= 1){
     list.innerHTML = '<div style="padding:14px 18px;color:var(--text-light);font-size:12px;">이 책은 단일 장(章)입니다.</div>';
-    _fillFront('이 책은', '<div class="bf-intro">'+esc(bookIntro(currentBook))+'</div>');
+    _fillFront('about', lang => '<div class="bf-intro">'+esc(bookIntro(currentBook, lang))+'</div>');
     return;
   }
-  // 속표지 목차 — 서랍 목차와 같은 장 목록. 누르면 그 장으로 내려간다
+  // 속표지 목차 — 서랍 목차와 같은 장 목록. 누르면 그 장으로 내려간다.
+  // 장 제목은 칸마다 그 칸의 말로 적혀 있으므로(번역 칸/원문 칸) 각 칸 자기 것에서 뽑는다
   {
     const done = (readerStats.completedChapters || {})[currentBook.id] || [];
-    _fillFront('목차', [...sections].map((sec,i)=>
-      `<div class="bf-ch${done.includes(i)?' done':''}" onclick="tocGo(${i})">${esc(sec.dataset.chTitle || ('Chapter '+(i+1)))}</div>`
-    ).join(''));
+    _fillFront('toc', (lang, pane) => {
+      const secs = (pane && pane.querySelectorAll('.chapter-anchor').length === sections.length)
+                   ? [...pane.querySelectorAll('.chapter-anchor')] : [...sections];
+      return secs.map((sec,i)=>
+        `<div class="bf-ch${done.includes(i)?' done':''}" onclick="tocGo(${i})">${esc(sec.dataset.chTitle || ('Chapter '+(i+1)))}</div>`
+      ).join('');
+    });
   }
   const completed = (readerStats.completedChapters || {})[currentBook.id] || [];
   list.innerHTML = '';
@@ -8451,7 +8473,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902c';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902b';   // 9/2 한국 고전 11권 잔재 정리(장식·위키마커·제목중복·라이선스)
@@ -8796,7 +8818,13 @@ async function openViewer(bookId, mode){
     if(!haveSupaTrans && (b.hasTrans||LEGACY_BODY_FILES[bookId])) await ensureForeignBody(bookId);
     _reload = true;
   }
-  if(b.hasTrans && bookId.startsWith('kr-')){ await ensureKrBody(b); if(currentBook===b) applyKrLang(bookId); _reload = true; }   // 늦은 응답이 전역 KR_LANG을 바꾸지 않게(레이스 가드 앞이라 별도 확인)
+  if(bookId.startsWith('kr-')){
+    const jobs = [ensureSummaryML()];                       // 속표지 '이 책은' 칸의 번역 언어 소개글
+    if(b.hasTrans) jobs.push(ensureKrBody(b));              // 평행 번역 본문
+    await Promise.all(jobs);
+    if(b.hasTrans && currentBook===b) applyKrLang(bookId);  // 늦은 응답이 전역 KR_LANG을 바꾸지 않게(레이스 가드 앞이라 별도 확인)
+    _reload = true;
+  }
   // kr-/레거시(g\d+) 등 gb- 외 고전 원문 fetch (gb-는 위에서 처리)
   if(classicFetchId(bookId) && !bookId.startsWith('gb-')){ await ensureClassicBody(bookId); _reload = true; }
   // 레이스 가드: 위 await(수 초) 동안 다른 책을 열었거나 뷰어를 닫았으면 꼬리 초기화 중단
@@ -9099,10 +9127,30 @@ function viewerBodies(book){
       한쪽에만 <p>가 생기면 책 전체 수평정렬이 꺼진다. (.cv-chunk·h3.ch-title도 금지 —
       읽던 자리 저장 앵커가 그 둘을 세기 때문)
    1권 먼저 확인 → 전체 개방 순서. 확인 끝나면 아래 집합 검사를 없애고 전권 적용. */
-const FRONT_PAGE_BOOKS = new Set(['gb-83', 'kr-김동인-K박사의-연구']);
-function frontPageOn(){ return !!currentBook && currentMode === 'full' && FRONT_PAGE_BOOKS.has(currentBook.id); }
-function bookIntro(b){
+// 국내(한국) 고전 전권. 해외 고전은 확인 후 별도로 연다.
+function frontPageOn(){
+  return !!currentBook && currentMode === 'full' && String(currentBook.id).startsWith('kr-');
+}
+// 속표지 문구 — 지금 보고 있는 칸의 언어를 따라간다(번역 칸은 그 나라 말, 원문 칸은 한국어)
+const FRONT_I18N = {
+  ko:{about:'이 책은',            toc:'목차',      start:'읽기 시작 ↓'},
+  zh:{about:'关于本书',            toc:'目录',      start:'开始阅读 ↓'},
+  vi:{about:'Về cuốn sách',       toc:'Mục lục',   start:'Bắt đầu đọc ↓'},
+  en:{about:'About this book',    toc:'Contents',  start:'Start reading ↓'},
+  ja:{about:'この本について',       toc:'目次',      start:'読みはじめる ↓'},
+};
+function frontT(lang){ return FRONT_I18N[lang] || FRONT_I18N.ko; }
+// 지금 뷰어의 왼쪽·오른쪽 칸이 각각 무슨 말인지 — 한국 고전 평행본은 왼쪽이 번역, 오른쪽이 한국어 원문
+function frontLangs(b){
+  const swap = b && String(b.id).startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[b.id];
+  return {left: swap ? KR_LANG : 'ko', right: 'ko'};
+}
+function bookIntro(b, lang){
   if(!b) return '';
+  if(lang && lang!=='ko'){
+    const ml = (typeof CLASSIC_SUMMARY_ML!=='undefined') && CLASSIC_SUMMARY_ML[b.id];
+    if(ml && ml[lang]) return ml[lang];   // 번역본 없으면 아래 한국어로 폴백
+  }
   const s = (typeof CLASSIC_SUMMARY!=='undefined' && CLASSIC_SUMMARY[b.id]) ? CLASSIC_SUMMARY[b.id] : '';
   return s || `${b.author||''}의 ${b.period||''} ${b.category||''} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
 }
@@ -9112,20 +9160,20 @@ function frontGoRead(){
   const first = pane.querySelector('.chapter-anchor, .cv-chunk');
   if(first) pane.scrollTo({top: first.offsetTop, behavior:'smooth'});
 }
-function bookFrontHtml(b){
+function bookFrontHtml(b, lang){
   const t = esc(b.title||'');
   const orig = (b.titleEn && b.titleEn !== b.title) ? `<div class="bf-meta">${esc(b.titleEn)}</div>` : '';
   const cover = b.coverSrc
     ? `<img src="${esc(b.coverSrc)}" alt="${t}" data-t="${t}" onerror="bfCoverFail(this)">`
     : `<div class="bf-nocv">${t}</div>`;
   const meta = [b.category, b.period, b.src].filter(Boolean).map(esc).join(' · ');
-  return `<div class="book-front">
+  return `<div class="book-front" data-lang="${esc(lang||'ko')}">
       <div class="bf-cover">${cover}
         <div class="bf-t">${t}</div>${orig}
         <div class="bf-a">${esc(b.author||'')}</div>
         ${meta ? `<div class="bf-meta">${meta}</div>` : ''}</div>
-      <div class="bf-side"><div class="bf-h">목차</div><div class="bf-toc"></div></div>
-      <div class="bf-go"><button onclick="frontGoRead()">읽기 시작 ↓</button></div>
+      <div class="bf-side"><div class="bf-h"></div><div class="bf-toc"></div></div>
+      <div class="bf-go"><button onclick="frontGoRead()">${esc(frontT(lang).start)}</button></div>
     </div>`;
 }
 
@@ -9170,15 +9218,17 @@ function renderViewer(){
     const rightBody = krSwap ? (C().orig  || ph(L.placeholderOrig))  : (C().trans || ph(L.placeholderTrans));
     // 속표지: 양쪽 칸에 같은 블록을 넣고 CSS가 PC에서 왼쪽=표지·오른쪽=목차로 갈라 보여준다
     // (좌우 높이가 같아야 비율 동기 스크롤이 어긋나지 않는다 → .book-front{height:100%})
-    const front = frontPageOn() ? bookFrontHtml(currentBook) : '';
+    const _fl = frontPageOn() ? frontLangs(currentBook) : null;
+    const frontL = _fl ? bookFrontHtml(currentBook, _fl.left)  : '';
+    const frontR = _fl ? bookFrontHtml(currentBook, _fl.right) : '';
     body.innerHTML = `
       <div class="viewer-pane left">
-        ${front}
+        ${frontL}
         <div class="viewer-pane-label">${L.leftLabel}</div>
         ${leftBody}
       </div>
       <div class="viewer-pane right">
-        ${front}
+        ${frontR}
         <div class="viewer-pane-label">${L.rightLabel}</div>
         ${rightBody}
       </div>
