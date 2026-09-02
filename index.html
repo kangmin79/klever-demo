@@ -8412,6 +8412,8 @@ function renderBookGrid(targetId, filterIntl){
 /* ═══════════════════════════════════════════════════════════
    도서 상세
    ═══════════════════════════════════════════════════════════ */
+// 퀴즈가 한 문제도 없는 세계고전 11권 (2026-09-02 bookstar_quiz_items 실측). 대부분 수필·우화·철학서 모음.
+const QUIZLESS_GB = new Set(['gb-23639','gb-1080','gb-57342','gb-21','gb-56463','gb-2130','gb-30201','gb-83b','gb-2434','gb-36151','gb-9198']);
 function openDetail(bookId){
   const b = BOOKS.find(x=>x.id===bookId);
   if(!b) return;
@@ -8435,10 +8437,13 @@ function openDetail(bookId){
   const intro = summary || `${b.author}의 ${b.period} 시대 ${b.category} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
   // 8/29 사장님 지시: 국내(한국) 고전에는 퀴즈가 한 문제도 없다(퀴즈 3,880문항 전부 세계고전 것).
   // 지금까지는 눌러도 뷰어만 열리고 '퀴즈가 준비되지 않았어요'로 끝나는 헛걸음이었다 → 국내 고전에서만 이 칸을 숨긴다.
-  // ⚠️ 이 상세 팝업은 세계고전과 함께 쓰는 하나뿐인 화면이다. 조건 없이 지우면 세계고전 50권의 퀴즈 입구까지 사라진다.
+  // ⚠️ 이 상세 팝업은 세계고전과 함께 쓰는 하나뿐인 화면이다. 조건 없이 지우면 세계고전 194권의 퀴즈 입구까지 사라진다.
   //    화면 탭 상태가 아니라 '책 자체'의 국내/해외 표시로 판정해야 한다(피드·검색에서 열어도 정확하도록).
+  // 9/2 실측: 세계고전 205권 중 194권에 두 유형 10문항씩(3,880문항) 있음. 아래 11권만 없음 → 같은 규칙으로 숨긴다.
+  //    (퀴즈를 만들어 넣으면 이 목록에서 빼면 된다)
   const isKrClassic = (b.locale==='modern') || String(b.id||'').startsWith('kr-');
-  const quizBlock = isKrClassic ? '' : `<div class="lcd-quiz">
+  const noQuiz = QUIZLESS_GB.has(b.id);
+  const quizBlock = (isKrClassic || noQuiz) ? '' : `<div class="lcd-quiz">
       <div class="lcd-quiz-h">퀴즈로 바로 읽기<span class="lcd-quiz-s">핵심 문장과 배경 설명을 읽고 풀어요</span></div>
       <div class="lcd-qcard" onclick="openQuizDirect('${b.id}','작품 이해')">
         <div class="qt">작품 이해 퀴즈</div><div class="qn">10장면 · 10문항</div>
@@ -8473,7 +8478,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902f';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902g';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902b';   // 9/2 한국 고전 11권 잔재 정리(장식·위키마커·제목중복·라이선스)
