@@ -3,7 +3,7 @@ import fs from "node:fs"; import vm from "node:vm"; import path from "node:path"
 const ROOT = "C:/Users/강동욱/Desktop/북스타/klever_demo";
 const ctx = { window: {} }; vm.createContext(ctx);
 // 데이터 파일은 top-level const라 vm 컨텍스트 프로퍼티로 안 잡힘 → const/let → var 로 바꿔 평가
-for (const f of ["classics_kr_data.js", "classics_foreign_data.js", "classics_ko_titles.js", "classics_summaries.js"]) vm.runInContext(fs.readFileSync(path.join(ROOT, f), "utf8").replace(/^(const|let)\s+/gm, "var "), ctx);
+for (const f of ["classics_kr_data.js", "classics_foreign_data.js", "classics_ko_titles.js", "classics_summaries.js"]) vm.runInContext(fs.readFileSync(path.join(ROOT, "data", f), "utf8").replace(/^(const|let)\s+/gm, "var "), ctx);
 const KR = ctx.BOOKS_CLASSICS_KR || ctx.window.BOOKS_CLASSICS_KR || [];
 const FO = ctx.BOOKS_CLASSICS_FOREIGN || ctx.window.BOOKS_CLASSICS_FOREIGN || [];
 const KOT = ctx.window.CLASSICS_KO || ctx.CLASSICS_KO || {};
