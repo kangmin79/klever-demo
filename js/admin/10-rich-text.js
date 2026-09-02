@@ -213,8 +213,7 @@ async function rtUploadFile(ed, file){
   try{
     const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'')||'bin';
     const path='file/'+Date.now()+'-'+Math.random().toString(36).slice(2,9)+'.'+ext;
-    const r=await fetch(`${SB_PROJ}/storage/v1/object/${RT_BUCKET}/${path}`,{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':file.type||'application/octet-stream','x-upsert':'true'},body:file});
+    const r=await sbUpload(RT_BUCKET, path, file, file.type||'application/octet-stream');
     if(!r.ok)throw new Error('HTTP '+r.status);
     const url=`${SB_PROJ}/storage/v1/object/public/${RT_BUCKET}/${path}`;
     const kb=file.size<1048576?Math.max(1,Math.round(file.size/1024))+'KB':(file.size/1048576).toFixed(1)+'MB';
@@ -292,10 +291,7 @@ async function rtUploadInsert(ed, file){
 async function rtUpload(file){
   const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
   const path='notice/'+Date.now()+'-'+Math.random().toString(36).slice(2,9)+'.'+ext;
-  const r=await fetch(`${SB_PROJ}/storage/v1/object/${RT_BUCKET}/${path}`,{
-    method:'POST',
-    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':file.type,'x-upsert':'true'},
-    body:file});
+  const r=await sbUpload(RT_BUCKET, path, file, file.type);
   if(!r.ok)throw new Error('HTTP '+r.status);
   return `${SB_PROJ}/storage/v1/object/public/${RT_BUCKET}/${path}`;
 }

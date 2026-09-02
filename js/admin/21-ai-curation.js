@@ -78,8 +78,7 @@ async function aicSend(forced){
   AIC_BUSY=true; const sb=el('aicSendBtn'); if(sb)sb.disabled=true;
   const typing=aicPush('typing','⭐ 생각 중…');
   let j=null; try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
-      body:JSON.stringify({chat:true, query:text, messages:AIC_MSGS.slice(-6)})});
+    const r=await sbFnPost(US_CURATE_FN, {chat:true, query:text, messages:AIC_MSGS.slice(-6)}, {anon:true});
     j=await r.json();
   }catch(e){}
   if(typing)typing.remove();
@@ -135,7 +134,7 @@ function aicSetUsage(n){ const u=el('aicUsage'); if(!u)return; n=Math.max(0,n|0)
   u.classList.toggle('full',n>=AIC_CAP); u.classList.toggle('warn',n>=AIC_CAP*0.9&&n<AIC_CAP); }
 async function aicLoadUsage(){ const u=el('aicUsage'); if(!u)return;
   const ym=new Date().toISOString().slice(0,7);   // 서버 bumpAiUsage와 동일한 키(년-월)
-  try{ const r=await fetch(`${SB_REST}/ai_curation_usage?ym=eq.${ym}&select=count`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+  try{ const r=await sbGetAnon(`/ai_curation_usage?ym=eq.${ym}&select=count`);
     const a=await r.json(); aicSetUsage((Array.isArray(a)&&a[0])?(a[0].count||0):0);
   }catch(_){ u.textContent='이번 달 –/500'; } }
 async function aicRunGenerate(topic,isRe){
@@ -152,10 +151,9 @@ async function aicRunGenerate(topic,isRe){
   [0,700,1500].forEach((t,k)=>setTimeout(()=>{ ids.forEach(x=>el(x).classList.remove('active')); for(let m=0;m<k;m++)el(ids[m]).classList.add('done'); el(ids[k]).classList.add('active'); },t));
   const started=Date.now(); let j=null, err=null;
   try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},
-      body:JSON.stringify(clsMode
+    const r=await sbFnPost(US_CURATE_FN, clsMode
         ? {query:topic, pool:aicClassicPool(), genTitle:true, titleModel:'sonnet', count:(AIC_COUNT||8)}
-        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8), format:CUR_FORMAT})});   // 8/19 책 형태 · 8/29 "+6" 제거(10권 고르면 후보 16권 나와 라벨과 안 맞았다)
+        : {query:topic, onlyHeld:true, genTitle:true, holdings:true, titleModel:'sonnet', rerank:true, count:(AIC_COUNT||8), format:CUR_FORMAT}, {anon:true});   // 8/19 책 형태 · 8/29 "+6" 제거(10권 고르면 후보 16권 나와 라벨과 안 맞았다)
     j=await r.json(); if(j&&j.error)err=j.error;
   }catch(e){ err=String(e); }
   await new Promise(s=>setTimeout(s,Math.max(0,1600-(Date.now()-started))));
@@ -203,7 +201,7 @@ async function aicLoadDescAdmin(b){ const e=el('aicDtDesc'); if(!e)return;
   if(!brcd&&!isbn){ e.textContent='줄거리 정보가 아직 없어요.'; return; }
   try{
     const ors=[]; if(brcd)ors.push('barcode.eq.'+encodeURIComponent(brcd)); if(isbn&&isbn!==brcd)ors.push('isbn.eq.'+encodeURIComponent(isbn));
-    const r=await fetch(`${SB_REST}/semyung_tulip?or=(${ors.join(',')})&select=description,author,publisher,pub_year&limit=1`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/semyung_tulip?or=(${ors.join(',')})&select=description,author,publisher,pub_year&limit=1`);
     const a=await r.json(); const row=(Array.isArray(a)&&a[0])||{};
     e.textContent=row.description||'줄거리 정보가 아직 없어요. (소장 도서 · 표지/형태로 판단해 주세요)';
     // 작가·출판사 보강(후보에 비어있으면 채움 — 모달 표시 + 담을 때 저장에도 반영)

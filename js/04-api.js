@@ -6,6 +6,8 @@
    4회차(마지막): 서버 함수 GET 3 → sbFn · 서버 함수 POST 7(bookinfo·curate·library-brain·byeoli-search·push-register 3) → sbFnPost
      · Auth 3(refresh·verify·logout) → sbAuth · 본문 로더 2 → sbGetAnon. URL·anon 키 상수는 전부 js/00-config.js 로.
    이제 supabase 로 가는 fetch 는 이 파일에만 있다(예외: js/90·91 위젯 IIFE 는 자기 상수를 따로 갖고 있음 — 그대로 둠). 공통 에러 처리는 S9.
+   S8-3: 관리자 화면(admin/)도 이 파일을 공유한다(../js/04-api.js). 관리자는 익명 갈래만 쓴다 —
+     sbGetAnon·sbWrite({anon})·sbFnPost({anon})·sbUpload. smHeaders() 갈래(sbGet·sbFn 기본)는 학생 화면 전용(js/16-auth-lock).
    ※ sbGet(BX_H) 과 sbGetAnon 을 합치지 않은 이유: 로그인하면 16-auth-lock 이 BX_H.Authorization 을 본인 토큰으로 바꾼다.
      공개 표(장서·프로그램·서평·팝업)를 익명 키로 읽던 곳을 BX_H 로 바꾸면 RLS 역할이 anon→authenticated 로 달라진다 — 동작 변경.
    ※ 상수는 js/00-config.js, smHeaders 는 js/16-auth-lock.js — 전부 함수 안에서만 읽으므로 로드 순서 무관.  */
@@ -19,8 +21,11 @@ function sbGet(path){
 // REST 표 읽기(GET, 항상 익명 키) — 공개 표(semyung_tulip·library_programs·library_sections·reviews·minsong_popups 등).
 //   로그인 뒤에도 본인 토큰을 쓰지 않는다(위 ※). Response 그대로 반환.
 //   sbGetAnon('/semyung_tulip?select=ctrl&kind=eq.paper&isbn=eq.'+clean+'&limit=1')
-function sbGetAnon(path){
-  return fetch(SB_REST+path,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+//   opts.range : 'from-to' — 서버 상한(1,000행)을 넘겨 이어 받을 때(Range + Range-Unit:items 헤더, 관리자 엑셀 내보내기)
+function sbGetAnon(path, opts){
+  const headers={apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON};
+  if(opts&&opts.range){ headers.Range=opts.range; headers['Range-Unit']='items'; }
+  return fetch(SB_REST+path,{headers});
 }
 
 // REST 표 쓰기(POST/PATCH/DELETE) — 기본은 학생 세션 헤더(BX_H: 로그인 뒤 본인 토큰). body 는 객체(JSON 직렬화), 없으면 생략(DELETE).
@@ -61,6 +66,14 @@ function sbFnPost(url, body, opts){
   const init={method:'POST',headers,body:JSON.stringify(body)};
   if(o.signal) init.signal=o.signal;
   return fetch(url,init);
+}
+
+// 스토리지 업로드(POST, 익명 키) — 관리자 공지 에디터의 이미지·파일 첨부(notice-images 버킷, RLS 가 지킨다).
+//   contentType 은 호출부가 정한다(파일의 실제 형식 — 빈 값 fallback 도 호출부 몫). Response 그대로.
+//   sbUpload(RT_BUCKET, 'notice/171…-abc.png', file, file.type)
+function sbUpload(bucket, path, file, contentType){
+  return fetch(SB_PROJ+'/storage/v1/object/'+bucket+'/'+path,{method:'POST',
+    headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':contentType,'x-upsert':'true'},body:file});
 }
 
 // Supabase Auth(/auth/v1) POST — path 는 '/token?grant_type=refresh_token' 처럼 SB_AUTH 뒤에 붙는 문자열. Response 그대로.

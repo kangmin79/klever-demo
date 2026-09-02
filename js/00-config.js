@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    설정 상수 (버전) — 9/2 리팩터링 S6: js/30-viewer.js 머리에서 옮김
    ═══════════════════════════════════════════════════════════ */
-const APP_BUILD = '260902w';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신 (.githooks/pre-commit 이 자동)
+const APP_BUILD = '260902x';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신 (.githooks/pre-commit 이 자동)
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(bodies_gb5921.js) — 3단계: 한국어 머리 8개를 Chapter N.으로 통일
@@ -11,6 +11,9 @@ const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(
 const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";   // Supabase anon 키(공개용 — RLS 가 지킨다)
 const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
 const SB_AUTH='https://gkujptyfrzqrjrvovbnc.supabase.co/auth/v1';
+const SB_PROJ="https://gkujptyfrzqrjrvovbnc.supabase.co";   // 프로젝트 뿌리(스토리지 업로드·public URL 조립) — 9/2 S8-3: admin에서 옮김
+// 관리자 저장 프록시(ADMIN_SECRET 검증) — library_sections·library_programs 는 anon 쓰기 잠김(2026-08-15). 관리자 화면·게이트가 쓴다
+const ADMIN_FN=SB_PROJ+"/functions/v1/admin-save";
 // 학생 세션 헤더 — 로그인하면 js/16-auth-lock 이 Authorization 을 본인 토큰으로 바꿔 끼우고, 로그아웃하면 익명 키로 되돌린다
 const BX_H = {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON, 'content-type':'application/json'};
 // 폰 브라우저면 교보 뷰어를 모바일용으로 발급(device=m) — PC용 뷰어가 폰에서 깨짐(8/21, 앱과 동일 수리).

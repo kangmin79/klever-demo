@@ -83,7 +83,7 @@ let LOCATIONS=SECTIONS.filter(s=>aOf(s)==='우리도서관').map(s=>s.title);
 let SEC_LOAD_FAILED=false;
 async function loadSections(){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible,chal_pos&order=sort_order`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible,chal_pos&order=sort_order`);
     if(!r.ok){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
     const rows=await r.json(); if(!Array.isArray(rows)){ SEC_LOAD_FAILED=true; if(el('pg-settings').style.display!=='none')renderSettings(); return; }
     SEC_LOAD_FAILED=false;
@@ -107,7 +107,7 @@ try{
     .forEach(b=>{ if(b&&b.id&&b.coverSrc) CLS_COVER[b.id]=String(b.coverSrc).replace(/^\.\//,'/'); });
 }catch(e){}
 async function loadClassicsPool(){
-  try{ const r=await fetch(`${SB_REST}/classics?select=id,title,author,origin&order=origin,id`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+  try{ const r=await sbGetAnon(`/classics?select=id,title,author,origin&order=origin,id`);
     if(r.ok){ const d=await r.json(); if(Array.isArray(d)){
       const KO=window.CLASSICS_KO||{};
       CLASSICS_POOL=d.map(b=>({...b, title_ko:(b.origin==='foreign'?(KO[b.id]||''):'')}));  // 해외 고전에 한글 제목 부여
@@ -458,7 +458,7 @@ async function fillHeld(books){
   const need=[...new Set((books||[]).map(b=>String(b.isbn||'')).filter(i=>/^\d{10,13}$/.test(i)))];
   const map={};
   for(let i=0;i<need.length;i+=100){
-    const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`);
     if(!r.ok) throw new Error('held-check '+r.status);
     for(const row of await r.json()) (map[row.isbn]=map[row.isbn]||[]).push(row);
   }
@@ -660,14 +660,14 @@ async function secSearch(){
   // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip (종이책만 고르면 건너뜀)
   const smP=(async()=>{ if(fmt==='paper') return []; try{
     const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
-    const r=await fetch(SB_REST+'/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=20',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon('/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=20');
     const d=await r.json(); return (Array.isArray(d)?d:[]).map(b=>({brcd:b.barcode||b.ctrl,title:b.title,author:b.author,cover:b.cover_url||'',provider:b.vendor||'',
       detail_url:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):''}));
   }catch(e){ return []; } })();
   // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
   _aiCur=null;
   const natP=(async()=>{ try{
-    const r=await fetch(CURATE_FN,{method:'POST',headers:{'Authorization':'Bearer '+CURATE_ANON,'apikey':CURATE_ANON,'content-type':'application/json'},body:JSON.stringify(fmt==='both'?{query:q,genTitle:true}:{query:q,genTitle:true,holdings:true,format:fmt,rerank:true})});   // 형태 지정=소장 그 형태만(서버가 강제) + 풀이 좁아 꼬리가 약해지므로 리랭크로 무관책 컷
+    const r=await sbFnPost(US_CURATE_FN, fmt==='both'?{query:q,genTitle:true}:{query:q,genTitle:true,holdings:true,format:fmt,rerank:true}, {anon:true});   // 형태 지정=소장 그 형태만(서버가 강제) + 풀이 좁아 꼬리가 약해지므로 리랭크로 무관책 컷
     const d=await r.json(); if(d&&d.title) _aiCur={title:d.title,subtitle:d.subtitle||''}; return d.candidates||[];
   }catch(e){ return []; } })();
   const [sm,nat]=await Promise.all([smP,natP]);
@@ -687,8 +687,8 @@ async function secSearchSemyung(){
   el('secCandWrap').innerHTML='<div class="cur-loading">✦ 세명대 전자도서관에서 찾는 중…</div>';
   try{
     const p='*'+encodeURIComponent(q)+'*';
-    const url=SB_REST+'/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=40';
-    const r=await fetch(url,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const url='/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=40';
+    const r=await sbGetAnon(url);
     const d=await r.json();
     SCAND=(Array.isArray(d)?d:[]).map(b=>({isbn:'sm-'+(b.barcode||b.ctrl),t:b.title,a:b.author||'',cover:b.cover_url||'',
       lib:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):'',_sm:true,prov:b.vendor||''}));
@@ -701,7 +701,7 @@ async function secLookupISBN(){
   if(raw.length<10){el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 정확히 입력해주세요 (10~13자리).</div>';return;}
   el('secCandWrap').innerHTML='<div class="cur-loading">📘 ISBN으로 도서 정보를 조회하는 중…</div>';
   try{
-    const r=await fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+SB_ANON,'apikey':SB_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:[raw]})});
+    const r=await sbFnPost(INFO_FN, {isbns:[raw]}, {anon:true});
     const d=await r.json();const x=(d.info||{})[raw];
     if(!x||!x.title){el('secCandWrap').innerHTML='<div class="book-empty">해당 ISBN의 책을 찾지 못했어요.</div>';return;}
     SCAND=[{t:x.title,a:x.author||'',isbn:raw,loan:x.loan||0,cover:x.cover||'',rating:x.rating}];

@@ -3,7 +3,7 @@
 let CHAL_LOAD_FAILED=false;
 async function loadChallenges(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`);
     if(!r.ok){CHAL_LOAD_FAILED=true;renderChallenges();return;}
     const rows=await r.json(); if(!Array.isArray(rows)){CHAL_LOAD_FAILED=true;renderChallenges();return;}
     CHAL_LOAD_FAILED=false;

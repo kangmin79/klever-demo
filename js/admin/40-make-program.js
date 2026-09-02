@@ -1,18 +1,17 @@
 /* ====== 프로그램 만들기 ====== */
-const CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";
-const CURATE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+// curate 함수 주소·anon 키 → ../js/00-config.js 의 US_CURATE_FN·COVER_ANON 공유 (9/2 S8-3 — 값이 같았다)
 const DEMO_CAND=[{t:'소년이 온다',a:'한강 · 창비',isbn:'9788936434120',loan:2313},{t:'모순',a:'양귀자 · 쓰다',isbn:'9788998441012',loan:2103},{t:'채식주의자',a:'한강 · 창비',isbn:'9788936434595',loan:1416},{t:'급류',a:'정대건 · 민음사',isbn:'9788937473401',loan:1469}];
 const CLASSICS=[{t:'돈키호테',a:'세르반테스',loan:0},{t:'햄릿',a:'셰익스피어',loan:0},{t:'로빈슨 크루소',a:'대니얼 디포',loan:0},{t:'군주론',a:'마키아벨리',loan:0},{t:'국부론',a:'애덤 스미스',loan:0},{t:'위대한 개츠비',a:'피츠제럴드',loan:0},{t:'1984',a:'조지 오웰',loan:0},{t:'변신',a:'프란츠 카프카',loan:0},{t:'노인과 바다',a:'헤밍웨이',loan:0},{t:'데미안',a:'헤르만 헤세',loan:0}];
 const EX_HOLD=['6월 신입생 가볍게 읽을 문학','시험 끝, 머리 식히는 책','요즘 많이 읽는 한국소설','심리학 입문'];
 const EX_CLASSIC=['삶의 지혜를 주는 고전','처음 읽는 서양 고전','짧고 강한 고전 명작'];
-const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
+// INFO_FN(bookinfo) → ../js/00-config.js 공유 (값 동일)
 let MK={type:null,books:[],mission:{quiz:false,quizN:5,review:false,question:false},loc:[]};
 let CHALLENGES=[],ORIG_CHAL_IDS=[];   // 챌린지 카테고리 목록(우리도서관 칸과 유사 구조)
 let LIB_INV=new Set();        // 우리 도서관 소장 ISBN 집합
 let LIB_BOOKS=[];             // 소장 도서 목록(도서관 내 탭)
 async function loadInventory(){
   try{
-    const r=await fetch(`${SB_REST}/library_books?select=isbn,title,author,cover,rating,loan&order=added_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/library_books?select=isbn,title,author,cover,rating,loan&order=added_at.desc`);
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows))return;
     LIB_BOOKS=rows.map(x=>({t:x.title,a:x.author||'',isbn:x.isbn,cover:x.cover||'',rating:x.rating,loan:x.loan||0}));
     LIB_INV=new Set(LIB_BOOKS.map(b=>b.isbn));

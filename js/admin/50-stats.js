@@ -245,10 +245,10 @@ const WR_MIN={oneline:5,question:5,review:300,essay:800,rv:100};   // 학생 앱
 // 8/29 리뷰 W1: 서버 시각은 세계표준시(…T16:00Z) — 그대로 자르면 자정~오전 9시 글이 전날로 찍힌다. 한국시간 날짜로.
 function kstDay(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); return new Date(d.getTime()+9*3600*1000).toISOString().slice(0,10); }
 // 8/29 리뷰 W2: 조회에 개수 제한이 없으면 서버 상한(1,000)에서 조용히 잘린다 → 1,000건씩 끝까지 이어 받는다
-async function fetchAllRows(url,H){
+async function fetchAllRows(path){
   const out=[], PAGE=1000;
   for(let from=0; ; from+=PAGE){
-    const r=await fetch(url,{headers:{...H,Range:`${from}-${from+PAGE-1}`,'Range-Unit':'items'}});
+    const r=await sbGetAnon(path,{range:`${from}-${from+PAGE-1}`});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const a=await r.json(); if(!Array.isArray(a)) break;
     out.push(...a); if(a.length<PAGE) break;
@@ -270,13 +270,12 @@ async function loadWritings(){
   const f=el('fdFrom').value, t=el('fdTo').value; if(!f||!t||f>t){ return; }
   const seq=++_wrSeq;
   el('fdTbl').innerHTML=stEmpty(6,'불러오는 중…');
-  const H={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
   const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
   let list=[], failed=false;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 실패 표시
   // 챌린지 밖에서 쓴 글만(challenge_id 없음) — 시안: 챌린지 글은 여기 없음
-  try{ list=await fetchAllRows(`${SB_REST}/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`,H); }catch(e){ failed=true; }
+  try{ list=await fetchAllRows(`/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`); }catch(e){ failed=true; }
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
-  try{ const rv=await fetchAllRows(`${SB_REST}/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`,H);
+  try{ const rv=await fetchAllRows(`/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`);
     rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
   }catch(e){ failed=true; }
   if(seq!==_wrSeq) return null;   // 그 사이 다른 기간 요청이 나갔으면 버림(실패 아님 — 8/29 리뷰 W9)

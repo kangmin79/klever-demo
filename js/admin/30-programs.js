@@ -5,7 +5,7 @@ let PROGRAMS=[];   // 서버(library_programs) 발행물만 — loadServerProgra
 // 서버(library_programs)의 실제 발행물을 불러와 데모 앞에 합침
 async function loadServerPrograms(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/library_programs?select=*&order=sort_order.asc.nullslast,created_at.desc`);
     if(!r.ok)return;
     const rows=await r.json(); if(!Array.isArray(rows))return;
     const mapped=rows.map(x=>({id:x.id,type:x.type,title:x.title,status:x.status,from:x.start_date||'',to:x.end_date||'',

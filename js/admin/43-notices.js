@@ -19,7 +19,7 @@ function toggleNtLocIdx(i){toggleNtLoc(LOCATIONS[i]);}
 function toggleNtLoc(l){const i=ntLocSel.indexOf(l);if(i<0)ntLocSel.push(l);else ntLocSel.splice(i,1);buildNtLoc();}
 async function loadNotices(){
   try{
-    const r=await fetch(`${SB_REST}/library_notices?select=*&order=created_at.desc`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/library_notices?select=*&order=created_at.desc`);
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows))return;
     NOTICES=rows.map(x=>({id:x.id,title:x.title,target:x.target||'전교생',period:x.period||'',loc:(x.location||'').split(',').filter(Boolean),body:x.body||'',at:(x.created_at||'').slice(0,10)}));
     if(el('pg-notice').style.display!=='none')renderNotices();

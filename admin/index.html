@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="../css/admin.css?b=2609021630"></head>
+<link rel="stylesheet" href="../css/admin.css?b=2609021702"></head>
 <body>
 <script src="../data/classics_ko_titles.js"></script>
 <!-- 8/14 사장님 수정요청: 담긴 책 표지 표시 — 고전 id→표지 매핑을 앱과 같은 데이터에서 가져온다 -->
@@ -33,9 +33,7 @@ async function lgTry(){var v=(document.getElementById('lgPw').value||'').trim();
   if(!v){document.getElementById('lgErr').textContent='비밀번호를 입력해주세요.';return;}
   document.getElementById('lgErr').textContent='확인 중…';
   try{
-    var r=await fetch(SB_PROJ+'/functions/v1/admin-save',{method:'POST',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'},
-      body:JSON.stringify({op:'ping',secret:v})});
+    var r=await sbFnPost(ADMIN_FN,{op:'ping',secret:v},{anon:true});   // 주소·창구는 ../js/00-config.js·04-api.js — 클릭 시점엔 로드 완료
     if(r.ok){try{sessionStorage.setItem('bs_admin_secret',v);}catch(e){}
       document.getElementById('loginGate').style.display='none';document.getElementById('lgErr').textContent='';}
     else{document.getElementById('lgErr').textContent='비밀번호가 올바르지 않습니다.';}
@@ -638,20 +636,22 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
 </div>
 <div id="toast"></div>
 
-<script src="../js/admin/00-helpers.js?b=2609021630"></script>
-<script src="../js/admin/10-rich-text.js?b=2609021630"></script>
-<script src="../js/admin/20-sections.js?b=2609021630"></script>
-<script src="../js/admin/21-ai-curation.js?b=2609021630"></script>
-<script src="../js/admin/30-programs.js?b=2609021630"></script>
-<script src="../js/admin/31-nav.js?b=2609021630"></script>
-<script src="../js/admin/32-minsong-app.js?b=2609021630"></script>
-<script src="../js/admin/33-writings-state.js?b=2609021630"></script>
-<script src="../js/admin/40-make-program.js?b=2609021630"></script>
-<script src="../js/admin/41-make-challenge.js?b=2609021630"></script>
-<script src="../js/admin/42-challenge-missions.js?b=2609021630"></script>
-<script src="../js/admin/43-notices.js?b=2609021630"></script>
-<script src="../js/admin/44-popups.js?b=2609021630"></script>
-<script src="../js/admin/45-community.js?b=2609021630"></script>
-<script src="../js/admin/50-stats.js?b=2609021630"></script>
-<script src="../js/admin/99-boot.js?b=2609021630"></script>
+<script src="../js/00-config.js?b=2609021702"></script>
+<script src="../js/04-api.js?b=2609021702"></script>
+<script src="../js/admin/00-helpers.js?b=2609021702"></script>
+<script src="../js/admin/10-rich-text.js?b=2609021702"></script>
+<script src="../js/admin/20-sections.js?b=2609021702"></script>
+<script src="../js/admin/21-ai-curation.js?b=2609021702"></script>
+<script src="../js/admin/30-programs.js?b=2609021702"></script>
+<script src="../js/admin/31-nav.js?b=2609021702"></script>
+<script src="../js/admin/32-minsong-app.js?b=2609021702"></script>
+<script src="../js/admin/33-writings-state.js?b=2609021702"></script>
+<script src="../js/admin/40-make-program.js?b=2609021702"></script>
+<script src="../js/admin/41-make-challenge.js?b=2609021702"></script>
+<script src="../js/admin/42-challenge-missions.js?b=2609021702"></script>
+<script src="../js/admin/43-notices.js?b=2609021702"></script>
+<script src="../js/admin/44-popups.js?b=2609021702"></script>
+<script src="../js/admin/45-community.js?b=2609021702"></script>
+<script src="../js/admin/50-stats.js?b=2609021702"></script>
+<script src="../js/admin/99-boot.js?b=2609021702"></script>
 </body></html>

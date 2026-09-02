@@ -5,7 +5,7 @@ const COMM_META={program:['참여 현황','기간(D-day)'],event:['기간','장�
 let commKind='program', COMM_POSTS=[];
 async function loadCommPosts(){
   try{
-    const r=await fetch(`${SB_REST}/community_posts?select=*&order=kind,sort_order,created_at`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/community_posts?select=*&order=kind,sort_order,created_at`);
     if(!r.ok)return; const rows=await r.json(); if(Array.isArray(rows)) COMM_POSTS=rows;
     if(el('pg-comm').style.display!=='none')renderComm();
   }catch(e){}
@@ -35,7 +35,7 @@ let COMM_REVIEWS=[];
 async function renderCommReviews(){
   el('commList').innerHTML='<div class="pv-empty">서평을 불러오는 중…</div>';
   try{
-    const r=await fetch(`${SB_REST}/reviews?select=*&order=created_at.desc&limit=100`,{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/reviews?select=*&order=created_at.desc&limit=100`);
     COMM_REVIEWS=r.ok?await r.json():[];
   }catch(e){COMM_REVIEWS=[];}
   el('commList').innerHTML=(COMM_REVIEWS||[]).map(p=>`<div class="notice-i"><div class="nx">

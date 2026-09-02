@@ -4,8 +4,7 @@ const MA_COL={login:'#6366f1',ebook_borrow:'#22c55e',pickup:'#f59e0b',hold:'#ec4
 let _maCharts={bar:null,cat:null};
 async function renderMsApp(){
   let d=null;
-  try{ const r=await fetch(`${SB_REST}/rpc/minsong_app_stats`,{method:'POST',
-    headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'content-type':'application/json'},body:'{}'});
+  try{ const r=await sbWrite('POST', `/rpc/minsong_app_stats`, {}, {anon:true});
     if(r.ok)d=await r.json(); }catch(e){}
   if(!d){ el('maBanner').innerHTML='<div class="db-chip"><div class="v">—</div><div class="l">집계를 불러오지 못했어요</div></div>'; return; }
   const tot=d.totals||{}, today=d.today||{};

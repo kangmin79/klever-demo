@@ -4,8 +4,7 @@ const PP_CH={both:'앱+웹',app:'앱만',web:'웹만'};
 let POPUPS=[];
 async function loadPopups(){
   try{
-    const r=await fetch(`${SB_REST}/minsong_popups?select=*&order=created_at.desc`,
-      {headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+    const r=await sbGetAnon(`/minsong_popups?select=*&order=created_at.desc`);
     POPUPS=r.ok?await r.json():[];
   }catch(e){POPUPS=[];}
   renderPopups();
