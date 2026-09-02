@@ -1,7 +1,7 @@
 /* ═══ 측정 로그 v2 — bookstar_events (2026-08-17) · 설계: klever_demo/_측정로그_설계_20260817.md ═══
    관리자 5화면(접속·조회·이용·활동·경로·출처)의 유일한 원천. 추가 전용(anon INSERT만), 실패해도 앱 동작엔 영향 없음.
    kind: visit 접속 / view 상세 조회 / read 고전 읽기(뷰어 닫을 때 1줄) / link 도서관 연결(찾아줘북즈·예약·전자책대출·크레마·OPAC) / activity 글쓰기 */
-const BX_EV_URL = SB_REST+'/bookstar_events';
+// (9/2 S7-4: 아무도 안 쓰던 BX_EV_URL 지움 — bxEvent 는 sbWrite('POST','/bookstar_events',…) 로 감)
 function _bxSess(){ try{ let s=sessionStorage.getItem('bx_sess'); if(!s){ s='s_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); sessionStorage.setItem('bx_sess',s); } return s; }catch(e){ return 'nosess'; } }
 // 출처(origin): 클릭한 요소의 가장 가까운 [data-origin] 조상에서 읽는다 — 호출처 15곳을 하나하나 안 고치기 위한 위임 방식
 window._bxOrigin=null;
@@ -294,7 +294,7 @@ document.addEventListener('click', bxCloseAccMenu);   // 바깥을 누르면 닫
 function bxLogout(){
   if(!confirm('로그아웃할까요?\n이 기기에서 도서관 연동 정보가 지워집니다.')) return;
   // 8/29: 서버 세션도 끝내고(다음 사람이 이 기기에서 이어 쓰지 못하게), 이 학생 이름으로 남은 임시 기록까지 지운다
-  try{ const a=_bxAuthGet(); if(a&&a.at) fetch(SB_AUTH+'/logout',{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+a.at},keepalive:true}).catch(()=>{}); }catch(e){}
+  try{ const a=_bxAuthGet(); if(a&&a.at) sbAuth('/logout',undefined,{token:a.at,keepalive:true}).catch(()=>{}); }catch(e){}
   try{ _bxAuthClear(); }catch(e){}
   try{
     localStorage.removeItem('bookstar-current-student');
@@ -540,7 +540,7 @@ async function backfillPool(){
   if(miss.length){
     const batches=[]; for(let i=0;i<miss.length;i+=24) batches.push(miss.slice(i,i+24));
     const results=await Promise.all(batches.map(batch=>
-      fetch(INFO_FN,{method:'POST',headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},body:JSON.stringify({isbns:batch})})
+      sbFnPost(INFO_FN,{isbns:batch},{anon:true})
         .then(r=>r.ok?r.json():null).catch(()=>null)));
     let changed=false;
     results.forEach(d=>{ const info=(d&&d.info)||{}; for(const isbn in info){ const x=info[isbn]; cache[isbn]=Object.assign({},x,{_ts:now}); changed=true; apply(isbn,x); } });
@@ -773,8 +773,7 @@ async function loadSimilarEbooks(brcd, bookTitle, opts){
     const ck='ebsim:'+key; let d=null;
     try{ const c=JSON.parse(sessionStorage.getItem(ck)||'null'); if(c&&c.t&&Date.now()-c.t<600000) d=c.d; }catch(e){}
     if(!d){
-      const r=await fetch(US_CURATE_FN,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json'},
-        body:JSON.stringify({similar:{brcd:String(brcd||''), ctrl:String(opts.ctrl||''), title:bookTitle||'', count:3}})});
+      const r=await sbFnPost(US_CURATE_FN,{similar:{brcd:String(brcd||''), ctrl:String(opts.ctrl||''), title:bookTitle||'', count:3}},{anon:true});
       d=await r.json();
       try{ if(d&&d.count) sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),d})); }catch(e){}
     }
@@ -900,11 +899,7 @@ function lcBorrow(isbn){
   setTimeout(()=>{ try{ w.location.href=dest; }catch(e){} }, 1600);   // 북스타 브리지 → 실제 뷰어/통합검색
 }
 // 전자도서관 구매 전자책 대출 — semyung-ebook-borrow가 로그인·대출·뷰어URL 생성까지 대행, 그 URL로 이동
-const SMEBK_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-ebook-borrow";
-// 폰 브라우저면 교보 뷰어를 모바일용으로 발급(device=m) — PC용 뷰어가 폰에서 깨짐(8/21, 앱과 동일 수리).
-// 판별식은 도서관 자체 isPC()와 동일. 창 크기가 아니라 UA 기준(좁힌 PC 창에 모바일 뷰어가 나가지 않게)
-const SM_DEV=/android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent)?'&device=m':'';
-const SMMY_FN ="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-my";
+// (SMEBK_FN·SM_DEV·SMMY_FN 은 js/00-config.js — 9/2 S7-4)
 // ── 세명대 개인기능 자격증명 ──
 // 토큰이 있으면 학생 본인 명의(각자 5권 한도), 없으면 서버가 공유계정으로 폴백한다.
 const SSO_TOK_KEY='bx_sso_token', SSO_PERSONAL_KEY='bx_sso_personal';

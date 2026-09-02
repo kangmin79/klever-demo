@@ -4,7 +4,7 @@
    app_metadata.hakbun(서버만 쓸 수 있는 칸)이 학번이다. DB(RLS)는 이 학번과 행의 student_id 가 같을 때만 쓰게 한다.
    BX_H.Authorization 을 이 세션으로 바꿔 두면 기존 호출 70여 곳이 그대로 본인 명의로 동작한다. */
 const BX_AUTH_KEY='bx_auth';
-const SB_AUTH='https://gkujptyfrzqrjrvovbnc.supabase.co/auth/v1';
+// (SB_AUTH 는 js/00-config.js — 9/2 S7-4)
 let _bxAuthTimer=null;
 function _bxJwt(at){
   try{ let p=String(at).split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); while(p.length%4) p+='=';
@@ -38,7 +38,7 @@ function _bxAuthApply(sess){
 async function bxAuthRefresh(){
   const s=_bxAuthGet(); if(!s||!s.rt) return false;
   try{
-    const r=await fetch(SB_AUTH+'/token?grant_type=refresh_token',{method:'POST',headers:{apikey:COVER_ANON,'content-type':'application/json'},body:JSON.stringify({refresh_token:s.rt})});
+    const r=await sbAuth('/token?grant_type=refresh_token',{refresh_token:s.rt});
     if(r.ok){ const j=await r.json(); if(j&&j.access_token) return _bxAuthApply(_bxAuthStore(j)); }
     if(r.status===400||r.status===401||r.status===403){
       const s2=_bxAuthGet();                       // 다른 탭이 먼저 갱신했으면 그걸 쓴다
@@ -59,7 +59,7 @@ function bxAuthSignedOut(){
 // sso-login 이 준 1회용 해시 → 세션. 성공=true
 async function bxAuthExchange(tokenHash){
   try{
-    const r=await fetch(SB_AUTH+'/verify',{method:'POST',headers:{apikey:COVER_ANON,'content-type':'application/json'},body:JSON.stringify({type:'magiclink',token_hash:tokenHash})});
+    const r=await sbAuth('/verify',{type:'magiclink',token_hash:tokenHash});
     if(!r.ok) return false;
     const j=await r.json(); if(!j||!j.access_token) return false;
     return _bxAuthApply(_bxAuthStore(j));
@@ -82,14 +82,14 @@ function smHeaders(){
 // 종이책 개인기능 공용 호출 — 대출현황/연장/예약. 미연동(409)이면 안내 문구를 그대로 돌려준다.
 async function smMy(action, params){
   const q=new URLSearchParams(Object.assign({action:action}, params||{}));
-  const r=await fetch(SMMY_FN+'?'+q.toString(), {headers:smHeaders()});
+  const r=await sbFn(SMMY_FN+'?'+q.toString());   // 쿼리는 URLSearchParams 인코딩 그대로(공백=+) — sbFn 의 encodeURIComponent 와 달라 여기서 조립
   return await r.json();
 }
 /* ── 알림(웹푸시) ──────────────────────────────────────────────────
    지금까지 반납일은 "앱을 열어야만" 알 수 있었다(사이드바 배지). 이게 그 반대편이다.
    서버(notify-due)가 매일 아침 도서관을 대신 확인하고, 켠 사람에게만 하루 한 통 보낸다.
    ⚠️ 아이폰은 홈 화면에 추가(A2HS)한 경우에만 웹푸시가 온다 — 그래서 안내를 따로 띄운다. */
-const PUSHREG_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/push-register";
+// (PUSHREG_FN 은 js/00-config.js — 9/2 S7-4)
 const VAPID_PUB="BCot9wRyajAtBdSgORnIrh26K_qWtmXFicgP5C8D8dAiswMYW7YLBQakjW3441syTPxPvTguM481_KiLZ_leFhE";
 const pushSupported=()=>('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
 // iOS는 홈 화면에 설치해야만 푸시가 된다 — 사파리 탭에서는 아무리 눌러도 안 온다
@@ -121,8 +121,7 @@ async function pushEnable(){
   let sub=await reg.pushManager.getSubscription();
   if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToU8(VAPID_PUB)});
   const j=sub.toJSON();
-  const r=await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
-    body:JSON.stringify({action:'subscribe',subscription:{endpoint:j.endpoint,keys:j.keys}})});
+  const r=await sbFnPost(PUSHREG_FN,{action:'subscribe',subscription:{endpoint:j.endpoint,keys:j.keys}});
   const d=await r.json();
   if(!d||!d.ok){
     // 서버에 등록 못 했으면 브라우저 구독만 남아 "켜진 것처럼 보이는데 안 오는" 상태가 된다 — 되돌린다
@@ -131,8 +130,7 @@ async function pushEnable(){
     return false;
   }
   // 진짜로 오는지 그 자리에서 한 통 — "켰는데 오는지 모르겠다"를 없앤다
-  try{ await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
-    body:JSON.stringify({action:'test',endpoint:j.endpoint})}); }catch(e){}
+  try{ await sbFnPost(PUSHREG_FN,{action:'test',endpoint:j.endpoint}); }catch(e){}
   return true;
 }
 async function pushDisable(){
@@ -140,8 +138,7 @@ async function pushDisable(){
   if(!sub) return true;
   const ep=sub.endpoint;
   try{ await sub.unsubscribe(); }catch(e){}
-  try{ await fetch(PUSHREG_FN,{method:'POST',headers:Object.assign({'content-type':'application/json'},smHeaders()),
-    body:JSON.stringify({action:'unsubscribe',endpoint:ep})}); }catch(e){}
+  try{ await sbFnPost(PUSHREG_FN,{action:'unsubscribe',endpoint:ep}); }catch(e){}
   return true;
 }
 async function pushToggle(on){

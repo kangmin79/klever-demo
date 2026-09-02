@@ -419,16 +419,13 @@ function chalQuit(cid){
 
 let LC_PUB=[];
 let LC_SEL={};  // ci → 펼친 책으로 보여줄 책 인덱스(기본 0)
-const COVER_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/cover";
-const INFO_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/bookinfo";
-const SMBEST_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-best";
-const SMHOLD_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-holding";
+// (COVER_FN·INFO_FN·SMBEST_FN·SMHOLD_FN 은 js/00-config.js — 9/2 S7-4)
 // 종이책 모달: 라이브 소장/대출가능 현황 (semyung-holding Edge Fn, reckey=CATTOT...)
 async function loadHolding(reckey, elId){
   const el=document.getElementById(elId||'lcdHolding'); if(!el) return;
   const pw = el.classList.contains('pw-hold')?' pw-hold':'';   // 펼침 박스면 여백 클래스 유지
   try{
-    const r=await fetch(SMHOLD_FN+'?reckey='+encodeURIComponent(reckey),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbFn(SMHOLD_FN,{reckey},{anon:true});
     const d=await r.json();
     if(!d||!d.ok||!d.total){ el.style.display='none'; return; }
     const avail=d.available>0;
@@ -526,8 +523,7 @@ function togglePaperHold(reckey, row){
     box.style.display='none'; row.classList.remove('pw-open');
   }
 }
-// 찾아줘북즈 예약 — 서버(semyung-reserve)가 도서관장 계정으로 로그인·신청까지 북스타 안에서 완결
-const SMRESV_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-reserve";
+// 찾아줘북즈 예약 — 서버(semyung-reserve)가 도서관장 계정으로 로그인·신청까지 북스타 안에서 완결 (SMRESV_FN 은 js/00-config.js)
 // ── 미연동 이용자 예약 차단 → 도서관 로그인 안내 (8/9 계약 전 잠금) ──────────
 // 예약은 사서가 실물을 움직이는 실세계 작업이라 학생 본인 이름으로만 받는다.
 // (예전엔 공유계정 폴백으로 로그인 없이도 신청됐음 — 서버 semyung-reserve도 같이 잠갔다)
@@ -741,6 +737,6 @@ async function smUnhold(reckey,mainNo){
     try{ renderMyLibStatus(); }catch(e){}
   }catch(e){ alert('취소 중 오류가 발생했어요'); }
 }
-const COVER_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
+// (COVER_ANON 은 js/00-config.js — 9/2 S7-4)
 function hiCover(u){return (u||'').replace('/coversum/','/cover500/').replace('/cover200/','/cover500/');}
 

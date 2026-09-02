@@ -384,11 +384,10 @@ async function ensureClassicBody(id){
      (CLASSIC_BODIES[id] || (typeof BODIES_SENT !== 'undefined' && BODIES_SENT[id]))) return;
   if(CLASSIC_BODY_P[id]) return CLASSIC_BODY_P[id];   // 이미 받는 중이면 그 프라미스 공유
   CLASSIC_BODY_P[id] = (async()=>{
-    const H = {headers:{apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON}};
-    const base = `https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classics?id=eq.${encodeURIComponent(fid)}`;
+    const base = `/classics?id=eq.${encodeURIComponent(fid)}`;   // SB_REST 뒤 경로 — 익명 키 GET(sbGetAnon)
     try{
       // 1차: body_sent(정렬형 문장쌍)만 — 정렬형(전체 절반)은 body/body_trans가 렌더에 안 쓰여 MB급 낭비였음
-      const r1 = await fetch(`${base}&select=body_sent`, H);
+      const r1 = await sbGetAnon(`${base}&select=body_sent`);
       if(!r1.ok) throw new Error('HTTP '+r1.status);   // 429/5xx 에러응답을 성공으로 오인해 빈 본문 캐시하는 것 방지
       const rows1 = await r1.json();
       const sent = rows1 && rows1[0] && rows1[0].body_sent;
@@ -398,7 +397,7 @@ async function ensureClassicBody(id){
         return;
       }
       // 2차: 비정렬형만 body(원문)+body_trans(ko-only 번역)
-      const r = await fetch(`${base}&select=body,body_trans`, H);
+      const r = await sbGetAnon(`${base}&select=body,body_trans`);
       if(!r.ok) throw new Error('HTTP '+r.status);
       const rows = await r.json();
       CLASSIC_BODIES[id] = (rows && rows[0] && rows[0].body) ? rows[0].body : '';

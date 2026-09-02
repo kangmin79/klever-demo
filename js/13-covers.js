@@ -118,7 +118,7 @@ let SEMYUNG_BEST_LIVE=null, SEMYUNG_NEW_LIVE=null, SEMYUNG_LOANRANK=null, SEMYUN
 function _smMap(list){ return list.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',lib:b.detail||smDetail(b.brcd),_sm:true,rank:b.rank,pubDate:b.pubDate||''})); }
 async function _smFetch(kind){
   try{
-    const r=await fetch(SMBEST_FN+'?kind='+kind,{headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON}});
+    const r=await sbFn(SMBEST_FN,{kind},{anon:true});   // kind 는 best/new 뿐이라 인코딩해도 같음
     if(!r.ok) return null;
     const d=await r.json(); const l=(d&&d.books)||[];
     return l.length?_smMap(l):null;
@@ -441,5 +441,5 @@ function millieHTML(secs,classicMode){
   });
   return `<div class="ml">${out}</div></div>`;   // 마지막 bx-org 래퍼 닫기 + .ml 닫기
 }
-const SB_REST="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1";
+// (SB_REST 는 js/00-config.js — 9/2 S7-4)
 

@@ -1,13 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    통합 검색 페이지 (Ver03) — 키워드(즉시) + 자연어(별이 추천)
    ═══════════════════════════════════════════════════════════ */
-const US_RECOMMEND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";  // (구) 옛 books 풀 추천 — 별이는 curate로 전환
-const US_CURATE_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/curate";        // 별이(학생) = 사서 큐레이션과 동일 코어(세명대 실소장 의미검색)
-const US_BRAIN_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 별이 두뇌 = 의도 라우팅(책/운영정보/잡담) + 도서관 지식베이스 답변
-const US_FIND_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/semyung-find";     // 통합검색 브리지 = 종이책 단행본·학위논문 검색(semyung_tulip search_tulip, CATTOT키→소장/예약)
-const US_KEYWORD_RPC="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/rpc/keyword_books"; // 하이브리드 키워드(정규화 ILIKE): 벡터가 놓치는 정확 제목/저자/축약어(총균쇠·한의학) → 맨 위로
-// 논문 검색(KCI paper + 국회 nanet) 계층 제거 — 2026-07-02. 책(curate+find+keyword)만 검색.
-const US_SEARCH_FN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/byeoli-search";  // 별이 통합검색 단일 엔진: 책 3소스(curate+find+keyword) 병렬호출+RRF 융합+측정훅을 백엔드로 일원화(화면은 렌더만)
+// (US_*_FN·US_KEYWORD_RPC 는 js/00-config.js — 9/2 S7-4)
 const US_NL_EX=["요즘 지쳐서 위로받고 싶어","오싹하고 무서운 이야기","우주와 과학이 궁금해","도서관 운영시간 알려줘","대출 몇 권까지 돼?"];
 let US_MODE='kw';
 let US_LAST_NL=[];
@@ -348,9 +342,7 @@ async function usChatSend(text){
   US_CHAT_BUSY=true; usChatRender();
   try{
     const hist=US_CHAT.filter(m=>!m.kind).map(m=>({role:m.role, content:m.content}));
-    const r=await fetch(US_BRAIN_FN,{method:'POST',
-      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      body:JSON.stringify({messages:hist})});
+    const r=await sbFnPost(US_BRAIN_FN,{messages:hist},{anon:true});
     const d=await r.json();
     US_CHAT_BUSY=false;
     if(d.intent==='books' && d.ready!==false){
@@ -441,10 +433,8 @@ async function _byeoliSearchOnce(topic, surface, wantAnswer){
   const ac=(typeof AbortController!=='undefined')?new AbortController():null;
   const to=ac?setTimeout(()=>{try{ac.abort();}catch(_){}} ,30000):null;
   try{
-    const r=await fetch(US_SEARCH_FN,{method:'POST', signal:ac?ac.signal:undefined,
-      headers:{'Authorization':'Bearer '+COVER_ANON,'apikey':COVER_ANON,'content-type':'application/json'},
-      // answer는 표시되는 표면에서만 요청(팔로업 등은 끔=불필요한 +3~4s Haiku 콜 절약). 기본 true.
-      body:JSON.stringify({query:topic, surface:surface||'api', count:12, config:{answer: wantAnswer!==false}})});
+    // answer는 표시되는 표면에서만 요청(팔로업 등은 끔=불필요한 +3~4s Haiku 콜 절약). 기본 true.
+    const r=await sbFnPost(US_SEARCH_FN,{query:topic, surface:surface||'api', count:12, config:{answer: wantAnswer!==false}},{anon:true, signal:ac?ac.signal:undefined});
     if(!r.ok) throw new Error('HTTP '+r.status);
     d=await r.json();
   }catch(e){ d=null; }

@@ -1,6 +1,5 @@
 /* ═══ 테스트 계정 + 챌린지 결과 서버 저장 (bookstar_students / bookstar_challenge_results) ═══ */
-const BX_SB = SB_REST;
-const BX_H = {apikey:COVER_ANON, Authorization:'Bearer '+COVER_ANON, 'content-type':'application/json'};
+// (BX_H 는 js/00-config.js — 9/2 S7-4. 아무도 안 쓰던 BX_SB 는 지움)
 // 8/9 데모 학생 5명(s1~s5) 삭제 — DB 기록까지 전부 정리(백업: 세명대_자료/_데모학생5명_삭제전_백업_20260809.json).
 // 이제 계정은 세명대 SSO(도서관 배너)로만 생긴다. 배열은 이름/학과 보강용 폴백이라 비워서 유지.
 const BX_STUDENTS = [];
