@@ -4,7 +4,8 @@
 # 활성화: git config core.hooksPath .githooks   (이 저장소에서 1회)
 # 9/2 S5: JS가 js/ 로 분리되어 APP_BUILD 선언이 js/ 안에 있음 → 선언이 든 파일을 찾아 그 파일을 고친다.
 #        css/·js/ 만 바뀐 커밋도 캐시버전(?b=)을 올려야 하므로 트리거를 넓힘.
-if git diff --cached --name-only | grep -qE '^(index\.html|css/[^/]+|js/[^/]+)$'; then
+#        9/2 S8: css/admin.css 는 관리자 전용 → 학생 트리거에서 제외(아래 admin 블록이 담당)
+if git diff --cached --name-only | grep -vE '^css/admin\.css$' | grep -qE '^(index\.html|css/[^/]+|js/[^/]+)$'; then
   today=$(date +%y%m%d)
   bfile=$(grep -l "^const APP_BUILD = '" index.html js/*.js 2>/dev/null | head -1)
   if [ -z "$bfile" ]; then echo "pre-commit: APP_BUILD 선언을 못 찾음 (index.html·js/*.js)" >&2; exit 1; fi
@@ -24,5 +25,13 @@ if git diff --cached --name-only | grep -qE '^(index\.html|css/[^/]+|js/[^/]+)$'
   printf '%s' "$new" > version.txt
   git add index.html version.txt "$bfile"
   echo "pre-commit: APP_BUILD -> $new ($bfile)"
+fi
+# 9/2 S8: 관리자 화면(admin/index.html · css/admin.css · js/admin/)이 커밋에 들어가면 admin/index.html 의 ?b= 만 새 값으로.
+#        학생 APP_BUILD 와는 독립 — 관리자만 바뀐 배포에 학생 쪽 "새 버전" 안내가 뜨지 않게. 값은 분 단위 시각(yymmddHHMM)
+if git diff --cached --name-only | grep -qE '^(admin/index\.html|css/admin\.css|js/admin/[^/]+)$'; then
+  adm=$(date +%y%m%d%H%M)
+  sed -i "s/?b=[0-9a-z]\{1,\}/?b=$adm/g" admin/index.html
+  git add admin/index.html
+  echo "pre-commit: admin ?b= -> $adm"
 fi
 exit 0

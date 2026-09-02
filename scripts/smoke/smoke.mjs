@@ -206,6 +206,45 @@ async function shot(page, name) {
     await page.close();
   }
 
+  // ⑥ 관리자 로그인 뒤 화면 (S8용, 9/2) — 게이트는 sessionStorage 에 비밀번호가 "있기만 하면" 숨겨지므로 가짜 값을 심는다.
+  //   진짜 비밀번호 아님 → 저장 요청은 서버(admin-save)가 거절하고, 어차피 route 가 쓰기를 전부 차단. 읽기(GET)만 실제로 나간다.
+  {
+    const actx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'ko-KR', deviceScaleFactor: 1 });
+    await actx.addInitScript(() => { try { sessionStorage.setItem('bs_admin_secret', 'smoke-fake'); localStorage.setItem('bs_admin_mode', 'web'); } catch (e) {} });
+    const page = await newPage(actx, 'admin-in');
+    try {
+      await page.goto(base + '/admin/', { waitUntil: 'load', timeout: 60000 });
+      const gateHidden = await page.evaluate(() => { const g = document.getElementById('loginGate'); return !!g && getComputedStyle(g).display === 'none'; });
+      if (!gateHidden) throw new Error('로그인 게이트가 안 숨겨짐');
+      await page.waitForFunction(() => typeof go === 'function' && typeof setMode === 'function', null, { timeout: 20000 });
+      // 대시보드(첫 화면) — 기간·시트 요약 줄
+      await page.waitForFunction(() => ((document.getElementById('dbSumLine') || {}).textContent || '').length > 0, null, { timeout: 20000 });
+      await page.waitForTimeout(1500);
+      await shot(page, 'admin-dash');
+      // 우리도서관 칸 목록(설정 페이지, library_sections 읽기 → 렌더)
+      await page.evaluate(() => { const n = document.querySelector('.navi'); go(n, 'settings'); });
+      await page.waitForFunction(() => (document.getElementById('secList') || {}).childElementCount > 0, null, { timeout: 30000 });
+      const nSec = await page.evaluate(() => document.getElementById('secList').childElementCount);
+      await page.waitForTimeout(1500);
+      await shot(page, 'admin-settings');
+      // 사이드 메뉴 전 페이지 순회 — 렌더 함수가 전부 예외 없이 도는지
+      const pages = ['stats', 'chstat', 'writings', 'history', 'make', 'notice', 'settings', 'comm', 'popup', 'dash'];
+      for (const pg of pages) {
+        await page.evaluate(p => { const n = document.querySelector('.navi') || document.body; go(n, p); }, pg);
+        await page.waitForTimeout(300);
+      }
+      await page.evaluate(() => { const n = document.querySelector('.navi'); go(n, 'make'); });
+      await page.waitForFunction(() => (document.getElementById('chalList') || {}).childElementCount > 0, null, { timeout: 30000 });
+      await page.waitForTimeout(1500);
+      await shot(page, 'admin-make');
+      const r = pageErrReport(page);
+      if (r.hard.length) fail('⑥ 관리자 로그인 뒤', 'JS 예외: ' + r.hard[0]);
+      else ok('⑥ 관리자 로그인 뒤', `칸 ${nSec}개, 페이지 ${pages.length}개 순회, JS 예외 0`);
+      if (r.soft.length) warn('⑥ console.error', r.soft.slice(0, 2).join(' | '));
+    } catch (e) { fail('⑥ 관리자 로그인 뒤', String(e.message).split('\n')[0]); }
+    await page.close(); await actx.close();
+  }
+
   await browser.close();
   if (srv) srv.close();
 

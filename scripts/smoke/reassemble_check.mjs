@@ -40,11 +40,12 @@ const alreadyInRef = ln => origLines.has(norm(ln).trim());
 for (let i = 0; i < lines.length; i++) {
   const ln = lines[i];
   if (alreadyInRef(ln)) { out.push(ln); continue; }
-  const css = ln.match(/^\s*<link rel="stylesheet" href="((?:\.\.\/)?css\/[^"?]+)(?:\?b=[0-9a-z]+)?">\s*$/);
+  // 9/2 S8: admin/index.html 은 원본이 `</style></head>` 한 줄 → <link …></head> 처럼 뒤에 붙은 꼬리(css[2])를 </style> 뒤에 그대로 붙인다
+  const css = ln.match(/^\s*<link rel="stylesheet" href="((?:\.\.\/)?css\/[^"?]+)(?:\?b=[0-9a-z]+)?">(\S*)\s*$/);
   if (css && ONLY !== 'js') {
     const body = fs.readFileSync(path.join(dir, css[1]), 'utf8');
     // 원본 모양: <style>⏎ 내용… ⏎</style> — 파일 끝 개행이 곧 </style> 앞 개행
-    out.push('<style>'); out.push((body.endsWith('\n') ? body : body + '\n') + '</style>');
+    out.push('<style>'); out.push((body.endsWith('\n') ? body : body + '\n') + '</style>' + css[2]);
     inlined.push(css[1]); continue;
   }
   const js = ln.match(/^\s*<script src="((?:\.\.\/)?js\/[^"?]+)(?:\?b=[0-9a-z]+)?"><\/script>\s*$/);
