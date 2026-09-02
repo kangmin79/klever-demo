@@ -37,7 +37,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css?b=260902p">
+<link rel="stylesheet" href="css/app.css?b=260902q">
 </head>
 <body>
 
@@ -519,20 +519,20 @@
      mvp35의 BODIES_ORIG 181권은 전부 k-접두 id인데 진열도서(BOOKS_RAW)는 kr-/gb-뿐이라 절대 매칭 안 됨.
      books_extra 41권(g#### id)도 표시·검색 제외 상태(아래 2900번대 주석 참고). 두 파일은 repo에 보존(되돌리기 가능).
      QUEST_MVP35(1KB)만 실사용 → 아래 인라인 QUEST 폴백 배열에 실데이터 반영함. -->
-<script src="data/classics_kr_data.js?b=260902p"></script>
-<script src="data/classics_foreign_data.js?b=260902p"></script>
-<script src="data/classics_ko_titles.js?b=260902p"></script>
-<script src="data/classics_summaries.js?b=260902p"></script>
+<script src="data/classics_kr_data.js?b=260902q"></script>
+<script src="data/classics_foreign_data.js?b=260902q"></script>
+<script src="data/classics_ko_titles.js?b=260902q"></script>
+<script src="data/classics_summaries.js?b=260902q"></script>
 <!-- 다국어 소개글(classics_summaries_multi.js, 218KB)은 읽기 화면에서만 쓰므로 ensureSummaryML로 지연 로드 -->
 <!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
      예전엔 BODIES_SENT를 아래 인라인 스크립트에서 선언 → 초기 4권의 문장정렬 데이터가 통째로 누락되어
      정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결.
      BODIES_ORIG/BODIES_TRANS: 원래 mvp35_data.js가 선언 → 제거 후 여기서 빈 객체로(레거시 bodies가 채움). -->
 <script>var BODIES_SENT={}, KR_SENT={}, BODIES_ORIG={}, BODIES_TRANS={};</script>
-<script src="bodies_dq.js?b=260902p"></script>
+<script src="bodies_dq.js?b=260902q"></script>
 <!-- bodies_gatsby/demian/emma(≈7MB)는 정적 include 제거 → 책 열 때만 ensureForeignBody가 지연 로드(LEGACY_BODY_FILES) -->
 <!-- bodies_gb{id}.js(변신 등 양산 산출물)는 ensureForeignBody()가 viewer 열 때 지연 로드 -->
-<script src="data/challenge_scenes.js?b=260902p"></script>
+<script src="data/challenge_scenes.js?b=260902q"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════
    SVG 아이콘 (Lucide 스타일 — viewBox 24)
@@ -5746,7 +5746,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902p';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902q';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(bodies_gb5921.js) — 3단계: 한국어 머리 8개를 Chapter N.으로 통일
@@ -9750,82 +9750,7 @@ window.addEventListener('keydown', (e) => {
 });
 </script>
 
-<script>
-/* ═══ AI추천 (ai.html 이식) — air* 네임스페이스, 전역 esc 재사용 ═══ */
-(function(){
-  const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/recommend";
-  const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
-  const EX=["요즘 지쳐서 위로받고 싶어","가볍게 머리 식힐 책","오싹하고 무서운 이야기","우주와 과학이 궁금해","철학 입문하고 싶어","김애란 책"];
-  const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
-  const man=n=>{if(!n)return '';if(n>=10000)return (n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,'')+'만';return n.toLocaleString();};
-  let LAST=[];
-  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_tulip";   // P3: semyung_books → semyung_tulip
-  const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
-  const _norm=t=>(t||'').replace(/\s+/g,'').toLowerCase();
-  // 추천 결과 → 세명대 전자책 매칭(_smLib=상세 딥링크 → '바로 읽기')
-  async function airSm(results){
-    const cores=results.map(b=>_core(b.title)).filter(Boolean).slice(0,12);
-    if(!cores.length) return;
-    const or=cores.map(c=>'title.ilike.*'+encodeURIComponent(c.replace(/[(),*]/g,' ').trim())+'*').join(',');
-    try{
-      const r=await fetch(SBR+'?kind=eq.ebook&or=('+or+')&select=title,barcode&limit=80',{headers:{apikey:ANON,Authorization:'Bearer '+ANON}});
-      const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return;
-      results.forEach(b=>{ const c=_norm(_core(b.title)); if(!c)return;
-        const hit=rows.find(x=>{const xc=_norm(_core(x.title));return xc&&(xc.includes(c)||c.includes(xc));});
-        if(hit&&hit.barcode) b._smLib='https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+hit.barcode; });
-    }catch(e){}
-  }
-  function cardHtml(b,i){
-    const star=b.rating!=null?`<span class="air-star">★</span> ${f5(b.rating)}`:'';
-    const loan=b.loan_count?`  ·  대출 ${man(b.loan_count)}`:'';
-    return `<div class="air-card" onclick="airOpen(${i})">
-      <div class="air-cv"><img src="${esc(b.cover)}" loading="lazy" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>
-      <div class="air-bd"><h3>${esc(b.title)}</h3><div class="air-au">${esc(b.author)}</div>
-        <div class="air-meta">${star}${loan}</div>
-        ${b.reason?`<div class="air-why">${esc(b.reason)}</div>`:''}
-        ${b._smLib?'<div class="air-read">우리 도서관 전자책 · 바로 읽기</div>':''}
-      </div></div>`;
-  }
-  function render(d){
-    const st=document.getElementById('airStage');
-    if(!d.results||!d.results.length){st.innerHTML='<div class="air-empty">딱 맞는 책을 못 찾았어요.<br>조금 다르게 말해보거나 예시를 눌러보세요.</div>';return;}
-    const modeTxt=d.mode==='entity'?'정확 검색 · 도서관 DB':'Bookstar AI 큐레이션';
-    st.innerHTML=`<div class="air-results"><div class="air-intro">${esc(d.intro||'')}</div><div class="air-modeline">${modeTxt} · ${d.results.length}권</div><div class="air-grid">${d.results.map(cardHtml).join('')}</div></div>`;
-  }
-  window.airRun=function(t){document.getElementById('airQ').value=t;airGo();};
-  window.airGo=async function(){
-    const q=document.getElementById('airQ').value.trim(); if(!q)return;
-    const st=document.getElementById('airStage');
-    var sy=document.getElementById('airStory'); if(sy) sy.style.display='none';
-    document.getElementById('airSend').disabled=true;
-    st.innerHTML='<div class="air-loading"><div class="air-pulse"></div><br>AI가 책을 고르는 중…</div>';
-    try{
-      const r=await fetch(FUNC,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({query:q})});
-      const d=await r.json(); LAST=d.results||[]; await airSm(LAST); render(d);
-    }catch(e){ st.innerHTML='<div class="air-empty">잠시 문제가 생겼어요. 다시 시도해 주세요.</div>'; }
-    document.getElementById('airSend').disabled=false;
-  };
-  window.airOpen=function(i){const b=LAST[i];if(!b)return; window.__airBook=b;
-    const star=b.rating!=null?`<span class="air-star">★</span> ${f5(b.rating)} · ${b.rating_count||0}명`:'';
-    const loan=b.loan_count?`  |  대출 ${man(b.loan_count)}`:'';
-    const page=b.pages?`  |  ${b.pages}쪽`:'';
-    const kws=(b.keywords||[]).slice(0,5);
-    document.getElementById('airSheet').innerHTML=`<div class="air-stop"><div class="air-scv"><img src="${esc(b.cover)}" decoding="async" data-t="${esc(b.title||'')}" data-a="${esc(b.author||'')}" onerror="ncSwap(this)"></div>
-      <div style="flex:1"><h2>${esc(b.title)}</h2><div class="air-sau">${esc(b.author)} · ${esc(b.publisher||'')} · ${b.pub_year||''}</div>
-      <div class="air-smeta">${star}${loan}${page}</div></div></div>
-      ${b.reason?`<div class="air-swhy">${esc(b.reason)}</div>`:''}
-      <p class="air-sdesc">${esc(b.description||'')}</p>
-      ${kws.length?`<div class="air-kws">${kws.map(k=>'<span class="air-kw">'+esc(k)+'</span>').join('')}</div>`:''}
-      <div class="air-acts"><button class="air-cta" onclick="libBridgeOpen(window.__airBook)">${b._smLib?'전자책 바로 읽기':'우리 도서관에서 찾기'}</button><button class="air-cta2" onclick="airClose()">닫기</button></div>
-      <div class="air-src">출처 · 별점·표지 알라딘 / 대출·키워드 정보나루(국립중앙도서관)</div>`;
-    document.getElementById('airOv').classList.add('on');
-  };
-  window.airClose=function(){document.getElementById('airOv').classList.remove('on');};
-  // 예시 칩 초기화
-  var ch=document.getElementById('airChips');
-  if(ch) ch.innerHTML=EX.map(e=>`<span class="air-chip" onclick="airRun('${e}')">${esc(e)}</span>`).join('');
-})();
-</script>
+<script src="js/90-ai-recommend.js?b=260902q"></script>
 
 <!-- ═══ 플로팅 AI 사서 챗봇 ═══ -->
 <button id="hwcBubble" onclick="hwcToggle()" aria-label="사서 별이에게 물어보기"><span class="hwc-dot"></span><span class="bx-star">⭐</span></button>
@@ -9841,199 +9766,7 @@ window.addEventListener('keydown', (e) => {
     <button class="hwc-send" id="hwcSend" onclick="hwcSend()" aria-label="보내기">↑</button>
   </div>
 </div>
-<script>
-/* ═══ 플로팅 AI 사서 챗봇 (hwc 네임스페이스) — chat Edge Function 대화 맥락 ═══ */
-(function(){
-  const FUNC="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/chat";
-  const BRAIN="https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/library-brain";  // 의도 라우팅(운영정보=KB로 바로 답 / 책=추천)
-  const ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWpwdHlmcnpxcmpydm92Ym5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNjI0MDcsImV4cCI6MjA5NTczODQwN30.BphB9N1xjfOgrGCPiqwFQNbwotu1HW7fBTDl4sdQSTc";
-  const GREET="안녕하세요, 별이예요. 🌙\n오늘은 어떤 책을 찾으세요? 기분이나 상황만 편하게 말씀해 주시면 딱 맞는 책을 골라드릴게요.";
-  const CHIPS=["요즘 지쳐서 위로되는 책","가볍게 머리 식힐 소설","우주·과학이 궁금해","밤에 오싹한 이야기","돈·재테크 입문"];
-  const f5=r=>r==null?'':(Math.round(r/2*10)/10).toFixed(1);
-  let msgs=[], busy=false, opened=false, lastQ='';
-  let shownKeys=new Set(), lastTopic='', lastRaw='';   // 통합검색 전환: 이미 보여준 책(isbn) + 마지막 검색 주제 + 학생이 친 말 그대로
-  const SBR="https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/semyung_tulip";   // P3: semyung_books → semyung_tulip (현재 미사용 상수)
-  const el=id=>document.getElementById(id);
-  const _core=t=>(t||'').split(/[\(\[:·\-]/)[0].trim();
-  const _norm=t=>(t||'').replace(/\s+/g,'').toLowerCase();
-  const scroll=()=>{const b=el('hwcBody');b.scrollTop=b.scrollHeight;};
-
-  function addRow(role,html){const r=document.createElement('div');r.className='hwc-row '+(role==='user'?'user':'bot');r.innerHTML=`<div class="hwc-msg">${html}</div>`;el('hwcBody').appendChild(r);scroll();}
-  function addUser(t){addRow('user',esc(t));}
-  function addBot(t){addRow('bot',esc(t));}
-  // 운영정보 답변: 요약 텍스트 + (있으면)도서관 링크 버튼 + 빠른답변 칩
-  function addBotRich(text, link, label, chips){
-    let h=mdLite(text);
-    if(link && /^https?:\/\/lib\.semyung\.ac\.kr\//.test(link)){
-      h+=`<a href="${esc(link)}" target="_blank" rel="noopener" style="display:block;width:fit-content;margin-top:11px;padding:8px 13px;border-radius:9px;background:var(--gold,#d4a017);color:#1a1a2e;font-weight:700;font-size:12.5px;text-decoration:none">📄 ${esc(label||'자세히 보기')}</a>`;
-    }
-    addRow('bot',h);
-    if(Array.isArray(chips) && chips.length){
-      const cr=document.createElement('div');cr.className='hwc-chips';
-      // LLM 생성 칩에 홑따옴표(')가 있으면 홑따옴표 속성이 조기 종료되던 것 → 메인 챗(aicShowChips)과 동일한 쌍따옴표+&quot; 패턴
-      cr.innerHTML=chips.slice(0,4).map(c=>`<span class="hwc-chip" onclick="hwcChip(${JSON.stringify(String(c)).replace(/"/g,'&quot;')})">${esc(c)}</span>`).join('');
-      el('hwcBody').appendChild(cr);scroll();
-    }
-  }
-
-  // 추천 카드 렌더(통합검색 전환) — 메인 별이와 동일하게 libDetail(isbn) 상세 연결 + 형태 배지 + 바로읽기 힌트
-  function hwcCandCard(b){
-    if(b._kind==='classic') return usClassicCardHTML(b).replace('class="book-card bc-book"','class="hwc-card bc-book"');   // 고전은 같은 카드(openDetail)
-    const isbn=String(b.isbn||'').replace(/'/g,'');
-    // 추천 v2(8/18): 서버 재고 판정 반영 — 대출 중이면 '바로 읽기' 힌트 대신 예약 안내
-    const read=b.smEbook?(b._avail===false?'<div class="hwc-read" style="color:#dc2626">대출 중 · 예약하기</div>':`<div class="hwc-read">${b._avail===true?'지금 바로 읽기':'바로 읽기'}</div>`):'';
-    const meta=[b.author, b.publisher, (b.year||b.pubYear)].filter(Boolean).join(' · ');
-    const loan=b.loan?`<span class="hwc-loan">대출 <b>${Number(b.loan).toLocaleString()}</b></span>`:'';
-    return `<div class="hwc-card ${(b._material==='thesis'||b._material==='serial')?'bc-paper':'bc-book'}" onclick="byeoliClickLog(US_CLICKMAP['${esc(isbn)}']);libDetail('${esc(isbn)}')">
-      <div class="hwc-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" loading="lazy" decoding="async" data-t="${esc(cleanT(b.title||''))}" data-a="${esc(String(b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}</div>
-      <div class="hwc-ci"><h4>${escD(b.title)}</h4><div class="au">${escD(meta)}</div>
-      <div style="margin-top:5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">${usFormBadges(b)}${loan}</div>${read}</div></div>`;
-  }
-  // 새 결과 중 이미 보여준 책(isbn) 제외하고 카드 추가 → 추가 개수 반환
-  // Answer Engine 답변 행(플로팅) — 인용 [n]·근거 칩 클릭 시 libDetail 상세 모달
-  function hwcAnswerRow(answer){
-    if(!answer||!answer.used||!answer.text) return;
-    // 번호 인용·칩 폐지(가독성) — 주제 요약 문단만. 책 목록은 아래 카드가 담당.
-    const html=esc(answer.text).replace(/\s*\[\d+\]/g,'');
-    const row=document.createElement('div'); row.className='hwc-row bot';
-    row.innerHTML=`<div class="usc-answer" style="max-width:100%"><div class="usc-answer-h">별이의 답</div><div class="usc-answer-t">${html}</div></div>`;
-    el('hwcBody').appendChild(row);
-  }
-  function hwcAddBooks(results, subtitle, answer){
-    const fresh=(results||[]).filter(b=>b&&b.isbn&&!shownKeys.has(b.isbn));
-    if(!fresh.length) return 0;
-    fresh.forEach(b=>shownKeys.add(b.isbn));
-    hwcAnswerRow(answer);
-    addBot('우리 도서관에서 골라봤어요 ⭐'+(subtitle?' '+subtitle:''));
-    const wrap=document.createElement('div');wrap.className='hwc-row bot';
-    wrap.innerHTML=`<div class="hwc-cards">${fresh.map(hwcCandCard).join('')}</div>`;
-    el('hwcBody').appendChild(wrap);
-    followRow();
-    // 한 권씩 '톡, 톡' 나타나며 그때마다 따라 스크롤(틴더식 — 별이가 골라주는 느낌). 즉시 scroll() 생략.
-    byeoliStagger(wrap.querySelector('.hwc-cards'), ()=>scroll());
-    return fresh.length;
-  }
-  // 후속 칩 — 같은 주제 재검색(이미 본 책 자동 제외) 또는 톤/분야 변형
-  const FOLLOWS=[
-    {label:'🔄 다른 책', mod:''},
-    {label:'더 가볍게', mod:' 가볍고 부담 없이 읽히는 책'},
-    {label:'분야 바꿔서', mod:' 다른 분야의 책'}];
-  function followRow(){
-    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());
-    const r=document.createElement('div');r.className='hwc-chips hwc-follow';
-    r.innerHTML=FOLLOWS.map((f,i)=>`<span class="hwc-chip" onclick="hwcFollow(${i})">${esc(f.label)}</span>`).join('');
-    el('hwcBody').appendChild(r);
-  }
-  window.hwcFollow=async function(i){
-    const f=FOLLOWS[i]; if(!f||busy)return;
-    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());
-    busy=true; el('hwcSend').disabled=true;
-    addUser(f.label.replace('🔄 ','')); typing(true);
-    try{
-      const fr=await byeoliFindBooks((lastTopic+f.mod).trim(), 'float', false, (lastRaw+f.mod).trim()); typing(false);   // 팔로업=answer 생략(렌더 안 함)
-      if(fr.offtopic){ addBot(fr.message||'다른 주제로 찾아볼까요?'); }
-      else { const n=hwcAddBooks(fr.results); if(!n) addBot(fr.error ? '연결이 잠깐 불안정했어요. 잠시 후 다시 시도해 주세요.' : '이 주제로는 더 보여드릴 책이 없네요. 다른 걸로 찾아볼까요?'); }
-    }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 다시 시도해 주세요.'); }
-    busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
-  };
-  function chipsRow(){
-    const r=document.createElement('div');r.className='hwc-chips';r.id='hwcChips';
-    r.innerHTML=CHIPS.map(c=>`<span class="hwc-chip" onclick="hwcChip('${c.replace(/'/g,"\\'")}')">${esc(c)}</span>`).join('');
-    el('hwcBody').appendChild(r);
-  }
-  function typing(on){
-    let t=el('hwcTyping');
-    if(on){ if(t)return; t=document.createElement('div');t.id='hwcTyping';t.className='hwc-row bot';
-      t.innerHTML='<div class="hwc-msg hwc-typing"><i></i><i></i><i></i></div>';el('hwcBody').appendChild(t);scroll(); }
-    else if(t) t.remove();
-  }
-
-  window.hwcToggle=function(){
-    opened=!opened;
-    el('hwcPanel').classList.toggle('on',opened);
-    el('hwcBubble').classList.toggle('hide',opened);
-    if(opened){ if(!el('hwcBody').children.length){ addBot(GREET); chipsRow(); }
-      // 8/14: 모바일은 자동 포커스 금지 — 키보드가 바로 올라와 인사말·칩이 가려지던 문제(전체화면과 세트)
-      if(window.innerWidth>900) setTimeout(()=>el('hwcInput').focus(),60); }
-  };
-  window.hwcGrow=function(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,96)+'px';};
-  window.hwcKey=function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();hwcSend();} };
-  window.hwcChip=function(t){ const c=el('hwcChips'); if(c)c.remove(); doSend(t); };
-  window.hwcSend=function(){ const i=el('hwcInput'); const t=i.value.trim(); if(!t)return; i.value=''; hwcGrow(i); const c=el('hwcChips'); if(c)c.remove(); doSend(t); };
-
-  async function doSend(text,shown){
-    if(busy)return; busy=true; el('hwcSend').disabled=true; lastQ=text;
-    document.querySelectorAll('.hwc-follow').forEach(x=>x.remove());   // 직접 입력 시에도 후속 칩 정리
-    addUser(shown||text); msgs.push({role:'user',content:text}); typing(true);
-    if(msgs.length>24){ msgs=msgs.slice(-24); while(msgs.length && msgs[0].role!=='user') msgs.shift(); }   // 히스토리 상한(user 턴 시작 보장) — 무제한 누적 시 매 턴 전체 전송(토큰·지연 증가) 방지
-    try{
-      let refined='', brainReply='';
-      // 1) 별이 두뇌: 의도 라우팅. 운영정보(info)·잡담(other)·모호한 책요청 → KB로 바로 답(추천 호출 안 함).
-      try{
-        const br=await fetch(BRAIN,{method:'POST',headers:{'Authorization':'Bearer '+ANON,'apikey':ANON,'content-type':'application/json'},body:JSON.stringify({messages:msgs})});
-        const bd=await br.json();
-        if(bd && bd.intent && !(bd.intent==='books' && bd.ready!==false)){
-          typing(false);
-          const reply=bd.reply||'무엇을 도와드릴까요?';
-          addBotRich(reply, bd.link, bd.linkLabel, bd.chips);
-          msgs.push({role:'assistant',content:reply});
-          byeoliLog({surface:'float',query:text,intent:bd.intent||'',ready:bd.ready,refined_topic:bd.refinedTopic||'',kb_link:bd.link||''});
-          busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
-          return;
-        }
-        if(bd && bd.refinedTopic) refined=bd.refinedTopic;   // 두뇌가 다듬은 검색 주제
-        if(bd && bd.reply) brainReply=bd.reply;               // 책 확인 한마디(아래에서 assistant 턴으로 기록)
-      }catch(e){ /* 두뇌 실패 → 원문 질의로 검색 */ }
-      // 2) 책 추천 — 메인 별이와 동일 엔진(세명대 실소장 11만: curate 전자책 + semyung-find 종이/논문)
-      lastTopic = byeoliTopicOf(refined, text);   // 두뇌가 덧붙이기만 했으면 학생 말 그대로(제목 검색 보호)
-      lastRaw = text;   // 학생이 친 말 그대로 — 다듬은 주제로 못 찾을 때 이 말로 다시 찾는다
-      const fr = await byeoliFindBooks(lastTopic, 'float', true, text);
-      typing(false);
-      // ⚠️책 추천도 assistant 턴으로 이력에 남긴다 — 안 남기면 user 메시지가 연속 누적되어
-      //   Anthropic API가 한 덩어리로 합쳐 직전 책맥락이 다음 운영질문("운영시간?")을 books로 오분류시킨다(메인 챗은 8359에서 이미 기록).
-      msgs.push({role:'assistant', content: brainReply || '책을 찾아드렸어요.'});
-      if(fr.offtopic){ addBot(fr.message||'책 주제를 조금 더 구체적으로 말씀해 주세요.'); }
-      else { const n=hwcAddBooks(fr.results, fr.subtitle, fr.answer); if(!n) addBot(fr.error ? '연결이 잠깐 불안정했어요. 잠시 후 다시 시도해 주세요.' : '아쉽지만 우리 도서관에서 딱 맞는 책을 못 찾았어요. 조금 다르게 말해볼까요?'); }
-    }catch(e){ typing(false); addBot('잠깐 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'); }
-    busy=false; el('hwcSend').disabled=false; el('hwcInput').focus();
-  }
-
-})();
-
-/* ── 사서 팝업 (minsong_popups — 관리자 '팝업 관리'에서 발행, 앱과 같은 테이블·팝업당 한 번만) ── */
-(async function(){
-  try{
-    const r=await fetch(`${SB_REST}/minsong_popups?select=id,title,body,target,starts_at,ends_at&active=is.true&channel=in.(web,both)&order=created_at.desc&limit=20`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
-    if(!r.ok) return;
-    const rows=await r.json();
-    let seen=[]; try{ seen=JSON.parse(localStorage.getItem('ms_seen_popups')||'[]'); }catch(e){}
-    // 한국 날짜로 비교 — toISOString은 UTC라 자정~오전 9시에 어제로 계산되는 버그 방지
-    const today=new Date(Date.now()+9*3600*1000).toISOString().slice(0,10);
-    const p=(rows||[]).find(x=>{
-      if(seen.includes(x.id))return false;
-      if(x.starts_at&&today<x.starts_at)return false;
-      if(x.ends_at&&today>x.ends_at)return false;
-      if(x.target==='login'&&!ssoToken())return false;
-      if(x.target==='overdue'||x.target==='charm0')return false;   // 앱 전용 조건 — 웹에선 안 띄움
-      return true;
-    });
-    if(!p) return;
-    const pe=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;background:rgba(25,31,40,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:28px';
-    ov.innerHTML=`<div style="background:#fff;border-radius:20px;padding:24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)">
-      <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:#b8902f;margin-bottom:8px">민송도서관</div>
-      <div style="font-size:17px;font-weight:800;color:#1f2430;line-height:1.45">${pe(p.title)}</div>
-      ${p.body?`<div style="color:#4e5968;font-size:13.5px;line-height:1.55;margin-top:10px;white-space:pre-line">${pe(p.body)}</div>`:''}
-      <button id="msPpOk" style="margin-top:18px;width:100%;background:#1f2430;color:#fff;border:0;border-radius:14px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">확인</button></div>`;
-    document.body.appendChild(ov);
-    document.getElementById('msPpOk').onclick=()=>{
-      try{ seen.push(p.id); localStorage.setItem('ms_seen_popups',JSON.stringify(seen.slice(-50))); }catch(e){}
-      ov.remove();
-    };
-  }catch(e){}
-})();
-</script>
+<script src="js/91-chatbot.js?b=260902q"></script>
+<script src="js/92-library-popup.js?b=260902q"></script>
 </body>
 </html>

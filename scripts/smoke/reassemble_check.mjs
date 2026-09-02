@@ -18,7 +18,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const argv = Object.fromEntries(process.argv.slice(2).map(a => { const m = a.match(/^--([^=]+)=(.*)$/); return m ? [m[1], m[2]] : [a.replace(/^--/, ''), true]; }));
 const REF = argv.ref;
 const FILE = argv.file || 'index.html';
-if (!REF) { console.error('사용법: --ref=<원본 커밋> [--file=index.html]'); process.exit(2); }
+// --only=js : 기준 커밋에서 이미 CSS가 분리돼 있으면 <link>는 그대로 두고 js/ 만 되돌려 붙인다 (S4~S6)
+const ONLY = argv.only || 'all';
+if (!REF) { console.error('사용법: --ref=<원본 커밋> [--file=index.html] [--only=js|css]'); process.exit(2); }
 
 const norm = s => s
   .replace(/APP_BUILD = '[0-9a-z]+'/g, "APP_BUILD = '@BUILD@'")
@@ -35,14 +37,14 @@ let inlined = [];
 for (let i = 0; i < lines.length; i++) {
   const ln = lines[i];
   const css = ln.match(/^\s*<link rel="stylesheet" href="((?:\.\.\/)?css\/[^"?]+)(?:\?b=[0-9a-z]+)?">\s*$/);
-  if (css) {
+  if (css && ONLY !== 'js') {
     const body = fs.readFileSync(path.join(dir, css[1]), 'utf8');
     // 원본 모양: <style>⏎ 내용… ⏎</style> — 파일 끝 개행이 곧 </style> 앞 개행
     out.push('<style>'); out.push((body.endsWith('\n') ? body : body + '\n') + '</style>');
     inlined.push(css[1]); continue;
   }
   const js = ln.match(/^\s*<script src="((?:\.\.\/)?js\/[^"?]+)(?:\?b=[0-9a-z]+)?"><\/script>\s*$/);
-  if (js) {
+  if (js && ONLY !== 'css') {
     // 연속된 js/ 줄을 한 블록으로
     let bodies = [fs.readFileSync(path.join(dir, js[1]), 'utf8')]; inlined.push(js[1]);
     while (i + 1 < lines.length) {
