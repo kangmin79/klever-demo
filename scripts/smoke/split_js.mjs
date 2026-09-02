@@ -7,6 +7,7 @@
 //   · scriptOpen/scriptClose = <script> / </script> 줄번호. parts 는 그 사이를 빈틈없이 덮어야 함(검증함)
 //   · 줄번호는 실행 전 원본 기준. 여러 블록은 아래→위 순으로 처리해 번호가 안 밀리게 한다
 //   · 잘라낸 내용은 한 글자도 바꾸지 않는다(끝 개행 포함). 합격 판정은 reassemble_check 가 한다
+//   · "srcBase":"../" (S8-2 admin/index.html 용) — out 은 repo 루트 기준 경로, src 속성엔 이 접두어를 붙인다
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,7 +37,7 @@ for (const b of blocks) {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     if (fs.existsSync(outPath)) throw new Error(`이미 있음: ${p.out}`);
     fs.writeFileSync(outPath, body, 'utf8');
-    srcLines.push(`<script src="${p.out}?b=${build}"></script>`);
+    srcLines.push(`<script src="${spec.srcBase || ''}${p.out}?b=${build}"></script>`);
     console.log(`${p.out} ← ${p.from}~${p.to}행 (${p.to - p.from + 1}줄, ${Buffer.byteLength(body)}B)`);
   }
   lines.splice(b.scriptOpen - 1, b.scriptClose - b.scriptOpen + 1, ...srcLines);

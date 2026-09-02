@@ -226,6 +226,14 @@ async function shot(page, name) {
       await page.waitForFunction(() => (document.getElementById('secList') || {}).childElementCount > 0, null, { timeout: 30000 });
       const nSec = await page.evaluate(() => document.getElementById('secList').childElementCount);
       await page.waitForTimeout(1500);
+      // 9/2 S8-2: 미리보기(iframe) 안 외부 표지 이미지 로딩 타이밍 플레이크(0.4~1%) → 이미지 전부 로드될 때까지 기다린 뒤 촬영
+      try {
+        await page.waitForFunction(() => {
+          const f = document.getElementById('pvLiveFrame'); const d = f && f.contentDocument; if (!d) return true;
+          return [...d.images].every(im => im.complete);
+        }, null, { timeout: 15000 });
+      } catch (e) { /* 시간 초과면 그냥 촬영 — 비교 결과가 말해준다 */ }
+      await page.waitForTimeout(500);
       await shot(page, 'admin-settings');
       // 사이드 메뉴 전 페이지 순회 — 렌더 함수가 전부 예외 없이 도는지
       const pages = ['stats', 'chstat', 'writings', 'history', 'make', 'notice', 'settings', 'comm', 'popup', 'dash'];

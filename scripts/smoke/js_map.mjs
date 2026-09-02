@@ -35,9 +35,10 @@ console.log(`메인 스크립트: ${FILE} ${codeFirstLine}~${codeLastLine}행 ($
 const secs = [];
 for (let i = codeFirstLine; i <= codeLastLine; i++) {
   const ln = lines[i - 1];
-  if (/^(\/\*|\/\/)\s*═{3,}/.test(ln)) {
+  // 학생 화면은 ═══, 관리자 화면(admin/index.html)은 ===== 구역 주석 (S8-2)
+  if (/^(\/\*|\/\/)\s*[═=]{3,}/.test(ln)) {
     // 3줄형(/* ═══\n 제목\n ═══ */) 또는 1줄형(/* ═══ 제목 ═══ */)
-    let title = ln.replace(/^(\/\*|\/\/)\s*═+\s*/, '').replace(/\s*═+\s*\*?\/?\s*$/, '').trim();
+    let title = ln.replace(/^(\/\*|\/\/)\s*[═=]+\s*/, '').replace(/\s*[═=]+\s*\*?\/?\s*$/, '').trim();
     if (!title) title = (lines[i] || '').trim();
     secs.push({ title: title.slice(0, 60), start: i });
   }
