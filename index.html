@@ -3204,7 +3204,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
     <div class="hl-popup" id="hlPopup">
       <button onclick="addHighlight()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>하이라이트</button>
       <button onclick="addNote()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>메모</button>
-      <button onclick="lookupSelection()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>사전</button>
+      <button id="hlDictBtn" onclick="lookupSelection()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>사전</button>
       <button onclick="openQuoteCard()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.757-2-2-2H4c-1.25 0-2 .75-2 2v6c0 1.25.75 2 2 2h4"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2-2-2h-4c-1.243 0-2 .75-2 2v6c0 1.25.757 2 2 2h4"/></svg>인용 카드</button>
     </div>
     <div class="dict-popup" id="dictPopup">
@@ -3300,7 +3300,8 @@ function setKrLang(lang){                  // 뷰어 언어 셀렉터 → 언어
   KR_LANG=lang;
   // 재렌더로 pane이 새로 만들어지므로 setMode와 동일 체인으로 전부 재초기화
   // (기존: applyReaderPrefs만 → 스크롤 리스너·형광펜·읽던 위치·TOC가 죽던 버그)
-  if(currentBook){ applyKrLang(currentBook.id); renderViewer();
+  // 9/2: 재렌더 뒤 restoreScrollPos는 "마지막 저장 위치"로 가므로(저장은 디바운스) 바꾸기 직전 지금 자리를 먼저 저장 — 언어 바꿀 때 자리 튐 방지
+  if(currentBook){ saveScrollPos(); applyKrLang(currentBook.id); renderViewer();
     setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } }, 0); }
 }
 const SVG = {
@@ -4411,6 +4412,9 @@ function setupHighlightHandlers(){
     if(!pane0 || pane0.classList.contains('bx-pane')) return;
     _lastSelectionRange = range.cloneRange();
     const rect = range.getBoundingClientRect();
+    // 9/2: 한글 선택인데 이 책 용어집에 없으면 [사전] 버튼 숨김 — 온라인 폴백은 영어 사전뿐이라 헛도는 버튼
+    const dictBtn = document.getElementById('hlDictBtn');
+    if(dictBtn) dictBtn.style.display = (/[가-힣]/.test(text) && !dictEntryFor(text)) ? 'none' : '';
     popup.style.display = 'flex';
     // 먼저 표시해 실제 폭을 잰 뒤 좌우 클램프 — 좁은 화면에서 오른쪽 잘림 방지
     // 8/17 사장님 수정요청(폰에서 우리 메뉴가 '복사·공유·웹 검색' 뒤에 숨음): 폰은 선택 문장 바로 위(브라우저 기본 툴바 자리)를 피해
@@ -4477,31 +4481,48 @@ function addHighlight(fromNote){
   document.getElementById('hlPopup').style.display = 'none';
   const p  = _elOf(r.startContainer)?.closest('p');
   const p2 = _elOf(r.endContainer)?.closest('p');
-  if(!p || p !== p2){
-    readerToast('한 단락 안의 텍스트만 하이라이트할 수 있어요');
+  const pane = p?.closest('.viewer-pane');
+  if(!p || !p2 || !pane || p2.closest('.viewer-pane') !== pane){
+    readerToast('본문 안의 텍스트만 하이라이트할 수 있어요');
     window.getSelection().removeAllRanges(); _lastSelectionRange = null;
     return null;
   }
-  const pre = document.createRange(); pre.selectNodeContents(p); pre.setEnd(r.startContainer, r.startOffset);
-  const off = pre.toString().length;
-  const text = r.toString();
-  const ts = Date.now();
-  _hlWrap(p, off, off + text.length, ts);
-  // 위치 앵커: 몇 번째 장(ch)·문단(p)·글자(off)인지 — 다시 열 때 복원용
-  const pane = p.closest('.viewer-pane');
-  const sec = p.closest('.chapter-anchor');
-  const ch = (sec && pane) ? [...pane.querySelectorAll('.chapter-anchor')].indexOf(sec) : -1;
-  const pi = (ch >= 0 ? [...sec.querySelectorAll('p')] : [...(pane || document).querySelectorAll('p')]).indexOf(p);
+  // 9/2: 여러 문단에 걸친 드래그 허용 — 문단마다 하나씩 잘라 저장 (기존: "한 단락 안에서만" 안내 후 거부)
+  const _offIn = (para, node, offset) => { const pre = document.createRange(); pre.selectNodeContents(para); pre.setEnd(node, offset); return pre.toString().length; };
+  const startOff = _offIn(p, r.startContainer, r.startOffset);
+  const endOff   = _offIn(p2, r.endContainer, r.endOffset);
+  const all = [...pane.querySelectorAll('p')];
+  const i0 = all.indexOf(p), i1 = all.indexOf(p2);
+  const segs = [];
+  if(i0 < 0 || i1 < i0){ segs.push({para: p, s: startOff, e: startOff + r.toString().length}); }
+  else for(let i = i0; i <= i1; i++){
+    const para = all[i], len = para.textContent.length;
+    const s = (i === i0) ? startOff : 0, e = (i === i1) ? endOff : len;
+    if(e > s && para.textContent.slice(s, e).trim()) segs.push({para, s, e});
+  }
   if(!readerStats.highlights[currentBook.id]) readerStats.highlights[currentBook.id] = [];
-  // pn: 어느 칸의 앵커인지 (l=원문/좌, r=번역/우) — 복원·점프 때 같은 칸에 되그림. 옛 기록(pn 없음)=l
-  const entry = {text, ts, anc: {ch, p: pi, off, pn: (pane && pane.classList.contains('right')) ? 'r' : 'l'}};
-  readerStats.highlights[currentBook.id].push(entry);
+  const ts0 = Date.now();
+  let first = null;
+  segs.forEach((sg, k) => {
+    const ts = ts0 + k;   // 문단별 항목은 ts로 구분·삭제되므로 1ms씩 어긋나게
+    const text = sg.para.textContent.slice(sg.s, sg.e);
+    _hlWrap(sg.para, sg.s, sg.e, ts);
+    // 위치 앵커: 몇 번째 장(ch)·문단(p)·글자(off)인지 — 다시 열 때 복원용
+    const sec = sg.para.closest('.chapter-anchor');
+    const ch = sec ? [...pane.querySelectorAll('.chapter-anchor')].indexOf(sec) : -1;
+    const pi = (ch >= 0 ? [...sec.querySelectorAll('p')] : all).indexOf(sg.para);
+    // pn: 어느 칸의 앵커인지 (l=원문/좌, r=번역/우) — 복원·점프 때 같은 칸에 되그림. 옛 기록(pn 없음)=l
+    const entry = {text, ts, anc: {ch, p: pi, off: sg.s, pn: pane.classList.contains('right') ? 'r' : 'l'}};
+    readerStats.highlights[currentBook.id].push(entry);
+    if(!first) first = entry;
+  });
+  if(!first){ window.getSelection().removeAllRanges(); _lastSelectionRange = null; return null; }
   saveReaderStats();
   if(!fromNote) readerToast('✦ 하이라이트 저장 — 독서노트에서 확인');
   window.getSelection().removeAllRanges(); _lastSelectionRange = null;
   buildNotesIfOpen();
   syncPairMarks();   // 정렬책: 번역쪽 같은 문단에 골드 마커
-  return entry;
+  return first;
 }
 function addNote(){
   if(!_lastSelectionRange || !currentBook) return;
@@ -8448,7 +8469,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902n';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(bodies_gb5921.js) — 3단계: 한국어 머리 8개를 Chapter N.으로 통일
