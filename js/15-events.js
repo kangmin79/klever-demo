@@ -147,7 +147,7 @@ async function bxLoadResultsFromDB(){                // 로그인/전환 시 서
   const s=bxStudent(); if(!s) return;
   const sid=s.id;   // 요청 세대 캡처
   try{
-    const r=await fetch(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=*`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=*`);
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     if((bxStudent()||{}).id!==sid) return;   // 응답 대기 중 다른 계정으로 전환됐으면 폐기(계정간 기록 혼입 방지)
     // 통째 교체가 아닌 병합: cert_prompted 등 로컬 전용 필드 보존 + read_pct는 max(서버 upsert 실패분 후퇴 방지)
@@ -236,7 +236,7 @@ async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더
   const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
   const sid=s.id;   // 요청 세대 캡처
   try{
-    const r=await fetch(`${BX_SB}/bookstar_reader_stats?student_id=eq.${encodeURIComponent(sid)}&select=data`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_reader_stats?student_id=eq.${encodeURIComponent(sid)}&select=data`);
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)||!rows[0]||!rows[0].data) return;
     if(((typeof bxStudent==='function'&&bxStudent())||{}).id!==sid) return;   // 계정 전환됐으면 폐기
     _rsMergeServer(rows[0].data);

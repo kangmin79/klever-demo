@@ -128,7 +128,7 @@ async function usTulipSearch(q, localLib){
   if(norm.length<2){ const {no}=els(); if(no&&no.style.display!=='none') no.textContent=noHitMsg; return; }
   let rows=[];
   try{
-    const r=await fetch(`${SB_REST}/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,cover_url,viewer_url&search_norm=ilike.${encodeURIComponent('*'+norm+'*')}&limit=48`,{headers:BX_H});
+    const r=await sbGet(`/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,cover_url,viewer_url&search_norm=ilike.${encodeURIComponent('*'+norm+'*')}&limit=48`);
     if(r.ok){ const a=await r.json(); if(Array.isArray(a)) rows=a; }
   }catch(e){}
   if(seq!==_usTulipSeq) return;                        // 그 사이 새 입력 — 늦은 응답 폐기

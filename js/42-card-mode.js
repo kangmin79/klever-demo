@@ -4,7 +4,7 @@ async function _mpFetchScenes(){
   _mpScenes=null;
   if(!currentBook) return;
   try{
-    const r=await fetch(`${SB_REST}/bookstar_quiz_scenes?book_id=eq.${encodeURIComponent(currentBook.id)}&order=scene_no&select=scene_no,title,core_sentence,source,scene_desc,image_url`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_quiz_scenes?book_id=eq.${encodeURIComponent(currentBook.id)}&order=scene_no&select=scene_no,title,core_sentence,source,scene_desc,image_url`);
     if(r.ok){ const rows=await r.json();
       if(Array.isArray(rows)&&rows.length){ _mpScenes={}; rows.forEach(x=>{ _mpScenes[x.scene_no]={core:x.core_sentence,desc:x.scene_desc,title:x.title,source:x.source,image:x.image_url||''}; }); }
     }

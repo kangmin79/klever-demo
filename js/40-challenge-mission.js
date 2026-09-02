@@ -72,11 +72,11 @@ async function mpHydrate(ch, m, stu, solo){
   await Promise.all([
     (async()=>{ try{
       // 8/30 사장님 규칙: 공개한 글만 챌린지 참여 기록으로 인정 — '나만 보기' 글은 미션 완료로 치지 않는다
-      const r=await fetch(`${SB_REST}/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(_bid)}&is_public=eq.true&select=activity`,{headers:BX_H});
+      const r=await sbGet(`/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(_bid)}&is_public=eq.true&select=activity`);
       if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) rows.forEach(x=>_mpCtx.done.add(x.activity+'|book:'+_bid)); }
     }catch(e){} })(),
     (async()=>{ try{
-      const r=await fetch(`${SB_REST}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(currentBook.id)}&select=ans`,{headers:BX_H});
+      const r=await sbGet(`/bookstar_challenge_results?student_id=eq.${encodeURIComponent(stu.id)}&book_id=eq.${encodeURIComponent(currentBook.id)}&select=ans`);
       if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].ans&&typeof rows[0].ans==='object') _mpCtx.ans=rows[0].ans; }
     }catch(e){} })(),
   ]);
@@ -111,9 +111,9 @@ async function mpLoadQuiz(m){
   try{
     /* 2종 체제: 난이도 없는 챌린지는 q_type만으로 로드. 난이도 있는 옛 챌린지는 level 필터 →
        0건이면(책이 2종 신규 데이터) level 없이 재조회. 장면당 1문항만 남겨 어떤 조합에서도 10문항 보장 */
-    const base=`${SB_REST}/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&order=scene_no&limit=40&select=id,scene_no,scene_title,question,opts,correct,expl,anchor`;
-    if(lv){ const r=await fetch(`${base}&level=eq.${encodeURIComponent(lv)}`,{headers:BX_H}); if(r.ok) items=await r.json(); }
-    if(!Array.isArray(items)||!items.length){ const r2=await fetch(base,{headers:BX_H}); if(r2.ok) items=await r2.json(); }
+    const base=`/bookstar_quiz_items?book_id=eq.${encodeURIComponent(currentBook.id)}&q_type=eq.${qt}&order=scene_no&limit=40&select=id,scene_no,scene_title,question,opts,correct,expl,anchor`;
+    if(lv){ const r=await sbGet(`${base}&level=eq.${encodeURIComponent(lv)}`); if(r.ok) items=await r.json(); }
+    if(!Array.isArray(items)||!items.length){ const r2=await sbGet(base); if(r2.ok) items=await r2.json(); }
   }catch(e){}
   if(_seq!==_mpLoadSeq || !currentBook || currentBook.id!==_bid || !box.isConnected) return;   // 책 전환/재렌더/겹친 호출 — 낡은 응답 폐기(B 컨텍스트 오염 방지)
   if(Array.isArray(items)&&items.length){ const seen=new Set(); items=items.filter(it=>{ if(seen.has(it.scene_no))return false; seen.add(it.scene_no); return true; }).slice(0,n); }

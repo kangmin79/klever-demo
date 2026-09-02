@@ -6,7 +6,7 @@ const _AGF_TTL=2000; const _agfCache=new Map();   // 마이페이지 진입 시 
 async function _agFetch(path){
   const c=_agfCache.get(path);
   if(c && (Date.now()-c.t)<_AGF_TTL) return c.p;   // 캐시된 Promise 공유 → 동시/연속 동일요청 1회로
-  const p=(async()=>{ try{ const r=await fetch(`${BX_SB}/${path}`,{headers:BX_H}); if(r.ok) return await r.json(); }catch(e){} return []; })();
+  const p=(async()=>{ try{ const r=await sbGet('/'+path); if(r.ok) return await r.json(); }catch(e){} return []; })();
   _agfCache.set(path,{t:Date.now(),p});
   return p;
 }
@@ -512,7 +512,7 @@ async function openProfileEdit(){
   let ov=document.getElementById('peOv');
   if(!ov){ ov=document.createElement('div'); ov.id='peOv'; ov.className='pe-ov'; ov.onclick=e=>{ if(e.target===ov) closeProfileEdit(); }; document.body.appendChild(ov); }
   let prof=null;
-  try{ const r=await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`,{headers:BX_H}); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
+  try{ const r=await sbGet(`/bookstar_students?id=eq.${encodeURIComponent(s.id)}&select=bio,favorite_book_id`); if(r.ok){ const a=await r.json(); prof=Array.isArray(a)&&a[0]; } }catch(e){}
   _peEmoji=s.emoji||'📘'; const bio=(prof&&prof.bio)||'';
   ov.innerHTML=`<div class="pe">
     <div class="pe-h">프로필 편집</div>
@@ -549,7 +549,7 @@ async function renderMyWritings(){
   if(!stu){ el.innerHTML=''; return; }
   let rows=[];
   try{
-    const r=await fetch(`${SB_REST}/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&order=created_at.desc&select=*`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_writings?student_id=eq.${encodeURIComponent(stu.id)}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&order=created_at.desc&select=*`);
     if(r.ok) rows=await r.json();
   }catch(e){}
   if(!Array.isArray(rows)||!rows.length){ el.innerHTML=''; return; }

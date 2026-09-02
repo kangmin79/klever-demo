@@ -23,7 +23,7 @@ let _bxNameMap=null;
 async function _bxNames(){
   if(_bxNameMap) return _bxNameMap;
   const m={};
-  try{ const r=await fetch(`${BX_SB}/bookstar_students_public?select=id,name,emoji`,{headers:BX_H});   // 8/29 공개용 뷰(이름 가림) — 본체 표는 본인 행만
+  try{ const r=await sbGet(`/bookstar_students_public?select=id,name,emoji`);   // 8/29 공개용 뷰(이름 가림) — 본체 표는 본인 행만
     if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>{ m[x.id]={name:x.name||'학생', emoji:x.emoji||'🙂'}; }); } }catch(e){}
   _bxNameMap=m;
   return m;
@@ -31,9 +31,9 @@ async function _bxNames(){
 async function loadFeedSocial(){
   const me=_bxSid();
   _myFollows=new Set(); _likeCount={}; _myLikes=new Set();
-  try{ const r=await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&select=following_id`,{headers:BX_H});
+  try{ const r=await sbGet(`/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&select=following_id`);
     if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>_myFollows.add(x.following_id)); } }catch(e){}
-  try{ const r=await fetch(`${BX_SB}/bookstar_likes?select=liker_id,item_key`,{headers:BX_H});
+  try{ const r=await sbGet(`/bookstar_likes?select=liker_id,item_key`);
     if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>{ _likeCount[x.item_key]=(_likeCount[x.item_key]||0)+1; if(x.liker_id===me) _myLikes.add(x.item_key); }); } }catch(e){}
 }
 async function feedLike(btn,key){
@@ -116,13 +116,13 @@ function feedCard(it,i){
 async function loadFeedItems(){
   const items=[];
   try{
-    const r=await fetch(`${BX_SB}/bookstar_writings?select=student_id,book_id,activity,text,hidden,created_at&is_public=eq.true&order=created_at.desc&limit=200`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_writings?select=student_id,book_id,activity,text,hidden,created_at&is_public=eq.true&order=created_at.desc&limit=200`);
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(x.hidden||!(x.text||'').trim())return;
       items.push({sid:x.student_id,book_id:x.book_id,act:x.activity,text:x.text,time:x.created_at,meta:''}); });
   }catch(e){}
   try{
-    const r=await fetch(`${BX_SB}/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=120`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_challenge_results?select=student_id,book_id,impression,score,quiz_ok,quiz_total,updated_at&order=updated_at.desc&limit=120`);
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!(x.impression||'').trim())return;
       const m=[]; if(x.quiz_total)m.push(`퀴즈 ${x.quiz_ok||0}/${x.quiz_total}`); if(x.score)m.push(`${x.score}점`);
@@ -130,7 +130,7 @@ async function loadFeedItems(){
   }catch(e){}
   // 인생책 — 글(bookstar_writings)이 아니라 학생 프로필의 별도 통로(favorite_book_id·favorite_reason). 시각은 프로필 생성 시각뿐이라 그것을 씀
   try{
-    const r=await fetch(`${BX_SB}/bookstar_students_public?select=id,favorite_book_id,favorite_reason,created_at&favorite_book_id=not.is.null&favorite_book_id=neq.&order=created_at.desc&limit=200`,{headers:BX_H});
+    const r=await sbGet(`/bookstar_students_public?select=id,favorite_book_id,favorite_reason,created_at&favorite_book_id=not.is.null&favorite_book_id=neq.&order=created_at.desc&limit=200`);
     const rows=await r.json();
     (Array.isArray(rows)?rows:[]).forEach(x=>{ if(!x.favorite_book_id)return;
       items.push({sid:x.id,book_id:x.favorite_book_id,act:'favorite',text:(x.favorite_reason||'').trim()||'인생책으로 골랐어요',time:x.created_at,meta:''}); });
@@ -218,14 +218,14 @@ async function openStudentProfile(sid){
   let writings=[], results=[], enroll=[];
   const me=_bxSid();
   let followers=0, followingN=0, iFollow=_myFollows.has(sid);
-  const _gj = async (url, fn) => { try{ const r=await fetch(url,{headers:BX_H}); if(r.ok) fn(await r.json()); }catch(e){} };
+  const _gj = async (path, fn) => { try{ const r=await sbGet(path); if(r.ok) fn(await r.json()); }catch(e){} };
   // 독립 5요청 병렬 (8/29 별 포인트 폐지 — totals 요청 삭제)
   await Promise.all([
-    _gj(`${BX_SB}/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}${sid===me?'':'&is_public=eq.true&hidden=eq.false'}&select=*&order=created_at.desc`, a=>{ writings=a; }),   // 8/29 남의 '나만 보기' 글 노출 수리
-    _gj(`${BX_SB}/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`, a=>{ results=a; }),
-    _gj(`${BX_SB}/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`, a=>{ enroll=a; }),
-    _gj(`${BX_SB}/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`, a=>{ if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } }),
-    _gj(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(sid)}&select=following_id`, a=>{ if(Array.isArray(a)) followingN=a.length; }),
+    _gj(`/bookstar_writings?student_id=eq.${encodeURIComponent(sid)}${sid===me?'':'&is_public=eq.true&hidden=eq.false'}&select=*&order=created_at.desc`, a=>{ writings=a; }),   // 8/29 남의 '나만 보기' 글 노출 수리
+    _gj(`/bookstar_challenge_results?student_id=eq.${encodeURIComponent(sid)}&select=book_id,impression,score,quiz_ok,quiz_total,updated_at`, a=>{ results=a; }),
+    _gj(`/bookstar_challenge_enroll?student_id=eq.${encodeURIComponent(sid)}&select=challenge_id,status`, a=>{ enroll=a; }),
+    _gj(`/bookstar_follows?following_id=eq.${encodeURIComponent(sid)}&select=follower_id`, a=>{ if(Array.isArray(a)){ followers=a.length; iFollow=a.some(x=>x.follower_id===me); } }),
+    _gj(`/bookstar_follows?follower_id=eq.${encodeURIComponent(sid)}&select=following_id`, a=>{ if(Array.isArray(a)) followingN=a.length; }),
   ]);
   if(openStudentProfile._t !== token) return;   // 그 사이 다른 프로필을 열었으면 이 응답은 폐기
   writings=Array.isArray(writings)?writings.filter(w=>!w.hidden):[];

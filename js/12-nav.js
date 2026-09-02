@@ -184,7 +184,7 @@ async function chalResolveFormats(){
   const arr=[...want];
   for(let i=0;i<arr.length;i+=100){
     try{
-      const r=await fetch(`${SB_REST}/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${arr.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=400`,{headers:BX_H});
+      const r=await sbGet(`/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${arr.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=400`);
       if(!r.ok) continue;
       for(const row of await r.json()){ (byIsbn[row.isbn]=byIsbn[row.isbn]||[]).push(row); }
     }catch(e){}
