@@ -1327,14 +1327,10 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 .reader-settings-sheet .rss-row + .rss-row{border-top:1px solid var(--border);}
 .reader-settings-sheet .rss-label{font-size:12.5px;font-weight:700;color:var(--text-sub);white-space:nowrap;}
 .reader-settings-sheet .rss-ctrl{display:flex;gap:6px;}
-@media(min-width:601px){ .reader-settings-sheet .rss-row.rss-mobile-only{display:none;} }   /* 탭넘김(모바일 전용)·TTS/전체화면(PC 상단에 있음) 행 숨김 */
+@media(min-width:601px){ .reader-settings-sheet .rss-row.rss-mobile-only{display:none;} }   /* 탭넘김(모바일 전용)·전체화면(PC 상단에 있음) 행 숨김 */
 .viewer-title{font-weight:800;font-size:15px;}
 .viewer-author{font-size:12px;color:var(--text-sub);margin-left:6px;}
 /* 8/30 사장님: 상세페이지에서 골라 들어오므로 뷰어 안에서는 불필요 → 감춤(setMode의 active 표시는 그대로 동작) */
-.mode-toggle{display:none;background:var(--bg-card);border-radius:24px;padding:4px;gap:2px;border:1px solid var(--border);}
-.mode-toggle button{padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;color:var(--text-sub);transition:all 0.15s;}
-.mode-toggle button.active{background:var(--primary);color:#fff;}
-body.dark .mode-toggle button.active{background:var(--gold);color:#0f172a;}
 .viewer-close{font-size:22px;color:var(--text-sub);cursor:pointer;padding:6px 10px;}
 .viewer-body{flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
 .viewer-pane{padding:var(--reader-pady,30px) var(--reader-padx,36px);overflow-y:auto;font-size:15px;line-height:1.9;color:var(--reader-fg,inherit);}
@@ -2188,8 +2184,7 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   /* 리더 헤더 한 줄: 고스트 아이콘 왼쪽 + 모드칩·Aa·닫기 오른쪽 (킨들/애플북스 결 — 2줄+박스버튼 정리 2026-07-23) */
   .viewer-header{flex-wrap:nowrap;gap:2px;padding:7px 8px;align-items:center;}
   .viewer-header > .vh-nav{order:0;flex:1 1 auto;min-width:0;padding-right:0;}
-  .viewer-header > .mode-toggle{order:1;flex:none;}
-  .viewer-header > #krLangSel{order:1;flex:none;max-width:110px;}   /* 8/30: 모드칩 자리에 언어 변경 */
+  .viewer-header > #krLangSel{order:1;flex:none;max-width:110px;}   /* 8/30: 언어 변경 (옛 모드칩 자리) */
   .viewer-header > .reader-aa{order:2;margin-left:2px;display:inline-flex;border:0;background:transparent;}
   .viewer-header > .viewer-close{order:3;position:static;padding:6px 6px 6px 4px;font-size:19px;flex:none;}
   .viewer-header > .reader-toolbar{display:none !important;}   /* 읽기설정 버튼 다발 숨김 → Aa 시트 */
@@ -2197,12 +2192,6 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .vh-nav{gap:0;}
   .vh-nav .reader-btn{font-size:0;padding:8px 6px;border:0;background:transparent;}   /* 고스트 아이콘 — 테두리 박스 제거 */
   .vh-nav .reader-btn .icon{width:20px;height:20px;}
-  /* 모드 알약: 접힘=현재 모드만 + ▾ (탭하면 3개 펼침, 선택하면 접힘) — 애플북스 칩 방식 */
-  .mode-toggle{padding:3px;}
-  .mode-toggle button{display:none;padding:7px 11px;}
-  .mode-toggle button.active,.mode-toggle.open button{display:inline-flex;align-items:center;}
-  .mode-toggle:not(.open) button.active::after{content:"▾";font-size:9px;margin-left:3px;opacity:.75;}
-  .viewer-header:has(.mode-toggle.open) .vh-nav .reader-btn{display:none;}   /* 칩 펼친 동안 아이콘 잠시 숨김 — 좁은 폰 한 줄 유지 */
   .reader-settings-sheet{right:10px;min-width:210px;}
   /* 바닥 바: 장황한 안내문 숨기고 버튼만 꽉 차게 — 글자 세로쪼개짐 방지 */
   .viewer-footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px;}
@@ -2453,9 +2442,6 @@ mark.hl.hl-flash{animation:hlFlash 1.4s ease;}
 .viewer-body.pane-trans .viewer-pane.left{display:none;}
 .viewer-body.pane-trans .viewer-pane.right{grid-column:1 / -1;}
 
-/* TTS 진행 중 표시 */
-.reader-btn#ttsBtn.on{background:var(--success);color:#fff;border-color:var(--success);}
-.viewer-pane .tts-speaking{background:rgba(46,184,114,0.18);border-radius:3px;}
 
 /* 사전 팝업 (외국인 학생용 다국어) */
 .dict-popup{
@@ -3134,17 +3120,11 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
           <span class="viewer-author" id="viewerAuthor"></span>
         </div>
       </div>
-      <div class="mode-toggle">
-        <button id="modeChallenge" class="active" onclick="setMode('challenge')">챌린지</button>
-        <button id="modeFull" onclick="setMode('full')">완독</button>
-        <button id="modeIntl" onclick="setMode('intl')">Intl</button>
-      </div>
       <button class="reader-btn reader-aa" id="readerAaBtn" onclick="toggleReaderSettings(event)" title="읽기 설정" style="font-weight:800;font-size:14px;">A<span style="font-size:11px;">a</span></button>
       <!-- 8/30 사장님: 폰에서 언어 변경이 안 보였다 — reader-toolbar는 폰에서 통째로 숨기므로 헤더 직속으로 올려 모드칩 자리에 둔다 -->
       <select id="krLangSel" onchange="setKrLang(this.value)" title="번역 언어" style="display:none;font-size:12px;font-weight:700;border:1px solid var(--line,#ddd);border-radius:8px;padding:5px 8px;background:var(--card,#fff);color:inherit;"></select>
       <div class="reader-toolbar">
         <button class="reader-btn" id="paneToggleBtn" onclick="cyclePaneView()" title="원문/번역 보기" style="display:none;"><svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span id="paneToggleLabel">나란히</span></button>
-        <button class="reader-btn" id="ttsBtn" onclick="toggleTTS()" title="음성 읽기 (완독·Intl 모드)"><svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>TTS</button>
         <button class="reader-btn" onclick="toggleFullscreen()" title="전체화면"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
       </div>
       <span class="viewer-close" onclick="closeViewer()" title="닫기">✕</span>
@@ -3183,8 +3163,7 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
           <button class="reader-btn" data-theme="light" onclick="readerTheme('light')" title="밝게"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg></button>
           <button class="reader-btn" data-theme="sepia" onclick="readerTheme('sepia')" title="세피아"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12z"/></svg></button>
           <button class="reader-btn" data-theme="dark" onclick="readerTheme('dark')" title="어둡게"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button></div></div>
-        <div class="rss-row rss-mobile-only"><span class="rss-label">음성 · 화면</span><div class="rss-ctrl">
-          <button class="reader-btn" onclick="toggleTTS()"><svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>TTS</button>
+        <div class="rss-row rss-mobile-only"><span class="rss-label">화면</span><div class="rss-ctrl">
           <button class="reader-btn" onclick="toggleFullscreen()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>전체화면</button></div></div>
       </div>
     </div>
@@ -4977,33 +4956,6 @@ function updatePaneToggleVisibility(){
       sel.innerHTML=Object.keys(KR_SENT[currentBook.id]).map(l=>`<option value="${l}"${l===KR_LANG?' selected':''}>${KR_LANG_NAMES[l]||l}</option>`).join('');
     } else { sel.style.display='none'; }
   }
-}
-
-/* ── TTS (완독·Intl 모드 전용, 챌린지 모드 차단) ── */
-let _ttsOn=false;
-function toggleTTS(){
-  if(currentMode==='challenge'){ readerToast('음성 읽기는 완독 모드에서 이용할 수 있어요'); return; }
-  if(!('speechSynthesis' in window)){ readerToast('이 브라우저는 음성 읽기를 지원하지 않아요'); return; }
-  const btn=document.getElementById('ttsBtn');
-  if(_ttsOn){ stopTTS(); return; }
-  // 화면에 보이는 칸을 읽음 (기존: 항상 left 고정 → '번역만'/KO1COL 기본/모바일 번역 탭에서 숨은 칸을 읽던 버그)
-  const pane = _scrollEl();
-  // content-visibility로 화면 밖 청크가 innerText에서 빠지는 문제 → DOM 기반 textContent로 전체 수집
-  const text = pane ? [...pane.querySelectorAll('p')].map(p=>p.textContent).join('\n').trim() : '';
-  if(!text){ return; }
-  const u=new SpeechSynthesisUtterance(text.slice(0,4000));
-  // 언어는 locale이 아니라 실제 읽는 텍스트 기준(한글 포함 여부)으로 판정
-  u.lang = /[가-힣]/.test(text.slice(0,200)) ? 'ko-KR' : 'en-US';
-  u.rate=0.95;
-  u.onend=()=>{ _ttsOn=false; btn.classList.remove('on'); };
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-  _ttsOn=true; btn.classList.add('on');
-}
-function stopTTS(){
-  window.speechSynthesis?.cancel();
-  _ttsOn=false;
-  document.getElementById('ttsBtn')?.classList.remove('on');
 }
 
 /* ── 사전 (외국인 학생용 다국어 glossary) ── */
@@ -8496,7 +8448,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902l';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902m';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(bodies_gb5921.js) — 3단계: 한국어 머리 8개를 Chapter N.으로 통일
@@ -8807,7 +8759,6 @@ async function openViewer(bookId, mode){
   if(currentBook && currentBook.id !== bookId){ _pg.chIdx=0; _pg.page=0; }
   currentBook = b;
   currentMode = mode || 'challenge';
-  syncModePill();   // 상세모달 '전문 바로 읽기' 등으로 열 때도 헤더 알약이 실제 모드를 표시(기존: 챌린지로 고정 표시)
   applyPaneDefault();   // KO 1단 기본 책이면 pane-trans, 아니면 나란히로 리셋
 
   document.getElementById('viewerTitle').textContent = b.title;
@@ -8873,28 +8824,7 @@ async function openViewer(bookId, mode){
   loadGlossary(b.id);
 }
 
-function syncModePill(){   // 헤더 모드 알약(챌린지/완독/Intl)을 currentMode와 동기화
-  document.querySelectorAll('.mode-toggle button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('mode' + currentMode.charAt(0).toUpperCase() + currentMode.slice(1))?.classList.add('active');
-}
-// 모바일 모드칩: 접힘 상태 첫 탭은 펼치기만 (캡처 단계에서 가로채 setMode 오발동 방지), 펼친 뒤 탭은 선택+접힘
-document.querySelector('#viewerOverlay .mode-toggle')?.addEventListener('click', function(e){
-  if(!window.matchMedia('(max-width:900px)').matches) return;
-  if(!this.classList.contains('open')){ e.stopPropagation(); this.classList.add('open'); }
-  else this.classList.remove('open');
-}, true);
-function setMode(mode){
-  if(currentBook && !currentBook.intl && mode==='intl'){
-    readerToast('해외 도서는 International 모드가 제공되지 않아요');
-    return;
-  }
-  currentMode = mode;
-  syncModePill();
-  stopTTS();
-  applyPaneDefault();   // KO 1단 기본 책+완독이면 pane-trans, 그 외 나란히 리셋
-  renderViewer();
-  setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } else exitPageMode(); hlHintOnce(); }, 0);
-}
+// 모드(챌린지/완독/Intl)는 openViewer(bookId, mode)에서 정해짐 — 헤더 모드 알약·setMode는 9/2 제거(8월부터 CSS 숨김 상태였던 죽은 UI)
 
 // 장르 버킷 (category → 조판 템플릿). 시 먼저 검사(서사시의 '시' 우선).
 function genreOf(cat){
@@ -10830,7 +10760,6 @@ function closeViewer(){
   saveScrollPos();
   readerSessionEnd();
   try{ bxReadFlush(false); }catch(e){}   // 측정: 이번 읽기 세션 1줄
-  stopTTS();
   closeSearch();
   closeNoteBox();
   const _hp=document.getElementById('hlPopup'); if(_hp) _hp.style.display='none';
