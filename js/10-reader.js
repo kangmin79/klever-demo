@@ -140,7 +140,7 @@ async function shelfReturn(key){
   if(!confirm(`「${cleanT(it.t)}」 반납할까요?`)) return;
   readerToast('반납 중…');
   try{
-    const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(it.loanSrmb)+'&brcd='+encodeURIComponent(String(key).replace(/^sm-/,'')),{headers:smHeaders()});
+    const r=await sbFn(SMEBK_FN,{action:'return',loanSrmb:it.loanSrmb,brcd:String(key).replace(/^sm-/,'')});
     const d=await r.json();
     if(d&&d.ok){ it.returned=true; it.returnedTs=Date.now(); shelfSave(a); renderMyShelf(); readerToast('반납 완료 — 대출 슬롯이 비었어요'); }
     // 도서관 계정 미연결(또는 연동 만료) — 8/9부터 전자책은 본인 명의로만 다뤄서 반납도 로그인이 필요하다

@@ -716,7 +716,7 @@ async function loadEbookStock(brcd, bookTitle, _retried){
   const tag=document.getElementById('ebStockTag'), note=document.getElementById('ebStockNote');
   if(!tag) return;
   try{
-    const r=await fetch(SMEBK_FN+'?action=stock&brcd='+encodeURIComponent(brcd),{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbFn(SMEBK_FN,{action:'stock',brcd:brcd},{anon:true});
     const d=await r.json();
     if(!tag.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
     if(!d||!d.ok){
@@ -807,7 +807,7 @@ async function ebReserve(brcd){
   if(!ssoIsPersonal()){ smLoginGuide(); return; }
   // '바로 읽기' 줄에서도 들어오므로(대출 중엔 클릭이 예약으로 전환) 실수 탭 방지 확인 필수
   if(!confirm('지금은 대출 중이에요.\n예약해 두면 반납되는 대로 순번대로 빌려드려요. 예약할까요?')) return;
-  const r=await fetch(SMEBK_FN+'?action=reserve&brcd='+encodeURIComponent(brcd),{headers:smHeaders()});
+  const r=await sbFn(SMEBK_FN,{action:'reserve',brcd:brcd});
   const d=await r.json();
   alert(d&&d.ok ? '예약했어요 — 반납되면 순번대로 알려드릴게요' : ((d&&(d.message||d.error))||'예약하지 못했어요'));
   if(d&&d.ok) loadEbookStock(brcd);

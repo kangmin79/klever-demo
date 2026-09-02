@@ -391,7 +391,7 @@ async function renderMyLibStatus(_retry){
 async function smEbookLoans(){
   if(!ssoIsPersonal()) return [];
   try{
-    const r=await fetch(SMEBK_FN+'?action=myLoans',{headers:smHeaders()});
+    const r=await sbFn(SMEBK_FN,{action:'myLoans'});
     const d=await r.json();
     if(d&&d.ok&&d.personal===true&&Array.isArray(d.items)) return d.items;
     return null;   // 8/30: 실패는 '0권'이 아니라 '모름'으로 — 화면이 "없어요"라고 거짓말하지 않게
@@ -401,7 +401,7 @@ async function smEbookLoans(){
 async function smEbookReserves(){
   if(!ssoIsPersonal()) return [];
   try{
-    const r=await fetch(SMEBK_FN+'?action=myReserves',{headers:smHeaders()});
+    const r=await sbFn(SMEBK_FN,{action:'myReserves'});
     const d=await r.json();
     if(d&&d.ok&&d.personal===true&&Array.isArray(d.items)) return d.items;
     return null;
@@ -409,7 +409,7 @@ async function smEbookReserves(){
 }
 async function ebDropReserve(prenSrmb){
   if(!confirm('예약을 취소할까요?')) return;
-  const r=await fetch(SMEBK_FN+'?action=cancelReserve&prenSrmb='+encodeURIComponent(prenSrmb),{headers:smHeaders()});
+  const r=await sbFn(SMEBK_FN,{action:'cancelReserve',prenSrmb:prenSrmb});
   const d=await r.json();
   readerToast(d&&d.ok?'예약을 취소했어요':((d&&(d.message||d.error))||'취소하지 못했어요'));
   renderMyLibStatus();
@@ -421,7 +421,7 @@ async function ebOpen(loanSrmb, brcd, title){
   if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
   try{ w.document.write(bridgeHTML({t:title||'',a:'',cover:''})); w.document.close(); }catch(e){}
   try{
-    const r=await fetch(SMEBK_FN+'?action=viewer&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||'')+SM_DEV,{headers:smHeaders()});
+    const r=await sbFn(SMEBK_FN,{action:'viewer',loanSrmb:loanSrmb,brcd:brcd||''},{dev:true});
     const d=await r.json();
     if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } return; }
     try{ w.close(); }catch(e){}
@@ -432,7 +432,7 @@ async function ebOpen(loanSrmb, brcd, title){
   }catch(e){ try{ w.close(); }catch(_){} readerToast('책을 여는 중 오류가 났어요'); }
 }
 async function ebExtend(loanSrmb, brcd){
-  const r=await fetch(SMEBK_FN+'?action=extend&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+  const r=await sbFn(SMEBK_FN,{action:'extend',loanSrmb:loanSrmb,brcd:brcd||''});
   const d=await r.json();
   readerToast(d&&d.ok?'연장했어요':((d&&d.message)||'연장할 수 없어요'));
   renderMyLibStatus();
@@ -440,7 +440,7 @@ async function ebExtend(loanSrmb, brcd){
 // 전자책 반납 — 반납하면 더 못 읽으므로 반드시 확인을 받는다(대출 슬롯은 즉시 비워짐)
 async function ebReturn(loanSrmb, brcd, title){
   if(!confirm(`「${title||'이 책'}」 반납할까요?\n반납하면 더 이상 읽을 수 없어요.`)) return;
-  const r=await fetch(SMEBK_FN+'?action=return&loanSrmb='+encodeURIComponent(loanSrmb)+'&brcd='+encodeURIComponent(brcd||''),{headers:smHeaders()});
+  const r=await sbFn(SMEBK_FN,{action:'return',loanSrmb:loanSrmb,brcd:brcd||''});
   const d=await r.json();
   if(d&&d.ok){
     // 북스타 서재의 그 책도 '반납함'으로 맞춰 둔다(같은 책이 두 곳에서 다르게 보이지 않게)
@@ -473,7 +473,7 @@ async function smDropPickup(reqNo){
 }
 async function smEbookBorrowOpen(brcd, w, book){
   try{
-    const r=await fetch(SMEBK_FN+'?action=borrow&brcd='+encodeURIComponent(brcd)+SM_DEV,{headers:smHeaders()});
+    const r=await sbFn(SMEBK_FN,{action:'borrow',brcd:brcd},{dev:true});
     const d=await r.json();
     // 연동 만료(토큰 7일) — 누를 땐 연동 상태였는데 서버에서 세션이 안 만들어진 경우.
     // 공유계정으로 대신 빌려주지 않으므로 여기서 안내로 돌린다.
