@@ -2279,6 +2279,7 @@ body.dark .quiz-fb.no{background:rgba(230,90,80,.16);color:#ef9a8f;}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bf-toc .bf-ch:hover{background:rgba(127,127,127,.16);opacity:1;}
 .bf-toc .bf-ch.done{opacity:.42;}
+.bf-toc .bf-ch .bf-sub{opacity:.62;font-size:.9em;margin-left:8px;}   /* '제1장'만 있는 칸에 붙이는 원제 부제 */
 .bf-intro{opacity:.85;font-size:.92em;line-height:1.75;}
 .bf-go{flex:none;display:block;text-align:center;}
 .bf-go button{border:1px solid currentColor;background:transparent;color:inherit;opacity:.6;cursor:pointer;
@@ -3802,9 +3803,13 @@ function buildTOC(){
     _fillFront('toc', (lang, pane) => {
       const secs = (pane && pane.querySelectorAll('.chapter-anchor').length === sections.length)
                    ? [...pane.querySelectorAll('.chapter-anchor')] : [...sections];
-      return secs.map((sec,i)=>
-        `<div class="bf-ch${done.includes(i)?' done':''}" onclick="tocGo(${i})">${esc(sec.dataset.chTitle || ('Chapter '+(i+1)))}</div>`
-      ).join('');
+      return secs.map((sec,i)=>{
+        const t = sec.dataset.chTitle || ('Chapter '+(i+1));
+        // 9/2 해외 고전 한국어 칸은 장 제목이 '제1장'뿐인 책이 많다 → 왼쪽(원서) 칸의 부제를 옆에 작게 붙인다
+        const other = sections[i] && sections[i].dataset.chTitle;
+        const sub = (_bareCh(t) && other && !_bareCh(other) && sec !== sections[i]) ? _chSub(other) : '';
+        return `<div class="bf-ch${done.includes(i)?' done':''}" onclick="tocGo(${i})">${esc(_chCase(t))}${sub?`<span class="bf-sub">${esc(_chCase(sub))}</span>`:''}</div>`;
+      }).join('');
     });
   }
   const completed = (readerStats.completedChapters || {})[currentBook.id] || [];
@@ -3834,6 +3839,18 @@ function buildTOC(){
     };
     list.appendChild(div);
   });
+}
+// 속표지 목차 표기 도우미
+//  _bareCh: '제3장' / 'CHAPTER III' / '12' 처럼 번호뿐인 제목인가
+//  _chSub : 'CHAPTER 1 MY UNCLE MAKES A GREAT DISCOVERY' → 'MY UNCLE MAKES A GREAT DISCOVERY'
+//  _chCase: 원서 제목이 전부 대문자면 읽기 쉽게 첫 글자만 대문자로(로마숫자는 그대로). 소문자가 하나라도 있으면 손대지 않음
+function _bareCh(t){ return /^(제\s*\d+\s*장|(?:CHAPTER|Chapter|chapter)\s+[\dIVXLC]+|[\dIVXLC]+)[.:]?$/.test(String(t||'').trim()); }
+function _chSub(t){ const m = String(t||'').match(/^(?:CHAPTER|Chapter|chapter)\s+[\dIVXLC]+\b[.:\s—–-]*(.*)$/); return (m ? m[1] : String(t||'')).trim(); }
+function _chCase(t){
+  t = String(t||'');
+  if(/[a-z]/.test(t)) return t;
+  const roman = /^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;   // 'CIVIC' 같은 낱말은 로마숫자로 안 본다
+  return t.replace(/[A-Z][A-Z'’]*/g, w => roman.test(w) ? w : w[0] + w.slice(1).toLowerCase());
 }
 function toggleTOC(){ const d=document.getElementById('tocDrawer'); if(d) d.classList.toggle('open'); }
 // 속표지 목차에서 장 이동 (서랍 목차와 같은 동작, 서랍은 열려 있을 때만 닫는다)
@@ -8479,7 +8496,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902j';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902b';   // 9/2 한국 고전 11권 잔재 정리(장식·위키마커·제목중복·라이선스)
