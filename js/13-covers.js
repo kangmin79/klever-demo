@@ -142,8 +142,8 @@ async function _smNewTable(){
     const SEL='select=ctrl,kind,barcode,title,author,publisher,pub_year,reg_date,cover_url,isbn';
     // 2차 정렬 pub_year — 전자책은 몇 달치를 한 번에 등록해서(5/26 107권 등) 뭉텅이 안 순서가
     // ctrl(등록 일련번호) 임의순이 된다. 발행연도 내림차순을 끼우면 뭉텅이 안에서 최신 발행이 앞.
-    const q=k=>fetch(`${SB_REST}/semyung_tulip?${SEL}&kind=eq.${k}&order=reg_date.desc,pub_year.desc.nullslast,ctrl.desc&limit=200`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}}).then(r=>r.ok?r.json():[]).catch(()=>[]);
+    const q=k=>sbGetAnon(`/semyung_tulip?${SEL}&kind=eq.${k}&order=reg_date.desc,pub_year.desc.nullslast,ctrl.desc&limit=200`)
+      .then(r=>r.ok?r.json():[]).catch(()=>[]);
     const [eb,pp]=await Promise.all([q('ebook'),q('paper')]);
     if((!Array.isArray(eb)||!eb.length)&&(!Array.isArray(pp)||!pp.length)) return null;
     SEMYUNG_NEW_E=(eb||[]).map(b=>_smMapNew(b,'ebook'));
@@ -154,8 +154,7 @@ async function _smNewTable(){
 // 우리 학교 대출 랭킹 = 종이책 실대출(OPAC popularloanList, 최근1년, 대출횟수 있음). scripts/build_semyung_loan_rank.py 갱신.
 async function _smLoanRank(){
   try{
-    const r=await fetch(`${SB_REST}/semyung_loan_rank?select=rank,title,author,publisher,pub_year,loan_count,cover,detail,brcd,prev_rank,description&order=rank&limit=20`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/semyung_loan_rank?select=rank,title,author,publisher,pub_year,loan_count,cover,detail,brcd,prev_rank,description&order=rank&limit=20`);
     if(!r.ok) return null;
     const rows=await r.json(); if(!Array.isArray(rows)||!rows.length) return null;
     return rows.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author,cover:b.cover||'',publisher:b.publisher||'',

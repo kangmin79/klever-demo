@@ -55,7 +55,7 @@ function closeCommModal(){ document.getElementById('commModal').classList.remove
 // 커뮤니티 4개 탭 전부 — 관리자(community_posts)에서 관리 (공지도 community_posts가 소스, 구 library_notices 미사용)
 async function loadCommunityPosts(){
   try{
-    const r=await fetch(`${SB_REST}/community_posts?select=kind,tag,title,meta1,meta2,body&order=sort_order,created_at`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/community_posts?select=kind,tag,title,meta1,meta2,body&order=sort_order,created_at`);
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     const mk=k=>rows.filter(x=>x.kind===k).map(x=>({tag:x.tag||'',title:x.title,meta:[x.meta1,x.meta2].filter(Boolean),body:x.body||''}));
     ['program','event','free','notice'].forEach(k=>{ COMMUNITY_POSTS[k]=mk(k); });   // 항상 서버값으로 교체(삭제→빈탭 반영)

@@ -415,9 +415,7 @@ async function usChatRecommend(topic, subtitleHint, rawWords){
 // 별이 질의 로그(fire-and-forget) — 약한/실패 질의 수집·분석용(byeoli_query_logs). 실패해도 UX 무영향.
 function byeoliLog(o){
   try{
-    fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/byeoli_query_logs',{method:'POST',
-      headers:{apikey:COVER_ANON,'Authorization':'Bearer '+COVER_ANON,'content-type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify(o)}).catch(()=>{});
+    sbWrite('POST','/byeoli_query_logs',o,{anon:true,prefer:'return=minimal'}).catch(()=>{});
   }catch(e){}
 }
 let US_CLICKMAP={};   // isbn→후보(현 검색결과). 카드 클릭 시 byeoliClickLog가 위치·소스·eventId 참조
@@ -494,9 +492,9 @@ async function byeoliFindBooks(topic, surface, wantAnswer, rawWords){
 function byeoliClickLog(b){
   try{
     if(!b) return;
-    fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/byeoli_search_clicks',{method:'POST',
-      headers:{apikey:COVER_ANON,'Authorization':'Bearer '+COVER_ANON,'content-type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({event_id:b._eventId||null, surface:b._surface||'', query:b._q||'', isbn:b.isbn||'', title:b.title||'', position:(typeof b._pos==='number'?b._pos:null), source:b._source||'', kind:b._kind||''})}).catch(()=>{});
+    sbWrite('POST','/byeoli_search_clicks',
+      {event_id:b._eventId||null, surface:b._surface||'', query:b._q||'', isbn:b.isbn||'', title:b.title||'', position:(typeof b._pos==='number'?b._pos:null), source:b._source||'', kind:b._kind||''},
+      {anon:true,prefer:'return=minimal'}).catch(()=>{});
   }catch(e){}
 }
 

@@ -107,7 +107,7 @@ function _questGroup(c, ci){
 // 사서가 삭제한(=DB에 더 없는) 챌린지를 학생 내서재에서 자동 정리
 async function pruneDeadChals(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=id`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/library_programs?select=id`);
     // 8/9: 0건도 유효한 진실로 취급 — 데모 챌린지 3개를 전부 삭제하면서 필요해졌다.
     // (통신 실패는 !r.ok/비배열에서 걸러진다. 200+빈배열 = 정말 챌린지가 없는 상태)
     if(!r.ok) return false; const rows=await r.json(); if(!Array.isArray(rows)) return false;

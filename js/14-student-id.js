@@ -22,8 +22,7 @@ function bxEnsureStudentRow(s){
   if(!s||!s.id) return;
   const row={id:String(s.id), name:String(s.name||s.id), school_id:CH_SCHOOL};
   if(s.emoji) row.emoji=s.emoji;
-  fetch(`${SB_REST}/bookstar_students?on_conflict=id`,{method:'POST',
-    headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},   // 8/29 본인 세션으로(익명 키는 이제 못 씀)
-    body:JSON.stringify(row)}).catch(()=>{});
+  sbWrite('POST',`/bookstar_students?on_conflict=id`,row,
+    {prefer:'resolution=ignore-duplicates,return=minimal'}).catch(()=>{});   // 8/29 본인 세션으로(익명 키는 이제 못 씀)
 }
 

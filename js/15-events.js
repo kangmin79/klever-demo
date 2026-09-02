@@ -62,7 +62,7 @@ function bxEvent(kind, o){
       origin:org.origin||'unknown', origin_id:(org.id||'').slice(0,120)||null, program_id:pid||null,
       ref_table:o.ref_table||null, ref_id:o.ref_id?String(o.ref_id).slice(0,200):null,
       ok:o.ok!==false, seconds:(o.seconds!=null?Math.max(0,Math.round(o.seconds)):null), meta:o.meta||{} };
-    fetch(BX_EV_URL,{method:'POST',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify(row),keepalive:!!o.beacon}).catch(()=>{});
+    sbWrite('POST','/bookstar_events',row,{prefer:'return=minimal',keepalive:!!o.beacon}).catch(()=>{});
   }catch(e){}
 }
 // 접속(visit): 탭당 1회. guest도 남기되 '접속 학생' 집계는 학번만 센다.
@@ -127,9 +127,8 @@ async function bxUpsertRead(bookId, pct, sec){   // 읽기 진행률(완독율 v
   const s=bxStudent(); if(!s) return;
   const row={student_id:s.id,book_id:bookId,read_pct:pct,updated_at:new Date().toISOString()};
   if(typeof sec==='number') row.read_sec=Math.round(sec);
-  try{ await fetch(`${BX_SB}/bookstar_challenge_results?on_conflict=student_id,book_id`,
-    {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-     body:JSON.stringify(row)}); }catch(e){}
+  try{ await sbWrite('POST',`/bookstar_challenge_results?on_conflict=student_id,book_id`,row,
+    {prefer:'resolution=merge-duplicates,return=minimal'}); }catch(e){}
 }
 async function bxUpsertResult(bookId, obj){          // 서버 저장(계정별·책별 upsert)
   const s=bxStudent(); if(!s) return;
@@ -138,9 +137,9 @@ async function bxUpsertResult(bookId, obj){          // 서버 저장(계정별�
   const total=sc?sc.scenes.reduce((t,x)=>t+x.quiz.length,0):0;
   const score=ok*10+(obj.submitted?50:0);
   try{
-    await fetch(`${BX_SB}/bookstar_challenge_results?on_conflict=student_id,book_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:s.id,book_id:bookId,ans:obj.ans||{},impression:obj.impression||'',quiz_ok:ok,quiz_total:total,score,submitted:!!obj.submitted,updated_at:new Date().toISOString()})});
+    await sbWrite('POST',`/bookstar_challenge_results?on_conflict=student_id,book_id`,
+      {student_id:s.id,book_id:bookId,ans:obj.ans||{},impression:obj.impression||'',quiz_ok:ok,quiz_total:total,score,submitted:!!obj.submitted,updated_at:new Date().toISOString()},
+      {prefer:'resolution=merge-duplicates,return=minimal'});
   }catch(e){}
 }
 async function bxLoadResultsFromDB(){                // 로그인/전환 시 서버→로컬 캐시
@@ -171,18 +170,18 @@ function bxUpsertReaderStats(){            // 리더 통계(읽은시간·streak
   clearTimeout(_rsServerTimer);
   _rsServerTimer=setTimeout(()=>{
     _rsServerTimer=null;
-    try{ fetch(`${BX_SB}/bookstar_reader_stats?on_conflict=student_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
+    try{ sbWrite('POST',`/bookstar_reader_stats?on_conflict=student_id`,
+      {student_id:s.id,data:readerStats,updated_at:new Date().toISOString()},
+      {prefer:'resolution=merge-duplicates,return=minimal'}); }catch(e){}
   }, 1500);
 }
 function _rsFlushNow(){   // 탭 종료·화면 이탈 시 대기 중(1.5초 디바운스) 동기화를 keepalive로 즉시 발사 — 마지막 세션 기록 유실 방지
   if(!_rsServerTimer) return;
   clearTimeout(_rsServerTimer); _rsServerTimer=null;
   const s=(typeof bxStudent==='function')?bxStudent():null; if(!s||!s.id) return;
-  try{ fetch(`${BX_SB}/bookstar_reader_stats?on_conflict=student_id`,
-    {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},keepalive:true,
-     body:JSON.stringify({student_id:s.id,data:readerStats,updated_at:new Date().toISOString()})}); }catch(e){}
+  try{ sbWrite('POST',`/bookstar_reader_stats?on_conflict=student_id`,
+    {student_id:s.id,data:readerStats,updated_at:new Date().toISOString()},
+    {prefer:'resolution=merge-duplicates,return=minimal',keepalive:true}); }catch(e){}
 }
 window.addEventListener('pagehide', ()=>{ try{ if(_viewerOpen()) readerSessionEnd(); }catch(e){} try{ bxReadFlush(true); }catch(e){} _rsFlushNow(); });
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) _rsFlushNow(); });
@@ -360,8 +359,7 @@ function injectNewArr(arr){
 async function loadSections(){
   try{
     // 우리도서관 페이지는 area='우리도서관' 칸만 (고전 컬렉션·International은 별도 영역)
-    const r=await fetch(`${SB_REST}/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/library_sections?select=area,slot,title,subtitle,style,sort_order,books,visible&order=sort_order`);
     if(!r.ok)return; const rows=await r.json(); if(!Array.isArray(rows)||!rows.length)return;
     SECTIONS=rows.filter(x=>(x.area||'우리도서관')==='우리도서관')
       .map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',visible:x.visible!==false,books:Array.isArray(x.books)?x.books:[]}));
@@ -371,8 +369,7 @@ async function loadSections(){
 // 고전 컬렉션 / International 영역의 사서 큐레이션 칸 로드
 async function loadAreaSections(area){
   try{
-    const r=await fetch(`${SB_REST}/library_sections?select=slot,title,subtitle,style,sort_order,books,chal_pos&area=eq.${encodeURIComponent(area)}&order=sort_order`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/library_sections?select=slot,title,subtitle,style,sort_order,books,chal_pos&area=eq.${encodeURIComponent(area)}&order=sort_order`);
     if(!r.ok) return []; const rows=await r.json();
     return Array.isArray(rows)?rows.map(x=>({slot:x.slot,title:x.title,subtitle:x.subtitle||'',style:x.style||'row',books:Array.isArray(x.books)?x.books:[],chal_pos:(x.chal_pos==null?null:+x.chal_pos)})):[];
   }catch(e){ return []; }
@@ -447,8 +444,7 @@ let _pvLastSecs=null;
 // 미리보기도 실제 앱처럼 발행 프로그램(library_programs)을 불러와 LC_PUB 채움 → 빈 칸 폴백이 앱과 일치(WYSIWYG)
 async function _pvLoadPub(){
   try{
-    const r=await fetch(`${SB_REST}/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=sort_order.asc.nullslast,created_at.desc`,   // 8/29: 사서가 정한 순서
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/library_programs?select=*&status=eq.${encodeURIComponent('진행중')}&order=sort_order.asc.nullslast,created_at.desc`);   // 8/29: 사서가 정한 순서
     if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)) LC_PUB=rows.map(x=>({id:x.id,title:x.title,intro:x.intro||'',location:x.location||'',
       books:(x.books||[]).map(b=>Object.assign({t:b.title,a:b.author,isbn:b.isbn,cover:b.cover,note:b.note||''},_keepForm(b)))})); }
   }catch(e){}
@@ -703,8 +699,7 @@ function libDetail(isbn){
 async function tulipEbookBarcode(title){
   try{
     const t=cleanT(title||'').slice(0,12); if(!t) return '';
-    const r=await fetch(SB_REST+'/semyung_tulip?select=title,barcode&kind=eq.ebook&limit=5&title=ilike.'+encodeURIComponent(t+'*'),
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon('/semyung_tulip?select=title,barcode&kind=eq.ebook&limit=5&title=ilike.'+encodeURIComponent(t+'*'));
     if(!r.ok) return '';
     const rows=await r.json();
     const key=cleanT(title||'').replace(/\s+/g,'');
@@ -820,10 +815,10 @@ async function loadDesc(key, isCatalog, book){
     const el=document.getElementById('lcdDesc'); if(!el) return;
     const auEl=document.querySelector('#lcDetail .lcd-i .au');   // 저자·출판사 줄(비어 있으면 함께 채움)
     const sel='description,author,publisher,pub_year';
-    const url=isCatalog
-      ? `${SB_REST}/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=${sel}&limit=1`
-      : `${SB_REST}/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=${sel}&limit=1`;
-    const r=await fetch(url,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const path=isCatalog
+      ? `/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=${sel}&limit=1`
+      : `/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=${sel}&limit=1`;
+    const r=await sbGetAnon(path);
     if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
     if(!d) return;
     if(!el.isConnected) return;   // 모달이 재렌더/닫힘 → 폐기

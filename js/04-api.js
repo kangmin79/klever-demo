@@ -1,8 +1,11 @@
 /* ═══ 서버 호출 창구 (S7, 2026-09-02) ═══
    지금까지 94곳이 각자 URL·키·헤더를 조립해 fetch 했다. 여기로 모은다.
    1회차: semyung-ebook-borrow(SMEBK_FN) 10곳만 sbFn 으로 — 응답 처리(.json()·분기)는 호출부에 그대로 둔다(동작 동일).
-   2회차: REST GET(`{headers:BX_H}`) 19곳 → sbGet.  남은 것: 익명 헤더 직접 조립한 GET · REST 쓰기(POST/PATCH/DELETE) · 서버 함수 POST · Auth
+   2회차: REST GET(`{headers:BX_H}`) 19곳 → sbGet.
+   3회차: 익명 키 GET 16곳 → sbGetAnon · REST 쓰기(POST/PATCH/DELETE) 25곳 → sbWrite.  남은 것: 서버 함수 POST · Auth · 푸시
    → 다음 회차에 패턴 1종씩. URL·anon 키를 00-config 로 옮기는 것도 그때. 공통 에러 처리는 S9.
+   ※ sbGet(BX_H) 과 sbGetAnon 을 합치지 않은 이유: 로그인하면 16-auth-lock 이 BX_H.Authorization 을 본인 토큰으로 바꾼다.
+     공개 표(장서·프로그램·서평·팝업)를 익명 키로 읽던 곳을 BX_H 로 바꾸면 RLS 역할이 anon→authenticated 로 달라진다 — 동작 변경.
    ※ SMEBK_FN·SM_DEV(15-events)·COVER_ANON(12-nav)·SB_REST(13-covers)·BX_H(14-student-id)·smHeaders(16-auth-lock)는
      함수 안에서만 읽으므로 로드 순서 무관.  */
 
@@ -10,6 +13,28 @@
 //   sbGet('/bookstar_writings?student_id=eq.'+encodeURIComponent(id)+'&select=*')
 function sbGet(path){
   return fetch(SB_REST+path,{headers:BX_H});
+}
+
+// REST 표 읽기(GET, 항상 익명 키) — 공개 표(semyung_tulip·library_programs·library_sections·reviews·minsong_popups 등).
+//   로그인 뒤에도 본인 토큰을 쓰지 않는다(위 ※). Response 그대로 반환.
+//   sbGetAnon('/semyung_tulip?select=ctrl&kind=eq.paper&isbn=eq.'+clean+'&limit=1')
+function sbGetAnon(path){
+  return fetch(SB_REST+path,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+}
+
+// REST 표 쓰기(POST/PATCH/DELETE) — 기본은 학생 세션 헤더(BX_H: 로그인 뒤 본인 토큰). body 는 객체(JSON 직렬화), 없으면 생략(DELETE).
+//   sbWrite('POST','/bookstar_mybooks?on_conflict=student_id,book_id', row, {prefer:'resolution=merge-duplicates,return=minimal'})
+//   opts.prefer    : PostgREST Prefer 헤더(업서트 방식·응답 형태). 없으면 안 붙임
+//   opts.keepalive : 탭 종료 직전 발사(pagehide) — 브라우저가 페이지를 닫아도 요청을 끝까지 보냄
+//   opts.anon      : 익명 키로(서평·별이 검색 로그처럼 로그인과 무관한 표) — content-type 은 붙임
+function sbWrite(method, path, body, opts){
+  const o=opts||{};
+  const headers=o.anon ? {apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json'} : {...BX_H};
+  if(o.prefer) headers.Prefer=o.prefer;
+  const init={method,headers};
+  if(body!==undefined) init.body=JSON.stringify(body);
+  if(o.keepalive) init.keepalive=true;
+  return fetch(SB_REST+path,init);
 }
 
 // 서버 함수 GET 호출 — Response 를 그대로 돌려준다(호출부가 r.json() 함).

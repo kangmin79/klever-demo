@@ -12,6 +12,8 @@
 // 대상(2회차): REST GET `{headers:BX_H}` 19곳 → sbGet(path). chalResolveFormats·bxLoadResultsFromDB·bxLoadReaderStats
 //   ·mpHydrate·mpLoadQuiz(level 있음/없음)·_mpFetchScenes·_agFetch·openProfileEdit·renderMyWritings·usTulipSearch
 //   ·_bxNames·loadFeedSocial·loadFeedItems·openStudentProfile(본인/남).  학생은 window.__SSO_STUDENT 로 심는다.
+// 대상(3회차): 익명 키 GET 16곳 → sbGetAnon(path)  ·  REST 쓰기(POST/PATCH/DELETE) 25곳 → sbWrite(method,path,body,opts).
+//   쓰기 본문의 시각(updated_at·last_seen·done_at 등 ISO)은 실행마다 달라 가린다. keepalive 도 기록한다.
 // 헤더는 키 이름 순으로 정렬해 기록한다 — HTTP 헤더는 순서가 없으므로 객체 키 순서 차이는 동작 차이가 아니다.
 import { chromium, devices } from 'playwright';
 import http from 'node:http';
@@ -43,9 +45,9 @@ function startServer() {
 async function runInPage(token) {
   const log = [];
   // session_id 는 페이지 로드마다 난수 → 전/후 비교에서 가린다
-  const mask = b => (typeof b === 'string') ? b.replace(/"session_id":"[^"]*"/g, '"session_id":"*"') : b;
+  const mask = b => (typeof b === 'string') ? b.replace(/"session_id":"[^"]*"/g, '"session_id":"*"').replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g, '*ISO*') : b;
   const sortH = h => { if (!h || typeof h !== 'object') return h || null; const o = {}; for (const k of Object.keys(h).sort()) o[k] = h[k]; return o; };
-  const rec = (fn, u, o) => log.push({ fn, url: String(u), method: (o && o.method) || 'GET', headers: sortH(o && o.headers), body: mask((o && o.body) || null) });
+  const rec = (fn, u, o) => log.push({ fn, url: String(u), method: (o && o.method) || 'GET', headers: sortH(o && o.headers), body: mask((o && o.body) || null), keepalive: !!(o && o.keepalive) });
   let cur = '';
   window.fetch = async (u, o) => { rec(cur, u, o); return { ok: true, status: 200, json: async () => ({ ok: false }), text: async () => '' }; };
   window.confirm = () => true; window.alert = () => {}; window.open = () => ({ document: { write() {}, close() {} }, close() {}, location: {} });
@@ -97,6 +99,78 @@ async function runInPage(token) {
     ['openStudentProfile(남)', () => openStudentProfile('S2')],
   ];
   for (const [name, f] of steps2) { cur = name; try { await f(); } catch (e) { errs.push(name + ': ' + (e && e.message || e)); } }
+
+  // ── 3회차 ①: 익명 키 GET 16곳 — 공개 표(장서·프로그램·큐레이션 칸·서평·팝업·번역 제목) ──
+  _progCache = null; _progCacheP = null; KR_TITLE_TR = null; _krTitleP = null;
+  { const d = document.createElement('div'); d.id = 'lcdDesc'; document.body.appendChild(d); }
+  const steps3 = [
+    ['_smNewTable', () => _smNewTable()],
+    ['_smLoanRank', () => _smLoanRank()],
+    ['fetchProgramsCached', () => fetchProgramsCached()],
+    ['tulipPaperKey(isbn)', () => tulipPaperKey('9788937460449', '돈키호테', '세르반테스')],
+    ['tulipPaperKey(제목만)', () => tulipPaperKey('', '오디세이아', '호메로스')],
+    ['pruneDeadChals', () => pruneDeadChals()],
+    ['loadCommunityPosts', () => loadCommunityPosts()],
+    ['loadSections', () => loadSections()],
+    ['loadAreaSections', () => loadAreaSections('고전 컬렉션')],
+    ['_pvLoadPub', () => _pvLoadPub()],
+    ['tulipEbookBarcode', () => tulipEbookBarcode('돈키호테')],
+    ['loadDesc(종이책)', () => loadDesc('CATTOT123', true, {})],
+    ['loadDesc(전자책)', () => loadDesc('9788937460449', false, {})],
+    ['bxResolveBooks', () => bxResolveBooks(['sm-12345', 'sm-CATTOT678', '9788937460449', 'gb-5921'])],
+    ['rvFetch', () => rvFetch('select=*&order=created_at.desc&limit=3')],
+    // 사서 팝업은 로드 시 1회 도는 IIFE — 같은 파일을 script 로 다시 꽂아 재실행
+    ['popup(92)', () => new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'js/92-library-popup.js?probe=1'; s.onload = res; s.onerror = () => rej(new Error('92 로드 실패')); document.head.appendChild(s); })],
+    ['loadKrTitles', () => loadKrTitles()],
+  ];
+  for (const [name, f] of steps3) { cur = name; try { await f(); } catch (e) { errs.push(name + ': ' + (e && e.message || e)); } }
+
+  // ── 3회차 ②: REST 쓰기 25곳 — 학생 세션(BX_H)·익명 두 갈래, POST/PATCH/DELETE, Prefer 변형, keepalive ──
+  window.mpProgress = () => ({ done: 1, total: 1 });   // 미션 진행 계산은 관심 밖 — 완주 갈래(enroll done)도 지나가게
+  window.joinedChals = () => []; window._saveJoinedChals = () => {};
+  CHAL_PUB = [{ id: 'C1', title: '챌린지', books: [] }];
+  _mpCtx = { student: 'S1', school: 'semyung', chId: 'C1', bookId: 'gb-5921', done: new Set(), ans: { q1: { ok: true } }, quizCount: 1, m: {}, solo: false, complete: false };
+  _wr = { k: 'review', bookId: 'gb-5921', b: { isbn: '', title: '돈키호테' }, def: { min: 5 }, chId: 'C1' };
+  _curFav = { id: 'gb-1', reason: '이전 인생책' }; _bmPendBook = 'gb-5921';
+  rvCtx = { bookId: 'gb-5921', bookTitle: '돈키호테', rating: 4 };
+  const TXT = '이 책은 정말 좋았습니다. 다시 읽고 싶어요.';
+  const mk = (tag, id, val) => { let e = document.getElementById(id); if (!e) { e = document.createElement(tag); e.id = id; document.body.appendChild(e); } if (val != null) e.value = val; return e; };   // 화면에 이미 있는 요소(서평 모달 등)면 그걸 씀
+  mk('textarea', 'wrTa', TXT); mk('input', 'bmReason', '이유'); mk('textarea', 'peBio', '소개'); mk('textarea', 'mp_ta_review', TXT); mk('textarea', 'rvmBody', TXT);
+  mk('input', 'rvmBookInput', '').style.display = 'none';
+  const likeEl = document.createElement('div'); likeEl.innerHTML = '<b>3</b>'; document.body.appendChild(likeEl);
+  const likeBtn = document.createElement('button'); likeBtn.innerHTML = '<span class="fl-c">0</span>'; document.body.appendChild(likeBtn);
+  const folBtn = document.createElement('button'), folBtn2 = document.createElement('button'); document.body.append(folBtn, folBtn2);
+  const steps4 = [
+    ['chalJoin', () => chalJoin('C1', { silent: true })],
+    ['bxEvent', () => bxEvent('view', { item_type: 'book', item_key: 'gb-1', item_title: '책' })],
+    ['bxEvent(beacon)', () => bxEvent('view', { item_type: 'book', item_key: 'gb-2', item_title: '책2', beacon: true })],
+    ['bxUpsertRead', () => bxUpsertRead('gb-5921', 55, 120)],
+    ['bxUpsertRead(sec없음)', () => bxUpsertRead('gb-5921', 55)],
+    ['bxUpsertResult', () => bxUpsertResult('gb-5921', { ans: { a: { ok: true } }, impression: '좋다', submitted: true })],
+    ['bxUpsertReaderStats', async () => { bxUpsertReaderStats(); await new Promise(r => setTimeout(r, 1700)); }],
+    ['_rsFlushNow', () => { bxUpsertReaderStats(); _rsFlushNow(); }],
+    ['_bmWrite(POST)', () => _bmWrite('POST', 'bookstar_life_history', { a: 1 })],
+    ['_bmWrite(DELETE)', () => _bmWrite('DELETE', 'bookstar_life_history?id=eq.1')],
+    ['mbTouch', () => mbTouch({ id: 'gb-5921', t: '돈키호테', a: '세르반테스', isbn: '', cover: '' })],
+    ['wrSubmit', () => wrSubmit()],
+    ['saveLifeBook', () => saveLifeBook()],
+    ['saveProfile', () => saveProfile()],
+    ['mpSubmitWrite', () => mpSubmitWrite('review', 5)],
+    ['mpSaveProgress', () => mpSaveProgress()],
+    ['mpCheckComplete', () => { _mpCtx.complete = false; return mpCheckComplete(); }],
+    ['bxEnsureStudentRow', () => bxEnsureStudentRow({ id: 'S1', name: '테스트', emoji: '📘' })],
+    ['likeReview', () => likeReview(7, likeEl)],
+    ['submitReview', () => submitReview()],
+    ['byeoliLog', () => byeoliLog({ surface: 's', query: 'q', intent: 'books' })],
+    ['byeoliClickLog', () => byeoliClickLog({ isbn: '1', title: 't', _eventId: 'e1', _surface: 's', _q: 'q', _pos: 0, _source: 'x', _kind: 'k' })],
+    ['feedLike(추가)', () => feedLike(likeBtn, 'k1')],
+    ['feedLike(취소)', () => feedLike(likeBtn, 'k1')],
+    ['feedFollow(추가)', () => feedFollow(folBtn, 'S2')],
+    ['feedFollow(취소)', () => feedFollow(folBtn, 'S2')],
+    ['profileFollow(추가)', () => profileFollow(folBtn2, 'S3')],
+    ['profileFollow(취소)', () => profileFollow(folBtn2, 'S3')],
+  ];
+  for (const [name, f] of steps4) { cur = name; try { await f(); } catch (e) { errs.push(name + ': ' + (e && e.message || e)); } }
   return { log, errs };
 }
 

@@ -91,9 +91,9 @@ async function mpSubmitWrite(k,min){
   const btn=document.getElementById('mp_btn_'+k); if(btn) btn.disabled=true;
   // 8/29 별 포인트 폐지: 글 저장(bookstar_writings)이 곧 미션 완료. 재제출 시 갱신.
   let ok=false;
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true})}); ok=r.ok; }catch(e){}
+  try{ const r=await sbWrite('POST',`/bookstar_writings?on_conflict=student_id,activity,book_id`,
+      {student_id:_mpCtx.student,school_id:_mpCtx.school,challenge_id:_mpCtx.chId,book_id:_mpCtx.bookId,activity:k,text:v,is_public:true},
+      {prefer:'resolution=merge-duplicates,return=minimal'}); ok=r.ok; }catch(e){}
   if(!ok){ if(btn) btn.disabled=false; const m='글 저장에 실패했어요 — 다시 제출해 주세요'; try{ bmToast(m); }catch(e){ alert(m); } return; }
   mpMarkDone(k); _mpCtx.done.add(k+'|book:'+_mpCtx.bookId);
   bxEvent('activity',{sub:k, book:bxBookByKey(_mpCtx.bookId), program_id:_mpCtx.chId||null, ref_table:'bookstar_writings', ref_id:_mpCtx.student+'|'+k+'|'+_mpCtx.bookId, meta:{len:v.length}});   // 측정: 활동(챌린지 글)
@@ -122,12 +122,12 @@ function mpRenderProgress(){
 async function mpSaveProgress(){
   if(!_mpCtx || _mpCtx.solo) return;   // solo=챌린지 없이 연 퀴즈 — challenge_id가 없어 이 표에 못 쓴다(8/20)
   try{
-    await fetch(`${SB_REST}/bookstar_challenge_results?on_conflict=student_id,book_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student, book_id:_mpCtx.bookId, challenge_id:_mpCtx.chId,
-         ans:_mpCtx.ans, quiz_total:_mpCtx.quizCount,
-         quiz_ok:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length, score:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length*10,   // 8/18: 완료 목록·관리자도 같은 숫자를 보게
-         updated_at:new Date().toISOString()})});
+    await sbWrite('POST',`/bookstar_challenge_results?on_conflict=student_id,book_id`,
+      {student_id:_mpCtx.student, book_id:_mpCtx.bookId, challenge_id:_mpCtx.chId,
+       ans:_mpCtx.ans, quiz_total:_mpCtx.quizCount,
+       quiz_ok:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length, score:Object.values(_mpCtx.ans||{}).filter(a=>a&&a.ok).length*10,   // 8/18: 완료 목록·관리자도 같은 숫자를 보게
+       updated_at:new Date().toISOString()},
+      {prefer:'resolution=merge-duplicates,return=minimal'});
   }catch(e){}
 }
 // 미션 패널(DB 퀴즈) 진행을 로컬 캐시에 미러 — 내 챌린지 카드(_chalBookScore/_chalBookState)는 로컬만 읽는다.
@@ -147,9 +147,9 @@ async function mpCheckComplete(){
   _mpCtx.complete=true;
   _mpMirrorLocal({mp_done:true});   // 내 챌린지 카드 '완료 ✓'(8/18)
   try{
-    await fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_mpCtx.student, challenge_id:_mpCtx.chId, status:'done', done_at:new Date().toISOString()})});
+    await sbWrite('POST',`/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
+      {student_id:_mpCtx.student, challenge_id:_mpCtx.chId, status:'done', done_at:new Date().toISOString()},
+      {prefer:'resolution=merge-duplicates,return=minimal'});
   }catch(e){}
   mpRenderProgress();
   try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 미션을 모두 마쳤어요','내서재에서 내 기록을 확인하세요']}); }

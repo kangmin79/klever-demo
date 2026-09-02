@@ -44,8 +44,8 @@ async function feedLike(btn,key){
     btn.classList.toggle('liked',on); const c=btn.querySelector('.fl-c'); if(c) c.textContent=_likeCount[key]||0; };
   apply(!liked);
   try{ const r = liked
-      ? await fetch(`${BX_SB}/bookstar_likes?liker_id=eq.${encodeURIComponent(me)}&item_key=eq.${encodeURIComponent(key)}`,{method:'DELETE',headers:BX_H})
-      : await fetch(`${BX_SB}/bookstar_likes`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({liker_id:me,item_key:key})});
+      ? await sbWrite('DELETE',`/bookstar_likes?liker_id=eq.${encodeURIComponent(me)}&item_key=eq.${encodeURIComponent(key)}`)
+      : await sbWrite('POST',`/bookstar_likes`,{liker_id:me,item_key:key},{prefer:'resolution=ignore-duplicates,return=minimal'});
     if(!r.ok) apply(liked);
   }catch(e){ apply(liked); }
 }
@@ -57,8 +57,8 @@ async function feedFollow(btn,sid){
   paint();
   const revert=()=>{ if(on) _myFollows.add(sid); else _myFollows.delete(sid); paint(); };
   try{ const r = on
-      ? await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H})
-      : await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})});
+      ? await sbWrite('DELETE',`/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`)
+      : await sbWrite('POST',`/bookstar_follows`,{follower_id:me,following_id:sid},{prefer:'resolution=ignore-duplicates,return=minimal'});
     if(!r.ok) revert();
   }catch(e){ revert(); }
 }
@@ -202,8 +202,8 @@ async function profileFollow(btn,sid){
     btn.classList.toggle('on',on); btn.textContent=on?'팔로잉':'팔로우';
     const f2=document.getElementById('bxpFollowers'); if(f2){ f2.textContent=Math.max(0,(parseInt(f2.textContent,10)||0)+(on?1:-1)); } };
   try{ const r = on
-      ? await fetch(`${BX_SB}/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`,{method:'DELETE',headers:BX_H})
-      : await fetch(`${BX_SB}/bookstar_follows`,{method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},body:JSON.stringify({follower_id:me,following_id:sid})});
+      ? await sbWrite('DELETE',`/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&following_id=eq.${encodeURIComponent(sid)}`)
+      : await sbWrite('POST',`/bookstar_follows`,{follower_id:me,following_id:sid},{prefer:'resolution=ignore-duplicates,return=minimal'});
     if(!r.ok) revert();
   }catch(e){ revert(); }
 }

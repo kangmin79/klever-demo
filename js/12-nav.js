@@ -127,8 +127,7 @@ async function fetchProgramsCached(){
   if(_progCacheP) return _progCacheP;
   _progCacheP=(async()=>{
     try{
-      const r=await fetch(`${SB_REST}/library_programs?select=*&status=neq.${encodeURIComponent('종료')}&order=sort_order.asc.nullslast,created_at.desc`,   // 8/29: 사서가 관리자에서 정한 순서(sort_order)대로
-        {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      const r=await sbGetAnon(`/library_programs?select=*&status=neq.${encodeURIComponent('종료')}&order=sort_order.asc.nullslast,created_at.desc`);   // 8/29: 사서가 관리자에서 정한 순서(sort_order)대로
       if(r.ok){ const rows=await r.json(); if(Array.isArray(rows)){
         // status 컬럼은 관리자 저장 시점의 스냅샷이라 시작일이 와도 '예정'에 머문다(자동 갱신 없음).
         // 날짜가 유일한 진실 — 오늘이 기간 안인 것만 노출(시작일에 자동 등장, 종료일 지나면 자동 퇴장).
@@ -401,9 +400,9 @@ function chalJoin(id,opt){
   // 서버 참여 기록(로그인 시) — 관리자 대시보드 '참여' 집계. 완주(done)는 덮지 않음. (8/29 별 포인트 폐지 — 참가 별 지급 삭제)
   const _stu=bxStudent();
   if(_stu){
-    fetch(`${SB_REST}/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
-      {method:'POST',headers:{...BX_H,Prefer:'resolution=ignore-duplicates,return=minimal'},
-       body:JSON.stringify({student_id:_stu.id, challenge_id:String(c.id), status:'joined'})}).catch(()=>{});
+    sbWrite('POST',`/bookstar_challenge_enroll?on_conflict=student_id,challenge_id`,
+      {student_id:_stu.id, challenge_id:String(c.id), status:'joined'},
+      {prefer:'resolution=ignore-duplicates,return=minimal'}).catch(()=>{});
   }
   if(opt.silent) return;
   // 8/21 사장님 요청: 브라우저 alert(주소 표기) 제거 · "여러 챌린지를 동시에…" 문구 삭제
@@ -501,14 +500,12 @@ async function tulipPaperKey(isbn, title, author){
   try{
     const clean=String(isbn||'').replace(/^sm-/,'').replace(/[^0-9Xx]/g,'');
     if(clean.length>=10){
-      const r=await fetch(SB_REST+'/semyung_tulip?select=ctrl&kind=eq.paper&isbn=eq.'+clean+'&limit=1',
-        {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+      const r=await sbGetAnon('/semyung_tulip?select=ctrl&kind=eq.paper&isbn=eq.'+clean+'&limit=1');
       if(r.ok){ const rows=await r.json(); if(rows&&rows[0]&&rows[0].ctrl) return 'CATTOT'+String(rows[0].ctrl); }
     }
     const t=cleanT(title||'').slice(0,12), au=String(author||'').trim();
     if(!t||!au) return '';
-    const r2=await fetch(SB_REST+'/semyung_tulip?select=ctrl,title,author&kind=eq.paper&limit=5&title=ilike.'+encodeURIComponent(t+'*'),
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r2=await sbGetAnon('/semyung_tulip?select=ctrl,title,author&kind=eq.paper&limit=5&title=ilike.'+encodeURIComponent(t+'*'));
     if(!r2.ok) return '';
     const rows=await r2.json();
     const key=cleanT(title||'').replace(/\s+/g,'');

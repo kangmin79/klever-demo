@@ -71,7 +71,7 @@ function _bmModal(html){
   o.innerHTML=`<div class="bm-modal">${html}</div>`; o.classList.add('on');
 }
 async function _bmWrite(method,path,bodyObj){
-  try{ const r=await fetch(`${BX_SB}/${path}`,{method,headers:{...BX_H,Prefer:'return=minimal'},body:bodyObj?JSON.stringify(bodyObj):undefined}); return r.ok; }catch(e){ return false; }
+  try{ const r=await sbWrite(method,'/'+path,bodyObj||undefined,{prefer:'return=minimal'}); return r.ok; }catch(e){ return false; }
 }
 
 /* ── 내 책(8/21 사장님 요청): 상세 페이지를 열어 본 책이 자동으로 담긴다 — bookstar_mybooks(학생별, 기기 무관).
@@ -95,7 +95,7 @@ async function bxResolveBooks(keys){
   const ors=[]; if(bc.length) ors.push(`barcode.in.(${bc.join(',')})`); if(ct.length) ors.push(`ctrl.in.(${ct.join(',')})`); if(isb.length) ors.push(`isbn.in.(${isb.join(',')})`);
   if(!ors.length) return;
   try{
-    const r=await fetch(`${SB_REST}/semyung_tulip?select=ctrl,kind,title,author,isbn,barcode,cover_url,viewer_url&or=(${ors.join(',')})&limit=200`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/semyung_tulip?select=ctrl,kind,title,author,isbn,barcode,cover_url,viewer_url&or=(${ors.join(',')})&limit=200`);
     if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
     rows.forEach(t=>{
       const cands=[]; if(t.barcode) cands.push('sm-'+t.barcode); if(t.kind==='paper'&&t.ctrl) cands.push('sm-CATTOT'+t.ctrl); if(t.isbn) cands.push(String(t.isbn));
@@ -121,7 +121,7 @@ function mbTouch(b){
     const it=bxItemOf(b);
     const row={school_id:CH_SCHOOL,student_id:s.id,book_id:key,title:cleanT(b.t||b.title||''),author:String(b.a||b.author||''),cover:String(b.cover||b.coverSrc||''),isbn:String(b.isbn||''),kind:it.item_type||'',last_seen:new Date().toISOString()};
     if(!row.title) return;
-    fetch(`${SB_REST}/bookstar_mybooks?on_conflict=student_id,book_id`,{method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(row)}).catch(()=>{});
+    sbWrite('POST',`/bookstar_mybooks?on_conflict=student_id,book_id`,row,{prefer:'resolution=merge-duplicates,return=minimal'}).catch(()=>{});
     if(_mbLoadedFor===s.id) _mbList=[_mbNormRow(row)].concat(_mbList.filter(x=>x.id!==key));
   }catch(e){}
 }
@@ -215,8 +215,9 @@ async function wrSubmit(){
   let chId=_wr.chId;
   if(!chId){ try{ const c=chalForBook({id:_wr.bookId,isbn:_wr.b.isbn,title:_wr.b.title}); if(c&&appChalMission(c)[_wr.k]) chId=String(c.id); }catch(e){} }
   let ok=false;
-  try{ const r=await fetch(`${SB_REST}/bookstar_writings?on_conflict=student_id,activity,book_id`,{method:'POST',headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify({student_id:s.id,school_id:CH_SCHOOL,challenge_id:chId||null,book_id:_wr.bookId,activity:_wr.k,text:v,is_public:pub})}); ok=r.ok; }catch(e){}
+  try{ const r=await sbWrite('POST',`/bookstar_writings?on_conflict=student_id,activity,book_id`,
+    {student_id:s.id,school_id:CH_SCHOOL,challenge_id:chId||null,book_id:_wr.bookId,activity:_wr.k,text:v,is_public:pub},
+    {prefer:'resolution=merge-duplicates,return=minimal'}); ok=r.ok; }catch(e){}
   if(!ok){ if(go) go.disabled=false; bmToast('저장에 실패했어요'); return; }
   bxEvent('activity',{sub:_wr.k, book:bxBookByKey(_wr.bookId), program_id:chId||null, ref_table:'bookstar_writings', ref_id:s.id+'|'+_wr.k+'|'+_wr.bookId, meta:{len:v.length,standing:!chId,is_public:pub}});
   try{ localStorage.removeItem(_wrDraftKey()); }catch(e){}
@@ -328,9 +329,9 @@ async function saveLifeBook(){
   //   → 업서트(없으면 만들고 있으면 고침) + 서버가 돌려준 실제 저장값을 확인해서만 "등록했어요"라고 말한다.
   let ok=false;
   try{
-    const res=await fetch(`${BX_SB}/bookstar_students?on_conflict=id`,{method:'POST',
-      headers:{...BX_H,Prefer:'resolution=merge-duplicates,return=representation'},
-      body:JSON.stringify({id:String(s.id),name:String(s.name||s.id),school_id:CH_SCHOOL,favorite_book_id:_bmPendBook,favorite_reason:r})});
+    const res=await sbWrite('POST',`/bookstar_students?on_conflict=id`,
+      {id:String(s.id),name:String(s.name||s.id),school_id:CH_SCHOOL,favorite_book_id:_bmPendBook,favorite_reason:r},
+      {prefer:'resolution=merge-duplicates,return=representation'});
     const rows=res.ok?await res.json():[];
     ok=Array.isArray(rows)&&rows.length>0&&String(rows[0].favorite_book_id||'')===String(_bmPendBook);
   }catch(e){ ok=false; }
@@ -533,7 +534,7 @@ function peSetEmoji(e){ _peEmoji=e; document.querySelectorAll('#peEmoji .pe-em')
 async function saveProfile(){
   const s=bxStudent(); if(!s) return;
   const bio=(document.getElementById('peBio')?.value||'').trim();
-  try{ await fetch(`${BX_SB}/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{method:'PATCH',headers:{...BX_H,Prefer:'return=minimal'},body:JSON.stringify({emoji:_peEmoji,bio})}); }catch(e){}
+  try{ await sbWrite('PATCH',`/bookstar_students?id=eq.${encodeURIComponent(s.id)}`,{emoji:_peEmoji,bio},{prefer:'return=minimal'}); }catch(e){}
   s.emoji=_peEmoji; bxSetStudent(s);
   try{ const i=BX_STUDENTS.findIndex(x=>x.id===s.id); if(i>=0) BX_STUDENTS[i].emoji=_peEmoji; }catch(e){}
   closeProfileEdit();

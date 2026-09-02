@@ -261,8 +261,7 @@ function clT(ko){ if(_clTab!=='modern'||_clLang==='all') return ko; return (CL_I
 let KR_TITLE_TR=null, _krTitleP=null;
 function loadKrTitles(){
   if(KR_TITLE_TR||_krTitleP) return _krTitleP||Promise.resolve();
-  _krTitleP=fetch('https://gkujptyfrzqrjrvovbnc.supabase.co/rest/v1/classic_translations?select=classic_id,lang,title_tr',
-    {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}})
+  _krTitleP=sbGetAnon('/classic_translations?select=classic_id,lang,title_tr')
     .then(r=>r.ok?r.json():[]).then(rows=>{
       KR_TITLE_TR={};
       (rows||[]).forEach(x=>{ if(x.title_tr){ (KR_TITLE_TR[x.classic_id]=KR_TITLE_TR[x.classic_id]||{})[x.lang]=x.title_tr; } });

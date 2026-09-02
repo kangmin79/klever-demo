@@ -1,8 +1,7 @@
 /* ── 사서 팝업 (minsong_popups — 관리자 '팝업 관리'에서 발행, 앱과 같은 테이블·팝업당 한 번만) ── */
 (async function(){
   try{
-    const r=await fetch(`${SB_REST}/minsong_popups?select=id,title,body,target,starts_at,ends_at&active=is.true&channel=in.(web,both)&order=created_at.desc&limit=20`,
-      {headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+    const r=await sbGetAnon(`/minsong_popups?select=id,title,body,target,starts_at,ends_at&active=is.true&channel=in.(web,both)&order=created_at.desc&limit=20`);
     if(!r.ok) return;
     const rows=await r.json();
     let seen=[]; try{ seen=JSON.parse(localStorage.getItem('ms_seen_popups')||'[]'); }catch(e){}

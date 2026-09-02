@@ -33,7 +33,7 @@ function rvCard(r){
   </div>`;
 }
 async function rvFetch(qs){
-  try{ const r=await fetch(`${SB_REST}/reviews?${qs}`,{headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON}});
+  try{ const r=await sbGetAnon(`/reviews?${qs}`);
     if(!r.ok) return []; const d=await r.json(); return Array.isArray(d)?d:[];
   }catch(e){ return []; }
 }
@@ -41,7 +41,7 @@ async function likeReview(id,elm){
   const b=elm.querySelector('b'); const n=(parseInt(b.textContent)||0)+1; b.textContent=n;
   // 실패 시 화면 숫자 롤백(DB와 영구 불일치 방지). 동시 클릭 원자성은 데모 규모상 보류(서버 RPC 필요)
   try{
-    const r=await fetch(`${SB_REST}/reviews?id=eq.${id}`,{method:'PATCH',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({likes:n})});
+    const r=await sbWrite('PATCH',`/reviews?id=eq.${id}`,{likes:n},{anon:true,prefer:'return=minimal'});
     if(!r.ok) b.textContent=n-1;
   }catch(e){ b.textContent=n-1; }
 }
@@ -91,7 +91,7 @@ async function submitReview(){
   // 8/17: 학번(student_id)으로 본인 식별, reviewer 는 가린 이름으로 저장(테이블이 anon 읽기라 실명을 아예 안 남긴다). hidden 은 사서가 admin-save 로만 바꾼다.
   const row={school:'세명대학교',book_id:rvCtx.bookId,book_title:rvCtx.bookTitle,student_id:_bxSid(),reviewer:pubName(readerName()),rating:rvCtx.rating,body:body,verified:false,lang:'ko'};
   let _rvId='';
-  try{ const r=await fetch(`${SB_REST}/reviews`,{method:'POST',headers:{apikey:COVER_ANON,Authorization:'Bearer '+COVER_ANON,'content-type':'application/json',Prefer:'return=representation'},body:JSON.stringify(row)});
+  try{ const r=await sbWrite('POST',`/reviews`,row,{anon:true,prefer:'return=representation'});
     if(!r.ok){ alert('등록 실패 ('+r.status+')'); return; }
     try{ const j=await r.json(); _rvId=(Array.isArray(j)&&j[0]&&j[0].id)?String(j[0].id):''; }catch(e){}
   }catch(e){ alert('등록 실패 — 연결 확인'); return; }
