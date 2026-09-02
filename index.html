@@ -551,7 +551,8 @@ body.dark .rsv-warn{color:#fca5a5;}
 .lcd-quiz-s{font-size:11.5px;color:var(--text-light);font-weight:500;}
 .lcd-qcard{display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:baseline;padding:13px 2px 12px;cursor:pointer;border-bottom:1px solid var(--border);}
 .lcd-qcard:hover .qt{text-decoration:underline;text-underline-offset:3px;}
-.lcd-qcard .qt{font-size:14.5px;font-weight:800;color:var(--primary);}   /* 9/2 제목에 색 — 위 '전자책 바로 읽기' 버튼과 같은 색이라 "누르는 것"으로 읽힌다 */
+.lcd-qcard .qt{font-size:14.5px;font-weight:800;color:var(--accent);}   /* 9/2 제목에 색 — --primary는 본문 글자색과 같은 남색이라 안 보임 → 앱 파랑(--accent) */
+body.dark .lcd-qcard .qt{color:#7fb0e6;}
 .lcd-qcard .qn{font-size:11.5px;font-weight:700;color:var(--text-light);white-space:nowrap;}
 .lcd-qcard .qd{grid-column:1 / -1;font-size:12px;color:var(--text-light);line-height:1.5;margin-top:3px;}
 @media(max-width:600px){.lcd-quiz{margin:2px 16px 12px;}}
@@ -8478,7 +8479,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902h';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902i';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902b';   // 9/2 한국 고전 11권 잔재 정리(장식·위키마커·제목중복·라이선스)
