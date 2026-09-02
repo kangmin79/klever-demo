@@ -28,3 +28,7 @@ _scratch/
 /byeoli-card-preview.html
 /byeolmadang_preview.html
 /kids_preview.html
+
+# 9/2 리팩터링 S1 — 스모크 테스트 도구(scripts/smoke)는 추적, 설치물·기준선은 로컬만
+node_modules/
+package-lock.json

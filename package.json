@@ -1,0 +1,18 @@
+{
+  "name": "bookstar-klever",
+  "private": true,
+  "description": "북스타 학생/관리자 웹 — scripts/smoke = 리팩터링 안전망 (2026-09-02 S1)",
+  "scripts": {
+    "smoke": "node scripts/smoke/smoke.mjs --no-net",
+    "smoke:net": "node scripts/smoke/smoke.mjs",
+    "smoke:live": "node scripts/smoke/smoke.mjs --live",
+    "smoke:shots": "node scripts/smoke/smoke.mjs --no-net --shots",
+    "smoke:compare": "node scripts/smoke/smoke.mjs --no-net --compare",
+    "reassemble": "node scripts/smoke/reassemble_check.mjs"
+  },
+  "devDependencies": {
+    "pixelmatch": "^6.0.0",
+    "playwright": "^1.55.0",
+    "pngjs": "^7.0.0"
+  }
+}
