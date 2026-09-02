@@ -34,8 +34,12 @@ const dir = path.dirname(path.join(ROOT, FILE));
 const lines = current.split('\n');
 const out = [];
 let inlined = [];
+// 9/2 S5: 기준 커밋에 이미 있던 <link>/<script src> 줄(예: S4의 js/90~92)은 되돌리지 않고 그대로 둔다
+const origLines = new Set(norm(original).split('\n').map(s => s.trim()));
+const alreadyInRef = ln => origLines.has(norm(ln).trim());
 for (let i = 0; i < lines.length; i++) {
   const ln = lines[i];
+  if (alreadyInRef(ln)) { out.push(ln); continue; }
   const css = ln.match(/^\s*<link rel="stylesheet" href="((?:\.\.\/)?css\/[^"?]+)(?:\?b=[0-9a-z]+)?">\s*$/);
   if (css && ONLY !== 'js') {
     const body = fs.readFileSync(path.join(dir, css[1]), 'utf8');
@@ -49,7 +53,7 @@ for (let i = 0; i < lines.length; i++) {
     let bodies = [fs.readFileSync(path.join(dir, js[1]), 'utf8')]; inlined.push(js[1]);
     while (i + 1 < lines.length) {
       const nx = lines[i + 1].match(/^\s*<script src="((?:\.\.\/)?js\/[^"?]+)(?:\?b=[0-9a-z]+)?"><\/script>\s*$/);
-      if (!nx) break;
+      if (!nx || alreadyInRef(lines[i + 1])) break;
       bodies.push(fs.readFileSync(path.join(dir, nx[1]), 'utf8')); inlined.push(nx[1]); i++;
     }
     const joined = bodies.join('');

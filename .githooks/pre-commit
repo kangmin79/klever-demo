@@ -1,10 +1,14 @@
 #!/bin/sh
-# 8/29 자동 버전 올리기 — index.html 이 커밋에 들어가면 APP_BUILD 와 version.txt 를 오늘 날짜로 맞춘다.
+# 8/29 자동 버전 올리기 — 학생 화면(index.html · css/ · js/)이 커밋에 들어가면 APP_BUILD 와 version.txt 를 오늘 날짜로 맞춘다.
 # (8/22 이후 8번 배포하면서 버전을 안 올려 "새 버전" 안내가 한 번도 안 뜬 사고 재발 방지)
 # 활성화: git config core.hooksPath .githooks   (이 저장소에서 1회)
-if git diff --cached --name-only | grep -qx 'index.html'; then
+# 9/2 S5: JS가 js/ 로 분리되어 APP_BUILD 선언이 js/ 안에 있음 → 선언이 든 파일을 찾아 그 파일을 고친다.
+#        css/·js/ 만 바뀐 커밋도 캐시버전(?b=)을 올려야 하므로 트리거를 넓힘.
+if git diff --cached --name-only | grep -qE '^(index\.html|css/[^/]+|js/[^/]+)$'; then
   today=$(date +%y%m%d)
-  cur=$(sed -n "s/^const APP_BUILD = '\([0-9a-z]*\)';.*/\1/p" index.html | head -1)
+  bfile=$(grep -l "^const APP_BUILD = '" index.html js/*.js 2>/dev/null | head -1)
+  if [ -z "$bfile" ]; then echo "pre-commit: APP_BUILD 선언을 못 찾음 (index.html·js/*.js)" >&2; exit 1; fi
+  cur=$(sed -n "s/^const APP_BUILD = '\([0-9a-z]*\)';.*/\1/p" "$bfile" | head -1)
   if [ "${cur%?}" = "$today" ]; then
     last=$(printf '%s' "$cur" | tail -c 1)
     next=$(printf '%s' "abcdefghijklmnopqrstuvwxyz" | sed "s/.*$last//" | cut -c1)
@@ -13,12 +17,12 @@ if git diff --cached --name-only | grep -qx 'index.html'; then
     next=a
   fi
   new="$today$next"
-  sed -i "s/^const APP_BUILD = '[0-9a-z]*';/const APP_BUILD = '$new';/" index.html
+  sed -i "s/^const APP_BUILD = '[0-9a-z]*';/const APP_BUILD = '$new';/" "$bfile"
   # 9/2 S2: 로컬 <link>/<script src="…?b=xxxxxxx"> 캐시버전도 전부 새 빌드로 통일 (css/app.css 분리 후 캐시 무효화)
   #        동적 로더의 '?b='+BODIES_VER 는 뒤에 값이 없어 매치되지 않음
   sed -i "s/?b=[0-9a-z]\{1,\}/?b=$new/g" index.html
   printf '%s' "$new" > version.txt
-  git add index.html version.txt
-  echo "pre-commit: APP_BUILD -> $new"
+  git add index.html version.txt "$bfile"
+  echo "pre-commit: APP_BUILD -> $new ($bfile)"
 fi
 exit 0
