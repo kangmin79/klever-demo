@@ -3305,7 +3305,7 @@ function ensureSummaryML(){
   if(typeof CLASSIC_SUMMARY_ML!=='undefined') return Promise.resolve();
   if(_sumMLP) return _sumMLP;
   _sumMLP=new Promise(res=>{ const s=document.createElement('script');
-    s.src='classics_summaries_multi.js'+(typeof BODIES_VER!=='undefined'?'?b='+BODIES_VER:'');
+    s.src='classics_summaries_multi.js?v=260902e';   // 소개글 파일이 바뀌면 이 숫자를 올린다(본문 파일 캐시와 별개). 9/2e 해외 고전분 추가
     s.onload=res;
     s.onerror=()=>{ _sumMLP=null; s.remove(); res(); };   // 실패해도 한국어 소개글로 폴백되므로 그냥 진행
     document.head.appendChild(s); });
@@ -8473,7 +8473,7 @@ function openDetail(bookId){
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902d';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
+const APP_BUILD = '260902e';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
 // 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
 // ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
 const BODIES_VER = '260902b';   // 9/2 한국 고전 11권 잔재 정리(장식·위키마커·제목중복·라이선스)
@@ -8812,10 +8812,12 @@ async function openViewer(bookId, mode){
   // 해외 고전(gb-): Supabase에서 원문(body)+번역(body_trans) 먼저 받음 → 번역이 있으면 대용량 JS 본문파일 생략(가볍게).
   // 번역이 Supabase에 아직 없으면(정렬형 SENT·미이전분) JS 본문파일로 폴백. (원문은 정렬형이면 SENT가 덮어씀)
   if(bookId.startsWith('gb-')){
+    const _sumP = ensureSummaryML();                           // 속표지 소개글(영어·한국어)·저자 영문 표기 — 본문과 나란히 받음
     await ensureClassicBody(bookId);
     // Supabase에 번역(body_trans=ko-only) 또는 문장쌍(body_sent=정렬형) 있으면 대용량 JS 본문파일 생략
     const haveSupaTrans = CLASSIC_TRANS[bookId] || (typeof BODIES_SENT !== 'undefined' && BODIES_SENT[bookId]);
     if(!haveSupaTrans && (b.hasTrans||LEGACY_BODY_FILES[bookId])) await ensureForeignBody(bookId);
+    await _sumP;
     _reload = true;
   }
   if(bookId.startsWith('kr-')){
@@ -9126,10 +9128,11 @@ function viewerBodies(book){
    ⚠️ 이 블록 안에 <p>를 넣으면 안 된다. 좌우 문단 1:1 정렬이 <p> 개수로 정렬책을 판정하므로
       한쪽에만 <p>가 생기면 책 전체 수평정렬이 꺼진다. (.cv-chunk·h3.ch-title도 금지 —
       읽던 자리 저장 앵커가 그 둘을 세기 때문)
-   1권 먼저 확인 → 전체 개방 순서. 확인 끝나면 아래 집합 검사를 없애고 전권 적용. */
-// 국내(한국) 고전 전권. 해외 고전은 확인 후 별도로 연다.
+   국내 고전(kr-) 9/2 확인 → 해외 고전(gb-)까지 전권 적용. */
 function frontPageOn(){
-  return !!currentBook && currentMode === 'full' && String(currentBook.id).startsWith('kr-');
+  if(!currentBook || currentMode !== 'full') return false;
+  const id = String(currentBook.id);
+  return id.startsWith('kr-') || id.startsWith('gb-');
 }
 // 속표지 문구 — 지금 보고 있는 칸의 언어를 따라간다(번역 칸은 그 나라 말, 원문 칸은 한국어)
 const FRONT_I18N = {
@@ -9140,19 +9143,24 @@ const FRONT_I18N = {
   ja:{about:'この本について',       toc:'目次',      start:'読みはじめる ↓'},
 };
 function frontT(lang){ return FRONT_I18N[lang] || FRONT_I18N.ko; }
-// 지금 뷰어의 왼쪽·오른쪽 칸이 각각 무슨 말인지 — 한국 고전 평행본은 왼쪽이 번역, 오른쪽이 한국어 원문
+// 지금 뷰어의 왼쪽·오른쪽 칸이 각각 무슨 말인지
+//  - 한국 고전 평행본: 왼쪽 번역(KR_LANG) / 오른쪽 한국어 원문
+//  - 해외 고전: 왼쪽 원서(영어, Gutenberg) / 오른쪽 한국어 번역
 function frontLangs(b){
-  const swap = b && String(b.id).startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[b.id];
+  if(!b) return {left:'ko', right:'ko'};
+  const id = String(b.id);
+  if(id.startsWith('gb-')) return {left:'en', right:'ko'};
+  const swap = id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[b.id];
   return {left: swap ? KR_LANG : 'ko', right: 'ko'};
 }
 function bookIntro(b, lang){
   if(!b) return '';
-  if(lang && lang!=='ko'){
-    const ml = (typeof CLASSIC_SUMMARY_ML!=='undefined') && CLASSIC_SUMMARY_ML[b.id];
-    if(ml && ml[lang]) return ml[lang];   // 번역본 없으면 아래 한국어로 폴백
-  }
+  const ml = (typeof CLASSIC_SUMMARY_ML!=='undefined') && CLASSIC_SUMMARY_ML[b.id];
+  if(lang && lang!=='ko' && ml && ml[lang]) return ml[lang];   // 번역본 없으면 아래 한국어로 폴백
   const s = (typeof CLASSIC_SUMMARY!=='undefined' && CLASSIC_SUMMARY[b.id]) ? CLASSIC_SUMMARY[b.id] : '';
-  return s || `${b.author||''}의 ${b.period||''} ${b.category||''} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
+  if(s) return s;
+  if(ml && ml.ko) return ml.ko;   // 한국어 소개글이 원래 없던 해외 고전 61권은 다국어판 쪽에 한국어도 들어 있음
+  return `${b.author||''}의 ${b.period||''} ${b.category||''} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
 }
 function bfCoverFail(img){ img.outerHTML = '<div class="bf-nocv">'+esc(img.dataset.t||'')+'</div>'; }
 function frontGoRead(){
@@ -9161,16 +9169,26 @@ function frontGoRead(){
   if(first) pane.scrollTo({top: first.offsetTop, behavior:'smooth'});
 }
 function bookFrontHtml(b, lang){
-  const t = esc(b.title||'');
-  const orig = (b.titleEn && b.titleEn !== b.title) ? `<div class="bf-meta">${esc(b.titleEn)}</div>` : '';
+  const isGb = String(b.id).startsWith('gb-');
+  const ml = (typeof CLASSIC_SUMMARY_ML!=='undefined') && CLASSIC_SUMMARY_ML[b.id];
+  // 해외 고전의 영어 칸: 원제를 크게, 한글 제목을 작게, 저자는 영문 표기. 그 외는 한글 제목 크게 + 원제 작게
+  const enPane = isGb && lang === 'en';
+  // 원제: 데이터에 영어 원제가 없고 한글만 있는 16권(설득·월든 등)은 다국어판의 영문 제목을 쓴다
+  const titleEn = (b.titleEn && !/[가-힣]/.test(b.titleEn)) ? b.titleEn : ((ml && ml.title_en) || '');
+  const big   = enPane ? (titleEn || b.title || '') : (b.title || '');
+  const small = enPane ? (b.title !== big ? b.title : '') : (titleEn && titleEn !== b.title ? titleEn : '');
+  const author = (enPane && ml && ml.author_en) ? ml.author_en : (b.author || '');
+  const t = esc(big);
+  const orig = small ? `<div class="bf-meta">${esc(small)}</div>` : '';
   const cover = b.coverSrc
     ? `<img src="${esc(b.coverSrc)}" alt="${t}" data-t="${t}" onerror="bfCoverFail(this)">`
     : `<div class="bf-nocv">${t}</div>`;
-  const meta = [b.category, b.period, b.src].filter(Boolean).map(esc).join(' · ');
+  // 메타 줄: 해외 고전은 분류(해외문학)와 시대(해외)가 같은 말이라 시대는 뺀다. 영어 칸엔 출처만
+  const meta = (enPane ? [b.src] : [b.category, b.period !== '해외' ? b.period : '', b.src]).filter(Boolean).map(esc).join(' · ');
   return `<div class="book-front" data-lang="${esc(lang||'ko')}">
       <div class="bf-cover">${cover}
         <div class="bf-t">${t}</div>${orig}
-        <div class="bf-a">${esc(b.author||'')}</div>
+        <div class="bf-a">${esc(author)}</div>
         ${meta ? `<div class="bf-meta">${meta}</div>` : ''}</div>
       <div class="bf-side"><div class="bf-h"></div><div class="bf-toc"></div></div>
       <div class="bf-go"><button onclick="frontGoRead()">${esc(frontT(lang).start)}</button></div>
