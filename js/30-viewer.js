@@ -2,10 +2,7 @@
    책 뷰어 (3 모드)
    ═══════════════════════════════════════════════════════════ */
 /* ── 자동 업데이트 안내 (배포 시 이용자에게 새로고침 배너 — 캐시 비우라는 안내 불필요) ── */
-const APP_BUILD = '260902r';   // ⚠️ 배포마다 version.txt + 스크립트 ?b= 와 함께 갱신
-// 본문 bodies_*.js 캐시 버전 — APP_BUILD와 분리. 앱을 배포해도 본문은 재다운로드 안 하도록 고정(체감 속도↑).
-// ⚠️ 본문 파일(bodies_*.js)을 재생성/수정해 배포할 때'만' 이 값을 올린다. (일반 앱 배포에선 건드리지 않음)
-const BODIES_VER = '260902d';   // 9/2 돈키호테 장 제목 복원 1~3단계(bodies_gb5921.js) — 3단계: 한국어 머리 8개를 Chapter N.으로 통일
+// APP_BUILD·BODIES_VER 상수는 js/00-config.js (9/2 S6에서 옮김)
 async function checkForUpdate(){
   try{
     const r = await fetch('./version.txt?t=' + Date.now(), {cache:'no-store'});
