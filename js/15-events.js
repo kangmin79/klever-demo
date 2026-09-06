@@ -250,6 +250,7 @@ async function bxLoadReaderStats(){        // 로그인/전환 시 서버 리더
 // ⚠️ 8/13까지 이 칩은 display:none으로 숨겨져 있었다. 로그인해도 헤더가 그대로라
 //    학생이 자기가 로그인된 건지 알 방법이 없었다(게스트와 화면이 동일).
 function bxRenderAccountChip(){
+  try{ bxRenderMyPageBtn(); }catch(e){}   // 9/6 헤더 '마이페이지' 버튼은 칩과 같은 타이밍에 갱신(로그인·로그아웃·페이지 이동 전부 여길 지난다)
   const el=document.getElementById('bxAccChip'); if(!el) return;
   const s=bxStudent();
   const _t=(k)=>(typeof uiT==='function'?uiT(k):k);   // 다국어 (uiT 정의 전 호출 대비 가드)
@@ -262,9 +263,18 @@ function bxRenderAccountChip(){
     return;
   }
   const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;   // 연체·도착·반납임박 중 가장 급한 하나
-  el.innerHTML=`<span style="font-size:15px;">${s.emoji||'🎓'}</span><span class="bx-acc-name">${esc(s.name)}</span>`
+  // 9/6 세명대 요청: 로그인 표시는 학번 · 이름 (이모지 대신). 학번 = SSO가 준 id
+  el.innerHTML=`<span class="bx-acc-id">${esc(String(s.id||''))}</span><span class="bx-acc-sep"> · </span><span class="bx-acc-name">${esc(s.name)}</span>`
     + (b?`<span class="bx-acc-dot" style="background:${b.color}"></span>`:'');
   el.title=b?b.title:(s.dept||'세명대학교');
+}
+// 9/6 세명대 요청: 헤더 '마이페이지' 버튼 — 로그인한 학생에게만 보이고, 내서재(#page-mypage)로 간다
+function bxRenderMyPageBtn(){
+  const btn=document.getElementById('bxMyPageBtn'); if(!btn) return;
+  const s=bxStudent();
+  btn.style.display=s?'':'none';
+  if(s){ const _t=(k)=>(typeof uiT==='function'?uiT(k):k); btn.textContent=_t('마이페이지'); }
+  btn.classList.toggle('on', typeof _navPage!=='undefined' && _navPage==='mypage');
 }
 // 칩 클릭 — 게스트·연동만료는 곧장 로그인으로, 로그인 상태면 계정 메뉴를 연다
 function bxChipClick(ev){
@@ -279,7 +289,7 @@ function bxRenderAccMenu(){
   const b=(typeof MYLIB_BADGE!=='undefined')?MYLIB_BADGE:null;
   const _t=(k)=>(typeof uiT==='function'?uiT(k):k);
   m.innerHTML=`<div class="who"><b>${esc(s.name)}</b><br>${esc(s.dept||'세명대학교')}</div>
-    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>${esc(_t('내 서재'))}</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
+    <button class="mi" onclick="bxCloseAccMenu();nav('mypage')"><span>${esc(_t('마이페이지'))}</span>${b?`<span class="n" style="color:${b.color}">${esc(b.title)}</span>`:''}</button>
     <div class="sep"></div>
     <button class="mi" onclick="bxLogout()"><span style="color:#c0392b">${esc(_t('로그아웃'))}</span></button>`;
 }
@@ -851,7 +861,7 @@ function closeLc(){document.getElementById('lcDetail').classList.remove('on');}
 function bridgeHTML(b){
   const cover=b.cover?`<img src="${esc(hiCover(b.cover))}" alt="" style="width:108px;height:158px;object-fit:cover;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.45)">`:'<div style="width:108px;height:158px;border-radius:8px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:40px">📖</div>';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>북스타 · 도서관 전자책</title><style>
+  <title>북픽 · 도서관 전자책</title><style>
   *{margin:0;box-sizing:border-box}
   body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
     background:radial-gradient(1200px 600px at 50% -10%,#243056 0%,#1a2240 55%,#141a30 100%);

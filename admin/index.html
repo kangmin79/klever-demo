@@ -1,6 +1,6 @@
 <!doctype html><html lang=ko><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>Bookstar 관리자 · 도서관 운영</title>
+<title>북픽 관리자 · 도서관 운영</title>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="../css/admin.css?b=2609021702"></head>
+<link rel="stylesheet" href="../css/admin.css?b=2609061200"></head>
 <body>
 <script src="../data/classics_ko_titles.js"></script>
 <!-- 8/14 사장님 수정요청: 담긴 책 표지 표시 — 고전 id→표지 매핑을 앱과 같은 데이터에서 가져온다 -->
@@ -19,7 +19,7 @@
 <div id="loginGate">
   <div class="lg-card">
     <img class="lg-logo" src="/apple-touch-icon.png" alt="bookstar" width=54 height=54>
-    <div class="lg-title">bookstar 관리자</div>
+    <div class="lg-title">북픽 관리자</div>
     <div class="lg-sub">도서관 관리자 전용 페이지입니다.<br>로그인 후 이용하세요.</div>
     <input id="lgPw" type="password" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')lgTry()" autofocus>
     <button onclick="lgTry()">로그인</button>
@@ -43,7 +43,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
 </script>
 
 <div class="topbar">
-  <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>bookstar <small>Builder</small></div>
+  <div class="brand"><img class="logo" src="/apple-touch-icon.png" alt="bookstar" width=30 height=30>북픽 <small>Builder</small></div>
   <div class="modeSwitch">
     <span class="ms on" id="msWeb" onclick="setMode('web')">웹 관리</span>
     <!-- 8/13 앱 관리 숨김(사장님 지시) — 네이티브 앱을 낼지 판단 중이라 화면에서만 뺀다.
@@ -121,7 +121,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         </div>
         <p class="note">
           <b>조회</b>는 상세페이지 살펴 본 건수<br>
-          <b>이용</b>은 종이책·전자책은 넘겨준 건수, 고전은 북스타에서 읽은 건수<br>
+          <b>이용</b>은 종이책·전자책은 넘겨준 건수, 고전은 북픽에서 읽은 건수<br>
           <b>활동</b>은 한줄소감, 한줄질문, 서평 작성 건수<br>
           각 시트 맨 윗줄에 <b>기간 한 줄</b>이 들어갑니다. 파일만 열어도 무슨 숫자인지 알 수 있어야 합니다.
         </p>
@@ -246,7 +246,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           <button class="btn-excel" style="font-size:14.5px;padding:13px 22px" onclick="downloadStatsExcel(this)">⤓ 엑셀 다운로드</button>
         </div>
         <p class="note">
-          <b>이용 방식</b> — 종이책·전자책은 <b>연결</b>(도서관으로 넘겨준 것), 고전은 <b>읽기</b>(북스타에서 읽은 것).<br>
+          <b>이용 방식</b> — 종이책·전자책은 <b>연결</b>(도서관으로 넘겨준 것), 고전은 <b>읽기</b>(북픽에서 읽은 것).<br>
           각 시트 맨 윗줄에 <b>기간 한 줄</b>이 들어갑니다. <b>이름은 없고 학번만</b> 있습니다.
         </p>
       </div>
@@ -375,7 +375,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
           <div id="ntListChal"></div>
           <div id="chalList"></div>
           <div class="note">※ <b>한 줄 소감·한 줄 질문·서평·독후감</b> 미션으로 완독을 측정합니다. <b>퀴즈</b>는 <b>고전 컬렉션</b> 종류에서만 있고, 그때는 필수입니다.<br>
-            ※ 책은 ‘통합검색·ISBN 입력’(고전 컬렉션 챌린지는 ‘북스타 고전’)으로 담을 수 있어요. 순서는 상단 <b>↕ 순서 바꾸기</b>나 카드의 ↑↓로 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
+            ※ 책은 ‘통합검색·ISBN 입력’(고전 컬렉션 챌린지는 ‘북픽 고전’)으로 담을 수 있어요. 순서는 상단 <b>↕ 순서 바꾸기</b>나 카드의 ↑↓로 정하고, <b>저장</b>해야 학생 앱에 반영됩니다.</div>
         </div>
         <!-- 학생 화면 '독서 챌린지' 탭 미리보기 — 8/31부터 우리 도서관과 같이 학생 앱을 그대로 띄운다(iframe ?preview=1&area=독서챌린지).
              편집 중인 챌린지는 postMessage 로 보내 저장 전 모습을 그린다. 흉내 내 그리던 예전 방식은 스타일이 빠져 있었다 -->
@@ -598,7 +598,7 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
         <div class="sec-h"><h3 id="secModalTitle">책 담기</h3><span class="x" onclick="secClosePicker()">×</span></div>
         <div class="sec-b">
           <div class="booktabs">
-            <button class="btab" data-sbt="cls" onclick="secTab('cls')" style="display:none">북스타 고전</button>
+            <button class="btab" data-sbt="cls" onclick="secTab('cls')" style="display:none">북픽 고전</button>
             <button class="btab" data-sbt="lib" onclick="secTab('lib')">도서관 내</button>
             <button class="btab" data-sbt="sm" onclick="secTab('sm')">세명대 전자책</button>
             <button class="btab on" data-sbt="nat" onclick="secTab('nat')">통합검색</button>
@@ -636,22 +636,22 @@ try{if(sessionStorage.getItem('bs_admin_secret'))document.getElementById('loginG
 </div>
 <div id="toast"></div>
 
-<script src="../js/00-config.js?b=2609021702"></script>
-<script src="../js/04-api.js?b=2609021702"></script>
-<script src="../js/admin/00-helpers.js?b=2609021702"></script>
-<script src="../js/admin/10-rich-text.js?b=2609021702"></script>
-<script src="../js/admin/20-sections.js?b=2609021702"></script>
-<script src="../js/admin/21-ai-curation.js?b=2609021702"></script>
-<script src="../js/admin/30-programs.js?b=2609021702"></script>
-<script src="../js/admin/31-nav.js?b=2609021702"></script>
-<script src="../js/admin/32-minsong-app.js?b=2609021702"></script>
-<script src="../js/admin/33-writings-state.js?b=2609021702"></script>
-<script src="../js/admin/40-make-program.js?b=2609021702"></script>
-<script src="../js/admin/41-make-challenge.js?b=2609021702"></script>
-<script src="../js/admin/42-challenge-missions.js?b=2609021702"></script>
-<script src="../js/admin/43-notices.js?b=2609021702"></script>
-<script src="../js/admin/44-popups.js?b=2609021702"></script>
-<script src="../js/admin/45-community.js?b=2609021702"></script>
-<script src="../js/admin/50-stats.js?b=2609021702"></script>
-<script src="../js/admin/99-boot.js?b=2609021702"></script>
+<script src="../js/00-config.js?b=2609061200"></script>
+<script src="../js/04-api.js?b=2609061200"></script>
+<script src="../js/admin/00-helpers.js?b=2609061200"></script>
+<script src="../js/admin/10-rich-text.js?b=2609061200"></script>
+<script src="../js/admin/20-sections.js?b=2609061200"></script>
+<script src="../js/admin/21-ai-curation.js?b=2609061200"></script>
+<script src="../js/admin/30-programs.js?b=2609061200"></script>
+<script src="../js/admin/31-nav.js?b=2609061200"></script>
+<script src="../js/admin/32-minsong-app.js?b=2609061200"></script>
+<script src="../js/admin/33-writings-state.js?b=2609061200"></script>
+<script src="../js/admin/40-make-program.js?b=2609061200"></script>
+<script src="../js/admin/41-make-challenge.js?b=2609061200"></script>
+<script src="../js/admin/42-challenge-missions.js?b=2609061200"></script>
+<script src="../js/admin/43-notices.js?b=2609061200"></script>
+<script src="../js/admin/44-popups.js?b=2609061200"></script>
+<script src="../js/admin/45-community.js?b=2609061200"></script>
+<script src="../js/admin/50-stats.js?b=2609061200"></script>
+<script src="../js/admin/99-boot.js?b=2609061200"></script>
 </body></html>

@@ -544,7 +544,7 @@ function smLoginGuide(mode){
   // ⛔ "내 이름으로·본인 명의" 계열 문구 금지(8/23 사용자) — 학생에겐 당연한 사실이라
   //    정보가 안 되고 개인정보가 나가는 느낌만 준다. 쓸모 있는 조건(권수 등)만 남긴다.
   const sub = classic
-    ? '북스타 고전은 <b>세명대 구성원 전용</b>이에요. 세명대 계정으로 로그인하면 바로 읽을 수 있어요.'
+    ? '북픽 고전은 <b>세명대 구성원 전용</b>이에요. 세명대 계정으로 로그인하면 바로 읽을 수 있어요.'
     : read
     ? '세명대 계정으로 로그인하면 전자책을 <b>5권까지</b> 빌릴 수 있어요.'
     : review
@@ -729,7 +729,7 @@ async function smUnhold(reckey,mainNo){
   btn.innerHTML='취소 중…';
   try{
     if(!ssoIsPersonal()){ smLoginGuide(); loadHolding(reckey); return; }
-    if(!mainNo){ alert('취소할 예약을 찾지 못했어요. 내 서재에서 다시 시도해 주세요.'); loadHolding(reckey); return; }
+    if(!mainNo){ alert('취소할 예약을 찾지 못했어요. 마이페이지에서 다시 시도해 주세요.'); loadHolding(reckey); return; }
     const d=await smMy('cancelReserve',{main_no:mainNo});
     _myWaitCache=null;
     if(d&&d.ok){ btn.className='lh-resv'; delete btn.dataset.busy; btn.setAttribute('onclick',"smHoldConfirm('"+esc(reckey)+"')"); btn.innerHTML='예약하기 · 반납되면 문자로 알려드리고 2층 안내데스크에 보관해 드려요'; }

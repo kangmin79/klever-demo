@@ -34,7 +34,7 @@ function bookIntro(b, lang){
   const s = (typeof CLASSIC_SUMMARY!=='undefined' && CLASSIC_SUMMARY[b.id]) ? CLASSIC_SUMMARY[b.id] : '';
   if(s) return s;
   if(ml && ml.ko) return ml.ko;   // 한국어 소개글이 원래 없던 해외 고전 61권은 다국어판 쪽에 한국어도 들어 있음
-  return `${b.author||''}의 ${b.period||''} ${b.category||''} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
+  return `${b.author||''}의 ${b.period||''} ${b.category||''} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북픽 표준 격조체 본문으로 바로 읽을 수 있어요.`;
 }
 function bfCoverFail(img){ img.outerHTML = '<div class="bf-nocv">'+esc(img.dataset.t||'')+'</div>'; }
 function frontGoRead(){

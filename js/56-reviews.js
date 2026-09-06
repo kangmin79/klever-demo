@@ -54,7 +54,7 @@ async function renderDetailReviews(bookId,bookTitle){
   // 서평 쓰기는 '내 도서관 > 빌린 책'에서만: 대출 사실이 곧 "읽었다"의 최소 증거다.
   host.innerHTML=`<div class="rvh">
       <b>독자 서평 ${list.length}</b>${avg?`<span class="rv-stars">${rvStars(Math.round(avg))}</span><span style="font-size:12px;color:var(--text-light)">${avg}</span>`:''}</div>
-    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 이 책을 빌려 읽은 학생이 내 서재(내 대출·예약)에서 남길 수 있어요.</div>'}`;
+    ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 이 책을 빌려 읽은 학생이 마이페이지(내 대출·예약)에서 남길 수 있어요.</div>'}`;
 }
 // 내 도서관 '빌린 책'에서 서평 쓰기 — 전자책은 바코드가 곧 책 키, 종이책은 소장목록에서 ctrl을 찾아 연결
 // (ctrl을 못 찾으면 제목 키로 저장 — 내 서평·커뮤니티에는 보이고 상세 연결만 빠진다)
@@ -160,7 +160,7 @@ function shareSummary(){
     x.fillStyle='#fff'; x.font='bold 88px Georgia'; x.fillText(cell[0], cx+cw/2, cy+125);
     x.fillStyle='#c4ccdd'; x.font='32px sans-serif'; x.fillText(cell[1], cx+cw/2, cy+185); });
   x.fillStyle='#fff'; x.font='bold 46px Georgia'; x.fillText('bookstar', W/2, H-115);
-  x.fillStyle='#c9b88a'; x.font='28px sans-serif'; x.fillText('읽은 만큼 증명되는 독서 — 북스타', W/2, H-65);
+  x.fillStyle='#c9b88a'; x.font='28px sans-serif'; x.fillText('읽은 만큼 증명되는 독서 — 북픽', W/2, H-65);
   c.toBlob(async(blob)=>{
     try{ const file=new File([blob],'bookstar-결산.png',{type:'image/png'});
       if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'내 독서 결산'}); return; }

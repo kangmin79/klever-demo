@@ -167,7 +167,7 @@ async function renderPushRow(){
   if(isIOS()&&!isStandalone()){
     box.innerHTML=wrap(`<div style="font-size:13px;font-weight:800;margin-bottom:4px">알림 받기</div>
       <div style="font-size:12.5px;color:var(--text-sub);line-height:1.55">아이폰은 <b>홈 화면에 추가</b>한 뒤에만 알림을 받을 수 있어요.<br>
-      공유 <span style="font-family:system-ui">↑</span> → <b>홈 화면에 추가</b> → 홈에서 북스타를 열고 다시 이 화면으로 오세요.</div>`);
+      공유 <span style="font-family:system-ui">↑</span> → <b>홈 화면에 추가</b> → 홈에서 북픽을 열고 다시 이 화면으로 오세요.</div>`);
     return;
   }
   const on=!!(await pushCurrent());
@@ -521,7 +521,7 @@ const SIDE_MENU = [
   {key:'mychal', icon:'target',   label:'마이 챌린지', page:'mychal'},
   {key:'search', icon:'search',   label:'검색',        page:'search'},
   {key:'feed',   icon:'users',    label:'피드',        page:'feed'},
-  {key:'shelf',  icon:'bookOpen', label:'내서재',      page:'mypage'},
+  {key:'shelf',  icon:'bookOpen', label:'마이페이지',  page:'mypage'},
 ];
 // 사이드바 배지 — 연체(빨강) > 예약도착(초록) 순. 들어가 보지 않아도 알게 하는 최소 알림.
 let MYLIB_BADGE=null;

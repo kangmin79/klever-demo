@@ -91,7 +91,7 @@ function renderClassicShelves(){
   const _kSub = UI_LANG==='ko' ? `KOREAN CLASSICS · 다국어 · ${kN}권` : `KOREAN CLASSICS · ${kN}${_cnt[UI_LANG]||'권'}`;
   const tabs = `<div class="cl-tabs">
       <button class="cl-tab ${foreign?'on':''}" onclick="clSetTab('foreign')">${uiT('세계고전')} <span class="en">${_fSub}</span></button>
-      <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">International <span class="en">${_kSub}</span></button>
+      <button class="cl-tab ${!foreign?'on':''}" onclick="clSetTab('modern')">Global Book <span class="en">${_kSub}</span></button>
     </div>`;
   // 8/17 사장님 수정요청: 메뉴 하단 설명 2줄(윗줄 메인·아랫줄 보조). 기존 cl-intro/cl-welcome 한 줄 소개문은 이걸로 대체.
   // International 아랫줄은 학생이 고른 언어(헤더 드롭다운 UI_LANG)로 — 한국어 모드면 영어(시안 그대로).
@@ -129,28 +129,28 @@ function navCl(t){ _clTab=t; nav('collection'); }
 const UI_I18N={
   en:{'우리 도서관':'Our Library','독서 챌린지':'Reading Challenge','세계고전':'World Classics','커뮤니티':'Community',
       '마이 챌린지':'My Challenge','리더보드':'Leaderboard','검색':'Search','피드':'Feed','내서재':'My Bookshelf',
-      '내 도서관':'My Library','내 서재':'My Bookshelf','로그아웃':'Log out','세명대 로그인':'Semyung Login',
+      '내 도서관':'My Library','내 서재':'My Bookshelf','마이페이지':'My Page','로그아웃':'Log out','세명대 로그인':'Semyung Login',
       '다시 로그인':'Log in again','세명대 계정으로 로그인':'Log in with your Semyung account','불러오는 중…':'Loading…'},
   zh:{'우리 도서관':'我们的图书馆','독서 챌린지':'阅读挑战','세계고전':'世界古典','커뮤니티':'社区',
       '마이 챌린지':'我的挑战','리더보드':'排行榜','검색':'搜索','피드':'动态','내서재':'我的书架',
-      '내 도서관':'我的图书馆','내 서재':'我的书架','로그아웃':'退出登录','세명대 로그인':'世明大学登录',
+      '내 도서관':'我的图书馆','내 서재':'我的书架','마이페이지':'我的页面','로그아웃':'退出登录','세명대 로그인':'世明大学登录',
       '다시 로그인':'重新登录','세명대 계정으로 로그인':'使用世明大学账号登录','불러오는 중…':'加载中…'},
   vi:{'우리 도서관':'Thư viện của chúng ta','독서 챌린지':'Thử thách đọc sách','세계고전':'Kinh điển thế giới','커뮤니티':'Cộng đồng',
       '마이 챌린지':'Thử thách của tôi','리더보드':'Bảng xếp hạng','검색':'Tìm kiếm','피드':'Bảng tin','내서재':'Tủ sách của tôi',
-      '내 도서관':'Thư viện của tôi','내 서재':'Tủ sách của tôi','로그아웃':'Đăng xuất','세명대 로그인':'Đăng nhập Semyung',
+      '내 도서관':'Thư viện của tôi','내 서재':'Tủ sách của tôi','마이페이지':'Trang của tôi','로그아웃':'Đăng xuất','세명대 로그인':'Đăng nhập Semyung',
       '다시 로그인':'Đăng nhập lại','세명대 계정으로 로그인':'Đăng nhập bằng tài khoản Semyung','불러오는 중…':'Đang tải…'},
   ja:{'우리 도서관':'私たちの図書館','독서 챌린지':'読書チャレンジ','세계고전':'世界古典','커뮤니티':'コミュニティ',
       '마이 챌린지':'マイチャレンジ','리더보드':'リーダーボード','검색':'検索','피드':'フィード','내서재':'マイ本棚',
-      '내 도서관':'マイ図書館','내 서재':'マイ本棚','로그아웃':'ログアウト','세명대 로그인':'世明大ログイン',
+      '내 도서관':'マイ図書館','내 서재':'マイ本棚','마이페이지':'マイページ','로그아웃':'ログアウト','세명대 로그인':'世明大ログイン',
       '다시 로그인':'再ログイン','세명대 계정으로 로그인':'世明大アカウントでログイン','불러오는 중…':'読み込み中…'},
 };
 // 로그인 안내 모달(정적 HTML) 다국어 — applyUiLang()이 h3/p를 갈아끼움
 const LOGIN_MODAL_I18N={
-  ko:{h:'세명대 계정으로 로그인', p:'세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.'},
-  en:{h:'Log in with your Semyung account', p:'Log in on the Semyung portal, then click the <b>Chamnaru banner</b> on the library homepage — you will be logged in automatically. You can still browse books freely without logging in.'},
-  zh:{h:'使用世明大学账号登录', p:'先登录世明大学门户，再点击图书馆主页的<b>참나루（Chamnaru）横幅</b>，即可自动登录。不登录也可以自由浏览图书。'},
-  vi:{h:'Đăng nhập bằng tài khoản Semyung', p:'Đăng nhập cổng thông tin Semyung, sau đó nhấn <b>banner Chamnaru</b> trên trang chủ thư viện — bạn sẽ được đăng nhập tự động. Không đăng nhập vẫn có thể tự do xem sách.'},
-  ja:{h:'世明大アカウントでログイン', p:'世明大ポータルにログインした後、図書館ホームページの<b>チャムナル（참나루）バナー</b>を押すと自動でログインされます。ログインしなくても本は自由に見られます。'},
+  ko:{h:'세명대 계정으로 로그인', p:'세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>북픽 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.'},
+  en:{h:'Log in with your Semyung account', p:'Log in on the Semyung portal, then click the <b>Book Pick banner</b> on the library homepage — you will be logged in automatically. You can still browse books freely without logging in.'},
+  zh:{h:'使用世明大学账号登录', p:'先登录世明大学门户，再点击图书馆主页的<b>북픽（Book Pick）横幅</b>，即可自动登录。不登录也可以自由浏览图书。'},
+  vi:{h:'Đăng nhập bằng tài khoản Semyung', p:'Đăng nhập cổng thông tin Semyung, sau đó nhấn <b>banner Book Pick</b> trên trang chủ thư viện — bạn sẽ được đăng nhập tự động. Không đăng nhập vẫn có thể tự do xem sách.'},
+  ja:{h:'世明大アカウントでログイン', p:'世明大ポータルにログインした後、図書館ホームページの<b>ブックピック（북픽）バナー</b>を押すと自動でログインされます。ログインしなくても本は自由に見られます。'},
 };
 // 세계고전 탭 인트로 다국어 (마크업 포함)
 const CL_FOREIGN_INTRO={

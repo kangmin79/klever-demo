@@ -1,6 +1,6 @@
 {
-  "name": "북스타",
-  "short_name": "북스타",
+  "name": "북픽",
+  "short_name": "북픽",
   "description": "세명대 민송도서관 책을 찾고, 빌리고, 읽는 곳",
   "start_url": "/app",
   "scope": "/",

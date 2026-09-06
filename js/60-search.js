@@ -9,8 +9,8 @@ let US_LAST_NL=[];
 // 도서 유형 배지: 북스타 한국고전 / 북스타 해외고전 / 전자책 / 종이책
 function bookTypeTag(b, kind){
   const id=b.id||'';
-  if(id.indexOf('kr-')===0) return {label:'북스타 한국고전', cls:'bt-kr'};
-  if(id.indexOf('gb-')===0 || /^g\d/.test(id)) return {label:'북스타 해외고전', cls:'bt-fr'};
+  if(id.indexOf('kr-')===0) return {label:'북픽 한국고전', cls:'bt-kr'};
+  if(id.indexOf('gb-')===0 || /^g\d/.test(id)) return {label:'북픽 해외고전', cls:'bt-fr'};
   // tags 우선 판정(usFormBadges와 일치) — 'sm-' 접두 종이책(CATTOT)이 '전자책'으로 오표기되던 것
   if(Array.isArray(b.tags)){
     if(b.tags.includes('ebook')) return {label:'전자책', cls:'bt-eb'};
@@ -94,7 +94,7 @@ function onUnifiedSearch(submit){
     <div class="book-grid us-grid" id="usLibGrid">${libHits.slice(0,24).map(b=>usCard(b,'lib')).join('')}</div>
   </div>`;
   if(clsHits.length){
-    html+=`<div class="us-section-label">📚 북스타 고전 <span style="color:var(--text-light);font-weight:600;">${clsHits.length}</span></div>`;
+    html+=`<div class="us-section-label">📚 북픽 고전 <span style="color:var(--text-light);font-weight:600;">${clsHits.length}</span></div>`;
     html+=`<div class="book-grid us-grid" style="margin-bottom:28px;">${clsHits.slice(0,24).map(b=>usCard(b,'cls')).join('')}</div>`;
     if(clsHits.length>24) html+=`<div style="text-align:center;color:var(--text-light);font-size:12.5px;margin:-16px 0 24px;">상위 24권만 표시 — 키워드를 더 구체적으로 입력해 보세요</div>`;
   }
@@ -249,7 +249,7 @@ function usClassicCardHTML(b){
   return `<div class="book-card bc-book" data-isbn="${esc(id)}" onclick="byeoliClickLog(US_CLICKMAP['${esc(id)}']);openDetail('${esc(id)}')">
       <div class="book-cover has-img">${cover}</div>
       <div class="book-info">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span class="bt-tag bt-eb">북스타 고전</span>${genre?`<span class="hwc-loan">${esc(genre)}</span>`:''}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span class="bt-tag bt-eb">북픽 고전</span>${genre?`<span class="hwc-loan">${esc(genre)}</span>`:''}</div>
         <div class="book-title">${escD(b.title)}</div>
         <div class="book-author">${escD([b.author,(b.year||'')].filter(Boolean).join(' · '))}</div>
         <button class="usc-act" onclick="event.stopPropagation();openDetail('${esc(id)}')">지금 바로 읽기</button>

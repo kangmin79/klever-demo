@@ -1388,7 +1388,7 @@ function certPromptSubmit(bookId){
   const b=(typeof BOOKS!=='undefined')?BOOKS.find(x=>x.id===bookId):null;
   bsCelebrate({
     title:`『${esc(cleanT(b?b.title:''))}』<br>완독 인증 완료!`,
-    rows:[`한 줄 소감 <b>+50점</b>`, `독서 이력에 추가 — 내서재에서 확인`],
+    rows:[`한 줄 소감 <b>+50점</b>`, `독서 이력에 추가 — 마이페이지에서 확인`],
   });
   try{ renderQuestMap(); renderMyImpressions(); renderReadingRhythm(); }catch(e){}
 }

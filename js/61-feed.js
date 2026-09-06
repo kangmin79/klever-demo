@@ -173,7 +173,7 @@ function _feedPaint(){
     box.innerHTML=head+(_feedTab==='follow'
       ? `<div class="feed-empty">아직 팔로우한 친구의 글이 없어요.<br>추천 탭에서 친구 이름을 누르고 <b>팔로우</b> 해보세요.</div>`
       : (_feedType==='favorite'
-        ? `<div class="feed-empty">아직 인생책을 고른 친구가 없어요.<br>내 서재에서 <b>인생책</b>을 골라 보세요.</div>`
+        ? `<div class="feed-empty">아직 인생책을 고른 친구가 없어요.<br>마이페이지에서 <b>인생책</b>을 골라 보세요.</div>`
         : `<div class="feed-empty">아직 이 유형의 글이 없어요.<br>챌린지에서 글을 남기면 여기에 모여요.</div>`));
     return;
   }

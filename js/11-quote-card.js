@@ -41,7 +41,7 @@ function openQuoteCard(){
 function setQuoteTheme(id){ _qc.theme=id; document.querySelectorAll('.qc-theme').forEach(e=>e.classList.toggle('on',e.dataset.t===id)); renderQuoteCard(); }
 function closeQuoteCard(){ document.getElementById('qcOverlay').classList.remove('open'); }
 function _qcClip(s,n){ s=(s||'').trim(); return s.length>n?s.slice(0,n)+'…':s; }
-function _qcFilename(){ return '북스타_'+((_qcClip(currentBook.title,16)||'인용').replace(/[\\/:*?"<>|]/g,''))+'.png'; }
+function _qcFilename(){ return '북픽_'+((_qcClip(currentBook.title,16)||'인용').replace(/[\\/:*?"<>|]/g,''))+'.png'; }
 function _qcWrap(ctx,text,maxW){   // 공백 기준 줄바꿈, 공백 없는 긴 토큰(한국어)은 글자단위로
   const lines=[];
   (text||'').split('\n').forEach(para=>{
@@ -108,7 +108,7 @@ function renderQuoteCard(){
   if(currentBook.author){ ctx.fillStyle=t.accent; ctx.globalAlpha=.85; ctx.font='500 27px "Noto Sans KR",sans-serif';
     ctx.fillText(_qcClip(currentBook.author,26), PAD, by+64); ctx.globalAlpha=1; }
   ctx.textAlign='right'; ctx.fillStyle=t.accent; ctx.font='800 28px "Noto Sans KR",sans-serif';
-  ctx.fillText('북스타', W-PAD, by+24);
+  ctx.fillText('북픽', W-PAD, by+24);
   ctx.fillStyle=t.fg; ctx.globalAlpha=.55; ctx.font='500 22px "Noto Sans KR",sans-serif';
   ctx.fillText('bookstar.co.kr', W-PAD, by+58); ctx.globalAlpha=1;
   ctx.textAlign='left';
@@ -134,7 +134,7 @@ function shareQuoteCard(){
     if(!b){ readerToast('이미지 생성에 실패했어요'); return; }
     const file=new File([b],_qcFilename(),{type:'image/png'});
     try{
-      if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file], text:'『'+currentBook.title+'』 — 북스타'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file], text:'『'+currentBook.title+'』 — 북픽'});
       else saveQuoteCard();
     }catch(e){ if(!e||e.name!=='AbortError') saveQuoteCard(); }   // 공유 불가(권한 소멸 등)면 저장으로 폴백 — "눌렀는데 무반응" 방지
   },'image/png');

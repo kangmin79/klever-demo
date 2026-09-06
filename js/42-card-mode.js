@@ -152,7 +152,7 @@ async function mpCheckComplete(){
       {prefer:'resolution=merge-duplicates,return=minimal'});
   }catch(e){}
   mpRenderProgress();
-  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 미션을 모두 마쳤어요','내서재에서 내 기록을 확인하세요']}); }
+  try{ bsCelebrate({title:'🏅 챌린지 완주!', rows:['이 책의 미션을 모두 마쳤어요','마이페이지에서 내 기록을 확인하세요']}); }
   catch(e){ readerToast&&readerToast('🏅 챌린지 완주!'); }
 }
 
@@ -364,14 +364,14 @@ function renderSceneChat(sc, body, info){
     ]);
     if(done){
       chat += _bxMe(_sc.impression);
-      chat += _bxBot([{cls:'react ok', html:`고마워요, 잘 읽으셨어요 ⭐ 소감은 내서재에 기록됐어요. <b>다른 책도 별이와 함께 읽어 보실래요?</b>`}]);
+      chat += _bxBot([{cls:'react ok', html:`고마워요, 잘 읽으셨어요 ⭐ 소감은 마이페이지에 기록됐어요. <b>다른 책도 별이와 함께 읽어 보실래요?</b>`}]);
       const others = _bxOtherBooks();
       if(others.length){
         chat += `<div class="bx-books-label">📚 아직 안 읽은 챌린지 책 — 표지를 눌러 별이와 함께 시작해요!</div><div class="bx-books">`
           + others.map(b=>`<button class="bx-book" onclick="bxOpenBook('${b.id}')">${b.cover?`<img src="${esc(b.cover)}" alt="">`:'<div class="bx-book-ph">📖</div>'}<span>${esc(b.title)}</span></button>`).join('')
           + `</div>`;
       } else {
-        chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">🏆 내서재에서 내 기록 보기 →</button></div>`;
+        chat += `<div class="bx-next-row"><button class="bx-next-btn" onclick="bxFinishGo()">🏆 마이페이지에서 내 기록 보기 →</button></div>`;
       }
     }
     chat += `<div class="bx-inputbar"><input id="bxImpr" type="text" placeholder="${done?'소감을 바꾸고 싶으면 다시 써서 보내 주세요':'여기에 한 줄 소감을 써 주세요 (5자 이상)'}" value="" onkeydown="if(event.key==='Enter')chatSubmitImpression()"><button onclick="chatSubmitImpression()">${done?'수정':'보내기'}</button></div>`;

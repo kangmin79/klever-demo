@@ -13,7 +13,7 @@ async function renderCommunityReviews(){
   const list=await rvFetch('select=*&hidden=eq.false&order=verified.desc,likes.desc,created_at.desc&limit=50');   // 사서가 숨긴 서평 제외(8/17)
   host.innerHTML=`<div style="font-size:12.5px;color:var(--text-light);margin-bottom:12px">
       완독·퀴즈를 통과한 학생들의 <b style="color:#1d6b48">✔ 검증된 서평</b>이 모이는 곳이에요.
-      서평은 <b>내 서재 › 내 대출·예약의 빌린 책</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
+      서평은 <b>마이페이지 › 내 대출·예약의 빌린 책</b>에서 쓰면 여기에 자동으로 올라옵니다.</div>
     ${list.length?list.map(rvCard).join(''):'<div class="rv-empty">아직 서평이 없어요. 책을 읽고 첫 서평을 남겨보세요!</div>'}`;
 }
 function renderCommunity(tab){
@@ -41,14 +41,14 @@ function openCommModal(tab,i){
       <span class="list-card-tag ${p.urgent?'urgent':''}">${esc(p.tag||'')}</span>
       ${(p.meta||[]).length?`<span style="font-size:12.5px;color:var(--text-light)">${p.meta.map(esc).join(' · ')}</span>`:''}</div>
     <h2 style="font-size:20px;margin:0 0 12px;line-height:1.4">${esc(p.title)}</h2>
-    <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 내서재에서 진행률과 점수를 확인할 수 있어요.'}</div>
+    <div class="rt-view" style="font-size:14px;line-height:1.85;color:var(--text)">${p.body?sanitizeHtml(p.body):'한 학기 동안 진행되는 독서 프로그램입니다. 참여하면 마이페이지에서 진행률과 점수를 확인할 수 있어요.'}</div>
     <button class="rv-writebtn" style="margin-top:20px;width:100%;justify-content:center" onclick="commJoinAlert('${esc(tab)}',${i})">참여하기 →</button>`;
   document.getElementById('commModal').classList.add('on');
 }
 // 제목을 onclick JS 문자열에 직접 삽입하지 않음 — 제목에 따옴표(’책제목’ 인용 관행) 있으면 버튼이 죽던 버그
 function commJoinAlert(tab,i){
   const p=(COMMUNITY_POSTS[tab]||[])[i];
-  alert('✅ ‘'+(p?p.title:'')+'’ 참여 신청 완료!\n내서재에서 진행률을 확인하세요.');
+  alert('✅ ‘'+(p?p.title:'')+'’ 참여 신청 완료!\n마이페이지에서 진행률을 확인하세요.');
   closeCommModal();
 }
 function closeCommModal(){ document.getElementById('commModal').classList.remove('on'); }

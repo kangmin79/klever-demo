@@ -337,9 +337,9 @@ function viewerLabels(book){
   if(loc === 'classic'){
     return {
       leftLabel:  '왼쪽 — 원문 (옛글·한문)',
-      rightLabel: '오른쪽 — 현대어 풀이 (북스타 격조체)',
-      challengeLeftLabel: '왼쪽 — 현대어 풀이 (북스타 격조체)',
-      intlLeftLabel: '왼쪽 — 현대어 풀이 (북스타 격조체)',
+      rightLabel: '오른쪽 — 현대어 풀이 (북픽 격조체)',
+      challengeLeftLabel: '왼쪽 — 현대어 풀이 (북픽 격조체)',
+      intlLeftLabel: '왼쪽 — 현대어 풀이 (북픽 격조체)',
       placeholderOrig: '원문 준비 중',
       placeholderTrans: '격조체 풀이 준비 중',
     };

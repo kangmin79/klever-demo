@@ -642,7 +642,7 @@ function submitSceneImpression(){
       rows:[
         `장면 퀴즈 정답 ${okCnt}/${total} <b>+${okCnt*10}점</b>`,
         `한 줄 소감 <b>+50점</b>`,
-        `누적 <b>${(SCORE_BASE+chalEarned()).toLocaleString()}점</b> — 내서재에서 확인`,
+        `누적 <b>${(SCORE_BASE+chalEarned()).toLocaleString()}점</b> — 마이페이지에서 확인`,
       ],
     });
   } else {

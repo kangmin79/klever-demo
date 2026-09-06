@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>북스타 · Bookstar — 모든 책은 하늘의 별</title>
-<meta name="description" content="수많은 책 중, 지금 당신에게 길을 비추는 한 권. 북스타 AI가 도서관 책을 자연어로 추천하고, 끝까지 읽도록 함께합니다.">
+<title>북픽 · Book Pick — 세명대학교 독서 플랫폼</title>
+<meta name="description" content="세명대학교 학술정보원 책을 찾고, 빌리고, 읽는 곳. 북픽 AI가 도서관 책을 자연어로 추천하고, 끝까지 읽도록 함께합니다.">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="북스타 · Bookstar">
-<meta property="og:title" content="북스타 · 모든 책은 하늘의 별">
-<meta property="og:description" content="수많은 책 중, 지금 당신에게 길을 비추는 한 권을 북스타 AI가 찾아드려요.">
+<meta property="og:site_name" content="북픽 · Book Pick">
+<meta property="og:title" content="북픽 · 세명대학교 독서 플랫폼">
+<meta property="og:description" content="수많은 책 중, 지금 당신에게 맞는 한 권을 북픽 AI가 찾아드려요.">
 <!-- 8/13 도메인 분리: 앱은 semyung.bookstar.co.kr. og는 절대주소여야 해서 상대경로로 못 바꾼다 -->
 <meta property="og:image" content="https://semyung.bookstar.co.kr/og.png">
 <meta property="og:url" content="https://semyung.bookstar.co.kr/">
@@ -37,7 +37,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="css/app.css?b=260902x">
+<link rel="stylesheet" href="css/app.css?b=260906a">
 </head>
 <body>
 
@@ -45,9 +45,10 @@
      헤더 (Ver 03 — 5 GNB)
      ═══════════════════════════════════════════════════════════ -->
 <header class="header">
+  <!-- 9/6 세명대 요청: 참나루 → 북픽(Book Pick). 마크 = 시안 C의 책갈피+체크(체크가 오른쪽 테두리를 뚫고 나감), 글자는 이미지 대신 폰트 -->
   <div class="brand-logo" onclick="nav('ourlib')" title="우리 도서관">
-    <span class="bl-mark"><svg viewBox="0 0 24 24"><circle cx="12" cy="7.6" r="3.7" fill="#4ade80"/><circle cx="8.7" cy="10.2" r="2.7" fill="#4ade80"/><circle cx="15.3" cy="10.2" r="2.7" fill="#4ade80"/><rect x="11" y="9" width="2" height="8" rx="1" fill="#fff"/><path d="M4.3 15.6 Q12 13.2 12 14.8 Q12 13.2 19.7 15.6 L19.7 19.4 Q12 17.2 12 18.8 Q12 17.2 4.3 19.4 Z" fill="#fff"/></svg></span>
-    <span class="bl-word">참<span>나루</span></span>
+    <span class="bl-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#c9a24a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5h13v17.5l-6.5-4.3-6.5 4.3z"/><path d="M8.4 10.8l2.9 2.9 8.6-8.6" stroke="#1c2742" stroke-width="4.6"/><path d="M8.4 10.8l2.9 2.9 8.6-8.6"/></svg></span>
+    <span class="bl-text"><span class="bl-word">북픽</span><span class="bl-sub">BOOK PICK</span></span>
     <span class="bl-tag"><span>세명대학교</span><span>독서 플랫폼</span></span>
   </div>
   <nav class="gnb">
@@ -55,7 +56,7 @@
     <div class="gnb-item" data-page="curation" onclick="nav('curation')">독서 챌린지</div>
     <!-- 7/2 사장님 지시: '고전 컬렉션' 드롭다운 해체 → 나란히. 세계고전=해외 / International=구 국내고전(다국어) -->
     <div class="gnb-item" data-page="collection" data-cl="foreign" onclick="navCl('foreign')">세계고전</div>
-    <div class="gnb-item" data-page="collection" data-cl="modern" onclick="navCl('modern')">International</div>
+    <div class="gnb-item" data-page="collection" data-cl="modern" onclick="navCl('modern')">Global Book</div>
     <!-- 8/14 사장님 수정요청: 커뮤니티 메뉴 삭제하기로 함 (섹션 코드는 보존 — 메뉴 미노출) -->
   </nav>
   <div class="hdr-actions" style="display:flex;align-items:center;gap:7px;">
@@ -72,6 +73,8 @@
     <span class="hdr-div"></span>
     <!-- 8/13: '세명대학교 학술정보원' 이름표 제거 — 왼쪽 로고 옆 '세명대학교 독서 플랫폼'과 중복이고,
          그 자리는 이제 계정 칩(로그인 상태)이 쓴다. -->
+    <!-- 9/6 세명대 요청: 로그인하면 [마이페이지] 버튼 + [학번 · 이름] 칩. 버튼은 bxRenderMyPageBtn()이 로그인 여부로 보이고 숨긴다 -->
+    <button class="bx-acc-chip bx-mypage" id="bxMyPageBtn" style="display:none" onclick="nav('mypage')">마이페이지</button>
     <span class="bx-acc-wrap" style="position:relative;display:inline-flex"><button class="bx-acc-chip" id="bxAccChip" onclick="bxChipClick(event)">세명대 로그인</button><div class="bx-acc-menu" id="bxAccMenu"></div></span>
   </div>
 </header>
@@ -80,7 +83,7 @@
 <div class="bx-acc-overlay" id="bxAccOverlay" onclick="if(event.target===this)bxClosePicker()">
   <div class="bx-acc-modal">
     <h3 id="bxAccModalH">세명대 계정으로 로그인</h3>
-    <p id="bxAccModalP">세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>참나루 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.</p>
+    <p id="bxAccModalP">세명대 포털로 로그인한 뒤, 도서관 홈페이지의 <b>북픽 배너</b>를 누르면 자동으로 로그인됩니다. 로그인하지 않아도 책은 자유롭게 둘러볼 수 있어요.</p>
     <div class="bx-acc-list" id="bxAccList"></div>
   </div>
 </div>
@@ -230,9 +233,9 @@
 <section class="page" id="page-airec">
   <div style="max-width:1000px;margin:0 auto;">
     <div class="air-hero">
-      <div class="air-kicker">✦ BOOKSTAR</div>
+      <div class="air-kicker">✦ BOOK PICK</div>
       <div class="air-h1">어떤 별을 찾고 계신가요?</div>
-      <div class="air-sub">모든 책은 하늘의 별 — 당신의 한 권을 북스타가 찾아드려요</div>
+      <div class="air-sub">모든 책은 하늘의 별 — 당신의 한 권을 북픽이 찾아드려요</div>
       <div class="air-searchwrap">
         <div class="air-searchbar">
           <input id="airQ" placeholder="예: 요즘 지쳐서 위로가 되는 책" onkeydown="if(event.key==='Enter')airGo()">
@@ -241,9 +244,9 @@
         <div class="air-chips" id="airChips"></div>
       </div>
     </div>
-    <div class="air-story" id="airStory">밤하늘에 수천 개의 별이 떠 있듯, 도서관엔 수천 권의 책이 있어요.<br>모두 빛나지만, 지금 당신에게 길을 비추는 별은 따로 있죠.<br>북스타는 그 한 권을 찾아주고, 끝까지 읽어내도록 함께합니다.<br>한 권을 읽을 때마다, 당신의 밤하늘엔 별이 하나씩 떠오릅니다.</div>
+    <div class="air-story" id="airStory">밤하늘에 수천 개의 별이 떠 있듯, 도서관엔 수천 권의 책이 있어요.<br>모두 빛나지만, 지금 당신에게 길을 비추는 별은 따로 있죠.<br>북픽은 그 한 권을 찾아주고, 끝까지 읽어내도록 함께합니다.<br>한 권을 읽을 때마다, 당신의 밤하늘엔 별이 하나씩 떠오릅니다.</div>
     <div class="air-stage" id="airStage"></div>
-    <div class="air-foot">표지·별점 알라딘 · 대출·키워드 도서관 정보나루(국립중앙도서관) · 추천 Bookstar AI</div>
+    <div class="air-foot">표지·별점 알라딘 · 대출·키워드 도서관 정보나루(국립중앙도서관) · 추천 Book Pick AI</div>
   </div>
 </section>
 <div id="airOv" onclick="if(event.target.id==='airOv')airClose()"><div class="air-sheet" id="airSheet"></div></div>
@@ -301,7 +304,7 @@
      ═══════════════════════════════════════════════════════════ -->
 <section class="page" id="page-search">
   <h1 class="page-title">도서 통합 검색</h1>
-  <p class="page-subtitle">전자책 · 종이책 · 북스타 고전을 한 번에 — 키워드 또는 자연어로 검색하세요</p>
+  <p class="page-subtitle">전자책 · 종이책 · 북픽 고전을 한 번에 — 키워드 또는 자연어로 검색하세요</p>
 
   <div class="subtabs" style="margin-top:18px;">
     <div class="subtab active" data-smode="kw" onclick="setSearchMode('kw')">🔎 키워드 검색</div>
@@ -519,53 +522,53 @@
      mvp35의 BODIES_ORIG 181권은 전부 k-접두 id인데 진열도서(BOOKS_RAW)는 kr-/gb-뿐이라 절대 매칭 안 됨.
      books_extra 41권(g#### id)도 표시·검색 제외 상태(아래 2900번대 주석 참고). 두 파일은 repo에 보존(되돌리기 가능).
      QUEST_MVP35(1KB)만 실사용 → 아래 인라인 QUEST 폴백 배열에 실데이터 반영함. -->
-<script src="data/classics_kr_data.js?b=260902x"></script>
-<script src="data/classics_foreign_data.js?b=260902x"></script>
-<script src="data/classics_ko_titles.js?b=260902x"></script>
-<script src="data/classics_summaries.js?b=260902x"></script>
+<script src="data/classics_kr_data.js?b=260906a"></script>
+<script src="data/classics_foreign_data.js?b=260906a"></script>
+<script src="data/classics_ko_titles.js?b=260906a"></script>
+<script src="data/classics_summaries.js?b=260906a"></script>
 <!-- 다국어 소개글(classics_summaries_multi.js, 218KB)은 읽기 화면에서만 쓰므로 ensureSummaryML로 지연 로드 -->
 <!-- ⚠️ 정적 bodies(아래 4권: dq·gatsby·demian·emma)가 채울 전역을 '로드 전'에 선언해야 함.
      예전엔 BODIES_SENT를 아래 인라인 스크립트에서 선언 → 초기 4권의 문장정렬 데이터가 통째로 누락되어
      정렬·문장 하이라이트가 신규 책과 다르게 동작했음(선언 순서 버그). 여기서 미리 선언해 해결.
      BODIES_ORIG/BODIES_TRANS: 원래 mvp35_data.js가 선언 → 제거 후 여기서 빈 객체로(레거시 bodies가 채움). -->
 <script>var BODIES_SENT={}, KR_SENT={}, BODIES_ORIG={}, BODIES_TRANS={};</script>
-<script src="bodies_dq.js?b=260902x"></script>
+<script src="bodies_dq.js?b=260906a"></script>
 <!-- bodies_gatsby/demian/emma(≈7MB)는 정적 include 제거 → 책 열 때만 ensureForeignBody가 지연 로드(LEGACY_BODY_FILES) -->
 <!-- bodies_gb{id}.js(변신 등 양산 산출물)는 ensureForeignBody()가 viewer 열 때 지연 로드 -->
-<script src="data/challenge_scenes.js?b=260902x"></script>
-<script src="js/00-config.js?b=260902x"></script>
-<script src="js/01-icons.js?b=260902x"></script>
-<script src="js/02-mock-data.js?b=260902x"></script>
-<script src="js/03-books-catalog.js?b=260902x"></script>
-<script src="js/04-api.js?b=260902x"></script>
-<script src="js/10-reader.js?b=260902x"></script>
-<script src="js/11-quote-card.js?b=260902x"></script>
-<script src="js/12-nav.js?b=260902x"></script>
-<script src="js/13-covers.js?b=260902x"></script>
-<script src="js/14-student-id.js?b=260902x"></script>
-<script src="js/15-events.js?b=260902x"></script>
-<script src="js/16-auth-lock.js?b=260902x"></script>
-<script src="js/20-home.js?b=260902x"></script>
-<script src="js/21-book-detail.js?b=260902x"></script>
-<script src="js/30-viewer.js?b=260902x"></script>
-<script src="js/31-page-flip.js?b=260902x"></script>
-<script src="js/32-front-page.js?b=260902x"></script>
-<script src="js/40-challenge-mission.js?b=260902x"></script>
-<script src="js/41-quiz-sync.js?b=260902x"></script>
-<script src="js/42-card-mode.js?b=260902x"></script>
-<script src="js/50-mylib.js?b=260902x"></script>
-<script src="js/51-hub.js?b=260902x"></script>
-<script src="js/52-quest-map.js?b=260902x"></script>
-<script src="js/53-badges.js?b=260902x"></script>
-<script src="js/54-dashboard.js?b=260902x"></script>
-<script src="js/55-community.js?b=260902x"></script>
-<script src="js/56-reviews.js?b=260902x"></script>
-<script src="js/57-misc.js?b=260902x"></script>
-<script src="js/60-search.js?b=260902x"></script>
-<script src="js/61-feed.js?b=260902x"></script>
-<script src="js/99-boot.js?b=260902x"></script>
+<script src="data/challenge_scenes.js?b=260906a"></script>
+<script src="js/00-config.js?b=260906a"></script>
+<script src="js/01-icons.js?b=260906a"></script>
+<script src="js/02-mock-data.js?b=260906a"></script>
+<script src="js/03-books-catalog.js?b=260906a"></script>
+<script src="js/04-api.js?b=260906a"></script>
+<script src="js/10-reader.js?b=260906a"></script>
+<script src="js/11-quote-card.js?b=260906a"></script>
+<script src="js/12-nav.js?b=260906a"></script>
+<script src="js/13-covers.js?b=260906a"></script>
+<script src="js/14-student-id.js?b=260906a"></script>
+<script src="js/15-events.js?b=260906a"></script>
+<script src="js/16-auth-lock.js?b=260906a"></script>
+<script src="js/20-home.js?b=260906a"></script>
+<script src="js/21-book-detail.js?b=260906a"></script>
+<script src="js/30-viewer.js?b=260906a"></script>
+<script src="js/31-page-flip.js?b=260906a"></script>
+<script src="js/32-front-page.js?b=260906a"></script>
+<script src="js/40-challenge-mission.js?b=260906a"></script>
+<script src="js/41-quiz-sync.js?b=260906a"></script>
+<script src="js/42-card-mode.js?b=260906a"></script>
+<script src="js/50-mylib.js?b=260906a"></script>
+<script src="js/51-hub.js?b=260906a"></script>
+<script src="js/52-quest-map.js?b=260906a"></script>
+<script src="js/53-badges.js?b=260906a"></script>
+<script src="js/54-dashboard.js?b=260906a"></script>
+<script src="js/55-community.js?b=260906a"></script>
+<script src="js/56-reviews.js?b=260906a"></script>
+<script src="js/57-misc.js?b=260906a"></script>
+<script src="js/60-search.js?b=260906a"></script>
+<script src="js/61-feed.js?b=260906a"></script>
+<script src="js/99-boot.js?b=260906a"></script>
 
-<script src="js/90-ai-recommend.js?b=260902x"></script>
+<script src="js/90-ai-recommend.js?b=260906a"></script>
 
 <!-- ═══ 플로팅 AI 사서 챗봇 ═══ -->
 <button id="hwcBubble" onclick="hwcToggle()" aria-label="사서 별이에게 물어보기"><span class="hwc-dot"></span><span class="bx-star">⭐</span></button>
@@ -581,7 +584,7 @@
     <button class="hwc-send" id="hwcSend" onclick="hwcSend()" aria-label="보내기">↑</button>
   </div>
 </div>
-<script src="js/91-chatbot.js?b=260902x"></script>
-<script src="js/92-library-popup.js?b=260902x"></script>
+<script src="js/91-chatbot.js?b=260906a"></script>
+<script src="js/92-library-popup.js?b=260906a"></script>
 </body>
 </html>

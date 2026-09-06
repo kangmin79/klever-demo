@@ -23,7 +23,7 @@ function openDetail(bookId){
   const chips = [b.minumsa?'★ 민음사':'', b.category, b.period, b.intl?'🌏 International OK':'']
     .filter(Boolean).map(c=>`<span class="lcd-chip">${esc(c)}</span>`).join('');
   const summary = (typeof CLASSIC_SUMMARY!=='undefined' && CLASSIC_SUMMARY[b.id]) ? CLASSIC_SUMMARY[b.id] : '';
-  const intro = summary || `${b.author}의 ${b.period} 시대 ${b.category} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북스타 표준 격조체 본문으로 바로 읽을 수 있어요.`;
+  const intro = summary || `${b.author}의 ${b.period} 시대 ${b.category} 정전입니다. 저작권이 만료된 공개 작품(PD)으로, 북픽 표준 격조체 본문으로 바로 읽을 수 있어요.`;
   // 8/29 사장님 지시: 국내(한국) 고전에는 퀴즈가 한 문제도 없다(퀴즈 3,880문항 전부 세계고전 것).
   // 지금까지는 눌러도 뷰어만 열리고 '퀴즈가 준비되지 않았어요'로 끝나는 헛걸음이었다 → 국내 고전에서만 이 칸을 숨긴다.
   // ⚠️ 이 상세 팝업은 세계고전과 함께 쓰는 하나뿐인 화면이다. 조건 없이 지우면 세계고전 194권의 퀴즈 입구까지 사라진다.
@@ -56,7 +56,7 @@ function openDetail(bookId){
       ${(()=>{const WT={'kr-김동인-붉은-산':['/webtoon_redmt.html','linear-gradient(135deg,#7a2417,#c0341c)'],'gb-74222':['/webtoon_demian.html','linear-gradient(135deg,#1a2452,#3a2a6a)'],'gb-64317':['/webtoon_gatsby.html','linear-gradient(135deg,#0f3d3e,#1f6f6f)'],'gb-158':['/webtoon_emma.html','linear-gradient(135deg,#a85c84,#d199b8)'],'kr-현진건-운수-좋은-날':['/webtoon_unsu.html','linear-gradient(135deg,#3a4452,#5a6675)'],'kr-이효석-메밀꽃-필-무렵':['/webtoon_memil.html','linear-gradient(135deg,#2a3566,#5566a8)']};const w=WT[b.id];return w?`<a class="lcd-btn" style="text-decoration:none;background:${w[1]};color:#fff;border:0" href="${w[0]}">🎬 웹툰으로 줄거리 보기 <span style="font-size:10px;background:rgba(255,255,255,.25);padding:1px 6px;border-radius:8px;margin-left:2px">NEW</span><span class="ar" style="opacity:.8">›</span></a>`:'';})()}
     </div>
     ${quizBlock}
-    <div class="lcd-src">본문 북스타 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
+    <div class="lcd-src">본문 북픽 표준 격조체 제공${others?` · ${esc(b.author)} 다른 책 ${others}권`:''}</div>
     <div id="lcdReviews"></div>`;
   ov.classList.add('on');
   lcdDescMark(ov.querySelector('.lcd-desc'));   // 8/14: 고전 상세도 설명 잘림 시 '더 보기'

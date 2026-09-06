@@ -13,7 +13,7 @@ self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch (_) { d = { body: (event.data && event.data.text()) || "" }; }
-  const title = d.title || "북스타";
+  const title = d.title || "북픽";
   event.waitUntil(self.registration.showNotification(title, {
     body: d.body || "",
     icon: "/icon-192.png",

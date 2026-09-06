@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 function enrollProgram(key){
   const names = {champion:'고전 챔피언 프로그램', freshman:'2026 신입생 고전 챌린지', intl:'Learning Korean through Korean Classics'};
-  alert(`✅ ${names[key]} 참가 완료!\n\n내서재 → 챌린지 메뉴에서 진행률을 확인하세요.`);
+  alert(`✅ ${names[key]} 참가 완료!\n\n마이페이지 → 챌린지 메뉴에서 진행률을 확인하세요.`);
   nav('mypage');
 }
 

@@ -59,23 +59,27 @@ input,textarea,select{font-family:inherit;}
 body.dark .header{background:rgba(15,23,42,0.95);}
 .logo{font-size:20px;font-weight:800;color:#fff;background:var(--primary);padding:7px 14px;border-radius:10px;cursor:pointer;letter-spacing:-0.5px;}
 body.dark .logo{background:var(--gold);color:#0f172a;}
-/* 북스타 헤더 로고 (세리프 워드마크) */
+/* 북픽 헤더 로고 — 9/6 세명대 요청(참나루→북픽). 시안 C(책갈피+체크 마크 · 북픽 / BOOK PICK 워드마크)를 폰트·벡터로 옮김.
+   팔레트: 남색 #1c2742 · 금색 #c9a24a · 크림 #f5f1e8 */
 .brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
-.bl-mark{width:30px;height:30px;border-radius:9px;background:var(--brand-grad);display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 4px 11px -2px rgba(56,98,220,.5);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
+.bl-mark{width:30px;height:30px;border-radius:9px;background:#1c2742;display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 4px 11px -2px rgba(28,39,66,.45);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
+body.dark .bl-mark{border:1px solid rgba(201,162,74,.4);box-shadow:none;}
 .brand-logo:hover .bl-mark{transform:rotate(-8deg) scale(1.06);}
-.bl-mark svg{width:17px;height:17px;color:#fff;}
-.bl-word{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;letter-spacing:-.4px;color:var(--text);line-height:1;}
-.bl-word span{background:var(--brand-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
-body.dark .bl-word{color:#f1f5f9;}
+.bl-mark svg{width:19px;height:19px;}
+.bl-text{display:flex;flex-direction:column;justify-content:center;line-height:1;gap:3px;}
+.bl-word{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.6px;color:#1c2742;line-height:1;}
+body.dark .bl-word{color:#f5f1e8;}
 .bl-tag{display:flex;flex-direction:column;justify-content:center;margin-left:10px;padding-left:11px;border-left:1px solid var(--line,#d5deec);line-height:1.22;flex:0 0 auto;}
 .bl-tag span{font-size:11px;font-weight:600;color:var(--text-light,#6b7a90);white-space:nowrap;letter-spacing:-.2px;}
-@media(max-width:960px){ .bl-tag{display:none;} }
-.bl-sub{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:12px;letter-spacing:.5px;color:#b8902f;margin-left:6px;opacity:.85;align-self:flex-end;padding-bottom:1px;}
+@media(max-width:1060px){ .bl-tag{display:none;} }   /* 9/6: 960→1060 — 메뉴 간격+마이페이지 버튼이 생겨 1000px대에서 계정 칩이 잘리던 것 */
+.bl-sub{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;font-weight:700;font-size:8px;letter-spacing:.22em;color:#c9a24a;line-height:1;white-space:nowrap;}
 body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
 /* 8/14 사장님 지시: GNB를 밀리의서재처럼 큼직하게 (데스크톱 — 모바일은 아래 미디어쿼리가 별도 크기) */
-.gnb{display:flex;gap:18px;flex:1;align-items:center;margin-left:28px;}
-.gnb-item{position:relative;display:flex;align-items:center;padding:8px 13px 10px;font-size:19px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.5px;}
+/* 9/6 세명대 요청: 메뉴를 한 칸 오른쪽에서 시작(로고 태그와 '우리 도서관' 사이를 메뉴 하나 폭만큼 띄움).
+   화면 폭에 비례(10vw)하되 28~150px — 좁은 데스크톱에서 메뉴가 계정 칩을 밀지 않게 상한·하한을 둔다 */
+.gnb{display:flex;gap:18px;flex:1;align-items:center;margin-left:clamp(28px,calc(12vw - 60px),150px);}   /* 1600→132 · 1280→94 · 1100→72 · 1000→60 */
+.gnb-item{position:relative;display:flex;align-items:center;padding:8px 13px 10px;font-size:19px;font-weight:700;color:var(--text-sub);cursor:pointer;transition:color .16s;letter-spacing:-0.5px;white-space:nowrap;}
 .gnb-item::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:center;transition:transform .22s cubic-bezier(.2,.7,.2,1);}
 .gnb-item:hover{color:var(--text);}
 .gnb-item:hover::after{transform:scaleX(.4);opacity:.5;}
@@ -1901,6 +1905,12 @@ body.dark .cg-head{color:#0f172a;}
 /* ── 테스트 계정 칩 + 선택 모달 ── */
 .bx-acc-chip{height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;letter-spacing:-0.2px;transition:border-color .15s;}
 .bx-acc-chip:hover{border-color:var(--gold);}
+/* 9/6 세명대 요청: 로그인하면 헤더에 학번 · 이름 · 마이페이지. 학번은 칩 안에 회색 숫자로, 마이페이지는 칩 왼쪽의 별도 버튼 */
+.bx-acc-id{font-weight:600;color:var(--text-sub);font-variant-numeric:tabular-nums;letter-spacing:0;}
+.bx-mypage{margin-right:6px;}
+.bx-mypage.on{border-color:var(--gold);color:var(--text);}
+/* 좁은 데스크톱(≤1200)·폰에선 학번을 접어 칩을 짧게 — 안 접으면 1100px에서 칩이 오른쪽 밖으로 잘렸다(9/6 실측) */
+@media (max-width:1200px){ .bx-acc-id,.bx-acc-id+.bx-acc-sep{display:none;} }
 /* 급한 것 하나를 점으로 — 사이드바 배지(MYLIB_BADGE)와 같은 판정을 헤더에서도 쓴다.
    들어가 보지 않아도 "지금 신경 쓸 게 있나"를 알게 하는 자리라서. */
 .bx-acc-dot{width:7px;height:7px;border-radius:50%;flex:none;}
