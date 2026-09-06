@@ -59,24 +59,18 @@ input,textarea,select{font-family:inherit;}
 body.dark .header{background:rgba(15,23,42,0.95);}
 .logo{font-size:20px;font-weight:800;color:#fff;background:var(--primary);padding:7px 14px;border-radius:10px;cursor:pointer;letter-spacing:-0.5px;}
 body.dark .logo{background:var(--gold);color:#0f172a;}
-/* 북픽 헤더 로고 — 9/6 세명대 요청(참나루→북픽). 시안 C(책갈피+체크 마크 · 북픽 / BOOK PICK 워드마크)를 폰트·벡터로 옮김.
+/* 북픽 헤더 로고 — 9/6 세명대 요청(참나루→북픽). 시안 C 원본을 잘라 배경만 뺀 그림 2장(밝은/어두운 테마).
+   처음엔 폰트·벡터로 흉내 냈는데 굵기·비율이 시안과 달라(사장님 지적 2회) 원본 그림으로 교체.
    팔레트: 남색 #1c2742 · 금색 #c9a24a · 크림 #f5f1e8 */
 .brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
-/* 9/6 사장님 지적: 시안 C는 상자 없이 크림 바탕에 금색 마크 — 남색 상자를 없애고 마크만 둔다.
-   체크가 테두리를 뚫는 자리는 헤더 배경색과 같은 선(.bl-halo)으로 끊는다(밝음 #f7f6f1 / 어둠 #0f172a) */
-.bl-mark{width:30px;height:30px;display:flex;align-items:center;justify-content:center;margin-right:8px;flex:0 0 auto;transition:transform .18s cubic-bezier(.2,.7,.2,1);}
-.brand-logo:hover .bl-mark{transform:rotate(-8deg) scale(1.06);}
-.bl-mark svg{width:28px;height:28px;}
-.bl-halo{stroke:#f7f6f1;}
-body.dark .bl-halo{stroke:#0f172a;}
-.bl-text{display:flex;flex-direction:column;justify-content:center;line-height:1;gap:3px;}
-.bl-word{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.6px;color:#1c2742;line-height:1;}
-body.dark .bl-word{color:#f5f1e8;}
+.bl-logo{height:36px;width:auto;display:block;transition:transform .18s cubic-bezier(.2,.7,.2,1);}
+.brand-logo:hover .bl-logo{transform:scale(1.04);}
+.bl-logo-dark{display:none;}
+body.dark .bl-logo-light{display:none;}
+body.dark .bl-logo-dark{display:block;}
 .bl-tag{display:flex;flex-direction:column;justify-content:center;margin-left:10px;padding-left:11px;border-left:1px solid var(--line,#d5deec);line-height:1.22;flex:0 0 auto;}
 .bl-tag span{font-size:11px;font-weight:600;color:var(--text-light,#6b7a90);white-space:nowrap;letter-spacing:-.2px;}
 @media(max-width:1060px){ .bl-tag{display:none;} }   /* 9/6: 960→1060 — 메뉴 간격+마이페이지 버튼이 생겨 1000px대에서 계정 칩이 잘리던 것 */
-.bl-sub{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;font-weight:700;font-size:8px;letter-spacing:.22em;color:#c9a24a;line-height:1;white-space:nowrap;}
-body.dark .bl-sub{color:var(--gold);}
 /* GNB — 골드 탭 언더라인 (편집/출판 톤, 알약 채움 대신 절제된 인디케이터) */
 /* 8/14 사장님 지시: GNB를 밀리의서재처럼 큼직하게 (데스크톱 — 모바일은 아래 미디어쿼리가 별도 크기) */
 /* 9/6 세명대 요청: 메뉴를 한 칸 오른쪽에서 시작(로고 태그와 '우리 도서관' 사이를 메뉴 하나 폭만큼 띄움).
