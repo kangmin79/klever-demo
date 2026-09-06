@@ -62,10 +62,13 @@ body.dark .logo{background:var(--gold);color:#0f172a;}
 /* 북픽 헤더 로고 — 9/6 세명대 요청(참나루→북픽). 시안 C(책갈피+체크 마크 · 북픽 / BOOK PICK 워드마크)를 폰트·벡터로 옮김.
    팔레트: 남색 #1c2742 · 금색 #c9a24a · 크림 #f5f1e8 */
 .brand-logo{display:flex;align-items:center;cursor:pointer;flex:0 0 auto;user-select:none;}
-.bl-mark{width:30px;height:30px;border-radius:9px;background:#1c2742;display:flex;align-items:center;justify-content:center;margin-right:9px;flex:0 0 auto;box-shadow:0 4px 11px -2px rgba(28,39,66,.45);transition:transform .18s cubic-bezier(.2,.7,.2,1);}
-body.dark .bl-mark{border:1px solid rgba(201,162,74,.4);box-shadow:none;}
+/* 9/6 사장님 지적: 시안 C는 상자 없이 크림 바탕에 금색 마크 — 남색 상자를 없애고 마크만 둔다.
+   체크가 테두리를 뚫는 자리는 헤더 배경색과 같은 선(.bl-halo)으로 끊는다(밝음 #f7f6f1 / 어둠 #0f172a) */
+.bl-mark{width:30px;height:30px;display:flex;align-items:center;justify-content:center;margin-right:8px;flex:0 0 auto;transition:transform .18s cubic-bezier(.2,.7,.2,1);}
 .brand-logo:hover .bl-mark{transform:rotate(-8deg) scale(1.06);}
-.bl-mark svg{width:19px;height:19px;}
+.bl-mark svg{width:28px;height:28px;}
+.bl-halo{stroke:#f7f6f1;}
+body.dark .bl-halo{stroke:#0f172a;}
 .bl-text{display:flex;flex-direction:column;justify-content:center;line-height:1;gap:3px;}
 .bl-word{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.6px;color:#1c2742;line-height:1;}
 body.dark .bl-word{color:#f5f1e8;}
