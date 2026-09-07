@@ -162,12 +162,7 @@ async function mpCheckComplete(){
 /* ── 점수 원장 (실측 적립 — 데모 기본 1,842점 + 챌린지로 번 점수) ── */
 const SCORE_BASE = 0;   // 테스트 계정은 0점에서 시작(점수는 책별 결과에서 파생)
 function _scoreLog(){ try{ return JSON.parse(localStorage.getItem('bookstar-score-log')||'[]'); }catch(e){ return []; } }
-function addScore(pts, type, note){ /* 점수는 _chalBookScore에서 파생 — 별도 적립 안 함(no-op) */ return;
-  // (legacy 보존)
-  const log = _scoreLog();
-  log.push({ts:Date.now(), pts, type, note});
-  try{ localStorage.setItem('bookstar-score-log', JSON.stringify(log)); }catch(e){}
-}
+function addScore(pts, type, note){ /* 점수는 _chalBookScore에서 파생 — 별도 적립 안 함(no-op). 옛 원장 기록은 9/8 코드점검 때 제거 */ }
 function _chalAllIds(){   // 점수·완독 집계 대상 = 진열 전체 + 장면챌린지 키(진열 제외돼도 기록 보존)
   const ids = new Set((typeof BOOKS !== 'undefined' ? BOOKS : []).map(b=>b.id));
   if(typeof CHALLENGE_SCENES !== 'undefined') Object.keys(CHALLENGE_SCENES).forEach(id=>ids.add(id));

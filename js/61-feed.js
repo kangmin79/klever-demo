@@ -265,11 +265,5 @@ function toggleTheme(){
   const order = ['light','sepia','dark'];
   const i = order.indexOf(readerPrefs.theme);
   readerTheme(order[(i+1) % order.length]);
-  return;
-  // (이하 레거시 흔적 — 의도적으로 도달 X)
-  document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  document.getElementById('themeBtn').innerHTML = ic(isDark ? 'sun' : 'moon', 'icon icon-sm');
-  localStorage.setItem('klever-theme', isDark ? 'dark' : 'light');
 }
 
