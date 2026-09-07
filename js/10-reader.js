@@ -386,9 +386,10 @@ function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
   else {
     hasSecond=!!c.trans;
-    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → [번역][원문], 번역(main)이 기본
+    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → [번역][원문].
+    // 9/7 사장님 수정요청: 폰에서 언어(中文 등)를 골라도 처음엔 한국어 원문이 보이게 — 기본 칸=원문(second). 번역은 탭으로.
     const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
-    if(krSwap){ label='원문'; opts.mainLabel='번역'; }
+    if(krSwap){ label='원문'; opts.mainLabel='번역'; opts.defaultPane='second'; }
     else if(hasSecond){
       // 8/14 사장님 수정요청: 해외고전은 영어 원문이 아니라 번역이 기본으로 보이게 + 용어 '본문'→'원문'
       label='번역'; opts.mainLabel='원문'; opts.mainFirst=false; opts.defaultPane='second';
