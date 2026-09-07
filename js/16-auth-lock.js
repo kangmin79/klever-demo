@@ -324,7 +324,7 @@ async function renderMyLibStatus(_retry){
             <div style="font-size:13.5px;font-weight:700;line-height:1.4"><span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>${esc(cleanT(x.title||''))}</div>
             <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">반납되면 순번대로 빌려드려요${x.rank?` · 내 순번 ${esc(x.rank)}번`:''}</div>
           </div>
-          <button onclick="ebDropReserve('${esc(x.prenSrmb)}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
+          <button onclick="ebDropReserve('${esc(x.brcd||'')}','${esc(x.prenSrmb||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
         </div>`)).join('');
       html+=resv.map(x=>{
         // 0008 = 예약서가비치 → 도착. 3일 내 안 찾으면 자동취소 + 1개월 예약정지라 가장 크게 알린다.
@@ -404,9 +404,10 @@ async function smEbookReserves(){
     return null;
   }catch(e){ return null; }
 }
-async function ebDropReserve(prenSrmb){
+// 9/8 정식 API 전환: 예약 목록에 예약번호(prenSrmb)가 더 이상 없다 — 취소는 바코드로(서버가 barcode+user_id 로 교보에 요청). 옛 번호가 있으면 같이 보낸다.
+async function ebDropReserve(brcd, prenSrmb){
   if(!confirm('예약을 취소할까요?')) return;
-  const r=await sbFn(SMEBK_FN,{action:'cancelReserve',prenSrmb:prenSrmb});
+  const r=await sbFn(SMEBK_FN,{action:'cancelReserve',brcd:brcd||'',prenSrmb:prenSrmb||''});
   const d=await r.json();
   readerToast(d&&d.ok?'예약을 취소했어요':((d&&(d.message||d.error))||'취소하지 못했어요'));
   renderMyLibStatus();
