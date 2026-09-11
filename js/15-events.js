@@ -302,7 +302,13 @@ function bxCloseAccMenu(){ const m=document.getElementById('bxAccMenu'); if(m) m
 document.addEventListener('click', bxCloseAccMenu);   // 바깥을 누르면 닫힘(칩은 stopPropagation)
 // 로그아웃 — 도서관 열람실 공용 PC를 생각하면 없어선 안 된다(다음 사람이 남의 대출내역을 그대로 본다).
 function bxLogout(){
-  if(!confirm('로그아웃할까요?\n이 기기에서 도서관 연동 정보가 지워집니다.')) return;
+  // 9/10 학교(박주원) 문의: "이 기기에서 도서관 연동 정보가 지워집니다"가 도서관 기록이 지워지는 것처럼 읽혔다.
+  //   실제로 지우는 건 이 기기의 로그인 상태·임시 저장물뿐이고 도서관·서버 기록은 그대로 → 문구를 그렇게 쓰고, 앱 안 확인창(bsConfirm)으로.
+  if(typeof bsConfirm==='function'){ bsConfirm('로그아웃할까요?', ['이 기기에서만 로그아웃됩니다.', '대출·예약·챌린지 기록은 그대로 남아요.'], _bxLogoutNow, '로그아웃'); return; }
+  if(!confirm('로그아웃할까요?\n이 기기에서만 로그아웃됩니다. 대출·예약·챌린지 기록은 그대로 남아요.')) return;
+  _bxLogoutNow();
+}
+function _bxLogoutNow(){
   // 8/29: 서버 세션도 끝내고(다음 사람이 이 기기에서 이어 쓰지 못하게), 이 학생 이름으로 남은 임시 기록까지 지운다
   try{ const a=_bxAuthGet(); if(a&&a.at) sbAuth('/logout',undefined,{token:a.at,keepalive:true}).catch(()=>{}); }catch(e){}
   try{ _bxAuthClear(); }catch(e){}

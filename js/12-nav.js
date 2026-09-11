@@ -282,6 +282,13 @@ function bsNotice(title, lines, onOk){
   _bmModal(`<h3>${title}</h3><div style="margin:10px 0 4px">${body}</div><div class="bm-mact"><button class="bm-btn fill" id="bsNoticeOk">확인</button></div>`);
   const b=document.getElementById('bsNoticeOk'); if(b) b.onclick=()=>{ bmCloseModal(); if(onOk) onOk(); };
 }
+// confirm() 대체 — 9/10 학교 문의: 브라우저 기본 확인창은 "semyung.bookstar.co.kr 내용:" 머리말이 붙어 낯설다. 취소/확인 두 버튼, 확인이면 onOk.
+function bsConfirm(title, lines, onOk, okLabel){
+  const body=(lines||[]).map(l=>`<div style="font-size:13.5px;color:var(--text-sub);line-height:1.6">${l}</div>`).join('');
+  _bmModal(`<h3>${title}</h3><div style="margin:10px 0 4px">${body}</div><div class="bm-mact"><button class="bm-btn" id="bsCfCancel">취소</button><button class="bm-btn fill" id="bsCfOk">${esc(okLabel||'확인')}</button></div>`);
+  const c=document.getElementById('bsCfCancel'); if(c) c.onclick=()=>bmCloseModal();
+  const b=document.getElementById('bsCfOk'); if(b) b.onclick=()=>{ bmCloseModal(); if(onOk) onOk(); };
+}
 // 히어로(우리 도서관 shelf-hero 재사용) — 대표 챌린지 1개를 크게
 function chalHero(c){
   const b=(c.books||[])[0]||{t:c.title};
