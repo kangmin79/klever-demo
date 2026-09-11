@@ -1300,16 +1300,12 @@ body.dark .btn-primary{background:var(--gold);color:#0f172a;}
 /* 마우스 숨기기 */
 .viewer-shell.mh-hidden{cursor:none;}
 .viewer-shell.mh-hidden .viewer-header{opacity:0;transition:opacity .4s;pointer-events:none;}
-/* 헤더 자동숨김 — 평소 숨김, 마우스를 상단에 올리면 노출 (PC 호버 전용·몰입형) */
+/* 헤더 자동숨김 — 평소 숨김, 마우스를 상단에 올리면 노출 (PC 호버 전용·몰입형)
+   9/11 세명대 요청: 예전엔 본문 위에 겹쳐 떠서 우측 스크롤바 위쪽과 검색창을 가려 조작이 안 됐다 →
+   PC는 메뉴가 나올 때 본문을 아래로 밀어 메뉴 아래에 뷰어를 보여준다(겹침 없음). 모바일 겹침(.immersive)은 그대로 */
 @media (hover:hover){
-  .viewer-shell.hdr-auto .viewer-header{
-    position:absolute;top:0;left:0;right:0;
-    transform:translateY(-100%);opacity:0;pointer-events:none;
-    transition:transform .3s ease,opacity .3s ease;
-    background:var(--bg-card);border-bottom:2px solid var(--primary);
-    box-shadow:0 16px 36px -10px rgba(0,0,0,.5);border-radius:16px 16px 0 0;
-  }
-  .viewer-shell.hdr-auto.hdr-peek .viewer-header{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .viewer-shell.hdr-auto .viewer-header{display:none;background:var(--bg-card);border-bottom:2px solid var(--primary);}
+  .viewer-shell.hdr-auto.hdr-peek .viewer-header{display:flex;}
 }
 /* 보기설정 추가 컨트롤 — 배경색 스와치 / 글꼴 칩 / 토글 */
 .rss-bg{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0;}

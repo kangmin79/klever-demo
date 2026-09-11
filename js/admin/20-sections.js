@@ -657,12 +657,18 @@ async function secSearch(){
   const fmt=CUR_FORMAT||'both';   // 8/19 책 형태: ebook=소장 전자책만 / paper=소장 종이책만 / both=기존(소장+미소장)
   el('secCandWrap').innerHTML='<div class="cur-loading">✦ '+(fmt==='ebook'?'세명대 소장 전자책을 찾는 중…':fmt==='paper'?'세명대 소장 종이책을 찾는 중…':'세명대 소장 책과 미소장 책을 함께 찾는 중…')+'</div>';
   const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
-  // 1) 세명대 소장 전자책(제목·저자 키워드) — P3: semyung_tulip (종이책만 고르면 건너뜀)
-  const smP=(async()=>{ if(fmt==='paper') return []; try{
+  // 1) 세명대 소장 전자책+종이책(제목·저자 키워드 그대로) — semyung_tulip. 고른 형태만 찾는다.
+  //    9/11 세명대 요청: "취사병 전설이 되다"(종이책 15권 소장)가 0건 — 종이책은 AI 추천에만 기대고 있어서 제목 그대로 검색되지 않았다
+  const smP=(async()=>{ try{
     const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
-    const r=await sbGetAnon('/semyung_tulip?kind=eq.ebook&or=(title.ilike.'+p+',author.ilike.'+p+')&select=barcode,ctrl,title,author,cover_url,vendor&limit=20');
-    const d=await r.json(); return (Array.isArray(d)?d:[]).map(b=>({brcd:b.barcode||b.ctrl,title:b.title,author:b.author,cover:b.cover_url||'',provider:b.vendor||'',
-      detail_url:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):''}));
+    const kinds=fmt==='ebook'?'(ebook)':fmt==='paper'?'(paper)':'(ebook,paper)';
+    const r=await sbGetAnon('/semyung_tulip?kind=in.'+kinds+'&or=(title.ilike.'+p+',author.ilike.'+p+')&select=kind,barcode,ctrl,title,author,cover_url,vendor,isbn&limit=40');
+    const d=await r.json(); const rows=(Array.isArray(d)?d:[]);
+    rows.sort((x,y)=>(x.title||'').localeCompare(y.title||'','ko',{numeric:true}));   // "… 2" 가 "… 10" 앞에 오게(권 순서)
+    return rows.map(b=>b.kind==='paper'
+      ?{paper:true,title:b.title,author:b.author,cover:b.cover_url||'',isbn:b.isbn||('cattot-CATTOT'+b.ctrl),detail_url:'https://lib.semyung.ac.kr/search/detail/CATTOT'+b.ctrl}
+      :{brcd:b.barcode||b.ctrl,title:b.title,author:b.author,cover:b.cover_url||'',provider:b.vendor||'',
+        detail_url:b.barcode?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+b.barcode):''});
   }catch(e){ return []; } })();
   // 2) 국중 전체(자연어 OK — curate+Haiku). curate가 제안한 큐레이션 제목·부제도 함께 받음(AI 큐레이션 만들기용)
   _aiCur=null;
@@ -671,7 +677,10 @@ async function secSearch(){
     const d=await r.json(); if(d&&d.title) _aiCur={title:d.title,subtitle:d.subtitle||''}; return d.candidates||[];
   }catch(e){ return []; } })();
   const [sm,nat]=await Promise.all([smP,natP]);
-  const smCand=sm.map(b=>({isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true,prov:b.provider||''}));
+  // 전자책은 _sm(딥링크 저장), 종이책은 국중 후보와 같은 모양(smPaper — 형태태그·도서관 링크 저장)
+  const smCand=sm.map(b=>b.paper
+    ?{isbn:b.isbn,t:b.title,a:b.author||'',cover:b.cover||'',held:false,smPaper:true,smPaperStatus:'소장',smPaperUrl:b.detail_url,loan:0}
+    :{isbn:'sm-'+b.brcd,t:b.title,a:b.author||'',cover:b.cover||'',lib:b.detail_url,_sm:true,held:true,prov:b.provider||''});
   const heldT=new Set(smCand.map(b=>normT(b.t)));
   let natCand=(nat||[]).filter(b=>!heldT.has(normT(b.title))).map(b=>({t:b.title,a:(b.author||'')+(b.publisher?' · '+b.publisher:''),isbn:b.isbn,loan:b.loan||0,cover:b.cover||'',rating:b.rating,held:false,smPaper:b.smPaper,smPaperStatus:b.smPaperStatus||'',smPaperUrl:b.smPaperUrl||'',smEbook:b.smEbook,smEbookProvider:b.smEbookProvider||'',smEbookUrl:b.smEbookUrl||''}));
   if(fmt==='ebook') natCand=natCand.filter(b=>b.smEbook);   // 클라 안전망(서버도 거름): 고른 형태가 아닌 책·미소장은 안 보임
@@ -701,11 +710,20 @@ async function secLookupISBN(){
   if(raw.length<10){el('secCandWrap').innerHTML='<div class="book-empty">ISBN을 정확히 입력해주세요 (10~13자리).</div>';return;}
   el('secCandWrap').innerHTML='<div class="cur-loading">📘 ISBN으로 도서 정보를 조회하는 중…</div>';
   try{
-    const r=await sbFnPost(INFO_FN, {isbns:[raw]}, {anon:true});
+    // 책 정보(국중)와 세명대 실제 소장(semyung_tulip: 전자책·종이책)을 함께 조회한다.
+    // 9/11 세명대 요청: 미소장 책(S라인)이 '소장중'으로 보였다 — 예전엔 소장을 대조하지 않고 담는 순간 우리 소장 목록에 넣어 버렸다
+    const [r,hr]=await Promise.all([
+      sbFnPost(INFO_FN, {isbns:[raw]}, {anon:true}),
+      sbGetAnon('/semyung_tulip?isbn=eq.'+raw+'&select=kind,barcode,ctrl,vendor').catch(()=>null)
+    ]);
     const d=await r.json();const x=(d.info||{})[raw];
     if(!x||!x.title){el('secCandWrap').innerHTML='<div class="book-empty">해당 ISBN의 책을 찾지 못했어요.</div>';return;}
-    SCAND=[{t:x.title,a:x.author||'',isbn:raw,loan:x.loan||0,cover:x.cover||'',rating:x.rating}];
-    secRenderCands('조회 결과 — + 를 눌러 담으세요');
+    let hold=[]; try{ const hd=hr?await hr.json():[]; hold=Array.isArray(hd)?hd:[]; }catch(e){}
+    const eb=hold.find(h=>h.kind==='ebook'), pp=hold.find(h=>h.kind==='paper');
+    SCAND=[{t:x.title,a:x.author||'',isbn:raw,loan:x.loan||0,cover:x.cover||'',rating:x.rating,held:false,
+      smEbook:!!eb,smEbookProvider:eb?(eb.vendor||''):'',smEbookUrl:(eb&&eb.barcode)?('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+eb.barcode):'',
+      smPaper:!!pp,smPaperStatus:pp?'소장':'',smPaperUrl:pp?('https://lib.semyung.ac.kr/search/detail/CATTOT'+pp.ctrl):''}];
+    secRenderCands((eb||pp)?'조회 결과 — + 를 눌러 담으세요':'조회 결과 — 세명대 미소장 책이라 담을 수 없어요');
   }catch(e){el('secCandWrap').innerHTML='<div class="book-empty">조회 실패 — 잠시 후 다시 시도해주세요.</div>';}
 }
 // 통합검색(AI) 결과 위에 뜨는 'AI 큐레이션 통째로 만들기' 배너 — 제목·부제 + 상위 8권을 한 번에

@@ -25,7 +25,8 @@
 //    - stock        : 교보 contentInfo(중계 경유) 우선 → 실패하면 표(solsup_stock) 폴백
 //    - myLoans      : 교보 userBorrowList → 실패하면 옛 HTML 파싱 폴백
 //    - myReserves   : 교보 userReserveList → 실패하면 옛 HTML 파싱 폴백
-//    - return·extend·cancelReserve : frontapi(barcode + user_id, 443 직접). 예약번호·대출번호 불필요(9/6 교보 확인)
+//    - return·extend·cancelReserve : ⚠️ 9/11 옛 세션 경로로 복귀 — frontapi에 연계폼 user_id를 넘기면 NOT_EXIST_MEMBER_INFO.
+//                                     (목록 API도 같은 이유로 9998 → 지금은 HTML 폴백이 실제로 일함) 교보 확인 전까지 세션 경로 고정
 //    - borrow·viewer·status·reserve : 개인세션(옛 경로) 그대로 — 뷰어 URL 발급이 /process/* 에 묶여 있어 검증된 길을 유지
 //    user_id(교보 규약 암호화 ID)는 lib 로그인 → 연계폼에서 얻는다(개인세션 수립보다 한 단계 앞). 세션은 필요한 액션에서만 만든다.
 import { sessionFromRequest } from "../_shared/sso_token.ts";
@@ -33,7 +34,7 @@ import { loadSession } from "../_shared/sso_store.ts";
 import { stockOneFromTable } from "../_shared/stock_table.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, listEbookLoans, xmlTag } from "../_shared/semyung_session.ts";
 import type { EbookHandoff } from "../_shared/semyung_session.ts";
-import { frontApi, frontMsg, kyoboBorrowList, kyoboReserveList, kyoboStock } from "../_shared/kyobo_api.ts";
+import { kyoboBorrowList, kyoboReserveList, kyoboStock } from "../_shared/kyobo_api.ts";
 
 // 정식 API로 얻은 재고를 표(solsup_stock)에도 적어 둔다 — 검색·닮은책(stockFromTable)이 같은 최신값을 보게. 있는 행만 고친다(없으면 무시). 응답은 안 기다림.
 function writeStockThrough(brcd: string, st: { loaned: number; total: number; reserved: number; available: boolean }): void {
@@ -394,23 +395,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 반납·연장 — 9/8 정식 처리 API(frontapi, barcode + user_id). 대출번호 불필요.
-    //   바코드가 없고 옛 대출번호만 온 경우(앱 캐시의 옛 항목)엔 옛 세션 경로로 처리한다.
+    // 반납·연장 — 옛 세션 경로(/process/*)로 처리한다.
+    //   9/11 실측: 정식 처리 API(frontapi)에 연계폼 user_id를 넘기면 NOT_EXIST_MEMBER_INFO("회원이 존재하지 않습니다")로
+    //   전부 실패했다(세명대 9/10 수정요청). 교보가 기대하는 user_id가 확인될 때까지 검증된 세션 경로만 쓴다.
+    //   정식 API 목록엔 대출번호가 없어 앱은 바코드만 보낸다 → 뷰어와 같은 방식으로 대출현황에서 번호를 찾는다.
     if (action === "return" || action === "extend") {
-      const loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
-      if (brcd) {
-        const r = await frontApi(action === "return" ? "contentReturnProc" : "contentExtendProc", { user_id: userId, barcode: brcd });
-        if (r.ok && action === "return") notifyStockChanged(brcd);   // 8/22: 반납한 순간 홈에 돌아오게
-        if (!r.ok) console.error(action, "frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
-        return json({ ok: r.ok, action, personal, source: "frontapi", loanSrmb, msgcode: r.msgcode, message: r.ok ? "" : frontMsg(r, action === "return" ? "반납하지 못했어요" : "연장하지 못했어요") });
+      let loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
+      if (!loanSrmb && !brcd) return json({ ok: false, action, error: "brcd 또는 loanSrmb 필요" }, 400);
+      const jar = await getJar();
+      let bc = brcd;
+      if (!loanSrmb) {
+        const mine = (await listLoans(jar)).find((l) => l.brcd === brcd);
+        if (!mine) return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
+        loanSrmb = mine.loanSrmb; bc = mine.brcd || brcd;
       }
-      if (!loanSrmb) return json({ ok: false, action, error: "brcd 또는 loanSrmb 필요" }, 400);
       const path = action === "return" ? "/process/contentReturnProc.xml" : "/process/contentExtendProc.xml";
-      const xml = await ebPost(await getJar(), path, { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd: "" });
+      const xml = await ebPost(jar, path, { lbryCode: LBRY, loanSrmb, brcd: bc, epdeBrcd: "" });
       const okRR = xmlTag(xml, "result") === "True";
+      if (okRR && action === "return" && bc) notifyStockChanged(bc);   // 8/22: 반납한 순간 홈에 돌아오게
+      if (!okRR) console.error(action, "session false", bc, xmlTag(xml, "msg").slice(0, 80));
       return json({
         ok: okRR, action, personal, source: "session", loanSrmb,
-        message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
+        message: okRR ? "" : ((xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " ") || (action === "return" ? "반납하지 못했어요" : "연장하지 못했어요")),
       });
     }
 
@@ -434,19 +440,23 @@ Deno.serve(async (req) => {
         message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
       });
     }
-    // 예약취소 — 9/8 정식 처리 API(barcode + user_id). 바코드가 없고 옛 예약번호만 오면 옛 세션 경로.
+    // 예약취소 — 옛 세션 경로(예약번호). 9/11: 정식 API(frontapi)는 회원 인식 실패(위 반납 주석 참고).
+    //   앱은 바코드만 보내므로 예약현황에서 예약번호를 찾는다.
     if (action === "cancelReserve") {
-      const prenSrmb = (url.searchParams.get("prenSrmb") || "").replace(/[^0-9]/g, "");
-      if (brcd) {
-        const r = await frontApi("contentReserveCancelProc", { user_id: userId, barcode: brcd });
-        if (!r.ok) console.error("cancelReserve frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
-        return json({ ok: r.ok, action, personal, source: "frontapi", msgcode: r.msgcode, message: r.ok ? "" : frontMsg(r, "예약을 취소하지 못했어요") });
+      let prenSrmb = (url.searchParams.get("prenSrmb") || "").replace(/[^0-9]/g, "");
+      if (!prenSrmb && !brcd) return json({ ok: false, action, error: "brcd 또는 prenSrmb 필요" }, 400);
+      const jar = await getJar();
+      if (!prenSrmb) {
+        const mine = (await listReserves(jar)).find((r) => r.brcd === brcd);
+        if (!mine) return json({ ok: false, action, personal, message: "예약 목록에 없는 책이에요 — 이미 취소됐거나 대출로 넘어갔어요" });
+        prenSrmb = mine.prenSrmb;
       }
-      if (!prenSrmb) return json({ ok: false, action, error: "brcd 또는 prenSrmb 필요" }, 400);
-      const xml = await ebPost(await getJar(), "/process/contentReserveCancelProc.xml", { lbryCode: LBRY, prenSrmb });
+      const xml = await ebPost(jar, "/process/contentReserveCancelProc.xml", { lbryCode: LBRY, prenSrmb });
+      const okC = xmlTag(xml, "result") === "True";
+      if (!okC) console.error("cancelReserve session false", brcd, xmlTag(xml, "msg").slice(0, 80));
       return json({
-        ok: xmlTag(xml, "result") === "True", action, personal, source: "session",
-        message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
+        ok: okC, action, personal, source: "session",
+        message: okC ? "" : ((xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " ") || "예약을 취소하지 못했어요"),
       });
     }
 

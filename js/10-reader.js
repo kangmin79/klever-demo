@@ -222,7 +222,10 @@ function _hdrPeekMove(e){
   // 설정 시트 열려 있으면 헤더 계속 노출 (시트가 헤더 아래로 펼쳐짐)
   if(document.getElementById('readerSettingsSheet')?.classList.contains('open')){ sh.classList.add('hdr-peek'); return; }
   const r=sh.getBoundingClientRect();
-  sh.classList.toggle('hdr-peek', (e.clientY - r.top) < 64);
+  // 9/11: PC는 메뉴가 본문을 밀어내며 나타나므로(겹침 없음), 보이는 동안엔 메뉴 전체 높이가 유지 영역 — 메뉴 아랫줄에서 깜빡이지 않게
+  const hdr=sh.querySelector('.viewer-header');
+  const zone=(sh.classList.contains('hdr-peek')&&hdr)?Math.max(64, hdr.getBoundingClientRect().bottom - r.top + 8):64;
+  sh.classList.toggle('hdr-peek', (e.clientY - r.top) < zone);
 }
 
 /* ── 모바일 읽기 설정 시트 (Aa) ── */
