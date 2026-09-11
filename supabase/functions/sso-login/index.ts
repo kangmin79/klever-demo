@@ -182,7 +182,8 @@ Deno.serve(async (req) => {
     // ① 필수값 ② 등록된 학교인지
     const school = g("school"), uid = g("client_userid"), uname = g("client_username");
     if (!school || !uid) return errPage("필수 항목(학교/학번)이 누락되었습니다.");
-    if (school !== ALLOWED_SCHOOL) return errPage("등록되지 않은 학교입니다.");
+    // 9/11: 도서관(아이티고식 견본)은 school에 홈페이지 도메인 "lib.semyung.ac.kr"을 넣는다 → 학교 도메인으로 끝나면 통과
+    if (school !== ALLOWED_SCHOOL && !school.endsWith("." + ALLOWED_SCHOOL)) return errPage("등록되지 않은 학교입니다.");
     // 학번 형식 방어(영숫자만, 과도 길이 차단)
     const hakbun = uid.replace(/[^0-9A-Za-z]/g, "").slice(0, 32);
     if (!hakbun) return errPage("학번 형식이 올바르지 않습니다.");
