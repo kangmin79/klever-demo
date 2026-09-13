@@ -306,10 +306,14 @@ Deno.serve(async (req) => {
     if (ses) {
       const row = await loadSession(ses.sid);
       if (row?.school_no && row?.portal_user_id) {
-        try {
-          const lib = await libLoginByPortal({ school_no: row.school_no, portal_user_id: row.portal_user_id });
-          hand = await fetchEbookHandoff(lib);
-        } catch (e) { console.error("personal handoff fail", String(e)); }
+        // 9/14 실측: 대출 직후 반납처럼 연달아 부르면 포털→lib 체인이 한 번 헛돌 때가 있다(다음 호출은 정상).
+        //   그 한 번이 학생에겐 "계정 연결이 필요해요"로 보이므로 한 번 더 시도한다.
+        for (let attempt = 1; attempt <= 2 && !hand; attempt++) {
+          try {
+            const lib = await libLoginByPortal({ school_no: row.school_no, portal_user_id: row.portal_user_id });
+            hand = await fetchEbookHandoff(lib);
+          } catch (e) { console.error(`personal handoff fail (${attempt}/2)`, String(e)); }
+        }
       }
     }
     if (!hand || !hand.user_id) {
