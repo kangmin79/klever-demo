@@ -659,10 +659,12 @@ async function secSearch(){
   const normT=s=>(s||'').replace(/\[[^\]]*\]/g,'').split(/[:：]/)[0].replace(/[()（）\[\]\s\-·,.]/g,'').toLowerCase();
   // 1) 세명대 소장 전자책+종이책(제목·저자 키워드 그대로) — semyung_tulip. 고른 형태만 찾는다.
   //    9/11 세명대 요청: "취사병 전설이 되다"(종이책 15권 소장)가 0건 — 종이책은 AI 추천에만 기대고 있어서 제목 그대로 검색되지 않았다
+  //    9/14: title·author ilike(색인 없음, 3초+·간헐 시간초과로 0건)가 아니라 search_norm(제목+저자 정규화, gin_trgm 색인·0.2초)으로 — 60-search.js와 같은 규칙
   const smP=(async()=>{ try{
-    const p='*'+encodeURIComponent(q.replace(/[(),*]/g,' ').trim())+'*';
+    const norm=q.toLowerCase().replace(/[^0-9a-z가-힣]/g,'');
+    if(norm.length<2) return [];
     const kinds=fmt==='ebook'?'(ebook)':fmt==='paper'?'(paper)':'(ebook,paper)';
-    const r=await sbGetAnon('/semyung_tulip?kind=in.'+kinds+'&or=(title.ilike.'+p+',author.ilike.'+p+')&select=kind,barcode,ctrl,title,author,cover_url,vendor,isbn&limit=40');
+    const r=await sbGetAnon('/semyung_tulip?kind=in.'+kinds+'&search_norm=ilike.'+encodeURIComponent('*'+norm+'*')+'&select=kind,barcode,ctrl,title,author,cover_url,vendor,isbn&limit=40');
     const d=await r.json(); const rows=(Array.isArray(d)?d:[]);
     rows.sort((x,y)=>(x.title||'').localeCompare(y.title||'','ko',{numeric:true}));   // "… 2" 가 "… 10" 앞에 오게(권 순서)
     return rows.map(b=>b.kind==='paper'
