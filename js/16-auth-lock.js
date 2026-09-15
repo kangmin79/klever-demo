@@ -297,7 +297,9 @@ async function renderMyLibStatus(_retry){
         // 전자책은 도서관이 '연장 가능/불가'를 직접 알려주므로 그 판정을 따른다.
         // 종이책 반납은 도서관에 직접 가야 하므로 버튼을 두지 않는다 — 전자책만 여기서 반납된다.
         // 전자책 버튼 순서 = 학생이 여기 오는 이유 순서. 9할은 읽으러 온다 → '이어 읽기'가 맨 앞·유일한 채운 버튼.
-        const _t=esc(cleanT(x.title||'').replace(/'/g,'’'));
+        // 9/14 세명대 요청: 대출·예약 목록의 제목은 도서관 홈페이지와 같은 전체 서명으로(부제 ':'·대등표제 '='·'-' 포함).
+        //   예전엔 표지용 cleanT가 ':'·'-'·'(' 앞에서 잘라 「가까스로-있음 : 브뤼노…」가 「가까스로」로 보였다
+        const _t=esc(String(x.title||'').trim().replace(/'/g,'’'));
         const _a=esc(String(x.author||'').replace(/'/g,'’'));
         // 서평 쓰기는 빌린 책에서만(8/14) — 대출이 "읽었다"의 최소 증거. 책 상세의 쓰기 버튼은 제거됨.
         const rvBtn=`<button onclick="smReviewFromLoan('${isEb?'ebook':'paper'}','${isEb?esc(x.brcd):''}','${_t}','${_a}')" style="${bs};color:var(--text-sub);border:1px solid var(--border)">서평</button>`;
@@ -308,7 +310,7 @@ async function renderMyLibStatus(_retry){
           : `<button onclick="smRenew('${esc(x.acc)}')" style="${bs};color:var(--primary);border:1px solid var(--primary)">연장</button>`+rvBtn;
         return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${kindTag}${esc(String(x.title||'').trim())}</div>
             ${x.author?`<div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author)}</div>`:''}
             <div style="font-size:12.5px;font-weight:700;color:${color};margin-top:5px">${when}${extra}${isEb?'':' · 반납은 도서관에서'}</div>
           </div><div style="display:flex;gap:6px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end">${btns}</div>
@@ -321,7 +323,7 @@ async function renderMyLibStatus(_retry){
       html+=head(`기다리는 책 ${resv.length+picks.length+ebrv.length}권`);
       html+=ebrv.map(x=>box(`<div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;line-height:1.4"><span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4"><span style="font-size:10.5px;font-weight:800;color:#1d4ed8;background:rgba(37,99,235,.1);border-radius:5px;padding:1px 5px;margin-right:5px">전자책</span>${esc(String(x.title||'').trim())}</div>
             <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">반납되면 순번대로 빌려드려요${x.rank?` · 내 순번 ${esc(x.rank)}번`:''}</div>
           </div>
           <button onclick="ebDropReserve('${esc(x.brcd||'')}','${esc(x.prenSrmb||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>
@@ -335,7 +337,7 @@ async function renderMyLibStatus(_retry){
           : `${esc(x.reservation_status_display||'예약중')}${rank?` · 내 순번 ${rank}번`:''}`;
         return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(String(x.title||'').trim())}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
             <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">${note}</div>
           </div>
@@ -356,7 +358,7 @@ async function renderMyLibStatus(_retry){
           : `<button onclick="smDropPickup('${esc(x.request_no||'')}')" style="flex:none;background:transparent;color:var(--text-sub);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">취소</button>`;
         return box(`<div class="sm-loan-row" style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(cleanT(x.title||''))}</div>
+            <div style="font-size:13.5px;font-weight:700;line-height:1.4">${esc(String(x.title||'').trim())}</div>
             <div style="font-size:12px;color:var(--text-light);margin-top:2px">${esc(x.author||'')}</div>
             <div style="font-size:12.5px;color:var(--text-sub);margin-top:5px">${note}</div>
           </div>

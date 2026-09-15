@@ -18,14 +18,14 @@ const FRONT_I18N = {
 };
 function frontT(lang){ return FRONT_I18N[lang] || FRONT_I18N.ko; }
 // 지금 뷰어의 왼쪽·오른쪽 칸이 각각 무슨 말인지
-//  - 한국 고전 평행본: 왼쪽 번역(KR_LANG) / 오른쪽 한국어 원문
+//  - 한국 고전 평행본: 왼쪽 한국어 원문 / 오른쪽 번역(KR_LANG) — 9/14 세명대 요청(유학생 피드백: 번역이 오른쪽이 편하다)로 좌우 교체
 //  - 해외 고전: 왼쪽 원서(영어, Gutenberg) / 오른쪽 한국어 번역
 function frontLangs(b){
   if(!b) return {left:'ko', right:'ko'};
   const id = String(b.id);
   if(id.startsWith('gb-')) return {left:'en', right:'ko'};
-  const swap = id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[b.id];
-  return {left: swap ? KR_LANG : 'ko', right: 'ko'};
+  const krPar = id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[b.id];
+  return {left: 'ko', right: krPar ? KR_LANG : 'ko'};
 }
 function bookIntro(b, lang){
   if(!b) return '';
@@ -104,10 +104,9 @@ function renderViewer(){
     renderMissionPanel(body, info, leftBody, L);
   } else if(currentMode === 'full'){
     info.innerHTML = '완독 모드 · 전권 일반 전자책 · <b>장당 +30 점수</b>';
-    // 한국 고전 평행: 번역(모국어)을 왼쪽, 한국어 원문을 오른쪽
-    const krSwap = currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
-    const leftBody  = krSwap ? (C().trans || ph(L.placeholderTrans)) : (C().orig  || ph(L.placeholderOrig));
-    const rightBody = krSwap ? (C().orig  || ph(L.placeholderOrig))  : (C().trans || ph(L.placeholderTrans));
+    // 모든 평행본 공통: 왼쪽 원문 / 오른쪽 번역 (한국 고전도 9/14부터 동일 — 예전엔 한국 고전만 좌우가 반대였다)
+    const leftBody  = C().orig  || ph(L.placeholderOrig);
+    const rightBody = C().trans || ph(L.placeholderTrans);
     // 속표지: 양쪽 칸에 같은 블록을 넣고 CSS가 PC에서 왼쪽=표지·오른쪽=목차로 갈라 보여준다
     // (좌우 높이가 같아야 비율 동기 스크롤이 어긋나지 않는다 → .book-front{height:100%})
     const _fl = frontPageOn() ? frontLangs(currentBook) : null;

@@ -389,10 +389,10 @@ function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
   else {
     hasSecond=!!c.trans;
-    // 한국고전 평행(krSwap)은 좌우가 스왑돼 두번째 칸=한국어 원문 → [번역][원문].
-    // 9/7 사장님 수정요청: 폰에서 언어(中文 등)를 골라도 처음엔 한국어 원문이 보이게 — 기본 칸=원문(second). 번역은 탭으로.
-    const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
-    if(krSwap){ label='원문'; opts.mainLabel='번역'; opts.defaultPane='second'; }
+    // 한국고전 평행: 9/14부터 왼쪽(첫 칸)=한국어 원문, 오른쪽(두번째)=번역 → [원문][번역], 기본 칸=원문(첫 칸).
+    // (9/7 사장님 요청 "처음엔 한국어 원문"은 그대로 — 예전엔 좌우가 반대라 second 를 기본으로 잡았었다)
+    const krPar = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
+    if(krPar){ label='번역'; opts.mainLabel='원문'; }
     else if(hasSecond){
       // 8/14 사장님 수정요청: 해외고전은 영어 원문이 아니라 번역이 기본으로 보이게 + 용어 '본문'→'원문'
       label='번역'; opts.mainLabel='원문'; opts.mainFirst=false; opts.defaultPane='second';
@@ -589,13 +589,10 @@ function _sentHot(s){   // PC: 같은 pi/sg 양쪽 칸 강조
   _sentSpans(s.dataset.pi, s.dataset.sg).forEach(x=>x.classList.add('ps-hot'));
 }
 /* 8/30 사장님: 폰에서 중국어 문장을 누르면 또 중국어가, 한국어를 누르면 또 한국어가 나왔다.
-   한국 고전(kr-)만 왼쪽이 번역·오른쪽이 한국어 원문으로 다른 책과 좌우가 반대인데,
-   '반대 언어' 고르기가 그 반전을 안 따라가서 보고 있는 칸과 같은 말이 나왔다.
-   짝 자료는 [한국어, 번역] 순서라, 좌우가 뒤집힌 책은 고르는 쪽도 뒤집는다. (베트남·영어·일어 동일) */
+   짝 자료는 [한국어, 번역] 순서. 9/14부터 한국 고전도 왼쪽=한국어 원문·오른쪽=번역(다른 책과 같은 방향)이라
+   왼쪽 칸에서 누르면 번역(g[1]), 오른쪽 칸에서 누르면 한국어(g[0]). (베트남·영어·일어 동일) */
 function _sentOther(g, inLeft){
-  const krSwap = !!(currentBook && currentBook.id && String(currentBook.id).startsWith('kr-')
-                    && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id]);
-  return (inLeft !== krSwap) ? (g[1]||'') : (g[0]||'');
+  return inLeft ? (g[1]||'') : (g[0]||'');
 }
 function _sentTap(s){   // 모바일: 강조 + 반대 언어 인라인 펼침(다시 탭 = 닫기)
   const opened = s.classList.contains('ps-hot');
@@ -1439,10 +1436,9 @@ function cyclePaneView(){
   _paneView = order[(order.indexOf(_paneView)+1)%order.length];
   body.classList.remove('pane-orig','pane-trans');
   const lbl=document.getElementById('paneToggleLabel');
-  // 한국 고전 평행은 좌=번역·우=원문이라 토글 라벨도 반대
-  const krSwap = currentBook && currentBook.id && currentBook.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[currentBook.id];
-  if(_paneView==='orig'){ body.classList.add('pane-orig'); if(lbl)lbl.textContent= krSwap?'번역만':'원문만'; }
-  else if(_paneView==='trans'){ body.classList.add('pane-trans'); if(lbl)lbl.textContent= krSwap?'원문만':'번역만'; }
+  // 9/14부터 한국 고전도 좌=원문·우=번역(다른 평행본과 동일) → 토글 라벨 공통
+  if(_paneView==='orig'){ body.classList.add('pane-orig'); if(lbl)lbl.textContent='원문만'; }
+  else if(_paneView==='trans'){ body.classList.add('pane-trans'); if(lbl)lbl.textContent='번역만'; }
   else { if(lbl)lbl.textContent='나란히'; }
   attachScrollListener();
   setupParallel();

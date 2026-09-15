@@ -322,12 +322,12 @@ function bodyToHtml(text){
 // locale별 viewer 라벨 + 본문 매핑
 function viewerLabels(book){
   const loc = book.locale || 'foreign';
-  // 한국 고전 다국어 평행: 번역(모국어) 왼쪽 / 한국어 원문 오른쪽
+  // 한국 고전 다국어 평행: 한국어 원문 왼쪽 / 번역(모국어) 오른쪽 (9/14 세명대 요청으로 좌우 교체 — 다른 평행본과 같은 방향)
   if(book.id && book.id.startsWith('kr-') && typeof KR_SENT!=='undefined' && KR_SENT[book.id]){
     const ln = (typeof KR_LANG_NAMES!=='undefined' && KR_LANG_NAMES[KR_LANG]) || '번역';
     return {
-      leftLabel:  '왼쪽 — '+ln+' 번역',
-      rightLabel: '오른쪽 — 한국어 원문',
+      leftLabel:  '왼쪽 — 한국어 원문',
+      rightLabel: '오른쪽 — '+ln+' 번역',
       challengeLeftLabel: '왼쪽 — 본문',
       intlLeftLabel: '왼쪽 — '+ln+' 번역',
       placeholderOrig: '원문 준비 중',
