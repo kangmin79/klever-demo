@@ -534,8 +534,10 @@ function togglePaperHold(reckey, row){
 // ── 미연동 이용자 예약 차단 → 도서관 로그인 안내 (8/9 계약 전 잠금) ──────────
 // 예약은 사서가 실물을 움직이는 실세계 작업이라 학생 본인 이름으로만 받는다.
 // (예전엔 공유계정 폴백으로 로그인 없이도 신청됐음 — 서버 semyung-reserve도 같이 잠갔다)
-// 연계값은 도서관 홈페이지 배너를 통해서만 넘어오므로 흐름은 [세명대 로그인 → 배너 → 복귀].
-const SEMYUNG_LOGIN_URL='https://setopia.semyung.ac.kr/main/index_lib_smate.jsp';
+// 10/2 배너 설치 후: 로그인은 **도서관 홈페이지에서만**(학교 비밀번호를 북픽 화면에서 받지 않는다 — 사장님 결정).
+//   이 주소는 비로그인이면 도서관 로그인(포털)으로 보냈다가 돌아오고, 로그인돼 있으면 폼이 자동 제출돼 북픽으로 바로 돌아온다(10/2 실측).
+const SEMYUNG_LOGIN_URL='https://lib.semyung.ac.kr/relation/bookstar';
+function smGoLibraryLogin(){ location.href=SEMYUNG_LOGIN_URL; }
 // mode: 'reserve'(기본, 종이책 예약) | 'read'(전자책 대출) — 마지막 줄만 상황에 맞게 바뀐다
 function smLoginGuide(mode){
   // 8/14 사장님 수정요청: 로그인하고 돌아왔을 때 보던 책이 다시 열리게 — 열려 있던 상세 모달의 책을 기억해 둔다
@@ -564,35 +566,14 @@ function smLoginGuide(mode){
   sh.innerHTML=`<div class="rsv-card">
     <h3>도서관 로그인이 필요해요</h3>
     <div class="rsv-sub">${sub}</div>
-    <div style="margin-top:14px;display:grid;gap:8px">
-      <input id="smLgId" placeholder="포털 아이디 (학번)" autocomplete="username" autocapitalize="none"
-        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
-      <input id="smLgPw" type="password" placeholder="포털 비밀번호" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')smPortalLogin()"
-        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
-      <div id="smLgMsg" style="display:none;color:#c0392b;font-size:12px">아이디와 비밀번호를 입력해 주세요.</div>
-    </div>
     <div class="rsv-btns">
       <button class="rsv-close" onclick="document.getElementById('rsvSheet').classList.remove('on')">닫기</button>
-      <button class="rsv-go" onclick="smPortalLogin()">포털 아이디로 로그인</button>
+      <button class="rsv-go" onclick="smGoLibraryLogin()">도서관 홈페이지에서 로그인</button>
     </div>
     <div style="font-size:11px;color:#8b93a5;margin-top:10px;line-height:1.6">
-      비밀번호는 학교 포털 확인에 한 번 쓰이고 저장하지 않아요. 로그인하면 이 페이지로 돌아오고, ${last}
+      세명대 도서관 홈페이지에서 로그인하면 북픽으로 자동으로 돌아오고, ${last}
     </div></div>`;
   sh.classList.add('on');
-}
-// 포털 아이디 직접 로그인 — 폼 전송이라 CORS 없음. sso-login이 세션값을 싣고 이 페이지로 302 복귀
-// (도서관 홈피 참나루 배너 설치 전에도 웹에서 본인 명의 기능을 쓸 수 있는 길 — 앱 8/11 체인과 동일)
-function smPortalLogin(pfx){
-  const idEl=document.getElementById((pfx||'sm')+'LgId'), pwEl=document.getElementById((pfx||'sm')+'LgPw');
-  const id=idEl?idEl.value.trim():'', pw=pwEl?pwEl.value:'';
-  if(!id||!pw){ const m=document.getElementById((pfx||'sm')+'LgMsg'); if(m)m.style.display='block'; return; }
-  const f=document.createElement('form'); f.method='POST';
-  f.action='https://gkujptyfrzqrjrvovbnc.supabase.co/functions/v1/sso-login';
-  const add=(k,v)=>{ const i=document.createElement('input'); i.type='hidden'; i.name=k; i.value=v; f.appendChild(i); };
-  add('school','semyung.ac.kr'); add('client_userid',id); add('client_username','');
-  add('portal_id',id); add('portal_pw',pw);
-  document.body.appendChild(f); f.submit();
 }
 // 예약 직전 확인 시트 — 규칙(24h 수령·3권·노쇼)을 결정 순간에 안내 + 실수 탭 방지
 function smConfirm(reckey){

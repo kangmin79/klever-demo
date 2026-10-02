@@ -323,21 +323,15 @@ function _bxLogoutNow(){
   location.href=location.pathname;   // 부분 갱신은 이전 계정 잔여가 남는다 — 통째로 게스트 상태에서 다시 시작
 }
 function bxOpenPicker(){
-  // 8/12 포털 아이디 직접 로그인으로 전환 — 배너 설치 전에도 들어올 수 있게 (배너가 생기면 배너로도 가능)
+  // 10/2 배너 설치 후: 북픽 화면에서 학교 비밀번호를 받지 않는다 — 도서관 홈페이지 로그인으로 보내면 자동으로 돌아온다
   const list=document.getElementById('bxAccList');
   if(list) list.innerHTML=`
     <div style="display:grid;gap:8px;padding:4px 2px">
-      <input id="bxLgId" placeholder="포털 아이디 (학번)" autocomplete="username" autocapitalize="none"
-        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
-      <input id="bxLgPw" type="password" placeholder="포털 비밀번호" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')smPortalLogin('bx')"
-        style="width:100%;padding:12px 13px;border:1px solid #d8dce3;border-radius:10px;font-size:14px;font-family:inherit">
-      <div id="bxLgMsg" style="display:none;color:#c0392b;font-size:12px">아이디와 비밀번호를 입력해 주세요.</div>
-      <button class="bx-acc-item" style="justify-content:center" onclick="smPortalLogin('bx')">
-        <span class="bx-acc-emoji">🎓</span><span>세명대 포털로 로그인</span>
+      <button class="bx-acc-item" style="justify-content:center" onclick="smGoLibraryLogin()">
+        <span class="bx-acc-emoji">🎓</span><span>세명대 도서관 홈페이지에서 로그인</span>
       </button>
       <div style="font-size:11px;color:#8b93a5;line-height:1.6;text-align:center">
-        비밀번호는 학교 포털 확인에 한 번 쓰이고 저장하지 않아요.
+        도서관 홈페이지에서 로그인하면 북픽으로 자동으로 돌아와요.
       </div>
     </div>`;
   document.getElementById('bxAccOverlay')?.classList.add('open');
