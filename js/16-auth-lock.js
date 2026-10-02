@@ -416,6 +416,18 @@ async function ebDropReserve(brcd, prenSrmb){
 }
 // 빌린 전자책 이어 읽기 — 도서관 사이트의 '바로보기'. 뷰어 주소는 세션에 묶여 있어 매번 서버가 새로 만든다.
 // (대출 때 받은 주소를 저장해 뒀다 쓰면 안 열린다 — 그래서 지금까지 이어 읽을 길이 없었다)
+// 10/2 교보 정식 뷰어 진입: PC는 선택화면(viewIfChoice)에 폼 POST로 들어간다 — 런처 주소(viewIf)는 스스로 팝업을 또 열어 차단되기 때문.
+//   폰은 서버가 준 주소(mobileViewIf)로 이동. 옛 경로(viewerUrl만)도 그대로 받는다.
+function ebNavigateViewer(w, d){
+  const vp=d&&d.viewerPost;
+  if(vp&&vp.url){
+    const f=vp.fields||{};
+    const inputs=Object.keys(f).map(k=>`<input type="hidden" name="${esc(k)}" value="${esc(String(f[k]))}">`).join('');
+    const html=`<!doctype html><meta charset="utf-8"><body style="font-family:system-ui,sans-serif;padding:48px;text-align:center;color:#889">책을 여는 중…<form id="f" method="post" action="${esc(vp.url)}">${inputs}</form><script>document.getElementById('f').submit()<\/script></body>`;
+    try{ w.document.open(); w.document.write(html); w.document.close(); return; }catch(e){}
+  }
+  try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); }
+}
 async function ebOpen(loanSrmb, brcd, title){
   const w=window.open('','_blank');                 // 제스처 안에서 새 탭 확보(팝업차단 회피)
   if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
@@ -423,7 +435,7 @@ async function ebOpen(loanSrmb, brcd, title){
   try{
     const r=await sbFn(SMEBK_FN,{action:'viewer',loanSrmb:loanSrmb,brcd:brcd||''},{dev:true});
     const d=await r.json();
-    if(d&&d.ok&&d.viewerUrl){ try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); } return; }
+    if(d&&d.ok&&d.viewerUrl){ ebNavigateViewer(w,d); return; }
     try{ w.close(); }catch(e){}
     // 연동 만료 — 빈 창만 남기지 말고 다시 로그인으로 잇는다
     if(d&&d.needsPersonal){ try{ localStorage.setItem(SSO_PERSONAL_KEY,'0'); }catch(e){} smLoginGuide('read'); return; }
@@ -487,7 +499,7 @@ async function smEbookBorrowOpen(brcd, w, book){
       if(book){ try{ shelfAdd(book); }catch(e){} }   // 대출 성공 확정 후에만 '읽는 중' 기록
       // 반납용 loanSrmb를 내 서재 항목에 저장(대출 기간 측정·반납 버튼에서 사용)
       try{ const a=shelfLoad(); const it=a.find(x=>x.key==='sm-'+brcd); if(it){ it.loanSrmb=d.loanSrmb||''; it.ents=d.entsDvsnCode||''; it.dueDate=d.dueDate||''; it.ts=Date.now(); it.returned=false; shelfSave(a); } }catch(e){}
-      try{ w.location.href=d.viewerUrl; }catch(e){ window.open(d.viewerUrl,'_blank'); }
+      ebNavigateViewer(w,d);
     }
     else{ const msg=(d&&(d.message||d.error))||'지금은 대출할 수 없어요(동시이용 한도일 수 있어요)';
       // 남이 빌려간 경우엔 "다시 시도"가 아니라 예약이 정답 — 안내를 예약으로 잇는다

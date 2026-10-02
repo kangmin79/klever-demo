@@ -107,6 +107,9 @@ async function issue(hakbun: string, nameIn: string, handoff: PortalHandoff | nu
       if (ps.name) name = ps.name.slice(0, 40); // 도서관 등록명이 더 정확
     } catch (e) { console.error("personalSession fail", String(e)); }
   }
+  // 10/2 배너(학번만): client_userid = school_no = 도서관 이용자번호(0채움만 다름 — 퓨처누리 9/29 확인, 배너 페이지의 liid "0000020149410"으로 실측)
+  //   → 13자리 0채움으로 liid에 저장하면 종이책 openapi(semyung-my)와 교보 정식 API(학번) 둘 다 이 값에서 나온다
+  if (!liid && /^\d+$/.test(hakbun)) liid = hakbun.padStart(13, "0");
 
   // ⑤ 서버 세션 저장 — liid·연계값은 여기에만(브라우저엔 sid도 아닌 서명토큰만 나감)
   // 저장이 실패하면 개인기능은 실제로 안 열린다(sid 행이 없으니 liid를 못 꺼냄).
@@ -189,6 +192,10 @@ Deno.serve(async (req) => {
     if (!hakbun) return errPage("학번 형식이 올바르지 않습니다.");
     let name = (uname || hakbun).slice(0, 40);
 
+    // 10/2: 도서관 홈페이지(lib.semyung.ac.kr/relation/bookstar)가 아이티고식 3필드만 보낸다 — 그 페이지에서 온 요청(Origin/Referer)은 통과
+    const origin = req.headers.get("origin") || "", referer = req.headers.get("referer") || "";
+    const fromLib = /^https:\/\/lib\.semyung\.ac\.kr(\/|$)/.test(origin) || /^https:\/\/lib\.semyung\.ac\.kr\//.test(referer);
+
     // ③ 개인기능 자격 — 배너가 연계값을 주면 그대로, 테스트 폼이면 포털 로그인으로 획득
     let handoff: PortalHandoff | null = null;
     if (g("school_no") && g("portal_user_id")) {
@@ -203,7 +210,7 @@ Deno.serve(async (req) => {
       //   SSO_BANNER_SECRET 시크릿이 비어 있으면 완전히 닫힘 — 학번만 아는 남이 남으로 로그인하던 구멍.
       //   배너 설치 시 학교와 합의한 키를 시크릿에 넣고, 배너 폼에 <input type=hidden name=banner_key> 로 실어 보낸다.
       const bannerKey = Deno.env.get("SSO_BANNER_SECRET") || "";
-      if (!bannerKey || g("banner_key") !== bannerKey) {
+      if (!(bannerKey && g("banner_key") === bannerKey) && !fromLib) {
         return errPage("학교 인증 정보가 없습니다. 도서관 홈페이지의 로그인 배너 또는 포털 로그인으로 들어와 주세요.", 403);
       }
       try {

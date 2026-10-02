@@ -34,7 +34,7 @@ import { loadSession } from "../_shared/sso_store.ts";
 import { stockOneFromTable } from "../_shared/stock_table.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, listEbookLoans, xmlTag } from "../_shared/semyung_session.ts";
 import type { EbookHandoff } from "../_shared/semyung_session.ts";
-import { kyoboBorrowList, kyoboReserveList, kyoboStock } from "../_shared/kyobo_api.ts";
+import { frontApi, frontMsg, isNoMember, kyoboBorrowList, kyoboIdFromSession, kyoboMemberSync, kyoboReserveList, kyoboStock, kyoboViewerLinks } from "../_shared/kyobo_api.ts";
 
 // 정식 API로 얻은 재고를 표(solsup_stock)에도 적어 둔다 — 검색·닮은책(stockFromTable)이 같은 최신값을 보게. 있는 행만 고친다(없으면 무시). 응답은 안 기다림.
 function writeStockThrough(brcd: string, st: { loaned: number; total: number; reserved: number; available: boolean }): void {
@@ -301,31 +301,47 @@ Deno.serve(async (req) => {
     // 개인 신원 — SSO 토큰의 sid로 저장된 포털 연계값을 꺼내 lib 로그인 → 전자도서관 연계폼(user_id)까지 얻는다.
     // 여기서 못 얻으면 그대로 막는다. 공유계정으로 대신 처리하지 않는다(위 헤더 주석 참고).
     // 9/8: 전자도서관 개인세션(mmbrLnkg)은 필요한 액션(borrow·viewer·status·reserve·폴백)에서만 만든다 — 정식 API 액션은 user_id만 있으면 된다.
-    let hand: EbookHandoff | null = null;
+    // 10/2 전환: 교보 정식 API의 user_id = 학번(세션 liid에서). 배너(학번만)로 들어온 학생도 전자책 전부 가능.
+    //   옛 세션 경로(포털 연계값 → lib → mmbrLnkg)는 학번을 못 뽑았거나 정식 API가 거부했을 때의 예비.
     const ses = await sessionFromRequest(req);
-    if (ses) {
-      const row = await loadSession(ses.sid);
-      if (row?.school_no && row?.portal_user_id) {
-        // 9/14 실측: 대출 직후 반납처럼 연달아 부르면 포털→lib 체인이 한 번 헛돌 때가 있다(다음 호출은 정상).
-        //   그 한 번이 학생에겐 "계정 연결이 필요해요"로 보이므로 한 번 더 시도한다.
-        for (let attempt = 1; attempt <= 2 && !hand; attempt++) {
-          try {
-            const lib = await libLoginByPortal({ school_no: row.school_no, portal_user_id: row.portal_user_id });
-            hand = await fetchEbookHandoff(lib);
-          } catch (e) { console.error(`personal handoff fail (${attempt}/2)`, String(e)); }
-        }
+    const row = ses ? await loadSession(ses.sid) : null;
+    const kyoboId = kyoboIdFromSession(row);
+    const legacyOk = !!(row?.school_no && row?.portal_user_id);   // 옛 경로를 만들 재료가 있나
+    let hand: EbookHandoff | null = null, handTried = false;
+    const ensureHand = async (): Promise<EbookHandoff | null> => {
+      if (hand || handTried || !legacyOk) return hand;
+      handTried = true;
+      // 9/14 실측: 연달아 부르면 포털→lib 체인이 한 번 헛돌 때가 있다 → 한 번 더
+      for (let attempt = 1; attempt <= 2 && !hand; attempt++) {
+        try {
+          const lib = await libLoginByPortal({ school_no: row!.school_no!, portal_user_id: row!.portal_user_id! });
+          hand = await fetchEbookHandoff(lib);
+        } catch (e) { console.error(`personal handoff fail (${attempt}/2)`, String(e)); }
+      }
+      return hand;
+    };
+    if (!kyoboId) {
+      const h = await ensureHand();
+      if (!h || !h.user_id) {
+        return json({ ok: false, action, personal: false, needsPersonal: true, error: "도서관 계정 연결이 필요해요" }, 409);
       }
     }
-    if (!hand || !hand.user_id) {
-      return json({
-        ok: false, action, personal: false, needsPersonal: true,
-        error: "도서관 계정 연결이 필요해요",
-      }, 409);
-    }
     const personal = true;
-    const userId = hand.user_id;
+    const userId = kyoboId;   // 정식 API용(없으면 "" → 호출이 throw → 옛 경로 폴백)
+    const mobile = (url.searchParams.get("device") || "") === "m";
+    const ua = req.headers.get("user-agent") || "";
     let _jar: Jar | null = null;
-    const getJar = async (): Promise<Jar> => { if (!_jar) _jar = await ebookSession(hand!); return _jar; };
+    const getJar = async (): Promise<Jar> => {
+      if (!_jar) { await ensureHand(); if (!hand) throw new Error("도서관 계정 연결이 필요해요"); _jar = await ebookSession(hand); }
+      return _jar;
+    };
+    // 전자도서관에 한 번도 안 들어온 학생은 교보에 회원이 없다 → 대출·예약 직전에 한 번 등록(규격 1.6)
+    const ensureMember = async (): Promise<boolean> => {
+      if (!kyoboId) return false;
+      const r = await kyoboMemberSync(kyoboId, row?.name || "");
+      if (!r.ok) console.error("memberSync false", kyoboId, r.msgcode, r.msg.slice(0, 80));
+      return r.ok;
+    };
 
     if (action === "status") {
       const body = await ebGet(await getJar(), "/main/userBorrowStatus.json");
@@ -338,8 +354,11 @@ Deno.serve(async (req) => {
       try {
         return json({ ok: true, action, personal, source: "api", items: await kyoboBorrowList(userId) });
       } catch (e) {
-        console.error("myLoans api fail → html", String(e).slice(0, 120));
-        return json({ ok: true, action, personal, source: "html", items: await listLoans(await getJar()) });
+        const s = String(e);
+        if (kyoboId && /9998/.test(s)) return json({ ok: true, action, personal, source: "api", items: [] });   // 교보 회원 아직 없음 = 빌린 책 없음
+        console.error("myLoans api fail → html", s.slice(0, 120));
+        try { return json({ ok: true, action, personal, source: "html", items: await listLoans(await getJar()) }); }
+        catch (e2) { return json({ ok: false, action, personal, error: "대출 목록을 읽지 못했어요" }); }
       }
     }
 
@@ -349,15 +368,22 @@ Deno.serve(async (req) => {
     if (action === "viewer") {
       const loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
       if (!loanSrmb && !brcd) return json({ ok: false, action, error: "loanSrmb 또는 brcd 필요" }, 400);
-      // 내 대출 목록에 있는 책만 연다 — 남의 대출번호를 넣어 여는 걸 막고,
-      // 이미 반납·만료된 책은 "왜 안 열리지" 대신 이유를 말해 준다.
-      // 9/8: 정식 API 목록엔 대출번호가 없어 앱이 바코드만 보내온다 → 여기서(열 때 한 번만) 도서관 대출현황에서 번호를 찾는다.
+      // 10/2 정식: 내 대출목록(API)에 있는 책만 — 뷰어는 교보 선택화면으로 직접(세션 불필요)
+      if (kyoboId && brcd) {
+        try {
+          const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd);
+          if (!mine) return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
+          const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
+          return json({ ok: true, action, personal, source: "api", loanSrmb: "", viewerUrl: v.viewerUrl, viewerPost: v.viewerPost, vendor: mine.vendor === "YS" ? "external" : "kyobo", dueDate: mine.dueDate || "" });
+        } catch (e) { console.error("viewer api fail → session", String(e).slice(0, 120)); if (!legacyOk) return json({ ok: false, action, personal, message: "대출 목록을 읽지 못했어요 — 잠시 후 다시 시도해 주세요" }); }
+      }
+      // (예비) 옛 세션 경로 — 내 대출 목록에 있는 책만 연다. 9/8: 앱이 바코드만 보내면 대출현황에서 번호를 찾는다.
       const jar = await getJar();
       const mine = (await listLoans(jar)).find((l) => loanSrmb ? l.loanSrmb === loanSrmb : l.brcd === brcd);
       if (!mine) {
         return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
       }
-      const v = await viewerUrlFor(jar, mine.loanSrmb, mine.brcd || brcd, (url.searchParams.get("device") || "") === "m");
+      const v = await viewerUrlFor(jar, mine.loanSrmb, mine.brcd || brcd, mobile);
       if (!v.url) {
         console.error("viewer fail", loanSrmb, v.vendor, v.error);
         return json({ ok: false, action, personal, vendor: v.vendor, message: `뷰어를 열지 못했어요 — ${v.error || "잠시 후 다시 시도해 주세요"}` });
@@ -370,15 +396,35 @@ Deno.serve(async (req) => {
     if (action === "borrow" && !brcd) return json({ ok: false, error: "brcd 필요" }, 400);
 
     if (action === "borrow") {
-      // 한도(5권) 초과여도 자동반납은 하지 않는다 — 본인 책이므로 안내만 하고 직접 고르게 한다.
-      // (공유계정 시절의 "가장 오래된 1권 강제 반납"은 남이 읽던 책을 끊어서 8/9에 폐지)
+      // 10/2 정식 API 대출(규격 1.1): user_id=학번 + barcode + borrow_type(W:PC/S:폰/T:태블릿). 회원 없으면 등록 후 1회 재시도.
+      //   한도 초과·전권 대출중 등은 교보 문장을 그대로 — 자동반납 없음(8/9 원칙 그대로)
+      if (kyoboId) {
+        const bt = mobile ? (/ipad/i.test(ua) ? "T" : "S") : "W";
+        let r = await frontApi("contentBorrowProc", { user_id: kyoboId, barcode: brcd, borrow_type: bt });
+        if (!r.ok && isNoMember(r) && await ensureMember()) r = await frontApi("contentBorrowProc", { user_id: kyoboId, barcode: brcd, borrow_type: bt });
+        if (r.ok) {
+          notifyStockChanged(brcd);   // 8/22: 빌린 순간 홈에서 빠지게
+          let dueDate = "", ents = "";
+          try { const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd); dueDate = mine?.dueDate || ""; ents = mine?.vendor || ""; } catch (_) { /* 날짜 없이 안내 */ }
+          const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
+          const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
+          return json({
+            ok: true, action, personal, source: "api", loanSrmb: r.borrowId || "", entsDvsnCode: ents, viewerUrl: v.viewerUrl, viewerPost: v.viewerPost,
+            vendor: ents === "YS" ? "external" : "kyobo", viewerError: "", dueDate,
+            message: dm ? `대출 완료 — ${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요` : "대출 완료 — 읽고 나면 반납해 주세요",
+          });
+        }
+        console.error("borrow frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
+        if (!legacyOk) return json({ ok: false, action, personal, source: "frontapi", msgcode: r.msgcode, message: frontMsg(r, "지금은 대출할 수 없어요") });
+      }
+      // (예비) 옛 세션 경로. 한도(5권) 초과여도 자동반납은 하지 않는다 — 본인 책이므로 안내만 하고 직접 고르게 한다.
       const jar = await getJar();
       const res = await doBorrow(jar, brcd);
       if (!res.ok) return json({ ok: false, action, personal, message: res.msg });
-      notifyStockChanged(brcd);   // 8/22: 빌린 순간 홈에서 빠지게
+      notifyStockChanged(brcd);
       // 뷰어URL 실패해도 대출은 유효 — 다만 왜 못 열었는지는 viewerError로 같이 보내 앱이 말하게 한다(8/21: 조용한 실패 금지)
       let viewerUrl = "", vendor = "", viewerError = "";
-      try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd, (url.searchParams.get("device") || "") === "m"); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
+      try { const v = await viewerUrlFor(jar, res.loanSrmb, brcd, mobile); viewerUrl = v.url; vendor = v.vendor; viewerError = v.error || ""; }
       catch (e) { viewerError = "뷰어 발급 중 오류: " + String(e).slice(0, 80); }
       // 📌 8/22 "방금 빌린 책은 표지만 뜨고 멈춤 → 이어보기면 열림" 신고는 8/23에 원인 확정: 솔숲 앱의 상세 화면 대출 호출만
       //   device=m을 빠뜨려 PC용(type=web) 토큰이 나갔던 것(이어보기는 device=m). 앱 쪽 수정으로 해결.
@@ -399,13 +445,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 반납·연장 — 옛 세션 경로(/process/*)로 처리한다.
-    //   9/11 실측: 정식 처리 API(frontapi)에 연계폼 user_id를 넘기면 NOT_EXIST_MEMBER_INFO("회원이 존재하지 않습니다")로
-    //   전부 실패했다(세명대 9/10 수정요청). 교보가 기대하는 user_id가 확인될 때까지 검증된 세션 경로만 쓴다.
-    //   정식 API 목록엔 대출번호가 없어 앱은 바코드만 보낸다 → 뷰어와 같은 방식으로 대출현황에서 번호를 찾는다.
+    // 반납·연장 — 10/2 정식 API(frontapi, user_id=학번 + barcode). 9/11엔 연계폼 암호값을 넣어 "회원 없음"이었던 것.
+    //   정식이 거부하면(이미 반납 등) 옛 세션 경로 재료가 있을 때만 한 번 더, 없으면 교보 문장을 그대로.
     if (action === "return" || action === "extend") {
       let loanSrmb = (url.searchParams.get("loanSrmb") || "").replace(/[^0-9]/g, "");
       if (!loanSrmb && !brcd) return json({ ok: false, action, error: "brcd 또는 loanSrmb 필요" }, 400);
+      if (kyoboId && brcd) {
+        const r = await frontApi(action === "return" ? "contentReturnProc" : "contentExtendProc", { user_id: kyoboId, barcode: brcd });
+        if (r.ok) {
+          if (action === "return") notifyStockChanged(brcd);   // 8/22: 반납한 순간 홈에 돌아오게
+          return json({ ok: true, action, personal, source: "frontapi", loanSrmb, message: "" });
+        }
+        console.error(action, "frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
+        if (!legacyOk) return json({ ok: false, action, personal, source: "frontapi", msgcode: r.msgcode, message: frontMsg(r, action === "return" ? "반납하지 못했어요" : "연장하지 못했어요") });
+      }
+      // (예비) 옛 세션 경로 — 앱이 바코드만 보내면 대출현황에서 번호를 찾는다
       const jar = await getJar();
       let bc = brcd;
       if (!loanSrmb) {
@@ -429,26 +483,46 @@ Deno.serve(async (req) => {
       try {
         return json({ ok: true, action, personal, source: "api", items: await kyoboReserveList(userId) });
       } catch (e) {
-        console.error("myReserves api fail → html", String(e).slice(0, 120));
-        return json({ ok: true, action, personal, source: "html", items: await listReserves(await getJar()) });
+        const s = String(e);
+        if (kyoboId && /9998/.test(s)) return json({ ok: true, action, personal, source: "api", items: [] });   // 교보 회원 아직 없음 = 예약 없음
+        console.error("myReserves api fail → html", s.slice(0, 120));
+        try { return json({ ok: true, action, personal, source: "html", items: await listReserves(await getJar()) }); }
+        catch (e2) { return json({ ok: false, action, personal, error: "예약 목록을 읽지 못했어요" }); }
       }
     }
 
-    // 전권 대출중인 전자책 예약 — 반납되면 순번대로 (옛 세션 경로 유지)
+    // 전권 대출중인 전자책 예약 — 10/2 정식 API(규격 1.3, reserve_type W/S). 회원 없으면 등록 후 1회 재시도.
     if (action === "reserve") {
       if (!brcd) return json({ ok: false, error: "brcd 필요" }, 400);
-      // ⚠️ dvsnCode:"W"(웹) 필수 — 빼면 조용히 실패한다(도서관 스크립트 실측)
+      if (kyoboId) {
+        const p = { user_id: kyoboId, barcode: brcd, reserve_type: mobile ? "S" : "W" };
+        let r = await frontApi("contentReserveProc", p);
+        if (!r.ok && isNoMember(r) && await ensureMember()) r = await frontApi("contentReserveProc", p);
+        if (r.ok || !legacyOk) {
+          if (!r.ok) console.error("reserve frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
+          return json({ ok: r.ok, action, personal, source: "frontapi", msgcode: r.msgcode, message: r.ok ? "" : frontMsg(r, "예약하지 못했어요") });
+        }
+        console.error("reserve frontapi false → session", brcd, r.msgcode, r.msg.slice(0, 80));
+      }
+      // (예비) 옛 세션 경로. ⚠️ dvsnCode:"W"(웹) 필수 — 빼면 조용히 실패한다(도서관 스크립트 실측)
       const xml = await ebPost(await getJar(), "/process/contentReserveProc.xml", { lbryCode: LBRY, brcd, epdeBrcd: "", dvsnCode: "W" });
       return json({
         ok: xmlTag(xml, "result") === "True", action, personal,
         message: (xmlTag(xml, "msg") || "").replace(/<br\s*\/?>/gi, " "),
       });
     }
-    // 예약취소 — 옛 세션 경로(예약번호). 9/11: 정식 API(frontapi)는 회원 인식 실패(위 반납 주석 참고).
-    //   앱은 바코드만 보내므로 예약현황에서 예약번호를 찾는다.
+    // 예약취소 — 10/2 정식 API(barcode + user_id, 예약번호 불필요: 9/6 교보 확인). 예비로 옛 세션 경로(예약번호).
     if (action === "cancelReserve") {
       let prenSrmb = (url.searchParams.get("prenSrmb") || "").replace(/[^0-9]/g, "");
       if (!prenSrmb && !brcd) return json({ ok: false, action, error: "brcd 또는 prenSrmb 필요" }, 400);
+      if (kyoboId && brcd) {
+        const r = await frontApi("contentReserveCancelProc", { user_id: kyoboId, barcode: brcd });
+        if (r.ok || !legacyOk) {
+          if (!r.ok) console.error("cancelReserve frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
+          return json({ ok: r.ok, action, personal, source: "frontapi", msgcode: r.msgcode, message: r.ok ? "" : frontMsg(r, "예약을 취소하지 못했어요") });
+        }
+        console.error("cancelReserve frontapi false → session", brcd, r.msgcode, r.msg.slice(0, 80));
+      }
       const jar = await getJar();
       if (!prenSrmb) {
         const mine = (await listReserves(jar)).find((r) => r.brcd === brcd);

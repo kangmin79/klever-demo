@@ -84,24 +84,53 @@ export async function kyoboReserveList(userId: string): Promise<KyoboReserve[]> 
   }));
 }
 
-// ── ④ 처리 API(frontapi, XML) — 반납·연장·예약취소 ────────────────
-// 응답: <channel><result>True|False</result><msgcode>…</msgcode><msg><![CDATA[…]]></msg></channel>
-export interface FrontRes { ok: boolean; msgcode: string; msg: string; raw: string }
+// ── ④ 처리 API(frontapi, XML) — 대출·반납·연장·예약·예약취소·회원등록 ────────────────
+// 응답: <channel><result>True|False</result><msgcode>…</msgcode><msg><![CDATA[…]]></msg>[<borrowid>…</borrowid>]</channel>
+// 🔑 user_id = **학번 그대로**(암호화·0채움 없음). 교보 9/23 답 + 10/2 실측(20149410 → 0000, 0000020149410 → 9998, 연계폼 암호값 → 9998).
+export type FrontName = "contentReturnProc" | "contentExtendProc" | "contentReserveCancelProc" | "contentBorrowProc" | "contentReserveProc" | "memberSync";
+export interface FrontRes { ok: boolean; msgcode: string; msg: string; raw: string; borrowId: string }
 const tag = (x: string, t: string) => {
   const v = (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(x) || [, ""])[1] || "";
   const c = /<!\[CDATA\[([\s\S]*?)\]\]>/.exec(v);
   return (c ? c[1] : v).trim();
 };
-export async function frontApi(name: "contentReturnProc" | "contentExtendProc" | "contentReserveCancelProc", params: Record<string, string>): Promise<FrontRes> {
+export async function frontApi(name: FrontName, params: Record<string, string>): Promise<FrontRes> {
   const qs = new URLSearchParams({ libraryCode: LBRY, ...params });
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
     const r = await fetch(`${EB}/frontapi/${name}.xml?${qs}`, { signal: ctl.signal, headers: { "User-Agent": "Mozilla/5.0 BookPick/1.0" } });
     const raw = await r.text();
-    if (!r.ok) return { ok: false, msgcode: `HTTP_${r.status}`, msg: "", raw };
-    return { ok: tag(raw, "result") === "True", msgcode: tag(raw, "msgcode"), msg: tag(raw, "msg").replace(/<br\s*\/?>/gi, " "), raw };
+    if (!r.ok) return { ok: false, msgcode: `HTTP_${r.status}`, msg: "", raw, borrowId: "" };
+    return { ok: tag(raw, "result") === "True", msgcode: tag(raw, "msgcode"), msg: tag(raw, "msg").replace(/<br\s*\/?>/gi, " "), raw, borrowId: tag(raw, "borrowid") };
   } finally { clearTimeout(t); }
+}
+/** 교보에 회원이 없다는 응답인가 — 전자도서관에 한 번도 안 들어온 학생(배너 로그인만 한 경우) */
+export const isNoMember = (r: FrontRes) => /ERROR_NOT_EXIST_USER_ID|MSG_ERROR_0039/.test(r.msgcode) || /회원이 존재하지/.test(r.msg);
+/** 회원 등록(규격 1.6, cmd=I). 이미 있으면 교보가 알아서 처리. 비밀번호는 아이디로 대체(규격). */
+export const kyoboMemberSync = (userId: string, name: string) => frontApi("memberSync", { cmd: "I", user_id: userId, user_name: name || userId });
+
+/** 세션 행 → 교보 user_id(학번). liid(도서관 이용자번호, 13자리 0채움 학번 "0000020149410")에서 0을 벗긴다.
+ *  배너 로그인은 client_userid(=school_no=학번)를 liid로 0채움 저장하므로 같은 길로 나온다. 둘 다 없으면 "" → 옛 세션 경로. */
+export function kyoboIdFromSession(row: { liid?: string | null; hakbun?: string | null } | null): string {
+  if (!row) return "";
+  const l = String(row.liid || "").split(";")[0].replace(/^0+/, "");
+  if (/^\d+$/.test(l)) return l;
+  const h = String(row.hakbun || "");
+  return /^\d{5,}$/.test(h) ? h : "";
+}
+
+/** 뷰어 진입 링크(규격 1.7). PC: viewIf.ink는 스스로 팝업을 또 열어 차단되므로 앱이 선택화면(viewIfChoice)에 폼 POST로 들어간다(8/25·10/2 실측).
+ *  폰: mobileViewIf.ink(user_id BASE64 + device). YES24 책도 같은 창구(규격 주석). */
+export function kyoboViewerLinks(userId: string, brcd: string, mobile: boolean, ua: string) {
+  if (mobile) {
+    const device = /ipad/i.test(ua) ? "ipad" : /iphone|ipod/i.test(ua) ? "ios" : "android";
+    return { viewerUrl: `${EB}/frontapi/mobileViewIf.ink?libraryCode=${LBRY}&barcode=${encodeURIComponent(brcd)}&user_id=${encodeURIComponent(btoa(userId))}&device=${device}`, viewerPost: null as null | { url: string; fields: Record<string, string> } };
+  }
+  return {
+    viewerUrl: `${EB}/frontapi/viewIf.ink?libraryCode=${LBRY}&user_id=${encodeURIComponent(userId)}&barcode=${encodeURIComponent(brcd)}`,
+    viewerPost: { url: `${EB}/frontapi/viewIfChoice.ink`, fields: { libraryCode: LBRY, user_id: userId, barcode: brcd } },
+  };
 }
 /** 도서관 문장이 비어 있을 때 쓸 우리말 — 규격서 에러코드 정의표(52종) 중 학생이 만날 만한 것만 */
 export const KYOBO_MSG: Record<string, string> = {

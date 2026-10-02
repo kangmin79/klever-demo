@@ -46,7 +46,7 @@ export async function verifySsoToken(token: string): Promise<SsoSession | null> 
     if (!p || !s) return null;
     const payload = b64urlDecode(p);
     const key = await hmacKey();
-    const ok = await crypto.subtle.verify("HMAC", key, b64urlDecode(s), payload);
+    const ok = await crypto.subtle.verify("HMAC", key, b64urlDecode(s) as BufferSource, payload as BufferSource);   // Deno2 엄격 타입(ArrayBufferLike) 캐스트 — 동작 동일
     if (!ok) return null;
     const j = JSON.parse(new TextDecoder().decode(payload));
     if (!j.h || typeof j.e !== "number") return null;
