@@ -140,6 +140,39 @@ function newSlot(prefix){
   return s;
 }
 function _ntArea(){ const p=el('pg-make'); return (p && p.style.display!=='none') ? CHAL_AREA : curArea; }
+// 10/9 세명대(박주원) 요청 "도서관 홈페이지 편집기처럼 안내 카드에 이미지를": 공지 편집기와 같은 저장소(notice-images)에 올리고
+//   본문의 커서 자리에 그림 주소 한 줄을 넣는다. 학생 앱(mlNoticeBody)이 그 주소를 그림으로 그린다. 너비는 주소 뒤 #w=NN(%)
+function ntImgBar(taId, mode){
+  return `<div class="nt-imgbar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 2px;font-size:12px;color:var(--light)">
+    <button type="button" class="btn-ghost" style="padding:4px 10px" onclick="event.stopPropagation();ntInsertImage('${taId}','${mode}')">🖼 이미지 넣기</button>
+    <select id="${taId}_w" class="cur-inp" style="width:auto;padding:3px 8px;font-size:12px" onclick="event.stopPropagation()" title="그림 너비"><option value="100">전체 너비</option><option value="50">절반</option><option value="33">작게</option></select>
+    <span>· 커서 자리에 들어가요 · 5MB 이하</span></div>`;
+}
+function ntInsertImage(taId, mode){
+  const ta=el(taId); if(!ta) return;
+  let inp=el('ntImgFile');
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.id='ntImgFile'; inp.accept='image/*'; inp.style.display='none'; document.body.appendChild(inp); }
+  inp.value='';
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0]; if(!f) return;
+    if(!f.type.startsWith('image/')){ toast('이미지 파일만 넣을 수 있어요'); return; }
+    if(f.size>5*1024*1024){ toast('이미지는 5MB 이하만 가능해요'); return; }
+    toast('이미지 올리는 중…');
+    try{
+      const url=await rtUpload(f);   // 10-rich-text.js — 공지 편집기와 같은 업로드
+      const w=(el(taId+'_w')||{}).value||'100';
+      const line=url+(w!=='100'?'#w='+w:'');
+      const s=(ta.selectionStart==null?ta.value.length:ta.selectionStart), e=(ta.selectionEnd==null?s:ta.selectionEnd);
+      const before=ta.value.slice(0,s), after=ta.value.slice(e);
+      const nl=(before&&!before.endsWith('\n'))?'\n':'';
+      ta.value=before+nl+line+'\n'+after;
+      const pos=before.length+nl.length+line.length+1; ta.focus(); ta.selectionStart=ta.selectionEnd=pos;
+      if(mode==='draft') _ntSyncDraft(); else pvSync();
+      toast('이미지가 들어갔어요 — 등록을 눌러야 학생 앱에 반영돼요');
+    }catch(err){ toast('이미지 업로드 실패 — '+((err&&err.message)||'연결 확인')); }
+  };
+  inp.click();
+}
 function _ntRepaint(){ if(_ntArea()===CHAL_AREA) renderChalNotices(); else { renderSettings(); pvSync(); } }
 function _ntSyncDraft(){ const t=el('ntNewT'), b=el('ntNewB'); if(t)_ntDraft.title=t.value; if(b)_ntDraft.body=b.value; }
 function ntToggleForm(){ _ntSyncDraft(); _ntFormOpen=!_ntFormOpen; _ntRepaint();
@@ -194,6 +227,7 @@ function ntBarHTML(){
         <input class="cur-inp" id="ntNewT" value="${esc(_ntDraft.title)}" placeholder="예) 2026학년도 2학기 월별 우수독서 후기" oninput="_ntSyncDraft()">
         <div class="flabel" style="margin-top:11px">본문 <span style="font-weight:400;color:var(--light)">· 학생에게 보일 글 — 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
         <textarea class="cur-inp" id="ntNewB" rows="8" style="line-height:1.8" placeholder="1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="_ntSyncDraft()">${esc(_ntDraft.body)}</textarea>
+        ${ntImgBar('ntNewB','draft')}
         <div class="nt-form-f">
           <span class="nt-form-n">등록하면 <b>맨 위</b>에 생겨요 — 자리는 카드의 <b>▲ 위로 · ▼ 아래로</b>로 옮기세요.</span>
           <button class="btn-ghost" onclick="ntCancel()">취소</button>
@@ -562,11 +596,12 @@ function renderSettings(){
         </div>
         <div class="style-pick" id="stylegrid_${s.slot}" style="display:none">${STYLES.filter(o=>o[0]!=='rank'&&!NO_BOOK_STYLES.includes(o[0])).map(o=>`<div class="sp-card${s.style===o[0]?' on':''}" onclick="setSecStyle('${s.slot}','${o[0]}')" title="${esc(STYLE_DESC[o[0]]||'')}"><div class="sp-th">${styleThumb(o[0])}</div><div class="sp-nm">${esc(o[1])}</div></div>`).join('')}</div>`}`}
     ${isNotice
-      ? `<div class="flabel">본문 <span style="font-weight:400;color:var(--light)">· 학생에게 보일 글 — 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게 바뀝니다</span></div>
-         <textarea class="cur-inp" id="sec_s_${s.slot}" rows="7" style="line-height:1.8" placeholder="예) 2026학년도 2학기 월별 우수독서 후기&#10;&#10;1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="pvSync()">${esc(s.subtitle)}</textarea>`
+      ? `<div class="flabel">본문 <span style="font-weight:400;color:var(--light)">· 학생에게 보일 글 — 줄바꿈 그대로 나오고, 주소(http…)는 누를 수 있게, 이미지는 그림으로 나옵니다</span></div>
+         <textarea class="cur-inp" id="sec_s_${s.slot}" rows="7" style="line-height:1.8" placeholder="예) 2026학년도 2학기 월별 우수독서 후기&#10;&#10;1. 방법 : 매월 학술정보원 홈페이지 게시판에 제출한 독서 후기를 평가하여 포상&#10;2. 기간 : 2026. 9. 1. ~ 11. 30.&#10;&#10;보러가기 : https://lib.semyung.ac.kr/bbs/content/1_33953&#10;&#10;문의사항 : 043)649-7010" oninput="pvSync()">${esc(s.subtitle)}</textarea>
+         ${ntImgBar('sec_s_'+s.slot,'pv')}`
       : `<div class="flabel">부제 (선택)</div><input class="cur-inp" id="sec_s_${s.slot}" value="${esc(s.subtitle)}" oninput="pvSync()">`}
     ${isFix?`<div class="note" style="margin-top:12px">⚙ 자동 집계 — 책을 직접 담지 않습니다. ${vis?'지금 <b>우리 도서관에 노출 중</b>이에요.':'지금 <b>숨김</b> 상태 — 학생 앱에 안 보여요.'}</div>`
-      :isNotice?`<div class="note" style="margin-top:12px">📢 안내 카드 — 책을 담지 않습니다. 제목과 본문만 학생 앱에 그대로 나와요. 자리는 위의 <b>▲ 위로 · ▼ 아래로</b>로 옮기고, <b>등록</b>을 눌러야 학생 앱에 반영됩니다.</div>`
+      :isNotice?`<div class="note" style="margin-top:12px">📢 안내 카드 — 책을 담지 않습니다. 제목·본문(·이미지)이 학생 앱에 그대로 나와요. 자리는 위의 <b>▲ 위로 · ▼ 아래로</b>로 옮기고, <b>등록</b>을 눌러야 학생 앱에 반영됩니다.</div>`
       :`<div class="flabel">담긴 책 ${books.length}권</div>
         ${books.length?'':`<div class="deco-empty">아직 담은 책이 없어요. 비워두면 앱에서 <b>도서관 인기·추천 책</b>이 자동으로 채워집니다.</div>`}
         <div class="deco-list">${books.map((b,bi)=>{const _cv=b.cover||(b.id&&CLS_COVER[b.id])||'';return `<div class="deco-bk" title="${esc((b.title||b.t||'')+' · '+(b.author||b.a||''))}">

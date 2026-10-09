@@ -247,6 +247,7 @@ body.dark .side-node .icon{color:var(--gold);}
 .ml-nt-t{font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--text);line-height:1.35;}
 .ml-nt-b{font-size:14.5px;line-height:1.9;color:var(--text-sub);margin-top:10px;white-space:pre-wrap;word-break:break-word;max-width:760px;}
 .ml-nt-b a{color:var(--primary);font-weight:700;text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
+.ml-nt-b img.ml-nt-img{display:block;max-width:100%;height:auto;border-radius:10px;margin:10px 0;}   /* 10/9 안내 카드 이미지(세명대 요청) */
 @media(max-width:640px){.ml-nt-t{font-size:18px;}.ml-nt-b{font-size:13.5px;line-height:1.85;}}
 .ml-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
 .ml-h-t{font-family:Georgia,'Noto Serif KR',serif;font-size:22px;font-weight:700;letter-spacing:-.3px;color:var(--text);}

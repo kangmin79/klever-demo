@@ -229,9 +229,15 @@ function mlcv(cls,b){return `<div class="${cls}">${lcCvHTML(b)}</div>`;}   /* �
 function mlHead(t,s){return `<div class="ml-head"><div><div class="ml-h-t">${esc(t)}</div>${s?`<div class="ml-h-s">${esc(s)}</div>`:''}</div></div>`;}/* 2026-06-21: 제목 옆 장식용 › (ml-h-x) 삭제 — 기능 없이 떠 있어 어색 */
 /* 8/29 안내 카드 — 사서가 적은 글을 그대로 보여준다(줄바꿈 유지). 본문 속 주소는 자동으로 누를 수 있게 바뀐다.
    먼저 esc()로 전부 막은 뒤 주소만 링크로 되살리므로, 사서가 무엇을 적어도 화면이 깨지거나 스크립트가 끼어들 수 없다. */
+// 10/9 세명대(박주원) 요청: 안내 카드에 이미지 — 관리자가 '이미지 넣기'로 올린 그림 주소(notice-images 버킷, 또는 이미지 확장자)는
+//   링크가 아니라 그림으로 그린다. 주소 뒤 #w=NN 은 너비(%) — 관리자의 전체/절반/작게 선택
+const NT_IMG_RE=/(\/storage\/v1\/object\/public\/notice-images\/|\.(png|jpe?g|gif|webp)(\?[^#\s]*)?$)/i;
 function mlNoticeBody(text){
-  return esc(String(text||'')).replace(/https?:\/\/[^\s<]+[^\s<.,)\]}"']/g,
-    u=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+  return esc(String(text||'')).replace(/https?:\/\/[^\s<]+[^\s<.,)\]}"']/g, u=>{
+    const m=/^(.*?)(?:#w=(\d{2,3}))?$/.exec(u); const base=m?m[1]:u, w=(m&&m[2])?Math.min(100,Math.max(10,+m[2])):0;
+    if(NT_IMG_RE.test(base)) return `<img class="ml-nt-img" src="${base}" alt="" loading="lazy"${w&&w<100?` style="width:${w}%"`:''}>`;
+    return `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`;
+  });
 }
 function mlNotice(t,s){
   const body=mlNoticeBody(s);
