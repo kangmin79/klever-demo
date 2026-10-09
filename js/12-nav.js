@@ -159,7 +159,7 @@ async function loadChalCards(){
     CHAL_PUB=rows.filter(x=>(x.type||'').includes('챌린지')).map(x=>({
       id:x.id,type:x.type,title:x.title,intro:x.intro||'',from:x.start_date||'',to:x.end_date||'',featured:!!x.featured,
       style:x.style||'row',
-      mission:x.mission||null,books:(x.books||[]).map(b=>Object.assign({id:b.id||'',t:b.title,a:b.author||'',cover:_gbCover(b),isbn:b.isbn,
+      mission:x.mission||null,books:(x.books||[]).map(b=>Object.assign({id:b.id||'',t:b.title,a:b.author||'',cover:_gbCover(b),isbn:b.isbn?normIsbnKey(b.isbn):b.isbn,
         tags:(!b.isbn&&/^(gb|kr)-/.test(b.id||''))?['cls']:undefined},_keepForm(b)))}));
     await chalResolveFormats();
     const _fi=CHAL_PUB.findIndex(c=>c.featured); if(_fi>0) CHAL_PUB.unshift(CHAL_PUB.splice(_fi,1)[0]);   // 사서가 지정한 '이달의 챌린지'(featured)를 맨 앞으로 → 히어로. 미지정이면 최신순 그대로
@@ -173,17 +173,35 @@ async function loadChalCards(){
 // 관리자가 저장한 소장 표식(tags·_pp·lib·_sm…)을 앱 책 객체로 옮긴다 — 8/22: 이걸 버려서 소장 책 71권이 "우리 도서관에서 찾기"(외부책)로 보였다
 const _FORM_KEYS=['tags','_pp','lib','_sm','paperStatus','crema','cremaUrl'];
 function _keepForm(b){ const o={}; if(b) for(const k of _FORM_KEYS) if(b[k]!==undefined) o[k]=b[k]; return o; }
+// 10/9 세명대(박주원) 문의 "일부 책이 '우리 도서관에서 찾기'로만 나온다": ISBN 뒤에 기호가 붙어 저장되거나(9791170614043:)
+//   ISBN-10(899168419X — 장서는 이 형식 그대로 보관)이면 장서 조회 정규식(\d{10,13})이 거부해 소장 표식이 안 붙었다.
+//   → 키 정규화: 숫자·X만 남기고 대문자 X. 'sm-' 키(세명대 바코드·CATTOT)는 그대로.
+const ISBN_RE=/^(\d{9}[\dX]|\d{13})$/;
+function normIsbnKey(s){ s=String(s||'').trim(); if(/^sm-/.test(s)) return s; const k=s.replace(/[^0-9Xx]/g,'').toUpperCase(); return ISBN_RE.test(k)?k:s; }
 // 챌린지 책 소장 표식 안전망(8/22 확장): 맨 ISBN인데 표식이 없으면 장서에서 종이(ctrl→CATTOT)·전자책(viewer_url) 링크까지 채운다.
 //   장서에 없으면 그 책은 챌린지 카드에서 뺀다(미소장은 선반에 못 올린다 — 관리자 저장 관문 fillHeld와 같은 규칙, 옛 데이터 대비 2중 방어)
 async function chalResolveFormats(){
-  const want=new Set();
-  CHAL_PUB.forEach(c=>(c.books||[]).forEach(b=>{ if((!b.tags||(!b._pp&&!b.lib)) && /^\d{10,13}$/.test(String(b.isbn||''))) want.add(String(b.isbn)); }));
+  const want=new Set(), wantBc=new Set(), wantCt=new Set();
+  CHAL_PUB.forEach(c=>(c.books||[]).forEach(b=>{ const k=String(b.isbn||''); let m;
+    if((!b.tags||(!b._pp&&!b.lib)) && ISBN_RE.test(k)) want.add(k);
+    // 10/9: 세명대 키로 담긴 책(sm-바코드=전자책 / sm-CATTOT=종이책)도 링크가 없으면 장서에서 채운다 — 예전엔 맨 ISBN만 처리해 "찾기"로 떨어졌다
+    else if((m=/^sm-CATTOT(\d+)$/.exec(k)) && !b._pp) wantCt.add(m[1]);
+    else if((m=/^sm-(\d+)$/.exec(k)) && !b.lib) wantBc.add(m[1]);
+  }));
+  const inList=a=>a.map(x=>'"'+x+'"').join(',');
+  const byBc={}, byCt={};
+  for(const arr=[...wantBc]; arr.length; ){ const part=arr.splice(0,100); try{ const r=await sbGet(`/semyung_tulip?select=barcode,viewer_url&barcode=in.(${inList(part)})&limit=200`); if(r.ok) for(const row of await r.json()) byBc[row.barcode]=row; }catch(e){} }
+  for(const arr=[...wantCt]; arr.length; ){ const part=arr.splice(0,100); try{ const r=await sbGet(`/semyung_tulip?select=ctrl&ctrl=in.(${inList(part)})&limit=200`); if(r.ok) for(const row of await r.json()) byCt[row.ctrl]=row; }catch(e){} }
+  CHAL_PUB.forEach(c=>(c.books||[]).forEach(b=>{ const k=String(b.isbn||''); let m;
+    if((m=/^sm-CATTOT(\d+)$/.exec(k)) && !b._pp && byCt[m[1]]){ b._pp='https://lib.semyung.ac.kr/search/detail/CATTOT'+m[1]; b.tags=[...new Set([...(b.tags||[]),'paper'])]; }
+    else if((m=/^sm-(\d+)$/.exec(k)) && !b.lib && byBc[m[1]]){ b.lib=byBc[m[1]].viewer_url||('https://ebook.semyung.ac.kr/elibrary-front/content/contentView.ink?cttsDvsnCode=001&lbryCode=20213&brcd='+m[1]); b._sm=true; b.tags=[...new Set([...(b.tags||[]),'ebook'])]; }
+  }));
   if(!want.size) return;
   const byIsbn={};
   const arr=[...want];
   for(let i=0;i<arr.length;i+=100){
     try{
-      const r=await sbGet(`/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${arr.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=400`);
+      const r=await sbGet(`/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${inList(arr.slice(i,i+100))})&limit=400`);
       if(!r.ok) continue;
       for(const row of await r.json()){ (byIsbn[row.isbn]=byIsbn[row.isbn]||[]).push(row); }
     }catch(e){}

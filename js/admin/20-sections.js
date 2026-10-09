@@ -454,8 +454,12 @@ function pvSync(){
 //   → 학생 앱에서 소장 책(71권)이 "우리 도서관에서 찾기"(외부책)로 보였다. 사장님 지적 "세명대에 없는 책이 또 나온다".
 // 규칙: 맨 ISBN인데 소장 표식(_pp·lib)이 없으면 장서(semyung_tulip)에서 채우고, 장서에 없으면 저장을 막는다(미소장은 선반에 못 올린다).
 // 8/29 리뷰 F7/B3: 장서 조회가 실패하면 예전엔 조용히 "전부 미소장"이 되어 사서가 멀쩡한 책을 빼게 했다 → 실패는 throw(호출부가 "연결 문제"로 안내)
+// 10/9 세명대 문의: ISBN 뒤 기호(9791170614043:)·ISBN-10(899168419X)은 아래 정규식이 거부해 소장 표식 없이 저장됐다 → 저장 직전 정규화
+const _ISBN_RE=/^(\d{9}[\dX]|\d{13})$/;
+function _normIsbn(s){ s=String(s||'').trim(); if(/^sm-/.test(s)) return s; const k=s.replace(/[^0-9Xx]/g,'').toUpperCase(); return _ISBN_RE.test(k)?k:s; }
 async function fillHeld(books){
-  const need=[...new Set((books||[]).map(b=>String(b.isbn||'')).filter(i=>/^\d{10,13}$/.test(i)))];
+  for(const b of (books||[])) if(b.isbn) b.isbn=_normIsbn(b.isbn);
+  const need=[...new Set((books||[]).map(b=>String(b.isbn||'')).filter(i=>_ISBN_RE.test(i)))];
   const map={};
   for(let i=0;i<need.length;i+=100){
     const r=await sbGetAnon(`/semyung_tulip?select=isbn,kind,ctrl,viewer_url&isbn=in.(${need.slice(i,i+100).map(x=>'"'+x+'"').join(',')})&limit=500`);
@@ -464,7 +468,7 @@ async function fillHeld(books){
   }
   const missing=[];
   for(const b of (books||[])){
-    const isbn=String(b.isbn||''); if(!/^\d{10,13}$/.test(isbn)) continue;
+    const isbn=String(b.isbn||''); if(!_ISBN_RE.test(isbn)) continue;
     const hits=map[isbn]||[];
     if(!hits.length){ if(!b._pp&&!b.lib) missing.push(b.title||b.t||isbn); continue; }
     const tags=new Set(b.tags||[]);
