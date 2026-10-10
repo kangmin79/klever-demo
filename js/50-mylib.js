@@ -151,13 +151,31 @@ const WR_ICON={oneline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
 const WR_DESC={oneline:'읽고 느낀 생각을 한 줄로',question:'책에 던지고 싶은 질문을 한 줄로',review:'이 책을 남에게 소개하는 글',essay:'읽고 난 내 생각을 쓰는 글'};
 const WR_INTRO={review:['서평은 <b>책 이야기</b>예요.','읽을 사람을 위해 쓰는 글이에요. 이 책이 어떤 책인지, 어떤 점이 좋고 아쉬웠는지, 누구에게 권하고 싶은지를 씁니다. 줄거리를 다 옮기기보다 읽고 나서 내린 판단과 그 이유를 담아 보세요.'],
   essay:['독후감은 <b>내 이야기</b>예요.','나를 위해 쓰는 글이에요. 어떤 대목이 마음에 남았는지, 그때 무슨 생각이 들었는지, 내 경험과 어떻게 이어졌는지를 씁니다. 잘 쓰려고 애쓰기보다 솔직하게 쓰면 됩니다.']};
-function _mbHead(b,tag){ return `<div class="bm-mbook" style="margin-bottom:10px"><div class="cv" style="width:46px;height:64px">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span><br><span class="mb-tag">${tag||'내 책'}</span></div></div>`; }
+// 10/10 사장님 양식 개편: 서평·독후감 '간단히' = 질문 4개에 한 줄씩(서평·독후감 질문 다름). 저장은 한 글로 합쳐 같은 칸(review/essay)에.
+const WR_BRIEF_Q={
+  review:[['어떤 책인가요','무슨 이야기인지 간단히'],['어디가 가장 기억에 남나요','장면·대사·인물 무엇이든'],['이 책, 어땠나요','좋았든 아쉬웠든 한 문장이면 돼요'],['누구에게 추천하고 싶나요','떠오르는 사람이 있다면']],
+  essay:[['이 책을 어떻게 읽게 되었나요','우연히 집었어도 괜찮아요'],['읽으면서 가장 기억에 남는 부분은요','장면·대사·인물 무엇이든'],['그 장면에서 떠오른 생각이나 경험이 있나요','사소한 것이라도 좋아요'],['다 읽고 난 지금, 어떤 느낌이 드나요','마음에 남은 대로']],
+};
+// 네 줄 ↔ 한 글: "1. 질문 — 답" 줄 4개로 합치고, 다시 열 때는 그 모양이면 네 칸으로 되돌린다(아니면 '자세히' 글)
+function wrBriefJoin(k, answers){ const qs=WR_BRIEF_Q[k]||[]; return qs.map((q,i)=>`${i+1}. ${q[0]} — ${String(answers[i]||'').trim()}`).join('\n'); }
+function wrBriefParse(k, text){
+  const qs=WR_BRIEF_Q[k]||[]; const lines=String(text||'').split('\n'); if(lines.length<qs.length) return null;
+  const out=[]; for(let i=0;i<qs.length;i++){ const m=new RegExp('^'+(i+1)+'\\.\\s'+qs[i][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s—\\s?([\\s\\S]*)$').exec(lines[i]||''); if(!m) return null; out.push(m[1].trim()); }
+  return out;
+}
+function _mbHead(b,tag){ return `<div class="bm-mbook" style="margin-bottom:10px;position:relative"><div class="cv" style="width:46px;height:64px">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span><br><span class="mb-tag">${tag||'내 책'}</span></div><button class="bm-x" type="button" onclick="bmCloseModal()" title="닫기">×</button></div>`; }   // 10/10 사장님: 창 닫기 버튼
 function mbMenu(id,opt){
   opt=opt||{}; if(opt.book){ _mbExtra[String(opt.book.id)]=opt.book; }
   const b=_anyBook(id); if(!b){ bmToast('책 정보를 찾지 못했어요'); return; }
   const keys=opt.only||['oneline','question','review','essay'];
   const chArg=opt.chId?`'${esc(String(opt.chId))}'`:'null';
-  const items=CH_MISSIONS.filter(x=>x.kind==='write'&&keys.indexOf(x.k)>=0).map(x=>`<div class="mb-mi" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg})"><span class="ic">${WR_ICON[x.k]}</span><div><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}</span></div><i>›</i></div>`).join('');
+  const items=CH_MISSIONS.filter(x=>x.kind==='write'&&keys.indexOf(x.k)>=0).map(x=>{
+    if(x.k==='review'||x.k==='essay'){   // 10/10: 줄 자체는 안 눌리고, 아래 두 버튼으로 들어간다
+      return `<div class="mb-mi mb-mi-forms"><span class="ic">${WR_ICON[x.k]}</span><div style="flex:1;min-width:0"><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}</span>
+        <div class="mb-forms"><button type="button" class="mb-form on" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg},'brief')">간단히<small>네 줄로 짧게</small></button><button type="button" class="mb-form" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg},'full')">자세히<small>${x.min}자 이상</small></button></div></div></div>`;
+    }
+    return `<div class="mb-mi" onclick="wrOpen('${esc(b.id)}','${x.k}',${chArg})"><span class="ic">${WR_ICON[x.k]}</span><div><b>${x.t.replace(' 쓰기','')}</b><span>${WR_DESC[x.k]}</span></div><i>›</i></div>`;
+  }).join('');
   const extra=opt.chId?'':`<div class="mb-sep"></div>
     <div class="mb-mi sm" onclick="openAddShelf('${esc(b.id)}')"><span class="ic">${IC_PLUS}</span><div><b>책장에 담기</b></div><i>›</i></div>
     <div class="mb-mi sm" onclick="openLifeModal('${esc(b.id)}')"><span class="ic">${IC_STAR_SM}</span><div><b>인생책으로</b></div><i>›</i></div>
@@ -168,10 +186,10 @@ function mbMenu(id,opt){
    8/29 별 포인트 폐지 — 챌린지 글·상시 글 모두 저장만 한다. ── */
 let _wr=null;
 function _wrDraftKey(){ return `bookstar-draft-${_bxSid()}-${_wr.k}-${_wr.bookId}`; }
-async function wrOpen(bookId,k,chId){
+async function wrOpen(bookId,k,chId,form){
   const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
   const b=_anyBook(bookId); const def=CH_MISSIONS.find(x=>x.k===k); if(!b||!def) return;
-  _wr={bookId:String(bookId),k,chId:chId||null,b,def};
+  _wr={bookId:String(bookId),k,chId:chId||null,b,def,form:''};
   const enc=encodeURIComponent(s.id);
   let prev=null; try{ const rows=await _agFetch(`bookstar_writings?student_id=eq.${enc}&book_id=eq.${encodeURIComponent(bookId)}&activity=eq.${k}&select=text,is_public,challenge_id`); prev=(rows&&rows[0])||null; }catch(e){}
   let draft=''; try{ draft=localStorage.getItem(_wrDraftKey())||''; }catch(e){}
@@ -187,28 +205,61 @@ async function wrOpen(bookId,k,chId){
       <button class="bm-btn fill wr-go" id="wrGo" onclick="wrSubmit()" ${text.trim().length<def.min?'disabled':''}>${prev?'수정해서 올리기':'올리기'}</button>
       <div class="wr-back" onclick="mbMenu('${esc(bookId)}'${backArg})">← 뒤로</div>`);
   } else {
+    // 10/10: 양식 결정 — 버튼으로 고른 게 있으면 그것, 없으면 저장된 글이 네 줄 모양이면 '간단히', 아니면 '자세히'
+    const parsed=wrBriefParse(k, text);
+    const useBrief = form ? form==='brief' : !!parsed;
+    _wr.form = useBrief ? 'brief' : 'full';
     const intro=WR_INTRO[k];
-    _bmModal(`<div class="wr-long">
-      <div class="wr-lh"><div><div class="wr-lt">${def.t}</div><div class="wr-ls">${esc(b.title)} · ${esc(b.author||'')}</div></div><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>
-      <div class="wr-intro"><div class="wr-it">${intro[0]}</div><div>${intro[1]}</div></div>
-      <textarea id="wrTa" placeholder="여기에 글을 써 보세요." oninput="wrCount()">${esc(text)}</textarea>
-      <div class="wr-foot"><span id="wrCnt"><b>${text.length}</b>자 / 최소 ${def.min}자</span>${pubChk}<span style="flex:1"></span><button class="bm-btn" onclick="wrSaveDraft()">저장</button><button class="bm-btn fill" id="wrGo" onclick="wrSubmit()" ${text.trim().length<def.min?'disabled':''}>${prev?'수정해서 올리기':'올리기'}</button></div>
-    </div>`);
+    const head=`<div class="wr-lh"><div><div class="wr-lt">${def.t}<span class="wr-form-tag">${useBrief?'간단히 · 네 줄':'자세히 · '+def.min+'자 이상'}</span></div><div class="wr-ls">${esc(b.title)} · ${esc(b.author||'')}</div></div><button class="bm-btn" onclick="bmCloseModal()">닫기</button></div>`;
+    const sw=useBrief
+      ? `<div class="wr-switch" onclick="wrOpen('${esc(bookId)}','${k}',${chId?`'${esc(String(chId))}'`:'null'},'full')">길게 쓰고 싶으면 → 자세히(${def.min}자 이상)로</div>`
+      : `<div class="wr-switch" onclick="wrOpen('${esc(bookId)}','${k}',${chId?`'${esc(String(chId))}'`:'null'},'brief')">짧게 쓰고 싶으면 → 간단히(네 줄)로</div>`;
+    if(useBrief){
+      const ans=parsed||['','','',''];
+      const qs=WR_BRIEF_Q[k];
+      _bmModal(`<div class="wr-long">${head}
+        <div class="wr-brief">${qs.map((q,i)=>`<div class="wr-bq"><b>${i+1} · ${q[0]}</b><span>${q[1]}</span><textarea class="wr-ba" data-i="${i}" rows="2" placeholder="한 줄이면 돼요" oninput="wrCount()">${esc(ans[i]||'')}</textarea></div>`).join('')}</div>
+        ${sw}
+        <div class="wr-foot"><span id="wrCnt"></span>${pubChk}<span style="flex:1"></span><button class="bm-btn" onclick="wrSaveDraft()">저장</button><button class="bm-btn fill" id="wrGo" onclick="wrSubmit()" disabled>${prev?'수정해서 올리기':'올리기'}</button></div>
+      </div>`);
+    } else {
+      const full = parsed ? '' : text;   // 네 줄 글을 '자세히'로 열면 빈 칸에서 시작(양식이 다르므로 섞지 않음)
+      _bmModal(`<div class="wr-long">${head}
+        <div class="wr-intro"><div class="wr-it">${intro[0]}</div><div>${intro[1]}</div></div>
+        <textarea id="wrTa" placeholder="여기에 글을 써 보세요." oninput="wrCount()">${esc(full)}</textarea>
+        ${sw}
+        <div class="wr-foot"><span id="wrCnt"><b>${full.length}</b>자 / 최소 ${def.min}자</span>${pubChk}<span style="flex:1"></span><button class="bm-btn" onclick="wrSaveDraft()">저장</button><button class="bm-btn fill" id="wrGo" onclick="wrSubmit()" ${full.trim().length<def.min?'disabled':''}>${prev?'수정해서 올리기':'올리기'}</button></div>
+      </div>`);
+    }
     const m=document.querySelector('#bmOv .bm-modal'); if(m) m.classList.add('wide');
+    if(useBrief){ wrCount(); const first=document.querySelector('.wr-ba'); if(first) setTimeout(()=>first.focus(),30);
+      if(!prev) document.querySelectorAll('.wr-ba').forEach(t=>t.addEventListener('input',()=>{ try{ localStorage.setItem(_wrDraftKey(), wrBriefJoin(_wr.k, _wrBriefAnswers())); }catch(e){} })); }
   }
   const ta=document.getElementById('wrTa'); if(ta){ ta.addEventListener('input',wrCount); if(!prev) ta.addEventListener('input',()=>{ try{ localStorage.setItem(_wrDraftKey(), ta.value); }catch(e){} }); setTimeout(()=>ta.focus(),30); }
 }
+function _wrBriefAnswers(){ return [...document.querySelectorAll('.wr-ba')].map(t=>t.value); }
+// 네 줄 양식의 완성 기준: 네 칸 모두 2자 이상 (글자 수 최소치는 없음 — 질문에 한 줄씩이 양식)
+function _wrBriefDone(ans){ return ans.length===4 && ans.every(a=>String(a||'').trim().length>=2); }
 function wrCount(){
-  if(!_wr) return; const ta=document.getElementById('wrTa'), c=document.getElementById('wrCnt'), go=document.getElementById('wrGo'); if(!ta) return;
+  if(!_wr) return; const c=document.getElementById('wrCnt'), go=document.getElementById('wrGo');
+  if(_wr.form==='brief'){ const ans=_wrBriefAnswers(); const n=ans.filter(a=>String(a||'').trim().length>=2).length; if(c) c.innerHTML=`<b>${n}</b>/4줄`; if(go) go.disabled=!_wrBriefDone(ans); return; }
+  const ta=document.getElementById('wrTa'); if(!ta) return;
   const n=ta.value.length, long=(_wr.k==='review'||_wr.k==='essay');
   if(c) c.innerHTML=long?`<b>${n}</b>자 / 최소 ${_wr.def.min}자`:`${n}/120자`;
   if(go) go.disabled=ta.value.trim().length<_wr.def.min;
 }
-function wrSaveDraft(){ const ta=document.getElementById('wrTa'); if(!ta||!_wr) return; try{ localStorage.setItem(_wrDraftKey(), ta.value); }catch(e){} bmToast('임시 저장했어요 (이 기기에만 남아요)'); }
+function wrSaveDraft(){
+  if(!_wr) return;
+  const v=_wr.form==='brief' ? wrBriefJoin(_wr.k,_wrBriefAnswers()) : ((document.getElementById('wrTa')||{}).value||'');
+  try{ localStorage.setItem(_wrDraftKey(), v); }catch(e){} bmToast('임시 저장했어요 (이 기기에만 남아요)');
+}
 async function wrSubmit(){
   if(!_wr) return; const s=bxStudent(); if(!s){ bxOpenPicker(); return; }
-  const ta=document.getElementById('wrTa'); const v=((ta&&ta.value)||'').trim();
-  const chk=bxWriteCheck(v,_wr.k,_wr.def.min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복)
+  const brief=_wr.form==='brief';
+  const ta=document.getElementById('wrTa');
+  if(brief && !_wrBriefDone(_wrBriefAnswers())){ bmToast('네 칸을 모두 채워 주세요'); return; }
+  const v=brief ? wrBriefJoin(_wr.k,_wrBriefAnswers()) : ((ta&&ta.value)||'').trim();
+  const chk=bxWriteCheck(v,_wr.k,brief?0:_wr.def.min);   // 측정 설계 §4 자동 미인정(글자수·연락처/링크·반복). 네 줄 양식은 글자수 대신 네 칸 완성이 기준
   if(!chk.ok){ bmToast(chk.msg); if(ta) ta.focus(); return; }
   const pub=!!(document.getElementById('wrPub')&&document.getElementById('wrPub').checked);
   const go=document.getElementById('wrGo'); if(go) go.disabled=true;

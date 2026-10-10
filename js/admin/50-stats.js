@@ -210,7 +210,7 @@ function chBuildMatrix(d){
   rows.forEach(r=>{ const s=byStu[r.student_id]||(byStu[r.student_id]={books:{},first:null});
     const k=bkey(r.book_id); const bb=s.books[k]||(s.books[k]={acts:{},at:null,text:[]});
     // 8/29 리뷰 F-14: 화면이 약속한 "글자 수 미달은 미완료"를 실제로 적용 — 피드관리의 미인정 기준(WR_MIN)과 같은 잣대
-    const _min=WR_MIN[r.act]; const _short=!!(_min && String(r.text||'').trim().length<_min);
+    const _short=wrIsShort(r.act, r.text);
     if(!_short) bb.acts[r.act]=true;
     if(r.text&&r.act!=='quiz') bb.text.push(_short?('[글자 수 미달] '+r.text):r.text); if(r.act==='quiz'&&r.text) bb.text.unshift('퀴즈 '+r.text);
     const at=kstDay(r.at); if(at&&(!bb.at||at>bb.at)) bb.at=at; if(at&&(!s.first||at<s.first)) s.first=at; });
@@ -241,7 +241,10 @@ async function chFixedExcel(id){
    8/17 시안: 여기는 챌린지 밖에서 쓴 글만(challenge_id 없는 bookstar_writings + reviews 독자 서평). 챌린지 글은 「챌린지 통계」 상세 엑셀에서. */
 let FEEDV=null, FEED_FAILED=false;   // WRITINGS 선언은 위 '학생 글' 구역
 let _wrSeq=0;     // 기간을 연달아 바꿔도 마지막 응답만 화면에(경합 방지)
-const WR_MIN={oneline:5,question:5,review:300,essay:800,rv:100};   // 학생 앱 CH_MISSIONS min 과 동일. rv(독자 서평)=학생 앱 100자 기준(8/29 리뷰 W6). 글자 수 미달 = 미인정
+const WR_MIN={oneline:5,question:5,review:500,essay:500,rv:100};   // 학생 앱 CH_MISSIONS min 과 동일(10/10 서평·독후감 '자세히' 500). rv(독자 서평)=학생 앱 100자 기준(8/29 리뷰 W6). 글자 수 미달 = 미인정
+// 10/10 양식 개편: 서평·독후감 '간단히'(질문 4개에 한 줄씩, "1. 질문 — 답" 네 줄)는 글자 수 대신 네 줄 완성이 기준 → 미달로 치지 않는다
+const WR_BRIEF_RE=/^1\. .+ — .{2,}\n2\. .+ — .{2,}\n3\. .+ — .{2,}\n4\. .+ — .{2,}/;
+function wrIsShort(act,text){ const t=String(text||'').trim(); const min=WR_MIN[act]; if(!min) return false; if((act==='review'||act==='essay')&&WR_BRIEF_RE.test(t)) return false; return t.length<min; }
 // 8/29 리뷰 W1: 서버 시각은 세계표준시(…T16:00Z) — 그대로 자르면 자정~오전 9시 글이 전날로 찍힌다. 한국시간 날짜로.
 function kstDay(iso){ if(!iso) return ''; const d=new Date(iso); if(isNaN(d)) return String(iso).slice(0,10); return new Date(d.getTime()+9*3600*1000).toISOString().slice(0,10); }
 // 8/29 리뷰 W2: 조회에 개수 제한이 없으면 서버 상한(1,000)에서 조용히 잘린다 → 1,000건씩 끝까지 이어 받는다
@@ -285,7 +288,7 @@ async function loadWritings(){
   return !failed;
 }
 const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
-const wrShort=w=>{ const min=WR_MIN[w.activity]; return !!(min && String(w.text||'').trim().length<min); };   // 글자 수 미달(미인정)
+const wrShort=w=>wrIsShort(w.activity, w.text);   // 글자 수 미달(미인정) — 네 줄 양식은 인정
 function bookTitleOf(id){ id=String(id||'');
   try{ if(/^gb-/.test(id)&&typeof CLASSICS_KO!=='undefined'&&CLASSICS_KO[id]) return CLASSICS_KO[id]; }catch(e){}
   try{ if(/^kr-/.test(id)&&typeof BOOKS_CLASSICS_KR!=='undefined'){ const b=BOOKS_CLASSICS_KR.find(x=>x.id===id); if(b&&b.title) return b.title; } }catch(e){}

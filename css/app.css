@@ -1799,6 +1799,20 @@ body.dark .bm-toast{color:#0f172a;}
 .mb-mi b{display:block;font-size:15px;} .mb-mi span:not(.ic){font-size:12px;color:var(--text-light);}
 .mb-mi i{margin-left:auto;color:var(--text-light);font-style:normal;}
 .mb-mi.sm{padding:10px 4px;} .mb-mi.sm b{font-size:13.5px;} .mb-mi.sm .ic{width:28px;height:28px;}
+/* 10/10 사장님 양식 개편 — 서평·독후감 줄의 '간단히/자세히' 두 버튼, 메뉴 × 닫기, 네 줄 입력 양식 */
+.mb-mi.mb-mi-forms{cursor:default;align-items:flex-start;} .mb-mi.mb-mi-forms:hover b{color:inherit;}
+.mb-forms{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;}
+.mb-form{font-family:inherit;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:10px;padding:8px 6px;cursor:pointer;font-size:13px;font-weight:800;line-height:1.2;}
+.mb-form small{display:block;font-weight:600;font-size:11px;color:var(--text-light);margin-top:2px;}
+.mb-form.on{background:var(--primary-bg);border-color:color-mix(in srgb,var(--primary) 45%,transparent);color:var(--primary);} .mb-form.on small{color:var(--primary);}
+.mb-form:hover{border-color:var(--primary);}
+.bm-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-sub);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.bm-x:hover{color:var(--text);border-color:var(--gold);}
+.wr-form-tag{display:inline-block;margin-left:8px;font-size:11.5px;font-weight:700;color:var(--primary);background:var(--primary-bg);border-radius:6px;padding:2px 7px;vertical-align:middle;}
+.wr-brief{display:flex;flex-direction:column;gap:12px;}
+.wr-bq b{display:block;font-size:14px;color:var(--text);} .wr-bq span{display:block;font-size:12px;color:var(--text-light);margin:2px 0 6px;}
+.wr-long textarea.wr-ba{flex:none;min-height:0;height:auto;resize:none;line-height:1.6;font-size:14px;}
+.wr-switch{font-size:12.5px;color:var(--primary);font-weight:700;cursor:pointer;margin-top:10px;text-decoration:underline;text-underline-offset:2px;}
 .mb-mi.danger .ic{background:rgba(220,38,38,.08);color:#dc2626;} .mb-mi.danger b{color:#dc2626;}
 .mb-sep{height:6px;}
 .wr-foot{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-light);margin-top:8px;flex-wrap:wrap;}

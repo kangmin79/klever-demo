@@ -3,8 +3,8 @@ const CH_MISSIONS=[
   {k:'quiz',t:'퀴즈 풀기',s:'책마다 퀴즈 10문항'},
   {k:'oneline',t:'한 줄 소감',s:'짧은 감상 한 줄'},
   {k:'question',t:'한 줄 질문',s:'책에 대한 질문 던지기'},
-  {k:'review',t:'서평 쓰기',s:'300자 이상으로 책에 대한 평을 작성'},
-  {k:'essay',t:'독후감 쓰기',s:'800자 이상으로 읽고 난 내 생각을 작성'},   // 8/21 사장님 요청: 독후감 미션 추가
+  {k:'review',t:'서평 쓰기',s:'간단히(질문 4개에 한 줄씩) 또는 자세히(500자 이상)'},   // 10/10 양식 개편
+  {k:'essay',t:'독후감 쓰기',s:'간단히(질문 4개에 한 줄씩) 또는 자세히(500자 이상)'},   // 8/21 사장님 요청: 독후감 미션 추가
 ];
 const _CH_MISS_KEYS=CH_MISSIONS.map(x=>x.k);
 function chalMissClean(m,type){   // DB 미션에서 폐지된 키 제거(underline/recommend/cert) — 5종 + autoJoin 유지
