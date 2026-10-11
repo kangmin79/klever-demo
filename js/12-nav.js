@@ -86,6 +86,9 @@ function nav(page){
   if(page === 'curation') {
     setTimeout(()=>loadChalCards(), 30);
   }
+  if(page === 'search') {   // 10/11: 검색어 없이 열면 카테고리 격자(키워드 탭)
+    setTimeout(()=>{ try{ const inp=document.getElementById('usSearchInput'); if(typeof usHome==='function' && US_MODE==='kw' && !(inp&&inp.value.trim())) usHome(); }catch(e){} }, 30);
+  }
   if(page === 'mychal') {
     // 자동 참여 챌린지가 독서 챌린지 탭을 안 거쳐도 들어오도록, 목록이 비어 있으면 먼저 로드
     setTimeout(async()=>{ if(!CHAL_PUB.length){ try{ await loadChalCards(); }catch(e){} } renderChalGroup(); }, 30);

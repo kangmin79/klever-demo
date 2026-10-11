@@ -23,6 +23,8 @@ function bookTypeTag(b, kind){
 function setSearchMode(m){
   US_MODE=m;
   document.querySelectorAll('#page-search .subtab').forEach(t=>t.classList.toggle('active', t.dataset.smode===m));
+  // 10/11 사장님 시안: 별이(AI 추천) 탭은 소개가 위, 입력창이 아래(밀리의 서재 AI 검색처럼) — CSS가 .nl 로 자리를 바꾼다
+  const pg=document.getElementById('page-search'); if(pg) pg.classList.toggle('nl', m==='nl');
   const inp=document.getElementById('usSearchInput');
   inp.placeholder = (m==='nl')
     ? "별이에게 말하듯 물어보세요 — 예: 요즘 지쳐서 위로받고 싶어"
@@ -31,11 +33,100 @@ function setSearchMode(m){
   chips.style.display='none';   // 예시칩은 대화 스레드 안(별이 인사)에 표시
   document.getElementById('usResults').innerHTML='';
   if(m==='nl'){
-    inp.placeholder="별이에게 말하듯 답해보세요";
+    inp.placeholder="어떤 책을 읽고 싶으세요?";
     usChatReset();              // 대화형 별이 시작(인사 + 예시 빠른답변)
   } else if(inp.value.trim()){
     onUnifiedSearch(false);
+  } else {
+    usHome();                   // 10/11: 검색어 없을 땐 카테고리 격자
   }
+}
+
+/* ══ 10/11 사장님 시안(2안): 검색어 없을 때 밀리의 서재식 카테고리 격자 → 누르면 소주제 선반 ══
+   분류 기준 = 세명대 장서의 KDC 분류기호(class_no, 99.9% 채워짐). 각 소주제는 KDC 접두 묶음.
+   줄 안 순서 = 전자책 먼저(바로 읽을 수 있는 책 — 즉시읽기 원칙), 그 다음 최근 입고순. */
+const US_CATS=[
+  {k:'novel',   t:'소설',        s:'한국 · 영미 · 일본 · 세계 소설',            rows:[['한국 소설',['813']],['영미 소설',['843']],['일본 소설',['833']],['그 밖의 세계 소설',['823','853','863','873','883','893']]]},
+  {k:'essay',   t:'에세이 · 시',  s:'수필, 시, 일기 · 기행',                     rows:[['에세이 · 수필',['814','844','834','824','854','864']],['시',['811','841','831','821']],['일기 · 서간 · 기행',['816','846','836']]]},
+  {k:'human',   t:'인문 · 철학',  s:'철학, 심리, 윤리, 동서양 사상',             rows:[['심리학',['15']],['철학 · 사상',['10','11','12','13','14','16','18']],['윤리 · 논리',['17','19']]]},
+  {k:'society', t:'사회 · 정치',  s:'사회, 정치, 법, 교육, 언론',                 rows:[['사회 · 문화',['30','31','33','38','39']],['정치 · 행정',['34','35']],['법',['36']],['교육',['37']]]},
+  {k:'econ',    t:'경제 · 경영',  s:'경제, 경영, 마케팅, 투자',                   rows:[['경제 · 금융',['320','321','322','323','324','327','328','329']],['경영 · 마케팅',['325','326']]]},
+  {k:'science', t:'과학',         s:'수학, 물리 · 화학, 천문, 생명과학',           rows:[['과학 일반 · 수학',['40','41']],['물리 · 화학 · 천문 · 지구',['42','43','44','45','46']],['생명과학',['47','48','49']]]},
+  {k:'tech',    t:'IT · 공학 · 의학', s:'컴퓨터, 공학, 의학 · 건강',               rows:[['컴퓨터 · IT',['004','005']],['의학 · 건강',['51']],['공학 · 기술',['50','52','53','54','55','56','57','58']]]},
+  {k:'life',    t:'생활 · 취미',  s:'요리, 살림, 스포츠, 레저',                   rows:[['요리 · 살림',['59']],['스포츠 · 레저',['69']]]},
+  {k:'art',     t:'예술 · 문화',  s:'미술, 디자인, 음악, 영화 · 공연',             rows:[['미술 · 디자인 · 사진',['60','61','62','63','64','65','66']],['음악',['67']],['영화 · 공연',['68']]]},
+  {k:'history', t:'역사 · 인물',  s:'한국사, 세계사, 인물, 지리 · 여행',           rows:[['한국사',['911']],['세계사',['90','912','913','914','915','916','917','918','919','92','93','94','95','96','97']],['인물 · 전기',['99']],['지리 · 여행',['98']]]},
+  {k:'lang',    t:'언어 · 외국어', s:'영어, 한국어, 일본어 · 중국어',              rows:[['영어',['74']],['한국어',['71']],['일본어 · 중국어',['73','72']],['그 밖의 언어',['70','75','76','77','78','79']]]},
+  {k:'religion',t:'종교',         s:'불교, 기독교, 종교학',                       rows:[['종교 일반',['20','21','29']],['불교',['22']],['기독교',['23']],['그 밖의 종교',['24','25','26','27','28']]]},
+  {k:'general', t:'총류 · 교양',  s:'독서, 글쓰기, 백과, 저널리즘',               rows:[['독서 · 문헌정보',['01','02','03']],['저널리즘 · 출판',['07']],['백과 · 일반',['00','06','08','09']]]},
+];
+let US_CAT=null;            // 열려 있는 카테고리 key (검색어를 지우면 이 화면으로 돌아온다)
+let _usCatSeq=0;
+const _usKdcOr=prefixes=>'or=('+prefixes.map(p=>'class_no.like.'+p+'*').join(',')+')';
+// 장서 행 → 앱 공용 책 객체(LIB_POOL 등재) — 검색 결과(usTulipSearch)와 같은 변환
+function _usTulipBook(t){
+  return curateToLibBook({
+    isbn:t.isbn||('sm-'+t.ctrl), title:String(t.title||'').replace(/\s*\[전자책\]\s*/g,' ').trim(),
+    author:t.author||'', cover:t.cover_url||'', publisher:t.publisher||'', year:t.pub_year||'',
+    smEbook:t.kind==='ebook', smPaper:t.kind==='paper', smEbookUrl:t.viewer_url||'', brcd:t.ctrl||''
+  });
+}
+async function _usKdcFetch(prefixes, limit){
+  const r=await sbGet(`/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,cover_url,viewer_url&${_usKdcOr(prefixes)}&title=not.ilike.*%5B%EC%A0%84%EC%9E%90%EC%B1%85%5D%20*%EA%B6%8C*&order=kind.asc,reg_date.desc.nullslast&limit=${limit||14}`);
+  if(!r.ok) throw new Error('kdc '+r.status);
+  const a=await r.json(); return Array.isArray(a)?a:[];
+}
+// 카테고리 카드 표지(각 카테고리 첫 소주제의 전자책 한 권) — 하루 캐시
+async function _usCatCovers(){
+  const KEY='bx_us_cat_covers_v1';
+  try{ const c=JSON.parse(localStorage.getItem(KEY)||'null'); if(c&&c._ts&&Date.now()-c._ts<86400000) return c; }catch(e){}
+  const out={_ts:Date.now()};
+  await Promise.all(US_CATS.map(async c=>{
+    try{ const r=await sbGet(`/semyung_tulip?select=cover_url&${_usKdcOr(c.rows[0][1])}&kind=eq.ebook&cover_url=not.is.null&order=reg_date.desc.nullslast&limit=1`);
+      const a=r.ok?await r.json():[]; out[c.k]=(a[0]&&a[0].cover_url)||''; }catch(e){ out[c.k]=''; }
+  }));
+  try{ localStorage.setItem(KEY, JSON.stringify(out)); }catch(e){}
+  return out;
+}
+// 검색어 없는 키워드 탭 = 카테고리 격자(또는 열려 있던 카테고리)
+function usHome(){
+  if(US_MODE!=='kw') return;
+  const box=document.getElementById('usResults'); if(!box) return;
+  if(US_CAT){ usCatOpen(US_CAT, true); return; }
+  const seq=++_usCatSeq;
+  box.innerHTML=`<div class="us-cat-h">카테고리로 둘러보기 <span>세명대 장서 전체 · 분류기호 기준</span></div>
+    <div class="us-cat-grid">${US_CATS.map(c=>`<div class="us-cat" onclick="usCatOpen('${c.k}')"><div class="us-cat-tx"><b>${esc(c.t)}</b><span>${esc(c.s)}</span></div><div class="us-cat-cv" id="usCatCv_${c.k}"></div></div>`).join('')}</div>`;
+  _usCatCovers().then(cv=>{ if(seq!==_usCatSeq) return; US_CATS.forEach(c=>{ const el=document.getElementById('usCatCv_'+c.k); if(el&&cv[c.k]) el.innerHTML=`<img src="${esc(cv[c.k])}" alt="" loading="lazy" onerror="this.remove()">`; }); });
+}
+// 카테고리 → 소주제 선반(우리 도서관 선반과 같은 카드·캐러셀)
+async function usCatOpen(k, keep){
+  const c=US_CATS.find(x=>x.k===k); if(!c) return;
+  US_CAT=k;
+  const box=document.getElementById('usResults'); if(!box) return;
+  const seq=++_usCatSeq;
+  box.innerHTML=`<div class="us-cat-top"><span class="us-cat-back" onclick="usCatBack()">‹ 전체 카테고리</span><div class="us-cat-crumb">카테고리 <i>›</i> <b>${esc(c.t)}</b></div></div>
+    <div class="ml">${c.rows.map((r,i)=>`<div class="cl-shelf us-cat-row" id="usRow_${k}_${i}"><div class="ml-head"><div><div class="ml-h-t">${esc(r[0])}</div><div class="ml-h-s">전자책 먼저 · 최근 들어온 순</div></div><span class="us-row-more" onclick="usRowMore('${k}',${i})">더보기 ›</span></div><div class="us-row-body"><div class="us-row-loading">불러오는 중…</div></div></div>`).join('')}</div>`;
+  if(!keep) window.scrollTo({top:0,behavior:'smooth'});
+  await Promise.all(c.rows.map(async (r,i)=>{
+    let rows=[]; try{ rows=await _usKdcFetch(r[1],14); }catch(e){}
+    if(seq!==_usCatSeq) return;
+    const host=document.querySelector(`#usRow_${k}_${i} .us-row-body`); if(!host) return;
+    if(!rows.length){ host.innerHTML='<div class="us-row-loading">이 분야 책이 아직 없어요</div>'; return; }
+    const books=rows.map(_usTulipBook);
+    host.innerHTML=mlCarousel(`<div class="ml-hrow">${books.map(b=>`<div class="ml-bk" onclick="libDetail('${esc(b.isbn)}')">${mlcv('ml-bk-cv',b)}<div class="ml-bk-t">${esc(cleanT(b.t||''))}</div>${b.a?`<div class="ml-bk-a">${esc(b.a)}</div>`:''}${fmtTags(b)}</div>`).join('')}</div>`);
+    try{ bindDragScroll(`#usRow_${k}_${i} .ml-hrow`); fitMlCars(); }catch(e){}
+  }));
+}
+function usCatBack(){ US_CAT=null; usHome(); }
+// 더보기 — 그 소주제만 48권 격자로 펼친다
+async function usRowMore(k,i){
+  const c=US_CATS.find(x=>x.k===k); if(!c||!c.rows[i]) return;
+  const host=document.querySelector(`#usRow_${k}_${i} .us-row-body`); if(!host) return;
+  host.innerHTML='<div class="us-row-loading">불러오는 중…</div>';
+  let rows=[]; try{ rows=await _usKdcFetch(c.rows[i][1],48); }catch(e){}
+  const books=rows.map(_usTulipBook);
+  host.innerHTML=books.length?`<div class="book-grid us-grid">${books.map(b=>usCard(b,'lib')).join('')}</div>`:'<div class="us-row-loading">이 분야 책이 아직 없어요</div>';
+  const more=document.querySelector(`#usRow_${k}_${i} .us-row-more`); if(more) more.style.display='none';
 }
 
 // 검색 결과 카드 (고전 = openDetail / 도서관 = libDetail)
@@ -73,8 +164,9 @@ function onUnifiedSearch(submit){
     inp.value='';
     return usChatSend(q);
   }
-  // 키워드 모드 — 즉시 로컬 검색
-  if(!q){ box.innerHTML=''; return; }
+  // 키워드 모드 — 즉시 로컬 검색. 검색어를 지우면 카테고리 격자(또는 열어 둔 카테고리)로 돌아간다(10/11)
+  if(!q){ usHome(); return; }
+  _usCatSeq++;   // 검색 결과가 그려지는 중에 늦게 도착한 카테고리 응답이 덮지 않게
   const ql=q.toLowerCase();
   // 8/14 사장님 수정요청: '모비딕'처럼 붙여 써도 '모비 딕'이 나오게 — 공백 제거본으로도 비교
   const qn=ql.replace(/\s+/g,'');
