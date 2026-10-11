@@ -65,14 +65,18 @@ let _usCatSeq=0;
 const _usKdcOr=prefixes=>'or=('+prefixes.map(p=>'class_no.like.'+p+'*').join(',')+')';
 // 장서 행 → 앱 공용 책 객체(LIB_POOL 등재) — 검색 결과(usTulipSearch)와 같은 변환
 function _usTulipBook(t){
+  const eb=t.kind==='ebook';
+  // 키: 전자책=바코드(표지 미러·대출 키), 종이책=CATTOT제어번호(표지 미러·상세의 소장현황 박스) — 세명대 키 규칙(13-covers lcCvHTML·15-events smKeyOf)
   return curateToLibBook({
-    isbn:t.isbn||('sm-'+t.ctrl), title:String(t.title||'').replace(/\s*\[전자책\]\s*/g,' ').trim(),
+    isbn: eb ? ('sm-'+(t.barcode||t.ctrl)) : (t.isbn||('sm-CATTOT'+t.ctrl)),
+    title:String(t.title||'').replace(/\s*\[전자책\]\s*/g,' ').trim(),
     author:t.author||'', cover:t.cover_url||'', publisher:t.publisher||'', year:t.pub_year||'',
-    smEbook:t.kind==='ebook', smPaper:t.kind==='paper', smEbookUrl:t.viewer_url||'', brcd:t.ctrl||''
+    smEbook:eb, smPaper:!eb, smEbookUrl:t.viewer_url||'', brcd:eb?(t.barcode||t.ctrl||''):'',
+    smPaperUrl: eb?'':('https://lib.semyung.ac.kr/search/detail/CATTOT'+t.ctrl)
   });
 }
 async function _usKdcFetch(prefixes, limit){
-  const r=await sbGet(`/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,cover_url,viewer_url&${_usKdcOr(prefixes)}&title=not.ilike.*%5B%EC%A0%84%EC%9E%90%EC%B1%85%5D%20*%EA%B6%8C*&order=kind.asc,reg_date.desc.nullslast&limit=${limit||14}`);
+  const r=await sbGet(`/semyung_tulip?select=ctrl,kind,title,author,publisher,pub_year,isbn,barcode,cover_url,viewer_url&${_usKdcOr(prefixes)}&title=not.ilike.*%5B%EC%A0%84%EC%9E%90%EC%B1%85%5D%20*%EA%B6%8C*&order=kind.asc,reg_date.desc.nullslast&limit=${limit||14}`);
   if(!r.ok) throw new Error('kdc '+r.status);
   const a=await r.json(); return Array.isArray(a)?a:[];
 }
