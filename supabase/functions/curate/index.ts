@@ -16,6 +16,7 @@
 // 시크릿(env): CLAUDE_API_KEY, OPENAI_API_KEY (+ 자동주입 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 import { stockFromTable } from "../_shared/stock_table.ts";
+import { kyoboStock } from "../_shared/kyobo_api.ts";   // 10/19: 닮은책 재고를 교보 정식 API(중계)로 확인 — 재고 표에 없는 책이 많아 '지금 대출 가능'이 빠졌다
 
 const CLAUDE = Deno.env.get("CLAUDE_API_KEY")!;
 const OPENAI = Deno.env.get("OPENAI_API_KEY") || "";
@@ -408,16 +409,30 @@ Deno.serve(async (req) => {
         .replace(/\s*[.．]\s*\d{1,2}\s+.*$/, "")   // 중간 권차 "설득의 심리학 . 2  Yes를…" → "설득의 심리학"
         .replace(/[\s\-·,.'"’“”()（）]/g, "").toLowerCase();
       let src: any = null;
-      if (brcd) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&barcode=eq.${encodeURIComponent(brcd)}&limit=1`))[0] || null;
-      if (!src && ctrl) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.paper&ctrl=eq.${encodeURIComponent(ctrl)}&limit=1`))[0] || null;
+      if (brcd) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode,isbn&kind=eq.ebook&barcode=eq.${encodeURIComponent(brcd)}&limit=1`))[0] || null;
+      if (!src && ctrl) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode,isbn&kind=eq.paper&ctrl=eq.${encodeURIComponent(ctrl)}&limit=1`))[0] || null;
       if (!src && body.similar.title) {   // 바코드로 못 찾으면 제목 핵심부로 1회(구 바코드 형식 등)
         // 10/17 세명대 "같은 장르가 안 보인다": 최근 들어온 전자책은 소장목록에 전자책 줄이 아직 없다 → 같은 제목의 종이책 판에서 분류(KDC)를 빌린다(전자책 줄이 있으면 그쪽 우선)
         const core = sani(String(body.similar.title)).split(/\s*[:\-(\[]/)[0].trim();
-        if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode,kind&title=ilike.*${encodeURIComponent(core)}*&class_no=not.is.null&order=kind.asc&limit=1`))[0] || null;
+        if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode,kind,isbn&title=ilike.*${encodeURIComponent(core)}*&class_no=neq.&order=kind.asc&limit=1`))[0] || null;
         if (src && src.kind !== "ebook") src = { ...src, barcode: "" };   // 종이책 줄의 바코드(빈 값)를 제외 키로 쓰지 않게
       }
-      if (!src || !src.class_no) return json({ similar: true, count: 0, candidates: [], reason: "no_source", tookMs: Date.now() - t0 });
-      const cls = String(src.class_no).trim();
+      // 10/19 세명대 "종이책 신착 아래 같은 장르 전자책이 없다": 신착 종이책 줄은 소장목록에 있어도 **분류(class_no)가 빈 채**로 들어온다
+      //   (openapi 검색 응답엔 분류가 늦게 채워짐). 분류를 다른 데서 빌린다 — ① 같은 ISBN의 다른 판(전자책) ② book_pool(국중)의 KDC ③ 앱이 보낸 kdc(소장현황의 청구기호 앞자리)
+      let clsRaw = src ? String(src.class_no || "").trim() : "";
+      if (!clsRaw) {
+        const isbn = src?.isbn || "";
+        if (isbn) {
+          const o = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=class_no&isbn=eq.${encodeURIComponent(isbn)}&class_no=neq.&order=kind.asc&limit=1`))[0];
+          if (o?.class_no) clsRaw = String(o.class_no).trim();
+          if (!clsRaw) { const p = (await get(`${SB_URL}/rest/v1/book_pool?select=kdc&isbn=eq.${encodeURIComponent(isbn)}&limit=1`))[0]; if (p?.kdc) clsRaw = String(p.kdc).trim(); }
+        }
+        const hint = String(body.similar.kdc || "").trim();
+        if (!clsRaw && /^\d{1,3}(\.\d+)?$/.test(hint)) clsRaw = hint;
+      }
+      if (!clsRaw) return json({ similar: true, count: 0, candidates: [], reason: src ? "no_class" : "no_source", tookMs: Date.now() - t0 });
+      if (!src) src = { ctrl: "", title: String(body.similar.title || ""), author: "", class_no: clsRaw, barcode: brcd };
+      const cls = clsRaw;
       const ladder = [...new Set([cls.slice(0, 5), cls.slice(0, 3), cls.slice(0, 2), cls.slice(0, 1)].map((s) => s.replace(/\.$/, "")).filter(Boolean))];
       const rpc = (prefix: string, lim: number) => fetch(`${SB_URL}/rest/v1/rpc/similar_ebooks`, { method: "POST", headers: hdr, body: JSON.stringify({ class_prefix: prefix, exclude_brcd: src.barcode || brcd, lim }) })
         .then((r) => (r.ok ? r.json() : [])).catch(() => []);
@@ -433,6 +448,13 @@ Deno.serve(async (req) => {
       const cand = pool.slice(0, 24);
       const tr = await stockFromTable(cand.map((b) => String(b.brcd)));
       const checked = cand.length;
+      // 10/19 세명대 "같은 장르 전자책에 '지금 대출 가능'이 안 붙는 책이 있다": 재고 표(solsup_stock)는 2,880권뿐이라 표에 없는 책은 재고를 몰랐다.
+      //   → 인기순 앞 6권만 교보 정식 재고 API(중계, 병렬)로 그 자리에서 확인해 표에 없던 것도 채운다(6회 호출, 0.2초대). 실패한 책은 표 값 그대로.
+      try {
+        const head = cand.slice(0, 6).filter((b) => !tr.map.get(String(b.brcd)));   // 표에 없거나 오래된 것만(null)
+        const live = await Promise.all(head.map((b) => kyoboStock(String(b.brcd)).catch(() => null)));
+        head.forEach((b, i) => { const s = live[i]; if (s) tr.map.set(String(b.brcd), { loaned: s.loaned, total: s.total, reserved: s.reserved, available: s.available, checked_at: new Date().toISOString(), age_ms: 0 } as any); });
+      } catch (_) { /* 중계 미설정 등 — 표 값으로 진행 */ }
       // 8/30 사장님: 바로 읽을 수 없는 책도 상관없다 — 재고 조건을 없앤다. 대출 가능한 책을 앞에, 나머지(대출 중·재고 모름)로 채운다.
       for (const b of cand) { const s = tr.map.get(String(b.brcd)); if (s && s.available) { picked.push({ b, s }); if (picked.length >= want) break; } }
       if (picked.length < want) for (const b of cand) { if (picked.some((p) => p.b === b)) continue; picked.push({ b, s: tr.map.get(String(b.brcd)) || null }); if (picked.length >= want) break; }

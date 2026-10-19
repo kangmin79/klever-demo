@@ -774,7 +774,7 @@ async function loadEbookStock(brcd, bookTitle, _retried){
 async function loadSimilarEbooks(brcd, bookTitle, opts){
   const box=document.getElementById('ebSimilar'); if(!box) return;
   opts=opts||{};
-  const key=String(brcd||'')+'|'+String(opts.ctrl||'')+'|'+String(bookTitle||'').slice(0,40);
+  const key=String(brcd||'')+'|'+String(opts.ctrl||'')+'|'+String(bookTitle||'').slice(0,40)+(opts.kdc?'|k'+opts.kdc:'');
   if(box.dataset.for===key) return;   // 재고 재확인 등으로 두 번 불려도 한 번만
   box.dataset.for=key;
   // 8/30 사장님: 바로 읽을 수 없는 책도 추천 — 재고 문구는 책마다 아는 것만 붙인다
@@ -783,13 +783,14 @@ async function loadSimilarEbooks(brcd, bookTitle, opts){
     const ck='ebsim:'+key; let d=null;
     try{ const c=JSON.parse(sessionStorage.getItem(ck)||'null'); if(c&&c.t&&Date.now()-c.t<600000) d=c.d; }catch(e){}
     if(!d){
-      const r=await sbFnPost(US_CURATE_FN,{similar:{brcd:String(brcd||''), ctrl:String(opts.ctrl||''), title:bookTitle||'', count:3}},{anon:true});
+      // 10/19: kdc = 소장현황의 청구기호 앞자리(신착 종이책은 소장목록에 분류가 비어 있어 서버가 못 찾을 때의 마지막 힌트)
+      const r=await sbFnPost(US_CURATE_FN,{similar:{brcd:String(brcd||''), ctrl:String(opts.ctrl||''), title:bookTitle||'', count:3, kdc:String(opts.kdc||'')}},{anon:true});
       d=await r.json();
       try{ if(d&&d.count) sessionStorage.setItem(ck,JSON.stringify({t:Date.now(),d})); }catch(e){}
     }
     if(!box.isConnected) return;   // 다른 책 모달로 바뀌었으면 폐기
     const list=(d&&Array.isArray(d.candidates))?d.candidates.filter(c=>c&&c.isbn&&c.title):[];
-    if(!list.length){ box.innerHTML=''; return; }   // 대체재 없으면 조용히(주 액션만 남음)
+    if(!list.length){ if(box.dataset.for===key) box.innerHTML=''; return; }   // 대체재 없으면 조용히(주 액션만 남음). 뒤에 kdc 힌트로 다시 부른 호출이 채운 건 지우지 않는다
     list.forEach(c=>{ curateToLibBook(c); US_CLICKMAP[String(c.isbn||'')]=c; });
     box.innerHTML=`<div class="ebsim" data-origin="similar" data-origin-id="${esc(String(brcd||opts.ctrl||''))}">
       <div class="ebsim-h">${heading}</div>
@@ -823,7 +824,7 @@ async function loadDesc(key, isCatalog, book){
     // (기존: 응답 후 id로 찾아 → A책 줄거리가 B책 모달에 쓰이던 레이스)
     const el=document.getElementById('lcdDesc'); if(!el) return;
     const auEl=document.querySelector('#lcDetail .lcd-i .au');   // 저자·출판사 줄(비어 있으면 함께 채움)
-    const sel='description,author,publisher,pub_year';
+    const sel='description,author,publisher,pub_year,isbn';
     const path=isCatalog
       ? `/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=${sel}&limit=1`
       : `/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=${sel}&limit=1`;
@@ -844,6 +845,18 @@ async function loadDesc(key, isCatalog, book){
     if(auEl && auEl.isConnected && !auEl.textContent.trim()){
       const bits=[d.author,d.publisher,d.pub_year].map(v=>String(v||'').trim()).filter(Boolean);
       if(bits.length) auEl.textContent=bits.join(' · ');
+    }
+    // 10/19 세명대 "도서 소개글이 안 보이는 경우가 종종": 줄이 있어도 줄거리가 빈 책(신착 종이책 대부분) →
+    //   ① 같은 ISBN의 다른 판(전자책)에서 ② 그래도 없으면 알라딘·정보나루(bookinfo 함수, ISBN)에서 빌린다
+    if(!d.description){
+      const isbn=String(d.isbn||book&&book.isbn13||'').replace(/[^0-9Xx]/g,'');
+      if(/^(97[89]\d{10}|\d{9}[0-9Xx])$/.test(isbn)){
+        try{ const r2=await sbGetAnon(`/semyung_tulip?isbn=eq.${encodeURIComponent(isbn)}&description=neq.&select=description&limit=1`); if(r2.ok){ const rows2=await r2.json(); if(rows2&&rows2[0]&&rows2[0].description) d={...d, description:rows2[0].description}; } }catch(e){}
+        if(!d.description && typeof INFO_FN!=='undefined'){
+          try{ const r3=await sbFnPost(INFO_FN,{isbns:[isbn]},{anon:true}); const j=await r3.json(); const info=j&&j.info&&j.info[isbn]; if(info&&info.description) d={...d, description:info.description}; }catch(e){}
+        }
+        if(!el.isConnected) return;
+      }
     }
     if(!d.description) return;
     if(el.textContent.trim()) return;   // 이미 줄거리가 있으면 덮지 않는다

@@ -474,6 +474,16 @@ async function loadHolding(reckey, elId){
       ? `<div class="lh-line"><span class="lh-dot ok"></span><b>지금 대출 가능</b> · ${d.available}/${d.total}권</div>`
       : `<div class="lh-line"><span class="lh-dot out"></span><b>대출 중</b> · 0/${d.total}권${backDate?` · 반납예정 ${esc(backDate)}`:''}</div>`) + where + resv;
     markMyHolding(reckey, d);   // 내가 이미 신청·예약한 책이면 버튼을 '취소하기' 상태로 교체
+    // 10/19 세명대 "종이책 신착 아래 같은 장르 전자책이 없다": 신착 종이책은 소장목록에 분류가 비어 있어 추천이 못 뜬다 →
+    //   소장현황이 준 청구기호 앞자리(KDC)를 힌트로 한 번 더 부른다. 이미 추천이 떠 있으면 건드리지 않는다.
+    try{
+      const kdc=(String(c.callNum||'').trim().match(/^\d{1,3}(?:\.\d+)?/)||[])[0]||'';
+      const sim=document.getElementById('ebSimilar');
+      if(kdc && sim && !sim.innerHTML.trim() && typeof loadSimilarEbooks==='function'){
+        const t=(document.querySelector('#lcDetail h2')||{}).textContent||'';
+        setTimeout(()=>{ if(sim.isConnected && !sim.innerHTML.trim()) loadSimilarEbooks('', t, {ctrl:String(reckey).replace(/^CATTOT/,''), avail:true, kdc}); }, 1200);
+      }
+    }catch(e){}
   }catch(e){
     // 조회 실패 시에만 최소 폴백(막다른 길 방지) — 도서관 상세로 직접 확인
     el.className='lcd-holding out'+pw;
