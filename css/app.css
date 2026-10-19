@@ -703,7 +703,8 @@ body.dark .bt-tag.bt-sub{background:#312357;color:#c4b5fd;}
 .us-cat-back{font-size:13px;font-weight:700;color:var(--primary);cursor:pointer;} .us-cat-crumb{font-size:18px;font-weight:800;color:var(--text);} .us-cat-crumb i{font-style:normal;color:var(--text-light);margin:0 6px;} .us-cat-crumb b{color:var(--text);}
 .us-cat-row{margin-bottom:28px;} .us-row-more{font-size:13px;font-weight:700;color:var(--text-sub);cursor:pointer;white-space:nowrap;align-self:center;} .us-row-more:hover{color:var(--primary);}
 .us-row-loading{font-size:13px;color:var(--text-light);padding:18px 2px;}
-#page-search.nl{display:flex;flex-direction:column;min-height:calc(100vh - 140px);}
+/* 10/19 세명대: 별이 탭을 한 번 고르면 다른 화면(내 챌린지·피드) 아래에 검색 화면이 따라붙었다 — .nl 규칙의 display:flex 가 .page{display:none} 을 이겨서. active 일 때만 */
+#page-search.nl.active{display:flex;flex-direction:column;min-height:calc(100vh - 140px);}
 #page-search.nl .page-title,#page-search.nl .page-subtitle,#page-search.nl .subtabs{order:0;}
 #page-search.nl #usResults{order:1;flex:1;}
 #page-search.nl #usBar{order:2;position:sticky;bottom:0;margin-top:16px;padding:12px 0 14px;background:linear-gradient(to top,var(--bg) 70%,transparent);max-width:none;}
