@@ -189,9 +189,24 @@ export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile:
       // YES24: 도서관이 주는 타사 연동 주소(YES24 선택 화면)가 곧 입구. 교보 웹뷰어 토큰을 만들면 안 된다(DRM 403)
       const pi = await hit(`/process/popupInfo.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&ifType=W`, undefined, referer);
       const apiUrl = tag(pi, "apiUrl");
-      if (tag(pi, "result") === "True" && /^https?:\/\//.test(apiUrl)) return apiUrl;
-      console.error("directViewer(YS): popupInfo apiUrl 없음", brcd, tag(pi, "result"), tag(pi, "msgcode"), tag(pi, "msg").slice(0, 80));
-      return "";
+      if (!(tag(pi, "result") === "True" && /^https?:\/\//.test(apiUrl))) {
+        console.error("directViewer(YS): popupInfo apiUrl 없음", brcd, tag(pi, "result"), tag(pi, "msgcode"), tag(pi, "msg").slice(0, 80));
+        return "";
+      }
+      // 10/19 저녁(사장님 "선택 화면이 올라오네"): YES24 선택 화면의 '바로보기'(webview.js goViewer)가 만드는 주소를 서버가 미리 계산한다.
+      //   = 도메인 + code + "/" + subcode + "/" + encodeURIComponent(암호문의 '/'→'-'). 암호문은 발급마다 다르고 한 번만 쓴다(열 때마다 새로).
+      //   8/24엔 이 직행이 403이었는데(발급=Supabase AWS), 발급을 중계(Vultr, school_net)로 바꾸니 학생 회선에서 열린다(10/19 실측 3/3).
+      //   선택 화면은 UA 로 PC(Gun)/폰(GunMobile)을 가르므로 학생의 UA 로 받는다. 파싱 실패·비정상이면 선택 화면 주소로 후퇴.
+      try {
+        const r = await fetch(apiUrl, { headers: { "User-Agent": ua || UA }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+        if (r.ok) {
+          const html = new TextDecoder("euc-kr").decode(await r.arrayBuffer());
+          const m = /goViewer\('([^']+)','([^']+)','([^']+)','([^']+)'\)/.exec(html);
+          if (m) return m[1] + m[2] + "/" + m[3] + "/" + encodeURIComponent(m[4].split("/").join("-"));
+          console.error("directViewer(YS): goViewer 못 찾음 → 선택 화면", brcd, html.replace(/\s+/g, " ").slice(0, 160));
+        } else console.error("directViewer(YS): 선택 화면 http", r.status);
+      } catch (e) { console.error("directViewer(YS): 선택 화면 읽기 실패 → 선택 화면 주소로", String(e).slice(0, 100)); }
+      return apiUrl;
     }
     // 2) 선택창과 같은 판정 — 웹뷰어(바로보기) 지원 책인가
     const sup = await hit(`/process/checkSupplyWebViewerInfo.xml?lbryCode=${LBRY}&brcd=${encodeURIComponent(brcd)}`, undefined, referer);

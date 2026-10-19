@@ -15,7 +15,9 @@
 const RELAY_URL = (Deno.env.get("KYOBO_RELAY_URL") || "").replace(/\/+$/, "");
 const RELAY_KEY = Deno.env.get("KYOBO_RELAY_KEY") || "";
 const OFF = Deno.env.get("SCHOOL_RELAY_OFF") === "1";
-const MAP: Record<string, string> = { "ebook.semyung.ac.kr": "/eb", "lib.semyung.ac.kr": "/lib", "setopia.semyung.ac.kr": "/portal" };
+// 10/19 저녁: ebook.semyung.ac.kr:8082(YES24 타사 연동 선택 화면)도 중계 — 직행 토큰은 **중계(한국 Vultr)가 발급해야** 학생 PC에서 열린다
+//   (실측: Vultr 발급 → 내 PC 열기 3/3 성공, AWS 발급(8/24)은 403, Vultr 자신이 열면 403)
+const MAP: Record<string, string> = { "ebook.semyung.ac.kr": "/eb", "ebook.semyung.ac.kr:8082": "/eb8082", "lib.semyung.ac.kr": "/lib", "setopia.semyung.ac.kr": "/portal" };
 
 /** 학교 주소면 중계 주소로, 아니면 "" */
 export function viaRelay(u: string): string {
