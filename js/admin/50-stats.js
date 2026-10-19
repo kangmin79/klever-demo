@@ -279,6 +279,11 @@ async function loadWritings(){
   //   → 챌린지 글도 함께. 어느 챌린지인지는 '챌린지' 칸에 이름으로(엑셀은 별도 열)
   try{ list=await fetchAllRows(`/bookstar_writings?school_id=eq.${ST_SCHOOL}&${rng}&order=created_at.desc&select=*`); }catch(e){ failed=true; }
   try{ const ps=await fetchAllRows(`/library_programs?select=id,title`); WR_CHAL_TITLE={}; (ps||[]).forEach(p=>{ WR_CHAL_TITLE[String(p.id)]=p.title||''; }); }catch(e){ /* 이름 못 읽으면 '챌린지'로만 표시 */ }
+  // 도서관 책(sm-바코드)이 챌린지·큐레이션에 없으면 제목이 "sm-480…"로 남는다 → 소장목록에서 제목을 채운다(10/17 엑셀에 바코드가 그대로 나갔음)
+  try{
+    const miss=[...new Set(list.map(w=>String(w.book_id||'')).filter(id=>/^sm-\d{6,13}$/.test(id)&&bookTitleOf(id)===id))];
+    if(miss.length){ const rows=await fetchAllRows(`/semyung_tulip?barcode=in.(${miss.map(id=>id.slice(3)).join(',')})&select=barcode,title`); (rows||[]).forEach(r=>{ if(r.barcode&&r.title) WR_SM_TITLE['sm-'+r.barcode]=String(r.title).replace(/\s*\/\s*$/,'').trim(); }); }
+  }catch(e){ /* 못 채우면 바코드 그대로 */ }
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
   try{ const rv=await fetchAllRows(`/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`);
     rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
@@ -291,7 +296,7 @@ async function loadWritings(){
 }
 const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
 const wrShort=w=>wrIsShort(w.activity, w.text);   // 글자 수 미달(미인정) — 네 줄 양식은 인정
-let WR_CHAL_TITLE={};
+let WR_CHAL_TITLE={}, WR_SM_TITLE={};
 const wrChal=w=>w.challenge_id?(WR_CHAL_TITLE[String(w.challenge_id)]||'챌린지'):'';
 // 10/17 세명대: 네 줄 양식("1. 질문 — 답")은 마중글을 빼고 학생이 쓴 답만 보여준다(학생 앱 wrDisplayText와 같은 규칙). 자세히 글은 그대로
 const WR_PROMPT_RE=/^\d{1,2}\.\s[^—\n]{2,80}\s—\s?/;
@@ -303,6 +308,7 @@ function wrDisplayText(activity, text){
   return lines.map(l=>l.replace(WR_PROMPT_RE,'').trim()).filter(Boolean).join('\n\n');
 }
 function bookTitleOf(id){ id=String(id||'');
+  if(WR_SM_TITLE[id]) return WR_SM_TITLE[id];
   try{ if(/^gb-/.test(id)&&typeof CLASSICS_KO!=='undefined'&&CLASSICS_KO[id]) return CLASSICS_KO[id]; }catch(e){}
   try{ if(/^kr-/.test(id)&&typeof BOOKS_CLASSICS_KR!=='undefined'){ const b=BOOKS_CLASSICS_KR.find(x=>x.id===id); if(b&&b.title) return b.title; } }catch(e){}
   for(const p of PROGRAMS){ for(const b of (p.books||[])){ if(b.isbn===id||b.isbn==='sm-'+id||('sm-'+(b.isbn||''))===id) return b.t||b.title||id; } } return id; }
