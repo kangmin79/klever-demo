@@ -385,7 +385,11 @@ function _setupMobilePanes(c){   // renderViewer 끝에서 호출 — 탭 라벨
   //   장면카드가 있는 책만(mpLoadQuiz가 확인한 뒤 _chalStackApply) — 장면카드 없는 책은 왼쪽이 소설 전문이라 쌓으면 퀴즈가 수십만 px 아래로 가서 기존 탭 방식 유지.
   if(body) body.classList.remove('chal-stack');
   let hasSecond,label,opts={};
-  if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행'; }
+  if(currentMode==='challenge'){ hasSecond=true; label='퀴즈·수행';
+    // 10/17 세명대: 상세 모달의 '퀴즈'로 들어왔을 때 폰에서 원문이 잠깐 보였다가 퀴즈로 넘어갔다 — 처음부터 퀴즈 칸을 연다
+    //   (장면카드 책은 곧 _chalStackApply 가 두 칸을 쌓아 보여 주므로 그 전까지 원문 대신 '문제 불러오는 중'이 보인다)
+    if(typeof _quizWant==='function' && _quizWant()) opts.defaultPane='second';
+  }
   else if(currentMode==='intl'){ hasSecond=true; label='English'; }
   else {
     hasSecond=!!c.trans;

@@ -411,8 +411,10 @@ Deno.serve(async (req) => {
       if (brcd) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&barcode=eq.${encodeURIComponent(brcd)}&limit=1`))[0] || null;
       if (!src && ctrl) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.paper&ctrl=eq.${encodeURIComponent(ctrl)}&limit=1`))[0] || null;
       if (!src && body.similar.title) {   // 바코드로 못 찾으면 제목 핵심부로 1회(구 바코드 형식 등)
+        // 10/17 세명대 "같은 장르가 안 보인다": 최근 들어온 전자책은 소장목록에 전자책 줄이 아직 없다 → 같은 제목의 종이책 판에서 분류(KDC)를 빌린다(전자책 줄이 있으면 그쪽 우선)
         const core = sani(String(body.similar.title)).split(/\s*[:\-(\[]/)[0].trim();
-        if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode&kind=eq.ebook&title=ilike.*${encodeURIComponent(core)}*&limit=1`))[0] || null;
+        if (core.length >= 2) src = (await get(`${SB_URL}/rest/v1/semyung_tulip?select=ctrl,title,author,class_no,barcode,kind&title=ilike.*${encodeURIComponent(core)}*&class_no=not.is.null&order=kind.asc&limit=1`))[0] || null;
+        if (src && src.kind !== "ebook") src = { ...src, barcode: "" };   // 종이책 줄의 바코드(빈 값)를 제외 키로 쓰지 않게
       }
       if (!src || !src.class_no) return json({ similar: true, count: 0, candidates: [], reason: "no_source", tookMs: Date.now() - t0 });
       const cls = String(src.class_no).trim();

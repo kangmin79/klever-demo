@@ -18,15 +18,17 @@ async function renderActivityGroup(){
   if(!s){ el.innerHTML=grpHead+'<div class="ag-card"><div class="ag-empty">계정을 선택하면 내 활동이 만들어져요. <span class="favset" onclick="bxOpenPicker()">계정 선택</span></div></div>'; return; }
   const enc=encodeURIComponent(s.id);
   try{ await mbLoad(); }catch(e){}   // 내 기록의 책 제목(도서관 책 포함)용
-  const [profA,writings,enroll]=await Promise.all([
+  const [profA,writings,enroll,rvs]=await Promise.all([
     _agFetch(`bookstar_students?id=eq.${enc}&select=bio,favorite_book_id,emoji,name`),
     _agFetch(`bookstar_writings?student_id=eq.${enc}&school_id=eq.${CH_SCHOOL}&hidden=eq.false&select=activity,book_id,text,created_at&order=created_at.desc`),
-    _agFetch(`bookstar_challenge_enroll?student_id=eq.${enc}&select=status`)
+    _agFetch(`bookstar_challenge_enroll?student_id=eq.${enc}&select=status`),
+    // 10/17 세명대 "건수가 안 맞다": 내 대출·예약의 [서평] 버튼으로 쓴 글은 reviews 표에 따로 저장돼 여기 서평 수에 빠져 있었다
+    _agFetch(`reviews?student_id=eq.${enc}&hidden=eq.false&select=id`)
   ]);
   const prof=profA[0]||{};
   const emoji=prof.emoji||s.emoji||'📘', name=prof.name||s.name||'', bio=prof.bio||s.bio||'';
   const wCnt=a=>writings.filter(w=>w.activity===a).length;
-  const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review'), nEss=wCnt('essay');
+  const nOne=wCnt('oneline')+wCnt('impression'), nQ=wCnt('question'), nRev=wCnt('review')+(Array.isArray(rvs)?rvs.length:0), nEss=wCnt('essay');
   const nDone=_doneBooks().length, nEnroll=enroll.length, nEnrollDone=enroll.filter(e=>e.status==='done').length;
   // 내 기록 노트 (칩으로 필터)
   _agWritings=writings; _agNoteFilter='all';
@@ -51,7 +53,7 @@ function _agNotesHTML(){
   if(_agNoteFilter!=='all'){ const acts=AG_NOTE_FILTERS[_agNoteFilter]||[]; list=list.filter(w=>acts.indexOf(w.activity)>=0); }
   list=list.slice(0,12);
   if(!list.length) return `<div class="ag-empty">${_agNoteFilter==='all'?'아직 남긴 기록이 없어요. 책을 읽고 한 줄 소감을 남겨보세요.':'해당하는 기록이 아직 없어요.'}</div>`;
-  return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=(typeof _anyBook==='function')?_anyBook(w.book_id):_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(w.text||'')}</p></div>`; }).join('');
+  return list.map(w=>{ const k=AG_NOTE_KIND[w.activity], b=(typeof _anyBook==='function')?_anyBook(w.book_id):_bookById(w.book_id), bt=b?cleanT(b.title):'', d=w.created_at?_agDate(w.created_at):''; return `<div class="ag-note"><div class="ag-nmeta"><span class="ag-kind ${k[1]}">${k[0]}</span>${bt?' '+esc(bt):''}${d?` · ${d}`:''}</div><p>${esc(wrDisplayText(w.activity,w.text))}</p></div>`; }).join('');
 }
 
 /* ════════ 내서재 ③ 내 책 모음 그룹 (인생책·도서·책장) — 실데이터 ════════ */
@@ -162,6 +164,17 @@ function wrBriefParse(k, text){
   const qs=WR_BRIEF_Q[k]||[]; const lines=String(text||'').split('\n'); if(lines.length<qs.length) return null;
   const out=[]; for(let i=0;i<qs.length;i++){ const m=new RegExp('^'+(i+1)+'\\.\\s'+qs[i][0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s—\\s?([\\s\\S]*)$').exec(lines[i]||''); if(!m) return null; out.push(m[1].trim()); }
   return out;
+}
+// 10/17 세명대 수정요청: 네 줄 양식 글을 보여줄 때는 마중글(질문)을 빼고 학생이 쓴 답만 문단으로.
+//   저장 형식("1. 질문 — 답")은 그대로 — 다시 열어 고칠 때 네 칸 복원이 그 형식에 기대므로. 보여주는 자리(피드·내가 쓴 글·관리자)에서만 벗긴다.
+//   질문 문구가 바뀌어도 깨지지 않게 "번호. 글 — " 모양이면 전부 마중글로 본다. 한 줄이라도 그 모양이 아니면 '자세히' 글 → 원문 그대로.
+const WR_PROMPT_RE=/^\d{1,2}\.\s[^—\n]{2,80}\s—\s?/;
+function wrDisplayText(activity, text){
+  text=String(text||'');
+  if(activity!=='review'&&activity!=='essay'&&activity!=='rv') return text;
+  const lines=text.split('\n'); if(lines.length<2) return text;
+  if(!lines.every(l=>!l.trim()||WR_PROMPT_RE.test(l))) return text;
+  return lines.map(l=>l.replace(WR_PROMPT_RE,'').trim()).filter(Boolean).join('\n\n');
 }
 function _mbHead(b,tag){ return `<div class="bm-mbook" style="margin-bottom:10px;position:relative"><div class="cv" style="width:46px;height:64px">${_bmCover(b)}</div><div><b>${esc(b.title)}</b><br><span>${esc(b.author||'')}</span><br><span class="mb-tag">${tag||'내 책'}</span></div><button class="bm-x" type="button" onclick="bmCloseModal()" title="닫기">×</button></div>`; }   // 10/10 사장님: 창 닫기 버튼
 function mbMenu(id,opt){
@@ -292,7 +305,7 @@ function _wrListHTML(){
   const list=(_wrMine||[]).filter(w=>alias.indexOf(w.activity)>=0);
   if(!list.length) return `<div class="ag-empty" style="padding:16px 2px">아직 남긴 글이 없어요. 책 표지 오른쪽 위 ${MB_DOTS} 를 눌러 첫 글을 남겨보세요.</div>`;
   return list.map(w=>{ const b=_anyBook(w.book_id); const t=b?b.title:(w.book_id||''); const d=w.created_at?_agDate(w.created_at):'';
-    return `<div class="wr-item"><div class="wr-im"><b>${esc(t)}</b>${d?` · ${d}`:''} · <span class="${w.is_public?'wr-pub-on':'wr-pub-off'}">${w.is_public?'공개':'나만 보기'}</span>${w.challenge_id?' · 챌린지':''}<span style="flex:1"></span><button class="bm-mini" style="flex:none;padding:4px 10px" onclick="wrOpen('${esc(w.book_id)}','${esc(w.activity==='impression'?'oneline':w.activity)}')">수정</button></div><p>${esc(w.text||'')}</p></div>`; }).join('');
+    return `<div class="wr-item"><div class="wr-im"><b>${esc(t)}</b>${d?` · ${d}`:''} · <span class="${w.is_public?'wr-pub-on':'wr-pub-off'}">${w.is_public?'공개':'나만 보기'}</span>${w.challenge_id?' · 챌린지':''}<span style="flex:1"></span><button class="bm-mini" style="flex:none;padding:4px 10px" onclick="wrOpen('${esc(w.book_id)}','${esc(w.activity==='impression'?'oneline':w.activity)}')">수정</button></div><p>${esc(wrDisplayText(w.activity,w.text))}</p></div>`; }).join('');
 }
 
 async function renderMyProfileTop(){
@@ -619,7 +632,7 @@ async function renderMyWritings(){
         <div class="mw-top"><span class="mw-badge">${a.icon} ${esc(a.t)}</span>
           <span class="mw-book">${esc(bookTitle(w.book_id))}</span>
           <span class="mw-date">${esc(date)}</span></div>
-        <div class="mw-text">${esc(w.text||'')}</div></div>`;
+        <div class="mw-text">${esc(wrDisplayText(w.activity,w.text))}</div></div>`;
     }).join('')}</div>`;
 }
 /* 마이페이지 — 별이 챌린지에서 남긴 한 줄 소감 + 점수 모음 */

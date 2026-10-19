@@ -88,14 +88,15 @@ function feedCard(it,i){
   const lc=_likeCount[likeKey]||0;
   const bk=!b?'':(isCls?` onclick="openDetail('${esc(String(b.id))}')"`:` onclick="libDetail('${esc(String(it.book_id))}')"`);
   const pastel=FEED_PASTEL[i%FEED_PASTEL.length];
-  const long=(it.act==='essay')||(it.text||'').length>120;
+  const shown=(typeof wrDisplayText==='function')?wrDisplayText(it.act,it.text):(it.text||'');   // 10/17 세명대: 네 줄 양식은 마중글 빼고 답만
+  const long=(it.act==='essay')||shown.length>120||shown.indexOf('\n')>=0;   // 문단 글은 pre-wrap 되는 본문 칸으로
   const isMe=(it.sid===_bxSid());
   const following=_myFollows.has(it.sid);
   const followBtn = isMe ? '' :    /* 8/30 사장님: '내 글' 배지 삭제 — 이름 아래 종류 표시로 충분 */`<button class="fc-follow${following?' on':''}" data-sid="${esc(it.sid)}" onclick="event.stopPropagation();feedFollow(this,'${esc(it.sid)}')">${following?'팔로잉':'팔로우'}</button>`;
   let content;
   if(it.act==='underline') content=`<div class="fc-quote hl" style="background:${pastel}"><span class="qm">“</span>${esc(it.text)}<span class="qm">”</span></div>`;
-  else if(long) content=`<div class="fc-body">${esc(it.text)}</div><button class="fc-more" onclick="event.stopPropagation();const b=this.previousElementSibling;b.classList.toggle('open');this.textContent=b.classList.contains('open')?'접기':'더보기'">더보기</button>`;   /* 8/30 서평·독후감 잘림 → 더보기 */
-  else content=`<div class="fc-quote" style="background:${pastel}">${esc(it.text)}</div>`;
+  else if(long) content=`<div class="fc-body">${esc(shown)}</div><button class="fc-more" onclick="event.stopPropagation();const b=this.previousElementSibling;b.classList.toggle('open');this.textContent=b.classList.contains('open')?'접기':'더보기'">더보기</button>`;   /* 8/30 서평·독후감 잘림 → 더보기 */
+  else content=`<div class="fc-quote" style="background:${pastel}">${esc(shown)}</div>`;
   return `<div class="fc${isMe?' mine':''}">
     <div class="fc-top">
       <div class="fc-ava" onclick="openStudentProfile('${esc(it.sid)}')">${esc(s.emoji||'🙂')}</div>

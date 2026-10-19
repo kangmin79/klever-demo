@@ -42,7 +42,11 @@ function setKrLang(lang){                  // 뷰어 언어 셀렉터 → 언어
   // 재렌더로 pane이 새로 만들어지므로 setMode와 동일 체인으로 전부 재초기화
   // (기존: applyReaderPrefs만 → 스크롤 리스너·형광펜·읽던 위치·TOC가 죽던 버그)
   // 9/2: 재렌더 뒤 restoreScrollPos는 "마지막 저장 위치"로 가므로(저장은 디바운스) 바꾸기 직전 지금 자리를 먼저 저장 — 언어 바꿀 때 자리 튐 방지
+  // 10/17 세명대: 폰에서 [번역] 탭을 보던 중 언어를 바꾸면 한국어 원문이 나왔다 — 재렌더(_setupMobilePanes)가 탭을 '원문'으로 되돌려서.
+  //   바꾸기 전 탭을 기억했다가 재렌더 뒤 같은 탭으로 돌아간다(스크롤 복원도 그 칸 기준이 되게 먼저).
+  const keepPane=(typeof _mobPane!=='undefined')?_mobPane:'main';
   if(currentBook){ saveScrollPos(); applyKrLang(currentBook.id); renderViewer();
+    if(keepPane==='second' && typeof switchMobilePane==='function') switchMobilePane('second');
     setTimeout(()=>{ applyReaderPrefs(); buildTOC(); restoreHighlights(); restoreScrollPos(); updateModeClass(); attachScrollListener(); updatePaneToggleVisibility(); if(pgEligible()){ _pg.on=false; enterPageMode(); } }, 0); }
 }
 const SVG = {

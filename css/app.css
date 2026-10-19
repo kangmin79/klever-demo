@@ -2091,7 +2091,9 @@ body.dark .pane-tabs .pt-btn.on{background:var(--gold);color:#0f172a;border-colo
   .lang-select{flex:0 0 auto;max-width:76px;padding:0 4px;font-size:11.5px;}
   /* 계정 칩은 span으로 한 겹 싸여 있다 — 줄어들어야 하는 건 그 바깥 span 쪽이다
      (여기를 안 풀어주면 좁은 폰에서 칩이 버티는 바람에 옆의 언어 선택이 잘려 나갔다) */
-  .bx-acc-wrap{flex:0 1 auto;min-width:0;overflow:hidden;}
+  /* 10/17 세명대: 폰에서 계정 칩을 눌러도 메뉴가 안 보였다 — 이 span의 overflow:hidden 이 안에 absolute 로 뜨는 메뉴(.bx-acc-menu)까지 잘라냈다.
+     줄어드는 역할은 min-width:0 만으로 충분하고, 잘라내기는 칩(button) 쪽에만 둔다 */
+  .bx-acc-wrap{flex:0 1 auto;min-width:0;overflow:visible;}
   .bx-acc-chip{flex:0 1 auto;min-width:0;overflow:hidden;max-width:100%;}
   /* 이름이 길면 이름만 말줄임(… ) — '다시 로그인' 같은 할 일 안내는 끝까지 보이게 */
   .bx-acc-name{display:inline-block;max-width:4.6em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;}

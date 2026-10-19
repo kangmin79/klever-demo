@@ -828,7 +828,16 @@ async function loadDesc(key, isCatalog, book){
       ? `/semyung_tulip?ctrl=eq.${encodeURIComponent(key.replace(/^CATTOT/,''))}&select=${sel}&limit=1`
       : `/semyung_tulip?or=(barcode.eq.${encodeURIComponent(key)},isbn.eq.${encodeURIComponent(key)})&select=${sel}&limit=1`;
     const r=await sbGetAnon(path);
-    if(!r.ok) return; const rows=await r.json(); const d=rows&&rows[0];
+    if(!r.ok) return; const rows=await r.json(); let d=rows&&rows[0];
+    // 10/17 세명대 "책 소개가 안 보인다": 최근 들어온 전자책(예: 인기 10위 「그건 쓰레기가 아니라고요」)은 소장목록에 전자책 줄이 아직 없다
+    //   → 같은 제목의 다른 판(종이책)에서 줄거리·저자를 빌려 온다. 줄거리는 판이 달라도 같은 책이다.
+    if(!d && book && (book.t||book.title)){
+      const core=cleanT(book.t||book.title||'').trim();
+      if(core.length>=2){
+        const r2=await sbGetAnon(`/semyung_tulip?title=ilike.${encodeURIComponent(core+'*')}&description=not.is.null&select=${sel}&order=kind.asc&limit=1`);
+        if(r2.ok){ const rows2=await r2.json(); d=rows2&&rows2[0]; }
+      }
+    }
     if(!d) return;
     if(!el.isConnected) return;   // 모달이 재렌더/닫힘 → 폐기
     // 저자·출판사·발행년이 비어 있으면 채운다(있으면 손대지 않는다 — 목록이 더 정확할 수 있음)

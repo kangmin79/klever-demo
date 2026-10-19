@@ -264,7 +264,7 @@ function fdSum(){
   initFeedDates();
   const [f,t]=rangeOf('fdFrom','fdTo'); const e=el('fdSumLine'); if(!e) return;
   if(!mark('pkFeed')){ e.innerHTML='<b style="color:var(--bad)">받을 자료를 골라 주세요.</b>'; return; }
-  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b> · 종류 <b>'+esc(selText('fdMs'))+'</b><br>엑셀 한 개 · 시트 <b>1장</b> — 학생 글 목록 '
+  e.innerHTML='<b>'+esc(f)+' ~ '+esc(t)+'</b> · 종류 <b>'+esc(selText('fdMs'))+'</b><br>엑셀 한 개 · 시트 <b>1장</b> — 학생 글 목록(챌린지 글 포함) '
     +'<span class="chip done">학번 · 글 전문 있음</span><br>파일 이름 &nbsp;<b>'+esc(fdFileName(f,t))+'.xlsx</b>';
 }
 const fdFileName=(f,t)=>'북스타_학생글_'+f+'_'+t;
@@ -275,8 +275,10 @@ async function loadWritings(){
   el('fdTbl').innerHTML=stEmpty(6,'불러오는 중…');
   const rng=`created_at=gte.${encodeURIComponent(kst(f))}&created_at=lt.${encodeURIComponent(kst(nextDay(t)))}`;
   let list=[], failed=false;   // 8/18 리뷰: 실패를 삼키면 빈 엑셀이 조용히 내려감 → 실패 표시
-  // 챌린지 밖에서 쓴 글만(challenge_id 없음) — 시안: 챌린지 글은 여기 없음
-  try{ list=await fetchAllRows(`/bookstar_writings?school_id=eq.${ST_SCHOOL}&challenge_id=is.null&${rng}&order=created_at.desc&select=*`); }catch(e){ failed=true; }
+  // 10/17 세명대 수정요청 "기간 동안 쓴 글이 누락": 예전엔 챌린지 밖 글만(challenge_id 없음) 내렸는데 학생 글 대부분이 챌린지 책에서 나온다
+  //   → 챌린지 글도 함께. 어느 챌린지인지는 '챌린지' 칸에 이름으로(엑셀은 별도 열)
+  try{ list=await fetchAllRows(`/bookstar_writings?school_id=eq.${ST_SCHOOL}&${rng}&order=created_at.desc&select=*`); }catch(e){ failed=true; }
+  try{ const ps=await fetchAllRows(`/library_programs?select=id,title`); WR_CHAL_TITLE={}; (ps||[]).forEach(p=>{ WR_CHAL_TITLE[String(p.id)]=p.title||''; }); }catch(e){ /* 이름 못 읽으면 '챌린지'로만 표시 */ }
   // 독자 서평(reviews = 빌린 책에서 쓴 상시 서평)도 같은 표에 합류(8/17) — activity 'rv', id 는 'rv:'+reviews.id 로 구분(챌린지 글 id 와 안 겹치게)
   try{ const rv=await fetchAllRows(`/reviews?school=eq.${encodeURIComponent('세명대학교')}&${rng}&order=created_at.desc&select=id,student_id,reviewer,book_id,book_title,body,rating,hidden,created_at`);
     rv.forEach(x=>list.push({id:'rv:'+x.id,rv_id:x.id,student_id:x.student_id||x.reviewer||'-',book_id:x.book_id,book_title:x.book_title,activity:'rv',text:x.body,hidden:!!x.hidden,created_at:x.created_at,challenge_id:null}));
@@ -289,6 +291,17 @@ async function loadWritings(){
 }
 const wrTitle=w=>w.activity==='rv'?(w.book_title||bookTitleOf(String(w.book_id||'').replace(/^sm-/,''))):bookTitleOf(w.book_id);
 const wrShort=w=>wrIsShort(w.activity, w.text);   // 글자 수 미달(미인정) — 네 줄 양식은 인정
+let WR_CHAL_TITLE={};
+const wrChal=w=>w.challenge_id?(WR_CHAL_TITLE[String(w.challenge_id)]||'챌린지'):'';
+// 10/17 세명대: 네 줄 양식("1. 질문 — 답")은 마중글을 빼고 학생이 쓴 답만 보여준다(학생 앱 wrDisplayText와 같은 규칙). 자세히 글은 그대로
+const WR_PROMPT_RE=/^\d{1,2}\.\s[^—\n]{2,80}\s—\s?/;
+function wrDisplayText(activity, text){
+  text=String(text||'');
+  if(activity!=='review'&&activity!=='essay'&&activity!=='rv') return text;
+  const lines=text.split('\n'); if(lines.length<2) return text;
+  if(!lines.every(l=>!l.trim()||WR_PROMPT_RE.test(l))) return text;
+  return lines.map(l=>l.replace(WR_PROMPT_RE,'').trim()).filter(Boolean).join('\n\n');
+}
 function bookTitleOf(id){ id=String(id||'');
   try{ if(/^gb-/.test(id)&&typeof CLASSICS_KO!=='undefined'&&CLASSICS_KO[id]) return CLASSICS_KO[id]; }catch(e){}
   try{ if(/^kr-/.test(id)&&typeof BOOKS_CLASSICS_KR!=='undefined'){ const b=BOOKS_CLASSICS_KR.find(x=>x.id===id); if(b&&b.title) return b.title; } }catch(e){}
@@ -302,8 +315,8 @@ function renderWritings(){
   tb.innerHTML = rows.length ? rows.slice(0,LIMIT).map(w=>{
     const tag=w.hidden?`<span class="chip bad">숨김</span>`
                      :(wrShort(w)?'<span class="chip end">미인정 · 글자 수 미달</span>':'');
-    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc(kstDay(w.created_at))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}</td>
-      <td><div class="fd-txt">${w.hidden?'숨긴 글입니다':esc(w.text)}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
+    return `<tr class="${w.hidden?'hid':''}"><td><b>${esc(w.student_id)}</b></td><td>${esc(kstDay(w.created_at))}</td><td>${esc(ACT_KO[w.activity]||w.activity)}</td><td>${esc(wrTitle(w))}${wrChal(w)?`<div style="margin-top:4px"><span class="chip">${esc(wrChal(w))}</span></div>`:''}</td>
+      <td><div class="fd-txt" style="white-space:pre-wrap">${w.hidden?'숨긴 글입니다':esc(wrDisplayText(w.activity,w.text))}</div>${tag?`<div style="margin-top:5px">${tag}</div>`:''}</td>
       <td><button class="btn-ghost" style="padding:6px 11px;font-size:12px" onclick="wrToggleHide('${esc(String(w.id))}')">${w.hidden?'다시 보이기':'숨기기'}</button></td></tr>`; }).join('')
     : stEmpty(6, FEEDV ? '해당하는 글이 없어요.' : (FEED_FAILED ? '불러오지 못했어요 — 기간을 다시 고르거나 잠시 후 시도해 주세요' : '불러오는 중…'));   // 8/29 리뷰 W8: 실패가 "불러오는 중…"으로 영구 표시되던 것
 }
@@ -327,8 +340,8 @@ function downloadFeedExcel(btn){
     if(!FEEDV||FEEDV.from!==f||FEEDV.to!==t){ const ok=await loadWritings(); if(ok===false){ toast('불러오지 못했어요 — 잠시 후 다시 시도해 주세요'); return; } }
     const ms=el('fdMs')?el('fdMs').value:'';
     const list=WRITINGS.filter(w=>!ms||w.activity===ms);
-    const rows=[[fmtRange(f,t)+(ms?' · 종류: '+(ACT_KO[ms]||ms):'')],[],['학번','날짜','종류','도서명','쓴 내용','숨김'],
-      ...list.map(w=>[w.student_id,kstDay(w.created_at),ACT_KO[w.activity]||w.activity,wrTitle(w),w.text,w.hidden?'숨김':''])];
+    const rows=[[fmtRange(f,t)+(ms?' · 종류: '+(ACT_KO[ms]||ms):'')],[],['학번','날짜','종류','도서명','챌린지','쓴 내용','숨김'],
+      ...list.map(w=>[w.student_id,kstDay(w.created_at),ACT_KO[w.activity]||w.activity,wrTitle(w),wrChal(w),wrDisplayText(w.activity,w.text).replace(/\n\n/g,'\n'),w.hidden?'숨김':''])];
     xlsxDownload(fdFileName(f,t), [{name:'학생 글 목록',rows:rows}]);
   });
 }

@@ -103,7 +103,8 @@ function nav(page){
     setTimeout(()=>{ renderMyLibStatus(); renderActivityGroup(); renderChalGroup(); renderMyProfileTop(); renderMyHero(); renderReadingRhythm(); renderChalScore(); renderMyShelf(); renderMyWritings(); renderMyImpressions(); renderBadges(); renderMyBooks(); renderMyReviews(); renderSummaryCard(); renderSuperlatives(); renderStreakCal(); renderReadChart(); }, 50);
   }
   if(page === 'search') {
-    setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
+    // 10/17 세명대: 폰에서는 자동 포커스를 하지 않는다 — 자판이 바로 올라와 카테고리 격자를 가렸다. 검색창을 누르면 그때 자판이 뜬다
+    if(window.innerWidth>900 && !(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)) setTimeout(()=>{ const i=document.getElementById('usSearchInput'); if(i) i.focus(); }, 50);
     if(SEMYUNG_BEST_LIVE===null) loadSemyungBest();   // 검색 직행 시에도 도서관 라이브 풀 로드(기존엔 ourlib 진입 시에만)
   }
   if(page === 'feed') {
