@@ -3,6 +3,7 @@
 // 구버전은 OPAC HTML 파싱(쿠키 봇체크) — openapi는 쿠키 불필요·구조 안정.
 // 출력: { ok, reckey, total, available, copies:[{callNum, location, status, returnDate,
 //         reserveAvailable, mainNo, accessionNo}], fetchedAt }  (앞 4필드는 구버전과 동일 — 앱 호환)
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 const HOST = "https://lib.semyung.ac.kr";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36 BookstarSync/1.0";
 

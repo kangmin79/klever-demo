@@ -2,6 +2,7 @@
 // ?kind=best (기본) → main/bestContent.json?bestCttsDvsnCode=1 (구매 전자책 대출 베스트, top→list 순서로 1..N)
 // ?kind=new          → main/newContent.json (신착 자료, 발행일 포함)
 // 출력: { books:[{ rank, brcd, title, author, publisher, cover, detail, pubDate }], fetchedAt }
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 const HOST = "https://ebook.semyung.ac.kr";
 const SRC = {
   best: HOST + "/elibrary-front/main/bestContent.json?bestCttsDvsnCode=1",

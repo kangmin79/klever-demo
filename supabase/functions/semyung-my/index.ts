@@ -22,6 +22,7 @@
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
 
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 import { tulip as api, tulipErr as apiErr } from "../_shared/tulip_api.ts";
 
 const CORS = {

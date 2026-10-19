@@ -14,6 +14,7 @@
 // 응답: 302 → https://bookstar.co.kr/app?sso_uid=…&sso_name=…&sso_dept=…&sso_token=…&sso_personal=1|0#ourlib
 import { signSsoToken } from "../_shared/sso_token.ts";
 import { loadLatestByHakbun, newSid, saveSession } from "../_shared/sso_store.ts";
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 import { personalSession, portalLogin, type PortalHandoff } from "../_shared/semyung_session.ts";
 
 const ALLOWED_SCHOOL = "semyung.ac.kr";

@@ -10,7 +10,7 @@
 //   - 화면(HTML) 긁기 0. 응답 코드를 그대로 해석하고, 모르는 건 throw → 호출측이 옛 경로로 폴백하거나 정직하게 실패한다.
 //   - 시크릿(KYOBO_RELAY_URL·KYOBO_RELAY_KEY)이 없으면 조회 함수는 throw — 폴백이 살아 있어 배포 순서에 안전하다.
 //   - 숫자는 문자열로 온다("2") → Number 로 바꿔 준다.
-import { EB, LBRY } from "./semyung_session.ts";
+import { EB, Jar, LBRY } from "./semyung_session.ts";
 
 const RELAY_URL = (Deno.env.get("KYOBO_RELAY_URL") || "").replace(/\/+$/, "");
 const RELAY_KEY = Deno.env.get("KYOBO_RELAY_KEY") || "";
@@ -131,6 +131,73 @@ export function kyoboViewerLinks(userId: string, brcd: string, mobile: boolean, 
     viewerUrl: `${EB}/frontapi/viewIf.ink?libraryCode=${LBRY}&user_id=${encodeURIComponent(userId)}&barcode=${encodeURIComponent(brcd)}`,
     viewerPost: { url: `${EB}/frontapi/viewIfChoice.ink`, fields: { libraryCode: LBRY, user_id: userId, barcode: brcd } },
   };
+}
+
+/** 선택창(바로보기 / 다운보기)의 '바로보기'를 서버가 대신 눌러 **뷰어 주소를 바로** 만든다 — 교보(KB) 책 전용.
+ *
+ *  10/15 사장님 신고: 10/2 정식 뷰어(viewIfChoice·mobileViewIf)로 바꾼 뒤 학생 폰에 교보 선택창이 한 번 더 뜬다("전에는 없었는데").
+ *  선택창 페이지를 읽어 보니(10/17 실측) '바로보기' = 그 페이지가 심어 둔 값(loanSrmb·mmbrNum 등)으로
+ *    폰: licenseCheck → webViewerProc(type=mobile) / PC: sessionAddProc(ifType=I) → webViewerProc(type=web)
+ *  을 부르고 popWebviewer.ink 로 가는 것뿐이다. 선택창을 연 쿠키(JSESSIONID)만 있으면 되고 포털·lib 로그인은 필요 없다.
+ *  그래서 같은 순서를 서버가 밟아 popWebviewer 주소를 만들어 준다 — 10/2 이전과 똑같이 학생은 바로 책이 열린다.
+ *  (만든 주소는 쿠키 없이 열려야 한다 — 10/17 실측 ✔, 두 번 열어도 같은 응답)
+ *
+ *  규칙: 어디서든 어긋나면 "" 를 돌려 호출측이 선택창 링크를 그대로 준다 — 못 여는 것보다 한 번 더 누르는 게 낫다(8/21 원칙).
+ *  ⛔ YES24(YS) 책엔 쓰지 않는다 — 8/24 실측: 선택창을 건너뛰면 콘텐츠 서버가 403. 호출측이 vendor==="KB" 일 때만 부른다.
+ *  선택창이 '바로보기'를 안 내주는 책(checkSupplyWebViewerInfo 가 Y/Y 가 아님 = 웹뷰어 미지원)도 "" — 선택창이 알아서 다운보기로 안내한다. */
+export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile: boolean, ua: string): Promise<string> {
+  const UA = mobile
+    ? (/iphone|ipad|ipod/i.test(ua) ? ua : "Mozilla/5.0 (Linux; Android 13; SM-S911N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+    : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+  const jar = new Jar();
+  const hit = async (path: string, form?: Record<string, string>, referer?: string): Promise<string> => {
+    const headers: Record<string, string> = { "User-Agent": UA };
+    const ck = jar.header(); if (ck) headers.Cookie = ck;
+    if (referer) headers.Referer = referer;
+    if (form) headers["Content-Type"] = "application/x-www-form-urlencoded";
+    if (path.includes(".xml")) headers["X-Requested-With"] = "XMLHttpRequest";
+    // 302 는 수동 추적 — 자동 추적이면 중간 응답의 Set-Cookie(JSESSIONID)가 사라진다(semyung_session.req 와 같은 이유)
+    let r = await fetch(`${EB}${path}`, { method: form ? "POST" : "GET", headers, body: form ? new URLSearchParams(form) : undefined, redirect: "manual", signal: AbortSignal.timeout(TIMEOUT_MS) });
+    jar.absorb(r);
+    let body = await r.text();
+    for (let i = 0; i < 3 && r.status >= 300 && r.status < 400 && r.headers.get("location"); i++) {
+      const next = new URL(r.headers.get("location")!, `${EB}${path}`).toString();
+      const h2: Record<string, string> = { "User-Agent": UA }; const ck2 = jar.header(); if (ck2) h2.Cookie = ck2; if (referer) h2.Referer = referer;
+      r = await fetch(next, { headers: h2, redirect: "manual", signal: AbortSignal.timeout(TIMEOUT_MS) });
+      jar.absorb(r);
+      body = await r.text();
+    }
+    if (!r.ok) throw new Error(`${path.split("?")[0]} http ${r.status}`);
+    return body;
+  };
+  const js = (html: string, key: string) => (new RegExp(`${key}\\s*:\\s*"([^"]*)"`).exec(html) || [, ""])[1];
+  try {
+    // 1) 선택창 열기 — 이 응답의 스크립트에 대출번호 등이 박혀 있고, 쿠키(JSESSIONID)가 뷰어 세션이 된다
+    const chooserPath = mobile
+      ? `/frontapi/mobileViewIf.ink?libraryCode=${LBRY}&barcode=${encodeURIComponent(brcd)}&user_id=${encodeURIComponent(btoa(userId))}&device=${/ipad/i.test(ua) ? "ipad" : /iphone|ipod/i.test(ua) ? "ios" : "android"}`
+      : `/frontapi/viewIfChoice.ink`;
+    const html = mobile ? await hit(chooserPath) : await hit(chooserPath, { libraryCode: LBRY, user_id: userId, barcode: brcd });
+    const loanSrmb = js(html, "loanSrmb");
+    if (!/^\d+$/.test(loanSrmb)) { console.error("directViewer: 선택창에 대출번호 없음", brcd, html.replace(/\s+/g, " ").slice(0, 160)); return ""; }
+    const epdeBrcd = js(html, "epdeBrcd"), cttsDvsnCode = js(html, "cttsDvsnCode") || "001", fileDvsnCode = js(html, "fileDvsnCode"), mmbrNum = js(html, "mmbrNum");
+    const referer = `${EB}${chooserPath.split("?")[0]}`;
+    // 2) 선택창과 같은 판정 — 웹뷰어(바로보기) 지원 책인가
+    const sup = await hit(`/process/checkSupplyWebViewerInfo.xml?lbryCode=${LBRY}&brcd=${encodeURIComponent(brcd)}`, undefined, referer);
+    if (!(tag(sup, "result") === "True" && tag(sup, "webViewrUsno") === "Y" && tag(sup, "webViewrYsno") === "Y" && tag(sup, "cttsLyot") !== "F")) {
+      console.error("directViewer: 웹뷰어 미지원 책 → 선택창", brcd, tag(sup, "result"), tag(sup, "webViewrUsno"), tag(sup, "webViewrYsno"), tag(sup, "cttsLyot")); return "";
+    }
+    // 3) 라이선스 — 폰: licenseCheck / PC: sessionAddProc(ifType=I). 결과 <result>는 반드시 본다(8/21 규칙 ①)
+    const lic = mobile
+      ? await hit("/process/licenseCheck.xml", { lbryCode: LBRY, brcd, epdeBrcd }, referer)
+      : await hit("/process/sessionAddProc.xml", { lbryCode: LBRY, loanSrmb, brcd, epdeBrcd, cttsDvsnCode, fileDvsnCode, mmbrNum, ifType: "I" }, referer);
+    if (tag(lic, "result") !== "True") { console.error("directViewer: 라이선스 False", brcd, tag(lic, "msgcode"), tag(lic, "msg").slice(0, 80)); return ""; }
+    // 4) 뷰어 토큰 → popWebviewer 주소(도서관 JS와 동일: token의 '/'→'-')
+    const wx = await hit(`/process/webViewerProc.xml?${new URLSearchParams({ lbryCode: LBRY, loanSrmb, brcd, epdeBrcd, type: mobile ? "mobile" : "web" })}`, undefined, referer);
+    if (tag(wx, "result") !== "True") { console.error("directViewer: webViewerProc False", brcd, tag(wx, "msgcode"), tag(wx, "msg").slice(0, 80)); return ""; }
+    const wvUrl = tag(wx, "webViewrUrl"), token = tag(wx, "token").replace(/\//g, "-"), title = tag(wx, "title");
+    if (!wvUrl || !token) { console.error("directViewer: 토큰 비어 있음", brcd); return ""; }
+    return `${EB}/popup/popWebviewer.ink?webViewrUrl=${wvUrl}&title=${encodeURIComponent(title)}&token=${encodeURIComponent(token)}`;
+  } catch (e) { console.error("directViewer err", brcd, String(e).slice(0, 120)); return ""; }
 }
 /** 도서관 문장이 비어 있을 때 쓸 우리말 — 규격서 에러코드 정의표(52종) 중 학생이 만날 만한 것만 */
 export const KYOBO_MSG: Record<string, string> = {

@@ -12,6 +12,7 @@
 //          &force=1                        → 오늘 보낼 게 없어도 확인용 알림 1건(배선 점검용)
 import { listActive, markFail, markSent, type PushRow } from "../_shared/push_store.ts";
 import { loadSessionAny, touchSession } from "../_shared/sso_store.ts";
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 import { listEbookLoans, personalSession } from "../_shared/semyung_session.ts";
 import { items, tulip, tulipErr } from "../_shared/tulip_api.ts";
 import { type AlertLoan, type AlertPick, type AlertResv, buildAlert } from "../_shared/alerts.ts";

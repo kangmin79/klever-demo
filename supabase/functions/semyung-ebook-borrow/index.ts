@@ -31,10 +31,11 @@
 //    user_id(교보 규약 암호화 ID)는 lib 로그인 → 연계폼에서 얻는다(개인세션 수립보다 한 단계 앞). 세션은 필요한 액션에서만 만든다.
 import { sessionFromRequest } from "../_shared/sso_token.ts";
 import { loadSession } from "../_shared/sso_store.ts";
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응) — 반드시 첫 import
 import { stockOneFromTable } from "../_shared/stock_table.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, listEbookLoans, xmlTag } from "../_shared/semyung_session.ts";
 import type { EbookHandoff } from "../_shared/semyung_session.ts";
-import { frontApi, frontMsg, isNoMember, kyoboBorrowList, kyoboIdFromSession, kyoboMemberSync, kyoboReserveList, kyoboStock, kyoboViewerLinks } from "../_shared/kyobo_api.ts";
+import { frontApi, frontMsg, isNoMember, kyoboBorrowList, kyoboDirectViewerUrl, kyoboIdFromSession, kyoboMemberSync, kyoboReserveList, kyoboStock, kyoboViewerLinks } from "../_shared/kyobo_api.ts";
 
 // 정식 API로 얻은 재고를 표(solsup_stock)에도 적어 둔다 — 검색·닮은책(stockFromTable)이 같은 최신값을 보게. 있는 행만 고친다(없으면 무시). 응답은 안 기다림.
 function writeStockThrough(brcd: string, st: { loaned: number; total: number; reserved: number; available: boolean }): void {
@@ -374,7 +375,9 @@ Deno.serve(async (req) => {
           const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd);
           if (!mine) return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
           const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
-          return json({ ok: true, action, personal, source: "api", loanSrmb: "", viewerUrl: v.viewerUrl, viewerPost: v.viewerPost, vendor: mine.vendor === "YS" ? "external" : "kyobo", dueDate: mine.dueDate || "" });
+          // 10/17: 교보(KB) 책은 선택창(바로보기/다운보기)을 서버가 대신 통과해 뷰어 주소를 바로 준다 — 실패하면 선택창 그대로
+          const direct = mine.vendor === "KB" ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua) : "";
+          return json({ ok: true, action, personal, source: "api", loanSrmb: "", viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct, vendor: mine.vendor === "YS" ? "external" : "kyobo", dueDate: mine.dueDate || "" });
         } catch (e) { console.error("viewer api fail → session", String(e).slice(0, 120)); if (!legacyOk) return json({ ok: false, action, personal, message: "대출 목록을 읽지 못했어요 — 잠시 후 다시 시도해 주세요" }); }
       }
       // (예비) 옛 세션 경로 — 내 대출 목록에 있는 책만 연다. 9/8: 앱이 바코드만 보내면 대출현황에서 번호를 찾는다.
@@ -407,9 +410,11 @@ Deno.serve(async (req) => {
           let dueDate = "", ents = "";
           try { const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd); dueDate = mine?.dueDate || ""; ents = mine?.vendor || ""; } catch (_) { /* 날짜 없이 안내 */ }
           const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
+          // 10/17: 교보(KB) 책은 선택창을 서버가 대신 통과 → 대출 직후 바로 책이 열린다(10/2 이전과 동일). 실패·YES24·공급사 미확인은 선택창
+          const direct = ents === "KB" ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua) : "";
           const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
           return json({
-            ok: true, action, personal, source: "api", loanSrmb: r.borrowId || "", entsDvsnCode: ents, viewerUrl: v.viewerUrl, viewerPost: v.viewerPost,
+            ok: true, action, personal, source: "api", loanSrmb: r.borrowId || "", entsDvsnCode: ents, viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct,
             vendor: ents === "YS" ? "external" : "kyobo", viewerError: "", dueDate,
             message: dm ? `대출 완료 — ${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요` : "대출 완료 — 읽고 나면 반납해 주세요",
           });

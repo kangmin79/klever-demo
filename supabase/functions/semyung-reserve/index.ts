@@ -6,6 +6,7 @@
 //     ?action=list                                → 현재 신청현황
 //     ?reckey=CATTOT...&action=cancel             → 그 책 신청 취소(reckey 매칭)
 // 출력: { ok, action, ... , message }
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 const HOST = "https://lib.semyung.ac.kr";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 const RECV = "0001"; // 수령처 = 민송도서관 (유일 옵션)

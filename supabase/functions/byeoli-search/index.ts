@@ -16,6 +16,7 @@
 //   results = 책버킷(curate+find+keyword RRF). 클라 카드 형태 그대로.
 // 시크릿: OPENAI 불필요(소스가 알아서). 자동주입 SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 로 형제 함수·RPC 호출.
 // ───────────────────────────────────────────────────────────────────────────
+import "../_shared/school_net.ts";   // 10/19: 학교 서버 통신 전부 중계 경유(AWS IP 차단 대응)
 import { stockMany } from "../_shared/ebook_stock.ts";
 import { stockFromTable } from "../_shared/stock_table.ts";
 
