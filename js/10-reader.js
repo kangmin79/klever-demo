@@ -221,6 +221,9 @@ function _hdrPeekMove(e){
   if(!sh || !sh.classList.contains('hdr-auto')) return;
   // 설정 시트 열려 있으면 헤더 계속 노출 (시트가 헤더 아래로 펼쳐짐)
   if(document.getElementById('readerSettingsSheet')?.classList.contains('open')){ sh.classList.add('hdr-peek'); return; }
+  // 10/19 세명대: PC에서 목차·독서노트를 닫을 수 없었다 — 서랍의 ✕로 마우스를 내리면 메뉴가 숨으며 본문·서랍이 위로 당겨져 ✕가 손가락 밑에서 달아났다.
+  //   서랍이 열려 있는 동안은 메뉴를 그대로 둔다(설정 시트와 같은 규칙). 서랍을 닫으면 다음 움직임부터 평소대로 숨는다.
+  if(document.querySelector('.toc-drawer.open')){ sh.classList.add('hdr-peek'); return; }
   const r=sh.getBoundingClientRect();
   // 9/11: PC는 메뉴가 본문을 밀어내며 나타나므로(겹침 없음), 보이는 동안엔 메뉴 전체 높이가 유지 영역 — 메뉴 아랫줄에서 깜빡이지 않게
   const hdr=sh.querySelector('.viewer-header');

@@ -52,6 +52,32 @@ function writeStockThrough(brcd: string, st: { loaned: number; total: number; re
 
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 
+// 10/19 세명대 "해당 컨텐츠가 존재하지 않습니다"(10/8~10/19 실패 17건): 앱이 바코드 대신 **ISBN(978…)**이나 **종이책 제어번호(12자리)**를 보내
+//   교보가 모르는 번호라고 답한 것. 소장목록(semyung_tulip)에서 같은 ISBN의 전자책 바코드로 바꿔 준다. 종이책만 있는 책이면 솔직히 말한다.
+//   교보 바코드는 480으로 시작하는 13자리, YES24는 9자리 — 그 모양이면 손대지 않는다.
+const looksLikeBarcode = (k: string) => /^480[0-9A-Z]{10}$/.test(k) || /^\d{9}$/.test(k);
+async function resolveEbookBarcode(key: string): Promise<{ barcode?: string; paperOnly?: boolean; title?: string }> {
+  const base = Deno.env.get("SUPABASE_URL") || "", k = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+  if (!base || !k) return {};
+  const get = async (q: string): Promise<Record<string, string>[]> => {
+    try { const r = await fetch(`${base}/rest/v1/semyung_tulip?${q}`, { headers: { apikey: k, Authorization: `Bearer ${k}` }, signal: AbortSignal.timeout(6000) }); return r.ok ? await r.json() : []; } catch { return []; }
+  };
+  const ebookByIsbn = async (isbn: string) => (await get(`isbn=eq.${encodeURIComponent(isbn)}&kind=eq.ebook&select=barcode,title&limit=1`))[0];
+  if (/^97[89]\d{10}$/.test(key)) {
+    const eb = await ebookByIsbn(key); if (eb?.barcode) return { barcode: eb.barcode, title: eb.title };
+    const any = (await get(`isbn=eq.${encodeURIComponent(key)}&select=ctrl,title&limit=1`))[0];
+    return any ? { paperOnly: true, title: any.title } : {};
+  }
+  if (/^\d{12}$/.test(key)) {
+    const row = (await get(`ctrl=eq.${encodeURIComponent(key)}&select=kind,isbn,barcode,title&limit=1`))[0];
+    if (!row) return {};
+    if (row.kind === "ebook" && row.barcode) return { barcode: row.barcode, title: row.title };
+    if (row.isbn) { const eb = await ebookByIsbn(row.isbn); if (eb?.barcode) return { barcode: eb.barcode, title: eb.title }; }
+    return { paperOnly: true, title: row.title };
+  }
+  return {};
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -257,7 +283,13 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "borrow";
-    const brcd = (url.searchParams.get("brcd") || "").replace(/[^0-9A-Za-z]/g, "");
+    let brcd = (url.searchParams.get("brcd") || "").replace(/[^0-9A-Za-z]/g, "");
+    // 10/19: 바코드 모양이 아닌 키(ISBN·종이책 제어번호)는 소장목록에서 전자책 바코드로 바꾼다 — 교보 "해당 컨텐츠가 존재하지 않습니다" 방지
+    if (brcd && !looksLikeBarcode(brcd) && ["borrow", "viewer", "stock", "reserve", "return", "extend", "cancelReserve"].includes(action)) {
+      const rs = await resolveEbookBarcode(brcd);
+      if (rs.barcode) { console.error("brcd resolved", action, brcd, "→", rs.barcode); brcd = rs.barcode; }
+      else if (rs.paperOnly) return json({ ok: false, action, source: "catalog", message: "이 책은 전자책이 없어요 — 우리 도서관엔 종이책만 있어요" });
+    }
 
     // 재고는 공개 정보 — 로그인·세션 없이 바로 응답(게스트도 "지금 빌릴 수 있나"를 본다)
     if (action === "stock") {
@@ -376,7 +408,8 @@ Deno.serve(async (req) => {
           if (!mine) return json({ ok: false, action, personal, message: "대출 목록에 없는 책이에요 — 기간이 끝났거나 이미 반납됐어요" });
           const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
           // 10/17: 교보(KB) 책은 선택창(바로보기/다운보기)을 서버가 대신 통과해 뷰어 주소를 바로 준다 — 실패하면 선택창 그대로
-          const direct = mine.vendor === "KB" ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua) : "";
+          // 10/19: YES24(YS) 책은 YES24 자체 선택 화면(popupInfo apiUrl)으로 — 교보 선택창의 바로보기는 YES24 콘텐츠에 DRM 403
+          const direct = (mine.vendor === "KB" || mine.vendor === "YS") ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua, mine.vendor) : "";
           return json({ ok: true, action, personal, source: "api", loanSrmb: "", viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct, vendor: mine.vendor === "YS" ? "external" : "kyobo", dueDate: mine.dueDate || "" });
         } catch (e) { console.error("viewer api fail → session", String(e).slice(0, 120)); if (!legacyOk) return json({ ok: false, action, personal, message: "대출 목록을 읽지 못했어요 — 잠시 후 다시 시도해 주세요" }); }
       }
@@ -411,7 +444,7 @@ Deno.serve(async (req) => {
           try { const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd); dueDate = mine?.dueDate || ""; ents = mine?.vendor || ""; } catch (_) { /* 날짜 없이 안내 */ }
           const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
           // 10/17: 교보(KB) 책은 선택창을 서버가 대신 통과 → 대출 직후 바로 책이 열린다(10/2 이전과 동일). 실패·YES24·공급사 미확인은 선택창
-          const direct = ents === "KB" ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua) : "";
+          const direct = (ents === "KB" || ents === "YS") ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua, ents) : "";   // 10/19: YS는 YES24 선택 화면 주소
           const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
           return json({
             ok: true, action, personal, source: "api", loanSrmb: r.borrowId || "", entsDvsnCode: ents, viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct,

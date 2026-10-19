@@ -145,7 +145,11 @@ export function kyoboViewerLinks(userId: string, brcd: string, mobile: boolean, 
  *  규칙: 어디서든 어긋나면 "" 를 돌려 호출측이 선택창 링크를 그대로 준다 — 못 여는 것보다 한 번 더 누르는 게 낫다(8/21 원칙).
  *  ⛔ YES24(YS) 책엔 쓰지 않는다 — 8/24 실측: 선택창을 건너뛰면 콘텐츠 서버가 403. 호출측이 vendor==="KB" 일 때만 부른다.
  *  선택창이 '바로보기'를 안 내주는 책(checkSupplyWebViewerInfo 가 Y/Y 가 아님 = 웹뷰어 미지원)도 "" — 선택창이 알아서 다운보기로 안내한다. */
-export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile: boolean, ua: string): Promise<string> {
+/*  10/19 추가 — YES24(YS) 책: 교보 선택창의 '바로보기'는 교보 웹뷰어로 가는데 YES24 콘텐츠는 거기서 **DRM 403**(sessionAddProc "라이선스 오류" → Vultr 실측).
+ *  즉 10/2 이후 YES24 책은 선택창에서 '바로보기'를 눌러도 안 열렸다. 도서관 PC 화면의 진짜 경로 = popupInfo.xml 이 주는 apiUrl
+ *  (`ebook.semyung.ac.kr:8082/api/yes24_ebook_open.asp?user_id=학번&goods_id=바코드` — YES24 자체 선택 화면, 쿠키 없이 열림, 8/21 검증 경로).
+ *  선택창 세션(JSESSIONID)으로 popupInfo 를 부르면 포털·lib 로그인 없이도 나온다(10/19 실측). vendor==="YS" 면 그 주소를 돌려준다. */
+export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile: boolean, ua: string, vendor = "KB"): Promise<string> {
   const UA = mobile
     ? (/iphone|ipad|ipod/i.test(ua) ? ua : "Mozilla/5.0 (Linux; Android 13; SM-S911N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
     : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -181,6 +185,14 @@ export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile:
     if (!/^\d+$/.test(loanSrmb)) { console.error("directViewer: 선택창에 대출번호 없음", brcd, html.replace(/\s+/g, " ").slice(0, 160)); return ""; }
     const epdeBrcd = js(html, "epdeBrcd"), cttsDvsnCode = js(html, "cttsDvsnCode") || "001", fileDvsnCode = js(html, "fileDvsnCode"), mmbrNum = js(html, "mmbrNum");
     const referer = `${EB}${chooserPath.split("?")[0]}`;
+    if (vendor === "YS") {
+      // YES24: 도서관이 주는 타사 연동 주소(YES24 선택 화면)가 곧 입구. 교보 웹뷰어 토큰을 만들면 안 된다(DRM 403)
+      const pi = await hit(`/process/popupInfo.xml?lbryCode=${LBRY}&loanSrmb=${loanSrmb}&ifType=W`, undefined, referer);
+      const apiUrl = tag(pi, "apiUrl");
+      if (tag(pi, "result") === "True" && /^https?:\/\//.test(apiUrl)) return apiUrl;
+      console.error("directViewer(YS): popupInfo apiUrl 없음", brcd, tag(pi, "result"), tag(pi, "msgcode"), tag(pi, "msg").slice(0, 80));
+      return "";
+    }
     // 2) 선택창과 같은 판정 — 웹뷰어(바로보기) 지원 책인가
     const sup = await hit(`/process/checkSupplyWebViewerInfo.xml?lbryCode=${LBRY}&brcd=${encodeURIComponent(brcd)}`, undefined, referer);
     if (!(tag(sup, "result") === "True" && tag(sup, "webViewrUsno") === "Y" && tag(sup, "webViewrYsno") === "Y" && tag(sup, "cttsLyot") !== "F")) {
