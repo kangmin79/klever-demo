@@ -193,19 +193,10 @@ export async function kyoboDirectViewerUrl(userId: string, brcd: string, mobile:
         console.error("directViewer(YS): popupInfo apiUrl 없음", brcd, tag(pi, "result"), tag(pi, "msgcode"), tag(pi, "msg").slice(0, 80));
         return "";
       }
-      // 10/19 저녁(사장님 "선택 화면이 올라오네"): YES24 선택 화면의 '바로보기'(webview.js goViewer)가 만드는 주소를 서버가 미리 계산한다.
-      //   = 도메인 + code + "/" + subcode + "/" + encodeURIComponent(암호문의 '/'→'-'). 암호문은 발급마다 다르고 한 번만 쓴다(열 때마다 새로).
-      //   8/24엔 이 직행이 403이었는데(발급=Supabase AWS), 발급을 중계(Vultr, school_net)로 바꾸니 학생 회선에서 열린다(10/19 실측 3/3).
-      //   선택 화면은 UA 로 PC(Gun)/폰(GunMobile)을 가르므로 학생의 UA 로 받는다. 파싱 실패·비정상이면 선택 화면 주소로 후퇴.
-      try {
-        const r = await fetch(apiUrl, { headers: { "User-Agent": ua || UA }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-        if (r.ok) {
-          const html = new TextDecoder("euc-kr").decode(await r.arrayBuffer());
-          const m = /goViewer\('([^']+)','([^']+)','([^']+)','([^']+)'\)/.exec(html);
-          if (m) return m[1] + m[2] + "/" + m[3] + "/" + encodeURIComponent(m[4].split("/").join("-"));
-          console.error("directViewer(YS): goViewer 못 찾음 → 선택 화면", brcd, html.replace(/\s+/g, " ").slice(0, 160));
-        } else console.error("directViewer(YS): 선택 화면 http", r.status);
-      } catch (e) { console.error("directViewer(YS): 선택 화면 읽기 실패 → 선택 화면 주소로", String(e).slice(0, 100)); }
+      // ⛔ 10/20 되돌림 — YES24 선택 화면 건너뛰기(goViewer 주소 미리 계산)는 **세 번째로 실패**했다(8/24 · 10/19 저녁 · 10/20 학교 신고 403 "동일 도서 1개 창").
+      //   10/19 저녁의 "3/3 성공"은 curl 이 301까지만 보고 멈춘 오판 — 실제 /ePubViewer 페이지가 403을 낸다(10/20 크로미움 실측: 첫 창·새 브라우저·창 닫은 뒤 전부 403).
+      //   선택 화면에서 사람이 '바로보기'를 눌러야만 열리는 구조(window.open 출처 검사로 추정). 서버·브라우저 어느 쪽에서도 흉내 낼 수 없다.
+      //   ⛔ 다시 시도하지 말 것. YES24 책은 선택 화면(apiUrl)까지만 안내한다 — 거기서 '바로보기' 한 번은 공급사 절차.
       return apiUrl;
     }
     // 2) 선택창과 같은 판정 — 웹뷰어(바로보기) 지원 책인가
