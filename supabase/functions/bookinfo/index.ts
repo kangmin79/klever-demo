@@ -33,7 +33,8 @@ Deno.serve(async (req) => {
       // ── 알라딘: 별점·쪽수·소개·발행년·출판사·표지 ──
       try {
         const ar = await fetch(
-          `http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${ALADIN}&itemIdType=ISBN13&ItemId=${encodeURIComponent(isbn)}&output=js&Version=20131101&OptResult=ratingInfo`,
+          // 10/20: fulldescription 추가 — 신간은 짧은 소개(description)가 비어 있고 출판사 긴 소개만 있는 경우가 있다(배설 스펙터클 등)
+          `http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=${ALADIN}&itemIdType=ISBN13&ItemId=${encodeURIComponent(isbn)}&output=js&Version=20131101&OptResult=ratingInfo,fulldescription`,
           { headers: { "User-Agent": "Mozilla/5.0" } },
         );
         const txt = (await ar.text()).trim().replace(/;\s*$/, "");
@@ -44,6 +45,8 @@ Deno.serve(async (req) => {
           if (it.author) o.author = it.author;
           if (it.cover) o.cover = https(it.cover);
           if (it.description) o.description = strip(it.description);
+          else if (it.fullDescription) o.description = strip(it.fullDescription);
+          else if (it.subInfo && it.subInfo.fullDescription) o.description = strip(it.subInfo.fullDescription);
           if (it.publisher) o.publisher = it.publisher;
           if (it.pubDate) { const y = (it.pubDate.match(/\d{4}/) || [])[0]; if (y) o.pubYear = y; }
           const si = it.subInfo || {};
