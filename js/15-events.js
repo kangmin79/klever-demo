@@ -563,6 +563,9 @@ async function backfillPool(){
 //   sm-접두를 안 붙이는 경우가 있다(_sm:true·tags:['ebook']인데 isbn='9791190238977' 같은 순수 ISBN13).
 //   ISBN13은 13자리 숫자라 우연히 바코드처럼 보여 그대로 조회하면 재고·줄거리 조회가 조용히 실패하고,
 //   lcBorrow는 대출 없이 전자책 URL을 그냥 열어 빈 화면이 뜬다 — lib/_pp URL 안의 진짜 키를 먼저 본다.
+// 10/27 세명대 전자책 바코드 판별 — 숫자만이 아니다: 교보 바코드 3,459권(15%)이 480D250401050 처럼 글자를 품는다.
+//   예전 /^\d+$/ 검사 때문에 그 책들은 줄거리도 안 붙고, 재고는 제목으로 딴 판을 찾고, 대출 대신 전자도서관 링크로 튕겼다(이방인 480D120803540).
+function isSmBrcd(k){ k=String(k||''); return /^\d{6,13}$/.test(k) || /^480[0-9A-Z]{10}$/.test(k); }
 function smKeyOf(b){
   const fromLib=(String(b.lib||b.smEbookUrl||'').match(/[?&]brcd=([0-9A-Za-z]+)/)||[,''])[1];
   if(fromLib) return fromLib;
@@ -686,14 +689,14 @@ function libDetail(isbn){
   // 줄거리 lazy 로드 — 후보가 description을 안 싣고 와도 DB에서 채움. P3부터 단일 semyung_tulip(종이책=CATTOT{ctrl}, 전자책=barcode/isbn).
   // 세명대 키(전자책 바코드=숫자 / 종이책 CATTOT)만 있으면 어느 목록에서 왔든 DB에서 보강한다.
   // (기존: b._sm 플래그에 의존 → 큐레이션 등 일부 경로에서 저자·줄거리가 통째로 비어 보였다)
-  const isSmKey = /^\d+$/.test(reckey) || /^CATTOT/.test(reckey);
+  const isSmKey = isSmBrcd(reckey) || /^CATTOT/.test(reckey) || /^97[89]\d{10}$/.test(reckey);   // 10/27: 글자 섞인 교보 바코드·ISBN 키도 줄거리 보강 대상
   if(isSmKey) loadDesc(reckey, /^CATTOT/.test(reckey), b);
   // 전자책 실시간 재고 — 태그가 실제로 그려졌는지로 판단(책 객체의 lib 유무에 의존하지 않는다)
   // 용어 통일(8/12 피드백): 배지는 '지금 대출 가능'/'대출 중' 둘만. 확인 못 하면 배지 생략('소장' 폐기)
   // 키가 바코드가 아니라 ISBN인 책(제철 행복류)은 소장목록에서 진짜 바코드를 찾아 재시도
   const _ebTag=document.getElementById('ebStockTag');
   if(_ebTag){
-    if(/^\d+$/.test(reckey)) loadEbookStock(reckey, b.t||'');
+    if(isSmBrcd(reckey)) loadEbookStock(reckey, b.t||'');
     else tulipEbookBarcode(b.t||'').then(bc=>{
       if(bc) loadEbookStock(bc, '', true);
       else if(_ebTag.isConnected) _ebTag.remove();
@@ -913,7 +916,7 @@ function lcBorrow(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
   const reckey=smKeyOf(b);   // isbn 접두 대신 lib URL의 진짜 brcd 우선(8/19) — 아니면 대출 없이 뷰어 URL을 그냥 열어 빈 화면
   // 세명대 전자도서관 구매 전자책(숫자 brcd) → 북스타 안에서 실제 대출 후 DRM 뷰어 열기
-  const isEbookLoan = /^\d+$/.test(reckey) &&
+  const isEbookLoan = (isSmBrcd(reckey) || /^97[89]\d{10}$/.test(reckey)) &&   // 10/27: 글자 섞인 바코드·ISBN 키(서버가 판 찾음)도 대출형
     ((b.lib||'').indexOf('ebook.semyung')>-1 || (b.lib||'').indexOf('elibrary')>-1 || (b.tags&&b.tags.includes('ebook')));
   // 미연동자 전자책 대출 차단(8/9) — 예전엔 공유계정(관장님)으로 대신 빌려줘서 관장님 이름으로
   // 기록이 남고, 5칸이 차면 남이 읽던 책이 강제 반납됐다. 창을 열기 전에 막는다.
