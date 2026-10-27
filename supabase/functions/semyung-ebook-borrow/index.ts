@@ -56,15 +56,27 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 //   교보가 모르는 번호라고 답한 것. 소장목록(semyung_tulip)에서 같은 ISBN의 전자책 바코드로 바꿔 준다. 종이책만 있는 책이면 솔직히 말한다.
 //   교보 바코드는 480으로 시작하는 13자리, YES24는 9자리 — 그 모양이면 손대지 않는다.
 const looksLikeBarcode = (k: string) => /^480[0-9A-Z]{10}$/.test(k) || /^\d{9}$/.test(k);
-async function resolveEbookBarcode(key: string): Promise<{ barcode?: string; paperOnly?: boolean; title?: string }> {
+async function resolveEbookBarcode(key: string, hintTitle = "", hintAuthor = ""): Promise<{ barcode?: string; paperOnly?: boolean; title?: string }> {
   const base = Deno.env.get("SUPABASE_URL") || "", k = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
   if (!base || !k) return {};
   const get = async (q: string): Promise<Record<string, string>[]> => {
     try { const r = await fetch(`${base}/rest/v1/semyung_tulip?${q}`, { headers: { apikey: k, Authorization: `Bearer ${k}` }, signal: AbortSignal.timeout(6000) }); return r.ok ? await r.json() : []; } catch { return []; }
   };
   const ebookByIsbn = async (isbn: string) => (await get(`isbn=eq.${encodeURIComponent(isbn)}&kind=eq.ebook&select=barcode,title&limit=1`))[0];
+  // 10/27 「이방인」: 큐레이션 책의 ISBN(민음사 판)이 소장목록 어느 줄에도 없는데 전자책은 다른 판으로 3종 있다 →
+  //   제목 핵심부 + 저자 성(姓) 일치로 전자책 판을 찾는다. 저자 불일치면 절대 안 고른다(제목만 같은 딴 책 사고 방지 — 8/6 교훈)
+  const norm = (s: string) => String(s || "").replace(/\[[^\]]*\]/g, " ").replace(/[\s·,.'"’“”()（）:：;\-]/g, "").toLowerCase();
+  const ebookByTitleAuthor = async () => {
+    const core = String(hintTitle || "").split(/\s*[:：=\/(\[]/)[0].trim();
+    if (core.length < 2) return undefined;
+    const rows = await get(`kind=eq.ebook&title=ilike.${encodeURIComponent(core + "*")}&select=barcode,title,author&limit=8`);
+    const toks = String(hintAuthor || "").split(/[\s,;:·()]+|옮긴이|지은이|지음|옮김|글|그림/).map((t) => norm(t)).filter((t) => t.length >= 2);
+    if (!toks.length) return undefined;
+    return rows.find((r) => { const t = norm(r.title).replace(/전자책/g, ""); const a = norm(r.author); return t.startsWith(norm(core)) && toks.some((x) => a.includes(x)); });
+  };
   if (/^97[89]\d{10}$/.test(key)) {
     const eb = await ebookByIsbn(key); if (eb?.barcode) return { barcode: eb.barcode, title: eb.title };
+    const byT = await ebookByTitleAuthor(); if (byT?.barcode) return { barcode: byT.barcode, title: byT.title };
     const any = (await get(`isbn=eq.${encodeURIComponent(key)}&select=ctrl,title&limit=1`))[0];
     return any ? { paperOnly: true, title: any.title } : {};
   }
@@ -286,7 +298,7 @@ Deno.serve(async (req) => {
     let brcd = (url.searchParams.get("brcd") || "").replace(/[^0-9A-Za-z]/g, "");
     // 10/19: 바코드 모양이 아닌 키(ISBN·종이책 제어번호)는 소장목록에서 전자책 바코드로 바꾼다 — 교보 "해당 컨텐츠가 존재하지 않습니다" 방지
     if (brcd && !looksLikeBarcode(brcd) && ["borrow", "viewer", "stock", "reserve", "return", "extend", "cancelReserve"].includes(action)) {
-      const rs = await resolveEbookBarcode(brcd);
+      const rs = await resolveEbookBarcode(brcd, url.searchParams.get("t") || "", url.searchParams.get("a") || "");
       if (rs.barcode) { console.error("brcd resolved", action, brcd, "→", rs.barcode); brcd = rs.barcode; }
       else if (rs.paperOnly) return json({ ok: false, action, source: "catalog", message: "이 책은 전자책이 없어요 — 우리 도서관엔 종이책만 있어요" });
     }

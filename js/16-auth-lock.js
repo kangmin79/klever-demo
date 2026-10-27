@@ -433,7 +433,7 @@ async function ebOpen(loanSrmb, brcd, title){
   if(!w){ alert('새 창이 차단됐어요. 팝업을 허용한 뒤 다시 눌러 주세요.'); return; }
   try{ w.document.write(bridgeHTML({t:title||'',a:'',cover:''})); w.document.close(); }catch(e){}
   try{
-    const r=await sbFn(SMEBK_FN,{action:'viewer',loanSrmb:loanSrmb,brcd:brcd||''},{dev:true});
+    const r=await sbFn(SMEBK_FN,{action:'viewer',loanSrmb:loanSrmb,brcd:brcd||'',t:title||''},{dev:true});
     const d=await r.json();
     if(d&&d.ok&&d.viewerUrl){ ebNavigateViewer(w,d); return; }
     try{ w.close(); }catch(e){}
@@ -485,7 +485,8 @@ async function smDropPickup(reqNo){
 }
 async function smEbookBorrowOpen(brcd, w, book){
   try{
-    const r=await sbFn(SMEBK_FN,{action:'borrow',brcd:brcd},{dev:true});
+    // 10/27: 키가 바코드가 아닌 책(큐레이션 ISBN 등)을 서버가 전자책 판으로 찾을 수 있게 제목·저자를 같이 보낸다(이방인)
+    const r=await sbFn(SMEBK_FN,{action:'borrow',brcd:brcd,t:(book&&(book.t||book.title))||'',a:(book&&(book.a||book.author))||''},{dev:true});
     const d=await r.json();
     // 연동 만료(토큰 7일) — 누를 땐 연동 상태였는데 서버에서 세션이 안 만들어진 경우.
     // 공유계정으로 대신 빌려주지 않으므로 여기서 안내로 돌린다.
