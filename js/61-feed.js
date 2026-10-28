@@ -30,11 +30,16 @@ async function _bxNames(){
 }
 async function loadFeedSocial(){
   const me=_bxSid();
-  _myFollows=new Set(); _likeCount={}; _myLikes=new Set();
+  // 10/28 김병삼: "팔로우가 작동하지 않는다" — 저장은 됐는데, 탭을 바꿀 때마다 여기서 기억을 먼저 비우고 화면을 그려
+  //   팔로잉 탭이 빈 화면·좋아요 0·버튼이 다시 '팔로우'로 보였다(서버 응답이 와도 다시 그리지 않음).
+  //   → 새 값을 다 받은 뒤에 바꿔 넣는다. 받기 실패하면 기존 기억 유지.
+  const follows=new Set(), likeCount={}, myLikes=new Set(); let okF=false, okL=false;
   try{ const r=await sbGet(`/bookstar_follows?follower_id=eq.${encodeURIComponent(me)}&select=following_id`);
-    if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>_myFollows.add(x.following_id)); } }catch(e){}
+    if(r.ok){ const a=await r.json(); if(Array.isArray(a)){ a.forEach(x=>follows.add(x.following_id)); okF=true; } } }catch(e){}
   try{ const r=await sbGet(`/bookstar_likes?select=liker_id,item_key`);
-    if(r.ok){ const a=await r.json(); if(Array.isArray(a)) a.forEach(x=>{ _likeCount[x.item_key]=(_likeCount[x.item_key]||0)+1; if(x.liker_id===me) _myLikes.add(x.item_key); }); } }catch(e){}
+    if(r.ok){ const a=await r.json(); if(Array.isArray(a)){ a.forEach(x=>{ likeCount[x.item_key]=(likeCount[x.item_key]||0)+1; if(x.liker_id===me) myLikes.add(x.item_key); }); okL=true; } } }catch(e){}
+  if(okF) _myFollows=follows;
+  if(okL){ _likeCount=likeCount; _myLikes=myLikes; }
 }
 async function feedLike(btn,key){
   const me=_bxSid(); const liked=_myLikes.has(key);
@@ -153,7 +158,9 @@ async function renderFeed(){
   }
   _feedPaint();
 }
-function _feedSig(){ return _feedItems.length+'|'+String(_feedItems[0]&&_feedItems[0].time||''); }
+function _feedSig(){   // 10/28 팔로우·좋아요가 서버에서 달라져 왔을 때도 다시 그리도록 서명에 포함
+  return _feedItems.length+'|'+String(_feedItems[0]&&_feedItems[0].time||'')+'|'+_myFollows.size+'|'+_myLikes.size+'|'+Object.keys(_likeCount).length;
+}
 function _feedHead(){
   return `<div class="feed-tabs">
       <button class="feed-tab ${_feedTab==='rec'?'on':''}" onclick="setFeedTab('rec')">추천</button>
