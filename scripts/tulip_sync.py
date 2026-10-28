@@ -630,10 +630,28 @@ def fresh_arrivals(days=30, d4l_budget=300, budget=200, limit=500):
 
     if got:
         # coalesce(nullif(...)) — 빈 문자열은 무시되므로 구조적으로 도장이 찍힐 수 없다
-        vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in got)
-        sql("update semyung_tulip t set cover_url=coalesce(nullif(v.u,''), t.cover_url), "
-            "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
-            f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", timeout=180)
+        # 10/28: 500건 한 문장이 한 행 때문에 HTTP 400으로 통째로 죽어 조달한 500건이 전부 날아갔다
+        #   → 40건씩 저장, 묶음이 실패하면 한 건씩 저장해 문제 행만 버린다(오류 본문도 찍는다)
+        def _save(rows):
+            vals = ",".join(f"({esc(c)},{esc(u)},{esc(d)})" for c, u, d in rows)
+            sql("update semyung_tulip t set cover_url=coalesce(nullif(v.u,''), t.cover_url), "
+                "description=coalesce(nullif(v.d,''), t.description), updated_at=now() "
+                f"from (values {vals}) as v(c,u,d) where t.ctrl=v.c", timeout=180)
+        lost = 0
+        for i in range(0, len(got), 40):
+            chunk = got[i:i + 40]
+            try:
+                _save(chunk)
+            except Exception as e:
+                body = ""
+                try: body = e.read().decode("utf-8", "replace")[:200]
+                except Exception: pass
+                print(f"  [fresh] 묶음 저장 실패({len(chunk)}건) {e} {body} — 한 건씩 재시도")
+                for row in chunk:
+                    try: _save([row])
+                    except Exception as e2:
+                        lost += 1; print(f"    버림 ctrl={row[0]}: {str(e2)[:80]}")
+        if lost: print(f"  [fresh] 저장 못 한 행 {lost}건(다음 실행에서 재조달)")
     nc = sum(1 for _, u, _ in got if u); nd = sum(1 for _, _, d in got if d)
     print(f"[fresh] 완료 — 표지 {nc:,} · 줄거리 {nd:,} 채움 / 남김(내일 재시도) {len(todo)-len(got):,} "
           f"| 호출 나루 {_d4l_calls:,} · 알라딘 {_aladin_calls:,}"
