@@ -593,7 +593,9 @@ def fresh_arrivals(days=30, d4l_budget=300, budget=200, limit=500):
         "select ctrl, isbn, title, coalesce(cover_url,'') cov, coalesce(description,'') dsc "
         # mat_type is null 포함 — 신착 삽입이 자료유형을 못 얻으면 NULL로 남는데,
         # 그걸 빼면 8/12처럼 신착이 통째로 누락된다. 여기선 관대하게 받는다(하루 십수 권이라 낭비 없음).
-        "from semyung_tulip where kind='paper' and (mat_type='m' or mat_type is null) "
+        # 10/28 전자책도 포함 — 인기 전자책 20권 중 12권이 5/26 이후 신착이라 줄거리가 없었다(사장님 신고).
+        #   전자책 표지는 enrich가 바코드로 조립하므로 여기선 보통 줄거리만 채워진다.
+        "from semyung_tulip where ((kind='paper' and (mat_type='m' or mat_type is null)) or kind='ebook') "
         f"and reg_date >= to_char(current_date - interval '{int(days)} days','YYYYMMDD') "
         "and (coalesce(cover_url,'')='' or coalesce(description,'')='') "
         f"order by reg_date desc, ctrl desc limit {int(limit)}", timeout=120))
@@ -827,6 +829,40 @@ def inherit_old():
                          "count(nullif(description,'')) ds from semyung_tulip where kind='ebook' group by vendor"))
     print("[inherit] 결과:", res)
 
+def _class_no_from_xml(xml):
+    """bookinfo(verb=all) XML의 <class_no> → '305.242' 꼴. 없으면 holdings의 <call_no> 앞 토큰. 둘 다 없으면 None."""
+    m = re.search(r"<class_no><!\[CDATA\[([^\]]*)\]\]>", xml)
+    v = (m.group(1).strip() if m else "")
+    if not v:
+        m = re.search(r"<call_no><!\[CDATA\[([^\]\s]+)", xml)
+        v = (m.group(1).strip() if m else "")
+    return v[:40] or None
+
+def fill_class(limit=500):
+    """10/28 신설: 분류기호(class_no)가 빈 최근 신착에 bookinfo로 분류를 채운다.
+    run_daily가 10/28 전엔 class_no를 안 넣었고(10/19 '신착 종이책은 분류가 비어 추천이 못 뜸'),
+    분류가 없으면 앱의 '같은 장르 추천'이 비어 보인다. 멱등 — 채워진 행은 다시 안 본다."""
+    rows = json.loads(sql(
+        "select ctrl from semyung_tulip where coalesce(class_no,'')='' and ctrl::bigint < 1000000000 "
+        "and reg_date >= to_char(current_date - interval '400 days','YYYYMMDD') "
+        f"order by ctrl desc limit {int(limit)}"))
+    print(f"[fill-class] 대상 {len(rows):,}건")
+    buf = []; got = 0
+    for r in rows:
+        try:
+            xml = tulip("bookinfo", verb="all", cid="CAT" + r["ctrl"])
+        except Exception:
+            time.sleep(2); continue
+        cls = _class_no_from_xml(xml)
+        if cls:
+            buf.append(f"update semyung_tulip set class_no={esc(cls)}, updated_at=now() where ctrl={esc(r['ctrl'])}")
+            got += 1
+        if len(buf) >= 50:
+            sql("; ".join(buf)); buf.clear()
+        time.sleep(0.3)
+    if buf: sql("; ".join(buf))
+    print(f"[fill-class] 채움 {got:,}/{len(rows):,}")
+
 def fetch_mat_type(ctrl, title):
     """신착 행의 자료유형(LIMT01)을 **제어번호 정확일치**로 가져온다. 못 찾으면 None.
 
@@ -871,8 +907,14 @@ def run_daily():
             py = re.search(r"<publisher_year><!\[CDATA\[(.*?)\]\]>", xml)
             ind = re.search(r"<input_date><!\[CDATA\[(.*?)\]\]>", xml)
             isbns = [x.strip() for x in re.findall(r"<isbn>([^<]*)</isbn>", xml) if re.search(r"\d{9}", x)]
+            # 10/28 전자책은 <isbn>이 없고 additional_form/original_version에 "ISBN 9791172740719"로만 온다 → 13자리 폴백
+            if not isbns:
+                m13 = re.search(r"\b(97[89]\d{10})\b", xml)
+                if m13: isbns = [m13.group(1)]
             kind = "ebook" if ("[전자책]" in title or "E-BOOK" in xml) else "paper"
             ctrl = "%012d" % n
+            # 10/28 분류기호(class_no) — 빠뜨리면 '같은 장르 추천'이 못 뜬다(10/19·10/28 사장님 신고: 신착 책 소개·추천 공백)
+            cls = _class_no_from_xml(xml)
             stext = " ".join(x for x in [title, au.group(1).strip() if au else "", pb.group(1).strip() if pb else ""] if x)
             # 🔴🔴 mat_type을 빠뜨리면 이 책은 이후 **모든** 단계에서 조용히 사라진다
             #   (2026-08-13 실측 사고): 표지·줄거리 백필은 mat_type='m'으로, 임베딩은
@@ -880,14 +922,16 @@ def run_daily():
             #   8/12 신착 10권이 표지·줄거리·임베딩 전부 없이 방치됐고 **검색에도 안 잡혔다.**
             #   방학이라 신착이 없다가 처음 들어오면서 드러났다 — 조용한 누락의 전형.
             mt = fetch_mat_type(ctrl, title)
-            sql("insert into semyung_tulip (ctrl,kind,title,author,publisher,pub_year,isbn,reg_date,mat_type,search_text) "
+            sql("insert into semyung_tulip (ctrl,kind,title,author,publisher,pub_year,isbn,reg_date,mat_type,class_no,search_text) "
                 f"values ({esc(ctrl)},{esc(kind)},{esc(title)},{esc(au.group(1).strip() if au else '')},"
                 f"{esc(pb.group(1).strip() if pb else '')},{esc(py.group(1).strip() if py else '')},"
                 f"{esc(isbns[0].split()[0] if isbns else None)},{esc(ind.group(1).strip() if ind else '')},"
-                f"{esc(mt)},{esc(stext)}) "
+                f"{esc(mt)},{esc(cls)},{esc(stext)}) "
                 # NULL로 덮어써서 멀쩡한 값을 지우는 일이 없게 coalesce
                 "on conflict (ctrl) do update set title=excluded.title, "
-                "mat_type=coalesce(excluded.mat_type, semyung_tulip.mat_type), updated_at=now()")
+                "mat_type=coalesce(excluded.mat_type, semyung_tulip.mat_type), "
+                "class_no=coalesce(nullif(excluded.class_no,''), semyung_tulip.class_no), "
+                "isbn=coalesce(semyung_tulip.isbn, excluded.isbn), updated_at=now()")
             found.append((n, title[:30]))
             last = n
         else:
@@ -922,6 +966,8 @@ if __name__ == "__main__":
                     help="줄거리가 임베딩에 안 실린 행 제자리 재임베딩(삭제 없음). HNSW 내리고 실행할 것")
     ap.add_argument("--reembed-kind", default="paper,ebook")
     ap.add_argument("--daily", action="store_true"); ap.add_argument("--set-max", action="store_true")
+    ap.add_argument("--fill-class", action="store_true", help="분류기호 빈 최근 신착에 bookinfo로 class_no 채움(10/28)")
+    ap.add_argument("--fill-limit", type=int, default=500)
     ap.add_argument("--inherit", action="store_true")
     ap.add_argument("--covers-paper", action="store_true")
     ap.add_argument("--covers-paper-aladin", action="store_true")
@@ -941,6 +987,7 @@ if __name__ == "__main__":
     elif a.embed_paper: embed_books(a.embed_limit, "paper")
     elif a.reembed: reembed_stale(a.embed_limit, tuple(a.reembed_kind.split(",")))
     elif a.daily: run_daily()
+    elif a.fill_class: fill_class(a.fill_limit)
     elif a.set_max: set_max()
     elif a.inherit: inherit_old()
     elif a.fresh: fresh_arrivals(a.fresh_days, a.d4l_budget if a.d4l_budget != 28000 else 300,

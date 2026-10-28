@@ -14,7 +14,8 @@ cd /opt/bookstar || exit 1
 PY=python3
 echo "===== $(date '+%F %T') weekly start ====="
 $PY -u scripts/tulip_sync.py --daily          || echo "[weekly] daily FAILED exit=$?"
-$PY -u scripts/tulip_sync.py --fresh          || echo "[weekly] fresh FAILED exit=$?"
+$PY -u scripts/tulip_sync.py --fill-class     || echo "[weekly] fill-class FAILED exit=$?"
+$PY -u scripts/tulip_sync.py --fresh --fresh-days 180 --d4l-budget 2000 --covers-budget 1500 || echo "[weekly] fresh FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --enrich-ebook   || echo "[weekly] enrich-ebook FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --embed-ebook    || echo "[weekly] embed-ebook FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --embed-paper    || echo "[weekly] embed-paper FAILED exit=$?"
