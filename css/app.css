@@ -2759,3 +2759,17 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
   .bm-cover{width:100px;height:144px;}
   .bm-life-t{font-size:18px;}
 }
+
+/* ── 독서 포트폴리오 만들기 (마이페이지 맨 아래, 10/28) ── */
+.pf-card{padding:22px 24px;}
+.pf-row{display:flex;gap:16px;align-items:flex-start;}
+.pf-ic{width:44px;height:44px;border-radius:12px;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none;}
+.pf-ic svg{width:22px;height:22px;}
+.pf-body{flex:1;min-width:0;}
+.pf-text{margin:2px 0 14px;font-size:14px;line-height:1.65;color:var(--text-sub);word-break:keep-all;}
+.pf-text b{color:var(--text);font-weight:800;}
+.pf-acts{display:flex;gap:8px;flex-wrap:wrap;}
+.pf-btn{padding:10px 16px;font-size:13.5px;text-decoration:none;}
+.pf-btn svg{flex:none;}
+.pf-note{margin-top:10px;font-size:12px;color:var(--text-light);}
+@media (max-width:600px){ .pf-row{gap:12px;} .pf-card{padding:18px 16px;} .pf-acts .pf-btn{flex:1 1 100%;justify-content:center;} }

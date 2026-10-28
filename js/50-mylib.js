@@ -361,7 +361,8 @@ async function renderMyProfileTop(){
   el.innerHTML = grpHead
    +`<div class="ag-sec-h"><h3>내 인생책</h3></div><div class="ag-card">${lifeCard}</div>
      <div class="ag-sec-h"><h3>내 책 <span style="font-size:12px;color:var(--text-light);font-weight:600">책 ${all.length}권 · 책장 ${_bmShelves.length}개</span></h3></div>${hint}${tabs}${shelfBar}${booksGrid}
-     <div class="ag-sec-h"><h3>내가 쓴 글 <span style="font-size:12px;color:var(--text-light);font-weight:600">한 줄 소감 · 한 줄 질문 · 서평 · 독후감</span></h3></div>${wrTabs}<div id="wrList">${_wrListHTML()}</div>`;
+     <div class="ag-sec-h"><h3>내가 쓴 글 <span style="font-size:12px;color:var(--text-light);font-weight:600">한 줄 소감 · 한 줄 질문 · 서평 · 독후감</span></h3></div>${wrTabs}<div id="wrList">${_wrListHTML()}</div>`
+   +((typeof portfolioSectionHTML==='function')?portfolioSectionHTML():'');   // 10/28 사장님: 독서 포트폴리오 만들기 — 마이페이지 맨 아래(js/58-portfolio.js)
 }
 /* ── 인생책 등록/바꾸기 (후보 = 내 책 전체) ── */
 function _lifeCandidates(){ return _mbAll(); }
