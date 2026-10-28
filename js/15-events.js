@@ -573,6 +573,16 @@ function smKeyOf(b){
   if(fromPaper) return fromPaper;
   return (b.isbn||'').replace(/^sm-/,'');
 }
+// 10/28 세명대 수정요청: 내 책 카드의 글쓰기 메뉴(⋮)를 도서 상세의 표지 오른쪽 위에도 — 같은 mbMenu(한 줄 소감·질문·서평·독후감·책장·인생책)
+//   키 = mbTouch 가 '내 책'에 담을 때 쓰는 키(mbKey)와 동일 → 상세에서 쓴 글이 내 책·내가 쓴 글과 같은 책으로 묶인다
+function _lcdDotsHTML(b){
+  try{
+    const key=(typeof mbKey==='function')?mbKey(b):String(b.isbn||b.id||''); if(!key) return '';
+    const book={id:key, title:cleanT(b.t||b.title||''), author:String(b.a||b.author||''), coverSrc:String(b.cover||b.coverSrc||''), isbn:String(b.isbn||''), kind:(b.tags&&b.tags.includes('paper'))?'paper':'ebook', last:''};
+    window._lcdDotsBook=book;
+    return `<button class="mb-dots lcd-dots" title="글쓰기" onclick="event.stopPropagation();mbMenu('${esc(key)}',{book:window._lcdDotsBook})">${MB_DOTS}</button>`;
+  }catch(e){ return ''; }
+}
 function libDetail(isbn){
   const b=LIB_POOL.find(x=>x.isbn===isbn); if(!b) return;
   try{ const _ov=document.getElementById('lcDetail'); if(_ov){ _ov.removeAttribute('data-origin'); _ov.removeAttribute('data-origin-id'); } }catch(e){}   // 대체추천(ebSimOpen)이 남긴 origin 표식 초기화
@@ -615,7 +625,7 @@ function libDetail(isbn){
   const ov=document.getElementById('lcDetail');
   ov.querySelector('.lcd').innerHTML=`<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
-      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" decoding="async" data-t="${esc(cleanT(b.t||''))}" data-a="${esc(String(b.a||b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}</div>
+      <div class="lcd-cv">${b.cover?`<img src="${esc(hiCover(b.cover))}" decoding="async" data-t="${esc(cleanT(b.t||''))}" data-a="${esc(String(b.a||b.author||''))}" onerror="ncSwap(this)">`:ncCover(b)}${_lcdDotsHTML(b)}</div>
       <div class="lcd-i">${b.rank?`<div class="lcd-rank"><span class="ricon">${SVG_RANK}</span>우리 학교 대출 ${b.rank}위</div>`:''}<h2>${escD(cleanT(b.t))}</h2><div class="au">${escD(authorLine(b))}${publisher?` · ${escD(publisher)}`:''}${pubYear?` · ${esc(pubYear)}`:''}</div>
         ${meta.length?`<div class="lcd-meta">${meta.join('  |  ')}</div>`:''}
         ${b.note?`<div class="lcd-note">“${esc(b.note)}” — 사서</div>`:''}</div>

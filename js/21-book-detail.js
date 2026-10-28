@@ -43,7 +43,7 @@ function openDetail(bookId){
     </div>`;
   ov.querySelector('.lcd').innerHTML = `<span class="lcd-x" onclick="closeLc()">×</span>
     <div class="lcd-top">
-      <div class="lcd-cv">${cover}</div>
+      <div class="lcd-cv">${cover}<button class="mb-dots lcd-dots" title="글쓰기" onclick="event.stopPropagation();mbMenu('${esc(b.id)}')">${MB_DOTS}</button></div>
       <div class="lcd-i"><h2>${esc(b.title)}</h2><div class="au">${esc(b.author)}${b.period?` · ${esc(b.period)}`:''}</div>
         <div class="lcd-chips">${chips}</div></div>
     </div>

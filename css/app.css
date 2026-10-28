@@ -2773,3 +2773,8 @@ body.dark .mp-scene-quote{background:rgba(212,169,59,.05)}
 .pf-btn svg{flex:none;}
 .pf-note{margin-top:10px;font-size:12px;color:var(--text-light);}
 @media (max-width:600px){ .pf-row{gap:12px;} .pf-card{padding:18px 16px;} .pf-acts .pf-btn{flex:1 1 100%;justify-content:center;} }
+
+/* ── 도서 상세 표지 오른쪽 위 글쓰기 메뉴(⋮) — 10/28 세명대 수정요청(내 책 카드와 동일 메뉴) ── */
+.lcd-cv{position:relative;}
+.lcd-cv .lcd-dots{top:6px;right:6px;width:26px;height:26px;border-radius:7px;z-index:2;}
+@media (max-width:600px){ .lcd-cv .lcd-dots{top:6px;right:6px;width:24px;height:24px;} }
