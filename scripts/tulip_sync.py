@@ -842,8 +842,10 @@ def fill_class(limit=500):
     """10/28 신설: 분류기호(class_no)가 빈 최근 신착에 bookinfo로 분류를 채운다.
     run_daily가 10/28 전엔 class_no를 안 넣었고(10/19 '신착 종이책은 분류가 비어 추천이 못 뜸'),
     분류가 없으면 앱의 '같은 장르 추천'이 비어 보인다. 멱등 — 채워진 행은 다시 안 본다."""
+    # 전자책은 ISBN도 같이 — ISBN이 없으면 fresh(줄거리 조달)가 "조달 불가"로 건너뛴다(10/28 실측: 신착 전자책 138권 전부 isbn null)
     rows = json.loads(sql(
-        "select ctrl from semyung_tulip where coalesce(class_no,'')='' and ctrl::bigint < 1000000000 "
+        "select ctrl, isbn from semyung_tulip where (coalesce(class_no,'')='' or (kind='ebook' and isbn is null)) "
+        "and ctrl::bigint < 1000000000 "
         "and reg_date >= to_char(current_date - interval '400 days','YYYYMMDD') "
         f"order by ctrl desc limit {int(limit)}"))
     print(f"[fill-class] 대상 {len(rows):,}건")
@@ -854,8 +856,13 @@ def fill_class(limit=500):
         except Exception:
             time.sleep(2); continue
         cls = _class_no_from_xml(xml)
-        if cls:
-            buf.append(f"update semyung_tulip set class_no={esc(cls)}, updated_at=now() where ctrl={esc(r['ctrl'])}")
+        sets = []
+        if cls: sets.append(f"class_no=coalesce(nullif(class_no,''), {esc(cls)})")
+        if not r.get("isbn"):
+            m13 = re.search(r"\b(97[89]\d{10})\b", xml)
+            if m13: sets.append(f"isbn=coalesce(isbn, {esc(m13.group(1))})")
+        if sets:
+            buf.append(f"update semyung_tulip set {', '.join(sets)}, updated_at=now() where ctrl={esc(r['ctrl'])}")
             got += 1
         if len(buf) >= 50:
             sql("; ".join(buf)); buf.clear()
