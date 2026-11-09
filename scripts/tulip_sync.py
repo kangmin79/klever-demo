@@ -7,8 +7,10 @@
   python scripts/tulip_sync.py --enrich-ebook  # 전자책만 bookinfo로 barcode·뷰어링크 보강
   python scripts/tulip_sync.py --daily         # 신착 증분 (last_max_ctrl 위로)
 
-쓰기 = Supabase Management API SQL (RLS 우회). 토큰: 환경변수 SUPABASE_ACCESS_TOKEN
-또는 hwik-web/.env 의 SUPABASE_ACCESS_TOKEN.
+쓰기 = DB 함수 bx_exec_sql(service_role 전용, 11/9) 를 PostgREST RPC로 호출. 키: 환경변수
+SUPABASE_SERVICE_ROLE(또는 BOOKSTAR_SERVICE_ROLE) 또는 hwik-web/.env — 북스타 프로젝트(ref 일치)의 것만 인정.
+  ↳ 11/9 배경: Management API 토큰(PAT)이 9/11·9/23·10/2·11월초 네 번 만료돼 Vultr 주간 갱신이 두 번 통째로
+    실패. service_role 키는 만료가 없어 이 경로를 기본으로. 서비스 키가 없을 때만 예전 PAT 경로(SUPABASE_ACCESS_TOKEN).
 규칙: 요청 간격 0.5초(전수)/0.3초(bookinfo), User-Agent 명시. 표지는 P2에서 별도.
 """
 import sys, io, os, re, json, time, argparse, ssl, html, threading
@@ -25,17 +27,46 @@ TULIP = "https://lib.semyung.ac.kr/openapi"
 PROJECT = "gkujptyfrzqrjrvovbnc"
 MGMT = f"https://api.supabase.com/v1/projects/{PROJECT}/database/query"
 
-def find_token():
-    tok = os.environ.get("SUPABASE_ACCESS_TOKEN")
-    if tok: return tok.strip()
-    envp = os.path.join(os.path.expanduser("~"), "Desktop", "hwik-web", ".env")
-    if os.path.exists(envp):
-        for line in open(envp, encoding="utf-8", errors="replace"):
-            m = re.match(r"\s*SUPABASE_ACCESS_TOKEN\s*=\s*(\S+)", line)
-            if m: return m.group(1).strip().strip("\"'")
-    sys.exit("토큰 없음: SUPABASE_ACCESS_TOKEN 환경변수 또는 hwik-web/.env 필요")
+ENV_PATH = os.path.join(os.path.expanduser("~"), "Desktop", "hwik-web", ".env")
 
-TOKEN = find_token()
+def _env_values(*names):
+    """환경변수 → hwik-web/.env 순서로 names 각각의 값을 찾는다(없으면 건너뜀)."""
+    found = {}
+    for n in names:
+        v = os.environ.get(n)
+        if v: found[n] = v.strip().strip("\"'")
+    if os.path.exists(ENV_PATH):
+        for line in open(ENV_PATH, encoding="utf-8", errors="replace"):
+            for n in names:
+                if n in found: continue
+                m = re.match(rf"\s*{n}\s*=\s*(\S+)", line)
+                if m: found[n] = m.group(1).strip().strip("\"'")
+    return found
+
+def _jwt_ref(tok):
+    """Supabase JWT의 ref(프로젝트) 클레임. 다른 프로젝트(휙) 키를 잘못 집는 사고 방지."""
+    try:
+        import base64
+        p = tok.split(".")[1]; p += "=" * (-len(p) % 4)
+        return json.loads(base64.urlsafe_b64decode(p)).get("ref")
+    except Exception: return None
+
+def find_service_key():
+    v = _env_values("SUPABASE_SERVICE_ROLE", "BOOKSTAR_SERVICE_ROLE", "SUPABASE_SERVICE_ROLE_KEY")
+    for n in ("SUPABASE_SERVICE_ROLE", "BOOKSTAR_SERVICE_ROLE", "SUPABASE_SERVICE_ROLE_KEY"):
+        k = v.get(n)
+        if k and _jwt_ref(k) == PROJECT: return k
+    return None
+
+def find_token():
+    tok = _env_values("SUPABASE_ACCESS_TOKEN").get("SUPABASE_ACCESS_TOKEN")
+    if tok: return tok
+    sys.exit("키 없음: SUPABASE_SERVICE_ROLE(북스타 service_role) 또는 SUPABASE_ACCESS_TOKEN 환경변수/hwik-web/.env 필요")
+
+SERVICE_KEY = find_service_key()
+TOKEN = None if SERVICE_KEY else find_token()
+RPC = f"https://{PROJECT}.supabase.co/rest/v1/rpc/bx_exec_sql"
+print("[db] 경로:", "service_role RPC(bx_exec_sql)" if SERVICE_KEY else "Management API(PAT)")
 
 def http(url, data=None, headers=None, timeout=60):
     h = {"User-Agent": UA}; h.update(headers or {})
@@ -44,6 +75,12 @@ def http(url, data=None, headers=None, timeout=60):
         return r.read().decode("utf-8", "replace")
 
 def sql(query, timeout=60):
+    """SQL 실행 → 결과 JSON 문자열(행 배열. 비조회문은 '[]'). 두 경로 모두 같은 모양으로 돌려준다."""
+    if SERVICE_KEY:
+        body = json.dumps({"q": query}).encode()
+        return http(RPC, data=body, headers={
+            "apikey": SERVICE_KEY, "Authorization": "Bearer " + SERVICE_KEY,
+            "Content-Type": "application/json"}, timeout=timeout)
     body = json.dumps({"query": query}).encode()
     return http(MGMT, data=body, headers={
         "Authorization": "Bearer " + TOKEN, "Content-Type": "application/json"}, timeout=timeout)
