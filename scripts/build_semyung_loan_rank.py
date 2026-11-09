@@ -119,6 +119,18 @@ def main():
         print("UPSERT:", urllib.request.urlopen(req, timeout=60).status)
     except urllib.error.HTTPError as e:
         print("ERR", e.code, e.read().decode()[:300])
+        return
+    # 11/9: 순위에서 빠진 책은 지운다. upsert만 하면 옛 순위 번호를 단 행이 남아 앱(order=rank&limit=20)에
+    #   현재 순위와 섞여 보였다(실측: 18위 3행·19위 3행 — 8/26 행, 6/24 1년치 행 포함). 줄거리·표지는 소장목록에서
+    #   다시 채워지므로 지워도 잃는 것 없음.
+    keep = ",".join(r["brcd"] for r in cur)
+    dreq = urllib.request.Request("%s/semyung_loan_rank?brcd=not.in.(%s)" % (REST, keep), method="DELETE",
+                                  headers=dict(RH, **{"Prefer": "return=minimal,count=exact", "User-Agent": UA}))
+    try:
+        resp = urllib.request.urlopen(dreq, timeout=60)
+        print("순위 밖 행 삭제:", (resp.headers.get("Content-Range") or "?").split("/")[-1])
+    except urllib.error.HTTPError as e:
+        print("DELETE ERR", e.code, e.read().decode()[:300])
 
 
 if __name__ == "__main__":
