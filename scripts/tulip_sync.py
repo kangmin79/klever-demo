@@ -348,6 +348,10 @@ def d4l_book(isbn, expect_title=None):
 
 _aladin_calls = 0
 def aladin(endpoint, **params):
+    # 🛑 2026-10-30 알라딘 OpenAPI 전면 종료(errorCode 999 "www.aladin.co.kr 도메인을 통한 OpenAPI서비스는 종료되었습니다",
+    #    새 주소 없음 — 11/9 공지 확인). 호출해도 전부 빈손이므로 바로 돌려보낸다(호출 수도 세지 않음).
+    #    표지·줄거리 공급원은 이제 정보나루(d4l)만 — 미등록 IP 500건/일, Vultr IP 등록 시 30,000건/일.
+    return []
     global _aladin_calls
     with _call_lock: _aladin_calls += 1
     params.update({"ttbkey": ALADIN_KEY, "output": "js", "Version": "20131101"})

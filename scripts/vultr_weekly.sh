@@ -6,10 +6,13 @@
 #   cron: 0 4 * * 1  (매주 월요일 04:00 KST)
 # 학교 서버를 부르는 단계 = ① --daily(도서관 openapi bookinfo, 신착 번호 순회, 0.3초 간격)
 #                          ② --enrich-ebook(같은 openapi) ③ 대출 랭킹(OPAC 통계 페이지 2회)
-#   나머지(--fresh 표지·줄거리, 임베딩, 랭킹 줄거리)는 알라딘·정보나루·OpenAI·우리 DB만 부른다.
-#   정보나루는 IP 미등록이면 1일 500건 → d4l-budget 400(Vultr IP 등록 전). 나머지는 알라딘 폴백.
+#   나머지(--fresh 표지·줄거리, 임베딩)는 정보나루·OpenAI·우리 DB만 부른다.
+#   정보나루는 IP 미등록이면 1일 500건 → d4l-budget 400(Vultr IP 등록 전).
+#   🛑 알라딘 OpenAPI 2026-10-30 전면 종료 → 폴백 없음(tulip_sync.aladin()은 즉시 빈손). 랭킹 표지·ISBN·줄거리는
+#      semyung_tulip 조인으로(build_semyung_loan_rank.py 11/9). 랭킹 줄거리 단계(desc_loan_rank.mjs)는 은퇴.
 # 뺀 단계: 매일 돌던 대량 표지·줄거리 백필(--covers-paper-aladin 3만 건/일) — 정보나루 IP 등록이 사장님 PC 기준이고
 #   학교와 무관한 대량 작업이라 주간 갱신엔 넣지 않음. 필요하면 별도 결정.
+# DB 쓰기(tulip_sync): 11/9부터 service_role→bx_exec_sql RPC(PAT 만료 무관). 로그 첫 줄 "[db] 경로:"로 확인.
 set -a; . /root/Desktop/hwik-web/.env; set +a
 cd /opt/bookstar || exit 1
 PY=python3
@@ -21,5 +24,4 @@ $PY -u scripts/tulip_sync.py --enrich-ebook   || echo "[weekly] enrich-ebook FAI
 $PY -u scripts/tulip_sync.py --embed-ebook    || echo "[weekly] embed-ebook FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --embed-paper    || echo "[weekly] embed-paper FAILED exit=$?"
 $PY -u scripts/build_semyung_loan_rank.py     || echo "[weekly] loan-rank FAILED exit=$?"
-node scripts/desc_loan_rank.mjs               || echo "[weekly] loan-rank-desc FAILED exit=$?"
 echo "===== $(date '+%F %T') weekly end ====="

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-/* semyung_loan_rank(종이책 대출랭킹) 줄거리 보강 — isbn13(종이책 ISBN)→알라딘 ItemLookUp → description 컬럼.
+/* 🛑 11/9 은퇴: 알라딘 OpenAPI 2026-10-30 전면 종료로 동작 불가. 줄거리는 build_semyung_loan_rank.py가
+   semyung_tulip(ctrl 조인)에서 함께 채운다. weekly.sh에서 이 단계 제거. 파일은 기록용으로만 남김.
+   semyung_loan_rank(종이책 대출랭킹) 줄거리 보강 — isbn13(종이책 ISBN)→알라딘 ItemLookUp → description 컬럼.
    왜: 종이책은 semyung_books(전자책)에 없어 모달 줄거리 공백. loan_rank는 isbn13 100% 보유 + 알라딘 종이ISBN 수율 높음.
        build_semyung_loan_rank.py가 매일 description을 리셋하므로 그 직후 재실행(멱등, 빈 행만).
    쓰기: service_role PostgREST 개별 PATCH(upsert는 NOT NULL 위반 → 금지). 출처=알라딘.
