@@ -44,6 +44,8 @@ function bxBookByKey(key){
   return /^(gb|kr)-/.test(key)?{id:key}:{isbn:key};
 }
 let _bxLastView={key:'',ts:0};
+// 11/11 시험 모드: 내 자동 시험(Playwright 등)이 통계에 섞이지 않게 — localStorage bx_test=1 이면 모든 기록을 voided(안 쓴 것)로 보낸다
+function _bxTestMode(){ try{ return localStorage.getItem('bx_test')==='1'; }catch(e){ return false; } }
 function bxEvent(kind, o){
   try{
     o=o||{};
@@ -61,7 +63,7 @@ function bxEvent(kind, o){
       kind:kind, sub:o.sub||null, item_type:it.item_type||'none', item_key:it.item_key||null, item_title:(it.item_title||'').slice(0,200)||null,
       origin:org.origin||'unknown', origin_id:(org.id||'').slice(0,120)||null, program_id:pid||null,
       ref_table:o.ref_table||null, ref_id:o.ref_id?String(o.ref_id).slice(0,200):null,
-      ok:o.ok!==false, seconds:(o.seconds!=null?Math.max(0,Math.round(o.seconds)):null), meta:o.meta||{} };
+      ok:o.ok!==false, seconds:(o.seconds!=null?Math.max(0,Math.round(o.seconds)):null), meta:o.meta||{}, voided:_bxTestMode() };
     sbWrite('POST','/bookstar_events',row,{prefer:'return=minimal',keepalive:!!o.beacon}).catch(()=>{});
   }catch(e){}
 }
