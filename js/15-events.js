@@ -68,7 +68,10 @@ function bxEvent(kind, o){
 // 접속(visit): 탭당 1회. guest도 남기되 '접속 학생' 집계는 학번만 센다.
 function bxVisitOnce(){
   try{ const k='bx_visit_'+_bxSid(); if(sessionStorage.getItem(k)) return; sessionStorage.setItem(k,'1'); }catch(e){}
-  bxEvent('visit',{origin:'direct', sub:(bxStudent()?'student':'guest')});
+  // 11/11: 비로그인 접속이 어디서 오는지 모르는 상태(60일 169세션) → 출발지·기기·배너 경유 여부를 함께 남긴다(화면 변화 없음)
+  let meta={};
+  try{ meta={ ref:String(document.referrer||'').slice(0,200), sso:!!window._bxSsoLanding, mobile:/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent), w:window.innerWidth, ua:String(navigator.userAgent||'').slice(0,120) }; }catch(e){}
+  bxEvent('visit',{origin:'direct', sub:(bxStudent()?'student':'guest'), meta:meta});
 }
 // 고전 읽기(read): 뷰어가 열려 있는 동안 readerSessionEnd()가 초를 누적, 닫을 때(또는 탭 이탈) 1줄로 보냄.
 let _bxReadSec=0, _bxReadBook=null;

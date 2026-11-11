@@ -27,9 +27,13 @@ window.addEventListener('DOMContentLoaded', () => {
         sessionStorage.setItem('bx_login_prev', _bxSid());   // 로그인 직전 계정(게스트) — 읽던 진행 승계용
         sessionStorage.setItem('bx_login_pending','1');
       }catch(e){}
+      window._bxSsoLanding=true;   // 11/11 측정: 이 탭의 첫 접속 기록에 '배너(sso)로 들어옴'을 남기기 위해
       history.replaceState(null,'',location.pathname+location.hash);   // 학번·토큰 URL 노출·새로고침 재적용 방지
       bxAuthExchange(_ssoAuth).then(ok=>{
-        if(ok){ location.replace(location.pathname+location.hash); return; }
+        // 11/11 수리: 예전 location.replace(pathname+hash)는 주소가 이미 같고 #ourlib 해시가 붙어 있어 "같은 문서 안 이동"으로 처리돼
+        //   새로고침이 일어나지 않았다(실측: 로그인은 됐는데 접속 기록은 guest, bx_login_pending 그대로, 로그인 전 보던 책 복귀 안 됨 — 8/29 이후 내내).
+        //   reload()는 해시가 있어도 반드시 다시 연다.
+        if(ok){ location.reload(); return; }
         try{ sessionStorage.removeItem('bx_login_pending'); localStorage.removeItem(SSO_TOK_KEY); localStorage.removeItem(SSO_PERSONAL_KEY); }catch(e){}
         try{ bmToast('로그인 확인에 실패했어요. 다시 로그인해 주세요.'); }catch(e){}
       });
@@ -60,8 +64,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }else if(_pb){
           const _rb=JSON.parse(_pb);
           if(_rb && _rb.isbn && _fresh(_rb)){
-            if(!LIB_POOL.find(x=>x.isbn===_rb.isbn)) LIB_POOL.push(_rb);   // 새로고침으로 풀이 비어도 열리게 복원
-            setTimeout(()=>{ try{ libDetail(_rb.isbn); }catch(e){} }, 450);
+            // 11/11: 풀 복원은 여는 순간에 — 라이브 목록이 오면 rebuildLibPool()이 LIB_POOL을 통째로 새로 만들어 미리 넣어 둔 책이 사라지고
+            //   libDetail이 조용히 빠져나갔다(로컬 재현). 넣고 바로 연다.
+            setTimeout(()=>{ try{ if(!LIB_POOL.find(x=>x.isbn===_rb.isbn)) LIB_POOL.push(_rb); libDetail(_rb.isbn); }catch(e){} }, 450);
           }
         }
       }catch(e){}
