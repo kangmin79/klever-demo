@@ -504,9 +504,13 @@ async function smEbookBorrowOpen(brcd, w, book){
     }
     else{ const msg=(d&&(d.message||d.error))||'지금은 대출할 수 없어요(동시이용 한도일 수 있어요)';
       // 남이 빌려간 경우엔 "다시 시도"가 아니라 예약이 정답 — 안내를 예약으로 잇는다
-      const othersHave=/먼저|대출\s*중/.test(msg);
-      const hint=othersHave?'창을 닫은 뒤, 책 화면의 <b>예약하기</b>를 눌러 두면 반납되는 대로 알려드려요.':'창을 닫고 다시 시도해 주세요.';
-      try{ w.document.body.innerHTML='<div style="font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#334"><p style="font-size:15px">'+msg+'</p><p style="font-size:13px;color:#889;margin-top:10px">'+hint+'</p></div>'; }catch(e){ alert(msg); }
+      // 11/11: "현재 회원님이 대출중인" 책은 서버가 바로 열어 주므로(alreadyMine) 여기 안 온다. 그래도 오면 '본인 대출'을 예약으로 안내하지 않게 제외.
+      const othersHave=/먼저|대출\s*중/.test(msg) && !/회원님/.test(msg);
+      // 예약 버튼을 이 창에 바로 둔다 — "창 닫고 책 화면에서 예약하기"는 두 번 움직여야 해서 실측상 아무도 안 했다(실패 뒤 같은 책 재시도 5/34)
+      const hint=othersHave
+        ?'<p style="font-size:13px;color:#889;margin-top:10px">예약해 두면 반납되는 대로 순번대로 빌려드려요.</p><button onclick="try{window.opener&&window.opener.ebReserve&&window.opener.ebReserve(\''+String(brcd).replace(/[^0-9A-Za-z]/g,'')+'\');}catch(e){};window.close()" style="margin-top:14px;padding:10px 22px;border:0;border-radius:10px;background:#5b6cff;color:#fff;font-size:14px;cursor:pointer">예약하기</button>'
+        :'<p style="font-size:13px;color:#889;margin-top:10px">창을 닫고 다시 시도해 주세요.</p>';
+      try{ w.document.body.innerHTML='<div style="font-family:system-ui,sans-serif;padding:48px 24px;text-align:center;color:#334"><p style="font-size:15px">'+msg+'</p>'+hint+'</div>'; }catch(e){ alert(msg); }
       // 재고를 다시 읽어 모달의 '바로 읽기' 줄을 예약 클릭으로 전환(재고 로드 전에 눌렀던 레이스 대비)
       try{ if(document.getElementById('ebStockTag')) loadEbookStock(brcd); }catch(e){} }
   }catch(e){ try{ w.document.body.innerHTML='<p style="font-family:sans-serif;padding:48px;text-align:center">대출 중 오류가 발생했어요. 다시 시도해 주세요.</p>'; }catch(_){ } }

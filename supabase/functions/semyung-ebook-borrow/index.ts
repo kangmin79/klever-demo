@@ -36,6 +36,17 @@ import { stockOneFromTable } from "../_shared/stock_table.ts";
 import { EB, LBRY, Jar, ebGet, ebPost, ebookSession, fetchEbookHandoff, libLoginByPortal, listEbookLoans, xmlTag } from "../_shared/semyung_session.ts";
 import type { EbookHandoff } from "../_shared/semyung_session.ts";
 import { frontApi, frontMsg, isNoMember, kyoboBorrowList, kyoboDirectViewerUrl, kyoboIdFromSession, kyoboMemberSync, kyoboReserveList, kyoboStock, kyoboViewerLinks } from "../_shared/kyobo_api.ts";
+import type { FrontRes, KyoboLoan } from "../_shared/kyobo_api.ts";
+
+// 11/11 대출 실패 실측(60일, 학생 23건): "해당 컨텐츠가 존재하지 않습니다" 12건은 10/19 바코드 변환(아래 resolveEbookBarcode)으로 그 뒤 0건.
+//   남은 유형 — ①"현재 회원님이 대출중인 컨텐츠" 4건 = 내가 이미 빌린 책인데 실패로 보여 줬다 → 대출 목록에서 확인되면 열어 준다.
+//   ②"통합/연동형 통신 중 오류" 3건 = 학교 연동 서버의 일시 오류 → 1초 뒤 한 번 더 시도.
+const isTransient = (r: FrontRes) => /^HTTP_5|^HTTP_0|^NETWORK/.test(r.msgcode) || /통신 중 오류|일시적|잠시 후/.test(r.msg);
+const sleep = (ms: number) => new Promise((z) => setTimeout(z, ms));
+// 처리 API가 네트워크 예외로 던지면 실패 응답으로 바꿔 재시도 판정에 태운다(예외는 바깥 catch로 가서 "String(e)"만 남았다)
+async function frontApiSafe(name: Parameters<typeof frontApi>[0], params: Record<string, string>): Promise<FrontRes> {
+  try { return await frontApi(name, params); } catch (e) { return { ok: false, msgcode: "NETWORK", msg: String(e).slice(0, 120), raw: "", borrowId: "" }; }
+}
 
 // 정식 API로 얻은 재고를 표(solsup_stock)에도 적어 둔다 — 검색·닮은책(stockFromTable)이 같은 최신값을 보게. 있는 행만 고친다(없으면 무시). 응답은 안 기다림.
 function writeStockThrough(brcd: string, st: { loaned: number; total: number; reserved: number; available: boolean }): void {
@@ -448,22 +459,35 @@ Deno.serve(async (req) => {
       //   한도 초과·전권 대출중 등은 교보 문장을 그대로 — 자동반납 없음(8/9 원칙 그대로)
       if (kyoboId) {
         const bt = mobile ? (/ipad/i.test(ua) ? "T" : "S") : "W";
-        let r = await frontApi("contentBorrowProc", { user_id: kyoboId, barcode: brcd, borrow_type: bt });
-        if (!r.ok && isNoMember(r) && await ensureMember()) r = await frontApi("contentBorrowProc", { user_id: kyoboId, barcode: brcd, borrow_type: bt });
-        if (r.ok) {
-          notifyStockChanged(brcd);   // 8/22: 빌린 순간 홈에서 빠지게
+        const p = { user_id: kyoboId, barcode: brcd, borrow_type: bt };
+        // 성공 응답 한 곳 — 새로 빌렸든(already=false) 이미 내 책이든(already=true) 뷰어 주소까지 같은 모양으로 준다
+        const success = async (borrowId: string, already: boolean, mine?: KyoboLoan) => {
           let dueDate = "", ents = "";
-          try { const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd); dueDate = mine?.dueDate || ""; ents = mine?.vendor || ""; } catch (_) { /* 날짜 없이 안내 */ }
+          try { mine = mine || (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd); dueDate = mine?.dueDate || ""; ents = mine?.vendor || ""; } catch (_) { /* 날짜 없이 안내 */ }
           const v = kyoboViewerLinks(kyoboId, brcd, mobile, ua);
           // 10/17: 교보(KB) 책은 선택창을 서버가 대신 통과 → 대출 직후 바로 책이 열린다(10/2 이전과 동일). 실패·YES24·공급사 미확인은 선택창
           const direct = (ents === "KB" || ents === "YS") ? await kyoboDirectViewerUrl(kyoboId, brcd, mobile, ua, ents) : "";   // 10/19: YS는 YES24 선택 화면 주소
           const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dueDate);
+          const until = dm ? `${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요` : "읽고 나면 반납해 주세요";
           return json({
-            ok: true, action, personal, source: "api", loanSrmb: r.borrowId || "", entsDvsnCode: ents, viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct,
-            vendor: ents === "YS" ? "external" : "kyobo", viewerError: "", dueDate,
-            message: dm ? `대출 완료 — ${+dm[2]}월 ${+dm[3]}일까지 읽을 수 있어요` : "대출 완료 — 읽고 나면 반납해 주세요",
+            ok: true, action, personal, source: "api", loanSrmb: borrowId, entsDvsnCode: ents, viewerUrl: direct || v.viewerUrl, viewerPost: direct ? null : v.viewerPost, direct: !!direct,
+            vendor: ents === "YS" ? "external" : "kyobo", viewerError: "", dueDate, alreadyMine: already,
+            message: already ? `이미 빌린 책이에요 — 바로 열어요 (${until})` : `대출 완료 — ${until}`,
           });
+        };
+        let r = await frontApiSafe("contentBorrowProc", p);
+        if (!r.ok && isNoMember(r) && await ensureMember()) r = await frontApiSafe("contentBorrowProc", p);
+        // 11/11: 학교 연동 서버의 일시 오류("통합/연동형 통신 중 오류", 네트워크 예외)는 1초 뒤 한 번 더
+        if (!r.ok && isTransient(r)) { console.error("borrow transient → retry", brcd, r.msgcode, r.msg.slice(0, 60)); await sleep(1000); r = await frontApiSafe("contentBorrowProc", p); }
+        if (r.ok) {
+          notifyStockChanged(brcd);   // 8/22: 빌린 순간 홈에서 빠지게
+          return await success(r.borrowId || "", false);
         }
+        // 11/11: "현재 회원님이 대출중인 컨텐츠"는 실패가 아니라 내 책 — 문구가 아니라 내 대출 목록으로 판정해 바로 열어 준다
+        try {
+          const mine = (await kyoboBorrowList(kyoboId)).find((l) => l.brcd === brcd);
+          if (mine) { console.error("borrow: already mine → open", brcd, r.msgcode); return await success("", true, mine); }
+        } catch (e) { console.error("borrow: borrowList check fail", String(e).slice(0, 80)); }
         console.error("borrow frontapi false", brcd, r.msgcode, r.msg.slice(0, 80));
         if (!legacyOk) return json({ ok: false, action, personal, source: "frontapi", msgcode: r.msgcode, message: frontMsg(r, "지금은 대출할 수 없어요") });
       }
