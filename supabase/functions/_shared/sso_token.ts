@@ -31,8 +31,11 @@ export interface SsoSession {
   exp: number; // epoch초
 }
 
-// 발급 — ttlSec 기본 7일 (배너 재클릭으로 자동 갱신되므로 짧게 유지)
-export async function signSsoToken(hakbun: string, name: string, sid = "", ttlSec = 7 * 24 * 3600): Promise<string> {
+// 발급 — ttlSec 기본 1년 (11/12 사장님 결정: 모바일에서 로그인이 풀리지 않게. 전엔 7일이라 일주일 뒤 "다시 로그인"이 떴다.
+//   연동에 쓰는 liid·포털 연계값은 학교 쪽에서 만료되는 값이 아니고, 알림 배치가 30일씩 연장해 써 온 걸로 증명됨.
+//   공용 PC는 로그아웃 버튼으로. sso_store.saveSession 기본값과 같이 맞춘다)
+export const SSO_TTL_SEC = 365 * 24 * 3600;
+export async function signSsoToken(hakbun: string, name: string, sid = "", ttlSec = SSO_TTL_SEC): Promise<string> {
   const payload = te.encode(JSON.stringify({ h: hakbun, n: name, s: sid, e: Math.floor(Date.now() / 1000) + ttlSec }));
   const key = await hmacKey();
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, payload));

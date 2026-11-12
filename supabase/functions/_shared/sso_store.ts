@@ -24,7 +24,7 @@ export function newSid(): string {
 }
 
 export async function saveSession(row: Omit<SsoRow, "expires_at"> & { ttlSec?: number }): Promise<void> {
-  const { ttlSec = 7 * 24 * 3600, ...rest } = row;
+  const { ttlSec = 365 * 24 * 3600, ...rest } = row;   // 11/12: 7일 → 1년 (sso_token.SSO_TTL_SEC 과 같은 값)
   const r = await fetch(`${SB_URL}/rest/v1/sso_sessions`, {
     method: "POST",
     headers: { ...H, Prefer: "resolution=merge-duplicates" },
