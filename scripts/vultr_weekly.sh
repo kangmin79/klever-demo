@@ -21,6 +21,8 @@ $PY -u scripts/tulip_sync.py --daily          || echo "[weekly] daily FAILED exi
 $PY -u scripts/tulip_sync.py --fill-class     || echo "[weekly] fill-class FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --fresh --fresh-days 180 --d4l-budget 400 --covers-budget 1500 || echo "[weekly] fresh FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --enrich-ebook   || echo "[weekly] enrich-ebook FAILED exit=$?"
+# 11/16 교보 전자책 웹뷰어 허용 판정(새 책 + app_only 30일 재판정) → app_only 면 학생 화면에서 숨김. 학교 서버 0.3초 간격.
+$PY -u scripts/kyobo_webviewer_check.py       || echo "[weekly] kyobo-webviewer-check FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --embed-ebook    || echo "[weekly] embed-ebook FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --embed-paper    || echo "[weekly] embed-paper FAILED exit=$?"
 $PY -u scripts/build_semyung_loan_rank.py     || echo "[weekly] loan-rank FAILED exit=$?"

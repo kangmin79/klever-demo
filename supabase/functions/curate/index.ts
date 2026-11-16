@@ -746,6 +746,26 @@ Deno.serve(async (req) => {
       const kept = candidates.filter((c: any) => format === "ebook" ? c.smEbook === true : c.smPaper === true);
       candidates.length = 0; candidates.push(...kept);
     }
+    // 11/16 교보 앱 전용 전자책 제외 — 출판사가 웹뷰어를 불허한 책(semyung_tulip.app_only, Vultr 주간 판정)은 폰에서
+    //   교보 앱으로 넘어가 버린다(사장님 캡처). 이 함수는 service_role 이라 RLS(app_only=false)가 안 걸리므로 여기서 뺀다.
+    //   book_pool 경로로 온 후보도 brcd 로 같이 걸린다. 종이책도 있는 책은 전자 표시만 떼고 남긴다.
+    try {
+      const bcs = [...new Set(candidates.map((c: any) => String(c.brcd || "")).filter((b: string) => /^[0-9A-Za-z]{6,16}$/.test(b)))];
+      if (bcs.length) {
+        const hdrA = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
+        const rows = await fetch(`${SB_URL}/rest/v1/semyung_tulip?select=barcode&app_only=is.true&barcode=in.(${bcs.join(",")})&limit=${bcs.length}`, { headers: hdrA })
+          .then((r) => (r.ok ? r.json() : [])).catch(() => []);
+        const bad = new Set((Array.isArray(rows) ? rows : []).map((r: any) => String(r.barcode)));
+        if (bad.size) {
+          const kept = candidates.filter((c: any) => {
+            if (!bad.has(String(c.brcd || ""))) return true;
+            if (c.smPaper === true && format !== "ebook") { c.smEbook = false; c.smEbookUrl = ""; c.smEbookProvider = ""; c.brcd = ""; return true; }
+            return false;
+          });
+          candidates.length = 0; candidates.push(...kept);
+        }
+      }
+    } catch (_) { /* 판정 조회 실패 → 제외 없이 진행(결과가 비는 쪽보다 낫다) */ }
 
     // 리랭킹(선택): 검색된 후보를 원 질의로 재검수해 무관책 컷 + 정밀순 재정렬. 제목생성·크레마 앞에 둬서
     //   제목은 리랭크된 세트로 짓고, 크레마도 살아남은 책만 조회. 전부 무관이면 빈 결과(정직).
