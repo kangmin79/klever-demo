@@ -17,7 +17,12 @@ set -a; . /root/Desktop/hwik-web/.env; set +a
 cd /opt/bookstar || exit 1
 PY=python3
 echo "===== $(date '+%F %T') weekly start ====="
-$PY -u scripts/tulip_sync.py --daily          || echo "[weekly] daily FAILED exit=$?"
+$PY -u scripts/tulip_sync.py --daily 2>&1 | tee /tmp/bx_daily_out.txt; [ "${PIPESTATUS[0]}" = 0 ] || echo "[weekly] daily FAILED exit=${PIPESTATUS[0]}"
+# 11/23 사고 재발 방지: 신착 0건이면 폰 알림(ntfy). 11/9 이후 두 주 연속 "신착 0건"(빈 제어번호 구간)을 아무도 못 봤다.
+#   학기 중 신착 0건은 비정상. 방학엔 0건이 정상일 수 있으니 알림 문구에 그렇게 적는다. NTFY_TOPIC 은 .env(휙과 공용).
+if grep -q '신착 0건' /tmp/bx_daily_out.txt && [ -n "$NTFY_TOPIC" ]; then
+  curl -s -m 15 -H "Title: Bookstar weekly" -d "세명대 신착 수집 0건 ($(date '+%m/%d')). 학기 중이면 수집 정지 의심 — /opt/bookstar/logs/weekly.log 확인" "https://ntfy.sh/$NTFY_TOPIC" > /dev/null || true
+fi
 $PY -u scripts/tulip_sync.py --fill-class     || echo "[weekly] fill-class FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --fresh --fresh-days 180 --d4l-budget 400 --covers-budget 1500 || echo "[weekly] fresh FAILED exit=$?"
 $PY -u scripts/tulip_sync.py --enrich-ebook   || echo "[weekly] enrich-ebook FAILED exit=$?"
