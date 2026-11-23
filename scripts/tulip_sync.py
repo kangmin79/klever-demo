@@ -952,14 +952,17 @@ def fetch_mat_type(ctrl, title):
     return (v.group(1).strip() or None) if v else None
 
 def run_daily():
-    """신착 증분: last_max_ctrl+1부터 위로, 연속 30개 빈 번호면 종료"""
+    """신착 증분: last_max_ctrl+1부터 위로, 연속 400개 빈 번호면 종료.
+    11/23 사고: 학교가 제어번호 557224~557346(123개)을 비워 둔 채 557347부터 신착을 넣었다. 예전 규칙(30개)은
+    그 빈 구간에서 멈춰 11/9 이후 두 주(11/16·11/23) "신착 0건"을 찍고도 아무도 몰랐다(사장님 11/23 "책 소개가 없는
+    책이 있다" 신고로 발견). 그 뒤에도 50개 넘는 빈 구간이 또 있었다(557501·557551 표본). 400개 = 0.3초×400 = 2분 비용."""
     st = json.loads(sql("select last_max_ctrl from semyung_sync_state where id=1"))
     last = int(st[0]["last_max_ctrl"])
     if last == 0:
         sys.exit("last_max_ctrl=0 — 먼저 --full 후 --set-max 로 기준점을 세팅하세요")
     print(f"[daily] CTRL {last} 위로 탐색")
     n = last + 1; misses = 0; found = []
-    while misses < 30:
+    while misses < 400:
         try:
             xml = tulip("bookinfo", verb="all", cid="CAT%012d" % n)
         except Exception:
